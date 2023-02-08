@@ -69,8 +69,8 @@ class TestTokenShareTokenDetails:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
-        web3.eth.default_account = deployer['account_address']
-        contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
+        web3.eth.default_account = deployer
+        contract_address, abi = Contract.deploy_contract('TokenList', [], deployer)
 
         return {'address': contract_address, 'abi': abi}
 
@@ -115,7 +115,7 @@ class TestTokenShareTokenDetails:
         assumed_body = {
             'token_address': share_token['address'],
             'token_template': 'IbetShare',
-            'owner_address': issuer['account_address'],
+            'owner_address': issuer,
             'company_name': '',
             'rsa_publickey': '',
             'name': 'テスト株式',
@@ -178,7 +178,7 @@ class TestTokenShareTokenDetails:
         assumed_body = {
             'token_address': share_token['address'],
             'token_template': 'IbetShare',
-            'owner_address': issuer['account_address'],
+            'owner_address': issuer,
             'company_name': '',
             'rsa_publickey': '',
             'name': 'テスト株式',

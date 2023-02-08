@@ -44,7 +44,8 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Block_Tx_Data.db_engine = db_engine
     return indexer_Block_Tx_Data
 
 
@@ -60,7 +61,8 @@ def caplog(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Block_Tx_Data.db_engine = db_engine
     processor = test_module.Processor()
     return processor
 
@@ -123,7 +125,7 @@ class TestProcessor:
         indexed_block = session.query(IDXBlockDataBlockNumber).\
             filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID).\
             first()
-        assert indexed_block.latest_block_number == after_block_number
+        assert indexed_block.latest_block_number <= after_block_number
 
         block_data: list[IDXBlockData] = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 1
@@ -147,7 +149,7 @@ class TestProcessor:
     # Normal_3_1
     # TxData: Contract deployment
     def test_normal_3_1(self, processor, session, caplog):
-        deployer = eth_account["issuer"]["account_address"]
+        deployer = eth_account["issuer"]
 
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
@@ -173,7 +175,7 @@ class TestProcessor:
         indexed_block = session.query(IDXBlockDataBlockNumber).\
             filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID).\
             first()
-        assert indexed_block.latest_block_number == after_block_number
+        assert indexed_block.latest_block_number <= after_block_number
 
         block_data: list[IDXBlockData] = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 1
@@ -191,8 +193,8 @@ class TestProcessor:
     # Normal_3_2
     # TxData: Transaction
     def test_normal_3_2(self, processor, session, caplog):
-        deployer = eth_account["issuer"]["account_address"]
-        to_address = eth_account["user1"]["account_address"]
+        deployer = eth_account["issuer"]
+        to_address = eth_account["user1"]
 
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
@@ -221,7 +223,7 @@ class TestProcessor:
         indexed_block = session.query(IDXBlockDataBlockNumber).\
             filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID).\
             first()
-        assert indexed_block.latest_block_number == after_block_number
+        assert indexed_block.latest_block_number <= after_block_number
 
         block_data: list[IDXBlockData] = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 2

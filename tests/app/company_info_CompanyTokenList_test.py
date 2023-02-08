@@ -23,6 +23,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.model.db import Listing
+from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_bond_token,
     register_bond_list,
@@ -33,7 +34,6 @@ from tests.contract_modules import (
     issue_coupon_token,
     coupon_register_list
 )
-from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -168,16 +168,16 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._bond_attribute(bond_exchange["address"], personal_info["address"])
         token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        self._insert_listing(session, token["address"], issuer)
 
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(url)
 
         assumed_body = [
             {
                 'token_address': token["address"],
                 'token_template': 'IbetStraightBond',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト債券',
@@ -233,16 +233,16 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._share_attribute(share_exchange["address"], personal_info["address"])
         token = issue_share_token(issuer, attribute)
         register_share_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        self._insert_listing(session, token["address"], issuer)
 
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(url)
 
         assumed_body = [
             {
                 'token_address': token["address"],
                 'token_template': 'IbetShare',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -287,16 +287,16 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._membership_attribute(membership_exchange["address"])
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        self._insert_listing(session, token["address"], issuer)
 
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(url)
 
         assumed_body = [
             {
                 'token_address': token["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -338,16 +338,16 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._coupon_attribute(coupon_exchange["address"])
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        self._insert_listing(session, token["address"], issuer)
 
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(url)
 
         assumed_body = [
             {
                 'token_address': token["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -391,22 +391,22 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._membership_attribute(membership_exchange["address"])
         membership_token = membership_issue(issuer, attribute)
         membership_register_list(issuer, membership_token, token_list)
-        self._insert_listing(session, membership_token["address"], issuer["account_address"])
+        self._insert_listing(session, membership_token["address"], issuer)
 
         # 新規トークン発行（クーポン）
         attribute = self._coupon_attribute(coupon_exchange["address"])
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
-        self._insert_listing(session, coupon_token["address"], issuer["account_address"])
+        self._insert_listing(session, coupon_token["address"], issuer)
 
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(url)
 
         assumed_body = [
             {
                 'token_address': coupon_token["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -433,7 +433,7 @@ class TestCompanyInfoCompanyTokenList:
             {
                 'token_address': membership_token["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -468,7 +468,7 @@ class TestCompanyInfoCompanyTokenList:
     def test_normal_6(self, client: TestClient, session: Session):
         issuer = eth_account['issuer']
 
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(url)
 
         assumed_body: list[str] = []
@@ -491,16 +491,16 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._membership_attribute(membership_exchange["address"])
         membership_token = membership_issue(issuer, attribute)
         membership_register_list(issuer, membership_token, token_list)
-        self._insert_listing(session, membership_token["address"], issuer["account_address"], True)
+        self._insert_listing(session, membership_token["address"], issuer, True)
 
         attribute = self._coupon_attribute(coupon_exchange["address"])
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
-        self._insert_listing(session, coupon_token["address"], issuer["account_address"], False)
+        self._insert_listing(session, coupon_token["address"], issuer, False)
 
         # テスト対象API呼び出し
         query_string = f'include_private_listing=true'
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(
             url,
             params=query_string
@@ -511,7 +511,7 @@ class TestCompanyInfoCompanyTokenList:
             {
                 'token_address': coupon_token["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -538,7 +538,7 @@ class TestCompanyInfoCompanyTokenList:
             {
                 'token_address': membership_token["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -581,16 +581,16 @@ class TestCompanyInfoCompanyTokenList:
         attribute = self._membership_attribute(membership_exchange["address"])
         membership_token = membership_issue(issuer, attribute)
         membership_register_list(issuer, membership_token, token_list)
-        self._insert_listing(session, membership_token["address"], issuer["account_address"], True)
+        self._insert_listing(session, membership_token["address"], issuer, True)
 
         attribute = self._coupon_attribute(coupon_exchange["address"])
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
-        self._insert_listing(session, coupon_token["address"], issuer["account_address"], False)
+        self._insert_listing(session, coupon_token["address"], issuer, False)
 
         # テスト対象API呼び出し
         query_string = f'include_private_listing=false'
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(
             url,
             params=query_string
@@ -601,7 +601,7 @@ class TestCompanyInfoCompanyTokenList:
             {
                 'token_address': membership_token["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': issuer["account_address"],
+                'owner_address': issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -659,7 +659,7 @@ class TestCompanyInfoCompanyTokenList:
 
         # テスト対象API呼び出し
         query_string = f'include_private_listing=test'
-        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        url = self.apiurl.replace("{eth_address}", issuer)
         resp = client.get(
             url,
             params=query_string

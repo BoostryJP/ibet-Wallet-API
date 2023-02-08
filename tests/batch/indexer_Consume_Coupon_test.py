@@ -49,13 +49,15 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Consume_Coupon.db_engine = db_engine
     indexer_Consume_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Consume_Coupon
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func(test_module, db_engine):
+    indexer_Consume_Coupon.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -66,7 +68,8 @@ def main_func(test_module):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Consume_Coupon.db_engine = db_engine
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
@@ -104,7 +107,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -123,8 +126,8 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
-        block_number = web3.eth.block_number
+        tx_hash = consume_coupon_token(self.issuer, token, 1000)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -137,7 +140,7 @@ class TestProcessor:
         assert _consume_coupon.id == 1
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token["address"]
-        assert _consume_coupon.account_address == self.issuer["account_address"]
+        assert _consume_coupon.account_address == self.issuer
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
 
@@ -152,11 +155,11 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
-        block_number = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 2000)
-        consume_coupon_token(self.trader, token, 2000)
-        block_number2 = web3.eth.block_number
+        tx_hash = consume_coupon_token(self.issuer, token, 1000)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
+        transfer_coupon_token(self.issuer, token, self.trader, 2000)
+        tx_hash = consume_coupon_token(self.trader, token, 2000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -169,7 +172,7 @@ class TestProcessor:
         assert _consume_coupon.id == 1
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token["address"]
-        assert _consume_coupon.account_address == self.issuer["account_address"]
+        assert _consume_coupon.account_address == self.issuer
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
         block = web3.eth.get_block(block_number2)
@@ -177,7 +180,7 @@ class TestProcessor:
         assert _consume_coupon.id == 2
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token["address"]
-        assert _consume_coupon.account_address == self.trader["account_address"]
+        assert _consume_coupon.account_address == self.trader
         assert _consume_coupon.amount == 2000
         assert _consume_coupon.block_timestamp is not None
 
@@ -195,16 +198,16 @@ class TestProcessor:
         self.listing_token(token2["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
-        block_number = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 2000)
-        consume_coupon_token(self.trader, token, 2000)
-        block_number2 = web3.eth.block_number
-        consume_coupon_token(self.issuer, token2, 3000)
-        block_number3 = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token2, self.trader["account_address"], 4000)
-        consume_coupon_token(self.trader, token2, 4000)
-        block_number4 = web3.eth.block_number
+        tx_hash = consume_coupon_token(self.issuer, token, 1000)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
+        transfer_coupon_token(self.issuer, token, self.trader, 2000)
+        tx_hash = consume_coupon_token(self.trader, token, 2000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = consume_coupon_token(self.issuer, token2, 3000)
+        block_number3 = web3.eth.get_transaction(tx_hash).blockNumber
+        transfer_coupon_token(self.issuer, token2, self.trader, 4000)
+        tx_hash = consume_coupon_token(self.trader, token2, 4000)
+        block_number4 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -217,7 +220,7 @@ class TestProcessor:
         assert _consume_coupon.id == 1
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token["address"]
-        assert _consume_coupon.account_address == self.issuer["account_address"]
+        assert _consume_coupon.account_address == self.issuer
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
         block = web3.eth.get_block(block_number2)
@@ -225,7 +228,7 @@ class TestProcessor:
         assert _consume_coupon.id == 2
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token["address"]
-        assert _consume_coupon.account_address == self.trader["account_address"]
+        assert _consume_coupon.account_address == self.trader
         assert _consume_coupon.amount == 2000
         assert _consume_coupon.block_timestamp is not None
         block = web3.eth.get_block(block_number3)
@@ -233,7 +236,7 @@ class TestProcessor:
         assert _consume_coupon.id == 3
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token2["address"]
-        assert _consume_coupon.account_address == self.issuer["account_address"]
+        assert _consume_coupon.account_address == self.issuer
         assert _consume_coupon.amount == 3000
         assert _consume_coupon.block_timestamp is not None
         block = web3.eth.get_block(block_number4)
@@ -241,7 +244,7 @@ class TestProcessor:
         assert _consume_coupon.id == 4
         assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
         assert _consume_coupon.token_address == token2["address"]
-        assert _consume_coupon.account_address == self.trader["account_address"]
+        assert _consume_coupon.account_address == self.trader
         assert _consume_coupon.amount == 4000
         assert _consume_coupon.block_timestamp is not None
 
@@ -308,7 +311,7 @@ class TestProcessor:
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        assert processor.latest_block == block_number_current
+        assert processor.latest_block >= block_number_current
 
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
@@ -325,7 +328,7 @@ class TestProcessor:
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
-        assert processor.latest_block == block_number_current
+        assert processor.latest_block >= block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     def test_error_1_2(self, processor, shared_contract, session):

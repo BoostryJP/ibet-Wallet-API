@@ -41,13 +41,15 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Token_Detail.db_engine = db_engine
     indexer_Token_Detail.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Token_Detail
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Token_Detail.db_engine = db_engine
     processor = test_module.Processor()
     return processor
 
@@ -80,9 +82,9 @@ class TestTokenCouponTokenAddresses:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
+        web3.eth.default_account = deployer
         contract_address, abi = Contract. \
-            deploy_contract("TokenList", [], deployer["account_address"])
+            deploy_contract("TokenList", [], deployer)
         return {"address": contract_address, "abi": abi}
 
     @staticmethod
@@ -366,7 +368,7 @@ class TestTokenCouponTokenAddresses:
 
         resp = client.get(self.apiurl, params={
             "name": "テストクーポン",
-            "owner_address": issuer["account_address"],
+            "owner_address": issuer,
             "company_name": "",
             "symbol": "COU",
             "transferable": True,

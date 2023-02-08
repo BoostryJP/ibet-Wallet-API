@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import os
 
 from web3 import Web3
 from app import config
@@ -23,29 +24,18 @@ from app import config
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
 # Account Address
+worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+if worker_id is not None:
+    worker_n = 1 + int(worker_id.split("gw")[1])
+    offset = 6 * worker_n
+else:
+    offset = 0
+
 eth_account = {
-    'deployer': {
-        'account_address': web3.eth.accounts[0],
-        'password': 'password'
-    },
-    'issuer': {
-        'account_address': web3.eth.accounts[1],
-        'password': 'password'
-    },
-    'agent': {
-        'account_address': web3.eth.accounts[2],
-        'password': 'password'
-    },
-    'trader': {
-        'account_address': web3.eth.accounts[3],
-        'password': 'password'
-    },
-    'user1': {
-        'account_address': web3.eth.accounts[4],
-        'password': 'password'
-    },
-    'user2': {
-        'account_address': web3.eth.accounts[5],
-        'password': 'password'
-    }
+    "deployer": web3.eth.accounts[0+offset],
+    "issuer": web3.eth.accounts[1+offset],
+    "agent": web3.eth.accounts[2+offset],
+    "trader": web3.eth.accounts[3+offset],
+    "user1": web3.eth.accounts[4+offset],
+    "user2": web3.eth.accounts[5+offset]
 }

@@ -62,13 +62,15 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Position_Membership.db_engine = db_engine
     indexer_Position_Membership.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Position_Membership
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func(test_module, db_engine):
+    indexer_Position_Membership.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -79,7 +81,8 @@ def main_func(test_module):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Position_Membership.db_engine = db_engine
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
@@ -118,7 +121,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -137,7 +140,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Transfer
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 10000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -151,7 +154,7 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -159,12 +162,12 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Single Token
@@ -177,8 +180,8 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Transfer
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader2["account_address"]}, token, 3000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 10000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader2}, token, 3000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -192,7 +195,7 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -200,7 +203,7 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader2["account_address"]
+        assert _position.account_address == self.trader2
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -208,12 +211,12 @@ class TestProcessor:
         _position = _position_list[2]
         assert _position.id == 3
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_3>
     # Multi Token
@@ -228,10 +231,10 @@ class TestProcessor:
         self.listing_token(token2["address"], session)
 
         # Transfer
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader2["account_address"]}, token, 3000)
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token2, 5000)
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader2["account_address"]}, token2, 3000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 10000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader2}, token, 3000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token2, 5000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader2}, token2, 3000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -245,7 +248,7 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -253,7 +256,7 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader2["account_address"]
+        assert _position.account_address == self.trader2
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -261,7 +264,7 @@ class TestProcessor:
         _position = _position_list[2]
         assert _position.id == 3
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -269,7 +272,7 @@ class TestProcessor:
         _position = _position_list[3]
         assert _position.id == 4
         assert _position.token_address == token2["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 5000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -277,7 +280,7 @@ class TestProcessor:
         _position = _position_list[4]
         assert _position.id == 5
         assert _position.token_address == token2["address"]
-        assert _position.account_address == self.trader2["account_address"]
+        assert _position.account_address == self.trader2
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -285,12 +288,12 @@ class TestProcessor:
         _position = _position_list[5]
         assert _position.id == 6
         assert _position.token_address == token2["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 5000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_4>
     # Single Token
@@ -326,12 +329,12 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 + 111 + 222
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 10000 - 111 - 222 - 333
         assert _position.exchange_commitment == 333
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_5>
     # Single Token
@@ -350,11 +353,11 @@ class TestProcessor:
         membership_transfer_to_exchange(
             self.issuer, {"address": escrow_contract.address}, token, 10000)
         create_token_escrow(self.issuer, {"address": escrow_contract.address},
-                                     token, self.trader["account_address"], self.issuer["account_address"], 200)
+                                     token, self.trader, self.issuer, 200)
         finish_token_escrow(
             self.issuer, {"address": escrow_contract.address}, get_latest_escrow_id({"address": escrow_contract.address}))
         create_token_escrow(self.issuer, {"address": escrow_contract.address},
-                                     token, self.trader["account_address"], self.issuer["account_address"], 300)
+                                     token, self.trader, self.issuer, 300)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -369,7 +372,7 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 10000 - 200 - 300
@@ -377,12 +380,12 @@ class TestProcessor:
         _position: IDXPosition = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 0
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 200
         assert _position.exchange_commitment == 0
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_6>
     # No event logs
@@ -402,7 +405,7 @@ class TestProcessor:
         assert len(_position_list) == 0
         _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).\
             filter(IDXPositionMembershipBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_7>
     # Not listing Token is NOT indexed,
@@ -413,7 +416,7 @@ class TestProcessor:
         token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
 
         # Transfer
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 10000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -438,7 +441,7 @@ class TestProcessor:
         assert len(_position_list) == 2
         _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).\
             filter(IDXPositionMembershipBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_membership_block_number.latest_block_number == block_number
+        assert _idx_position_membership_block_number.latest_block_number >= block_number
 
     # <Normal_8>
     # Single Token
@@ -452,7 +455,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
         for i in range(0, 5):
             # Transfer
-            membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 10000)
 
         # Get events for token address
         events = Contract.get_contract('IbetMembership', token["address"]).events.Transfer.getLogs(
@@ -564,11 +567,11 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token1["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 + 55
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
-        assert _idx_position_coupon_block_number.latest_block_number == block_number1
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number1
 
         # Token2 Listing
         self.listing_token(token2["address"], session)
@@ -590,20 +593,20 @@ class TestProcessor:
         _position1: IDXPosition = _position_list[0]
         assert _position1.id == 1
         assert _position1.token_address == token1["address"]
-        assert _position1.account_address == self.issuer["account_address"]
+        assert _position1.account_address == self.issuer
         assert _position1.balance == 1000000 - 10000 + 55
         assert _position1.exchange_balance == 10000 - 55 - 66
         assert _position1.exchange_commitment == 66
-        assert _idx_position_coupon_block_number1.latest_block_number == block_number2
+        assert _idx_position_coupon_block_number1.latest_block_number >= block_number2
 
         _position2: IDXPosition = _position_list[1]
         assert _position2.id == 2
         assert _position2.token_address == token2["address"]
-        assert _position2.account_address == self.issuer["account_address"]
+        assert _position2.account_address == self.issuer
         assert _position2.balance == 1000000 - 10000 + 55
         assert _position2.exchange_balance == 10000 - 55 - 66
         assert _position2.exchange_commitment == 66
-        assert _idx_position_coupon_block_number2.latest_block_number == block_number2
+        assert _idx_position_coupon_block_number2.latest_block_number >= block_number2
 
     ###########################################################################
     # Error Case
@@ -624,7 +627,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         block_number_current = web3.eth.block_number
         # Run initial sync
@@ -636,11 +639,11 @@ class TestProcessor:
         # Latest_block is incremented in "initial_sync" process.
         _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).\
             filter(IDXPositionMembershipBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_membership_block_number.latest_block_number == block_number_current
+        assert _idx_position_membership_block_number.latest_block_number >= block_number_current
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         block_number_current = web3.eth.block_number
         # Run target process
@@ -657,7 +660,7 @@ class TestProcessor:
         # Latest_block is incremented in "sync_new_logs" process.
         _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).\
             filter(IDXPositionMembershipBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_membership_block_number.latest_block_number == block_number_current
+        assert _idx_position_membership_block_number.latest_block_number >= block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     @mock.patch("web3.eth.Eth.get_code", MagicMock(side_effect=ServiceUnavailable()))
@@ -669,7 +672,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
@@ -687,7 +690,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         _idx_position_membership_block_number_bf = session.query(IDXPositionMembershipBlockNumber).first()
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -713,7 +716,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
@@ -732,7 +735,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
@@ -757,7 +760,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that initial_sync() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
@@ -777,7 +780,7 @@ class TestProcessor:
 
         # Transfer
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \

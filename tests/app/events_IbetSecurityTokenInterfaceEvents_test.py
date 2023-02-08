@@ -70,7 +70,7 @@ class TestEventsIbetSecurityTokenInterface:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestEventsIbetSecurityTokenInterface.issuer["account_address"]
+        _listing.owner_address = TestEventsIbetSecurityTokenInterface.issuer
         session.add(_listing)
         session.commit()
 
@@ -165,7 +165,7 @@ class TestEventsIbetSecurityTokenInterface:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
         # user1: 20000 trader: 0
 
@@ -182,8 +182,8 @@ class TestEventsIbetSecurityTokenInterface:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -195,30 +195,30 @@ class TestEventsIbetSecurityTokenInterface:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             2000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
         finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
         # user1: 13000 trader: 17000
 
-        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        bond_lock(self.trader, token, self.issuer, 3000)
         # user1: 13000 trader: 17000
 
-        bond_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        bond_unlock(self.issuer, token, self.trader, self.user1, 2000)
         # user1: 15000 trader: 15000
 
         bond_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
         # user1: 115000 trader: 15000
 
-        bond_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
-        bond_redeem_from(self.issuer, token, self.user1["account_address"], 10000)
+        bond_issue_from(self.issuer, token, self.issuer, 40000)
+        bond_redeem_from(self.issuer, token, self.user1, 10000)
         # user1: 105000 trader: 15000
 
-        bond_issue_from(self.issuer, token, self.trader["account_address"], 30000)
-        bond_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
+        bond_issue_from(self.issuer, token, self.trader, 30000)
+        bond_redeem_from(self.issuer, token, self.issuer, 10000)
         # user1: 115000 trader: 45000
 
         self.token_address = token["address"]
@@ -417,7 +417,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "argument_filters": json.dumps(
                     {
-                        "lockAddress": self.issuer["account_address"]
+                        "lockAddress": self.issuer
                     }
                 )
             }
@@ -499,7 +499,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "args": {
                     "accountAddress": ANY,
                     "data": "",
-                    "lockAddress": self.issuer["account_address"],
+                    "lockAddress": self.issuer,
                     "value": ANY
                 },
                 "transaction_hash": ANY,
@@ -512,7 +512,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "args": {
                     "accountAddress": ANY,
                     "data": "",
-                    "lockAddress": self.issuer["account_address"],
+                    "lockAddress": self.issuer,
                     "recipientAddress": ANY,
                     "value": ANY
                 },
@@ -611,7 +611,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Transfer",
                 "argument_filters": json.dumps(
                     {
-                        "from": self.user1["account_address"]
+                        "from": self.user1
                     }
                 )
             }
@@ -627,7 +627,7 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Transfer",
                 "args": {
-                    "from": self.user1["account_address"],
+                    "from": self.user1,
                     "to": ANY,
                     "value": ANY
                 },
@@ -653,7 +653,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Transfer",
                 "argument_filters": json.dumps(
                     {
-                        "to": self.user1["account_address"]
+                        "to": self.user1
                     }
                 )
             }
@@ -670,7 +670,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Transfer",
                 "args": {
                     "from": ANY,
-                    "to": self.user1["account_address"],
+                    "to": self.user1,
                     "value": ANY
                 },
                 "transaction_hash": ANY,
@@ -682,7 +682,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Transfer",
                 "args": {
                     "from": ANY,
-                    "to": self.user1["account_address"],
+                    "to": self.user1,
                     "value": ANY
                 },
                 "transaction_hash": ANY,
@@ -718,9 +718,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.issuer["account_address"],
+                    "targetAddress": self.issuer,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -731,9 +731,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.trader["account_address"],
+                    "targetAddress": self.trader,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -758,7 +758,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Issue",
                 "argument_filters": json.dumps(
                     {
-                        "from": self.issuer["account_address"]
+                        "from": self.issuer
                     }
                 )
             }
@@ -774,9 +774,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.issuer["account_address"],
+                    "targetAddress": self.issuer,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -787,9 +787,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.trader["account_address"],
+                    "targetAddress": self.trader,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -814,7 +814,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Issue",
                 "argument_filters": json.dumps(
                     {
-                        "targetAddress": self.trader["account_address"]
+                        "targetAddress": self.trader
                     }
                 )
             }
@@ -830,9 +830,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.trader["account_address"],
+                    "targetAddress": self.trader,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -873,7 +873,7 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
                     "amount": ANY
@@ -886,7 +886,7 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Issue",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
                     "amount": ANY
@@ -924,9 +924,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Redeem",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.user1["account_address"],
+                    "targetAddress": self.user1,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -937,9 +937,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Redeem",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.issuer["account_address"],
+                    "targetAddress": self.issuer,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -964,7 +964,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Redeem",
                 "argument_filters": json.dumps(
                     {
-                        "targetAddress": self.issuer["account_address"]
+                        "targetAddress": self.issuer
                     }
                 )
             }
@@ -980,9 +980,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Redeem",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": config.ZERO_ADDRESS,
-                    "targetAddress": self.issuer["account_address"],
+                    "targetAddress": self.issuer,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -1007,7 +1007,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Redeem",
                 "argument_filters": json.dumps(
                     {
-                        "targetAddress": self.user1["account_address"]
+                        "targetAddress": self.user1
                     }
                 )
             }
@@ -1023,9 +1023,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Redeem",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": ANY,
-                    "targetAddress": self.user1["account_address"],
+                    "targetAddress": self.user1,
                     "amount": ANY
                 },
                 "transaction_hash": ANY,
@@ -1066,7 +1066,7 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Redeem",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
                     "amount": ANY
@@ -1079,7 +1079,7 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Redeem",
                 "args": {
-                    "from": self.issuer["account_address"],
+                    "from": self.issuer,
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
                     "amount": ANY
@@ -1117,8 +1117,8 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Lock",
                 "args": {
-                    "accountAddress": self.trader["account_address"],
-                    "lockAddress": self.issuer["account_address"],
+                    "accountAddress": self.trader,
+                    "lockAddress": self.issuer,
                     "data": "",
                     "value": ANY
                 },
@@ -1144,7 +1144,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Lock",
                 "argument_filters": json.dumps(
                     {
-                        "accountAddress": self.issuer["account_address"]
+                        "accountAddress": self.issuer
                     }
                 )
             }
@@ -1173,7 +1173,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Lock",
                 "argument_filters": json.dumps(
                     {
-                        "lockAddress": self.issuer["account_address"]
+                        "lockAddress": self.issuer
                     }
                 )
             }
@@ -1189,8 +1189,8 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Lock",
                 "args": {
-                    "accountAddress": self.trader["account_address"],
-                    "lockAddress": self.issuer["account_address"],
+                    "accountAddress": self.trader,
+                    "lockAddress": self.issuer,
                     "data": "",
                     "value": ANY
                 },
@@ -1227,9 +1227,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Unlock",
                 "args": {
-                    "accountAddress": self.trader["account_address"],
-                    "lockAddress": self.issuer["account_address"],
-                    "recipientAddress": self.user1["account_address"],
+                    "accountAddress": self.trader,
+                    "lockAddress": self.issuer,
+                    "recipientAddress": self.user1,
                     "data": "",
                     "value": ANY
                 },
@@ -1255,7 +1255,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Unlock",
                 "argument_filters": json.dumps(
                     {
-                        "accountAddress": self.issuer["account_address"]
+                        "accountAddress": self.issuer
                     }
                 )
             }
@@ -1284,7 +1284,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Unlock",
                 "argument_filters": json.dumps(
                     {
-                        "lockAddress": self.issuer["account_address"]
+                        "lockAddress": self.issuer
                     }
                 )
             }
@@ -1300,9 +1300,9 @@ class TestEventsIbetSecurityTokenInterface:
             {
                 "event": "Unlock",
                 "args": {
-                    "accountAddress": self.trader["account_address"],
-                    "lockAddress": self.issuer["account_address"],
-                    "recipientAddress": self.user1["account_address"],
+                    "accountAddress": self.trader,
+                    "lockAddress": self.issuer,
+                    "recipientAddress": self.user1,
                     "data": "",
                     "value": ANY
                 },

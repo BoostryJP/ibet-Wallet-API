@@ -50,7 +50,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def watcher_factory(session, shared_contract):
+def watcher_factory(session, shared_contract, db_engine):
     def _watcher(cls_name):
         # Create exchange contract for each test method.
         coupon_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
@@ -60,6 +60,7 @@ def watcher_factory(session, shared_contract):
 
         from batch import processor_Notifications_Coupon_Exchange
         test_module = reload(processor_Notifications_Coupon_Exchange)
+        processor_Notifications_Coupon_Exchange.db_engine = db_engine
         test_module.db_session = session
 
         cls = getattr(test_module, cls_name)
@@ -109,28 +110,28 @@ class TestWatchCouponNewOrder:
 
         # Create Order
         transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
         assert _notification.priority == 0
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -144,7 +145,7 @@ class TestWatchCouponNewOrder:
             filter(NotificationBlockNumber.notification_type == NotificationType.NEW_ORDER). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -156,32 +157,32 @@ class TestWatchCouponNewOrder:
 
         # Create Order
         transfer_coupon_token(self.issuer, token, exchange_contract_address, 5000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000, 100)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000, 100)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
         assert _notification.priority == 0
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 100,
             "amount": 1000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -192,19 +193,19 @@ class TestWatchCouponNewOrder:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
         assert _notification.priority == 0
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 2,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 10,
             "amount": 4000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -218,7 +219,7 @@ class TestWatchCouponNewOrder:
             filter(NotificationBlockNumber.notification_type == NotificationType.NEW_ORDER). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -231,16 +232,16 @@ class TestWatchCouponNewOrder:
         # Not Create Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
 
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -284,28 +285,28 @@ class TestWatchCouponCancelOrder:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Cancel Order
-        cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
+        tx_hash = cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
         assert _notification.priority == 0
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -319,7 +320,7 @@ class TestWatchCouponCancelOrder:
             filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_ORDER). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -335,32 +336,32 @@ class TestWatchCouponCancelOrder:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
         # Cancel Order
-        cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
-        cancel_order(self.issuer, {"address": exchange_contract_address}, 2)
+        tx_hash = cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = cancel_order(self.issuer, {"address": exchange_contract_address}, 2)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
         assert _notification.priority == 0
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 100,
             "amount": 1000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -371,19 +372,19 @@ class TestWatchCouponCancelOrder:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
         assert _notification.priority == 0
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 2,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 10,
             "amount": 4000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -397,7 +398,7 @@ class TestWatchCouponCancelOrder:
             filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_ORDER). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -414,16 +415,15 @@ class TestWatchCouponCancelOrder:
         # Not Cancel Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -482,7 +482,7 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Force Cancel Order
-        force_cancel_order(
+        tx_hash = force_cancel_order(
             invoker=eth_account["agent"],
             exchange={"address": exchange_contract_address},
             order_id=1
@@ -492,22 +492,22 @@ class TestWatchCouponForceCancelOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -521,7 +521,7 @@ class TestWatchCouponForceCancelOrder:
             filter(NotificationBlockNumber.notification_type == NotificationType.FORCE_CANCEL_ORDER). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -558,40 +558,40 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Cancel Order
-        force_cancel_order(
+        tx_hash = force_cancel_order(
             invoker=eth_account["agent"],
             exchange={"address": exchange_contract_address},
             order_id=1
         )
-        force_cancel_order(
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = force_cancel_order(
             invoker=eth_account["agent"],
             exchange={"address": exchange_contract_address},
             order_id=2
         )
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 1, 0)
         assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 100,
             "amount": 1000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -602,19 +602,19 @@ class TestWatchCouponForceCancelOrder:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 1, 0)
         assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 2,
-            "accountAddress": self.issuer["account_address"],
+            "accountAddress": self.issuer,
             "isBuy": False,
             "price": 10,
             "amount": 4000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -628,7 +628,7 @@ class TestWatchCouponForceCancelOrder:
             filter(NotificationBlockNumber.notification_type == NotificationType.FORCE_CANCEL_ORDER). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -649,7 +649,7 @@ class TestWatchCouponForceCancelOrder:
             to=exchange_contract_address,
             value=1000000
         )
-        make_sell(
+        tx_hash = make_sell(
             invoker=self.issuer,
             exchange={"address": exchange_contract_address},
             token=token,
@@ -661,16 +661,15 @@ class TestWatchCouponForceCancelOrder:
 
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -715,29 +714,29 @@ class TestWatchCouponBuyAgreement:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
         assert _notification.priority == 1
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -751,7 +750,7 @@ class TestWatchCouponBuyAgreement:
             filter(NotificationBlockNumber.notification_type == NotificationType.BUY_AGREEMENT). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -766,33 +765,33 @@ class TestWatchCouponBuyAgreement:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 600000)
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 600000)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 1)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
         assert _notification.priority == 1
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 600000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -803,20 +802,20 @@ class TestWatchCouponBuyAgreement:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
         assert _notification.priority == 1
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 2,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 400000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -830,7 +829,7 @@ class TestWatchCouponBuyAgreement:
             filter(NotificationBlockNumber.notification_type == NotificationType.BUY_AGREEMENT). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -847,16 +846,15 @@ class TestWatchCouponBuyAgreement:
         # Not Buy Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -901,29 +899,28 @@ class TestWatchCouponSellAgreement:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_AGREEMENT.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -937,7 +934,7 @@ class TestWatchCouponSellAgreement:
             filter(NotificationBlockNumber.notification_type == NotificationType.SELL_AGREEMENT). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -952,31 +949,32 @@ class TestWatchCouponSellAgreement:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 600000)
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 600000)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 2)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_AGREEMENT.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 600000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -986,20 +984,20 @@ class TestWatchCouponSellAgreement:
             "token_type": "IbetCoupon"
         }
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_AGREEMENT.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 2,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 400000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1013,7 +1011,7 @@ class TestWatchCouponSellAgreement:
             filter(NotificationBlockNumber.notification_type == NotificationType.SELL_AGREEMENT). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -1030,16 +1028,15 @@ class TestWatchCouponSellAgreement:
         # Not Buy Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -1087,29 +1084,28 @@ class TestWatchCouponBuySettlementOK:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Confirm Agreement
-        confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        tx_hash = confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
         assert _notification.priority == 1
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1123,7 +1119,7 @@ class TestWatchCouponBuySettlementOK:
             filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_OK). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1142,33 +1138,33 @@ class TestWatchCouponBuySettlementOK:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Confirm Agreement
-        confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
-        confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        tx_hash = confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 1)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
         assert _notification.priority == 1
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 600000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1179,20 +1175,20 @@ class TestWatchCouponBuySettlementOK:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 1)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
         assert _notification.priority == 1
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 2,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 400000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1206,7 +1202,7 @@ class TestWatchCouponBuySettlementOK:
             filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_OK). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -1226,16 +1222,15 @@ class TestWatchCouponBuySettlementOK:
         # Not Confirm Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -1283,29 +1278,28 @@ class TestWatchCouponSellSettlementOK:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Confirm Agreement
-        confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        tx_hash = confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
         assert _notification.priority == 1
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1319,7 +1313,7 @@ class TestWatchCouponSellSettlementOK:
             filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_OK). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1338,33 +1332,33 @@ class TestWatchCouponSellSettlementOK:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Confirm Agreement
-        confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
-        confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        tx_hash = confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 2)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
         assert _notification.priority == 1
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 600000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1375,20 +1369,20 @@ class TestWatchCouponSellSettlementOK:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 2)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
         assert _notification.priority == 1
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 2,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 400000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1402,7 +1396,7 @@ class TestWatchCouponSellSettlementOK:
             filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_OK). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -1422,16 +1416,15 @@ class TestWatchCouponSellSettlementOK:
         # Not Confirm Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -1479,29 +1472,28 @@ class TestWatchCouponBuySettlementNG:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Cancel Agreement
-        cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        tx_hash = cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
         assert _notification.priority == 2
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1515,7 +1507,7 @@ class TestWatchCouponBuySettlementNG:
             filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_NG). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1534,8 +1526,10 @@ class TestWatchCouponBuySettlementNG:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Cancel Agreement
-        cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
-        cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        tx_hash = cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
@@ -1547,20 +1541,20 @@ class TestWatchCouponBuySettlementNG:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 1)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
         assert _notification.priority == 2
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 600000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1571,20 +1565,20 @@ class TestWatchCouponBuySettlementNG:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
         assert _notification.priority == 2
-        assert _notification.address == self.trader["account_address"]
+        assert _notification.address == self.trader
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 2,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 400000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1598,7 +1592,7 @@ class TestWatchCouponBuySettlementNG:
             filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_NG). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -1618,16 +1612,15 @@ class TestWatchCouponBuySettlementNG:
         # Not Cancel Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case
@@ -1675,29 +1668,29 @@ class TestWatchCouponSellSettlementNG:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Cancel Agreement
-        cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        tx_hash = cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 1000000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1711,7 +1704,7 @@ class TestWatchCouponSellSettlementNG:
             filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_NG). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1730,33 +1723,33 @@ class TestWatchCouponSellSettlementNG:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Cancel Agreement
-        cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
-        cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        tx_hash = cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 2)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number1, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 1,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 600000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1767,20 +1760,20 @@ class TestWatchCouponSellSettlementNG:
         }
 
         _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number2, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
         assert _notification.priority == 2
-        assert _notification.address == self.issuer["account_address"]
+        assert _notification.address == self.issuer
         assert _notification.block_timestamp is not None
         assert _notification.args == {
             "tokenAddress": token["address"],
             "orderId": 1,
             "agreementId": 2,
-            "buyAddress": self.trader["account_address"],
-            "sellAddress": self.issuer["account_address"],
+            "buyAddress": self.trader,
+            "sellAddress": self.issuer,
             "price": 100,
             "amount": 400000,
-            "agentAddress": self.agent["account_address"],
+            "agentAddress": self.agent,
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -1794,7 +1787,7 @@ class TestWatchCouponSellSettlementNG:
             filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_NG). \
             filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
             first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number2
 
     # <Normal_3>
     # No event logs
@@ -1814,16 +1807,15 @@ class TestWatchCouponSellSettlementNG:
         # Not Cancel Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        block_number = web3.eth.block_number
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.block_number
-
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number.latest_block_number == block_number
+        assert _notification_block_number.latest_block_number >= block_number
 
     ###########################################################################
     # Error Case

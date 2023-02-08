@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from eth_typing import ChecksumAddress
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest import mock
@@ -53,7 +54,7 @@ class TestPositionCouponContractAddress:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract, token_list_contract):
+    def create_balance_data(account: ChecksumAddress, exchange_contract, token_list_contract):
 
         # Issue token
         args = {
@@ -74,7 +75,7 @@ class TestPositionCouponContractAddress:
         transfer_coupon_token(
             TestPositionCouponContractAddress.issuer,
             token,
-            account["account_address"],
+            account,
             1000000
         )
 
@@ -83,7 +84,7 @@ class TestPositionCouponContractAddress:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(account, exchange_contract, token_list_contract, commitment):
+    def create_commitment_data(account: ChecksumAddress, exchange_contract, token_list_contract, commitment):
         # Issue token
         token = TestPositionCouponContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract)
@@ -99,8 +100,8 @@ class TestPositionCouponContractAddress:
         ExchangeContract = Contract.get_contract(
             'IbetExchange', exchange_contract['address'])
         tx_hash = ExchangeContract.functions. \
-            createOrder(token['address'], commitment, 10000, False, agent['account_address']). \
-            transact({'from': account['account_address'], 'gas': 4000000})
+            createOrder(token['address'], commitment, 10000, False, agent). \
+            transact({'from': account, 'gas': 4000000})
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
         return token
@@ -108,7 +109,7 @@ class TestPositionCouponContractAddress:
     # Prepare used data
     # balance = 1000000 - commitment, used = [args used]
     @staticmethod
-    def create_used_data(account, exchange_contract, token_list_contract, used):
+    def create_used_data(account: ChecksumAddress, exchange_contract, token_list_contract, used):
         # Issue token
         token = TestPositionCouponContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract)
@@ -121,7 +122,7 @@ class TestPositionCouponContractAddress:
     # Prepare non balance data
     # balance = 0
     @staticmethod
-    def create_non_balance_data(account, to_account, exchange_contract, token_list_contract):
+    def create_non_balance_data(account: ChecksumAddress, to_account: ChecksumAddress, exchange_contract, token_list_contract):
 
         # Issue token
         token = TestPositionCouponContractAddress.create_balance_data(
@@ -131,7 +132,7 @@ class TestPositionCouponContractAddress:
         transfer_coupon_token(
             account,
             token,
-            to_account["account_address"],
+            to_account,
             1000000
         )
 
@@ -201,8 +202,8 @@ class TestPositionCouponContractAddress:
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
         idx_transfer.token_address = token_7["address"]
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.account_1["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.account_1
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
@@ -213,7 +214,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_2["address"]),
             )
 
@@ -222,7 +223,7 @@ class TestPositionCouponContractAddress:
             "token": {
                 'token_address': token_2["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -301,8 +302,8 @@ class TestPositionCouponContractAddress:
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
         idx_transfer.token_address = token_7["address"]
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.account_1["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.account_1
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
@@ -313,7 +314,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_3["address"]),
             )
 
@@ -322,7 +323,7 @@ class TestPositionCouponContractAddress:
             "token": {
                 'token_address': token_3["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -401,8 +402,8 @@ class TestPositionCouponContractAddress:
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
         idx_transfer.token_address = token_7["address"]
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.account_1["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.account_1
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
@@ -413,7 +414,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_4["address"]),
             )
 
@@ -422,7 +423,7 @@ class TestPositionCouponContractAddress:
             "token": {
                 'token_address': token_4["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -501,8 +502,8 @@ class TestPositionCouponContractAddress:
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
         idx_transfer.token_address = token_7["address"]
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.account_1["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.account_1
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
@@ -513,7 +514,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_5["address"]),
             )
 
@@ -522,7 +523,7 @@ class TestPositionCouponContractAddress:
             "token": {
                 'token_address': token_5["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -601,8 +602,8 @@ class TestPositionCouponContractAddress:
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
         idx_transfer.token_address = token_7["address"]
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.account_1["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.account_1
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
@@ -613,7 +614,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_6["address"]),
             )
 
@@ -622,7 +623,7 @@ class TestPositionCouponContractAddress:
             "token": {
                 'token_address': token_6["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -701,8 +702,8 @@ class TestPositionCouponContractAddress:
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
         idx_transfer.token_address = token_7["address"]
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.account_1["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.account_1
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
@@ -713,7 +714,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_7["address"]),
             )
 
@@ -722,7 +723,7 @@ class TestPositionCouponContractAddress:
             "token": {
                 'token_address': token_7["address"],
                 'token_template': 'IbetCoupon',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
@@ -758,7 +759,7 @@ class TestPositionCouponContractAddress:
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
 
-        account_address = self.account_1["account_address"]
+        account_address = self.account_1
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -800,7 +801,7 @@ class TestPositionCouponContractAddress:
 
         # Request target API
         resp = client.get(
-            self.apiurl.format(account_address=self.account_1["account_address"], contract_address="invalid"),
+            self.apiurl.format(account_address=self.account_1, contract_address="invalid"),
         )
 
         # Assertion
@@ -819,7 +820,7 @@ class TestPositionCouponContractAddress:
 
         # Request target API
         resp = client.get(
-            self.apiurl.format(account_address=self.account_1["account_address"], contract_address=contract_address),
+            self.apiurl.format(account_address=self.account_1, contract_address=contract_address),
         )
 
         # Assertion
@@ -845,7 +846,7 @@ class TestPositionCouponContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=contract_address),
             )
 

@@ -61,9 +61,9 @@ def insert_node_data(session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER,
 
 def tokenlist_contract():
     issuer = eth_account['issuer']
-    web3.eth.default_account = issuer['account_address']
+    web3.eth.default_account = issuer
     contract_address, abi = Contract.deploy_contract(
-        'TokenList', [], issuer['account_address'])
+        'TokenList', [], issuer)
 
     return {'address': contract_address, 'abi': abi}
 
@@ -145,7 +145,7 @@ class TestEthSendRawTransaction:
                 to_checksum_address(local_account_1.address),
                 10
             ).build_transaction({
-                "from": to_checksum_address(issuer["account_address"]),
+                "from": to_checksum_address(issuer),
                 "gas": 6000000,
                 "gasPrice": 0
             })
@@ -227,7 +227,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -254,7 +254,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_2.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -325,7 +325,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -558,7 +558,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -621,7 +621,7 @@ class TestEthSendRawTransaction:
 
         # ステータス無効化
         pre_tx = token_contract_1.functions.setStatus(False).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -987,7 +987,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -1062,7 +1062,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -1137,7 +1137,7 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address),
             10
         ).build_transaction({
-            "from": to_checksum_address(issuer["account_address"]),
+            "from": to_checksum_address(issuer),
             "gas": 6000000,
             "gasPrice": 0
         })

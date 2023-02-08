@@ -127,9 +127,9 @@ class TestDEXOrderList:
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         pi_utils.register(
-            trader["account_address"],
+            trader,
             personal_info["address"],
-            issuer["account_address"]
+            issuer
         )
         order_id = get_latest_orderid(bond_exchange)
         take_buy(trader, bond_exchange, order_id, 100)
@@ -153,9 +153,9 @@ class TestDEXOrderList:
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         pi_utils.register(
-            trader["account_address"],
+            trader,
             personal_info["address"],
-            issuer["account_address"]
+            issuer
         )
         order_id = get_latest_orderid(bond_exchange)
         take_buy(trader, bond_exchange, order_id, 100)
@@ -210,19 +210,19 @@ class TestDEXOrderList:
         order.exchange_address = bond_exchange["address"]
         order.order_id = order_id
         order.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = False
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]]
+            "account_address_list": [account]
         }
         resp = client.get(
             self.base_url + bond_token["address"],
@@ -269,19 +269,19 @@ class TestDEXOrderList:
         order.exchange_address = bond_exchange["address"]
         order.order_id = order_id
         order.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = True
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": True
         }
         resp = client.get(
@@ -329,12 +329,12 @@ class TestDEXOrderList:
         order.exchange_address = bond_exchange["address"]
         order.order_id = order_id
         order.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = False
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
@@ -346,7 +346,7 @@ class TestDEXOrderList:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = bond_exchange["address"]
         agreement.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -356,7 +356,7 @@ class TestDEXOrderList:
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]]
+            "account_address_list": [account]
         }
         resp = client.get(
             self.base_url + bond_token["address"],
@@ -406,12 +406,12 @@ class TestDEXOrderList:
         order.exchange_address = bond_exchange["address"]
         order.order_id = order_id
         order.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = False
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
@@ -423,7 +423,7 @@ class TestDEXOrderList:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = bond_exchange["address"]
         agreement.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -434,7 +434,7 @@ class TestDEXOrderList:
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]]
+            "account_address_list": [account]
         }
         resp = client.get(
             self.base_url + bond_token["address"],
@@ -486,12 +486,12 @@ class TestDEXOrderList:
         order.exchange_address = bond_exchange["address"]
         order.order_id = order_id
         order.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = False
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
@@ -503,7 +503,7 @@ class TestDEXOrderList:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = bond_exchange["address"]
         agreement.unique_order_id = bond_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -514,7 +514,7 @@ class TestDEXOrderList:
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": True
         }
         resp = client.get(
@@ -592,7 +592,7 @@ class TestDEXOrderList:
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"][:-1]]
+            "account_address_list": [account[:-1]]
         }
         resp = client.get(
             self.base_url + bond_token["address"],
@@ -782,18 +782,18 @@ class TestDEXOrderListMembership:
         order.exchange_address = membership_exchange["address"]
         order.order_id = 1
         order.unique_order_id = membership_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = False
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
         # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         resp = client.get(
             self.apiurl,
             params=request_params
@@ -804,7 +804,7 @@ class TestDEXOrderListMembership:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetMembership",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テスト会員権",
@@ -865,19 +865,19 @@ class TestDEXOrderListMembership:
         order.exchange_address = membership_exchange["address"]
         order.order_id = 1
         order.unique_order_id = membership_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = True
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": True
         }
         resp = client.get(
@@ -890,7 +890,7 @@ class TestDEXOrderListMembership:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetMembership",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テスト会員権",
@@ -954,7 +954,7 @@ class TestDEXOrderListMembership:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = membership_exchange["address"]
         agreement.unique_order_id = membership_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -963,7 +963,7 @@ class TestDEXOrderListMembership:
         session.add(agreement)
 
         # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         resp = client.get(
             self.apiurl,
             params=request_params
@@ -974,7 +974,7 @@ class TestDEXOrderListMembership:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetMembership",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テスト会員権",
@@ -1044,7 +1044,7 @@ class TestDEXOrderListMembership:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = membership_exchange["address"]
         agreement.unique_order_id = membership_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -1054,7 +1054,7 @@ class TestDEXOrderListMembership:
         session.add(agreement)
 
         # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         resp = client.get(
             self.apiurl,
             params=request_params
@@ -1065,7 +1065,7 @@ class TestDEXOrderListMembership:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetMembership",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テスト会員権",
@@ -1132,7 +1132,7 @@ class TestDEXOrderListMembership:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = membership_exchange["address"]
         agreement.unique_order_id = membership_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -1143,7 +1143,7 @@ class TestDEXOrderListMembership:
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": True
         }
         resp = client.get(
@@ -1156,7 +1156,7 @@ class TestDEXOrderListMembership:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetMembership",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テスト会員権",
@@ -1264,7 +1264,7 @@ class TestDEXOrderListMembership:
         account = eth_account["trader"]
 
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": "test"
         }
         resp = client.get(
@@ -1302,7 +1302,7 @@ class TestDEXOrderListMembership:
     # Membership token is not enabled
     def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         config.MEMBERSHIP_TOKEN_ENABLED = False
         resp = client.get(self.apiurl, params=request_params)
 
@@ -1317,7 +1317,7 @@ class TestDEXOrderListMembership:
     # Exchange address is not set
     def test_error_6(self, client: TestClient, session: Session):
         account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
         resp = client.get(self.apiurl, params=request_params)
@@ -1502,18 +1502,18 @@ class TestDEXOrderListCoupon:
         order.exchange_address = coupon_exchange["address"]
         order.order_id = 1
         order.unique_order_id = coupon_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = False
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
         # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         resp = client.get(
             self.apiurl,
             params=request_params
@@ -1524,7 +1524,7 @@ class TestDEXOrderListCoupon:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetCoupon",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テストクーポン",
@@ -1587,19 +1587,19 @@ class TestDEXOrderListCoupon:
         order.exchange_address = coupon_exchange["address"]
         order.order_id = 1
         order.unique_order_id = coupon_exchange["address"] + "_" + str(1)
-        order.account_address = account["account_address"]
+        order.account_address = account
         order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
-        order.agent_address = eth_account["agent"]["account_address"]
+        order.agent_address = eth_account["agent"]
         order.is_cancelled = True
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": True
         }
         resp = client.get(
@@ -1612,7 +1612,7 @@ class TestDEXOrderListCoupon:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetCoupon",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テストクーポン",
@@ -1675,7 +1675,7 @@ class TestDEXOrderListCoupon:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = coupon_exchange["address"]
         agreement.unique_order_id = coupon_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -1684,7 +1684,7 @@ class TestDEXOrderListCoupon:
         session.add(agreement)
 
         # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         resp = client.get(
             self.apiurl,
             params=request_params
@@ -1695,7 +1695,7 @@ class TestDEXOrderListCoupon:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetCoupon",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テストクーポン",
@@ -1761,7 +1761,7 @@ class TestDEXOrderListCoupon:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = coupon_exchange["address"]
         agreement.unique_order_id = coupon_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -1771,7 +1771,7 @@ class TestDEXOrderListCoupon:
         session.add(agreement)
 
         # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         resp = client.get(
             self.apiurl,
             params=request_params
@@ -1782,7 +1782,7 @@ class TestDEXOrderListCoupon:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetCoupon",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テストクーポン",
@@ -1850,7 +1850,7 @@ class TestDEXOrderListCoupon:
         agreement.agreement_id = agreement_id
         agreement.exchange_address = coupon_exchange["address"]
         agreement.unique_order_id = coupon_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
+        agreement.buyer_address = account
         agreement.seller_address = ""
         agreement.counterpart_address = ""
         agreement.amount = 100
@@ -1861,7 +1861,7 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": True
         }
         resp = client.get(
@@ -1874,7 +1874,7 @@ class TestDEXOrderListCoupon:
             "token": {
                 "token_address": token["address"],
                 "token_template": "IbetCoupon",
-                "owner_address": eth_account["issuer"]["account_address"],
+                "owner_address": eth_account["issuer"],
                 "company_name": "",
                 "rsa_publickey": "",
                 "name": "テストクーポン",
@@ -1983,7 +1983,7 @@ class TestDEXOrderListCoupon:
         account = eth_account["trader"]
 
         request_params = {
-            "account_address_list": [account["account_address"]],
+            "account_address_list": [account],
             "include_canceled_items": "test"
         }
         resp = client.get(
@@ -2023,7 +2023,7 @@ class TestDEXOrderListCoupon:
     def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
 
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
         config.COUPON_TOKEN_ENABLED = False
         resp = client.get(self.apiurl, params=request_params)
 
@@ -2039,7 +2039,7 @@ class TestDEXOrderListCoupon:
     # Exchange address is not set
     def test_error_6(self, client: TestClient, session: Session):
         account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
+        request_params = {"account_address_list": [account]}
 
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None

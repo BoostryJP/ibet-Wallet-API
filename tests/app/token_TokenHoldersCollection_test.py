@@ -28,6 +28,7 @@ from web3 import Web3
 from app import config
 from app.contracts import Contract
 from app.model.db import TokenHolderBatchStatus, TokenHoldersList, Listing
+from batch import indexer_Token_Holders
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -45,12 +46,14 @@ from tests.contract_modules import (
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Token_Holders.db_engine = db_engine
     return Processor
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Token_Holders.db_engine = db_engine
     processor = test_module()
     return processor
 
@@ -118,7 +121,7 @@ class TestTokenTokenHoldersCollection:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestTokenTokenHoldersCollection.issuer["account_address"]
+        _listing.owner_address = TestTokenTokenHoldersCollection.issuer
         session.add(_listing)
         session.commit()
 
@@ -129,7 +132,7 @@ class TestTokenTokenHoldersCollection:
     # Normal_1
     # POST collection request.
     # After processor ran, GET generated data of token holders.
-    def test_normal_1(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_1(self, client: TestClient, shared_contract, session: Session, processor: Processor):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -146,7 +149,7 @@ class TestTokenTokenHoldersCollection:
 
         # Transfer
         bond_transfer_to_exchange(self.issuer, {"address": escrow_contract.address}, token, 10000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 30000)
+        transfer_token(token_contract, self.issuer, self.trader, 30000)
         block_number = web3.eth.block_number
         list_id = str(uuid.uuid4())
 
@@ -167,14 +170,14 @@ class TestTokenTokenHoldersCollection:
 
         apiurl = self.apiurl_after_post.format(contract_address=token["address"], list_id=list_id)
         resp = client.get(apiurl)
-        holders = [{"account_address": self.trader["account_address"], "hold_balance": 30000, "locked_balance": 0}]
+        holders = [{"account_address": self.trader, "hold_balance": 30000, "locked_balance": 0}]
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}
 
     # Normal_2
     # POST collection request twice.
-    def test_normal_2(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_2(self, client: TestClient, shared_contract, session: Session, processor: Processor):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -208,7 +211,7 @@ class TestTokenTokenHoldersCollection:
 
     # Normal_3
     # POST collection request with same contract_address and block_number.
-    def test_normal_3(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_3(self, client: TestClient, shared_contract, session: Session, processor: Processor):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]

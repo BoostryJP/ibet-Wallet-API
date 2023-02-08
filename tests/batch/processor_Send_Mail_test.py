@@ -27,6 +27,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.model.db import Mail
+from batch import processor_Send_Mail
 from batch.processor_Send_Mail import (
     Processor,
     LOG
@@ -34,7 +35,8 @@ from batch.processor_Send_Mail import (
 
 
 @pytest.fixture(scope='function')
-def processor(session):
+def processor(session, db_engine):
+    processor_Send_Mail.db_engine = db_engine
     return Processor()
 
 

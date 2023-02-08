@@ -56,7 +56,7 @@ class TestEthGetTransactionCount:
     # -> nonce = （ブロックを直接参照した情報と一致）
     def test_transactioncount_normal_2(self, client: TestClient, session: Session):
         # deployerのアドレス
-        eth_address = eth_account['deployer']['account_address']
+        eth_address = eth_account['deployer']
 
         apiurl = self.apiurl_base + eth_address
         resp = client.get(apiurl)
@@ -74,7 +74,7 @@ class TestEthGetTransactionCount:
     # block_identifier = "pending"
     def test_transactioncount_normal_3(self, client: TestClient, session: Session):
         # deployerのアドレス
-        eth_address = eth_account['deployer']['account_address']
+        eth_address = eth_account['deployer']
 
         apiurl = self.apiurl_base + eth_address
         query_string = "block_identifier=pending"

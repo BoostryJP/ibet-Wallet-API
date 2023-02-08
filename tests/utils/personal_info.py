@@ -37,6 +37,8 @@ class PersonalInfoUtils:
             address=personal_info_address
         )
         encrypted_info = "some_encrypted_info"
-        PersonalInfoContract.functions.\
+        tx_hash = PersonalInfoContract.functions.\
             register(link_address, encrypted_info). \
             transact({"from": tx_from, "gas": 4000000})
+        web3.eth.wait_for_transaction_receipt(tx_hash)
+        return tx_hash

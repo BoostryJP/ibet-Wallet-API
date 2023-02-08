@@ -65,9 +65,9 @@ class TestTokenMembershipTokenDetails:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
-        web3.eth.default_account = deployer['account_address']
+        web3.eth.default_account = deployer
         contract_address, abi = Contract. \
-            deploy_contract('TokenList', [], deployer['account_address'])
+            deploy_contract('TokenList', [], deployer)
         return {'address': contract_address, 'abi': abi}
 
     @staticmethod
@@ -110,7 +110,7 @@ class TestTokenMembershipTokenDetails:
         assumed_body = {
             'token_address': token['address'],
             'token_template': 'IbetMembership',
-            'owner_address': issuer['account_address'],
+            'owner_address': issuer,
             'company_name': '',
             'rsa_publickey': '',
             'name': 'テスト会員権',
@@ -169,7 +169,7 @@ class TestTokenMembershipTokenDetails:
         assumed_body = {
             'token_address': token['address'],
             'token_template': 'IbetMembership',
-            'owner_address': issuer['account_address'],
+            'owner_address': issuer,
             'company_name': '',
             'rsa_publickey': '',
             'name': 'テスト会員権',

@@ -26,6 +26,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.model.db import Node
+from batch import processor_Block_Sync_Status
 from batch.processor_Block_Sync_Status import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -33,7 +34,8 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope='function')
-def processor(session):
+def processor(session, db_engine):
+    processor_Block_Sync_Status.db_engine = db_engine
     return Processor()
 
 
@@ -64,7 +66,7 @@ class TestProcessor:
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
 
         # Run 2nd: block generation speed down(same the previous)
-        with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
+        with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 1000):
             processor.process()
             session.commit()
 

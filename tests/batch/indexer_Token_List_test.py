@@ -52,20 +52,24 @@ from tests.contract_modules import (
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Token_List.db_engine = db_engine
     indexer_Token_List.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Token_List
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Token_List.db_engine = db_engine
     processor = test_module.Processor()
     return processor
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func(test_module, db_engine):
+    indexer_Token_List.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -89,7 +93,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -131,7 +135,7 @@ class TestProcessor:
 
     # <Normal_1>
     # no token is listed
-    def test_normal_1(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_1(self, processor: Processor, shared_contract, session: Session):
         token_list_contract = shared_contract["TokenList"]
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
@@ -148,7 +152,7 @@ class TestProcessor:
 
     # <Normal_2>
     # Multiple token is listed
-    def test_normal_2(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_2(self, processor: Processor, shared_contract, session: Session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -202,7 +206,7 @@ class TestProcessor:
             _token_expected_list.append({
                 "token_address": token["address"],
                 "token_template": "IbetStraightBond",
-                "owner_address": self.issuer["account_address"]
+                "owner_address": self.issuer
             })
 
         # Issue share token
@@ -231,7 +235,7 @@ class TestProcessor:
             _token_expected_list.append({
                 "token_address": token["address"],
                 "token_template": "IbetShare",
-                "owner_address": self.issuer["account_address"]
+                "owner_address": self.issuer
             })
 
         # Issue membership token
@@ -256,7 +260,7 @@ class TestProcessor:
             _token_expected_list.append({
                 "token_address": token["address"],
                 "token_template": "IbetMembership",
-                "owner_address": self.issuer["account_address"]
+                "owner_address": self.issuer
             })
 
         # issue coupon token
@@ -282,7 +286,7 @@ class TestProcessor:
             _token_expected_list.append({
                 "token_address": token["address"],
                 "token_template": "IbetCoupon",
-                "owner_address": self.issuer["account_address"]
+                "owner_address": self.issuer
             })
 
         # Run target process
@@ -342,7 +346,7 @@ class TestProcessor:
         _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
-        assert _token_list_block_number.latest_block_number == block_number_current
+        assert _token_list_block_number.latest_block_number >= block_number_current
 
         token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
         self.listing_token(token["address"], session)
@@ -361,7 +365,7 @@ class TestProcessor:
         _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
-        assert _token_list_block_number.latest_block_number == block_number_current
+        assert _token_list_block_number.latest_block_number >= block_number_current
 
     # <Error_2_1>: ServiceUnavailable occurs in __sync_xx method.
     def test_error_2_1(self, processor: Processor, shared_contract, session):

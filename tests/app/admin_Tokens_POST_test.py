@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from eth_typing import ChecksumAddress
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -92,9 +93,9 @@ class TestAdminTokensPOST:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
-        web3.eth.default_account = deployer['account_address']
+        web3.eth.default_account = deployer
         contract_address, abi = Contract.deploy_contract(
-            'TokenList', [], deployer['account_address'])
+            'TokenList', [], deployer)
 
         return {'address': contract_address, 'abi': abi}
 
@@ -153,7 +154,7 @@ class TestAdminTokensPOST:
         assert listing.is_public == self.token_param_1["is_public"]
         assert listing.max_holding_quantity == self.token_param_1["max_holding_quantity"]
         assert listing.max_sell_amount == self.token_param_1["max_sell_amount"]
-        assert listing.owner_address == issuer["account_address"]
+        assert listing.owner_address == issuer
 
         executable_contract: ExecutableContract = session.query(ExecutableContract). \
             filter(ExecutableContract.contract_address == self.token_param_1["contract_address"]). \
@@ -162,11 +163,11 @@ class TestAdminTokensPOST:
 
         bond: IDXBondToken = session.query(IDXBondToken).first()
         assert bond.token_address == self.token_param_1["contract_address"]
-        assert bond.owner_address == issuer["account_address"]
+        assert bond.owner_address == issuer
 
         position: IDXPosition = session.query(IDXPosition).first()
         assert position.token_address == self.token_param_1["contract_address"]
-        assert position.account_address == issuer["account_address"]
+        assert position.account_address == issuer
         assert position.balance == 1000000
 
     # <Normal_2>
@@ -205,15 +206,15 @@ class TestAdminTokensPOST:
         assert listing.is_public == self.token_param_2["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
-        assert listing.owner_address == issuer["account_address"]
+        assert listing.owner_address == issuer
 
         bond: IDXBondToken = session.query(IDXBondToken).first()
         assert bond.token_address == bond_token["address"]
-        assert bond.owner_address == issuer["account_address"]
+        assert bond.owner_address == issuer
 
         position: IDXPosition = session.query(IDXPosition).first()
         assert position.token_address == bond_token["address"]
-        assert position.account_address == issuer["account_address"]
+        assert position.account_address == issuer
         assert position.balance == 1000000
 
     # <Normal_3>
@@ -238,7 +239,7 @@ class TestAdminTokensPOST:
 
         bf_position = IDXPosition()
         bf_position.token_address = bond_token["address"]
-        bf_position.account_address = issuer["account_address"]
+        bf_position.account_address = issuer
         bf_position.balance = 1000000
         session.add(bf_position)
         session.commit()
@@ -259,15 +260,15 @@ class TestAdminTokensPOST:
         assert listing.is_public == self.token_param_2["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
-        assert listing.owner_address == issuer["account_address"]
+        assert listing.owner_address == issuer
 
         bond: IDXBondToken = session.query(IDXBondToken).first()
         assert bond.token_address == bond_token["address"]
-        assert bond.owner_address == issuer["account_address"]
+        assert bond.owner_address == issuer
 
         position: IDXPosition = session.query(IDXPosition).first()
         assert position.token_address == bond_token["address"]
-        assert position.account_address == issuer["account_address"]
+        assert position.account_address == issuer
         assert position.balance == 1000000
 
     ###########################################################################
@@ -540,7 +541,7 @@ class TestAdminTokensPOST:
         register_bond_list(issuer, bond_token, token_list)
 
         request_params = {
-            "contract_address": eth_account['issuer']["account_address"],
+            "contract_address": eth_account['issuer'],
             "is_public": True,
         }
 

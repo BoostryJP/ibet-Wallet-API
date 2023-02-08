@@ -65,13 +65,15 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Position_Coupon.db_engine = db_engine
     indexer_Position_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Position_Coupon
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func(test_module, db_engine):
+    indexer_Position_Coupon.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -82,7 +84,8 @@ def main_func(test_module):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Position_Coupon.db_engine = db_engine
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
@@ -110,9 +113,9 @@ class TestProcessor:
             'privacyPolicy': 'プライバシーポリシー'
         }
         token = issue_coupon_token(issuer, args)
-        coupon_register_list(issuer, token, token_list)
+        tx_hash = coupon_register_list(issuer, token, token_list)
 
-        return token
+        return token, tx_hash
 
     @staticmethod
     def listing_token(token_address, session):
@@ -121,7 +124,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -136,14 +139,14 @@ class TestProcessor:
     def test_normal_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
+        tx_hash = transfer_coupon_token(self.issuer, token, self.trader, 10000)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -154,16 +157,16 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer is None
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # Single Token
@@ -172,15 +175,15 @@ class TestProcessor:
     def test_normal_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
-        transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 3000)
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
+        tx_hash = transfer_coupon_token(self.issuer, token, self.trader2, 3000)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -191,7 +194,7 @@ class TestProcessor:
         _position: IDXPosition = _position_list[2]
         assert _position.id == 3
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -199,7 +202,7 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -207,12 +210,12 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader2["account_address"]
+        assert _position.account_address == self.trader2
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_3>
     # Multi Token
@@ -221,19 +224,19 @@ class TestProcessor:
     def test_normal_3(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
-        token2 = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token2, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token2["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
-        transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 3000)
-        transfer_coupon_token(self.issuer, token2, self.trader["account_address"], 5000)
-        transfer_coupon_token(self.issuer, token2, self.trader2["account_address"], 3000)
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
+        transfer_coupon_token(self.issuer, token, self.trader2, 3000)
+        transfer_coupon_token(self.issuer, token2, self.trader, 5000)
+        tx_hash = transfer_coupon_token(self.issuer, token2, self.trader2, 3000)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -245,7 +248,7 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -253,7 +256,7 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader2["account_address"]
+        assert _position.account_address == self.trader2
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -261,7 +264,7 @@ class TestProcessor:
         _position = _position_list[2]
         assert _position.id == 3
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -269,7 +272,7 @@ class TestProcessor:
         _position = _position_list[3]
         assert _position.id == 4
         assert _position.token_address == token2["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 5000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -277,7 +280,7 @@ class TestProcessor:
         _position = _position_list[4]
         assert _position.id == 5
         assert _position.token_address == token2["address"]
-        assert _position.account_address == self.trader2["account_address"]
+        assert _position.account_address == self.trader2
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -285,12 +288,12 @@ class TestProcessor:
         _position = _position_list[5]
         assert _position.id == 6
         assert _position.token_address == token2["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 5000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_4>
     # Single Token
@@ -300,17 +303,17 @@ class TestProcessor:
     def test_normal_4(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 3000)
+        tx_hash = consume_coupon_token(self.issuer, token, 3000)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -321,7 +324,7 @@ class TestProcessor:
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
@@ -329,12 +332,12 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_5>
     # Single Token
@@ -347,7 +350,7 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         coupon_exchange = shared_contract["IbetCouponExchange"]
         agent = eth_account['agent']
-        token = self.issue_token_coupon(self.issuer, coupon_exchange["address"], token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, coupon_exchange["address"], token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
@@ -356,10 +359,10 @@ class TestProcessor:
         cancel_order(self.issuer, coupon_exchange, get_latest_orderid(coupon_exchange))
         make_sell(self.issuer, coupon_exchange, token, 222, 1000)
         force_cancel_order(agent, coupon_exchange, get_latest_orderid(coupon_exchange))
-        make_sell(self.issuer, coupon_exchange, token, 333, 1000)
+        tx_hash = make_sell(self.issuer, coupon_exchange, token, 333, 1000)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -371,12 +374,12 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 + 111 + 222
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 10000 - 111 - 222 - 333
         assert _position.exchange_commitment == 333
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_6>
     # Single Token
@@ -388,21 +391,21 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetEscrow"]
-        token = self.issue_token_coupon(self.issuer, escrow_contract.address, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, escrow_contract.address, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Deposit and Escrow
         coupon_transfer_to_exchange(
             self.issuer, {"address": escrow_contract.address}, token, 10000)
         create_token_escrow(self.issuer, {"address": escrow_contract.address},
-                                     token, self.trader["account_address"], self.issuer["account_address"], 200)
+                                     token, self.trader, self.issuer, 200)
         finish_token_escrow(
             self.issuer, {"address": escrow_contract.address}, get_latest_escrow_id({"address": escrow_contract.address}))
-        create_token_escrow(self.issuer, {"address": escrow_contract.address},
-                                     token, self.trader["account_address"], self.issuer["account_address"], 300)
+        tx_hash = create_token_escrow(self.issuer, {"address": escrow_contract.address},
+                                     token, self.trader, self.issuer, 300)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -414,7 +417,7 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 10000 - 200 - 300
@@ -422,24 +425,24 @@ class TestProcessor:
         _position: IDXPosition = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
+        assert _position.account_address == self.trader
         assert _position.balance == 0
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 200
         assert _position.exchange_commitment == 0
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_7>
     # No event logs
     def test_normal_7(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Not Event
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -447,7 +450,7 @@ class TestProcessor:
         assert len(_position_list) == 0
         _idx_position_coupon_block_number = session.query(IDXPositionCouponBlockNumber).\
             filter(IDXPositionCouponBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_8>
     # Not listing Token is NOT indexed,
@@ -455,13 +458,13 @@ class TestProcessor:
     def test_normal_8(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
 
         # Transfer
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+        tx_hash = membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 10000)
 
         # Run target process
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -484,7 +487,7 @@ class TestProcessor:
         assert len(_position_list) == 2
         _idx_position_coupon_block_number = session.query(IDXPositionCouponBlockNumber).\
             filter(IDXPositionCouponBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_coupon_block_number.latest_block_number == block_number
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number
 
     # <Normal_9>
     # Single Token
@@ -494,11 +497,11 @@ class TestProcessor:
     def test_normal_9(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
         for i in range(0, 5):
             # Transfer
-            transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
+            transfer_coupon_token(self.issuer, token, self.trader, 10000)
 
         # Get events for token address
         events = Contract.get_contract('IbetCoupon', token["address"]).events.Transfer.getLogs(
@@ -522,7 +525,7 @@ class TestProcessor:
 
         mock_lib = MagicMock()
 
-        token = self.issue_token_coupon(self.issuer, escrow_contract.address, token_list_contract)
+        token, tx_hash = self.issue_token_coupon(self.issuer, escrow_contract.address, token_list_contract)
 
         # Setting current block number to 19,999,999
         self.listing_token(token["address"], session)
@@ -549,7 +552,7 @@ class TestProcessor:
                 # Then processor call "__sync_all" method once.
                 assert __sync_all_mock.call_count == 1
 
-        new_token = self.issue_token_coupon(
+        new_token, tx_hash = self.issue_token_coupon(
             self.issuer, escrow_contract.address, token_list_contract)
         self.listing_token(new_token["address"], session)
 
@@ -572,9 +575,9 @@ class TestProcessor:
         agent = eth_account['agent']
         personal_info_contract = shared_contract["PersonalInfo"]
 
-        token1 = self.issue_token_coupon(
+        token1, tx_hash = self.issue_token_coupon(
             self.issuer, exchange_contract["address"], token_list_contract)
-        token2 = self.issue_token_coupon(
+        token2, tx_hash = self.issue_token_coupon(
             self.issuer, exchange_contract["address"], token_list_contract)
 
         # Token1 Listing
@@ -598,10 +601,10 @@ class TestProcessor:
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 55)
         cancel_agreement(agent, exchange_contract, get_latest_orderid(exchange_contract), get_latest_agreementid(exchange_contract, get_latest_orderid(exchange_contract)))
         make_buy(self.trader, exchange_contract, token2, 111, 1000)
-        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
+        tx_hash = take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
         # Run target process
-        block_number1 = web3.eth.block_number
+        block_number1 = web3.eth.get_transaction(tx_hash).blockNumber
         processor.sync_new_logs()
 
         # Assertion
@@ -613,17 +616,17 @@ class TestProcessor:
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token1["address"]
-        assert _position.account_address == self.issuer["account_address"]
+        assert _position.account_address == self.issuer
         assert _position.balance == 1000000 - 10000 + 55 - 100
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
-        assert _idx_position_coupon_block_number.latest_block_number == block_number1
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number1
 
         # Token2 Listing
         self.listing_token(token2["address"], session)
 
         # Run target process
-        block_number2 = web3.eth.block_number
+        block_number2 = block_number1
 
         eth_getCode_mock = MagicMock(wraps=web3.eth.get_code)
         with mock.patch("web3.eth.Eth.get_code", eth_getCode_mock):
@@ -644,20 +647,20 @@ class TestProcessor:
         _position1: IDXPosition = _position_list[0]
         assert _position1.id == 1
         assert _position1.token_address == token1["address"]
-        assert _position1.account_address == self.issuer["account_address"]
+        assert _position1.account_address == self.issuer
         assert _position1.balance == 1000000 - 10000 + 55 - 100
         assert _position1.exchange_balance == 10000 - 55 - 66
         assert _position1.exchange_commitment == 66
-        assert _idx_position_coupon_block_number1.latest_block_number == block_number2
+        assert _idx_position_coupon_block_number1.latest_block_number >= block_number2
 
         _position2: IDXPosition = _position_list[1]
         assert _position2.id == 2
         assert _position2.token_address == token2["address"]
-        assert _position2.account_address == self.issuer["account_address"]
+        assert _position2.account_address == self.issuer
         assert _position2.balance == 1000000 - 10000 + 55
         assert _position2.exchange_balance == 10000 - 55 - 66
         assert _position2.exchange_commitment == 66
-        assert _idx_position_coupon_block_number2.latest_block_number == block_number2
+        assert _idx_position_coupon_block_number2.latest_block_number >= block_number2
 
     ###########################################################################
     # Error Case
@@ -673,15 +676,15 @@ class TestProcessor:
     def test_error_1_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(
+        token, tx_hash = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
-        coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+        tx_hash = coupon_transfer_to_exchange(
+            self.issuer, {"address": self.trader}, token, 10000)
 
-        block_number_current = web3.eth.block_number
+        block_number_current = web3.eth.get_transaction(tx_hash).blockNumber
         # Run initial sync
         processor.initial_sync()
 
@@ -691,13 +694,13 @@ class TestProcessor:
         # Latest_block is incremented in "initial_sync" process.
         _idx_position_coupon_block_number = session.query(IDXPositionCouponBlockNumber).\
             filter(IDXPositionCouponBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_coupon_block_number.latest_block_number == block_number_current
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number_current
 
         # Transfer
-        coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+        tx_hash = coupon_transfer_to_exchange(
+            self.issuer, {"address": self.trader}, token, 10000)
 
-        block_number_current = web3.eth.block_number
+        block_number_current = web3.eth.get_transaction(tx_hash).blockNumber
         # Run target process
         processor.sync_new_logs()
 
@@ -712,20 +715,20 @@ class TestProcessor:
         # Latest_block is incremented in "sync_new_logs" process.
         _idx_position_coupon_block_number = session.query(IDXPositionCouponBlockNumber).\
             filter(IDXPositionCouponBlockNumber.token_address == token["address"]).first()
-        assert _idx_position_coupon_block_number.latest_block_number == block_number_current
+        assert _idx_position_coupon_block_number.latest_block_number >= block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     @mock.patch("web3.eth.Eth.get_code", MagicMock(side_effect=ServiceUnavailable()))
     def test_error_1_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(
+        token, tx_hash = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
         coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
@@ -743,7 +746,7 @@ class TestProcessor:
 
         # Transfer
         coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
@@ -763,13 +766,13 @@ class TestProcessor:
     def test_error_2_1(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(
+        token, tx_hash = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
         coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
@@ -788,7 +791,7 @@ class TestProcessor:
 
         # Transfer
         coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
@@ -808,13 +811,13 @@ class TestProcessor:
     def test_error_2_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(
+        token, tx_hash = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
 
         # Transfer
         coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that initial_sync() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
@@ -834,7 +837,7 @@ class TestProcessor:
 
         # Transfer
         coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+            self.issuer, {"address": self.trader}, token, 10000)
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \

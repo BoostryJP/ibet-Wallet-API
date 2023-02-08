@@ -45,14 +45,14 @@ class TestUserInfoPaymentAccount:
         # データ準備：受領用銀行口座情報登録->認可
         register_payment_gateway(trader, payment_gateway)
 
-        query_string = 'account_address=' + trader['account_address'] + \
-            '&agent_address=' + agent['account_address']
+        query_string = 'account_address=' + trader + \
+            '&agent_address=' + agent
 
         resp = client.get(self.apiurl, params=query_string)
 
         assumed_body = {
-            'account_address': trader['account_address'],
-            'agent_address': agent['account_address'],
+            'account_address': trader,
+            'agent_address': agent,
             'approval_status': 2
         }
 
@@ -72,13 +72,13 @@ class TestUserInfoPaymentAccount:
         config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
 
         query_string = 'account_address=' + trader + \
-            '&agent_address=' + agent['account_address']
+            '&agent_address=' + agent
 
         resp = client.get(self.apiurl, params=query_string)
 
         assumed_body = {
             'account_address': trader,
-            'agent_address': agent['account_address'],
+            'agent_address': agent,
             'approval_status': 0
         }
 
@@ -108,7 +108,7 @@ class TestUserInfoPaymentAccount:
         # テスト用アカウント
         agent = eth_account['agent']
 
-        query_string = 'agent_address=' + agent['account_address']
+        query_string = 'agent_address=' + agent
 
         resp = client.get(self.apiurl, params=query_string)
 
@@ -134,7 +134,7 @@ class TestUserInfoPaymentAccount:
         agent = eth_account['agent']
 
         query_string = 'account_address=' + trader + \
-            '&agent_address=' + agent['account_address']
+            '&agent_address=' + agent
 
         resp = client.get(self.apiurl, params=query_string)
 
@@ -156,7 +156,7 @@ class TestUserInfoPaymentAccount:
     # agent_addressが未設定
     def test_paymentaccount_error_3_1(self, client: TestClient, session: Session):
         # テスト用アカウント
-        trader = eth_account['trader']['account_address']
+        trader = eth_account['trader']
 
         query_string = 'account_address=' + trader
 
@@ -179,7 +179,7 @@ class TestUserInfoPaymentAccount:
     # agent_addressのアドレスフォーマットが正しくない
     def test_paymentaccount_error_3_2(self, client: TestClient, session: Session):
         # テスト用アカウント
-        trader = eth_account['trader']['account_address']
+        trader = eth_account['trader']
         agent = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
 
         query_string = 'account_address=' + trader + \

@@ -60,33 +60,40 @@ class IbetShareUtils:
             address=contract_address
         )
         if "tradableExchange" in args:
-            share_contract.functions.setTradableExchange(
+            tx_hash = share_contract.functions.setTradableExchange(
                 args["tradableExchange"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
         if "personalInfoAddress" in args:
-            share_contract.functions.setPersonalInfoAddress(
+            tx_hash = share_contract.functions.setPersonalInfoAddress(
                 args["personalInfoAddress"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
         if "contactInformation" in args:
-            share_contract.functions.setContactInformation(
+            tx_hash = share_contract.functions.setContactInformation(
                 args["contactInformation"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
         if "privacyPolicy" in args:
-            share_contract.functions.setPrivacyPolicy(
+            tx_hash = share_contract.functions.setPrivacyPolicy(
                 args["privacyPolicy"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
         if "memo" in args:
-            share_contract.functions.setMemo(
+            tx_hash = share_contract.functions.setMemo(
                 args["memo"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
         if "transferable" in args:
-            share_contract.functions.setTransferable(
+            tx_hash = share_contract.functions.setTransferable(
                 args["transferable"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
         if "transferApprovalRequired" in args:
-            share_contract.functions.setTransferApprovalRequired(
+            tx_hash = share_contract.functions.setTransferApprovalRequired(
                 args["transferApprovalRequired"]
             ).transact({"from": tx_from})
+            web3.eth.wait_for_transaction_receipt(tx_hash)
 
         return share_contract
 
@@ -97,9 +104,10 @@ class IbetShareUtils:
             address=token_list_contract_address
         )
         web3.eth.default_account = tx_from
-        TokenListContract.functions. \
+        tx_hash = TokenListContract.functions. \
             register(token_address, "IbetShare"). \
             transact({"from": tx_from, "gas": gas_limit})
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
     @staticmethod
     def sell(tx_from: str,
@@ -128,22 +136,24 @@ class IbetShareUtils:
             contract_name="IbetShare",
             address=token_address
         )
-        TokenContract.functions.transfer(exchange_address, amount). \
+        tx_hash = TokenContract.functions.transfer(exchange_address, amount). \
             transact({"from": tx_from, "gas": gas_limit})
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
     @staticmethod
     def make_sell_order(tx_from: str,
                         exchange_address: str, token_address: str,
                         amount: int, price: int):
         web3.eth.default_account = tx_from
-        agent_address = eth_account["agent"]["account_address"]
+        agent_address = eth_account["agent"]
         ExchangeContract = Contract.get_contract(
             contract_name="IbetExchange",
             address=exchange_address
         )
-        ExchangeContract.functions. \
+        tx_hash = ExchangeContract.functions. \
             createOrder(token_address, amount, price, False, agent_address). \
             transact({"from": tx_from, "gas": gas_limit})
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
     @staticmethod
     def set_transfer_approval_required(tx_from: str, token_address: str, required: bool):
@@ -151,8 +161,9 @@ class IbetShareUtils:
             contract_name="IbetShare",
             address=token_address
         )
-        TokenContract.functions.setTransferApprovalRequired(required).\
+        tx_hash = TokenContract.functions.setTransferApprovalRequired(required).\
             transact({"from": tx_from, "gas": gas_limit})
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
     @staticmethod
     def apply_for_transfer(tx_from: str, token_address: str, to: str, value: int):
@@ -160,5 +171,6 @@ class IbetShareUtils:
             contract_name="IbetShare",
             address=token_address
         )
-        TokenContract.functions.applyForTransfer(to, value, "").\
+        tx_hash = TokenContract.functions.applyForTransfer(to, value, "").\
             transact({"from": tx_from, "gas": gas_limit})
+        web3.eth.wait_for_transaction_receipt(tx_hash)

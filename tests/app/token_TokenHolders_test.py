@@ -39,8 +39,8 @@ class TestTokenTokenHolders:
     account_address_2 = "0x34C987DDe783EfbFe1E573727165E6c15D660590"
     issuer_address = "0x02D0784B3460E206ED69393ae1f9Ed37941089eD"
 
-    lock_address_1 = eth_account["user1"]["account_address"]
-    lock_address_2 = eth_account["user2"]["account_address"]
+    lock_address_1 = eth_account["user1"]
+    lock_address_2 = eth_account["user2"]
 
     @staticmethod
     def insert_listing(session, listing: dict):

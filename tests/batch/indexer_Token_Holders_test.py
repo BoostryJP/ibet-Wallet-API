@@ -43,6 +43,7 @@ from app.model.db import (
     TokenHolder,
     Listing
 )
+from batch import indexer_Token_Holders
 from batch.indexer_Token_Holders import (
     LOG,
     Processor
@@ -104,12 +105,14 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Token_Holders.db_engine = db_engine
     return Processor
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Token_Holders.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -138,7 +141,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -275,8 +278,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -294,8 +296,8 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1, trader and exchange.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract["address"]}, token, 10000)
         # user1: 20000 trader: 10000
 
@@ -327,15 +329,15 @@ class TestProcessor:
         )
         # user1: 6000 trader: 24000
 
-        bond_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
-        bond_redeem_from(self.issuer, token, self.trader["account_address"], 10000)
+        bond_issue_from(self.issuer, token, self.issuer, 40000)
+        bond_redeem_from(self.issuer, token, self.trader, 10000)
         # user1: 6000 trader: 14000
 
-        bond_issue_from(self.issuer, token, self.trader["account_address"], 30000)
-        bond_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
+        bond_issue_from(self.issuer, token, self.trader, 30000)
+        bond_redeem_from(self.issuer, token, self.issuer, 10000)
         # user1: 6000 trader: 44000
 
-        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        bond_lock(self.trader, token, self.issuer, 3000)
         # user1: 6000 trader: (hold: 41000, locked: 3000)
 
         # Insert collection record with above token and current block number
@@ -344,7 +346,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -353,13 +355,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -386,8 +388,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -406,7 +407,7 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
         # user1: 20000 trader: 0
 
@@ -423,8 +424,8 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -436,18 +437,18 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             2000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
         finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
         # user1: 13000 trader: 17000
 
-        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        bond_lock(self.trader, token, self.issuer, 3000)
         # user1: 13000 trader: (hold: 14000, locked: 3000)
 
-        bond_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        bond_unlock(self.issuer, token, self.trader, self.user1, 2000)
         # user1: 15000 trader: (hold: 14000, locked: 1000)
 
         # Insert collection record with above token and current block number
@@ -457,7 +458,7 @@ class TestProcessor:
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         bond_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -465,13 +466,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -491,8 +492,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -512,9 +512,9 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1 and trader.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
-        transfer_token(token_contract, self.user1["account_address"], escrow_contract.address, 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
+        transfer_token(token_contract, self.user1, escrow_contract.address, 10000)
         # user1: 20000 trader: 10000
 
         bond_set_transfer_approval_required(self.issuer, token, True)
@@ -525,16 +525,16 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             3000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -549,7 +549,7 @@ class TestProcessor:
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         bond_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -558,13 +558,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -587,8 +587,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -605,8 +604,8 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1, trader and exchange.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
         share_transfer_to_exchange(self.issuer, {"address": exchange["address"]}, token, 10000)
         # user1: 20000 trader: 10000
 
@@ -627,15 +626,15 @@ class TestProcessor:
         confirm_agreement(self.agent, exchange, _latest_order_id, get_latest_agreementid(exchange, _latest_order_id))
         # user1: 10000 trader: 20000
 
-        share_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
-        share_redeem_from(self.issuer, token, self.trader["account_address"], 10000)
+        share_issue_from(self.issuer, token, self.issuer, 40000)
+        share_redeem_from(self.issuer, token, self.trader, 10000)
         # user1: 10000 trader: 10000
 
-        share_issue_from(self.issuer, token, self.trader["account_address"], 30000)
-        share_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
+        share_issue_from(self.issuer, token, self.trader, 30000)
+        share_redeem_from(self.issuer, token, self.issuer, 10000)
         # user1: 10000 trader: 40000
 
-        share_lock(self.trader, token, self.issuer["account_address"], 3000)
+        share_lock(self.trader, token, self.issuer, 3000)
         # user1: 10000 trader: (hold: 37000, locked: 3000)
 
         # Insert collection record with above token and current block number
@@ -644,7 +643,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -653,13 +652,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -686,8 +685,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -706,7 +704,7 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         share_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
         # user1: 20000 trader: 0
 
@@ -723,8 +721,8 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -736,18 +734,18 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             2000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
         finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
         # user1: 13000 trader: 17000
 
-        share_lock(self.trader, token, self.issuer["account_address"], 3000)
+        share_lock(self.trader, token, self.issuer, 3000)
         # user1: 13000 trader: (hold: 14000, locked: 3000)
 
-        share_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        share_unlock(self.issuer, token, self.trader, self.user1, 2000)
         # user1: 15000 trader: (hold: 14000, locked: 1000)
 
         # Insert collection record with above token and current block number
@@ -757,7 +755,7 @@ class TestProcessor:
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         share_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -766,13 +764,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -792,8 +790,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -813,9 +810,9 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1 and trader.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
-        transfer_token(token_contract, self.user1["account_address"], escrow_contract.address, 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
+        transfer_token(token_contract, self.user1, escrow_contract.address, 10000)
         # user1: 20000 trader: 10000
 
         share_set_transfer_approval_required(self.issuer, token, True)
@@ -826,16 +823,16 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             3000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -850,7 +847,7 @@ class TestProcessor:
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         share_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -859,13 +856,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -885,8 +882,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -903,8 +899,8 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1, trader and exchange.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
         coupon_transfer_to_exchange(self.issuer, {"address": exchange["address"]}, token, 10000)
         # user1: 20000 trader: 10000
 
@@ -931,7 +927,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -940,13 +936,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -965,8 +961,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -983,7 +978,7 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         coupon_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
         # user1: 20000 trader: 0
 
@@ -993,8 +988,8 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         _latest_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -1005,8 +1000,8 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             2000,
         )
         _latest_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -1019,7 +1014,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1028,13 +1023,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1052,8 +1047,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1071,25 +1065,25 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1 and trader.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 10000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
-        transfer_token(token_contract, self.user1["account_address"], escrow_contract.address, 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 10000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
+        transfer_token(token_contract, self.user1, escrow_contract.address, 10000)
         # user1: 10000 trader: 10000
 
         create_token_escrow(
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         create_token_escrow(
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             3000,
         )
         _latest_escrow_id = get_latest_escrow_id({"address": escrow_contract.address})
@@ -1105,7 +1099,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1114,13 +1108,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1140,8 +1134,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1158,8 +1151,8 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1, trader and exchange.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
         membership_transfer_to_exchange(self.issuer, {"address": exchange["address"]}, token, 10000)
         # user1: 20000 trader: 10000
 
@@ -1186,7 +1179,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1195,19 +1188,19 @@ class TestProcessor:
         issuer_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.issuer["account_address"])
+            .filter(TokenHolder.account_address == self.issuer)
             .first()
         )
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1226,8 +1219,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1244,7 +1236,7 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         membership_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
         # user1: 20000 trader: 0
 
@@ -1253,8 +1245,8 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         _latest_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -1264,8 +1256,8 @@ class TestProcessor:
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             2000,
         )
         _latest_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
@@ -1278,7 +1270,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1287,13 +1279,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1310,8 +1302,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1329,25 +1320,25 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1 and trader.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 10000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
-        transfer_token(token_contract, self.user1["account_address"], escrow_contract.address, 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 10000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
+        transfer_token(token_contract, self.user1, escrow_contract.address, 10000)
         # user1: 10000 trader: 10000
 
         create_token_escrow(
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             7000,
         )
         create_token_escrow(
             self.user1,
             {"address": escrow_contract.address},
             token,
-            self.trader["account_address"],
-            self.agent["account_address"],
+            self.trader,
+            self.agent,
             3000,
         )
         _latest_escrow_id = get_latest_escrow_id({"address": escrow_contract.address})
@@ -1360,7 +1351,7 @@ class TestProcessor:
         session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(token_contract, self.issuer, self.user1, 100000)
 
         # Then execute processor.
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1369,13 +1360,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1391,8 +1382,7 @@ class TestProcessor:
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
-        block_number: None,
+        session: Session
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1411,8 +1401,8 @@ class TestProcessor:
         register_personalinfo(self.trader, personal_info_contract)
 
         # Issuer transfers issued token to user1, trader and exchange.
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract["address"]}, token, 10000)
         # user1: 20000 trader: 10000
 
@@ -1426,13 +1416,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list1.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list1.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1468,13 +1458,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list2.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list2.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1499,12 +1489,12 @@ class TestProcessor:
         )
         # user1: 6000 trader: 24000
 
-        bond_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
-        bond_redeem_from(self.issuer, token, self.trader["account_address"], 10000)
+        bond_issue_from(self.issuer, token, self.issuer, 40000)
+        bond_redeem_from(self.issuer, token, self.trader, 10000)
         # user1: 6000 trader: 14000
 
-        bond_issue_from(self.issuer, token, self.trader["account_address"], 30000)
-        bond_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
+        bond_issue_from(self.issuer, token, self.trader, 30000)
+        bond_redeem_from(self.issuer, token, self.issuer, 10000)
         # user1: 6000 trader: 44000
 
         # Insert collection record with above token and current block number
@@ -1517,13 +1507,13 @@ class TestProcessor:
         user1_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list3.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .filter(TokenHolder.account_address == self.user1)
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
             .filter(TokenHolder.holder_list == target_token_holders_list3.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .filter(TokenHolder.account_address == self.trader)
             .first()
         )
 
@@ -1533,7 +1523,7 @@ class TestProcessor:
     # <Normal_14>
     # StraightBond
     # Jobs are queued and pending jobs are to be processed one by one.
-    def test_normal_14(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+    def test_normal_14(self, processor: Processor, shared_contract, session: Session, caplog):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -1559,8 +1549,8 @@ class TestProcessor:
         target_token_holders_list1 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list1)
         session.commit()
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
+        transfer_token(token_contract, self.issuer, self.trader, 10000)
         target_token_holders_list2 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list2)
         session.commit()
@@ -1582,7 +1572,7 @@ class TestProcessor:
 
     # <Error_1>
     # There is no target token holders list id with batch_status PENDING.
-    def test_error_1(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+    def test_error_1(self, processor: Processor, shared_contract, session: Session, caplog):
         token_list_contract = shared_contract["TokenList"]
 
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1593,7 +1583,7 @@ class TestProcessor:
     # <Error_2>
     # There is target token holders list id with batch_status PENDING.
     # And target token is not contained in "TokenList" contract.
-    def test_error_2(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+    def test_error_2(self, processor: Processor, shared_contract, session: Session, caplog):
         token_list_contract = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
@@ -1620,7 +1610,7 @@ class TestProcessor:
     # <Error_3>
     # Failed to get Logs because of ABIEventFunctionNotFound.
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
-    def test_error_3(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+    def test_error_3(self, processor: Processor, shared_contract, session: Session, caplog):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -1638,7 +1628,7 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
 
         block_number = web3.eth.block_number
@@ -1656,7 +1646,7 @@ class TestProcessor:
 
     # <Error_4>
     # Failed to get Logs because of blockchain(ServiceUnavailable).
-    def test_error_4(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+    def test_error_4(self, processor: Processor, shared_contract, session: Session, caplog):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -1674,7 +1664,7 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
 
         block_number = web3.eth.block_number
@@ -1693,7 +1683,7 @@ class TestProcessor:
         )
         assert len(_records) == 0
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer, self.user1, 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
 
         block_number = web3.eth.block_number

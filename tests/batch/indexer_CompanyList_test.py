@@ -24,11 +24,13 @@ from unittest.mock import MagicMock
 import requests
 
 from app.model.db import Company
+from batch import indexer_CompanyList
 from batch.indexer_CompanyList import Processor
 
 
 @pytest.fixture(scope='function')
-def processor(session):
+def processor(session, db_engine):
+    indexer_CompanyList.db_engine = db_engine
     return Processor()
 
 

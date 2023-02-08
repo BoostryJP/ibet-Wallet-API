@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from eth_typing import ChecksumAddress
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest import mock
@@ -48,7 +49,7 @@ class TestPositionMembershipContractAddress:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract, token_list_contract):
+    def create_balance_data(account: ChecksumAddress, exchange_contract, token_list_contract):
         # Issue token
         args = {
             'name': 'テスト会員権',
@@ -67,7 +68,7 @@ class TestPositionMembershipContractAddress:
         membership_register_list(TestPositionMembershipContractAddress.issuer, token, token_list_contract)
         membership_transfer_to_exchange(
             TestPositionMembershipContractAddress.issuer,
-            {"address": account["account_address"]},
+            {"address": account},
             token,
             1000000
         )
@@ -77,7 +78,7 @@ class TestPositionMembershipContractAddress:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(account, exchange_contract, token_list_contract, commitment):
+    def create_commitment_data(account: ChecksumAddress, exchange_contract, token_list_contract, commitment):
         # Issue token
         token = TestPositionMembershipContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract)
@@ -93,8 +94,8 @@ class TestPositionMembershipContractAddress:
         ExchangeContract = Contract.get_contract(
             'IbetExchange', exchange_contract['address'])
         tx_hash = ExchangeContract.functions. \
-            createOrder(token['address'], commitment, 10000, False, agent['account_address']). \
-            transact({'from': account['account_address'], 'gas': 4000000})
+            createOrder(token['address'], commitment, 10000, False, agent). \
+            transact({'from': account, 'gas': 4000000})
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
         return token
@@ -110,7 +111,7 @@ class TestPositionMembershipContractAddress:
         # Transfer all amount
         membership_transfer_to_exchange(
             account,
-            {"address": to_account["account_address"]},
+            {"address": to_account},
             token,
             1000000
         )
@@ -169,7 +170,7 @@ class TestPositionMembershipContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_2["address"]),
             )
 
@@ -178,7 +179,7 @@ class TestPositionMembershipContractAddress:
             "token": {
                 'token_address': token_2["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -244,7 +245,7 @@ class TestPositionMembershipContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_3["address"]),
             )
 
@@ -253,7 +254,7 @@ class TestPositionMembershipContractAddress:
             "token": {
                 'token_address': token_3["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -319,7 +320,7 @@ class TestPositionMembershipContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=token_4["address"]),
             )
 
@@ -328,7 +329,7 @@ class TestPositionMembershipContractAddress:
             "token": {
                 'token_address': token_4["address"],
                 'token_template': 'IbetMembership',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -363,7 +364,7 @@ class TestPositionMembershipContractAddress:
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
 
-        account_address = self.account_1["account_address"]
+        account_address = self.account_1
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -405,7 +406,7 @@ class TestPositionMembershipContractAddress:
 
         # Request target API
         resp = client.get(
-            self.apiurl.format(account_address=self.account_1["account_address"], contract_address="invalid"),
+            self.apiurl.format(account_address=self.account_1, contract_address="invalid"),
         )
 
         # Assertion
@@ -424,7 +425,7 @@ class TestPositionMembershipContractAddress:
 
         # Request target API
         resp = client.get(
-            self.apiurl.format(account_address=self.account_1["account_address"], contract_address=contract_address),
+            self.apiurl.format(account_address=self.account_1, contract_address=contract_address),
         )
 
         # Assertion
@@ -450,7 +451,7 @@ class TestPositionMembershipContractAddress:
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.account_1["account_address"],
+                self.apiurl.format(account_address=self.account_1,
                                    contract_address=contract_address),
             )
 

@@ -70,7 +70,7 @@ class TestEventsE2EMessaging:
     # Normal_2_1
     # event = PublicKeyUpdated
     def test_normal_2_1(self, client: TestClient, session: Session, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
+        user1 = eth_account["user1"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -85,7 +85,7 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.block_number
+        latest_block_number = web3.eth.get_transaction(tx).blockNumber
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
@@ -122,8 +122,8 @@ class TestEventsE2EMessaging:
     # Normal_2_2
     # event = Message
     def test_normal_2_2(self, client: TestClient, session: Session, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
-        user2 = eth_account["user2"]["account_address"]
+        user1 = eth_account["user1"]
+        user2 = eth_account["user2"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -138,7 +138,7 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.block_number
+        latest_block_number = web3.eth.get_transaction(tx).blockNumber
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
@@ -176,7 +176,7 @@ class TestEventsE2EMessaging:
     # Normal_2_3
     # event = None
     def test_normal_2_3(self, client: TestClient, session: Session, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
+        user1 = eth_account["user1"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -191,7 +191,7 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.block_number
+        latest_block_number = web3.eth.get_transaction(tx).blockNumber
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
@@ -227,8 +227,8 @@ class TestEventsE2EMessaging:
     # Normal_3
     # Multiple events
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
-        user2 = eth_account["user2"]["account_address"]
+        user1 = eth_account["user1"]
+        user2 = eth_account["user2"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -250,16 +250,17 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(latest_block_number - 1)["timestamp"]
-        block_timestamp_2 = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_number_1 = web3.eth.get_transaction(tx_1).blockNumber
+        latest_block_number_2 = web3.eth.get_transaction(tx_2).blockNumber
+        block_timestamp_1 = web3.eth.get_block(latest_block_number_1)["timestamp"]
+        block_timestamp_2 = web3.eth.get_block(latest_block_number_2)["timestamp"]
 
         # request target API
         resp = client.get(
             self.apiurl,
             params={
-                "from_block": latest_block_number - 1,
-                "to_block": latest_block_number,
+                "from_block": latest_block_number_1,
+                "to_block": latest_block_number_2,
                 "event": "Message"
             }
         )
@@ -280,7 +281,7 @@ class TestEventsE2EMessaging:
                     "text": "test_message"
                 },
                 "transaction_hash": tx_1.hex(),
-                "block_number": latest_block_number - 1,
+                "block_number": latest_block_number_1,
                 "block_timestamp": block_timestamp_1,
                 "log_index": 0
             },
@@ -293,7 +294,7 @@ class TestEventsE2EMessaging:
                     "text": "test_message"
                 },
                 "transaction_hash": tx_2.hex(),
-                "block_number": latest_block_number,
+                "block_number": latest_block_number_2,
                 "block_timestamp": block_timestamp_2,
                 "log_index": 0
             },
@@ -304,7 +305,7 @@ class TestEventsE2EMessaging:
     # query with filter argument {"who": user1}
     # results 1 record.
     def test_normal_4_1(self, client: TestClient, session: Session, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
+        user1 = eth_account["user1"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -319,7 +320,7 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.block_number
+        latest_block_number = web3.eth.get_transaction(tx).blockNumber
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         # request target API
         resp = client.get(
@@ -360,7 +361,7 @@ class TestEventsE2EMessaging:
     # query with filter argument {"who": "0x0000000000000000000000000000000000000000"}
     # results no record.
     def test_normal_4_2(self, client: TestClient, session: Session, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
+        user1 = eth_account["user1"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -375,7 +376,7 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.block_number
+        latest_block_number = web3.eth.get_transaction(_tx).blockNumber
         _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         # request target API
         resp = client.get(

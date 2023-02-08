@@ -223,9 +223,9 @@ class TestDEXMarketGetAgreement:
         assumed_body = {
             'amount': 100,
             'canceled': False,
-            'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': eth_account['trader']['account_address'],
-            'seller_address': eth_account['issuer']['account_address'],
+            'counterpart': eth_account['trader'],
+            'buyer_address': eth_account['trader'],
+            'seller_address': eth_account['issuer'],
             'paid': False,
             'price': 1000
         }
@@ -257,9 +257,9 @@ class TestDEXMarketGetAgreement:
         assumed_body = {
             'amount': 100,
             'canceled': False,
-            'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': eth_account['trader']['account_address'],
-            'seller_address': eth_account['issuer']['account_address'],
+            'counterpart': eth_account['trader'],
+            'buyer_address': eth_account['trader'],
+            'seller_address': eth_account['issuer'],
             'paid': False,
             'price': 1000
         }

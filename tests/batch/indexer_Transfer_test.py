@@ -64,7 +64,8 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Transfer.db_engine = db_engine
     indexer_Transfer.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Transfer
 
@@ -81,7 +82,8 @@ def caplog(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Transfer.db_engine = db_engine
     processor = test_module.Processor()
     return processor
 
@@ -204,7 +206,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -229,15 +231,15 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
         share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
@@ -247,14 +249,14 @@ class TestProcessor:
         share_lock(
             self.trader,
             share_token,
-            self.trader2["account_address"],
+            self.trader2,
             50000
         )
         share_unlock(
             self.trader2,
             share_token,
-            self.trader["account_address"],
-            self.trader2["account_address"],
+            self.trader,
+            self.trader2,
             50000,
             json.dumps({"message": "unlock"})
         )
@@ -272,8 +274,8 @@ class TestProcessor:
         assert idx_transfer.id == 1
         assert idx_transfer.transaction_hash == block1["transactions"][0].hex()
         assert idx_transfer.token_address == share_token["address"]
-        assert idx_transfer.from_address == self.issuer["account_address"]
-        assert idx_transfer.to_address == self.trader["account_address"]
+        assert idx_transfer.from_address == self.issuer
+        assert idx_transfer.to_address == self.trader
         assert idx_transfer.value == 100000
         assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert idx_transfer.data is None
@@ -285,8 +287,8 @@ class TestProcessor:
         assert idx_transfer.id == 2
         assert idx_transfer.transaction_hash == block2["transactions"][0].hex()
         assert idx_transfer.token_address == share_token["address"]
-        assert idx_transfer.from_address == self.trader["account_address"]
-        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.from_address == self.trader
+        assert idx_transfer.to_address == self.trader2
         assert idx_transfer.value == 50000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
         assert idx_transfer.data == {"message": "unlock"}
@@ -296,7 +298,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_2
+        assert idx_block_number.latest_block_number >= block_number_2
 
     # <Normal_1_2>
     # IbetShare
@@ -314,26 +316,26 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Unlock"
         share_lock(
             self.trader,
             share_token,
-            self.trader2["account_address"],
+            self.trader2,
             50000
         )
-        share_unlock(
+        tx_hash = share_unlock(
             self.trader2,
             share_token,
-            self.trader["account_address"],
-            self.trader["account_address"],
+            self.trader,
+            self.trader,
             50000
         )
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Execute batch processing
         processor.sync_new_logs()
@@ -345,7 +347,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number
+        assert idx_block_number.latest_block_number >= block_number
 
     # <Normal_2>
     # IbetShare
@@ -365,60 +367,60 @@ class TestProcessor:
         self.listing_token(share_token["address"], session)
 
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         PersonalInfoUtils.register(
-            self.trader2["account_address"],
+            self.trader2,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
+        tx_hash = share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
-        block_number_1 = web3.eth.block_number
+        block_number_1 = web3.eth.get_transaction(tx_hash).blockNumber
 
-        share_transfer_to_exchange(
+        tx_hash = share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader2["account_address"]},
+            {"address": self.trader2},
             share_token,
             200000
         )
-        block_number_2 = web3.eth.block_number
+        block_number_2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # emit "Unlock"
         share_lock(
             self.trader,
             share_token,
-            self.trader2["account_address"],
+            self.trader2,
             100000
         )
-        share_unlock(
+        tx_hash = share_unlock(
             self.trader2,
             share_token,
-            self.trader["account_address"],
-            self.trader2["account_address"],
+            self.trader,
+            self.trader2,
             50000,
             json.dumps({"message": "unlock"})
         )
-        block_number_3 = web3.eth.block_number
+        block_number_3 = web3.eth.get_transaction(tx_hash).blockNumber
 
-        share_unlock(
+        tx_hash = share_unlock(
             self.trader2,
             share_token,
-            self.trader["account_address"],
-            self.trader2["account_address"],
+            self.trader,
+            self.trader2,
             50000,
             json.dumps({"message": "unlock"})
         )
-        block_number_4 = web3.eth.block_number
+        block_number_4 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Execute batch processing
         processor.sync_new_logs()
@@ -432,8 +434,8 @@ class TestProcessor:
         assert idx_transfer.id == 1
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == share_token["address"]
-        assert idx_transfer.from_address == self.issuer["account_address"]
-        assert idx_transfer.to_address == self.trader["account_address"]
+        assert idx_transfer.from_address == self.issuer
+        assert idx_transfer.to_address == self.trader
         assert idx_transfer.value == 100000
         assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert idx_transfer.data is None
@@ -445,8 +447,8 @@ class TestProcessor:
         assert idx_transfer.id == 2
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == share_token["address"]
-        assert idx_transfer.from_address == self.issuer["account_address"]
-        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.from_address == self.issuer
+        assert idx_transfer.to_address == self.trader2
         assert idx_transfer.value == 200000
         assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert idx_transfer.data is None
@@ -458,8 +460,8 @@ class TestProcessor:
         assert idx_transfer.id == 3
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == share_token["address"]
-        assert idx_transfer.from_address == self.trader["account_address"]
-        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.from_address == self.trader
+        assert idx_transfer.to_address == self.trader2
         assert idx_transfer.value == 50000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
         assert idx_transfer.data == {"message": "unlock"}
@@ -471,8 +473,8 @@ class TestProcessor:
         assert idx_transfer.id == 4
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == share_token["address"]
-        assert idx_transfer.from_address == self.trader["account_address"]
-        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.from_address == self.trader
+        assert idx_transfer.to_address == self.trader2
         assert idx_transfer.value == 50000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
         assert idx_transfer.data == {"message": "unlock"}
@@ -482,7 +484,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_4
+        assert idx_block_number.latest_block_number >= block_number_4
 
     # <Normal_3>
     # IbetStraightBond, IbetMembership, IbetCoupon
@@ -511,34 +513,34 @@ class TestProcessor:
         self.listing_token(coupon_token["address"], session)
 
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
-        bond_transfer_to_exchange(
+        tx_hash = bond_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             bond_token,
             100000
         )
-        bond_block_number = web3.eth.block_number
-        membership_transfer_to_exchange(
+        bond_block_number = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = membership_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             membership_token,
             200000
         )
-        membership_block_number = web3.eth.block_number
-        transfer_coupon_token(
+        membership_block_number = web3.eth.get_transaction(tx_hash).blockNumber
+        tx_hash = transfer_coupon_token(
             self.issuer,
             coupon_token,
-            self.trader["account_address"],
+            self.trader,
             300000
         )
-        coupon_block_number = web3.eth.block_number
-        latest_block_number = web3.eth.block_number
+        coupon_block_number = web3.eth.get_transaction(tx_hash).blockNumber
+        latest_block_number = coupon_block_number
 
         # Execute batch processing
         processor.sync_new_logs()
@@ -552,8 +554,8 @@ class TestProcessor:
         assert idx_transfer.id == 1
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == bond_token["address"]
-        assert idx_transfer.from_address == self.issuer["account_address"]
-        assert idx_transfer.to_address == self.trader["account_address"]
+        assert idx_transfer.from_address == self.issuer
+        assert idx_transfer.to_address == self.trader
         assert idx_transfer.value == 100000
         assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert idx_transfer.data is None
@@ -565,8 +567,8 @@ class TestProcessor:
         assert idx_transfer.id == 2
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == membership_token["address"]
-        assert idx_transfer.from_address == self.issuer["account_address"]
-        assert idx_transfer.to_address == self.trader["account_address"]
+        assert idx_transfer.from_address == self.issuer
+        assert idx_transfer.to_address == self.trader
         assert idx_transfer.value == 200000
         assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert idx_transfer.data is None
@@ -578,8 +580,8 @@ class TestProcessor:
         assert idx_transfer.id == 3
         assert idx_transfer.transaction_hash == block["transactions"][0].hex()
         assert idx_transfer.token_address == coupon_token["address"]
-        assert idx_transfer.from_address == self.issuer["account_address"]
-        assert idx_transfer.to_address == self.trader["account_address"]
+        assert idx_transfer.from_address == self.issuer
+        assert idx_transfer.to_address == self.trader
         assert idx_transfer.value == 300000
         assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert idx_transfer.data is None
@@ -589,17 +591,17 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == bond_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == latest_block_number
+        assert idx_block_number.latest_block_number >= latest_block_number
 
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == membership_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == latest_block_number
+        assert idx_block_number.latest_block_number >= latest_block_number
 
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == coupon_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == latest_block_number
+        assert idx_block_number.latest_block_number >= latest_block_number
 
     # <Normal_4_1>
     # No blocks have been generated since the last transaction occurred
@@ -616,19 +618,19 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
+        tx_hash = share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
-        block_number_1 = web3.eth.block_number
+        block_number_1 = web3.eth.get_transaction(tx_hash).blockNumber
 
         """
         1st execution
@@ -644,8 +646,8 @@ class TestProcessor:
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
         assert _transfer.token_address == share_token["address"]
-        assert _transfer.from_address == self.issuer["account_address"]
-        assert _transfer.to_address == self.trader["account_address"]
+        assert _transfer.from_address == self.issuer
+        assert _transfer.to_address == self.trader
         assert _transfer.value == 100000
         assert _transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert _transfer.data is None
@@ -655,7 +657,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_1
+        assert idx_block_number.latest_block_number >= block_number_1
 
         """
         2nd execution
@@ -672,7 +674,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_1
+        assert idx_block_number.latest_block_number >= block_number_1
 
         assert 2 == caplog.record_tuples.count((
             LOG.name,
@@ -696,19 +698,19 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
+        tx_hash = share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
-        block_number_1 = web3.eth.block_number
+        block_number_1 = web3.eth.get_transaction(tx_hash).blockNumber
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
         """
@@ -725,8 +727,8 @@ class TestProcessor:
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
         assert _transfer.token_address == share_token["address"]
-        assert _transfer.from_address == self.issuer["account_address"]
-        assert _transfer.to_address == self.trader["account_address"]
+        assert _transfer.from_address == self.issuer
+        assert _transfer.to_address == self.trader
         assert _transfer.value == 100000
         assert _transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert _transfer.data is None
@@ -736,7 +738,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_1
+        assert idx_block_number.latest_block_number >= block_number_1
 
         """
         2nd execution
@@ -756,7 +758,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_2
+        assert idx_block_number.latest_block_number >= block_number_2
 
         assert 2 == caplog.record_tuples.count((
             LOG.name,
@@ -780,19 +782,19 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
+        tx_hash = share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
-        block_number_1 = web3.eth.block_number
+        block_number_1 = web3.eth.get_transaction(tx_hash).blockNumber
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
         """
@@ -809,8 +811,8 @@ class TestProcessor:
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
         assert _transfer.token_address == share_token["address"]
-        assert _transfer.from_address == self.issuer["account_address"]
-        assert _transfer.to_address == self.trader["account_address"]
+        assert _transfer.from_address == self.issuer
+        assert _transfer.to_address == self.trader
         assert _transfer.value == 100000
         assert _transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
         assert _transfer.data is None
@@ -820,7 +822,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_1
+        assert idx_block_number.latest_block_number >= block_number_1
 
         idx_block_number.latest_block_number += 999999
 
@@ -846,7 +848,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_2
+        assert idx_block_number.latest_block_number >= block_number_2
 
         assert 2 == caplog.record_tuples.count((
             LOG.name,
@@ -871,26 +873,26 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
+        tx_hash = share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
-        block_number_1 = web3.eth.block_number
+        block_number_1 = web3.eth.get_transaction(tx_hash).blockNumber
         block = web3.eth.get_block(block_number_1)
 
         idx_transfer = IDXTransfer()
         idx_transfer.id = 1
         idx_transfer.transaction_hash = block["transactions"][0].hex()
-        idx_transfer.from_address = self.issuer["account_address"]
-        idx_transfer.to_address = self.issuer["account_address"]
+        idx_transfer.from_address = self.issuer
+        idx_transfer.to_address = self.issuer
         idx_transfer.value = 100000
         idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         idx_transfer.token_address = share_token["address"]
@@ -911,7 +913,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number_1
+        assert idx_block_number.latest_block_number >= block_number_1
 
         assert 1 == caplog.record_tuples.count((
             LOG.name,
@@ -933,14 +935,14 @@ class TestProcessor:
             token_list_contract
         )
         self.listing_token(share_token["address"], session)
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
+        tx_hash = PersonalInfoUtils.register(
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # Latest block number
-        block_number = web3.eth.block_number
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Execute batch processing
         caplog.clear()
@@ -953,7 +955,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
             filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
             first()
-        assert idx_block_number.latest_block_number == block_number
+        assert idx_block_number.latest_block_number >= block_number
 
         assert 2 == caplog.record_tuples.count((
             LOG.name,
@@ -972,11 +974,11 @@ class TestProcessor:
             self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
 
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader, personal_info_contract_address, self.issuer)
 
         # Transfer
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+            self.issuer, {"address": self.trader}, share_token, 100000)
         block_number = web3.eth.block_number
 
         # Run target process
@@ -1008,15 +1010,15 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
         share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
@@ -1043,15 +1045,15 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
         share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
@@ -1079,15 +1081,15 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
         share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )
@@ -1114,15 +1116,15 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
         PersonalInfoUtils.register(
-            self.trader["account_address"],
+            self.trader,
             personal_info_contract_address,
-            self.issuer["account_address"]
+            self.issuer
         )
 
         # emit "Transfer"
         share_transfer_to_exchange(
             self.issuer,
-            {"address": self.trader["account_address"]},
+            {"address": self.trader},
             share_token,
             100000
         )

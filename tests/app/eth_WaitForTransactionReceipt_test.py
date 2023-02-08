@@ -43,9 +43,9 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 def tokenlist_contract():
     issuer = eth_account['issuer']
-    web3.eth.default_account = issuer['account_address']
+    web3.eth.default_account = issuer
     contract_address, abi = Contract.deploy_contract(
-        'TokenList', [], issuer['account_address'])
+        'TokenList', [], issuer)
 
     return {'address': contract_address, 'abi': abi}
 
@@ -106,10 +106,10 @@ class TestEthWaitForTransactionReceipt:
             abi=coupontoken_1["abi"],
         )
         user1 = eth_account["user1"]
-        transfer_coupon_token(issuer, coupontoken_1, user1["account_address"], 10)
+        transfer_coupon_token(issuer, coupontoken_1, user1, 10)
 
         tx = token_contract_1.functions.consume(10).build_transaction({
-            "from": to_checksum_address(user1["account_address"]),
+            "from": to_checksum_address(user1),
             "gas": 6000000,
             "gasPrice": 0
         })
@@ -166,7 +166,7 @@ class TestEthWaitForTransactionReceipt:
         # Send a test transaction
         # NOTE: Coupon consumption with no balance -> Revert
         tx = token_contract_1.functions.consume(10000).build_transaction({
-            "from": to_checksum_address(user1["account_address"]),
+            "from": to_checksum_address(user1),
             "gas": 6000000,
             "gasPrice": 0
         })

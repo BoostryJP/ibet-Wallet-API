@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from eth_typing import ChecksumAddress
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest import mock
@@ -50,11 +51,11 @@ class TestPositionShareContractAddress:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account,
+    def create_balance_data(account: ChecksumAddress,
                             exchange_contract,
                             personal_info_contract,
                             token_list_contract):
-        issuer_address = TestPositionShareContractAddress.issuer["account_address"]
+        issuer_address = TestPositionShareContractAddress.issuer
 
         # Issue token
         args = {
@@ -84,13 +85,13 @@ class TestPositionShareContractAddress:
             token_list_contract_address=token_list_contract["address"]
         )
         PersonalInfoUtils.register(
-            tx_from=account["account_address"],
+            tx_from=account,
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address
         )
         IbetShareUtils.transfer_to_exchange(
             tx_from=issuer_address,
-            exchange_address=account["account_address"],
+            exchange_address=account,
             token_address=token.address,
             amount=1000000
         )
@@ -100,13 +101,13 @@ class TestPositionShareContractAddress:
     # Prepare pending_transfer data
     # balance = 1000000, pending_transfer = [args pending_transfer]
     @staticmethod
-    def create_pending_transfer_data(account,
-                                     to_account,
+    def create_pending_transfer_data(account: ChecksumAddress,
+                                     to_account: ChecksumAddress,
                                      exchange_contract,
                                      personal_info_contract,
                                      token_list_contract,
                                      pending_transfer):
-        issuer_address = TestPositionShareContractAddress.issuer["account_address"]
+        issuer_address = TestPositionShareContractAddress.issuer
 
         # Issue token
         token = TestPositionShareContractAddress.create_balance_data(
@@ -123,14 +124,14 @@ class TestPositionShareContractAddress:
             required=True
         )
         PersonalInfoUtils.register(
-            tx_from=to_account["account_address"],
+            tx_from=to_account,
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address
         )
         IbetShareUtils.apply_for_transfer(
-            tx_from=account["account_address"],
+            tx_from=account,
             token_address=token.address,
-            to=to_account["account_address"],
+            to=to_account,
             value=pending_transfer
         )
 
@@ -139,11 +140,11 @@ class TestPositionShareContractAddress:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(account,
+    def create_commitment_data(account: ChecksumAddress,
                                exchange_contract,
                                personal_info_contract,
                                token_list_contract,
-                               commitment):
+                               commitment: int):
         # Issue token
         token = TestPositionShareContractAddress.create_balance_data(
             account,
@@ -154,7 +155,7 @@ class TestPositionShareContractAddress:
 
         # Sell order
         IbetShareUtils.sell(
-            tx_from=account["account_address"],
+            tx_from=account,
             exchange_address=exchange_contract["address"],
             token_address=token.address,
             amount=commitment,
@@ -166,12 +167,12 @@ class TestPositionShareContractAddress:
     # Prepare non balance data
     # balance = 0
     @staticmethod
-    def create_non_balance_data(account,
-                                to_account,
+    def create_non_balance_data(account: ChecksumAddress,
+                                to_account: ChecksumAddress,
                                 exchange_contract,
                                 personal_info_contract,
                                 token_list_contract):
-        issuer_address = TestPositionShareContractAddress.issuer["account_address"]
+        issuer_address = TestPositionShareContractAddress.issuer
 
         # Issue token
         token = TestPositionShareContractAddress.create_balance_data(
@@ -183,13 +184,13 @@ class TestPositionShareContractAddress:
 
         # Transfer all amount
         PersonalInfoUtils.register(
-            tx_from=to_account["account_address"],
+            tx_from=to_account,
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address
         )
         IbetShareUtils.transfer_to_exchange(
-            tx_from=account["account_address"],
-            exchange_address=to_account["account_address"],
+            tx_from=account,
+            exchange_address=to_account,
             token_address=token.address,
             amount=1000000
         )
@@ -219,7 +220,6 @@ class TestPositionShareContractAddress:
             idx_position.exchange_commitment = exchange_commitment
         session.merge(idx_position)
         session.commit()
-        pass
 
     @staticmethod
     def create_idx_token(session: Session,
@@ -230,7 +230,7 @@ class TestPositionShareContractAddress:
         # Issue token
         idx_token = IDXShareToken()
         idx_token.token_address = token_address
-        idx_token.owner_address = TestPositionShareContractAddress.issuer["account_address"]
+        idx_token.owner_address = TestPositionShareContractAddress.issuer
         idx_token.company_name = ""
         idx_token.rsa_publickey = ""
         idx_token.name = "テスト株式"
@@ -408,7 +408,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_2.address
                 ),
             )
@@ -418,7 +418,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_2.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -571,7 +571,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_3.address
                 ),
             )
@@ -581,7 +581,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_3.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -733,7 +733,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_4.address
                 ),
             )
@@ -743,7 +743,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_4.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -895,7 +895,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_5.address
                 ),
             )
@@ -905,7 +905,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_5.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -1058,7 +1058,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_6.address
                 ),
             )
@@ -1068,7 +1068,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_6.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -1117,7 +1117,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1128,7 +1128,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1138,7 +1138,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_1.address, self.account_1, balance=1000000)
         self.list_token(token_1.address, session)
         self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1148,7 +1148,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_2.address, self.account_1, balance=1000000)
         self.list_token(token_2.address, session)
         self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1159,7 +1159,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1170,7 +1170,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1182,7 +1182,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.create_idx_position(session, token_3.address, self.account_1, balance=999900, pending_transfer=100)
         self.list_token(token_3.address, session)
         self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1194,7 +1194,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.create_idx_position(session, token_4.address, self.account_1, pending_transfer=1000000)
         self.list_token(token_4.address, session)
         self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1205,7 +1205,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.create_idx_position(session, token_5.address, self.account_1, balance=999900, exchange_commitment=100)
         self.list_token(token_5.address, session)
         self.create_idx_token(session, token_5.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1216,7 +1216,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.create_idx_position(session, token_6.address, self.account_1, exchange_commitment=1000000)
         self.list_token(token_6.address, session)
         self.create_idx_token(session, token_6.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1227,7 +1227,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1238,7 +1238,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1246,7 +1246,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_2.address
                 ),
                 params={
@@ -1259,7 +1259,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_2.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -1308,7 +1308,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1319,7 +1319,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1329,7 +1329,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_1.address, self.account_1, balance=1000000)
         self.list_token(token_1.address, session)
         self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1339,7 +1339,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_2.address, self.account_1, balance=1000000)
         self.list_token(token_2.address, session)
         self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1350,7 +1350,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1361,7 +1361,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1373,7 +1373,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.create_idx_position(session, token_3.address, self.account_1, balance=999900, pending_transfer=100)
         self.list_token(token_3.address, session)
         self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1385,7 +1385,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.create_idx_position(session, token_4.address, self.account_1, pending_transfer=1000000)
         self.list_token(token_4.address, session)
         self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1396,7 +1396,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.create_idx_position(session, token_5.address, self.account_1, balance=999900, exchange_commitment=100)
         self.list_token(token_5.address, session)
         self.create_idx_token(session, token_5.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1407,7 +1407,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.create_idx_position(session, token_6.address, self.account_1, exchange_commitment=1000000)
         self.list_token(token_6.address, session)
         self.create_idx_token(session, token_6.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1418,7 +1418,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1429,7 +1429,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1437,7 +1437,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_4.address
                 ),
                 params={
@@ -1450,7 +1450,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_4.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -1499,7 +1499,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1510,7 +1510,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1520,7 +1520,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_1.address, self.account_1, balance=1000000)
         self.list_token(token_1.address, session)
         self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1530,7 +1530,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_2.address, self.account_1, balance=1000000)
         self.list_token(token_2.address, session)
         self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1541,7 +1541,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1552,7 +1552,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1564,7 +1564,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.create_idx_position(session, token_3.address, self.account_1, balance=999900, pending_transfer=100)
         self.list_token(token_3.address, session)
         self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1576,7 +1576,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.create_idx_position(session, token_4.address, self.account_1, pending_transfer=1000000)
         self.list_token(token_4.address, session)
         self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1587,7 +1587,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.create_idx_position(session, token_5.address, self.account_1, balance=999900, exchange_commitment=100)
         self.list_token(token_5.address, session)
         self.create_idx_token(session, token_5.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1598,7 +1598,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.create_idx_position(session, token_6.address, self.account_1, exchange_commitment=1000000)
         self.list_token(token_6.address, session)
         self.create_idx_token(session, token_6.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1609,7 +1609,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1620,7 +1620,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1628,7 +1628,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_4.address
                 ),
                 params={
@@ -1641,7 +1641,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_4.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -1690,7 +1690,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1701,7 +1701,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1711,7 +1711,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_1.address, self.account_1, balance=1000000)
         self.list_token(token_1.address, session)
         self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1721,7 +1721,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_2.address, self.account_1, balance=1000000)
         self.list_token(token_2.address, session)
         self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1732,7 +1732,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1743,7 +1743,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1755,7 +1755,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.create_idx_position(session, token_3.address, self.account_1, balance=999900, pending_transfer=100)
         self.list_token(token_3.address, session)
         self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1767,7 +1767,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.create_idx_position(session, token_4.address, self.account_1, pending_transfer=1000000)
         self.list_token(token_4.address, session)
         self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1778,7 +1778,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.create_idx_position(session, token_5.address, self.account_1, balance=999900, exchange_commitment=100)
         self.list_token(token_5.address, session)
         self.create_idx_token(session, token_5.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1789,7 +1789,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.create_idx_position(session, token_6.address, self.account_1, exchange_commitment=1000000)
         self.list_token(token_6.address, session)
         self.create_idx_token(session, token_6.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1800,7 +1800,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1811,7 +1811,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1819,7 +1819,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_5.address
                 ),
                 params={
@@ -1832,7 +1832,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_5.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -1881,7 +1881,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1892,7 +1892,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1902,7 +1902,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_1.address, self.account_1, balance=1000000)
         self.list_token(token_1.address, session)
         self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1912,7 +1912,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.create_idx_position(session, token_2.address, self.account_1, balance=1000000)
         self.list_token(token_2.address, session)
         self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1923,7 +1923,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1934,7 +1934,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -1946,7 +1946,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.create_idx_position(session, token_3.address, self.account_1, balance=999900, pending_transfer=100)
         self.list_token(token_3.address, session)
         self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1958,7 +1958,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.create_idx_position(session, token_4.address, self.account_1, pending_transfer=1000000)
         self.list_token(token_4.address, session)
         self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS, transfer_approval_required=True)
 
@@ -1969,7 +1969,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             100
         )
-        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.create_idx_position(session, token_5.address, self.account_1, balance=999900, exchange_commitment=100)
         self.list_token(token_5.address, session)
         self.create_idx_token(session, token_5.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1980,7 +1980,7 @@ class TestPositionShareContractAddress:
             token_list_contract,
             1000000
         )
-        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.create_idx_position(session, token_6.address, self.account_1, exchange_commitment=1000000)
         self.list_token(token_6.address, session)
         self.create_idx_token(session, token_6.address, personal_info_contract["address"], exchange_contract["address"])
 
@@ -1991,7 +1991,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -2002,7 +2002,7 @@ class TestPositionShareContractAddress:
             personal_info_contract,
             token_list_contract
         )
-        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.create_idx_position(session, token_non.address, self.account_2, balance=1000000)
         self.list_token(token_non.address, session)  # not target
         self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -2010,7 +2010,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_6.address
                 ),
                 params={
@@ -2023,7 +2023,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_6.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -2073,13 +2073,13 @@ class TestPositionShareContractAddress:
         share_lock(
             invoker=self.account_1,
             token={"address": token_1.address},
-            lock_address=self.account_2["account_address"],
+            lock_address=self.account_2,
             amount=1000
         )
         share_lock(
             invoker=self.account_1,
             token={"address": token_1.address},
-            lock_address=self.issuer["account_address"],
+            lock_address=self.issuer,
             amount=2000
         )
         transfer_share_token(
@@ -2091,14 +2091,14 @@ class TestPositionShareContractAddress:
         share_lock(
             invoker=self.account_2,
             token={"address": token_1.address},
-            lock_address=self.issuer["account_address"],
+            lock_address=self.issuer,
             amount=5000
         )
 
-        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000-3000)
-        self.create_idx_locked_position(session, token_1.address, self.account_2["account_address"], self.account_1["account_address"], 1000)
-        self.create_idx_locked_position(session, token_1.address, self.issuer["account_address"], self.account_1["account_address"], 2000)
-        self.create_idx_locked_position(session, token_1.address, self.issuer["account_address"], self.account_2["account_address"], 5000)
+        self.create_idx_position(session, token_1.address, self.account_1, balance=1000000-3000)
+        self.create_idx_locked_position(session, token_1.address, self.account_2, self.account_1, 1000)
+        self.create_idx_locked_position(session, token_1.address, self.issuer, self.account_1, 2000)
+        self.create_idx_locked_position(session, token_1.address, self.issuer, self.account_2, 5000)
         self.list_token(token_1.address, session)
         self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
 
@@ -2106,7 +2106,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=token_1.address
                 ),
                 params={
@@ -2119,7 +2119,7 @@ class TestPositionShareContractAddress:
             "token": {
                 'token_address': token_1.address,
                 'token_template': 'IbetShare',
-                'owner_address': self.issuer["account_address"],
+                'owner_address': self.issuer,
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト株式',
@@ -2160,7 +2160,7 @@ class TestPositionShareContractAddress:
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
 
-        account_address = self.account_1["account_address"]
+        account_address = self.account_1
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -2206,7 +2206,7 @@ class TestPositionShareContractAddress:
         # Request target API
         resp = client.get(
             self.apiurl.format(
-                account_address=self.account_1["account_address"],
+                account_address=self.account_1,
                 contract_address="invalid"
             ),
         )
@@ -2228,7 +2228,7 @@ class TestPositionShareContractAddress:
         # Request target API
         resp = client.get(
             self.apiurl.format(
-                account_address=self.account_1["account_address"],
+                account_address=self.account_1,
                 contract_address=contract_address
             ),
         )
@@ -2251,7 +2251,7 @@ class TestPositionShareContractAddress:
         # Request target API
         resp = client.get(
             self.apiurl.format(
-                account_address=self.account_1["account_address"],
+                account_address=self.account_1,
                 contract_address=contract_address
             ),
             params={
@@ -2285,7 +2285,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=contract_address
                 ),
             )
@@ -2316,7 +2316,7 @@ class TestPositionShareContractAddress:
             # Request target API
             resp = client.get(
                 self.apiurl.format(
-                    account_address=self.account_1["account_address"],
+                    account_address=self.account_1,
                     contract_address=contract_address
                 ),
                 params={

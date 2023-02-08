@@ -59,19 +59,22 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Token_Detail.db_engine = db_engine
     indexer_Token_Detail.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Token_Detail
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Token_Detail.db_engine = db_engine
     processor = test_module.Processor()
     return processor
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func(test_module, db_engine):
+    indexer_Token_Detail.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -95,13 +98,13 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
 
         _idx_token_list_item = IDXTokenListItem()
         _idx_token_list_item.token_address = token_address
         _idx_token_list_item.token_template = token_template
-        _idx_token_list_item.owner_address = TestProcessor.issuer["account_address"]
+        _idx_token_list_item.owner_address = TestProcessor.issuer
         session.add(_idx_token_list_item)
         session.commit()
 
@@ -142,7 +145,7 @@ class TestProcessor:
     ###########################################################################
 
     # <Normal_1>
-    def test_normal_1(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_1(self, processor: Processor, shared_contract, session: Session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]

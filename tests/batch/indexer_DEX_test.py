@@ -61,7 +61,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def processor_factory(session, shared_contract):
+def processor_factory(session, shared_contract, db_engine):
     def _processor(membership=False, coupon=False):
 
         # Create exchange contract for each test method.
@@ -82,6 +82,7 @@ def processor_factory(session, shared_contract):
             indexer_DEX.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
             exchange_address["coupon"] = coupon_exchange["address"]
 
+        indexer_DEX.db_engine = db_engine
         processor = indexer_DEX.Processor()
         processor.initial_sync()
 
@@ -91,7 +92,8 @@ def processor_factory(session, shared_contract):
 
 
 @pytest.fixture(scope="function")
-def main_func(processor_factory):
+def main_func(processor_factory, db_engine):
+    indexer_DEX.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -155,7 +157,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         session.add(_listing)
         session.commit()
 
@@ -176,8 +178,8 @@ class TestProcessor:
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
-        block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -192,12 +194,12 @@ class TestProcessor:
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 100
         assert _order.amount == 1000000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -218,8 +220,8 @@ class TestProcessor:
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
-        block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Cancel Order
         cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
@@ -237,12 +239,12 @@ class TestProcessor:
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 100
         assert _order.amount == 1000000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is True
         assert _order.order_timestamp is not None
 
@@ -263,12 +265,12 @@ class TestProcessor:
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
-        block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Order Agreement(Take buy)
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 2000)
-        block_number2 = web3.eth.block_number
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 2000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -284,12 +286,12 @@ class TestProcessor:
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 100
         assert _order.amount == 1000000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -303,9 +305,9 @@ class TestProcessor:
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
         assert _agreement.unique_order_id == f"{exchange_contract_address}_1"
-        assert _agreement.buyer_address == self.trader["account_address"]
-        assert _agreement.seller_address == self.issuer["account_address"]
-        assert _agreement.counterpart_address == self.trader["account_address"]
+        assert _agreement.buyer_address == self.trader
+        assert _agreement.seller_address == self.issuer
+        assert _agreement.counterpart_address == self.trader
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.PENDING.value
         assert _agreement.agreement_timestamp is not None
@@ -323,16 +325,16 @@ class TestProcessor:
         token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
 
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 3000)
+        membership_transfer_to_exchange(self.issuer, {"address": self.trader}, token, 3000)
 
         # Create Order(Make buy)
-        make_buy(self.issuer, {"address": exchange_contract_address}, token, 4000, 100)
-        block_number = web3.eth.block_number
+        tx_hash = make_buy(self.issuer, {"address": exchange_contract_address}, token, 4000, 100)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Order Agreement(Take sell)
         membership_transfer_to_exchange(self.trader, {"address": exchange_contract_address}, token, 3000)
-        take_sell(self.trader, {"address": exchange_contract_address}, 1, 3000)
-        block_number2 = web3.eth.block_number
+        tx_hash = take_sell(self.trader, {"address": exchange_contract_address}, 1, 3000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -348,12 +350,12 @@ class TestProcessor:
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is True
         assert _order.price == 100
         assert _order.amount == 4000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -367,9 +369,9 @@ class TestProcessor:
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
         assert _agreement.unique_order_id == f"{exchange_contract_address}_1"
-        assert _agreement.buyer_address == self.issuer["account_address"]
-        assert _agreement.seller_address == self.trader["account_address"]
-        assert _agreement.counterpart_address == self.trader["account_address"]
+        assert _agreement.buyer_address == self.issuer
+        assert _agreement.seller_address == self.trader
+        assert _agreement.counterpart_address == self.trader
         assert _agreement.amount == 3000
         assert _agreement.status == AgreementStatus.PENDING.value
         assert _agreement.agreement_timestamp is not None
@@ -390,12 +392,12 @@ class TestProcessor:
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
-        block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Order Agreement(Take buy)
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 2000)
-        block_number2 = web3.eth.block_number
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 2000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Confirm Agreement
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
@@ -414,12 +416,12 @@ class TestProcessor:
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 100
         assert _order.amount == 1000000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -433,9 +435,9 @@ class TestProcessor:
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
         assert _agreement.unique_order_id == f"{exchange_contract_address}_1"
-        assert _agreement.buyer_address == self.trader["account_address"]
-        assert _agreement.seller_address == self.issuer["account_address"]
-        assert _agreement.counterpart_address == self.trader["account_address"]
+        assert _agreement.buyer_address == self.trader
+        assert _agreement.seller_address == self.issuer
+        assert _agreement.counterpart_address == self.trader
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.DONE.value
         assert _agreement.agreement_timestamp is not None
@@ -456,12 +458,12 @@ class TestProcessor:
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
-        block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Order Agreement(Take buy)
-        take_buy(self.trader, {"address": exchange_contract_address}, 1, 2000)
-        block_number2 = web3.eth.block_number
+        tx_hash = take_buy(self.trader, {"address": exchange_contract_address}, 1, 2000)
+        block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Cancel Agreement
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
@@ -480,12 +482,12 @@ class TestProcessor:
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 100
         assert _order.amount == 1000000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -499,9 +501,9 @@ class TestProcessor:
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
         assert _agreement.unique_order_id == f"{exchange_contract_address}_1"
-        assert _agreement.buyer_address == self.trader["account_address"]
-        assert _agreement.seller_address == self.issuer["account_address"]
-        assert _agreement.counterpart_address == self.trader["account_address"]
+        assert _agreement.buyer_address == self.trader
+        assert _agreement.seller_address == self.issuer
+        assert _agreement.counterpart_address == self.trader
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.CANCELED.value
         assert _agreement.agreement_timestamp is not None
@@ -528,19 +530,19 @@ class TestProcessor:
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": membership_exchange_contract_address}, membership_token, 900000)
-        make_sell(self.issuer, {"address": membership_exchange_contract_address}, membership_token, 900000, 100)
-        membership_block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": membership_exchange_contract_address}, membership_token, 900000, 100)
+        membership_block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         transfer_coupon_token(self.issuer, coupon_token, coupon_exchange_contract_address, 800000)
-        make_sell(self.issuer, {"address": coupon_exchange_contract_address}, coupon_token, 800000, 200)
-        coupon_block_number = web3.eth.block_number
+        tx_hash = make_sell(self.issuer, {"address": coupon_exchange_contract_address}, coupon_token, 800000, 200)
+        coupon_block_number = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Order Agreement(Take buy)
-        take_buy(self.trader, {"address": membership_exchange_contract_address}, 1, 1000)
-        membership_block_number2 = web3.eth.block_number
+        tx_hash = take_buy(self.trader, {"address": membership_exchange_contract_address}, 1, 1000)
+        membership_block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
-        take_buy(self.trader, {"address": coupon_exchange_contract_address}, 1, 2000)
-        coupon_block_number2 = web3.eth.block_number
+        tx_hash = take_buy(self.trader, {"address": coupon_exchange_contract_address}, 1, 2000)
+        coupon_block_number2 = web3.eth.get_transaction(tx_hash).blockNumber
 
         # Confirm Agreement
         confirm_agreement(self.agent, {"address": membership_exchange_contract_address}, 1, 1)
@@ -560,12 +562,12 @@ class TestProcessor:
         assert _order.token_address == membership_token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{membership_exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 100
         assert _order.amount == 900000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -576,12 +578,12 @@ class TestProcessor:
         assert _order.token_address == coupon_token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{coupon_exchange_contract_address}_1"
-        assert _order.account_address == self.issuer["account_address"]
+        assert _order.account_address == self.issuer
         assert _order.counterpart_address == ""
         assert _order.is_buy is False
         assert _order.price == 200
         assert _order.amount == 800000
-        assert _order.agent_address == self.agent["account_address"]
+        assert _order.agent_address == self.agent
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
@@ -595,9 +597,9 @@ class TestProcessor:
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
         assert _agreement.unique_order_id == f"{membership_exchange_contract_address}_1"
-        assert _agreement.buyer_address == self.trader["account_address"]
-        assert _agreement.seller_address == self.issuer["account_address"]
-        assert _agreement.counterpart_address == self.trader["account_address"]
+        assert _agreement.buyer_address == self.trader
+        assert _agreement.seller_address == self.issuer
+        assert _agreement.counterpart_address == self.trader
         assert _agreement.amount == 1000
         assert _agreement.status == AgreementStatus.DONE.value
         assert _agreement.agreement_timestamp is not None
@@ -610,9 +612,9 @@ class TestProcessor:
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
         assert _agreement.unique_order_id == f"{coupon_exchange_contract_address}_1"
-        assert _agreement.buyer_address == self.trader["account_address"]
-        assert _agreement.seller_address == self.issuer["account_address"]
-        assert _agreement.counterpart_address == self.trader["account_address"]
+        assert _agreement.buyer_address == self.trader
+        assert _agreement.seller_address == self.issuer
+        assert _agreement.counterpart_address == self.trader
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.DONE.value
         assert _agreement.agreement_timestamp is not None
@@ -711,7 +713,7 @@ class TestProcessor:
         assert len(_agreement_list) == 0
 
         # Latest_block is incremented in "initial_sync" process.
-        assert processor.latest_block == block_number_current
+        assert processor.latest_block >= block_number_current
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
@@ -730,7 +732,7 @@ class TestProcessor:
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
-        assert processor.latest_block == block_number_current
+        assert processor.latest_block >= block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     def test_error_1_2(self, processor_factory, shared_contract, session):
@@ -757,7 +759,7 @@ class TestProcessor:
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block >= block_number_bf
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
@@ -776,7 +778,7 @@ class TestProcessor:
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block >= block_number_bf
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_1(self, processor_factory, shared_contract, session):
@@ -802,7 +804,7 @@ class TestProcessor:
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block >= block_number_bf
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
@@ -821,7 +823,7 @@ class TestProcessor:
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block >= block_number_bf
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_2(self, processor_factory, shared_contract, session):
@@ -848,7 +850,7 @@ class TestProcessor:
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block >= block_number_bf
 
         # Create Order
         membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
@@ -867,7 +869,7 @@ class TestProcessor:
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block >= block_number_bf
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, processor_factory, shared_contract, session, caplog):

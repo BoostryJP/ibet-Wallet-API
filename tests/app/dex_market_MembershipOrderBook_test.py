@@ -38,7 +38,7 @@ class TestDEXMarketMembershipOrderBook:
 
     def setup(self):
         # 環境変数設定
-        config.AGENT_ADDRESS = eth_account['agent']['account_address']
+        config.AGENT_ADDRESS = eth_account['agent']
 
     ###########################################################################
     # Normal
@@ -58,7 +58,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -112,7 +112,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -165,7 +165,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -211,7 +211,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -257,7 +257,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -298,7 +298,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -353,7 +353,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -399,7 +399,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -453,7 +453,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -499,7 +499,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -545,7 +545,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -586,7 +586,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -641,7 +641,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -682,7 +682,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -749,7 +749,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # テストデータを挿入
         order = Order()
@@ -820,7 +820,7 @@ class TestDEXMarketMembershipOrderBook:
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # Orderの情報を挿入
         order = Order()
@@ -969,7 +969,7 @@ class TestDEXMarketMembershipOrderBook:
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # Orderの情報を挿入
         order = Order()
@@ -1120,7 +1120,7 @@ class TestDEXMarketMembershipOrderBook:
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # Orderの情報を挿入
         order = Order()
@@ -1274,7 +1274,7 @@ class TestDEXMarketMembershipOrderBook:
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         # Orderの情報を挿入
         order = Order()
@@ -1426,8 +1426,8 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address_1 = eth_account['agent']['account_address']
-        agent_address_2 = eth_account['user1']['account_address']
+        agent_address_1 = eth_account['agent']
+        agent_address_2 = eth_account['user1']
 
         # テストデータを挿入
         order = Order()
@@ -1504,7 +1504,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         request_params = {
             "token_address": token_address,
@@ -1536,7 +1536,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-        agent_address = eth_account['agent']['account_address'][:-1]  # アドレスが短い
+        agent_address = eth_account['agent'][:-1]  # アドレスが短い
 
         request_params = {
             "token_address": token_address,
@@ -1567,7 +1567,7 @@ class TestDEXMarketMembershipOrderBook:
         exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
 
         request_params = {
@@ -1599,7 +1599,7 @@ class TestDEXMarketMembershipOrderBook:
         exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -1647,7 +1647,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = False
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         request_params = {
             "token_address": token_address,
@@ -1669,7 +1669,7 @@ class TestDEXMarketMembershipOrderBook:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        agent_address = eth_account['agent']['account_address']
+        agent_address = eth_account['agent']
 
         request_params = {
             "token_address": token_address,

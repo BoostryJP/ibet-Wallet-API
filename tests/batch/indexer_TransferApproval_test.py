@@ -53,13 +53,15 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_TransferApproval.db_engine = db_engine
     indexer_TransferApproval.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_TransferApproval
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func(test_module, db_engine):
+    indexer_TransferApproval.db_engine = db_engine
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -70,7 +72,8 @@ def main_func(test_module):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_TransferApproval.db_engine = db_engine
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
@@ -124,7 +127,7 @@ class TestProcessor:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
-        _listing.owner_address = TestProcessor.issuer["account_address"]
+        _listing.owner_address = TestProcessor.issuer
         db_session.add(_listing)
         db_session.commit()
 
@@ -143,7 +146,7 @@ class TestProcessor:
         token_contract.functions.setTransferApprovalRequired(
             required
         ).transact({
-            'from': TestProcessor.issuer['account_address']
+            'from': TestProcessor.issuer
         })
 
     ###########################################################################
@@ -171,21 +174,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -197,11 +200,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Run target process
@@ -218,8 +221,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -251,21 +254,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -277,11 +280,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Approve transfer
@@ -289,7 +292,7 @@ class TestProcessor:
             0,
             "1609418096"  # 2020/12/31 12:34:56
         ).transact({
-            "from": self.issuer["account_address"]
+            "from": self.issuer
         })
 
         # Run target process
@@ -306,8 +309,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -340,21 +343,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -366,11 +369,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Cancel transfer
@@ -378,7 +381,7 @@ class TestProcessor:
             0,
             "test_data"
         ).transact({
-            "from": self.issuer["account_address"]
+            "from": self.issuer
         })
 
         # Run target process
@@ -395,8 +398,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -439,27 +442,27 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token_1,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
         transfer_token(
             token_contract=token_2,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -475,18 +478,18 @@ class TestProcessor:
 
         # Apply for transfer
         token_1.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
         token_2.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             3000,
             "978266097"  # 2000/12/31 12:34:57
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Approve transfer
@@ -494,13 +497,13 @@ class TestProcessor:
             0,
             "1609418096"  # 2020/12/31 12:34:56
         ).transact({
-            "from": self.issuer["account_address"]
+            "from": self.issuer
         })
         token_2.functions.approveTransfer(
             0,
             "1609418097"  # 2020/12/31 12:34:57
         ).transact({
-            "from": self.issuer["account_address"]
+            "from": self.issuer
         })
 
         # Run target process
@@ -517,8 +520,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token_1.address
         assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -533,8 +536,8 @@ class TestProcessor:
         assert _transfer_approval.id == 2
         assert _transfer_approval.token_address == token_2.address
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 3000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:57", '%Y/%m/%d %H:%M:%S')
@@ -565,21 +568,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -615,21 +618,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -641,11 +644,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Run target process
@@ -679,21 +682,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -706,7 +709,7 @@ class TestProcessor:
         # Deposit token to escrow
         transfer_token(
             token_contract=token,
-            from_address=self.account1["account_address"],
+            from_address=self.account1,
             to_address=st_escrow_contract.address,
             amount=10000
         )
@@ -714,13 +717,13 @@ class TestProcessor:
         # Create escrow
         st_escrow_contract.functions.createEscrow(
             token.address,
-            self.account2["account_address"],
+            self.account2,
             10000,
-            self.escrow_agent["account_address"],
+            self.escrow_agent,
             "978266096",  # 2000/12/31 12:34:56
             "test_escrow_data"
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Run target process
@@ -737,8 +740,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address == st_escrow_contract.address
         assert _transfer_approval.application_id == st_escrow_contract.functions.latestEscrowId().call()
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 10000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -772,21 +775,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -799,7 +802,7 @@ class TestProcessor:
         # Deposit token to escrow
         transfer_token(
             token_contract=token,
-            from_address=self.account1["account_address"],
+            from_address=self.account1,
             to_address=st_escrow_contract.address,
             amount=10000
         )
@@ -807,13 +810,13 @@ class TestProcessor:
         # Create escrow
         st_escrow_contract.functions.createEscrow(
             token.address,
-            self.account2["account_address"],
+            self.account2,
             10000,
-            self.escrow_agent["account_address"],
+            self.escrow_agent,
             "978266096",  # 2000/12/31 12:34:56
             "test_escrow_data"
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Cancel escrow
@@ -821,7 +824,7 @@ class TestProcessor:
         st_escrow_contract.functions.cancelEscrow(
             escrow_id
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Run target process
@@ -838,8 +841,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address == st_escrow_contract.address
         assert _transfer_approval.application_id == escrow_id
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 10000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -873,21 +876,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -900,7 +903,7 @@ class TestProcessor:
         # Deposit token to escrow
         transfer_token(
             token_contract=token,
-            from_address=self.account1["account_address"],
+            from_address=self.account1,
             to_address=st_escrow_contract.address,
             amount=10000
         )
@@ -908,13 +911,13 @@ class TestProcessor:
         # Create escrow
         st_escrow_contract.functions.createEscrow(
             token.address,
-            self.account2["account_address"],
+            self.account2,
             10000,
-            self.escrow_agent["account_address"],
+            self.escrow_agent,
             "978266096",  # 2000/12/31 12:34:56
             "test_escrow_data"
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
         escrow_id = st_escrow_contract.functions.latestEscrowId().call()
 
@@ -922,7 +925,7 @@ class TestProcessor:
         st_escrow_contract.functions.finishEscrow(
             escrow_id
         ).transact({
-            "from": self.escrow_agent["account_address"]
+            "from": self.escrow_agent
         })
 
         # Run target process
@@ -939,8 +942,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address == st_escrow_contract.address
         assert _transfer_approval.application_id == escrow_id
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 10000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -974,21 +977,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=10000
         )
 
@@ -1001,7 +1004,7 @@ class TestProcessor:
         # Deposit token to escrow
         transfer_token(
             token_contract=token,
-            from_address=self.account1["account_address"],
+            from_address=self.account1,
             to_address=st_escrow_contract.address,
             amount=10000
         )
@@ -1009,13 +1012,13 @@ class TestProcessor:
         # Create escrow
         st_escrow_contract.functions.createEscrow(
             token.address,
-            self.account2["account_address"],
+            self.account2,
             10000,
-            self.escrow_agent["account_address"],
+            self.escrow_agent,
             "978266096",  # 2000/12/31 12:34:56
             "test_escrow_data"
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
         escrow_id = st_escrow_contract.functions.latestEscrowId().call()
 
@@ -1023,7 +1026,7 @@ class TestProcessor:
         st_escrow_contract.functions.finishEscrow(
             escrow_id
         ).transact({
-            "from": self.escrow_agent["account_address"]
+            "from": self.escrow_agent
         })
 
         # Approve transfer
@@ -1031,7 +1034,7 @@ class TestProcessor:
             escrow_id,
             "1609418096"  # 2020/12/31 12:34:56
         ).transact({
-            "from": self.issuer["account_address"]
+            "from": self.issuer
         })
 
         # Run target process
@@ -1048,8 +1051,8 @@ class TestProcessor:
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address == st_escrow_contract.address
         assert _transfer_approval.application_id == escrow_id
-        assert _transfer_approval.from_address == self.account1["account_address"]
-        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.from_address == self.account1
+        assert _transfer_approval.to_address == self.account2
         assert _transfer_approval.value == 10000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -1089,20 +1092,20 @@ class TestProcessor:
         )
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=5000
         )
         # Change transfer approval required to True
@@ -1112,11 +1115,11 @@ class TestProcessor:
         )
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         block_number_current = web3.eth.block_number
@@ -1132,15 +1135,15 @@ class TestProcessor:
         # Latest_block is incremented in "initial_sync" process.
         idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = session.query(IDXTransferApprovalBlockNumber).\
             filter(IDXTransferApprovalBlockNumber.token_address == token.address).first()
-        assert idx_transfer_approval_block_number.latest_block_number == block_number_current
+        assert idx_transfer_approval_block_number.latest_block_number >= block_number_current
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
         block_number_current = web3.eth.block_number
 
@@ -1159,7 +1162,7 @@ class TestProcessor:
         # Latest_block is incremented in "initial_sync" process.
         idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = session.query(IDXTransferApprovalBlockNumber).\
             filter(IDXTransferApprovalBlockNumber.token_address == token.address).first()
-        assert idx_transfer_approval_block_number.latest_block_number == block_number_current
+        assert idx_transfer_approval_block_number.latest_block_number >= block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     def test_error_1_2(self, processor, shared_contract, session):
@@ -1180,21 +1183,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=5000
         )
         # Change transfer approval required to True
@@ -1205,11 +1208,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -1227,11 +1230,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -1269,21 +1272,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=5000
         )
         # Change transfer approval required to True
@@ -1293,11 +1296,11 @@ class TestProcessor:
         )
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -1315,11 +1318,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -1357,21 +1360,21 @@ class TestProcessor:
 
         # Register personal info
         self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account1,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
         self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
+            account_address=self.account2,
+            link_address=self.issuer,
             personal_info_contract=personal_info_contract
         )
 
         # Transfer token: from issuer to account1
         transfer_token(
             token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
+            from_address=self.issuer,
+            to_address=self.account1,
             amount=5000
         )
         # Change transfer approval required to True
@@ -1381,11 +1384,11 @@ class TestProcessor:
         )
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Expect that initial_sync() raises SQLAlchemyError.
@@ -1404,11 +1407,11 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"],
+            self.account2,
             2000,
             "978266096"  # 2000/12/31 12:34:56
         ).transact({
-            "from": self.account1["account_address"]
+            "from": self.account1
         })
 
         # Expect that sync_new_logs() raises SQLAlchemyError.

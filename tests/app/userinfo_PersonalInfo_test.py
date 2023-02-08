@@ -38,8 +38,8 @@ class TestUserInfoPersonalInfo:
     # Registered
     # environment variable (default)
     def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
-        trader = eth_account["trader"]["account_address"]
-        issuer = eth_account["issuer"]["account_address"]
+        trader = eth_account["trader"]
+        issuer = eth_account["issuer"]
 
         # Get PersonalInfo contract address
         personal_info = shared_contract["PersonalInfo"]
@@ -66,8 +66,8 @@ class TestUserInfoPersonalInfo:
     # Registered
     # query parameter
     def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
-        trader = eth_account["trader"]["account_address"]
-        issuer = eth_account["issuer"]["account_address"]
+        trader = eth_account["trader"]
+        issuer = eth_account["issuer"]
 
         # Get PersonalInfo contract address
         personal_info = shared_contract["PersonalInfo"]
@@ -79,7 +79,7 @@ class TestUserInfoPersonalInfo:
         # Request target API
         query_string = f"account_address={trader}&" \
                        f"owner_address={issuer}&" \
-                       f"personal_info_address{_personal_info_address}"
+                       f"personal_info_address={_personal_info_address}"
         resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
@@ -96,7 +96,7 @@ class TestUserInfoPersonalInfo:
     # Not registered
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        issuer = eth_account["issuer"]["account_address"]
+        issuer = eth_account["issuer"]
 
         # Get PersonalInfo contract address
         personal_info = shared_contract["PersonalInfo"]
@@ -171,8 +171,8 @@ class TestUserInfoPersonalInfo:
     # Error_2_2
     # Invalid parameter: invalid account address
     def test_error_2_2(self, client: TestClient, session: Session):
-        trader = eth_account["issuer"]["account_address"][:-1]  # short address
-        issuer = eth_account["issuer"]["account_address"]
+        trader = eth_account["issuer"][:-1]  # short address
+        issuer = eth_account["issuer"]
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"
@@ -195,8 +195,8 @@ class TestUserInfoPersonalInfo:
     # Error_2_3
     # Invalid parameter: invalid owner address
     def test_error_2_3(self, client: TestClient, session: Session):
-        trader = eth_account["trader"]["account_address"]
-        issuer = eth_account["issuer"]["account_address"][:-1]  # short address
+        trader = eth_account["trader"]
+        issuer = eth_account["issuer"][:-1]  # short address
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"

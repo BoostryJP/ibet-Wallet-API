@@ -29,9 +29,9 @@ from app.contracts import Contract
 from app.model.db import (
     TokenHolderBatchStatus,
     TokenHoldersList,
-    Listing,
-    IDXLockedPosition
+    Listing
 )
+from batch import indexer_Token_Holders
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -50,12 +50,14 @@ from tests.contract_modules import (
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract, db_engine):
+    indexer_Token_Holders.db_engine = db_engine
     return Processor
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, session, db_engine):
+    indexer_Token_Holders.db_engine = db_engine
     processor = test_module()
     return processor
 
@@ -122,7 +124,7 @@ class TestTokenTokenHoldersCollectionId:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestTokenTokenHoldersCollectionId.issuer["account_address"]
+        _listing.owner_address = TestTokenTokenHoldersCollectionId.issuer
         session.add(_listing)
         session.commit()
 
@@ -133,7 +135,7 @@ class TestTokenTokenHoldersCollectionId:
     # Normal_1
     # GET
     # Holders in response is empty.
-    def test_normal_1(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_1(self, client: TestClient, shared_contract, session: Session, processor: Processor):
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = self.token_address
         target_token_holders_list.list_id = str(uuid.uuid4())
@@ -156,7 +158,7 @@ class TestTokenTokenHoldersCollectionId:
     # Normal_2
     # GET
     # Holders in response is filled after holders data is generated properly by batch.
-    def test_normal_2(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_2(self, client: TestClient, shared_contract, session: Session, processor: Processor):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -173,12 +175,12 @@ class TestTokenTokenHoldersCollectionId:
 
         # Transfer
         bond_transfer_to_exchange(self.issuer, {"address": escrow_contract.address}, token, 10000)
-        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 30000)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 50000)
+        transfer_token(token_contract, self.issuer, self.trader, 30000)
+        transfer_token(token_contract, self.issuer, self.user1, 50000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 30000)
-        bond_lock(self.trader, token, self.user1["account_address"], 2000)
-        bond_lock(self.trader, token, self.issuer["account_address"], 1000)
-        bond_unlock(self.user1, token, self.trader["account_address"], self.user1["account_address"], 1000)
+        bond_lock(self.trader, token, self.user1, 2000)
+        bond_lock(self.trader, token, self.issuer, 1000)
+        bond_unlock(self.user1, token, self.trader, self.user1, 1000)
 
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = token["address"]
@@ -196,11 +198,11 @@ class TestTokenTokenHoldersCollectionId:
         resp = client.get(apiurl)
 
         holders = [{
-            "account_address": self.trader["account_address"],
+            "account_address": self.trader,
             "hold_balance": 27000,
             "locked_balance": 2000
         }, {
-            "account_address": self.user1["account_address"],
+            "account_address": self.user1,
             "hold_balance": 51000,
             "locked_balance": 0
         }]
