@@ -9,7 +9,7 @@ services:
       - POSTGRES_PASSWORD=apluserpass
       - POSTGRES_DB=apldb
     volumes:
-      - ./tests/qa_createdb.sql:/docker-entrypoint-initdb.d/qa_createdb.sql
+      - ./tests/qa_createdb.postgres.sql:/docker-entrypoint-initdb.d/qa_createdb.sql
   mysql:
     image: mysql:5.7
     environment:
@@ -22,6 +22,8 @@ services:
       - 3306:3306
     command:
       mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./tests/qa_createdb.mysql.sql:/docker-entrypoint-initdb.d/qa_createdb.sql
   ganache:
     image: "trufflesuite/ganache:latest"
     ports:
