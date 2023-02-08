@@ -56,11 +56,12 @@ class Processor:
                             html_content=mail.html_content
                         )
                         smtp_mail.send_mail()
-                        db_session.delete(mail)
-                        db_session.commit()
                     except (SMTPException, SESException) as err:
                         LOG.warning(f"Could not send email: {err}")
                         continue
+                    finally:
+                        db_session.delete(mail)
+                        db_session.commit()
                 LOG.info("Process end")
         finally:
             db_session.close()

@@ -56,8 +56,8 @@ class TestProcessorSendMail:
     def test_normal_1(self, processor, session, caplog):
         # Run processor
         with (
-            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())),
-            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test")
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None))
         ):
             processor.process()
             session.commit()
@@ -83,14 +83,14 @@ class TestProcessorSendMail:
 
         # Run processor
         with (
-            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())),
-            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test")
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None))
         ):
             processor.process()
             session.commit()
 
         # Assertion
-        assert session.query(Mail).count() == 1
+        assert session.query(Mail).count() == 0
 
         assert 1 == caplog.record_tuples.count((
             LOG.name,
@@ -120,7 +120,7 @@ class TestProcessorSendMail:
 
         # Assertion
         mail_list = session.query(Mail).all()
-        assert len(mail_list) == 1
+        assert len(mail_list) == 0
 
         assert 1 == caplog.record_tuples.count((
             LOG.name,
