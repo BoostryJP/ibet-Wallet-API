@@ -1,12 +1,12 @@
-boto3== 1.26.59
+boto3== 1.26.68
 coincurve==18.0.0
 eth-keyfile==0.5.1
 eth-utils==1.10.0
-fastapi==0.88.0
+fastapi==0.91.0
 gunicorn==20.1.0
 gevent==22.10.2
 hexbytes==0.3.0
-orjson==3.8.3
+orjson==3.8.6
 PyMySQL==1.0.2
 psycopg2-binary==2.9.5
 pydantic[email]==1.10.4
