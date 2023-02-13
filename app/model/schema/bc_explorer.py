@@ -28,7 +28,10 @@ from pydantic import (
 from pydantic.dataclasses import dataclass
 from web3 import Web3
 
-from app.model.schema.base import ResultSet
+from app.model.schema.base import (
+    ResultSet,
+    SortOrder
+)
 
 
 ############################
@@ -65,6 +68,7 @@ class BlockDataDetail(BaseModel):
     size: NonNegativeInt
     transactions: list[str] = Field(description="Transaction list")
 
+
 class TxData(BaseModel):
     hash: str = Field(description="Transaction hash")
     block_hash: str
@@ -72,6 +76,7 @@ class TxData(BaseModel):
     transaction_index: NonNegativeInt
     from_address: str
     to_address: Optional[str]
+
 
 class TxDataDetail(BaseModel):
     hash: str = Field(description="Transaction hash")
@@ -92,12 +97,15 @@ class TxDataDetail(BaseModel):
 # REQUEST
 ############################
 
+
 @dataclass
 class ListBlockDataQuery:
     offset: Optional[NonNegativeInt] = Query(default=None, description="start position")
     limit: Optional[NonNegativeInt] = Query(default=None, description="number of set")
     from_block_number: Optional[NonNegativeInt] = Query(default=None)
     to_block_number: Optional[NonNegativeInt] = Query(default=None)
+    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+
 
 @dataclass
 class ListTxDataQuery:
@@ -125,15 +133,19 @@ class ListTxDataQuery:
 # RESPONSE
 ############################
 
+
 class BlockDataResponse(BaseModel):
     __root__: BlockDataDetail
+
 
 class BlockDataListResponse(BaseModel):
     result_set: ResultSet
     block_data: list[BlockData]
 
+
 class TxDataResponse(BaseModel):
     __root__: TxDataDetail
+
 
 class TxDataListResponse(BaseModel):
     result_set: ResultSet
