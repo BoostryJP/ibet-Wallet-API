@@ -111,7 +111,7 @@ class BlockScreen(TuiScreen):
     async def background_execution(self, refresh_rate: float):
         self.background_lock = Event()
         block_number = None
-        async with TCPConnector(limit=1, keepalive_timeout=60) as tcp_connector:
+        async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
             async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
                 while self.is_running:
                     start = time.time()
