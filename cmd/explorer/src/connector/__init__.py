@@ -57,7 +57,7 @@ def dict_factory(x: list[tuple[str, Any]]):
     return {k: v for (k, v) in x if v is not None}
 
 
-@AsyncTTL(time_to_live=5, skip_args=1)
+@AsyncTTL(time_to_live=10, skip_args=1)
 async def list_block_data(session: ClientSession, url: str, query: ListBlockDataQuery) -> BlockDataListResponse:
     async with session.get(url=f"{url}/NodeInfo/BlockData", params=asdict(query, dict_factory=dict_factory)) as resp:
         data = await resp.json()
