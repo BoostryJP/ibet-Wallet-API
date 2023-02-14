@@ -111,7 +111,7 @@ class BlockScreen(TuiScreen):
     async def background_execution(self, refresh_rate: float):
         self.background_lock = Event()
         block_number = None
-        async with TCPConnector(limit=1, keepalive_timeout=60) as tcp_connector:
+        async with TCPConnector(limit=2, keepalive_timeout=0) as tcp_connector:
             async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                 while self.is_running:
                     start = time.time()
@@ -163,11 +163,11 @@ class BlockScreen(TuiScreen):
         async with self.lock_reload_block:
             if self.current_block_number == 0:
                 return
-            async with TCPConnector(limit=1) as tcp_connector:
+            async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
                 async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                     query = ListBlockDataQuery()
                     query.to_block_number = self.current_block_number
-                    query.limit = 100
+                    query.from_block_number = self.current_block_number - 100
                     query.sort_order = SortOrder.DESC
                     try:
                         block_data_list: BlockDataListResponse = await connector.list_block_data(
@@ -212,7 +212,7 @@ class BlockScreen(TuiScreen):
         if selected_row is None:
             return
         block_number = selected_row_data[0]
-        async with TCPConnector(limit=1) as tcp_connector:
+        async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
             async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                 try:
                     block_detail: BlockDataDetail = await connector.get_block_data(
