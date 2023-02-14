@@ -5,7 +5,7 @@ description = "ibet-Wallet-API Terminal UI for Block Chain Explorer"
 authors = ["BOOSTRY Co., Ltd. <dev@boostry.co.jp>"]
 readme = "README.md"
 packages = [
-    { include = "src/" },
+    { include = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -17,7 +17,7 @@ aiohttp = "^3.8.4"
 fastapi = "^0.91.0"
 web3 = "^5.31.3"
 SQLAlchemy = "1.4"
-psycopg2-binary = "2.9.3"
+psycopg2-binary = "2.9.5"
 pydantic = {extras = ["email"], version = "^1.10.4"}
 
 [tool.poetry.dev-dependencies]

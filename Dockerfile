@@ -57,6 +57,12 @@ RUN . ~/.bash_profile \
  && pip install -r /app/requirements.txt \
  && rm -f /app/requirements.txt
 
+# install command
+COPY cmd/explorer /app/ibet-Wallet-API/cmd/explorer
+RUN . ~/.bash_profile \
+ && cd /app/ibet-Wallet-API/cmd/explorer \
+ && pip install -e ./
+
 # deploy app
 USER root
 COPY . /app/ibet-Wallet-API
