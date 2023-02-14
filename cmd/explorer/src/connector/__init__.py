@@ -47,7 +47,8 @@ async def health_check(url: str, session: ClientSession) -> None:
         await resp.json()
 
 
-async def get_node_info(url: str, session: ClientSession) -> GetBlockSyncStatusResponse:
+@AsyncTTL(time_to_live=10, skip_args=1)
+async def get_node_info(session: ClientSession, url: str) -> GetBlockSyncStatusResponse:
     async with session.get(url=f"{url}/NodeInfo/BlockSyncStatus") as resp:
         data = await resp.json()
         return GetBlockSyncStatusResponse.parse_obj(data.get("data"))

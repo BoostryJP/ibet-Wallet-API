@@ -45,6 +45,10 @@ DataTable:focus {
     height: 1;
     background: $accent-darken-3;
 }
+#tx_list_header {
+    height: 1;
+    background: $accent-darken-3;
+}
 .menubutton {
     color: $text;
     width: 30;

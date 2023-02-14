@@ -50,7 +50,7 @@ class TransactionScreen(TuiScreen):
                     Label(Text.from_markup(" [bold]ibet-Wallet-API BC Explorer[/bold]")),
                     Label(" | "),
                     Label(f"Selected block: -", id=ID.TX_SELECTED_BLOCK_NUMBER),
-                    id="header",
+                    id="tx_list_header",
                 ),
                 Horizontal(TxListView(classes="column"), TxDetailView(classes="column")),
                 classes="column",
@@ -72,8 +72,8 @@ class TransactionScreen(TuiScreen):
             return
 
         tx_hash = selected_row[0]
-        async with TCPConnector(limit=1) as tcp_connector:
-            async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
+        async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
+            async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                 tx_detail: TxDataDetail = await connector.get_tx_data(
                     session,
                     self.tui.url,
@@ -86,8 +86,8 @@ class TransactionScreen(TuiScreen):
 
     async def on_screen_resume(self):
         if self.tui.state.tx_query is not None:
-            async with TCPConnector(limit=1) as tcp_connector:
-                async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
+            async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
+                async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                     tx_list = await connector.list_tx_data(
                         session=session, url=self.tui.url, query=self.tui.state.tx_query
                     )
