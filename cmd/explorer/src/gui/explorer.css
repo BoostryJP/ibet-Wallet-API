@@ -1,0 +1,55 @@
+/*****************************
+    Screens
+ *****************************/
+BlockScreen {
+    layer: 0;
+}
+TransactionScreen {
+    layer: 0;
+}
+
+/*****************************
+    Widgets
+ *****************************/
+Menu {
+    visibility: hidden;
+    height: auto;
+    width: auto;
+    layer: 1;
+    opacity: 0;
+}
+DataTable {
+    width: 100%;
+    padding: 0;
+    border: $surface
+}
+DataTable:focus {
+     border: heavy $accent-darken-3;
+}
+
+/*****************************
+    Class&Id
+ *****************************/
+
+.column {
+    width: 1fr;
+}
+.visible {
+    visibility: visible;
+}
+#block_list_description {
+    dock: top;
+    height: 1;
+}
+#block_screen_header {
+    height: 1;
+    background: $accent-darken-3;
+}
+.menubutton {
+    color: $text;
+    width: 30;
+    height: 3;
+    margin: 0;
+    padding: 0;
+    border: heavy $accent-darken-3;
+}

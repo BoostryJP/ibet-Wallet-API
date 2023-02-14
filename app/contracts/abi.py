@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+import os
 from functools import lru_cache
 import eth_utils.abi
 
@@ -124,34 +125,36 @@ ABI = List[ABIDescription]
 
 @lru_cache(None)
 def create_abi_event_argument_models(contract_name: str) -> list[Type[BaseModel]]:
-    contract_file = f"app/contracts/json/{contract_name}.json"
 
-    contract_json = json.load(open(contract_file, 'r'))
-    abi_list = parse_obj_as(ABI, contract_json.get("abi"))
+    contract_file = f"{os.path.dirname(os.path.abspath(__file__))}/json/{contract_name}.json"
 
-    models = []
-    for abi in abi_list:
-        if abi.type != ABIDescriptionType.event:
-            continue
+    with open(contract_file, 'r') as file:
+        contract_json = json.load(file)
+        abi_list = parse_obj_as(ABI, contract_json.get("abi"))
 
-        fields = {}
-        for i in abi.inputs:
-            if i.indexed is True:
-                fields[i.name] = (Optional[i.type.to_python_type()], None)
+        models = []
+        for abi in abi_list:
+            if abi.type != ABIDescriptionType.event:
+                continue
 
-        if len(fields.values()) == 0:
-            continue
+            fields = {}
+            for i in abi.inputs:
+                if i.indexed is True:
+                    fields[i.name] = (Optional[i.type.to_python_type()], None)
 
-        class Config(BaseModel.Config):
-            extra = Extra.forbid
+            if len(fields.values()) == 0:
+                continue
 
-        model = create_model(
-            f"{abi.name.capitalize()}{abi.type.capitalize()}Argument",
-            **fields,
-            __config__=Config
-        )
+            class Config(BaseModel.Config):
+                extra = Extra.forbid
 
-        models.append(model)
+            model = create_model(
+                f"{abi.name.capitalize()}{abi.type.capitalize()}Argument",
+                **fields,
+                __config__=Config
+            )
 
-    parent_model = Union[tuple(models)]
+            models.append(model)
+
+        parent_model = Union[tuple(models)]
     return parent_model

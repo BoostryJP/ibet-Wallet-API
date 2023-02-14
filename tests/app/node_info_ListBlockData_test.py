@@ -274,6 +274,36 @@ class TestListBlockData:
             self.filter_response_item(self.block_0)
         ]
 
+    # Normal_4
+    # Pagination: sort_order
+    def test_normal_4(self, client: TestClient, session: Session):
+        config.BC_EXPLORER_ENABLED = True
+
+        self.insert_block_data(session, self.block_0)
+        self.insert_block_data(session, self.block_1)
+        self.insert_block_data(session, self.block_2)
+
+        # Request target API
+        params = {"sort_order": 1}
+        resp = client.get(self.apiurl, params=params)
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        response_data = resp.json()["data"]
+        assert response_data["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3
+        }
+        assert response_data["block_data"] == [
+            self.filter_response_item(self.block_2),
+            self.filter_response_item(self.block_1),
+            self.filter_response_item(self.block_0)
+        ]
+
     ###########################################################################
     # Error
     ###########################################################################

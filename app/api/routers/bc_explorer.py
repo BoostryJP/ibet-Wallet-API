@@ -94,6 +94,7 @@ def list_block_data(
     limit = request_query.limit
     from_block_number = request_query.from_block_number
     to_block_number = request_query.to_block_number
+    sort_order =request_query.sort_order  # default: asc
 
     query = session.query(IDXBlockData)
     total = query.count()
@@ -109,7 +110,10 @@ def list_block_data(
     count = query.count()
 
     # Sort
-    query = query.order_by(IDXBlockData.number)
+    if sort_order == 0:
+        query = query.order_by(IDXBlockData.number)
+    else:
+        query = query.order_by(desc(IDXBlockData.number))
 
     # Pagination
     if limit is not None:

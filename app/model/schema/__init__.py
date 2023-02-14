@@ -44,8 +44,10 @@ from .bc_explorer import (
     # Response
     BlockDataResponse,
     BlockDataListResponse,
+    BlockDataDetail,
     TxDataResponse,
-    TxDataListResponse
+    TxDataListResponse,
+    TxDataDetail
 )
 from .contract_abi import (
     ABI
