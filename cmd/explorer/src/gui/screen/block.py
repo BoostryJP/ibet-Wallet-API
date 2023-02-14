@@ -111,11 +111,11 @@ class BlockScreen(TuiScreen):
     async def background_execution(self, refresh_rate: float):
         self.background_lock = Event()
         block_number = None
-        async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
-            async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
+        async with TCPConnector(limit=1, keepalive_timeout=60) as tcp_connector:
+            async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                 while self.is_running:
                     start = time.time()
-                    tasks: list[Coroutine] = [connector.get_node_info(self.base_url, session)]
+                    tasks: list[Coroutine] = [connector.get_node_info(session, self.base_url)]
                     if block_number is not None:
                         if self.current_block_number == 0:
                             self.current_block_number = block_number
@@ -128,7 +128,7 @@ class BlockScreen(TuiScreen):
                                 self.base_url,
                                 ListBlockDataQuery(
                                     to_block_number=block_number,
-                                    from_block_number=max(block_number - 300, 0),
+                                    from_block_number=max(block_number - 100, 0),
                                     sort_order=SortOrder.DESC,
                                 ),
                             )
@@ -144,7 +144,7 @@ class BlockScreen(TuiScreen):
                         block_data_list: BlockDataListResponse = result[1]
                         transaction_count = sum([len(block.transactions) for block in block_data_list.block_data])
                         self.query_one(f"#{ID.BLOCK_TX_COUNT_5M}").update(
-                            f"Transactions(in last 300block): {str(transaction_count)}"
+                            f"Transactions(in last 100block): {str(transaction_count)}"
                         )
 
                     self.query_one(f"#{ID.BLOCK_CURRENT_BLOCK_NUMBER}", Static).update(
@@ -164,10 +164,10 @@ class BlockScreen(TuiScreen):
             if self.current_block_number == 0:
                 return
             async with TCPConnector(limit=1) as tcp_connector:
-                async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
+                async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                     query = ListBlockDataQuery()
                     query.to_block_number = self.current_block_number
-                    query.limit = 300
+                    query.limit = 100
                     query.sort_order = SortOrder.DESC
                     try:
                         block_data_list: BlockDataListResponse = await connector.list_block_data(
@@ -213,7 +213,7 @@ class BlockScreen(TuiScreen):
             return
         block_number = selected_row_data[0]
         async with TCPConnector(limit=1) as tcp_connector:
-            async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
+            async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                 try:
                     block_detail: BlockDataDetail = await connector.get_block_data(
                         session,
