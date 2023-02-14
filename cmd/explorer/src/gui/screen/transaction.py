@@ -50,7 +50,7 @@ class TransactionScreen(TuiScreen):
                     Label(Text.from_markup(" [bold]ibet-Wallet-API BC Explorer[/bold]")),
                     Label(" | "),
                     Label(f"Selected block: -", id=ID.TX_SELECTED_BLOCK_NUMBER),
-                    id="header",
+                    id="tx_list_header",
                 ),
                 Horizontal(TxListView(classes="column"), TxDetailView(classes="column")),
                 classes="column",
