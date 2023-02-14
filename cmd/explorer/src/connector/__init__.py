@@ -38,6 +38,10 @@ from app.model.schema import (
 )
 
 
+class ApiNotEnabledException(Exception):
+    pass
+
+
 async def health_check(url: str, session: ClientSession) -> None:
     async with session.get(url=f"{url}/") as resp:
         await resp.json()
@@ -57,8 +61,8 @@ def dict_factory(x: list[tuple[str, Any]]):
 async def list_block_data(session: ClientSession, url: str, query: ListBlockDataQuery) -> BlockDataListResponse:
     async with session.get(url=f"{url}/NodeInfo/BlockData", params=asdict(query, dict_factory=dict_factory)) as resp:
         data = await resp.json()
-        if resp.status != 200:
-            raise Exception(data)
+        if resp.status == 404:
+            raise ApiNotEnabledException(data)
         return BlockDataListResponse.parse_obj(data.get("data"))
 
 

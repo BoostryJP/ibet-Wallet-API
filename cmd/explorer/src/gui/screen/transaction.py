@@ -49,7 +49,7 @@ class TransactionScreen(TuiScreen):
                 Horizontal(
                     Label(Text.from_markup(" [bold]ibet-Wallet-API BC Explorer[/bold]")),
                     Label(" | "),
-                    Label(f"Selected block: -", id=ID.SELECTED_BLOCK_NUMBER),
+                    Label(f"Selected block: -", id=ID.TX_SELECTED_BLOCK_NUMBER),
                     id="header",
                 ),
                 Horizontal(TxListView(classes="column"), TxDetailView(classes="column")),
@@ -92,6 +92,6 @@ class TransactionScreen(TuiScreen):
                         session=session, url=self.tui.url, query=self.tui.state.tx_query
                     )
                     self.query_one(TxListTable).update_rows(tx_list.tx_data)
-                    self.query_one(f"#{ID.SELECTED_BLOCK_NUMBER}", Label).update(
+                    self.query_one(f"#{ID.TX_SELECTED_BLOCK_NUMBER}", Label).update(
                         f"Selected block: {self.tui.state.tx_query.block_number}"
                     )

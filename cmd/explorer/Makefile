@@ -11,6 +11,9 @@ black:
 test:
 	pytest .
 
+console:
+	textual console
+
 dev:
 	TEXTUAL=devtools poetry run python src/main.py
 

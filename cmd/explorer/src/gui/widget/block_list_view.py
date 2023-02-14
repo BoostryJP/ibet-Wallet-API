@@ -39,7 +39,7 @@ class BlockListView(TuiWidget):
             Label("Loaded Time: ", id=ID.BLOCK_LIST_LOADED_TIME),
             Label("      "),
             Label("", id=ID.BLOCK_LIST_LOADING),
-            id="block_list_description",
+            id=ID.BLOCK_LIST_DESCRIPTION,
         )
         yield BlockListTable(name="blocks", complete_refresh=True)
 

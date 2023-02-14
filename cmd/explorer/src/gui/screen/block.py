@@ -34,6 +34,7 @@ from textual.widgets import Button, DataTable, Footer, Label, Static
 
 import connector
 from gui.consts import ID
+from gui.error import Error
 from gui.screen.base import TuiScreen
 from gui.widget.block_detail_view import BlockDetailView
 from gui.widget.block_list_table import BlockListTable
@@ -64,7 +65,7 @@ class BlockScreen(TuiScreen):
     def __init__(self, name: str | None = None, id: str | None = None, classes: str | None = None):
         super().__init__(name=name, id=id, classes=classes)
         self.base_url = self.tui.url
-        self.refresh_rate = 1.0
+        self.refresh_rate = 3.0
         self.block_detail_header_widget = BlockDetailView(classes="column")
 
     def compose(self) -> ComposeResult:
@@ -73,19 +74,19 @@ class BlockScreen(TuiScreen):
                 Horizontal(
                     Label(Text.from_markup(" [bold]ibet-Wallet-API BC Explorer[/bold]")),
                     Label(" | "),
-                    Label("Fetching current block...", id=ID.CURRENT_BLOCK_NUMBER),
+                    Label("Fetching current block...", id=ID.BLOCK_CURRENT_BLOCK_NUMBER),
                     Label(" | "),
-                    Label("Fetching current status...", id=ID.IS_SYNCED),
+                    Label("Fetching current status...", id=ID.BLOCK_IS_SYNCED),
                     Label(" | "),
-                    Label("Fetching transaction count...", id=ID.TX_COUNT_5M),
-                    id="header",
+                    Label("Fetching transaction count...", id=ID.BLOCK_TX_COUNT_5M),
+                    id=ID.BLOCK_SCREEN_HEADER,
                 ),
                 Horizontal(BlockListView(classes="column"), self.block_detail_header_widget),
                 classes="column",
             )
         )
         yield Footer()
-        yield Menu(id="menu")
+        yield Menu(id=ID.MENU)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         event.prevent_default()
@@ -132,25 +133,24 @@ class BlockScreen(TuiScreen):
                                 ),
                             )
                         )
-                    result = await asyncio.gather(*tasks)
+                    try:
+                        result = await asyncio.gather(*tasks)
+                    except Exception as e:
+                        self.emit_no_wait(Error(e, self))
+                        await asyncio.sleep(5)
+                        continue
                     node_info: GetBlockSyncStatusResponse = result[0]
                     if block_number is not None:
                         block_data_list: BlockDataListResponse = result[1]
                         transaction_count = sum([len(block.transactions) for block in block_data_list.block_data])
-                        try:
-                            self.query_one(f"#{ID.TX_COUNT_5M}").update(
-                                f"Transactions(in last 300block): {str(transaction_count)}"
-                            )
-                        except:
-                            pass
-
-                    try:
-                        self.query_one(f"#{ID.CURRENT_BLOCK_NUMBER}", Static).update(
-                            f"Current Block: {node_info.latest_block_number}"
+                        self.query_one(f"#{ID.BLOCK_TX_COUNT_5M}").update(
+                            f"Transactions(in last 300block): {str(transaction_count)}"
                         )
-                        self.query_one(f"#{ID.IS_SYNCED}", Static).update(f"Is Synced: {node_info.is_synced}")
-                    except:
-                        pass
+
+                    self.query_one(f"#{ID.BLOCK_CURRENT_BLOCK_NUMBER}", Static).update(
+                        f"Current Block: {node_info.latest_block_number}"
+                    )
+                    self.query_one(f"#{ID.BLOCK_IS_SYNCED}", Static).update(f"Is Synced: {node_info.is_synced}")
                     block_number = node_info.latest_block_number
                     elapsed_time = time.time() - start
                     await asyncio.sleep(max(refresh_rate - elapsed_time, 0))
@@ -169,11 +169,15 @@ class BlockScreen(TuiScreen):
                     query.to_block_number = self.current_block_number
                     query.limit = 300
                     query.sort_order = SortOrder.DESC
-                    block_data_list: BlockDataListResponse = await connector.list_block_data(
-                        session,
-                        self.base_url,
-                        query,
-                    )
+                    try:
+                        block_data_list: BlockDataListResponse = await connector.list_block_data(
+                            session,
+                            self.base_url,
+                            query,
+                        )
+                    except Exception as e:
+                        self.emit_no_wait(Error(e, self))
+                        return
                     self.query_one(BlockListTable).update_rows(block_data_list.block_data)
                     self.query_one(f"#{ID.BLOCK_LIST_LOADED_TIME}", Static).update(
                         f"Loaded Time: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}"
@@ -210,9 +214,13 @@ class BlockScreen(TuiScreen):
         block_number = selected_row_data[0]
         async with TCPConnector(limit=1) as tcp_connector:
             async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(10)) as session:
-                block_detail: BlockDataDetail = await connector.get_block_data(
-                    session,
-                    self.base_url,
-                    block_number,
-                )
+                try:
+                    block_detail: BlockDataDetail = await connector.get_block_data(
+                        session,
+                        self.base_url,
+                        block_number,
+                    )
+                except Exception as e:
+                    self.emit_no_wait(Error(e, self))
+                    return
                 self.query_one(BlockDetailView).block_detail = block_detail

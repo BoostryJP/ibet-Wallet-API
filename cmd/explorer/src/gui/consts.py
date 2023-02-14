@@ -32,15 +32,17 @@ INFO = "[blue]:information:[/]"
 
 
 class ID(str, Enum):
+    BLOCK_CONNECTED = "block_connected"
+    BLOCK_CURRENT_BLOCK_NUMBER = "block_current_block_number"
+    BLOCK_IS_SYNCED = "block_is_synced"
+    BLOCK_TX_COUNT_5M = "block_tx_count_5m"
+    BLOCK_SCREEN_HEADER = "block_screen_header"
+
     BLOCK_LIST_FILTER = "block_list_filter"
     BLOCK_LIST_LOADED_TIME = "block_list_loaded_time"
     BLOCK_LIST_LOADING = "block_list_loading"
-    BLOCK_LIST_HEADER = "block_list_header"
+    BLOCK_LIST_DESCRIPTION = "block_list_description"
 
-    CONNECTED = "connected"
-    CURRENT_BLOCK_NUMBER = "current_block_number"
-    IS_SYNCED = "is_synced"
-    TX_COUNT_5M = "tx_count_5m"
-    HEADER = "header"
+    TX_SELECTED_BLOCK_NUMBER = "tx_selected_block_number"
 
-    SELECTED_BLOCK_NUMBER = "selected_block_number"
+    MENU = "menu"

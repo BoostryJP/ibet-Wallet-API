@@ -16,24 +16,19 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import asyncio
-import os
-import sys
+from typing import Any
 
-import typer
-
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-
-from gui.explorer import ExplorerApp
-
-app = typer.Typer(pretty_exceptions_show_locals=False)
+from textual.message import Message
 
 
-@app.command()
-def run(url: str = typer.Argument("http://localhost:5000", help="ibet-Wallet-API server URL to connect")):
-    explorer = ExplorerApp()
-    asyncio.run(explorer.run_async(url=url))
+class Error(Message):
+    """
+    A message sent when there was an error encoding the content.
+    """
 
-
-if __name__ == "__main__":
-    app()
+    def __init__(self, error: Exception, *args: Any, **kwargs: Any) -> None:
+        """
+        Initialise the error message.
+        """
+        super().__init__(*args, **kwargs)
+        self.error = error

@@ -16,40 +16,39 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Literal, Union
+from typing import Literal
 
-from app.model.schema import BlockDataDetail
 from rich.align import Align
 from rich.panel import Panel
 from rich.style import Style
-from textual.reactive import Reactive, reactive
+from rich.traceback import Traceback
 
-from .. import styles
-from ..rendarable.block_detail_info import BlockDetailInfo
-from .base import TuiWidget
+from gui import styles
+from gui.widget.base import TuiWidget
 
 
-class BlockDetailView(TuiWidget):
-    block_detail: Reactive[BlockDataDetail | None] = reactive(None)
-
-    def watch_block_detail(self, old: BlockDetailInfo, new: BlockDetailInfo):
-        self.render()
-
+class TracebackWidget(TuiWidget):
     def render(self) -> Panel:
-        block_detail: Union[Align, BlockDetailInfo] = Align.center("Not selected", vertical="middle")
-        style: Style | Literal["none"] = Style(bgcolor="#004578")
-
-        if self.block_detail is not None:
-            block_detail = BlockDetailInfo(self.block_detail)
-            style = "none"
+        style: Style | Literal["none"] = Style()
+        if self.tui.state.error is not None:
+            trace_back = Traceback.from_exception(
+                exc_type=type(self.tui.state.error),
+                exc_value=self.tui.state.error,
+                traceback=self.tui.state.error.__traceback__,
+            )
+            content: Align = Align.center(trace_back, vertical="middle")
+        else:
+            content = Align.center("", vertical="middle")
 
         panel = Panel(
-            block_detail,
-            title="[bold]Block[/]",
-            title_align="left",
+            content,
+            title="[bold]Exception[/]",
             style=style,
             border_style=styles.BORDER,
             box=styles.BOX,
+            title_align="left",
+            padding=0,
+            highlight=True,
         )
 
         return panel

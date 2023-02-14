@@ -37,15 +37,11 @@ DataTable:focus {
 .visible {
     visibility: visible;
 }
-#block_list_header {
-    dock: top;
-    height: 1;
-}
 #block_list_description {
     dock: top;
     height: 1;
 }
-#header {
+#block_screen_header {
     height: 1;
     background: $accent-darken-3;
 }

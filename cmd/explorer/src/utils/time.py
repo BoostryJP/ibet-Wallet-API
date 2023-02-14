@@ -44,7 +44,7 @@ def human_time(secs: int):
         >>> human_time(266400)
         "3 days"
         >>> human_time(0)
-        "less than minutes"
+        "0 secs"
         >>> human_time(1)
         "less than minutes"
     Args:
@@ -53,7 +53,7 @@ def human_time(secs: int):
         str: Human-readable time.
     """
     if secs < 0:
-        return "less than minutes"
+        return "0 secs"
     elif secs == 0:
         return "0 secs"
     elif 1 < secs < INTERVALS["minute"]:

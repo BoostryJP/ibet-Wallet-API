@@ -19,10 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 
+from rich.traceback import Traceback
 from textual.app import App, ReturnType
 from textual.binding import Binding
 
+from connector import ApiNotEnabledException
+
+from .error import Error
 from .screen.block import BlockScreen
+from .screen.traceback import TracebackScreen
 from .screen.transaction import TransactionScreen
 
 path = os.path.join(os.path.dirname(__file__), "../../../../")
@@ -33,6 +38,7 @@ from app.model.schema import ListTxDataQuery
 
 class AppState:
     tx_query: ListTxDataQuery | None = None
+    error: Exception | None = None
 
 
 class ExplorerApp(App):
@@ -40,7 +46,7 @@ class ExplorerApp(App):
 
     BINDINGS = [Binding("q", "quit", "Quit")]
     CSS_PATH = f"{os.path.dirname(os.path.abspath(__file__))}/explorer.css"
-    SCREENS = {"transaction_screen": TransactionScreen}
+    SCREENS = {"transaction_screen": TransactionScreen, "traceback_screen": TracebackScreen}
     url: str
     state: AppState = AppState()
 
@@ -60,3 +66,10 @@ class ExplorerApp(App):
 
     async def action_quit(self) -> None:
         self.exit()
+
+    def on_error(self, event: Error) -> None:
+        if isinstance(event.error, ApiNotEnabledException):
+            raise event.error from None
+
+        self.state.error = event.error
+        self.push_screen("traceback_screen")

@@ -51,7 +51,7 @@ class TxDetailInfo:
         if self.tx_detail.contract_parameters is not None:
             function_arguments_table = Table(box=None, expand=False, show_header=False, show_edge=False)
             for k, v in self.tx_detail.contract_parameters.items():
-                function_arguments_table.add_row(f"  {k}: ", str(v))
+                function_arguments_table.add_row(f"{k}: ", str(v))
             contract_table.add_row("Contract Function Arguments:", Panel(function_arguments_table))
 
         return Group(
