@@ -1,21 +1,12 @@
 # ibet-Wallet-API BC-Explorer
 
-## Setup
-
-### Poetry
-```bash
-poetry install
-```
-
-### Pip
-```bash
-pip install -e ./
-```
-
 ## Run
 
+### with container
+
 ```bash
-> ibet-explorer --help
+> docker exec -it ibet-wallet-api bash --login
+> apl@2e5a80e06fcb:/$ ibet-explorer
 
  Usage: ibet-explorer [OPTIONS] [URL]
 
@@ -29,16 +20,19 @@ pip install -e ./
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-- You can run this on pythonic way.
+- **URL**: ibet-Wallet-API URL.
+- You can run this on pythonic way in local.
 
 ### Poetry
 ```bash
-poetry run python src/main.py --url http://localhost:5000
+> poetry install
+> poetry run python src/main.py --url http://localhost:5000
 ```
 
 ### Pip
 ```bash
-python src/main.py --url http://localhost:5000
+> pip install -e ./
+> python src/main.py --url http://localhost:5000
 ```
 
 ## Screenshots 👀
