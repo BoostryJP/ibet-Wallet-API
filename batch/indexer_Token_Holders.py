@@ -81,8 +81,6 @@ class Processor:
     token_owner_address: str
     token_template: str
 
-    checkpoint_used: bool
-
     token_contract: Optional[Contract]
     exchange_contract: Optional[Contract]
     escrow_contract: Optional[Contract]
@@ -91,7 +89,6 @@ class Processor:
         self.target = None
         self.balance_book = self.BalanceBook()
         self.tradable_exchange_address = ""
-        self.checkpoint_used = False
 
     @staticmethod
     def __get_db_session() -> Session:
@@ -210,7 +207,6 @@ class Processor:
         self.tradable_exchange_address = ""
         self.token_owner_address = ""
         self.token_template = ""
-        self.checkpoint_used = False
         self.token_contract = None
         self.exchange_contract = None
         self.escrow_contract = None
