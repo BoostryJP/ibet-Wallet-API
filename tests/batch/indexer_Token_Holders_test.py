@@ -249,11 +249,11 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def token_holders_list(token, block_number) -> TokenHoldersList:
+    def token_holders_list(token, block_number, status: TokenHolderBatchStatus = TokenHolderBatchStatus.PENDING) -> TokenHoldersList:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.list_id = str(uuid.uuid4())
         target_token_holders_list.token_address = token["address"]
-        target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
+        target_token_holders_list.batch_status = status.value
         target_token_holders_list.block_number = block_number
         return target_token_holders_list
 
@@ -1575,6 +1575,52 @@ class TestProcessor:
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list1.list_id}) status changes to be done."))
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list2.list_id}) status changes to be done."))
         assert 2 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Collect job has been completed"))
+
+    # <Normal_15>
+    # When stored checkpoint is 9,999,999 and current block number is 19,999,999,
+    # then processor should call "__process_all" method 10 times.
+    def test_normal_15(self, processor: Processor, shared_contract, session: Session, caplog: pytest.LogCaptureFixture):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        current_block_number = 20000000 - 1
+        checkpoint_block_number = 10000000 - 1
+
+        token = self.issue_token_bond(
+            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract
+        )
+        self.listing_token(token["address"], session)
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+
+        # Insert collection record with above token and checkpoint block number
+        target_token_holders_list = self.token_holders_list(token, current_block_number)
+        session.add(target_token_holders_list)
+        completed_token_holders_list = self.token_holders_list(token, checkpoint_block_number, status=TokenHolderBatchStatus.DONE)
+        session.add(completed_token_holders_list)
+        session.commit()
+
+        # Setting current block number to 19,999,999
+        with (
+            mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"])
+        ):
+            # Setting stored index to 9,999,999
+            processor.collect()
+            # Then processor call "__process_all" method 10 times.
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=10000000, to=10999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=11000000, to=11999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=12000000, to=12999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=13000000, to=13999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=14000000, to=14999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=15000000, to=15999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=16000000, to=16999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=17000000, to=17999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=18000000, to=18999999"))
+            assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"process from=19000000, to=19999999"))
+
+            session.rollback()
+            processed_list = session.query(TokenHoldersList).filter(TokenHoldersList.id == target_token_holders_list.id).first()
+            assert processed_list.block_number == 19999999
+            assert processed_list.batch_status == TokenHolderBatchStatus.DONE.value
 
     ###########################################################################
     # Error Case
