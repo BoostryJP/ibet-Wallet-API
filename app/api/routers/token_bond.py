@@ -33,7 +33,8 @@ from app.database import db_session
 from app.errors import (
     InvalidParameterError,
     NotSupportedError,
-    DataNotExistsError
+    DataNotExistsError,
+    ServiceUnavailable
 )
 from app import config
 from app.model.blockchain import BondToken
@@ -314,6 +315,9 @@ def retrieve_straight_bond_token(
     try:
         token_detail = BondToken.get(session=session, token_address=token_address)
 
+    except ServiceUnavailable as e:
+        LOG.warning(e)
+        raise DataNotExistsError('contract_address: %s' % contract_address) from None
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError('contract_address: %s' % contract_address) from None
