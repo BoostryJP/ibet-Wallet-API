@@ -55,6 +55,7 @@ from app.model.schema import (
 from app.contracts import Contract
 from app.utils.contract_error_code import error_code_msg
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -98,10 +99,10 @@ def get_transaction_count(
 
     eth_info = {"nonce": nonce, "gasprice": gasprice, "chainid": chainid}
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": eth_info
-    }
+    })
 
 
 # ------------------------------
@@ -276,10 +277,10 @@ def send_raw_transaction(
             "transaction_hash": tx_hash.hex()
         })
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": result
-    }
+    })
 
 
 # ------------------------------
@@ -390,10 +391,10 @@ def send_raw_transaction_no_wait(
             "transaction_hash": transaction_hash.hex()
         })
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": result
-    }
+    })
 
 
 # ------------------------------
@@ -435,10 +436,10 @@ def wait_for_transaction_receipt(
     except TimeExhausted:
         raise DataNotExistsError
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": result
-    }
+    })
 
 
 def inspect_tx_failure(tx_hash: str) -> str:

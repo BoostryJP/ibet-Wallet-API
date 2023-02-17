@@ -54,6 +54,7 @@ from app.model.schema import (
     RetrieveCouponTokenResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -535,10 +536,10 @@ def list_all_membership_order_history(
     """
     Endpoint: /DEX/OrderList/Membership
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": order_list_res
-    }
+    })
 
 
 # ------------------------------
@@ -619,10 +620,10 @@ def list_all_coupon_order_history(
     """
     Endpoint: /DEX/OrderList/Coupon
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": order_list_res
-    }
+    })
 
 
 # ------------------------------
@@ -707,7 +708,7 @@ def list_all_order_history_by_token_address(
     """
     Endpoint: /DEX/OrderList/{token_address}
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": order_list_res
-    }
+    })

@@ -38,6 +38,7 @@ from app.model.schema import (
     ListAllEventsResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -109,10 +110,10 @@ def list_all_e2e_messaging_event_logs(
         tmp_list,
         key=lambda x: (x["block_number"], x["log_index"])
     )
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": resp_json
-    }
+    })
 
 
 # /Events/IbetEscrow
@@ -184,10 +185,10 @@ def list_all_ibet_escrow_event_logs(
         tmp_list,
         key=lambda x: (x["block_number"], x["log_index"])
     )
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": resp_json
-    }
+    })
 
 
 # /Events/IbetSecurityTokenEscrow
@@ -268,7 +269,7 @@ def list_all_ibet_security_token_escrow_event_logs(
         tmp_list,
         key=lambda x: (x["block_number"], x["log_index"])
     )
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": resp_json
-    }
+    })

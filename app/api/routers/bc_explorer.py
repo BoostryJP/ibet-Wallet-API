@@ -54,6 +54,7 @@ from app.model.schema import (
     TxDataListResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -142,10 +143,10 @@ def list_block_data(
         "block_data": block_data
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 # ------------------------------
 # [BC-Explorer] Retrieve Block data
@@ -176,8 +177,8 @@ def get_block_data(
     if block_data is None:
         raise DataNotExistsError
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": {
             "number": block_data.number,
             "parent_hash": block_data.parent_hash,
@@ -198,7 +199,7 @@ def get_block_data(
             "size": block_data.size,
             "transactions": block_data.transactions
         }
-    }
+    })
 
 # ------------------------------
 # [BC-Explorer] List Tx data
@@ -274,10 +275,10 @@ def list_tx_data(
         },
         "tx_data": tx_data
     }
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 # ------------------------------
@@ -332,8 +333,8 @@ def get_tx_data(
         except FileNotFoundError:
             pass
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": {
             "hash": tx_data.hash,
             "block_hash": tx_data.block_hash,
@@ -349,4 +350,4 @@ def get_tx_data(
             "value": tx_data.value,
             "nonce": tx_data.nonce
         }
-    }
+    })

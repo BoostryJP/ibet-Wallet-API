@@ -50,6 +50,7 @@ from app.model.db import (
     IDXCouponToken
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -157,10 +158,10 @@ def list_all_coupon_tokens(
         "tokens": tokens
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 @router.get(
@@ -249,10 +250,10 @@ def list_all_coupon_token_addresses(
         "address_list": [_token.token_address for _token in _token_list]
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 @router.get(
@@ -300,7 +301,7 @@ def retrieve_coupon_token(
         LOG.error(e)
         raise DataNotExistsError('contract_address: %s' % contract_address) from None
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": token_detail.__dict__
-    }
+    })

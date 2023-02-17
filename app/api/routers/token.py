@@ -56,6 +56,7 @@ from app.model.schema import (
     TransferApprovalHistoriesResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 from app.utils.web3_utils import Web3Wrapper
 from app.model.db import (
     Listing,
@@ -141,10 +142,10 @@ def get_token_status(
         'status': status,
         'transferable': transferable
     }
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": response_json
-    }
+    })
 
 
 @router.get(
@@ -203,10 +204,10 @@ def get_token_holders(
             "exchange_commitment": holder.exchange_commitment
         })
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": resp_body
-    }
+    })
 
 
 @router.get(
@@ -259,10 +260,10 @@ def get_token_holders_count(
         "count": _count
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": resp_body
-    }
+    })
 
 
 @router.post(
@@ -322,13 +323,13 @@ def create_token_holders_collection(
     if _same_combi_record is not None:
         # 同じブロックナンバー・トークンアドレスのコレクションが、PENDINGかDONEで既に存在する場合、
         # そのlist_idとstatusを返却する。
-        return {
-            **SuccessResponse.use().dict(),
+        return json_response({
+            **SuccessResponse.default(),
             "data": {
                 "list_id": _same_combi_record.list_id,
                 "status": _same_combi_record.batch_status,
             }
-        }
+        })
     else:
         token_holder_list = TokenHoldersList()
         token_holder_list.list_id = list_id
@@ -338,13 +339,13 @@ def create_token_holders_collection(
         session.add(token_holder_list)
         session.commit()
 
-        return {
-            **SuccessResponse.use().dict(),
+        return json_response({
+            **SuccessResponse.default(),
             "data": {
                 "list_id": token_holder_list.list_id,
                 "status": token_holder_list.batch_status,
             }
-        }
+        })
 
 
 @router.get(
@@ -411,13 +412,13 @@ def get_token_holders_collection(
         all()
     token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": {
             "status": _same_list_id_record.batch_status,
             "holders": token_holders
         }
-    }
+    })
 
 
 @router.get(
@@ -479,10 +480,10 @@ def list_all_transfer_histories(
         "transfer_history": resp_data
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 @router.get(
@@ -544,8 +545,8 @@ def list_all_transfer_approval_histories(
         "transfer_approval_history": resp_data
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 

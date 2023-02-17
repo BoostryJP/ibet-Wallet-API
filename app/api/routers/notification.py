@@ -44,6 +44,7 @@ from app.model.schema import (
     NotificationUpdateResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -126,10 +127,10 @@ def list_all_notifications(
         "notifications": notifications
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 @router.post(
@@ -154,7 +155,7 @@ def read_all_notifications(
         update({'is_read': data.is_read})
     session.commit()
 
-    return SuccessResponse.use()
+    return json_response(SuccessResponse.default())
 
 
 @router.get(
@@ -181,12 +182,12 @@ def count_notifications(
         filter(Notification.is_deleted == False). \
         count()
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": {
             "unread_counts": count,
         }
-    }
+    })
 
 
 @router.post(
@@ -224,10 +225,10 @@ def update_notification(
 
     session.commit()
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": notification.json()
-    }
+    })
 
 
 @router.delete(
@@ -252,4 +253,4 @@ def delete_notification(
     session.delete(_notification)
     session.commit()
 
-    return SuccessResponse.use()
+    return json_response(SuccessResponse.default())

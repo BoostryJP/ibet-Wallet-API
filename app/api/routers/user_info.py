@@ -34,6 +34,7 @@ from app.model.schema import (
     RetrievePersonalInfoQuery
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -86,10 +87,10 @@ def get_payment_account_registration_status(
             "approval_status": account_info[3]
         }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": response_json
-    }
+    })
 
 
 # ------------------------------
@@ -140,7 +141,7 @@ def get_personal_info_registration_status(
             "registered": True
         }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": response_json
-    }
+    })

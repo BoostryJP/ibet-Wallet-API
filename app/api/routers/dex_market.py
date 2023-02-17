@@ -55,6 +55,7 @@ from app.model.schema import (
     RetrieveAgreementDetailResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -136,10 +137,10 @@ def retrieve_agreement(
         "paid": paid,  # 支払済フラグ
         "expiry": expiry  # 有効期限（unixtime）
     }
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": res_data
-    }
+    })
 
 
 # /DEX/Market/OrderBook/Membership
@@ -231,10 +232,10 @@ def list_all_membership_order_book(
     else:
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": order_list
-    }
+    })
 
 
 # /DEX/Market/LastPrice/Membership
@@ -272,10 +273,10 @@ def list_all_membership_last_price(
             "last_price": last_price
         })
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": price_list
-    }
+    })
 
 
 # /DEX/Market/Tick/Membership
@@ -327,10 +328,10 @@ def list_all_membership_tick(
             LOG.error(e)
             tick_list = []
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": tick_list
-    }
+    })
 
 
 # /DEX/Market/OrderBook/Coupon
@@ -422,10 +423,10 @@ def list_all_coupon_order_book(
     else:
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": order_list
-    }
+    })
 
 
 # /DEX/Market/LastPrice/Coupon
@@ -462,10 +463,10 @@ def list_all_coupon_last_price(
             "last_price": last_price
         })
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": price_list
-    }
+    })
 
 
 # /DEX/Market/Tick/Coupon
@@ -517,7 +518,7 @@ def list_all_coupon_tick(
             LOG.error(e)
             tick_list = []
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": tick_list
-    }
+    })

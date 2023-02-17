@@ -59,6 +59,7 @@ from app.model.schema import (
     GetAdminTokenTypeResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -95,10 +96,10 @@ def list_all_admin_tokens(
     # idの降順にソート
     res_body.sort(key=lambda x: x["id"], reverse=True)  # type: ignore
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": res_body
-    }
+    })
 
 
 @router.post(
@@ -198,7 +199,7 @@ def register_admin_token(
     session.merge(position)
     session.commit()
 
-    return SuccessResponse.use()
+    return json_response(SuccessResponse.default())
 
 
 # ------------------------------
@@ -223,10 +224,10 @@ def get_admin_token_type():
         "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,
         "IbetCoupon": config.COUPON_TOKEN_ENABLED
     }
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": res_body
-    }
+    })
 
 
 # ------------------------------
@@ -254,10 +255,10 @@ def retrieve_admin_token(
         first()
 
     if token is not None:
-        return {
-            **SuccessResponse.use().dict(),
+        return json_response({
+            **SuccessResponse.default(),
             "data": token.json()
-        }
+        })
     else:
         raise DataNotExistsError()
 
@@ -296,7 +297,7 @@ def update_token(
     token.owner_address = owner_address
     session.merge(token)
     session.commit()
-    return SuccessResponse.use()
+    return json_response(SuccessResponse.default())
 
 
 @router.delete(
@@ -325,7 +326,7 @@ def delete_token(
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()
     session.commit()
-    return SuccessResponse.use()
+    return json_response(SuccessResponse.default())
 
 
 def available_token_template():
