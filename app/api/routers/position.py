@@ -43,7 +43,8 @@ from app.database import db_session
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError,
-    NotSupportedError
+    NotSupportedError,
+    ServiceUnavailable
 )
 from app.model.db import (
     Listing,
@@ -350,6 +351,9 @@ class BasePosition:
                 else:
                     position["token_address"] = token_address
                 return position
+        except ServiceUnavailable as e:
+            LOG.warning(e)
+            return None
         except Exception as e:
             LOG.error(e)
             return None
@@ -447,6 +451,9 @@ class BasePositionShare(BasePosition):
                 else:
                     position["token_address"] = token_address
                 return position
+        except ServiceUnavailable as e:
+            LOG.warning(e)
+            return None
         except Exception as e:
             LOG.error(e)
             return None
@@ -520,6 +527,9 @@ class BasePositionStraightBond(BasePosition):
                 else:
                     position["token_address"] = token_address
                 return position
+        except ServiceUnavailable as e:
+            LOG.warning(e)
+            return None
         except Exception as e:
             LOG.error(e)
             return None
@@ -746,6 +756,9 @@ class BasePositionCoupon(BasePosition):
                 else:
                     position["token_address"] = token_address
                 return position
+        except ServiceUnavailable as e:
+            LOG.warning(e)
+            return None
         except Exception as e:
             LOG.error(e)
             return None
