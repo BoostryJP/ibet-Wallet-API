@@ -39,7 +39,8 @@ from app import log
 from app.database import db_session
 from app.errors import (
     InvalidParameterError,
-    DataNotExistsError
+    DataNotExistsError,
+    ServiceUnavailable
 )
 from app import config
 from app.contracts import Contract
@@ -140,6 +141,9 @@ def get_token_status(
             function_name="transferable",
             args=()
         )
+    except ServiceUnavailable as e:
+        LOG.warning(e)
+        raise DataNotExistsError('contract_address: %s' % contract_address)
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError('contract_address: %s' % contract_address)
