@@ -119,10 +119,10 @@ class Company:
 
     def json(self):
         return {
-            "address": self.obj.get("address"),
-            "corporate_name": self.obj.get("corporate_name"),
-            "rsa_publickey": self.obj.get("rsa_publickey"),
-            "homepage": self.obj.get("homepage"),
+            "address": self.obj.get("address") or "",
+            "corporate_name": self.obj.get("corporate_name") or "",
+            "rsa_publickey": self.obj.get("rsa_publickey") or "",
+            "homepage": self.obj.get("homepage") or "",
         }
 
     def __getitem__(self, key: str):
