@@ -51,17 +51,17 @@ RUN . ~/.bash_profile \
  && pyenv global 3.10.4 \
  && pip install --upgrade pip
 
-# install python packages
-COPY requirements.txt /app/requirements.txt
-RUN . ~/.bash_profile \
- && pip install -r /app/requirements.txt \
- && rm -f /app/requirements.txt
-
 # install command
 COPY cmd/explorer /app/ibet-Wallet-API/cmd/explorer
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API/cmd/explorer \
  && pip install -e ./
+
+# install python packages
+COPY requirements.txt /app/requirements.txt
+RUN . ~/.bash_profile \
+ && pip install -r /app/requirements.txt \
+ && rm -f /app/requirements.txt
 
 # deploy app
 USER root
