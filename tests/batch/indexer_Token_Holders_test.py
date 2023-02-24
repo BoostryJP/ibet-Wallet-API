@@ -338,6 +338,21 @@ class TestProcessor:
         bond_lock(self.trader, token, self.issuer["account_address"], 3000)
         # user1: 6000 trader: (hold: 41000, locked: 3000)
 
+        # Issuer issues other token.
+        other_token = self.issue_token_bond(
+            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract
+        )
+        other_token_contract = Contract.get_contract("IbetStraightBond", other_token["address"])
+        transfer_token(other_token_contract, self.issuer["account_address"], self.user1["account_address"], 10000)
+        transfer_token(other_token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        bond_transfer_to_exchange(self.user1, exchange_contract, other_token, 10000)
+        make_sell(self.user1, exchange_contract, other_token, 10000, 100)
+        _latest_order_id = get_latest_orderid(exchange_contract)
+        take_buy(self.trader, exchange_contract, _latest_order_id, 10000)
+        confirm_agreement(
+            self.agent, exchange_contract, _latest_order_id, get_latest_agreementid(exchange_contract, _latest_order_id)
+        )
+
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
@@ -637,6 +652,21 @@ class TestProcessor:
 
         share_lock(self.trader, token, self.issuer["account_address"], 3000)
         # user1: 10000 trader: (hold: 37000, locked: 3000)
+
+        # Issuer issues other token.
+        other_token = self.issue_token_share(
+            self.issuer, exchange["address"], personal_info_contract["address"], token_list_contract
+        )
+        other_token_contract = Contract.get_contract("IbetShare", other_token["address"])
+        transfer_token(other_token_contract, self.issuer["account_address"], self.user1["account_address"], 10000)
+        transfer_token(other_token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        share_transfer_to_exchange(self.user1, exchange, other_token, 10000)
+        make_sell(self.user1, exchange, other_token, 10000, 100)
+        _latest_order_id = get_latest_orderid(exchange)
+        take_buy(self.trader, exchange, _latest_order_id, 10000)
+        confirm_agreement(
+            self.agent, exchange, _latest_order_id, get_latest_agreementid(exchange, _latest_order_id)
+        )
 
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
