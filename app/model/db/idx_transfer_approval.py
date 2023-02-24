@@ -21,7 +21,7 @@ from datetime import (
     timezone,
     timedelta
 )
-
+from zoneinfo import ZoneInfo
 from sqlalchemy import (
     Column,
     String,
@@ -29,12 +29,12 @@ from sqlalchemy import (
     DateTime,
     Boolean
 )
-
+from app.config import TZ
 from app.model.db import Base
 from app.utils import alchemy
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class IDXTransferApproval(Base):
@@ -72,10 +72,14 @@ class IDXTransferApproval(Base):
 
     @staticmethod
     def format_datetime(_datetime: datetime) -> str:
+        """Convert timestamp from UTC to local timezone str
+        :param _datetime:
+        :return: str
+        """
         if _datetime is None:
             return ""
-        _datetime = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return _datetime.strftime("%Y/%m/%d %H:%M:%S.%f")
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
         return {
