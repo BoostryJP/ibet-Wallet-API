@@ -21,6 +21,7 @@ from datetime import (
     timezone
 )
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from eth_utils import to_checksum_address
 from fastapi import (
     APIRouter,
@@ -49,6 +50,7 @@ from web3 import Web3
 
 from app import config
 from app import log
+from app.config import TZ
 from app.contracts import Contract
 from app.database import db_session
 from app.errors import (
@@ -108,7 +110,7 @@ from app.utils.fastapi import json_response
 LOG = log.get_logger()
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 router = APIRouter(
     prefix="/Position",
@@ -299,7 +301,7 @@ class ListAllLockEvent:
                 "recipient_address": lock_event[5],
                 "value": lock_event[6],
                 "data": lock_event[7],
-                "block_timestamp": lock_event[8].replace(tzinfo=UTC).astimezone(JST)
+                "block_timestamp": lock_event[8].replace(tzinfo=UTC).astimezone(local_tz)
             })
 
         data = {

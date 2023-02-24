@@ -20,11 +20,8 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine, and_
 from sqlalchemy.exc import SQLAlchemyError
@@ -39,7 +36,8 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     NOTIFICATION_PROCESS_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    TZ
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -56,7 +54,7 @@ from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")
 
 WORKER_COUNT = int(WORKER_COUNT)
@@ -94,7 +92,7 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], JST)
+        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], local_tz)
 
     @staticmethod
     def _get_token_all_list(db_session: Session):

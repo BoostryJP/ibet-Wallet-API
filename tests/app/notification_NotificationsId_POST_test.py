@@ -16,13 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.model.db import Notification, NotificationType
-
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 class TestNotificationsIdPOST:

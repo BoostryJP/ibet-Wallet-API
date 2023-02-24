@@ -15,6 +15,7 @@ The list of environment variables that can be set for this system is as follows.
 | TEST_DATABASE_URL       | False    | Test database URL (for development use)  | postgresql://xxxx:xxxx@yyyy:5432/zzzz    | postgresql://ethuser:ethpass@localhost:5432/ethcache_test |
 | APP_LOGFILE             | False    | Output location for application logs     | /some/directory                          | /dev/stdout (standard output)                             |
 | ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                          | /dev/stdout (standard output)                             |
+| TZ                      | False    | Time Zone                                | Europe/Berlin                            | Asia/Tokyo                                                |
 
 
 ## API Server Settings

@@ -17,15 +17,24 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timedelta, timezone
-
+from datetime import (
+    datetime,
+    timedelta,
+    timezone
+)
+from zoneinfo import ZoneInfo
 from sqlalchemy import Column
-from sqlalchemy import String, BigInteger, Boolean
+from sqlalchemy import (
+    String,
+    BigInteger,
+    Boolean
+)
 
+from app.config import TZ
 from app.model.db import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class Listing(Base):
@@ -45,14 +54,14 @@ class Listing(Base):
 
     @staticmethod
     def format_timestamp(_datetime: datetime) -> str:
-        """UTCからJSTへ変換
+        """Convert timestamp from UTC to local timezone str
         :param _datetime:
-        :return:
+        :return: str
         """
         if _datetime is None:
             return ""
-        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetime_jp.strftime("%Y/%m/%d %H:%M:%S")
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
         return {
