@@ -247,7 +247,10 @@ class Processor:
             try:
                 holder_changed_events = exchange_contract.events.HolderChanged.getLogs(
                     fromBlock=block_from,
-                    toBlock=block_to
+                    toBlock=block_to,
+                    argument_filters={
+                        "token": self.token_contract.address
+                    }
                 )
             except ABIEventFunctionNotFound:
                 holder_changed_events = []
