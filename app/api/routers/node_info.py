@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from typing import Type
+
 from fastapi import (
     APIRouter,
     Depends
@@ -106,12 +108,12 @@ def get_block_sync_status(
     Endpoint: /NodeInfo/BlockSyncStatus
     """
     # Get block sync status
-    node: Node = session.query(Node). \
+    node: Type[Node] = session.query(Node). \
         filter(Node.is_synced == True). \
         order_by(Node.priority). \
         first()
 
-    # Get latest block number
+    # Get the latest block number
     is_synced = False
     latest_block_number = None
     if node is not None:

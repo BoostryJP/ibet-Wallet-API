@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Type
 from uuid import UUID
 from fastapi import (
     APIRouter,
@@ -345,7 +346,7 @@ def create_token_holders_collection(
     _same_combi_record = session.query(TokenHoldersList). \
         filter(TokenHoldersList.token_address == contract_address). \
         filter(TokenHoldersList.block_number == block_number). \
-        filter(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED.value). \
+        filter(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED). \
         first()
 
     if _same_combi_record is not None:
@@ -423,7 +424,7 @@ def get_token_holders_collection(
         raise DataNotExistsError('contract_address: %s' % contract_address)
 
     # 既存レコードの存在チェック
-    _same_list_id_record: TokenHoldersList = session.query(TokenHoldersList). \
+    _same_list_id_record: Type[TokenHoldersList] = session.query(TokenHoldersList). \
         filter(TokenHoldersList.list_id == str(list_id)). \
         first()
 
