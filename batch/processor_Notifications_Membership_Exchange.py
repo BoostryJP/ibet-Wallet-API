@@ -52,7 +52,6 @@ from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
 
-local_tz = ZoneInfo(TZ)
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-MEMBERSHIP-EXCHANGE")
 
 WORKER_COUNT = int(WORKER_COUNT)
@@ -98,7 +97,7 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], local_tz)
+        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"])
 
     def watch(self, db_session: Session, entries):
         pass
