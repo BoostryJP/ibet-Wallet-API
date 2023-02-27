@@ -179,7 +179,7 @@ class ListAllLock:
         if offset is not None:
             query = query.offset(offset)
 
-        _locked_list: list[IDXLockedPosition] = query.all()
+        _locked_list: list[Type[IDXLockedPosition]] = query.all()
         locked_list = []
 
         for _locked in _locked_list:

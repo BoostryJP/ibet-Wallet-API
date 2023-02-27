@@ -21,7 +21,7 @@ from datetime import datetime
 
 from sqlalchemy import Column
 from sqlalchemy import DateTime
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from app import log
 from app.utils import alchemy
