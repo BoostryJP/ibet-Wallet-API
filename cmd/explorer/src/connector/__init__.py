@@ -58,7 +58,7 @@ def dict_factory(x: list[tuple[str, Any]]):
     return {k: v for (k, v) in x if v is not None}
 
 
-@AsyncTTL(time_to_live=10, skip_args=1)
+@AsyncTTL(time_to_live=3600, skip_args=1)
 async def list_block_data(session: ClientSession, url: str, query: ListBlockDataQuery) -> BlockDataListResponse:
     async with session.get(url=f"{url}/NodeInfo/BlockData", params=asdict(query, dict_factory=dict_factory)) as resp:
         data = await resp.json()
@@ -74,14 +74,14 @@ async def get_block_data(session: ClientSession, url: str, block_number: int) ->
         return BlockDataDetail.parse_obj(data.get("data"))
 
 
-@AsyncTTL(skip_args=1)
+@AsyncTTL(time_to_live=3600, skip_args=1)
 async def list_tx_data(session: ClientSession, url: str, query: ListTxDataQuery) -> TxDataListResponse:
     async with session.get(url=f"{url}/NodeInfo/TxData", params=asdict(query, dict_factory=dict_factory)) as resp:
         data = await resp.json()
         return TxDataListResponse.parse_obj(data.get("data"))
 
 
-@AsyncTTL(skip_args=1)
+@AsyncTTL(time_to_live=3600, skip_args=1)
 async def get_tx_data(session: ClientSession, url: str, tx_hash: str) -> TxDataDetail:
     async with session.get(url=f"{url}/NodeInfo/TxData/{tx_hash}") as resp:
         data = await resp.json()

@@ -18,8 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 import os
 import sys
+from pydantic import ValidationError
 
-from rich.traceback import Traceback
 from textual.app import App, ReturnType
 from textual.binding import Binding
 
@@ -33,32 +33,38 @@ from .screen.transaction import TransactionScreen
 path = os.path.join(os.path.dirname(__file__), "../../../../")
 sys.path.append(path)
 
-from app.model.schema import ListTxDataQuery
+from app.model.schema import ListBlockDataQuery, ListTxDataQuery
 
 
 class AppState:
-    tx_query: ListTxDataQuery | None = None
+    tx_list_query: ListTxDataQuery | None = None
+    block_list_query: ListBlockDataQuery | None = None
+    current_block_number: int | None = None
     error: Exception | None = None
+    lot_size: int | None = None
 
 
 class ExplorerApp(App):
     """A Textual app to explorer ibet-Network."""
 
-    BINDINGS = [Binding("q", "quit", "Quit")]
+    BINDINGS = [Binding("ctrl+c", "quit", "Quit")]
     CSS_PATH = f"{os.path.dirname(os.path.abspath(__file__))}/explorer.css"
     SCREENS = {"transaction_screen": TransactionScreen, "traceback_screen": TracebackScreen}
     url: str
+    lot_size: int
     state: AppState = AppState()
 
     async def run_async(
         self,
         *,
         url: str = "http://localhost:5000",
+        lot_size: int = 30,
         headless: bool = False,
         size: tuple[int, int] | None = None,
         auto_pilot: None = None,
     ) -> ReturnType | None:
         self.url = url
+        self.state.lot_size = lot_size
         return await super().run_async(headless=headless, size=size, auto_pilot=auto_pilot)
 
     def on_mount(self):
@@ -70,6 +76,7 @@ class ExplorerApp(App):
     def on_error(self, event: Error) -> None:
         if isinstance(event.error, ApiNotEnabledException):
             raise event.error from None
-
+        if isinstance(event.error, ValidationError):
+            raise ValueError(event.error.json()) from None
         self.state.error = event.error
         self.push_screen("traceback_screen")

@@ -19,10 +19,9 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import os
 import sys
-import time
 from asyncio import Event, Lock
 from datetime import datetime
-from typing import Coroutine, Optional
+from typing import Optional
 
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from rich.text import Text
@@ -38,8 +37,9 @@ from gui.error import Error
 from gui.screen.base import TuiScreen
 from gui.widget.block_detail_view import BlockDetailView
 from gui.widget.block_list_table import BlockListTable
-from gui.widget.block_list_view import BlockListView
+from gui.widget.block_list_view import BlockListQueryPanel, BlockListSummaryPanel, BlockListView
 from gui.widget.menu import Menu, MenuInstruction
+from gui.widget.query_panel import QuerySetting
 
 path = os.path.join(os.path.dirname(__file__), "../../../../../")
 sys.path.append(path)
@@ -55,17 +55,17 @@ from app.model.schema.base import SortOrder
 
 
 class BlockScreen(TuiScreen):
-    BINDINGS = [Binding("q", "quit", "Quit"), Binding("ctrl+r", "reload_block", "Reload block data")]
+    BINDINGS = [
+        Binding("e", "edit_query", "Edit list block data query"),
+    ]
     dark = Reactive(True)
+    mutex_reload_block = Reactive(Lock())
     background_lock: Optional[Event] = None
-    current_block_number = Reactive(0)
-    lock_reload_block = Reactive(Lock())
-    __block_detail: Optional[BlockDataDetail] = None
 
     def __init__(self, name: str | None = None, id: str | None = None, classes: str | None = None):
         super().__init__(name=name, id=id, classes=classes)
         self.base_url = self.tui.url
-        self.refresh_rate = 3.0
+        self.refresh_rate = 5.0
         self.block_detail_header_widget = BlockDetailView(classes="column")
 
     def compose(self) -> ComposeResult:
@@ -78,7 +78,7 @@ class BlockScreen(TuiScreen):
                     Label(" | "),
                     Label("Fetching current status...", id=ID.BLOCK_IS_SYNCED),
                     Label(" | "),
-                    Label("Fetching transaction count...", id=ID.BLOCK_TX_COUNT_5M),
+                    Label("Loading...", id=ID.BLOCK_NOTION),
                     id=ID.BLOCK_SCREEN_HEADER,
                 ),
                 Horizontal(BlockListView(classes="column"), self.block_detail_header_widget),
@@ -87,131 +87,78 @@ class BlockScreen(TuiScreen):
         )
         yield Footer()
         yield Menu(id=ID.MENU)
+        yield QuerySetting(id=ID.QUERY_PANEL)
+
+    def update_current_block(self, latest_block_number: int):
+        self.query_one(f"#{ID.BLOCK_CURRENT_BLOCK_NUMBER}", Static).update(f"Current Block: {latest_block_number}")
+
+    def update_is_synced(self, is_synced: bool):
+        self.query_one(f"#{ID.BLOCK_IS_SYNCED}", Static).update(f"Is Synced: {is_synced}")
+        self.query_one(f"#{ID.BLOCK_NOTION}", Static).update(f"Press [E] To Load Block List")
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """
+        Occurs when Button is pressed
+        """
+        event.stop()
         event.prevent_default()
         match event.button.id:
-            case "cancel":
+            case ID.MENU_CANCEL:
                 self.query_one(Menu).hide()
+                self.remove_class("menu")
                 self.query(BlockListTable)[0].can_focus = True
                 self.query_one(BlockListTable).focus()
-            case "show_transactions":
+            case ID.MENU_SHOW_TX:
                 ix = self.query_one(Menu).hide()
+                self.remove_class("menu")
                 get_query = ListTxDataQuery()
                 get_query.block_number = ix.block_number
-                self.tui.state.tx_query = get_query
+                self.tui.state.tx_list_query = get_query
                 await self.app.push_screen("transaction_screen")
+            case ID.QUERY_PANEL_ENTER:
+                self.action_reload_block()
+
+    async def on_query_setting_enter(self, event: QuerySetting.Enter):
+        """
+        Occurs when QuerySetting.Enter is emitted
+        """
         event.stop()
+        event.prevent_default()
+        self.action_reload_block()
 
     async def on_mount(self) -> None:
+        """
+        Occurs when Self is mounted
+        """
         self.query_one(Menu).hide()
+        self.remove_class("menu")
+        self.query_one(QuerySetting).hide()
         self.query(BlockListTable)[0].focus()
-        asyncio.create_task(self.background_execution(self.refresh_rate))
+        self.set_interval(self.refresh_rate, self.fetch_sync_status)
 
-    async def background_execution(self, refresh_rate: float):
-        self.background_lock = Event()
-        block_number = None
+    async def fetch_sync_status(self):
         async with TCPConnector(limit=2, keepalive_timeout=0) as tcp_connector:
             async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
-                while self.is_running:
-                    start = time.time()
-                    tasks: list[Coroutine] = [connector.get_node_info(session, self.base_url)]
-                    if block_number is not None:
-                        if self.current_block_number == 0:
-                            self.current_block_number = block_number
-                            asyncio.create_task(self.action_reload_block())
-                        else:
-                            self.current_block_number = block_number
-                        tasks.append(
-                            connector.list_block_data(
-                                session,
-                                self.base_url,
-                                ListBlockDataQuery(
-                                    to_block_number=block_number,
-                                    from_block_number=max(block_number - 100, 0),
-                                    sort_order=SortOrder.DESC,
-                                ),
-                            )
-                        )
-                    try:
-                        result = await asyncio.gather(*tasks)
-                    except Exception as e:
+                try:
+                    node_info: GetBlockSyncStatusResponse = await connector.get_node_info(session, self.base_url)
+                except Exception as e:
+                    if hasattr(self, "emit_no_wait"):
                         self.emit_no_wait(Error(e, self))
-                        await asyncio.sleep(5)
-                        continue
-                    node_info: GetBlockSyncStatusResponse = result[0]
-                    if block_number is not None:
-                        block_data_list: BlockDataListResponse = result[1]
-                        transaction_count = sum([len(block.transactions) for block in block_data_list.block_data])
-                        self.query_one(f"#{ID.BLOCK_TX_COUNT_5M}").update(
-                            f"Transactions(in last 100block): {str(transaction_count)}"
-                        )
-
-                    self.query_one(f"#{ID.BLOCK_CURRENT_BLOCK_NUMBER}", Static).update(
-                        f"Current Block: {node_info.latest_block_number}"
-                    )
-                    self.query_one(f"#{ID.BLOCK_IS_SYNCED}", Static).update(f"Is Synced: {node_info.is_synced}")
-                    block_number = node_info.latest_block_number
-                    elapsed_time = time.time() - start
-                    await asyncio.sleep(max(refresh_rate - elapsed_time, 0))
-
-        self.log.debug("Closing background thread")
-
-    async def action_reload_block(self) -> None:
-        if self.lock_reload_block.locked():
-            return
-        async with self.lock_reload_block:
-            if self.current_block_number == 0:
-                return
-            async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
-                async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
+                    return
+                self.update_current_block(node_info.latest_block_number)
+                self.update_is_synced(node_info.is_synced)
+                if self.tui.state.current_block_number is None and self.tui.state.block_list_query is None:
+                    # initialize block list query
                     query = ListBlockDataQuery()
-                    query.to_block_number = self.current_block_number
-                    query.from_block_number = self.current_block_number - 100
+                    query.to_block_number = node_info.latest_block_number
+                    query.from_block_number = max(node_info.latest_block_number - self.tui.state.lot_size, 0)
                     query.sort_order = SortOrder.DESC
-                    try:
-                        block_data_list: BlockDataListResponse = await connector.list_block_data(
-                            session,
-                            self.base_url,
-                            query,
-                        )
-                    except Exception as e:
-                        self.emit_no_wait(Error(e, self))
-                        return
-                    self.query_one(BlockListTable).update_rows(block_data_list.block_data)
-                    self.query_one(f"#{ID.BLOCK_LIST_LOADED_TIME}", Static).update(
-                        f"Loaded Time: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}"
-                    )
+                    self.tui.state.block_list_query = query
+                    self.query_one(BlockListQueryPanel).block_list_query = query
 
-    @property
-    def block_detail(self) -> Optional[BlockDataDetail]:
-        return self.__block_detail
+                self.tui.state.current_block_number = node_info.latest_block_number
 
-    @block_detail.setter
-    def block_detail(self, block_detail: Optional[BlockDataDetail]) -> None:
-        self.__block_detail = block_detail
-        self.block_detail_header_widget.refresh()
-
-    async def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        selected_row = self.query_one(BlockListTable).data.get(event.cursor_row)
-        if selected_row is None:
-            return
-        await self.show_selected_block_detail(event.cursor_row)
-
-        if int(selected_row[2]) == 0:
-            # If the number of transaction is 0, menu is not pop up.
-            return
-
-        self.query_one(Menu).show(
-            MenuInstruction(block_number=selected_row[0], block_hash=selected_row[3], selected_row=event.cursor_row)
-        )
-        self.query(BlockListTable)[0].can_focus = False
-
-    async def show_selected_block_detail(self, selected_row: int):
-        selected_row_data = self.query_one(BlockListTable).data.get(selected_row)
-        if selected_row is None:
-            return
-        block_number = selected_row_data[0]
+    async def fetch_block_detail(self, block_number: int):
         async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
             async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                 try:
@@ -221,6 +168,64 @@ class BlockScreen(TuiScreen):
                         block_number,
                     )
                 except Exception as e:
-                    self.emit_no_wait(Error(e, self))
+                    if hasattr(self, "emit_no_wait"):
+                        self.emit_no_wait(Error(e, self))
                     return
                 self.query_one(BlockDetailView).block_detail = block_detail
+
+    def action_edit_query(self) -> None:
+        if self.tui.state.current_block_number is None or self.tui.state.block_list_query is None:
+            return
+
+        self.query_one(QuerySetting).show()
+        self.query(BlockListTable)[0].can_focus = False
+
+    def action_reload_block(self) -> None:
+        if self.tui.state.current_block_number is None or self.tui.state.block_list_query is None:
+            return
+
+        self.query_one(BlockListQueryPanel).block_list_query = self.tui.state.block_list_query
+        asyncio.create_task(self.fetch_block_list())
+
+    async def fetch_block_list(self) -> None:
+        if self.tui.state.current_block_number == 0:
+            return
+        try:
+            self.query_one(BlockListSummaryPanel).loading = True
+            await asyncio.sleep(5)
+            async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
+                async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
+                    try:
+                        block_data_list: BlockDataListResponse = await connector.list_block_data(
+                            session, self.base_url, self.tui.state.block_list_query
+                        )
+                    except Exception as e:
+                        if hasattr(self, "emit_no_wait"):
+                            self.emit_no_wait(Error(e, self))
+                        return
+                    self.query_one(BlockListTable).update_rows(block_data_list.block_data)
+                    self.query_one(BlockListSummaryPanel).loaded_time = datetime.now()
+
+        finally:
+            self.query_one(BlockListSummaryPanel).loading = False
+
+    async def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """
+        Occurs when DataTable row is selected
+        """
+        event.stop()
+        event.prevent_default()
+        selected_row = self.query_one(BlockListTable).data.get(event.cursor_row)
+        if selected_row is None:
+            return
+        await self.fetch_block_detail(selected_row[0])
+
+        if int(selected_row[2]) == 0:
+            # If the number of transaction is 0, menu is not pop up.
+            return
+
+        self.query_one(Menu).show(
+            MenuInstruction(block_number=selected_row[0], block_hash=selected_row[3], selected_row=event.cursor_row)
+        )
+        self.add_class("menu")
+        self.query(BlockListTable)[0].can_focus = False

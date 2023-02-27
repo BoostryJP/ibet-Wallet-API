@@ -35,14 +35,23 @@ class ID(str, Enum):
     BLOCK_CONNECTED = "block_connected"
     BLOCK_CURRENT_BLOCK_NUMBER = "block_current_block_number"
     BLOCK_IS_SYNCED = "block_is_synced"
-    BLOCK_TX_COUNT_5M = "block_tx_count_5m"
+    BLOCK_NOTION = "block_notion"
     BLOCK_SCREEN_HEADER = "block_screen_header"
 
     BLOCK_LIST_FILTER = "block_list_filter"
     BLOCK_LIST_LOADED_TIME = "block_list_loaded_time"
     BLOCK_LIST_LOADING = "block_list_loading"
     BLOCK_LIST_DESCRIPTION = "block_list_description"
+    BLOCK_LIST_TABLE = "block_list_table"
 
     TX_SELECTED_BLOCK_NUMBER = "tx_selected_block_number"
 
     MENU = "menu"
+    MENU_CANCEL = "menu_cancel"
+    MENU_SHOW_TX = "menu_show_tx"
+
+    QUERY_PANEL = "query_panel"
+    QUERY_PANEL_FROM_BLOCK_INPUT = "query_panel_from_block_input"
+    QUERY_PANEL_TO_BLOCK_INPUT = "query_panel_to_block_input"
+    QUERY_PANEL_SORT_ORDER_CHOICE = "query_panel_sort_order_choice"
+    QUERY_PANEL_ENTER = "query_panel_enter"

@@ -19,12 +19,19 @@ SPDX-License-Identifier: Apache-2.0
 from typing import TYPE_CHECKING, cast
 
 from textual.widget import Widget
+from textual.widgets import Static
 
 if TYPE_CHECKING:
     from gui.explorer import ExplorerApp
 
 
 class TuiWidget(Widget):
+    @property
+    def tui(self) -> "ExplorerApp":
+        return cast("ExplorerApp", self.app)
+
+
+class TuiStatic(Static):
     @property
     def tui(self) -> "ExplorerApp":
         return cast("ExplorerApp", self.app)

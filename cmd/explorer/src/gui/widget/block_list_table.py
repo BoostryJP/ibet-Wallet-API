@@ -43,15 +43,18 @@ class BlockListTable(DataTable):
     only_include_tx = reactive(False)
     raw_data: Iterable[BlockData] = []
 
-    def __init__(self, name: str, complete_refresh: bool):
-        super().__init__()
+    def __init__(self, name: str, complete_refresh: bool, id: str):
+        super().__init__(name=name, id=id)
         self.table_name = name
-        self.column_labels = ["Block", "Age", "Txn", "Hash", "Gas Used"]
         self.cursor_type = "row"
         self.complete_refresh = complete_refresh
 
     def on_mount(self) -> None:
-        self.add_columns(*self.column_labels)
+        self.add_column("Block", width=10)
+        self.add_column("Age", width=24)
+        self.add_column("Txn", width=4)
+        self.add_column("Hash", width=70)
+        self.add_column("Gas Used")
 
     def toggle_filter(self) -> bool:
         self.only_include_tx = not self.only_include_tx
