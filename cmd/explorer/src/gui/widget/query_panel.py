@@ -227,7 +227,7 @@ class QuerySetting(TuiWidget):
         event.stop()
         if event.input.id == ID.QUERY_PANEL_TO_BLOCK_INPUT:
             self.query_one(f"#{ID.QUERY_PANEL_FROM_BLOCK_INPUT}", Input).value = str(
-                max(int(event.input.value) - self.tui.lot_size, 0)
+                max(int(event.input.value) - self.tui.lot_size - 1, 0)
             )
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:

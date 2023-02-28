@@ -16,13 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from pathlib import Path
 from typing import Tuple, Dict, Any
 
 from eth_utils import to_checksum_address
 from fastapi import (
     APIRouter,
-    Depends
+    Depends,
+    Path
 )
 from pydantic import NonNegativeInt
 from sqlalchemy import desc
@@ -41,7 +41,8 @@ from app.errors import (
 from app.model.db import (
     IDXBlockData,
     IDXTxData,
-    IDXTokenListItem
+    IDXTokenListItem,
+    IDXBlockDataBlockNumber
 )
 from app.model.schema import (
     GenericSuccessResponse,
@@ -94,10 +95,30 @@ def list_block_data(
     limit = request_query.limit
     from_block_number = request_query.from_block_number
     to_block_number = request_query.to_block_number
-    sort_order =request_query.sort_order  # default: asc
+    sort_order = request_query.sort_order  # default: asc
+
+    # NOTE: The more data, the slower the SELECT COUNT(1) query becomes.
+    #       To get total number of block data, latest block number where block data synced is used here.
+    idx_block_data_block_number = (
+        session.query(IDXBlockDataBlockNumber).filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID).first()
+    )
+    if idx_block_data_block_number is None:
+        return json_response({
+            **SuccessResponse.default(),
+            "data": {
+                "result_set": {
+                    "count": 0,
+                    "offset": offset,
+                    "limit": limit,
+                    "total": 0
+                },
+                "block_data": []
+            }
+        })
+
+    total = idx_block_data_block_number.latest_block_number + 1
 
     query = session.query(IDXBlockData)
-    total = query.count()
 
     # Search Filter
     if from_block_number is not None and to_block_number is not None:

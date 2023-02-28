@@ -22,7 +22,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import IDXBlockData
+from app.model.db import (
+    IDXBlockData,
+    IDXBlockDataBlockNumber
+)
 
 
 class TestListBlockData:
@@ -127,17 +130,48 @@ class TestListBlockData:
         session.add(block_model)
         session.commit()
 
+    @staticmethod
+    def insert_block_data_block_number(session: Session, latest_block_number: int):
+        idx_block_data_block_number = IDXBlockDataBlockNumber()
+        idx_block_data_block_number.chain_id = config.WEB3_CHAINID
+        idx_block_data_block_number.latest_block_number = latest_block_number
+        session.add(idx_block_data_block_number)
+        session.commit()
+
     ###########################################################################
     # Normal
     ###########################################################################
 
-    # Normal_1
-    def test_normal_1(self, client: TestClient, session: Session):
+    # Normal_1_1
+    # IDXBlockDataBlockNumber is None
+    def test_normal_1_1(self, client: TestClient, session: Session):
+        config.BC_EXPLORER_ENABLED = True
+
+        # Request target API
+        resp = client.get(self.apiurl, params={})
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "result_set": {
+                "count": 0,
+                "offset": None,
+                "limit": None,
+                "total": 0
+            },
+            "block_data": []
+        }
+
+    # Normal_1_2
+    def test_normal_1_2(self, client: TestClient, session: Session):
         config.BC_EXPLORER_ENABLED = True
 
         self.insert_block_data(session, self.block_0)
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
+
+        self.insert_block_data_block_number(session, latest_block_number=2)
 
         # Request target API
         resp = client.get(self.apiurl)
@@ -168,6 +202,8 @@ class TestListBlockData:
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
 
+        self.insert_block_data_block_number(session, latest_block_number=2)
+
         # Request target API
         params = {"from_block_number": 1}
         resp = client.get(self.apiurl, params=params)
@@ -196,6 +232,8 @@ class TestListBlockData:
         self.insert_block_data(session, self.block_0)
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
+
+        self.insert_block_data_block_number(session, latest_block_number=2)
 
         # Request target API
         params = {"to_block_number": 1}
@@ -226,6 +264,8 @@ class TestListBlockData:
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
 
+        self.insert_block_data_block_number(session, latest_block_number=2)
+
         # Request target API
         params = {"offset": 1}
         resp = client.get(self.apiurl, params=params)
@@ -255,6 +295,8 @@ class TestListBlockData:
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
 
+        self.insert_block_data_block_number(session, latest_block_number=2)
+
         # Request target API
         params = {"limit": 1}
         resp = client.get(self.apiurl, params=params)
@@ -282,6 +324,8 @@ class TestListBlockData:
         self.insert_block_data(session, self.block_0)
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
+
+        self.insert_block_data_block_number(session, latest_block_number=2)
 
         # Request target API
         params = {"sort_order": 1}
@@ -379,6 +423,8 @@ class TestListBlockData:
         self.insert_block_data(session, self.block_0)
         self.insert_block_data(session, self.block_1)
         self.insert_block_data(session, self.block_2)
+
+        self.insert_block_data_block_number(session, latest_block_number=2)
 
         # Request target API
         with mock.patch("app.api.routers.bc_explorer.BLOCK_RESPONSE_LIMIT", 2):
