@@ -33,9 +33,15 @@ class TxDetailView(TuiWidget):
     tx_detail: Reactive[TxDataDetail | None] = reactive(None)
 
     def on_mount(self) -> None:
+        """
+        Occurs when Self is mounted
+        """
         pass
 
     def watch_tx_detail(self, old: TxDetailInfo, new: TxDetailInfo):
+        """
+        Occurs when `tx_detail` is changed
+        """
         self.render()
 
     def render(self) -> Panel:

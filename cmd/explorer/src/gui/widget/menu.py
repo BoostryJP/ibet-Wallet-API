@@ -22,6 +22,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import Button
 
+from gui.consts import ID
 from gui.widget.base import TuiWidget
 
 
@@ -36,23 +37,26 @@ class Menu(TuiWidget):
         Binding("tab,down,ctrl+n", "focus_next", "Focus Next", show=False),
         Binding("shift+tab,up,ctrl+p", "focus_previous", "Focus Previous", show=False),
         Binding("ctrl+r", "", "", show=False),
-        Binding("t", "click('show_transactions')", "Show Transactions"),
-        Binding("c,q", "click('cancel')", "Cancel", key_display="Q, C"),
+        Binding("t", "click('menu_show_tx')", "Show Transactions"),
+        Binding("c,q", "click('menu_cancel')", "Cancel", key_display="Q, C"),
     ]
     ix: MenuInstruction | None = None
 
     def compose(self) -> ComposeResult:
-        yield Button(Text.from_markup("\[t] Show Transactions :package:"), id="show_transactions", classes="menubutton")
-        yield Button("\[c] Cancel", id="cancel", classes="menubutton")
+        yield Button(Text.from_markup("\[t] Show Transactions :package:"), id=ID.MENU_SHOW_TX, classes="menubutton")
+        yield Button("\[c] Cancel", id=ID.MENU_CANCEL, classes="menubutton")
 
     def show(self, ix: MenuInstruction):
         self.ix = ix
         self.add_class("visible")
-        self.query_one("#show_transactions", Button).focus()
+        self.query_one(f"#{ID.MENU_SHOW_TX}", Button).focus()
 
     def hide(self) -> MenuInstruction | None:
         self.remove_class("visible")
         return self.ix
 
     def action_click(self, _id: str):
+        """
+        Occurs when keybind related to `click` is called.
+        """
         self.query_one(f"#{_id}", Button).press()

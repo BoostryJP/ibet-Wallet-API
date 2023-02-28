@@ -43,15 +43,21 @@ class BlockListTable(DataTable):
     only_include_tx = reactive(False)
     raw_data: Iterable[BlockData] = []
 
-    def __init__(self, name: str, complete_refresh: bool):
-        super().__init__()
+    def __init__(self, name: str, complete_refresh: bool, id: str):
+        super().__init__(name=name, id=id)
         self.table_name = name
-        self.column_labels = ["Block", "Age", "Txn", "Hash", "Gas Used"]
         self.cursor_type = "row"
         self.complete_refresh = complete_refresh
 
     def on_mount(self) -> None:
-        self.add_columns(*self.column_labels)
+        """
+        Occurs when Self is mounted
+        """
+        self.add_column("Block", width=10)
+        self.add_column("Age", width=24)
+        self.add_column("Txn", width=4)
+        self.add_column("Hash", width=70)
+        self.add_column("Gas Used")
 
     def toggle_filter(self) -> bool:
         self.only_include_tx = not self.only_include_tx
@@ -100,6 +106,9 @@ class BlockListTable(DataTable):
         self.refresh()
 
     def action_select_cursor(self) -> None:
+        """
+        Occurs when keybind related to `select_cursor` is called.
+        """
         self._set_hover_cursor(False)
         if self.show_cursor and self.cursor_type != "none" and self.has_focus:
             self._emit_selected_message()

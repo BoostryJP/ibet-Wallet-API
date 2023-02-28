@@ -30,9 +30,12 @@ app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
 @app.command()
-def run(url: str = typer.Argument("http://localhost:5000", help="ibet-Wallet-API server URL to connect")):
+def run(
+    url: str = typer.Argument("http://localhost:5000", help="ibet-Wallet-API server URL to connect"),
+    lot_size: int = typer.Argument(30, help="Lot size to fetch Block Data list"),
+):
     explorer = ExplorerApp()
-    asyncio.run(explorer.run_async(url=url))
+    asyncio.run(explorer.run_async(url=url, lot_size=lot_size))
 
 
 if __name__ == "__main__":

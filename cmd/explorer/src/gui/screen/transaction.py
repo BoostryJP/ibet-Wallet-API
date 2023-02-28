@@ -59,14 +59,25 @@ class TransactionScreen(TuiScreen):
         yield Footer()
 
     async def on_mount(self) -> None:
+        """
+        Occurs when Self is mounted
+        """
         self.query(TxListTable)[0].focus()
 
     def action_quit(self):
+        """
+        Occurs when keybind related to `quit` is called.
+        """
         self.tui.pop_screen()
         self.tui.query(BlockListTable)[0].can_focus = True
         self.tui.query(BlockListTable)[0].focus()
 
     async def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """
+        Occurs when DataTable row is selected
+        """
+        event.stop()
+        event.prevent_default()
         selected_row = self.query_one(TxListTable).data.get(event.cursor_row)
         if selected_row is None:
             return
@@ -82,16 +93,22 @@ class TransactionScreen(TuiScreen):
                 self.query_one(TxDetailView).tx_detail = tx_detail
 
     async def on_screen_suspend(self):
+        """
+        Occurs when Self is suspended
+        """
         self.query_one(TxListTable).update_rows([])
 
     async def on_screen_resume(self):
-        if self.tui.state.tx_query is not None:
+        """
+        Occurs when Self is resumed
+        """
+        if self.tui.state.tx_list_query is not None:
             async with TCPConnector(limit=1, keepalive_timeout=0) as tcp_connector:
                 async with ClientSession(connector=tcp_connector, timeout=ClientTimeout(30)) as session:
                     tx_list = await connector.list_tx_data(
-                        session=session, url=self.tui.url, query=self.tui.state.tx_query
+                        session=session, url=self.tui.url, query=self.tui.state.tx_list_query
                     )
                     self.query_one(TxListTable).update_rows(tx_list.tx_data)
                     self.query_one(f"#{ID.TX_SELECTED_BLOCK_NUMBER}", Label).update(
-                        f"Selected block: {self.tui.state.tx_query.block_number}"
+                        f"Selected block: {self.tui.state.tx_list_query.block_number}"
                     )

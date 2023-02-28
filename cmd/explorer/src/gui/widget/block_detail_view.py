@@ -33,10 +33,13 @@ class BlockDetailView(TuiWidget):
     block_detail: Reactive[BlockDataDetail | None] = reactive(None)
 
     def watch_block_detail(self, old: BlockDetailInfo, new: BlockDetailInfo):
+        """
+        Occurs when `block_detail` is changed
+        """
         self.render()
 
     def render(self) -> Panel:
-        block_detail: Union[Align, BlockDetailInfo] = Align.center("Not selected", vertical="middle")
+        block_detail: Union[Align, BlockDetailInfo] = Align.center("Press [E] to set query", vertical="middle")
         style: Style | Literal["none"] = Style(bgcolor="#004578")
 
         if self.block_detail is not None:

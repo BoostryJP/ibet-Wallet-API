@@ -33,8 +33,14 @@ class TracebackScreen(TuiScreen):
         yield Footer()
 
     async def on_mount(self) -> None:
+        """
+        Occurs when Self is mounted
+        """
         self.query(TracebackWidget)[0].focus()
 
     def action_quit(self):
+        """
+        Occurs when keybind related to `quit` is called.
+        """
         self.tui.pop_screen()
         self.tui.query_one(BlockListTable).focus()
