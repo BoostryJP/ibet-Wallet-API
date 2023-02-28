@@ -41,9 +41,7 @@ from app.model.schema.bc_explorer import TxDataDetail
 
 
 class TransactionScreen(TuiScreen):
-    BINDINGS = [
-        Binding("q", "quit", "Close", priority=True)
-    ]
+    BINDINGS = [Binding("q", "quit", "Close", priority=True)]
 
     def compose(self) -> ComposeResult:
         yield Horizontal(
@@ -78,6 +76,8 @@ class TransactionScreen(TuiScreen):
         """
         Occurs when DataTable row is selected
         """
+        event.stop()
+        event.prevent_default()
         selected_row = self.query_one(TxListTable).data.get(event.cursor_row)
         if selected_row is None:
             return

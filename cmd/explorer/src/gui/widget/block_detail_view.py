@@ -33,6 +33,9 @@ class BlockDetailView(TuiWidget):
     block_detail: Reactive[BlockDataDetail | None] = reactive(None)
 
     def watch_block_detail(self, old: BlockDetailInfo, new: BlockDetailInfo):
+        """
+        Occurs when `block_detail` is changed
+        """
         self.render()
 
     def render(self) -> Panel:

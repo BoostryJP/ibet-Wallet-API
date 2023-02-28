@@ -56,4 +56,7 @@ class Menu(TuiWidget):
         return self.ix
 
     def action_click(self, _id: str):
+        """
+        Occurs when keybind related to `click` is called.
+        """
         self.query_one(f"#{_id}", Button).press()

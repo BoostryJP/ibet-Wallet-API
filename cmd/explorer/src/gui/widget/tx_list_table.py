@@ -40,6 +40,9 @@ class TxListTable(DataTable):
         self.complete_refresh = complete_refresh
 
     def on_mount(self) -> None:
+        """
+        Occurs when Self is mounted
+        """
         self.add_columns(*self.column_labels)
 
     def update_rows(self, data: Iterable[TxData]):
@@ -50,6 +53,9 @@ class TxListTable(DataTable):
         self.refresh()
 
     def action_select_cursor(self) -> None:
+        """
+        Occurs when keybind related to `select_cursor` is called.
+        """
         self._set_hover_cursor(False)
         if self.show_cursor and self.cursor_type != "none" and self.has_focus:
             self._emit_selected_message()

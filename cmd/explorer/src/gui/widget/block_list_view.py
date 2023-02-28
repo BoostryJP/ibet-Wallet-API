@@ -38,6 +38,9 @@ class BlockListQueryPanel(TuiStatic):
     block_list_query: Reactive[ListBlockDataQuery | None] = reactive(None)
 
     def watch_block_list_query(self, old: ListBlockDataQuery, new: ListBlockDataQuery):
+        """
+        Occurs when `block_list_query` is changed
+        """
         self.render()
 
     def render(self) -> Panel:
@@ -82,6 +85,9 @@ class BlockListSummaryPanel(TuiStatic):
         self._spinner = Spinner("dots")
 
     def watch_loading(self, new: bool):
+        """
+        Occurs when `loading` is changed
+        """
         if new:
             if self.update_render is None:
                 self.update_render = self.set_interval(1 / 60, self.update_spinner)
@@ -92,9 +98,15 @@ class BlockListSummaryPanel(TuiStatic):
                 self.update_render.pause()
 
     def watch_loaded_time(self, new: datetime):
+        """
+        Occurs when `loaded_time` is changed
+        """
         self.render()
 
     def watch_only_block_filter(self, new: bool):
+        """
+        Occurs when `only_block_filter` is changed
+        """
         self.render()
 
     def update_spinner(self) -> None:
@@ -140,6 +152,9 @@ class BlockListView(TuiWidget):
         yield BlockListTable(name="blocks", complete_refresh=True, id=ID.BLOCK_LIST_TABLE)
 
     def action_filter(self):
+        """
+        Occurs when keybind related to `filter` is called.
+        """
         if self.query_one(BlockListTable).can_focus:
             toggle = self.query_one(BlockListTable).toggle_filter()
             self.query_one(BlockListSummaryPanel).only_block_filter = toggle

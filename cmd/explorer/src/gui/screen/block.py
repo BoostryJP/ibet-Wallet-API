@@ -151,7 +151,7 @@ class BlockScreen(TuiScreen):
                     # initialize block list query
                     query = ListBlockDataQuery()
                     query.to_block_number = node_info.latest_block_number
-                    query.from_block_number = max(node_info.latest_block_number - self.tui.state.lot_size, 0)
+                    query.from_block_number = max(node_info.latest_block_number - self.tui.lot_size, 0)
                     query.sort_order = SortOrder.DESC
                     self.tui.state.block_list_query = query
                     self.query_one(BlockListQueryPanel).block_list_query = query
@@ -174,6 +174,9 @@ class BlockScreen(TuiScreen):
                 self.query_one(BlockDetailView).block_detail = block_detail
 
     def action_edit_query(self) -> None:
+        """
+        Occurs when keybind related to `edit_query` is called.
+        """
         if self.tui.state.current_block_number is None or self.tui.state.block_list_query is None:
             return
 
@@ -181,6 +184,9 @@ class BlockScreen(TuiScreen):
         self.query(BlockListTable)[0].can_focus = False
 
     def action_reload_block(self) -> None:
+        """
+        Occurs when keybind related to `reload_block` is called.
+        """
         if self.tui.state.current_block_number is None or self.tui.state.block_list_query is None:
             return
 

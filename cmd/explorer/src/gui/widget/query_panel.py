@@ -93,6 +93,9 @@ class ToBlockInput(Input):
                 self.cursor_position += len(text)
 
     async def on_key(self, event: events.Key) -> None:
+        """
+        Occurs when `Key` is emitted.
+        """
         self._cursor_visible = True
         if self.cursor_blink:
             self.blink_timer.reset()
@@ -193,10 +196,10 @@ class QuerySetting(TuiWidget):
         self.tui.query(BlockListTable)[0].can_focus = True
         self.tui.query(BlockListTable)[0].focus()
 
-    def action_cancel(self):
-        self.hide()
-
     def on_key(self, event: events.Key):
+        """
+        Occurs when `Key` is emitted.
+        """
         if event.key == "Enter":
             self.action_enter()
             from_block = self.query_one(f"#{ID.QUERY_PANEL_FROM_BLOCK_INPUT}", Input).value
@@ -217,17 +220,33 @@ class QuerySetting(TuiWidget):
             event.prevent_default()
 
     async def on_input_changed(self, event: ToBlockInput.Changed):
+        """
+        Occurs when `Input.Changed` is emitted.
+        """
         event.prevent_default()
         event.stop()
         if event.input.id == ID.QUERY_PANEL_TO_BLOCK_INPUT:
             self.query_one(f"#{ID.QUERY_PANEL_FROM_BLOCK_INPUT}", Input).value = str(
-                max(int(event.input.value) - self.tui.state.lot_size, 0)
+                max(int(event.input.value) - self.tui.lot_size, 0)
             )
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """
+        Occurs when `Button.Pressed` is emitted.
+        """
+        if event.button.id == ID.QUERY_PANEL_ENTER:
+            await self.action_enter()
+        else:
+            event.stop()
+            event.prevent_default()
 
     class Enter(Message):
         pass
 
     def action_enter(self):
+        """
+        Occurs when keybind related to `enter` is called.
+        """
         from_block = self.query_one(f"#{ID.QUERY_PANEL_FROM_BLOCK_INPUT}", Input).value
         to_block = self.query_one(f"#{ID.QUERY_PANEL_TO_BLOCK_INPUT}", Input).value
         sort_order = self.query_one(f"#{ID.QUERY_PANEL_SORT_ORDER_CHOICE}", Choices).current_value()
@@ -243,9 +262,8 @@ class QuerySetting(TuiWidget):
         self.emit_no_wait(self.Enter(sender=self))
         self.hide()
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == ID.QUERY_PANEL_ENTER:
-            await self.action_enter()
-        else:
-            event.stop()
-            event.prevent_default()
+    def action_cancel(self):
+        """
+        Occurs when keybind related to `cancel` is called.
+        """
+        self.hide()

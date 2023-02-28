@@ -50,6 +50,9 @@ class BlockListTable(DataTable):
         self.complete_refresh = complete_refresh
 
     def on_mount(self) -> None:
+        """
+        Occurs when Self is mounted
+        """
         self.add_column("Block", width=10)
         self.add_column("Age", width=24)
         self.add_column("Txn", width=4)
@@ -103,6 +106,9 @@ class BlockListTable(DataTable):
         self.refresh()
 
     def action_select_cursor(self) -> None:
+        """
+        Occurs when keybind related to `select_cursor` is called.
+        """
         self._set_hover_cursor(False)
         if self.show_cursor and self.cursor_type != "none" and self.has_focus:
             self._emit_selected_message()
