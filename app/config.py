@@ -65,9 +65,9 @@ NOTIFICATION_PROCESS_INTERVAL = int(os.environ.get("NOTIFICATION_PROCESS_INTERVA
 
 # Database
 if UNIT_TEST_MODE:
-    DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or 'postgresql+psycopg://ethuser:ethpass@localhost:5432/ethcache_test'
+    DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache_test'
 else:
-    DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql+psycopg://ethuser:ethpass@localhost:5432/ethcache'
+    DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 
 # Logging
