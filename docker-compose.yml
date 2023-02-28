@@ -37,7 +37,7 @@ services:
     environment:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
-      - TEST_DATABASE_URL=postgresql+psycopg://apluser:apluserpass@postgres/apldb
+      - TEST_DATABASE_URL=postgresql://apluser:apluserpass@postgres/apldb
       - UNIT_TEST_MODE=1
       - RESPONSE_VALIDATION_MODE=1
     links:
