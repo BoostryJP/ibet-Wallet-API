@@ -3384,4 +3384,4 @@ ibet-explorer = ["aiohttp", "async-cache", "ibet-wallet-api-explorer", "textual"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.10.4"
-content-hash = "85445aa2ef8023c6d636054dff5b868af487d32cdf3ea4021a516e160020a846"
+content-hash = "51a2904cbd510b4284881c8eb3f52596dc44598d75bd0c88aff5cc5db878df4f"
