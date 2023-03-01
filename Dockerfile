@@ -51,25 +51,27 @@ RUN . ~/.bash_profile \
  && pyenv global 3.10.4 \
  && pip install --upgrade pip
 
-# install command
-COPY cmd/explorer /app/ibet-Wallet-API/cmd/explorer
+# install poetry
 RUN . ~/.bash_profile \
- && cd /app/ibet-Wallet-API/cmd/explorer \
- && pip install -e ./
+ && curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.4.0 python - \
+ && echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~apl/.bash_profile
+RUN . ~/.bash_profile \
+ && poetry config virtualenvs.create false
 
 # install python packages
-COPY requirements.txt /app/requirements.txt
-RUN . ~/.bash_profile \
- && pip install -r /app/requirements.txt \
- && rm -f /app/requirements.txt
-
-# deploy app
 USER root
 COPY . /app/ibet-Wallet-API
 RUN chown -R apl:apl /app/ibet-Wallet-API \
  && rm -rf /app/ibet-Wallet-API/tests/ \
  && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
  && chmod 755 /app/ibet-Wallet-API
+
+USER apl
+RUN . ~/.bash_profile \
+ && cd /app/ibet-Wallet-API \
+ && poetry install --only main --no-root -E ibet-explorer \
+ && rm -f /app/ibet-Wallet-API/pyproject.toml \
+ && rm -f /app/ibet-Wallet-API/poetry.lock
 
 # command deploy
 USER apl
