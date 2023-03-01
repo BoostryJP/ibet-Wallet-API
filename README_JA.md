@@ -52,7 +52,7 @@
 
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ pip install -r requirements.txt
+$ poetry install --no-root --only main -E explorer
 ```
 
 ### 環境変数の設定
@@ -108,7 +108,7 @@ ReDoc 形式のドキュメントを参照することができるはずです�
 
 テストで利用するパッケージをインストールします。
 ```bash
-$ pip install -r tests/requirements.txt
+$ poetry install --no-root
 ```
 
 以下のようにテストを実行します。

@@ -51,7 +51,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 Install python packages with:
 ```bash
-$ pip install -r requirements.txt
+$ poetry install --no-root --only main -E explorer
 ```
 
 ### Setting environment variables
@@ -109,7 +109,7 @@ You will see the alternative automatic documentation provided by ReDoc:
 
 Install packages with:
 ```bash
-$ pip install -r tests/requirements.txt
+$ poetry install --no-root
 ```
 
 You can run the tests with:

@@ -17,11 +17,5 @@ __pycache__/
 # PyEnv
 .python-version
 
-# Poetry
-poetry.toml
-/pyproject.toml
-/poetry.lock
-dist
-
 # Mac
 .DS_Store
