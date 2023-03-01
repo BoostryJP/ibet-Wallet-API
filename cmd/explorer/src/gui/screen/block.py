@@ -151,7 +151,7 @@ class BlockScreen(TuiScreen):
                     # initialize block list query
                     query = ListBlockDataQuery()
                     query.to_block_number = node_info.latest_block_number
-                    query.from_block_number = max(node_info.latest_block_number - self.tui.lot_size, 0)
+                    query.from_block_number = max(node_info.latest_block_number - self.tui.lot_size - 1, 0)
                     query.sort_order = SortOrder.DESC
                     self.tui.state.block_list_query = query
                     self.query_one(BlockListQueryPanel).block_list_query = query
