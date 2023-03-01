@@ -70,7 +70,7 @@ USER apl
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
  && poetry install --no-root \
- && rm -f /app/ibet-Wallet-API/pyproject.txt \
+ && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/poetry.lock
 
 # deploy app
