@@ -17,21 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import os
-import sys
 
 from pydantic import ValidationError
 from textual.app import App, ReturnType
 from textual.binding import Binding
 
-from connector import ApiNotEnabledException
-from gui.screen.block import BlockScreen
-from gui.screen.traceback import TracebackScreen
-from gui.screen.transaction import TransactionScreen
-
-from .error import Error
-
-path = os.path.join(os.path.dirname(__file__), "../../../../")
-sys.path.append(path)
+from src.connector import ApiNotEnabledException
+from src.gui.screen.block import BlockScreen
+from src.gui.screen.traceback import TracebackScreen
+from src.gui.screen.transaction import TransactionScreen
+from src.gui.error import Error
 
 from app.model.schema import ListBlockDataQuery, ListTxDataQuery
 
