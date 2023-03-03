@@ -116,7 +116,6 @@ router = APIRouter(
 )
 
 
-
 class ListAllLock:
     token_enabled: bool
 
@@ -222,6 +221,7 @@ class ListAllLockEvent:
         except:
             raise InvalidParameterError(description="invalid account_address")
 
+        token_address_list = request_query.token_address_list
         category = request_query.category
 
         query_lock = session.query(
@@ -247,6 +247,10 @@ class ListAllLockEvent:
             IDXUnlock.block_timestamp.label("block_timestamp")
         )
 
+        if len(token_address_list) > 0:
+            query_lock = query_lock.filter(column("token_address").in_(token_address_list))
+            query_unlock = query_unlock.filter(column("token_address").in_(token_address_list))
+
         total = query_lock.count() + query_unlock.count()
 
         match category:
@@ -259,8 +263,6 @@ class ListAllLockEvent:
 
         query = query.filter(column("account_address") == account_address)
 
-        if request_query.token_address is not None:
-            query = query.filter(column("token_address") == request_query.token_address)
         if request_query.lock_address is not None:
             query = query.filter(column("lock_address") == request_query.lock_address)
         if request_query.recipient_address is not None:

@@ -269,6 +269,15 @@ paths:
             type: integer
           name: to_block_number
           in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 0
+          name: sort_order
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -299,11 +308,13 @@ paths:
       description: Returns block data in the specified block number.
       operationId: GetBlockData
       parameters:
-        - required: true
+        - description: Block number
+          required: true
           schema:
             title: Block Number
             minimum: 0
             type: integer
+            description: Block number
           name: block_number
           in: path
       responses:
@@ -411,10 +422,12 @@ paths:
       description: Searching for the transaction by transaction hash
       operationId: GetTxData
       parameters:
-        - required: true
+        - description: Transaction hash
+          required: true
           schema:
             title: Hash
             type: string
+            description: Transaction hash
           name: hash
           in: path
       responses:
@@ -2672,13 +2685,16 @@ paths:
             description: number of set
           name: limit
           in: query
-        - description: token address
+        - description: list of token address (**this affects total number**)
           required: false
           schema:
-            title: Token Address
-            type: string
-            description: token address
-          name: token_address
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: token_address_list
           in: query
         - description: lock address
           required: false
@@ -2704,12 +2720,12 @@ paths:
             description: data
           name: data
           in: query
-        - description: history item category (**this affects total number**)
+        - description: history item category
           required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/LockEventCategory'
-            description: history item category (**this affects total number**)
+            description: history item category
           name: category
           in: query
         - description: sort item
@@ -2864,13 +2880,16 @@ paths:
             description: number of set
           name: limit
           in: query
-        - description: token address
+        - description: list of token address (**this affects total number**)
           required: false
           schema:
-            title: Token Address
-            type: string
-            description: token address
-          name: token_address
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: token_address_list
           in: query
         - description: lock address
           required: false
@@ -2896,12 +2915,12 @@ paths:
             description: data
           name: data
           in: query
-        - description: history item category (**this affects total number**)
+        - description: history item category
           required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/LockEventCategory'
-            description: history item category (**this affects total number**)
+            description: history item category
           name: category
           in: query
         - description: sort item

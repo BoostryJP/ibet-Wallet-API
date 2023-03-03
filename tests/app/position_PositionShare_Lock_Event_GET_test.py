@@ -252,9 +252,9 @@ class TestPositionShareLockEvent:
         }
         assert resp.json()["data"]["events"] == assumed_body
 
-    # Normal_4_1
-    # Filter(token_address)
-    def test_normal_4_1(self, client: TestClient, session: Session):
+    # Normal_4_1_1
+    # Filter(token_address_list): empty
+    def test_normal_4_1_1(self, client: TestClient, session: Session):
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -264,7 +264,92 @@ class TestPositionShareLockEvent:
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={
-                "token_address": self.token_1
+                "token_address_list": []
+            }
+        )
+
+        assumed_body = [
+            {
+                "token_address": self.token_2, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": self.recipient_2,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "2"}, "value": 2,
+                "category": LockEventCategory.Unlock,
+            },
+            {
+                "token_address": self.token_2, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": self.recipient_1,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Unlock
+            },
+            {
+                "token_address": self.token_2, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "3"}, "value": 3,
+                "category": LockEventCategory.Lock,
+            },
+            {
+                "token_address": self.token_2, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Lock
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": self.recipient_2,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "2"}, "value": 2,
+                "category": LockEventCategory.Unlock,
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": self.recipient_1,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Unlock
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "3"}, "value": 3,
+                "category": LockEventCategory.Lock,
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Lock
+            },
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 8,
+            "offset": None,
+            "limit": None,
+            "total": 16
+        }
+        assert resp.json()["data"]["events"] == assumed_body
+
+    # Normal_4_1_2
+    # Filter(token_address_list): single item
+    def test_normal_4_1_2(self, client: TestClient, session: Session):
+        # Prepare Data
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
+        base_time = datetime(2023, 1, 2)
+        self.setup_data(session=session, token_address=self.token_2, base_time=base_time)
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "token_address_list": [self.token_1]
             }
         )
 
@@ -303,6 +388,91 @@ class TestPositionShareLockEvent:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"]["result_set"] == {
             "count": 4,
+            "offset": None,
+            "limit": None,
+            "total": 8
+        }
+        assert resp.json()["data"]["events"] == assumed_body
+
+    # Normal_4_1_3
+    # Filter(token_address_list): multiple item
+    def test_normal_4_1_3(self, client: TestClient, session: Session):
+        # Prepare Data
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
+        base_time = datetime(2023, 1, 2)
+        self.setup_data(session=session, token_address=self.token_2, base_time=base_time)
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "token_address_list": [self.token_1, self.token_2, "invalid_token_address"]
+            }
+        )
+
+        assumed_body = [
+            {
+                "token_address": self.token_2, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": self.recipient_2,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "2"}, "value": 2,
+                "category": LockEventCategory.Unlock,
+            },
+            {
+                "token_address": self.token_2, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": self.recipient_1,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Unlock
+            },
+            {
+                "token_address": self.token_2, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "3"}, "value": 3,
+                "category": LockEventCategory.Lock,
+            },
+            {
+                "token_address": self.token_2, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Lock
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": self.recipient_2,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "2"}, "value": 2,
+                "category": LockEventCategory.Unlock,
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": self.recipient_1,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Unlock
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_2,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "3"}, "value": 3,
+                "category": LockEventCategory.Lock,
+            },
+            {
+                "token_address": self.token_1, "lock_address": self.lock_1,
+                "account_address": self.account_1, "recipient_address": None,
+                "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
+                "data": {"message": "1"}, "value": 1,
+                "category": LockEventCategory.Lock
+            },
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 8,
             "offset": None,
             "limit": None,
             "total": 16
