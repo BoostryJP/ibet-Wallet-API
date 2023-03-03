@@ -104,7 +104,7 @@ class TransactionScreen(TuiScreen):
                     )
 
     ##################################################
-    # Key biding
+    # Key binding
     ##################################################
 
     def action_quit(self):

@@ -53,6 +53,7 @@ class ExplorerApp(App):
     # App State
     state: AppState = AppState()
 
+    # Run App
     async def run_async(
         self,
         *,
@@ -66,17 +67,15 @@ class ExplorerApp(App):
         self.lot_size = lot_size
         return await super().run_async(headless=headless, size=size, auto_pilot=auto_pilot)
 
+    ##################################################
+    # Event
+    ##################################################
+
     def on_mount(self):
         """
         Occurs when Self is mounted
         """
         self.push_screen(BlockScreen(name="block_screen"))
-
-    async def action_quit(self) -> None:
-        """
-        Occurs when keybind related to `quit` is called.
-        """
-        self.exit()
 
     def on_error(self, event: Error) -> None:
         if isinstance(event.error, ApiNotEnabledException):
@@ -85,3 +84,13 @@ class ExplorerApp(App):
             raise ValueError(event.error.json()) from None
         self.state.error = event.error
         self.push_screen("traceback_screen")
+
+    ##################################################
+    # Key binding
+    ##################################################
+
+    async def action_quit(self) -> None:
+        """
+        Occurs when keybind related to `quit` is called.
+        """
+        self.exit()

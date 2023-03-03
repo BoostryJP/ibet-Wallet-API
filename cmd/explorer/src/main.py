@@ -16,7 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import logging
 import asyncio
+logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 import typer
 

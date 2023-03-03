@@ -43,7 +43,7 @@ class TracebackScreen(TuiScreen):
         self.query(TracebackWidget)[0].focus()
 
     ##################################################
-    # Key biding
+    # Key binding
     ##################################################
 
     def action_quit(self):

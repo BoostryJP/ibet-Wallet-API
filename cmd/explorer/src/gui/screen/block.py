@@ -181,7 +181,7 @@ class BlockScreen(TuiScreen):
         asyncio.create_task(self.fetch_block_list())
 
     ##################################################
-    # Key biding
+    # Key binding
     ##################################################
 
     def action_edit_query(self) -> None:
