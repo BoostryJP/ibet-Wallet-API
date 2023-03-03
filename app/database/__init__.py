@@ -27,7 +27,6 @@ LOG = log.get_logger()
 
 
 def get_engine(uri):
-    LOG.info('Connecting to database..')
     options = {
         'pool_recycle': 3600,
         'pool_size': 10,
