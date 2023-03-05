@@ -169,11 +169,11 @@ class ListAllLockEventQuery:
     offset: Optional[int] = Query(default=None, description="start position", ge=0)
     limit: Optional[int] = Query(default=None, description="number of set", ge=0)
 
-    token_address: Optional[str] = Query(default=None, description="token address")
+    token_address_list: list[StrictStr] = Query(default=[], description="list of token address (**this affects total number**)")
     lock_address: Optional[str] = Query(default=None, description="lock address")
     recipient_address: Optional[str] = Query(default=None, description="recipient address")
     data: Optional[str] = Query(default=None, description="data")
-    category: Optional[LockEventCategory] = Query(default=None, description="history item category (**this affects total number**)")
+    category: Optional[LockEventCategory] = Query(default=None, description="history item category")
 
     sort_item: LockEventSortItem = Query(
         default=LockEventSortItem.block_timestamp,
