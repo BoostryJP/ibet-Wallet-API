@@ -60,12 +60,15 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
-    indexer_Token_Detail.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Token_Detail
 
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    config.BOND_TOKEN_ENABLED = True
+    config.SHARE_TOKEN_ENABLED = True
+    config.MEMBERSHIP_TOKEN_ENABLED = True
+    config.COUPON_TOKEN_ENABLED = True
     processor = test_module.Processor()
     return processor
 

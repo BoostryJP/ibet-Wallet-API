@@ -32,15 +32,7 @@ from sqlalchemy.orm.exc import ObjectDeletedError
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import (
-    DATABASE_URL,
-    TOKEN_FETCH_INTERVAL,
-    TOKEN_CACHE_REFRESH_INTERVAL,
-    BOND_TOKEN_ENABLED,
-    SHARE_TOKEN_ENABLED,
-    MEMBERSHIP_TOKEN_ENABLED,
-    COUPON_TOKEN_ENABLED
-)
+from app import config
 from app.errors import ServiceUnavailable
 from app.model.blockchain.token import TokenClassTypes
 from app.model.db import (
@@ -58,7 +50,7 @@ import log
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
 
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -70,23 +62,23 @@ class Processor:
         token_class: Type[TokenClassTypes]
 
     target_token_types: List[TargetTokenType]
-    SEC_PER_RECORD: int = TOKEN_FETCH_INTERVAL
+    SEC_PER_RECORD: int = config.TOKEN_FETCH_INTERVAL
 
     def __init__(self):
         self.target_token_types = []
-        if BOND_TOKEN_ENABLED:
+        if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetStraightBond", token_class=BondToken)
             )
-        if SHARE_TOKEN_ENABLED:
+        if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetShare", token_class=ShareToken)
             )
-        if MEMBERSHIP_TOKEN_ENABLED:
+        if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetMembership", token_class=MembershipToken)
             )
-        if COUPON_TOKEN_ENABLED:
+        if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetCoupon", token_class=CouponToken)
             )
@@ -151,7 +143,7 @@ def main():
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
-        time_to_sleep = max(TOKEN_CACHE_REFRESH_INTERVAL - elapsed_time, 0)
+        time_to_sleep = max(config.TOKEN_CACHE_REFRESH_INTERVAL - elapsed_time, 0)
         if time_to_sleep == 0:
             LOG.debug("Processing is delayed")
         time.sleep(time_to_sleep)

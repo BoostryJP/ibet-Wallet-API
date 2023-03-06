@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest import mock
+
 import pytest
 
 from eth_utils import to_checksum_address
@@ -48,6 +50,7 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    config.BOND_TOKEN_ENABLED = True
     processor = test_module.Processor()
     return processor
 
@@ -143,6 +146,7 @@ class TestTokenStraightBondTokenAddresses:
         session.commit()
 
         # 事前準備
+        processor.BOND_TOKEN_ENABLED = True
         processor.SEC_PER_RECORD = 0
         processor.process()
 

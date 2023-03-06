@@ -85,6 +85,8 @@ class TestPositionStraightBondLock:
     # <Normal_1_1>
     # List all tokens
     def test_normal_1_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -119,6 +121,8 @@ class TestPositionStraightBondLock:
     # <Normal_1_2>
     # List specific tokens with query
     def test_normal_1_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -156,6 +160,8 @@ class TestPositionStraightBondLock:
     # <Normal_2>
     # Pagination
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -190,6 +196,8 @@ class TestPositionStraightBondLock:
     # <Normal_3>
     # Pagination(over offset)
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -220,6 +228,8 @@ class TestPositionStraightBondLock:
     # <Normal_4>
     # Filter(lock_address)
     def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -251,6 +261,8 @@ class TestPositionStraightBondLock:
     # <Normal_5_1>
     # Sort(token_address)
     def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -289,6 +301,8 @@ class TestPositionStraightBondLock:
     # <Normal_5_2>
     # Sort(lock_address)
     def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -327,6 +341,8 @@ class TestPositionStraightBondLock:
     # <Normal_5_3>
     # Sort(account_address)
     def test_normal_5_3(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -360,6 +376,8 @@ class TestPositionStraightBondLock:
     # <Normal_5_4>
     # Sort(value)
     def test_normal_5_4(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         self.setup_data(session)
 
@@ -397,6 +415,7 @@ class TestPositionStraightBondLock:
     # <Error_1>
     # ParameterError: invalid account_address
     def test_error_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -414,6 +433,7 @@ class TestPositionStraightBondLock:
     # <Error_2>
     # ParameterError: offset/limit(minus value)
     def test_error_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -448,6 +468,7 @@ class TestPositionStraightBondLock:
     # <Error_3>
     # ParameterError: offset/limit(not int), include_token_details(not bool)
     def test_error_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -475,4 +496,22 @@ class TestPositionStraightBondLock:
                 }
             ],
             "message": "Invalid Parameter"
+        }
+
+    # <Error_4>
+    # Not Supported
+    def test_error_4(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = False
+
+        # Request target API
+        resp = client.get(
+            self.apiurl_base.format(account_address="some_address"),
+        )
+
+        # Assertion
+        assert resp.status_code == 404
+        assert resp.json()["meta"] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /Position/some_address/StraightBond/Lock'
         }

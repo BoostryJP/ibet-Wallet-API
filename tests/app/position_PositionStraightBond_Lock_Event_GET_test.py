@@ -22,6 +22,7 @@ from unittest.mock import ANY
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app import config
 from app.model.db import (
     Listing,
     IDXLock,
@@ -141,6 +142,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_1
     # List all Events
     def test_normal_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -194,6 +197,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_2
     # Pagination
     def test_normal_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -229,6 +234,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_3
     # Pagination(over offset)
     def test_normal_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -255,6 +262,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_1_1
     # Filter(token_address_list): empty
     def test_normal_4_1_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -340,6 +349,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_1_2
     # Filter(token_address_list): single item
     def test_normal_4_1_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -397,6 +408,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_1_3
     # Filter(token_address_list): multiple item
     def test_normal_4_1_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -482,6 +495,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_2
     # Filter(lock_address)
     def test_normal_4_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -523,6 +538,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_3
     # Filter(recipient_address)
     def test_normal_4_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -557,6 +574,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_4
     # Filter(category=Lock)
     def test_normal_4_4(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -592,6 +611,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_6
     # Filter(category=Unlock)
     def test_normal_4_6(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -627,6 +648,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_4_7
     # Filter(data)
     def test_normal_4_7(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -668,6 +691,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_5_1
     # Sort(token_address)
     def test_normal_5_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -754,6 +779,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_5_2
     # Sort(lock_address)
     def test_normal_5_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -810,6 +837,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_5_3
     # Sort(recipient_address)
     def test_normal_5_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -866,6 +895,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_5_5
     # Sort(value)
     def test_normal_5_5(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -922,6 +953,8 @@ class TestPositionStraightBondLockEvent:
     # Normal_5_6
     # Sort(block_timestamp)
     def test_normal_5_6(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Prepare Data
         base_time = datetime(2023, 1, 1)
         self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
@@ -982,6 +1015,7 @@ class TestPositionStraightBondLockEvent:
     # <Error_1>
     # ParameterError: invalid account_address
     def test_error_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -999,6 +1033,7 @@ class TestPositionStraightBondLockEvent:
     # <Error_2>
     # ParameterError: offset/limit(minus value)
     def test_error_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -1033,6 +1068,7 @@ class TestPositionStraightBondLockEvent:
     # <Error_3>
     # ParameterError: offset/limit(not int), include_token_details(not bool)
     def test_error_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -1060,4 +1096,22 @@ class TestPositionStraightBondLockEvent:
                 }
             ],
             "message": "Invalid Parameter"
+        }
+
+    # <Error_4>
+    # Not Supported
+    def test_error_4(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = False
+
+        # Request target API
+        resp = client.get(
+            self.apiurl_base.format(account_address="some_address"),
+        )
+
+        # Assertion
+        assert resp.status_code == 404
+        assert resp.json()["meta"] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /Position/some_address/StraightBond/Lock/Event'
         }

@@ -29,15 +29,7 @@ from typing import List, Type
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import (
-    DATABASE_URL,
-    BOND_TOKEN_ENABLED,
-    SHARE_TOKEN_ENABLED,
-    MEMBERSHIP_TOKEN_ENABLED,
-    COUPON_TOKEN_ENABLED,
-    TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL,
-    TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC
-)
+from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
@@ -59,7 +51,7 @@ import log
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)
 
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -71,23 +63,23 @@ class Processor:
         token_model: Type[IDXTokenInstance]
 
     target_token_types: List[TargetTokenType]
-    SEC_PER_RECORD: float = TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC/1000
+    SEC_PER_RECORD: float = config.TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC/1000
 
     def __init__(self):
         self.target_token_types = []
-        if BOND_TOKEN_ENABLED:
+        if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetStraightBond", token_class=BondToken, token_model=BondTokenModel)
             )
-        if SHARE_TOKEN_ENABLED:
+        if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetShare", token_class=ShareToken, token_model=ShareTokenModel)
             )
-        if MEMBERSHIP_TOKEN_ENABLED:
+        if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetMembership", token_class=MembershipToken, token_model=MembershipTokenModel)
             )
-        if COUPON_TOKEN_ENABLED:
+        if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(template="IbetCoupon", token_class=CouponToken, token_model=CouponTokenModel)
             )
@@ -149,7 +141,7 @@ def main():
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
-        time_to_sleep = max(TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL - elapsed_time, 0)
+        time_to_sleep = max(config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL - elapsed_time, 0)
         if time_to_sleep == 0:
             LOG.debug("Processing is delayed")
         time.sleep(time_to_sleep)

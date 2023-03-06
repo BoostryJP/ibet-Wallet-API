@@ -36,10 +36,10 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 ### Token
 | Variable Name                  | Required | Details                                                            | Example                                    | Default | 
 |--------------------------------|----------|--------------------------------------------------------------------|--------------------------------------------|---------|
-| BOND_TOKEN_ENABLED             | False    | Using ibet Bond token (security token)                             | 0 (not using) / 1 (using)                  | 1       |
-| SHARE_TOKEN_ENABLED            | False    | Using ibet Share token (security token)                            | 0 (not using) / 1 (using)                  | 1       |
-| MEMBERSHIP_TOKEN_ENABLED       | False    | Using ibet Membership token                                        | 0 (not using) / 1 (using)                  | 1       |
-| COUPON_TOKEN_ENABLED           | False    | Using ibet Coupon token                                            | 0 (not using) / 1 (using)                  | 1       |
+| BOND_TOKEN_ENABLED             | False    | Using ibet Bond token (security token)                             | 0 (not using) / 1 (using)                  | 0       |
+| SHARE_TOKEN_ENABLED            | False    | Using ibet Share token (security token)                            | 0 (not using) / 1 (using)                  | 0       |
+| MEMBERSHIP_TOKEN_ENABLED       | False    | Using ibet Membership token                                        | 0 (not using) / 1 (using)                  | 0       |
+| COUPON_TOKEN_ENABLED           | False    | Using ibet Coupon token                                            | 0 (not using) / 1 (using)                  | 0       |
 | TOKEN_LIST_CONTRACT_ADDRESS    | True     | TokenList contract address                                         | 0x0000000000000000000000000000000000000000 | --      |
 | PERSONAL_INFO_CONTRACT_ADDRESS | True*    | PersonalInfo contract address (*Set if you enable security tokens) | 0x0000000000000000000000000000000000000000 | --      |
 | TOKEN_NOTIFICATION_ENABLED     | True*    | Use of token-related notification (*Set if you enable tokens)      | 0 (not using) / 1 (using)                  | --      |

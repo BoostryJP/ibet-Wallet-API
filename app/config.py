@@ -122,10 +122,10 @@ WEB3_REQUEST_WAIT_TIME = int(os.environ.get("WEB3_REQUEST_WAIT_TIME")) if os.env
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 # Token
-BOND_TOKEN_ENABLED = False if os.environ.get('BOND_TOKEN_ENABLED') == '0' else True
-MEMBERSHIP_TOKEN_ENABLED = False if os.environ.get('MEMBERSHIP_TOKEN_ENABLED') == '0' else True
-COUPON_TOKEN_ENABLED = False if os.environ.get('COUPON_TOKEN_ENABLED') == '0' else True
-SHARE_TOKEN_ENABLED = False if os.environ.get('SHARE_TOKEN_ENABLED') == '0' else True
+BOND_TOKEN_ENABLED = True if os.environ.get('BOND_TOKEN_ENABLED') == '1' else False
+MEMBERSHIP_TOKEN_ENABLED = True if os.environ.get('MEMBERSHIP_TOKEN_ENABLED') == '1' else False
+COUPON_TOKEN_ENABLED = True if os.environ.get('COUPON_TOKEN_ENABLED') == '1' else False
+SHARE_TOKEN_ENABLED = True if os.environ.get('SHARE_TOKEN_ENABLED') == '1' else False
 
 TOKEN_LIST_CONTRACT_ADDRESS = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
 PERSONAL_INFO_CONTRACT_ADDRESS = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
