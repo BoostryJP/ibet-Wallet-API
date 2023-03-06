@@ -21,7 +21,6 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine, and_
 from sqlalchemy.exc import SQLAlchemyError
@@ -36,8 +35,7 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     NOTIFICATION_PROCESS_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    TZ
+    TOKEN_LIST_CONTRACT_ADDRESS
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -91,7 +89,7 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"])
+        return datetime.utcfromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"])
 
     @staticmethod
     def _get_token_all_list(db_session: Session):

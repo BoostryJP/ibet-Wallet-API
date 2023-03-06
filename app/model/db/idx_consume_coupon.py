@@ -41,6 +41,10 @@ class IDXConsumeCoupon(Base):
     # Consume Amount
     amount = Column(BigInteger)
     # Block Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     block_timestamp = Column(DateTime, default=None)
 
     FIELDS = {

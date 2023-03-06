@@ -6385,7 +6385,7 @@ components:
         block_timestamp:
           title: Block Timestamp
           type: string
-          description: block_timestamp when Lock log was emitted (JST)
+          description: block_timestamp when Lock log was emitted (local_timezone)
           format: date-time
     LockEventCategory:
       title: LockEventCategory
@@ -7020,7 +7020,7 @@ components:
         created:
           title: Created
           type: string
-          description: Create Datetime (JST)
+          description: Create Datetime (local timezone)
     RetrieveAgreementDetailResponse:
       title: RetrieveAgreementDetailResponse
       required:
@@ -8076,19 +8076,19 @@ components:
         application_datetime:
           title: Application Datetime
           type: string
-          description: application datetime (JST)
+          description: application datetime (local timezone)
         application_blocktimestamp:
           title: Application Blocktimestamp
           type: string
-          description: application blocktimestamp (JST)
+          description: application blocktimestamp (local timezone)
         approval_datetime:
           title: Approval Datetime
           type: string
-          description: approval datetime (JST)
+          description: approval datetime (local timezone)
         approval_blocktimestamp:
           title: Approval Blocktimestamp
           type: string
-          description: approval blocktimestamp (JST)
+          description: approval blocktimestamp (local timezone)
         cancelled:
           title: Cancelled
           type: boolean
@@ -8155,7 +8155,7 @@ components:
         created:
           title: Created
           type: string
-          description: block_timestamp when Transfer log was emitted (JST)
+          description: block_timestamp when Transfer log was emitted (local timezone)
     TransferSourceEvent:
       title: TransferSourceEvent
       enum:

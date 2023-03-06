@@ -84,6 +84,10 @@ class Notification(Base):
     deleted_at = Column(DateTime, default=None)
 
     # 通知が発生した日付（blockTime）
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     block_timestamp = Column(DateTime)
 
     # 通知イベントの内容

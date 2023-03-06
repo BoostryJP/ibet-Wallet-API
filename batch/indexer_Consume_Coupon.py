@@ -168,9 +168,8 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
-                    block_timestamp = datetime.fromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"],
-                        local_tz
+                    block_timestamp = datetime.utcfromtimestamp(
+                        web3.eth.get_block(event["blockNumber"])["timestamp"]
                     )
                     amount = args.get("value", 0)
                     consumer = args.get("consumer", ZERO_ADDRESS)

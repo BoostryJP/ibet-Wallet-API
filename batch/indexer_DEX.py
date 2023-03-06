@@ -172,9 +172,8 @@ class Processor:
                             filter(Listing.token_address == args["tokenAddress"]). \
                             first()
                         transaction_hash = event["transactionHash"].hex()
-                        order_timestamp = datetime.fromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"],
-                            local_tz
+                        order_timestamp = datetime.utcfromtimestamp(
+                            web3.eth.get_block(event["blockNumber"])["timestamp"]
                         )
                         if available_token is not None:
                             account_address = args["accountAddress"]
@@ -263,9 +262,8 @@ class Processor:
                         else:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].hex()
-                        agreement_timestamp = datetime.fromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"],
-                            local_tz
+                        agreement_timestamp = datetime.utcfromtimestamp(
+                            web3.eth.get_block(event["blockNumber"])["timestamp"]
                         )
                         self.__sink_on_agree(
                             db_session=db_session,
@@ -294,9 +292,8 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
-                    settlement_timestamp = datetime.fromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"],
-                        local_tz
+                    settlement_timestamp = datetime.utcfromtimestamp(
+                        web3.eth.get_block(event["blockNumber"])["timestamp"]
                     )
                     self.__sink_on_settlement_ok(
                         db_session=db_session,
