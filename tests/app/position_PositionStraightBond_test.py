@@ -253,6 +253,8 @@ class TestPositionStraightBond:
     # <Normal_1>
     # List all positions
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -348,6 +350,8 @@ class TestPositionStraightBond:
     # <Normal_2>
     # Pagination
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -433,6 +437,8 @@ class TestPositionStraightBond:
     # <Normal_3>
     # token details
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -513,6 +519,8 @@ class TestPositionStraightBond:
     # List all positions
     # Indexed: <Normal_1>
     def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -641,6 +649,8 @@ class TestPositionStraightBond:
     # Pagination
     # Indexed: <Normal_2>
     def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -757,6 +767,8 @@ class TestPositionStraightBond:
     # token details
     # Indexed: <Normal_3>
     def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -839,6 +851,8 @@ class TestPositionStraightBond:
     # <Normal_7>
     # locked amount
     def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -918,14 +932,14 @@ class TestPositionStraightBond:
     # <Error_1>
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = False
 
         account_address = self.account_1["account_address"]
 
         # Request target API
-        with mock.patch("app.config.BOND_TOKEN_ENABLED", False):
-            resp = client.get(
-                self.apiurl.format(account_address=account_address),
-            )
+        resp = client.get(
+            self.apiurl.format(account_address=account_address),
+        )
 
         # Assertion
         assert resp.status_code == 404
@@ -938,6 +952,7 @@ class TestPositionStraightBond:
     # <Error_2>
     # ParameterError: invalid account_address
     def test_error_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -955,6 +970,7 @@ class TestPositionStraightBond:
     # <Error_3>
     # ParameterError: offset/limit(minus value)
     def test_error_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
@@ -989,6 +1005,7 @@ class TestPositionStraightBond:
     # <Error_4>
     # ParameterError: offset/limit(not int), include_token_details(not bool)
     def test_error_4(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
 
         # Request target API
         resp = client.get(
