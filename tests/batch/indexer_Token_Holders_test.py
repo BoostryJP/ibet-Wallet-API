@@ -1562,8 +1562,80 @@ class TestProcessor:
 
     # <Normal_14>
     # StraightBond
+    # Batch does not index former holder who has no balance at the target block number.
+    def test_normal_14(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        exchange_contract = shared_contract["IbetStraightBondExchange"]
+
+        # Issuer issues bond token.
+        token = self.issue_token_bond(
+            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract
+        )
+        self.listing_token(token["address"], session)
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+
+        # User1 and trader must register personal information before they receive token.
+        register_personalinfo(self.user1, personal_info_contract)
+        register_personalinfo(self.trader, personal_info_contract)
+
+        # Issuer transfers issued token to user1, trader and exchange.
+        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.user1["account_address"], self.issuer["account_address"], 20000)
+        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+        transfer_token(token_contract, self.trader["account_address"], self.issuer["account_address"], 10000)
+        # user1: 0 trader: 0
+
+        # Insert collection record with above token and current block number
+        target_token_holders_list1 = self.token_holders_list(token, web3.eth.block_number)
+        session.add(target_token_holders_list1)
+        session.flush()
+
+        former_holder = TokenHolder()
+        former_holder.holder_list = target_token_holders_list1.id
+        former_holder.hold_balance = 0
+        former_holder.locked_balance = 0
+        former_holder.account_address = "former holder"
+        session.add(former_holder)
+
+        session.commit()
+
+        # Issuer transfers issued token to users again to proceed block_number.
+        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
+
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
+
+        user1_record: TokenHolder = (
+            session.query(TokenHolder)
+            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
+            .filter(TokenHolder.account_address == self.user1["account_address"])
+            .first()
+        )
+        trader_record: TokenHolder = (
+            session.query(TokenHolder)
+            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
+            .filter(TokenHolder.account_address == self.trader["account_address"])
+            .first()
+        )
+
+        assert user1_record is None
+        assert trader_record is None
+
+        assert len(session.query(TokenHolder).all()) == 0
+
+    # <Normal_15>
+    # StraightBond
     # Jobs are queued and pending jobs are to be processed one by one.
-    def test_normal_14(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+    def test_normal_15(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -1606,10 +1678,10 @@ class TestProcessor:
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list2.list_id}) status changes to be done."))
         assert 2 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Collect job has been completed"))
 
-    # <Normal_15>
+    # <Normal_16>
     # When stored checkpoint is 9,999,999 and current block number is 19,999,999,
     # then processor should call "__process_all" method 10 times.
-    def test_normal_15(self, processor: Processor, shared_contract, session: Session, caplog: pytest.LogCaptureFixture):
+    def test_normal_16(self, processor: Processor, shared_contract, session: Session, caplog: pytest.LogCaptureFixture):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
