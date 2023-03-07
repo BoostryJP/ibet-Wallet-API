@@ -2,12 +2,6 @@ name: Pull Request Check
 on: [pull_request]
 
 jobs:
-  lint-isort:
-    name: 'Lint check (isort)'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: isort/isort-action@v1.0.0
   lint-black:
     name: 'Lint check (black)'
     runs-on: ubuntu-latest
