@@ -18,19 +18,20 @@ SPDX-License-Identifier: Apache-2.0
 """
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+
 from app.model.db import (
-    Listing,
     ExecutableContract,
     IDXBondToken,
-    IDXShareToken,
+    IDXCouponToken,
     IDXMembershipToken,
-    IDXCouponToken
+    IDXShareToken,
+    Listing,
 )
 
 
 class TestAdminTokenDELETE:
     # テスト対象API
-    apiurl_base = '/Admin/Tokens/'
+    apiurl_base = "/Admin/Tokens/"
 
     @staticmethod
     def insert_Listing(session: Session, token):
@@ -88,7 +89,7 @@ class TestAdminTokenDELETE:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
@@ -104,19 +105,25 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = session.query(Listing). \
-            filter(Listing.token_address == token["token_address"]). \
-            all()
+        listing = (
+            session.query(Listing)
+            .filter(Listing.token_address == token["token_address"])
+            .all()
+        )
         assert listing == []
 
-        executable_contract = session.query(ExecutableContract). \
-            filter(ExecutableContract.contract_address == token["token_address"]). \
-            all()
+        executable_contract = (
+            session.query(ExecutableContract)
+            .filter(ExecutableContract.contract_address == token["token_address"])
+            .all()
+        )
         assert executable_contract == []
 
-        idx_token = session.query(IDXBondToken). \
-            filter(IDXBondToken.token_address == token["token_address"]). \
-            all()
+        idx_token = (
+            session.query(IDXBondToken)
+            .filter(IDXBondToken.token_address == token["token_address"])
+            .all()
+        )
         assert idx_token == []
 
     # Normal_2
@@ -127,7 +134,7 @@ class TestAdminTokenDELETE:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
@@ -143,19 +150,25 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = session.query(Listing). \
-            filter(Listing.token_address == token["token_address"]). \
-            all()
+        listing = (
+            session.query(Listing)
+            .filter(Listing.token_address == token["token_address"])
+            .all()
+        )
         assert listing == []
 
-        executable_contract = session.query(ExecutableContract). \
-            filter(ExecutableContract.contract_address == token["token_address"]). \
-            all()
+        executable_contract = (
+            session.query(ExecutableContract)
+            .filter(ExecutableContract.contract_address == token["token_address"])
+            .all()
+        )
         assert executable_contract == []
 
-        idx_token = session.query(IDXShareToken). \
-            filter(IDXShareToken.token_address == token["token_address"]). \
-            all()
+        idx_token = (
+            session.query(IDXShareToken)
+            .filter(IDXShareToken.token_address == token["token_address"])
+            .all()
+        )
         assert idx_token == []
 
     # Normal_3
@@ -166,7 +179,7 @@ class TestAdminTokenDELETE:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
@@ -182,19 +195,25 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = session.query(Listing). \
-            filter(Listing.token_address == token["token_address"]). \
-            all()
+        listing = (
+            session.query(Listing)
+            .filter(Listing.token_address == token["token_address"])
+            .all()
+        )
         assert listing == []
 
-        executable_contract = session.query(ExecutableContract). \
-            filter(ExecutableContract.contract_address == token["token_address"]). \
-            all()
+        executable_contract = (
+            session.query(ExecutableContract)
+            .filter(ExecutableContract.contract_address == token["token_address"])
+            .all()
+        )
         assert executable_contract == []
 
-        idx_token = session.query(IDXMembershipToken). \
-            filter(IDXMembershipToken.token_address == token["token_address"]). \
-            all()
+        idx_token = (
+            session.query(IDXMembershipToken)
+            .filter(IDXMembershipToken.token_address == token["token_address"])
+            .all()
+        )
         assert idx_token == []
 
     # Normal_4
@@ -205,7 +224,7 @@ class TestAdminTokenDELETE:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
@@ -221,19 +240,25 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = session.query(Listing). \
-            filter(Listing.token_address == token["token_address"]). \
-            all()
+        listing = (
+            session.query(Listing)
+            .filter(Listing.token_address == token["token_address"])
+            .all()
+        )
         assert listing == []
 
-        executable_contract = session.query(ExecutableContract). \
-            filter(ExecutableContract.contract_address == token["token_address"]). \
-            all()
+        executable_contract = (
+            session.query(ExecutableContract)
+            .filter(ExecutableContract.contract_address == token["token_address"])
+            .all()
+        )
         assert executable_contract == []
 
-        idx_token = session.query(IDXCouponToken). \
-            filter(IDXCouponToken.token_address == token["token_address"]). \
-            all()
+        idx_token = (
+            session.query(IDXCouponToken)
+            .filter(IDXCouponToken.token_address == token["token_address"])
+            .all()
+        )
         assert idx_token == []
 
     # Normal_5
@@ -244,7 +269,7 @@ class TestAdminTokenDELETE:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
@@ -261,22 +286,30 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = session.query(Listing). \
-            filter(Listing.token_address == token["token_address"]). \
-            all()
+        listing = (
+            session.query(Listing)
+            .filter(Listing.token_address == token["token_address"])
+            .all()
+        )
         assert listing == []
 
-        executable_contract = session.query(ExecutableContract). \
-            filter(ExecutableContract.contract_address == token["token_address"]). \
-            all()
+        executable_contract = (
+            session.query(ExecutableContract)
+            .filter(ExecutableContract.contract_address == token["token_address"])
+            .all()
+        )
         assert executable_contract == []
 
-        idx_token = session.query(IDXBondToken). \
-            filter(IDXBondToken.token_address == token["token_address"]). \
-            all()
+        idx_token = (
+            session.query(IDXBondToken)
+            .filter(IDXBondToken.token_address == token["token_address"])
+            .all()
+        )
         assert idx_token == []
 
-        idx_token = session.query(IDXCouponToken). \
-            filter(IDXCouponToken.token_address == token["token_address"]). \
-            all()
+        idx_token = (
+            session.query(IDXCouponToken)
+            .filter(IDXCouponToken.token_address == token["token_address"])
+            .all()
+        )
         assert idx_token == []

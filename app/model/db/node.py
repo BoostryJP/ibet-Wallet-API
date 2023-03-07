@@ -17,13 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from sqlalchemy import Column
-from sqlalchemy import (
-    BigInteger,
-    String,
-    Integer,
-    Boolean
-)
+from sqlalchemy import BigInteger, Boolean, Column, Integer, String
 
 from app.model.db import Base
 
@@ -32,7 +26,8 @@ class Node(Base):
     """
     Ethereum Node Information
     """
-    __tablename__ = 'node'
+
+    __tablename__ = "node"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # endpoint uri(http[s]://domain:port)
@@ -43,14 +38,13 @@ class Node(Base):
     is_synced = Column(Boolean, nullable=False)
 
     def __repr__(self):
-        return "<Node id='%d' is_synced='%s'>" % \
-               (self.id, self.is_synced)
+        return "<Node id='%d' is_synced='%s'>" % (self.id, self.is_synced)
 
     FIELDS = {
-        'id': int,
-        'endpoint_uri': str,
-        'priority': int,
-        'is_synced': bool,
+        "id": int,
+        "endpoint_uri": str,
+        "priority": int,
+        "is_synced": bool,
     }
 
     FIELDS.update(Base.FIELDS)

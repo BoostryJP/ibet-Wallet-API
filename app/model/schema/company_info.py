@@ -16,11 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import (
-    Optional,
-    Union
-)
+from typing import Optional, Union
+
 from pydantic import BaseModel
+
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
@@ -40,6 +39,7 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 # RESPONSE
 ############################
 
+
 class RetrieveCompanyInfoResponse(BaseModel):
     address: str
     corporate_name: str
@@ -52,7 +52,14 @@ class ListAllCompanyInfoResponse(BaseModel):
 
 
 class ListAllCompanyTokensResponse(BaseModel):
-    __root__: list[Union[RetrieveStraightBondTokenResponse, RetrieveShareTokenResponse, RetrieveMembershipTokenResponse, RetrieveCouponTokenResponse]]
+    __root__: list[
+        Union[
+            RetrieveStraightBondTokenResponse,
+            RetrieveShareTokenResponse,
+            RetrieveMembershipTokenResponse,
+            RetrieveCouponTokenResponse,
+        ]
+    ]
 
 
 class CompanyToken(BaseModel):

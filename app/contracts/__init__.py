@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .contract import Contract
 from .abi import create_abi_event_argument_models
+from .contract import Contract
 
 contract_version = "v22.12.0"

@@ -19,15 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 import logging
 from datetime import datetime
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
-
 
 meta = MetaData()
 
 table = Table(
-    "mail", meta,
+    "mail",
+    meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("to_email", String(256), nullable=False),
     Column("subject", String(100), nullable=False),

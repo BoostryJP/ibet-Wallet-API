@@ -16,13 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    DateTime,
-    String,
-    BigInteger,
-    Boolean
-)
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
 from app.model.db import Base
 from app.utils import alchemy
@@ -30,6 +24,7 @@ from app.utils import alchemy
 
 class IDXOrder(Base):
     """DEX Order Events (INDEX)"""
+
     __tablename__ = "order"
 
     # Sequence Id

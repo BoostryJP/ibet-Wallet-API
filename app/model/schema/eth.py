@@ -17,13 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    StrictStr
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field, StrictStr
 from pydantic.dataclasses import dataclass
 
 ############################
@@ -34,6 +31,7 @@ from pydantic.dataclasses import dataclass
 ############################
 # REQUEST
 ############################
+
 
 class BlockIdentifier(str, Enum):
     latest = "latest"
@@ -47,7 +45,9 @@ class GetTransactionCountQuery:
 
 
 class SendRawTransactionRequest(BaseModel):
-    raw_tx_hex_list: list[StrictStr] = Field(description="Signed transaction list", min_items=1)
+    raw_tx_hex_list: list[StrictStr] = Field(
+        description="Signed transaction list", min_items=1
+    )
 
 
 @dataclass
@@ -60,6 +60,7 @@ class WaitForTransactionReceiptQuery:
 # RESPONSE
 ############################
 
+
 class TransactionCountResponse(BaseModel):
     nonce: int = Field(..., example=34)
     gasprice: int = Field(..., example=0)
@@ -68,11 +69,19 @@ class TransactionCountResponse(BaseModel):
 
 class SendRawTransactionResponse(BaseModel):
     id: int = Field(..., example=1, description="transaction send order")
-    status: int = Field(..., example=1, description="execution failure:0, execution success:1, execution success("
-                                                    "pending transaction):2")
+    status: int = Field(
+        ...,
+        example=1,
+        description="execution failure:0, execution success:1, execution success("
+        "pending transaction):2",
+    )
     transaction_hash: Optional[str] = Field(description="transaction hash")
-    error_code: Optional[int] = Field(example=240202, description="error code thrown from contract")
-    error_msg: Optional[str] = Field(example="Message sender is not token owner.", description="error msg")
+    error_code: Optional[int] = Field(
+        example=240202, description="error code thrown from contract"
+    )
+    error_msg: Optional[str] = Field(
+        example="Message sender is not token owner.", description="error msg"
+    )
 
 
 class SendRawTransactionsResponse(BaseModel):
@@ -81,7 +90,9 @@ class SendRawTransactionsResponse(BaseModel):
 
 class SendRawTransactionNoWaitResponse(BaseModel):
     id: int = Field(..., example=1, description="transaction send order")
-    status: int = Field(..., example=1, description="execution failure:0, execution success:1")
+    status: int = Field(
+        ..., example=1, description="execution failure:0, execution success:1"
+    )
     transaction_hash: Optional[str] = Field(description="transaction hash")
 
 
@@ -90,6 +101,12 @@ class SendRawTransactionsNoWaitResponse(BaseModel):
 
 
 class WaitForTransactionReceiptResponse(BaseModel):
-    status: int = Field(..., example=1, description="transaction revert:0, transaction success:1")
-    error_code: Optional[int] = Field(example=240202, description="error code thrown from contract")
-    error_msg: Optional[str] = Field(example="Message sender is not token owner.", description="error msg")
+    status: int = Field(
+        ..., example=1, description="transaction revert:0, transaction success:1"
+    )
+    error_code: Optional[int] = Field(
+        example=240202, description="error code thrown from contract"
+    )
+    error_msg: Optional[str] = Field(
+        example="Message sender is not token owner.", description="error msg"
+    )

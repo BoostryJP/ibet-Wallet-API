@@ -18,11 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.model.db import (
-    IDXPosition,
-    IDXLockedPosition,
-    Listing
-)
+
+from app.model.db import IDXLockedPosition, IDXPosition, Listing
 from tests.account_config import eth_account
 
 
@@ -119,7 +116,7 @@ class TestTokenTokenHolders:
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 5,
-            "exchange_commitment": 5
+            "exchange_commitment": 5,
         }
         self.insert_position(session, position_1)
         position_2 = {
@@ -128,7 +125,7 @@ class TestTokenTokenHolders:
             "balance": 20,
             "exchange_balance": 20,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, position_2)
 
@@ -139,7 +136,7 @@ class TestTokenTokenHolders:
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, other_position_1)
         other_position_2 = {
@@ -148,7 +145,7 @@ class TestTokenTokenHolders:
             "balance": 20,
             "exchange_balance": 20,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_2)
 
@@ -166,7 +163,7 @@ class TestTokenTokenHolders:
                 "pending_transfer": 10,
                 "exchange_balance": 20,
                 "exchange_commitment": 10,
-                "locked": 0
+                "locked": 0,
             },
             {
                 "token_address": self.token_address,
@@ -175,7 +172,7 @@ class TestTokenTokenHolders:
                 "pending_transfer": 5,
                 "exchange_balance": 10,
                 "exchange_commitment": 5,
-                "locked": 0
+                "locked": 0,
             },
         ]
         assert resp.status_code == 200
@@ -204,7 +201,7 @@ class TestTokenTokenHolders:
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, position_1)
         position_2 = {
@@ -213,7 +210,7 @@ class TestTokenTokenHolders:
             "balance": 20,
             "exchange_balance": 20,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, position_2)
 
@@ -224,7 +221,7 @@ class TestTokenTokenHolders:
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, other_position_1)
         other_position_2 = {
@@ -233,7 +230,7 @@ class TestTokenTokenHolders:
             "balance": 20,
             "exchange_balance": 20,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_2)
 
@@ -242,14 +239,14 @@ class TestTokenTokenHolders:
             "token_address": self.token_address,
             "lock_address": self.lock_address_1,
             "account_address": self.account_address_1,
-            "value": 1
+            "value": 1,
         }
         self.insert_locked_position(session, locked_position_1)
         locked_position_2 = {
             "token_address": self.token_address,
             "lock_address": self.lock_address_2,
             "account_address": self.account_address_1,
-            "value": 1
+            "value": 1,
         }
         self.insert_locked_position(session, locked_position_2)
 
@@ -267,7 +264,7 @@ class TestTokenTokenHolders:
                 "pending_transfer": 10,
                 "exchange_balance": 20,
                 "exchange_commitment": 10,
-                "locked": 0
+                "locked": 0,
             },
             {
                 "token_address": self.token_address,
@@ -276,7 +273,7 @@ class TestTokenTokenHolders:
                 "pending_transfer": 0,
                 "exchange_balance": 0,
                 "exchange_commitment": 0,
-                "locked": 2
+                "locked": 2,
             },
         ]
         assert resp.status_code == 200
@@ -302,7 +299,7 @@ class TestTokenTokenHolders:
         position_1 = {
             "token_address": self.token_address,
             "account_address": self.account_address_1,
-            "balance": 0
+            "balance": 0,
         }
         self.insert_position(session, position=position_1)
 
@@ -310,7 +307,7 @@ class TestTokenTokenHolders:
         position_2 = {
             "token_address": self.token_address,
             "account_address": self.account_address_1,
-            "pending_transfer": 0
+            "pending_transfer": 0,
         }
         self.insert_position(session, position=position_2)
 
@@ -318,7 +315,7 @@ class TestTokenTokenHolders:
         position_3 = {
             "token_address": self.token_address,
             "account_address": self.account_address_1,
-            "exchange_balance": 0
+            "exchange_balance": 0,
         }
         self.insert_position(session, position=position_3)
 
@@ -326,7 +323,7 @@ class TestTokenTokenHolders:
         position_4 = {
             "token_address": self.token_address,
             "account_address": self.account_address_1,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, position=position_4)
 
@@ -337,7 +334,7 @@ class TestTokenTokenHolders:
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, other_position_1)
         other_position_2 = {
@@ -346,7 +343,7 @@ class TestTokenTokenHolders:
             "balance": 20,
             "exchange_balance": 20,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_2)
 
@@ -389,7 +386,7 @@ class TestTokenTokenHolders:
         position_2 = {
             "token_address": self.token_address,
             "account_address": self.issuer_address,
-            "pending_transfer": 5
+            "pending_transfer": 5,
         }
         self.insert_position(session, position=position_2)
 
@@ -400,7 +397,7 @@ class TestTokenTokenHolders:
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, other_position_1)
         other_position_2 = {
@@ -409,15 +406,13 @@ class TestTokenTokenHolders:
             "balance": 20,
             "exchange_balance": 20,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_2)
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query = {
-            "exclude_owner": True
-        }
+        query = {"exclude_owner": True}
         resp = client.get(apiurl, params=query)
 
         # Assertion
@@ -429,7 +424,7 @@ class TestTokenTokenHolders:
                 "pending_transfer": None,
                 "exchange_balance": 10,
                 "exchange_commitment": None,
-                "locked": 0
+                "locked": 0,
             }
         ]
         assert resp.status_code == 200
@@ -452,7 +447,7 @@ class TestTokenTokenHolders:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address"
+            "description": "invalid contract_address",
         }
 
     # Error_2
@@ -467,5 +462,5 @@ class TestTokenTokenHolders:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + self.token_address
+            "description": "contract_address: " + self.token_address,
         }

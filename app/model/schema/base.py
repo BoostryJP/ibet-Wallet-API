@@ -17,23 +17,17 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import IntEnum
+from typing import Generic, Optional, TypeVar
+
 from fastapi import Query
-from typing import (
-    TypeVar,
-    Generic,
-    Optional
-)
-from pydantic import (
-    BaseModel,
-    Field
-)
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 from pydantic.generics import GenericModel
-
 
 ############################
 # REQUEST
 ############################
+
 
 class SortOrder(IntEnum):
     ASC = 0
@@ -50,8 +44,10 @@ class ResultSetQuery:
 # RESPONSE
 ############################
 
+
 class ResultSet(BaseModel):
     """result set for pagination"""
+
     count: Optional[int]
     offset: Optional[int] = Field(..., description="start position")
     limit: Optional[int] = Field(..., description="number of set")
@@ -67,7 +63,9 @@ Data = TypeVar("Data")
 
 
 class SuccessResponse(BaseModel):
-    meta: Success200MetaModel = Field(..., example=Success200MetaModel(code=200, message="OK"))
+    meta: Success200MetaModel = Field(
+        ..., example=Success200MetaModel(code=200, message="OK")
+    )
     data: dict = {}
 
     @staticmethod
@@ -76,5 +74,7 @@ class SuccessResponse(BaseModel):
 
 
 class GenericSuccessResponse(GenericModel, Generic[Data]):
-    meta: Success200MetaModel = Field(..., example=Success200MetaModel(code=200, message="OK"))
+    meta: Success200MetaModel = Field(
+        ..., example=Success200MetaModel(code=200, message="OK")
+    )
     data: Data

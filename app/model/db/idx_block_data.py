@@ -16,20 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    Integer,
-    Text,
-    JSON
-)
+from sqlalchemy import JSON, BigInteger, Column, Integer, String, Text
 
 from app.model.db import Base
 
 
 class IDXBlockData(Base):
     """Block data (INDEX)"""
+
     __tablename__ = "block_data"
 
     # Header data
@@ -72,13 +66,14 @@ class IDXBlockData(Base):
         "nonce": str,
         "hash": str,
         "size": int,
-        "transactions": list[str]
+        "transactions": list[str],
     }
     FIELDS.update(Base.FIELDS)
 
 
 class IDXBlockDataBlockNumber(Base):
     """Synchronized blockNumber of IDXBlockData"""
+
     __tablename__ = "idx_block_data_block_number"
 
     # Chain id

@@ -24,7 +24,7 @@ from app import config
 
 class TestAdminTokenType:
     # テスト対象API
-    apiurl = '/Admin/Tokens/Type'
+    apiurl = "/Admin/Tokens/Type"
 
     ###########################################################################
     # Normal
@@ -40,5 +40,5 @@ class TestAdminTokenType:
             "IbetStraightBond": config.BOND_TOKEN_ENABLED,
             "IbetShare": config.SHARE_TOKEN_ENABLED,
             "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,
-            "IbetCoupon": config.COUPON_TOKEN_ENABLED
+            "IbetCoupon": config.COUPON_TOKEN_ENABLED,
         }

@@ -18,17 +18,14 @@ SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
 
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-)
+from sqlalchemy import BigInteger, Column, String
 
 from app.model.db import Base
 
 
 class TokenHoldersList(Base):
     """Token Holder List"""
+
     __tablename__ = "token_holders_list"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -50,6 +47,7 @@ class TokenHolderBatchStatus(str, Enum):
 
 class TokenHolder(Base):
     """Token Holder"""
+
     __tablename__ = "token_holder"
 
     # Related to TokenHoldersList primary key
@@ -65,14 +63,14 @@ class TokenHolder(Base):
         return {
             "account_address": self.account_address,
             "hold_balance": self.hold_balance,
-            "locked_balance": self.locked_balance
+            "locked_balance": self.locked_balance,
         }
 
     FIELDS = {
         "holder_list_id": int,
         "account_address": str,
         "hold_balance": int,
-        "locked_balance": int
+        "locked_balance": int,
     }
 
     FIELDS.update(Base.FIELDS)

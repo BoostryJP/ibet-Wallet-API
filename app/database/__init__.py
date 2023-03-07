@@ -20,20 +20,19 @@ SPDX-License-Identifier: Apache-2.0
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app import log
-from app import config
+from app import config, log
 
 LOG = log.get_logger()
 
 
 def get_engine(uri):
     options = {
-        'pool_recycle': 3600,
-        'pool_size': 10,
-        'pool_timeout': 30,
-        'pool_pre_ping': True,
-        'max_overflow': 30,
-        'echo': config.DB_ECHO
+        "pool_recycle": 3600,
+        "pool_size": 10,
+        "pool_timeout": 30,
+        "pool_pre_ping": True,
+        "max_overflow": 30,
+        "echo": config.DB_ECHO,
     }
     return create_engine(uri, **options)
 

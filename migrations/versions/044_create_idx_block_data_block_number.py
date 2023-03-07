@@ -19,15 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 import logging
 from datetime import datetime
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
-
 
 meta = MetaData()
 
 table = Table(
-    "idx_block_data_block_number", meta,
+    "idx_block_data_block_number",
+    meta,
     Column("chain_id", String(10), primary_key=True),
     Column("latest_block_number", BigInteger),
     Column("created", DateTime, default=datetime.utcnow),

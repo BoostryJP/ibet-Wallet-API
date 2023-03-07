@@ -18,10 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.config import TZ
 
+from app.config import TZ
 from app.model.db import Notification
 
 local_tz = ZoneInfo(TZ)
@@ -49,7 +50,9 @@ class TestNotificationsRead:
         n.is_flagged = False
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=local_tz)  # ローカルタイムゾーンとして保存する
+        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(
+            tzinfo=local_tz
+        )  # ローカルタイムゾーンとして保存する
         n.args = {
             "hoge": "fuga",
         }
@@ -126,7 +129,9 @@ class TestNotificationsRead:
 
     # ＜正常系1＞
     #   全件既読化
-    def test_post_notification_read_normal_1(self, client: TestClient, session: Session):
+    def test_post_notification_read_normal_1(
+        self, client: TestClient, session: Session
+    ):
         self._insert_test_data(session)
 
         resp = client.post(
@@ -137,15 +142,17 @@ class TestNotificationsRead:
             },
         )
 
-        notification_1_list = \
-            session.query(Notification). \
-                filter(Notification.address == TestNotificationsRead.address_1). \
-                all()
+        notification_1_list = (
+            session.query(Notification)
+            .filter(Notification.address == TestNotificationsRead.address_1)
+            .all()
+        )
 
-        notification_2_list = \
-            session.query(Notification). \
-                filter(Notification.address == TestNotificationsRead.address_2). \
-                all()
+        notification_2_list = (
+            session.query(Notification)
+            .filter(Notification.address == TestNotificationsRead.address_2)
+            .all()
+        )
 
         assert resp.status_code == 200
         assert len(notification_1_list) == 4
@@ -159,7 +166,9 @@ class TestNotificationsRead:
 
     # ＜正常系2＞
     #   全件未読化
-    def test_post_notification_read_normal_2(self, client: TestClient, session: Session):
+    def test_post_notification_read_normal_2(
+        self, client: TestClient, session: Session
+    ):
         self._insert_test_data(session)
 
         resp = client.post(
@@ -167,7 +176,7 @@ class TestNotificationsRead:
             json={
                 "address": TestNotificationsRead.address_1,
                 "is_read": False,
-            }
+            },
         )
 
         notification_list = session.query(Notification).all()
@@ -180,7 +189,9 @@ class TestNotificationsRead:
 
     # ＜正常系3＞
     #   存在しないアドレスの既読化
-    def test_post_notification_read_normal_3(self, client: TestClient, session: Session):
+    def test_post_notification_read_normal_3(
+        self, client: TestClient, session: Session
+    ):
         self._insert_test_data(session)
 
         resp = client.post(
@@ -201,9 +212,9 @@ class TestNotificationsRead:
         resp = client.post(
             self.apiurl,
             json={
-                "address": 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf,
+                "address": 0x7E5F4552091A69125D5DFCB7B8C2659029395BDF,
                 "is_read": "invalid_value",
-            }
+            },
         )
 
         assert resp.status_code == 400
@@ -213,15 +224,15 @@ class TestNotificationsRead:
                 {
                     "loc": ["body", "address"],
                     "msg": "address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 },
                 {
                     "loc": ["body", "is_read"],
                     "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool"
-                }
+                    "type": "type_error.bool",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # ＜エラー系2＞
@@ -234,7 +245,7 @@ class TestNotificationsRead:
             json={
                 "address": "",
                 "is_read": None,
-            }
+            },
         )
 
         assert resp.status_code == 400
@@ -244,15 +255,15 @@ class TestNotificationsRead:
                 {
                     "loc": ["body", "address"],
                     "msg": "address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 },
                 {
                     "loc": ["body", "is_read"],
                     "msg": "none is not an allowed value",
-                    "type": "type_error.none.not_allowed"
-                }
+                    "type": "type_error.none.not_allowed",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # ＜エラー系3＞
@@ -265,7 +276,7 @@ class TestNotificationsRead:
             json={
                 "address": "0x123",
                 "is_read": True,
-            }
+            },
         )
 
         assert resp.status_code == 400
@@ -275,8 +286,8 @@ class TestNotificationsRead:
                 {
                     "loc": ["body", "address"],
                     "msg": "address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }

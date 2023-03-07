@@ -18,26 +18,13 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 import os
-from functools import lru_cache
-import eth_utils.abi
-
-
 from enum import Enum
+from functools import lru_cache
+from typing import Any, List, Literal, Optional, Type, Union
+
+import eth_utils.abi
 from hexbytes import HexBytes
-from pydantic import (
-    BaseModel,
-    parse_obj_as,
-    create_model,
-    Extra
-)
-from typing import (
-    List,
-    Optional,
-    Union,
-    Literal,
-    Type,
-    Any
-)
+from pydantic import BaseModel, Extra, create_model, parse_obj_as
 from web3 import Web3
 
 
@@ -119,16 +106,19 @@ class ABIEventDescription(BaseModel):
     anonymous: bool
 
 
-ABIDescription = Union[ABIEventDescription, ABIFunctionDescription, ABIGenericDescription]
+ABIDescription = Union[
+    ABIEventDescription, ABIFunctionDescription, ABIGenericDescription
+]
 ABI = List[ABIDescription]
 
 
 @lru_cache(None)
 def create_abi_event_argument_models(contract_name: str) -> list[Type[BaseModel]]:
+    contract_file = (
+        f"{os.path.dirname(os.path.abspath(__file__))}/json/{contract_name}.json"
+    )
 
-    contract_file = f"{os.path.dirname(os.path.abspath(__file__))}/json/{contract_name}.json"
-
-    with open(contract_file, 'r') as file:
+    with open(contract_file, "r") as file:
         contract_json = json.load(file)
         abi_list = parse_obj_as(ABI, contract_json.get("abi"))
 
@@ -151,7 +141,7 @@ def create_abi_event_argument_models(contract_name: str) -> list[Type[BaseModel]
             model = create_model(
                 f"{abi.name.capitalize()}{abi.type.capitalize()}Argument",
                 **fields,
-                __config__=Config
+                __config__=Config,
             )
 
             models.append(model)

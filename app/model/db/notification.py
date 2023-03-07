@@ -18,12 +18,21 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import sys
-from enum import Enum
-from sqlalchemy import create_engine
-from sqlalchemy import Column, Index, BigInteger, Sequence
-from sqlalchemy import String, Integer, Boolean, DateTime, JSON
-
 from datetime import datetime
+from enum import Enum
+
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Index,
+    Integer,
+    Sequence,
+    String,
+    create_engine,
+)
 
 from app import config
 from app.model.db import Base
@@ -35,10 +44,10 @@ engine = create_engine(URI, echo=False)
 # 通知データをキャッシュするためのテーブル
 # 既読情報や重要フラグの情報なども保存される
 class Notification(Base):
-    __tablename__ = 'notification'
+    __tablename__ = "notification"
 
     # レコードID
-    if engine.name == 'mysql':
+    if engine.name == "mysql":
         # NOTE:MySQLの場合はSEQ機能が利用できない
         id = Column(BigInteger, autoincrement=True)
     else:
@@ -49,9 +58,13 @@ class Notification(Base):
             increment=1,
             minvalue=1,
             maxvalue=sys.maxsize,
-            cache=1
+            cache=1,
         )
-        id = Column(BigInteger, server_default=Sequence("notification_id_seq").next_value(), autoincrement=True)
+        id = Column(
+            BigInteger,
+            server_default=Sequence("notification_id_seq").next_value(),
+            autoincrement=True,
+        )
 
     # 通知ID
     # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex> | <optionType>
@@ -96,19 +109,24 @@ class Notification(Base):
     metainfo = Column(JSON)
 
     def __repr__(self):
-        return "<Notification(notification_id='{}', notification_type='{}')>" \
-            .format(self.notification_id, self.notification_type)
+        return "<Notification(notification_id='{}', notification_type='{}')>".format(
+            self.notification_id, self.notification_type
+        )
 
     def json(self):
         return {
             "notification_type": self.notification_type,
             "id": self.notification_id,
             "priority": self.priority,
-            "block_timestamp": self.block_timestamp.strftime("%Y/%m/%d %H:%M:%S") if self.block_timestamp is not None else None,
+            "block_timestamp": self.block_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+            if self.block_timestamp is not None
+            else None,
             "is_read": self.is_read,
             "is_flagged": self.is_flagged,
             "is_deleted": self.is_deleted,
-            "deleted_at": self.deleted_at.strftime("%Y/%m/%d %H:%M:%S") if self.deleted_at is not None else None,
+            "deleted_at": self.deleted_at.strftime("%Y/%m/%d %H:%M:%S")
+            if self.deleted_at is not None
+            else None,
             "args": self.args,
             "metainfo": self.metainfo,
             "account_address": self.address,
@@ -133,7 +151,12 @@ class Notification(Base):
 # 通知を新着順でソート時に使用
 Index("notification_index_1", Notification.address, Notification.notification_id)
 # 通知を重要度→新着順でソート時に使用
-Index("notification_index_2", Notification.address, Notification.priority, Notification.notification_id)
+Index(
+    "notification_index_2",
+    Notification.address,
+    Notification.priority,
+    Notification.notification_id,
+)
 
 
 class NotificationType(str, Enum):
@@ -156,6 +179,7 @@ class NotificationType(str, Enum):
 
 class NotificationBlockNumber(Base):
     """Synchronized blockNumber of Notification"""
+
     __tablename__ = "notification_block_number"
 
     # notification type: NotificationType
@@ -166,9 +190,9 @@ class NotificationBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        'notification_type': str,
-        'contract_address': str,
-        'latest_block_number': int,
+        "notification_type": str,
+        "contract_address": str,
+        "latest_block_number": int,
     }
 
     FIELDS.update(Base.FIELDS)

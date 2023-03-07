@@ -18,13 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
 
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    BigInteger,
-    DateTime
-)
+from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 
 from app.model.db import Base
 from app.utils import alchemy
@@ -32,6 +26,7 @@ from app.utils import alchemy
 
 class IDXAgreement(Base):
     """DEX Agreement Events (INDEX)"""
+
     __tablename__ = "agreement"
 
     # Sequence Id

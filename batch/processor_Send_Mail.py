@@ -29,10 +29,11 @@ from sqlalchemy.orm import Session
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app.config import DATABASE_URL
 from app.model.db import Mail
 from app.model.mail import Mail as SMTPMail
-import log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
 
@@ -40,7 +41,6 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
-
     def process(self):
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
@@ -53,7 +53,7 @@ class Processor:
                             to_email=mail.to_email,
                             subject=mail.subject,
                             text_content=mail.text_content,
-                            html_content=mail.html_content
+                            html_content=mail.html_content,
                         )
                         smtp_mail.send_mail()
                     except (SMTPException, SESException) as err:

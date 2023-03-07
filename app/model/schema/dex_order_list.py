@@ -16,21 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import (
-    Optional,
-    Generic,
-    TypeVar
-)
+from typing import Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import (
-    BaseModel,
-    Field,
-    validator
-)
+from pydantic import BaseModel, Field, validator
 from pydantic.dataclasses import dataclass
 from pydantic.generics import GenericModel
 from web3 import Web3
+
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
@@ -43,12 +36,13 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 # REQUEST
 ############################
 
+
 @dataclass
 class ListAllOrderListQuery:
     account_address_list: list[str] = Query(description="Account address list")
     include_canceled_items: Optional[bool] = Query(
         default=None,
-        description="Whether to include canceled orders or canceled agreements."
+        description="Whether to include canceled orders or canceled agreements.",
     )
 
     @validator("account_address_list")
@@ -64,6 +58,7 @@ class ListAllOrderListQuery:
 # RESPONSE
 ############################
 
+
 class TokenAddress(BaseModel):
     token_address: str
 
@@ -78,7 +73,12 @@ class Order(BaseModel):
     order_timestamp: str
 
 
-TokenModel = TypeVar("TokenModel", RetrieveMembershipTokenResponse, RetrieveCouponTokenResponse, TokenAddress)
+TokenModel = TypeVar(
+    "TokenModel",
+    RetrieveMembershipTokenResponse,
+    RetrieveCouponTokenResponse,
+    TokenAddress,
+)
 
 
 class OrderSet(GenericModel, Generic[TokenModel]):

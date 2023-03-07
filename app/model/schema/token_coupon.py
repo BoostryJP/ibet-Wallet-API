@@ -17,18 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import (
-    ResultSet,
-    SortOrder
-)
+from app.model.schema.base import ResultSet, SortOrder
 
 ############################
 # COMMON
@@ -38,6 +33,7 @@ from app.model.schema.base import (
 ############################
 # REQUEST
 ############################
+
 
 class CouponTokensSortItem(str, Enum):
     token_address = "token_address"
@@ -61,21 +57,29 @@ class ListAllCouponTokensQuery:
     name: Optional[str] = Query(default=None, description="token name")
     symbol: Optional[str] = Query(default=None, description="token symbol")
     company_name: Optional[str] = Query(default=None, description="company name")
-    tradable_exchange: Optional[str] = Query(default=None, description="tradable exchange address")
+    tradable_exchange: Optional[str] = Query(
+        default=None, description="tradable exchange address"
+    )
     status: Optional[bool] = Query(default=None, description="token status")
-    transferable: Optional[bool] = Query(default=None, description="transferable status")
-    initial_offering_status: Optional[bool] = Query(default=None, description="offering status")
+    transferable: Optional[bool] = Query(
+        default=None, description="transferable status"
+    )
+    initial_offering_status: Optional[bool] = Query(
+        default=None, description="offering status"
+    )
 
     sort_item: Optional[CouponTokensSortItem] = Query(
-        default=CouponTokensSortItem.created,
-        description="sort item"
+        default=CouponTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    sort_order: Optional[SortOrder] = Query(
+        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
+    )
 
 
 ############################
 # RESPONSE
 ############################
+
 
 class CouponImage(BaseModel):
     id: int

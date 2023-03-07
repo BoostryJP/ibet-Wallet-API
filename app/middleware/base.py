@@ -16,13 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi import (
-    Request,
-    Response,
-    status
-)
-
+from fastapi import Request, Response, status
 from starlette.middleware.base import RequestResponseEndpoint
+
 from app import log
 
 LOG = log.get_logger()
@@ -37,6 +33,7 @@ class SuppressNoResponseReturnedMiddleware:
     *
     * Based on: https://github.com/encode/starlette/discussions/1527#discussioncomment-2234702
     """
+
     @staticmethod
     async def handle(request: Request, call_next: RequestResponseEndpoint) -> Response:
         try:

@@ -18,39 +18,37 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
-import pytest
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 from typing import List, Optional
 from unittest import mock
 from unittest.mock import MagicMock
+
+import pytest
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from web3.exceptions import ABIEventFunctionNotFound
+from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    Listing,
-    IDXTokenListItem,
-    IDXTokenListBlockNumber
-)
+from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem, Listing
 from batch import indexer_Token_List
-from batch.indexer_Token_List import Processor, LOG, main
+from batch.indexer_Token_List import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    issue_bond_token,
-    register_bond_list,
-    issue_share_token,
-    register_share_list,
-    issue_coupon_token,
     coupon_register_list,
+    issue_bond_token,
+    issue_coupon_token,
+    issue_share_token,
     membership_issue,
-    membership_register_list
+    membership_register_list,
+    register_bond_list,
+    register_share_list,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
 
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
@@ -135,11 +133,17 @@ class TestProcessor:
 
     # <Normal_1>
     # no token is listed
-    def test_normal_1(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_1(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
         token_list_contract = shared_contract["TokenList"]
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
-        _token_list_block_number.contract_address = token_list_contract['address']
+        _token_list_block_number.contract_address = token_list_contract["address"]
         session.add(_token_list_block_number)
         session.commit()
 
@@ -152,17 +156,23 @@ class TestProcessor:
 
     # <Normal_2>
     # Multiple token is listed
-    def test_normal_2(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_2(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         _token_expected_list = []
 
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
-        _token_list_block_number.contract_address = token_list_contract['address']
+        _token_list_block_number.contract_address = token_list_contract["address"]
         session.add(_token_list_block_number)
         session.commit()
 
@@ -173,7 +183,7 @@ class TestProcessor:
                 "symbol": "BOND",
                 "totalSupply": 1000000,
                 "tradableExchange": exchange_contract["address"],
-                "faceValue": int((i+1)*10000),
+                "faceValue": int((i + 1) * 10000),
                 "interestRate": 602,
                 "interestPaymentDate1": "0101",
                 "interestPaymentDate2": "0201",
@@ -203,11 +213,13 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             self.listing_token(token["address"], session)
-            _token_expected_list.append({
-                "token_address": token["address"],
-                "token_template": "IbetStraightBond",
-                "owner_address": self.issuer["account_address"]
-            })
+            _token_expected_list.append(
+                {
+                    "token_address": token["address"],
+                    "token_template": "IbetStraightBond",
+                    "owner_address": self.issuer["account_address"],
+                }
+            )
 
         # Issue share token
         for i in range(2):
@@ -216,7 +228,7 @@ class TestProcessor:
                 "symbol": "SHARE",
                 "tradableExchange": exchange_contract["address"],
                 "personalInfoAddress": personal_info_contract["address"],
-                "issuePrice": int((i+1)*1000),
+                "issuePrice": int((i + 1) * 1000),
                 "principalValue": 1000,
                 "totalSupply": 1000000,
                 "dividends": 101,
@@ -232,18 +244,20 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             self.listing_token(token["address"], session)
-            _token_expected_list.append({
-                "token_address": token["address"],
-                "token_template": "IbetShare",
-                "owner_address": self.issuer["account_address"]
-            })
+            _token_expected_list.append(
+                {
+                    "token_address": token["address"],
+                    "token_template": "IbetShare",
+                    "owner_address": self.issuer["account_address"],
+                }
+            )
 
         # Issue membership token
         for i in range(2):
             args = {
                 "name": "テスト会員権",
                 "symbol": "MEMBERSHIP",
-                "initialSupply": int((i+1)*1000000),
+                "initialSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
                 "details": "詳細",
                 "returnDetails": "リターン詳細",
@@ -257,18 +271,20 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             self.listing_token(token["address"], session)
-            _token_expected_list.append({
-                "token_address": token["address"],
-                "token_template": "IbetMembership",
-                "owner_address": self.issuer["account_address"]
-            })
+            _token_expected_list.append(
+                {
+                    "token_address": token["address"],
+                    "token_template": "IbetMembership",
+                    "owner_address": self.issuer["account_address"],
+                }
+            )
 
         # issue coupon token
         for i in range(2):
             args = {
                 "name": "テストクーポン",
                 "symbol": "COUPON",
-                "totalSupply":  int((i+1)*1000000),
+                "totalSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
                 "details": "クーポン詳細",
                 "returnDetails": "リターン詳細",
@@ -283,20 +299,24 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             self.listing_token(token["address"], session)
-            _token_expected_list.append({
-                "token_address": token["address"],
-                "token_template": "IbetCoupon",
-                "owner_address": self.issuer["account_address"]
-            })
+            _token_expected_list.append(
+                {
+                    "token_address": token["address"],
+                    "token_template": "IbetCoupon",
+                    "owner_address": self.issuer["account_address"],
+                }
+            )
 
         # Run target process
         processor.process()
 
         # assertion
         for _expect_dict in _token_expected_list:
-            token_list_item: IDXTokenListItem = session.query(IDXTokenListItem).\
-                filter(IDXTokenListItem.token_address == _expect_dict["token_address"]).\
-                first()
+            token_list_item: IDXTokenListItem = (
+                session.query(IDXTokenListItem)
+                .filter(IDXTokenListItem.token_address == _expect_dict["token_address"])
+                .first()
+            )
 
             assert token_list_item.token_template == _expect_dict["token_template"]
             assert token_list_item.owner_address == _expect_dict["owner_address"]
@@ -310,7 +330,10 @@ class TestProcessor:
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
     # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
+    @mock.patch(
+        "web3.contract.ContractEvent.getLogs",
+        MagicMock(side_effect=ABIEventFunctionNotFound()),
+    )
     def test_error_1(self, processor: Processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -325,7 +348,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -335,7 +358,9 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
         block_number_current = web3.eth.block_number
@@ -344,12 +369,16 @@ class TestProcessor:
 
         # Assertion
         _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
         assert _token_list_block_number.latest_block_number == block_number_current
 
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
         block_number_current = web3.eth.block_number
@@ -363,7 +392,9 @@ class TestProcessor:
         session.rollback()
         # Assertion
         _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
         assert _token_list_block_number.latest_block_number == block_number_current
@@ -383,7 +414,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -393,39 +424,61 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
-        _token_list_block_number_bf: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number_bf: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.process()
 
         session.rollback()
         # Assertion
         _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         assert len(_token_list) == 0
-        assert _token_list_block_number_bf.latest_block_number == _token_list_block_number_af.latest_block_number
+        assert (
+            _token_list_block_number_bf.latest_block_number
+            == _token_list_block_number_af.latest_block_number
+        )
 
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
         session.rollback()
-        _token_list_block_number_bf: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number_bf: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
 
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.process()
 
         # Assertion
         session.rollback()
         _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         assert len(_token_list) == 0
-        assert _token_list_block_number_bf.latest_block_number == _token_list_block_number_af.latest_block_number
+        assert (
+            _token_list_block_number_bf.latest_block_number
+            == _token_list_block_number_af.latest_block_number
+        )
 
     # <Error_2_2>: SQLAlchemyError occurs in "process".
     def test_error_2_2(self, processor: Processor, shared_contract, session):
@@ -442,7 +495,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -452,36 +505,52 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.process()
 
         # Assertion
         _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         assert len(_token_list) == 0
-        assert _token_list_block_number_af.latest_block_number == _token_list_block_number.latest_block_number
+        assert (
+            _token_list_block_number_af.latest_block_number
+            == _token_list_block_number.latest_block_number
+        )
 
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
         session.rollback()
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.process()
 
         # Assertion
         session.rollback()
         _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(IDXTokenListBlockNumber).first()
+        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
+            IDXTokenListBlockNumber
+        ).first()
         assert len(_token_list) == 0
-        assert _token_list_block_number_af.latest_block_number == _token_list_block_number.latest_block_number
+        assert (
+            _token_list_block_number_af.latest_block_number
+            == _token_list_block_number.latest_block_number
+        )
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):
@@ -492,7 +561,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -502,7 +571,9 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], session)
 
         # Mocking time.sleep to break mainloop
@@ -510,12 +581,17 @@ class TestProcessor:
         time_mock.sleep.side_effect = [TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Token_List.time", time_mock),\
-            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(TypeError):
+        with mock.patch("batch.indexer_Token_List.time", time_mock), mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(TypeError):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
             main_func()
 
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Service started successfully"))
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.INFO, "Service started successfully")
+        )
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.WARNING, "An external service was unavailable")
+        )
         caplog.clear()

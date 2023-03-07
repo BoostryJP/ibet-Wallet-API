@@ -24,7 +24,7 @@ from app.model.db import Listing
 
 class TestAdminTokensGET:
     # テスト対象API
-    apiurl = '/Admin/Tokens'
+    apiurl = "/Admin/Tokens"
 
     @staticmethod
     def insert_listing_data(session, _token):
@@ -48,7 +48,7 @@ class TestAdminTokensGET:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_listing_data(session, token)
 
@@ -71,7 +71,7 @@ class TestAdminTokensGET:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_listing_data(session, token)
         self.insert_listing_data(session, token)
@@ -79,7 +79,7 @@ class TestAdminTokensGET:
         resp = client.get(self.apiurl)
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
         for i, resp_body in enumerate(reversed(resp.json()["data"])):
             assert resp_body["id"] == i + 1

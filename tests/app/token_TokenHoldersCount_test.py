@@ -18,11 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.model.db import (
-    IDXPosition,
-    IDXLockedPosition,
-    Listing
-)
+
+from app.model.db import IDXLockedPosition, IDXPosition, Listing
 from tests.account_config import eth_account
 
 
@@ -89,9 +86,7 @@ class TestTokenTokenHoldersCount:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = {
-            "count": 0
-        }
+        assumed_body = {"count": 0}
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -124,7 +119,7 @@ class TestTokenTokenHoldersCount:
         position_2 = {
             "token_address": self.token_address,
             "account_address": self.account_address,
-            "pending_transfer": 5
+            "pending_transfer": 5,
         }
         self.insert_position(session, position=position_2)
 
@@ -135,7 +130,7 @@ class TestTokenTokenHoldersCount:
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
 
@@ -145,9 +140,7 @@ class TestTokenTokenHoldersCount:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = {
-            "count": 2
-        }
+        assumed_body = {"count": 2}
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -174,7 +167,7 @@ class TestTokenTokenHoldersCount:
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, position=position)
 
@@ -183,7 +176,7 @@ class TestTokenTokenHoldersCount:
             "token_address": self.token_address,
             "lock_address": self.lock_address_1,
             "account_address": self.account_address,
-            "value": 1
+            "value": 1,
         }
         self.insert_locked_position(session, locked_position_1)
 
@@ -194,7 +187,7 @@ class TestTokenTokenHoldersCount:
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
 
@@ -204,9 +197,7 @@ class TestTokenTokenHoldersCount:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = {
-            "count": 1
-        }
+        assumed_body = {"count": 1}
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -230,7 +221,7 @@ class TestTokenTokenHoldersCount:
         position_1 = {
             "token_address": self.token_address,
             "account_address": self.account_address,
-            "balance": 0
+            "balance": 0,
         }
         self.insert_position(session, position=position_1)
 
@@ -238,7 +229,7 @@ class TestTokenTokenHoldersCount:
         position_2 = {
             "token_address": self.token_address,
             "account_address": self.account_address,
-            "pending_transfer": 0
+            "pending_transfer": 0,
         }
         self.insert_position(session, position=position_2)
 
@@ -246,7 +237,7 @@ class TestTokenTokenHoldersCount:
         position_3 = {
             "token_address": self.token_address,
             "account_address": self.account_address,
-            "exchange_balance": 0
+            "exchange_balance": 0,
         }
         self.insert_position(session, position=position_3)
 
@@ -254,7 +245,7 @@ class TestTokenTokenHoldersCount:
         position_4 = {
             "token_address": self.token_address,
             "account_address": self.account_address,
-            "exchange_commitment": 0
+            "exchange_commitment": 0,
         }
         self.insert_position(session, position=position_4)
 
@@ -265,7 +256,7 @@ class TestTokenTokenHoldersCount:
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
 
@@ -274,9 +265,7 @@ class TestTokenTokenHoldersCount:
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = {
-            "count": 0
-        }
+        assumed_body = {"count": 0}
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -310,7 +299,7 @@ class TestTokenTokenHoldersCount:
         position_2 = {
             "token_address": self.token_address,
             "account_address": self.issuer_address,
-            "pending_transfer": 5
+            "pending_transfer": 5,
         }
         self.insert_position(session, position=position_2)
 
@@ -321,21 +310,17 @@ class TestTokenTokenHoldersCount:
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
-            "exchange_commitment": 10
+            "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query = {
-            "exclude_owner": True
-        }
+        query = {"exclude_owner": True}
         resp = client.get(apiurl, params=query)
 
         # Assertion
-        assumed_body = {
-            "count": 1
-        }
+        assumed_body = {"count": 1}
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -356,7 +341,7 @@ class TestTokenTokenHoldersCount:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address"
+            "description": "invalid contract_address",
         }
 
     # Error_2
@@ -371,5 +356,5 @@ class TestTokenTokenHoldersCount:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + self.token_address
+            "description": "contract_address: " + self.token_address,
         }

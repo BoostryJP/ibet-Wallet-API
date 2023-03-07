@@ -19,30 +19,24 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime
 
 from eth_utils import to_checksum_address
-from fastapi import (
-    APIRouter,
-    Depends,
-    Path
-)
+from fastapi import APIRouter, Depends, Path
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app import log
 from app.database import db_session
-from app.errors import (
-    DataNotExistsError
-)
+from app.errors import DataNotExistsError
 from app.model.db import Notification
 from app.model.schema import (
-    NotificationsResponse,
     GenericSuccessResponse,
-    NotificationsQuery,
-    SuccessResponse,
     NotificationReadRequest,
-    NotificationsCountResponse,
     NotificationsCountQuery,
+    NotificationsCountResponse,
+    NotificationsQuery,
+    NotificationsResponse,
+    NotificationUpdateResponse,
+    SuccessResponse,
     UpdateNotificationRequest,
-    NotificationUpdateResponse
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
@@ -50,10 +44,7 @@ from app.utils.fastapi import json_response
 LOG = log.get_logger()
 
 
-router = APIRouter(
-    prefix="/Notifications",
-    tags=["user_notification"]
-)
+router = APIRouter(prefix="/Notifications", tags=["user_notification"])
 
 
 @router.get(
@@ -61,11 +52,11 @@ router = APIRouter(
     summary="Notification List",
     operation_id="GetNotifications",
     response_model=GenericSuccessResponse[NotificationsResponse],
-    responses=get_routers_responses()
+    responses=get_routers_responses(),
 )
 def list_all_notifications(
     request_query: NotificationsQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Notifications/
@@ -123,15 +114,12 @@ def list_all_notifications(
             "count": count,
             "offset": offset,
             "limit": limit,
-            "total": total
+            "total": total,
         },
-        "notifications": notifications
+        "notifications": notifications,
     }
 
-    return json_response({
-        **SuccessResponse.default(),
-        "data": data
-    })
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.post(
@@ -139,11 +127,10 @@ def list_all_notifications(
     summary="Mark all notifications as read",
     operation_id="NotificationsRead",
     response_model=SuccessResponse,
-    responses=get_routers_responses()
+    responses=get_routers_responses(),
 )
 def read_all_notifications(
-    data: NotificationReadRequest,
-    session: Session = Depends(db_session)
+    data: NotificationReadRequest, session: Session = Depends(db_session)
 ):
     """
     Endpoint: /Notifications/Read/
@@ -151,9 +138,9 @@ def read_all_notifications(
     address = to_checksum_address(data.address)
 
     # Update Data
-    session.query(Notification). \
-        filter(Notification.address == address). \
-        update({'is_read': data.is_read})
+    session.query(Notification).filter(Notification.address == address).update(
+        {"is_read": data.is_read}
+    )
     session.commit()
 
     return json_response(SuccessResponse.default())
@@ -164,11 +151,11 @@ def read_all_notifications(
     summary="Get the number of unread notifications",
     operation_id="NotificationsCount",
     response_model=GenericSuccessResponse[NotificationsCountResponse],
-    responses=get_routers_responses()
+    responses=get_routers_responses(),
 )
 def count_notifications(
     request_query: NotificationsCountQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Notifications/Count/
@@ -177,18 +164,22 @@ def count_notifications(
     address = to_checksum_address(request_query.address)
 
     # 未読数を取得
-    count = session.query(Notification). \
-        filter(Notification.address == address). \
-        filter(Notification.is_read == False). \
-        filter(Notification.is_deleted == False). \
-        count()
+    count = (
+        session.query(Notification)
+        .filter(Notification.address == address)
+        .filter(Notification.is_read == False)
+        .filter(Notification.is_deleted == False)
+        .count()
+    )
 
-    return json_response({
-        **SuccessResponse.default(),
-        "data": {
-            "unread_counts": count,
+    return json_response(
+        {
+            **SuccessResponse.default(),
+            "data": {
+                "unread_counts": count,
+            },
         }
-    })
+    )
 
 
 @router.post(
@@ -196,20 +187,22 @@ def count_notifications(
     summary="Update Notification",
     operation_id="PostNotifications",
     response_model=GenericSuccessResponse[NotificationUpdateResponse],
-    responses=get_routers_responses(DataNotExistsError)
+    responses=get_routers_responses(DataNotExistsError),
 )
 def update_notification(
     data: UpdateNotificationRequest,
     notification_id: str = Path(description="Notification id"),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Notifications/{id}
     """
     # Update Notification
-    notification: Notification = session.query(Notification). \
-        filter(Notification.notification_id == notification_id). \
-        first()
+    notification: Notification = (
+        session.query(Notification)
+        .filter(Notification.notification_id == notification_id)
+        .first()
+    )
     if notification is None:
         raise DataNotExistsError("notification not found")
 
@@ -226,10 +219,7 @@ def update_notification(
 
     session.commit()
 
-    return json_response({
-        **SuccessResponse.default(),
-        "data": notification.json()
-    })
+    return json_response({**SuccessResponse.default(), "data": notification.json()})
 
 
 @router.delete(
@@ -237,16 +227,18 @@ def update_notification(
     summary="Delete Notification",
     operation_id="DeleteNotification",
     response_model=SuccessResponse,
-    responses=get_routers_responses(DataNotExistsError)
+    responses=get_routers_responses(DataNotExistsError),
 )
 def delete_notification(
     notification_id: str = Path(description="Notification id"),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     # Get Notification
-    _notification = session.query(Notification). \
-        filter(Notification.notification_id == notification_id). \
-        first()
+    _notification = (
+        session.query(Notification)
+        .filter(Notification.notification_id == notification_id)
+        .first()
+    )
     if _notification is None:
         raise DataNotExistsError("id: %s" % notification_id)
 

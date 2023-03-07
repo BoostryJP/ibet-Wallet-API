@@ -16,29 +16,20 @@ limitations under the License.
 
 SPDX-License
 """
-from fastapi import (
-    APIRouter,
-    Depends
-)
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app import log
 from app.database import db_session
 from app.errors import InvalidParameterError
 from app.model.db import Mail
-from app.model.schema import (
-    SuccessResponse,
-    SendMailRequest
-)
+from app.model.schema import SendMailRequest, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(
-    prefix="/Mail",
-    tags=["messaging"]
-)
+router = APIRouter(prefix="/Mail", tags=["messaging"])
 
 
 @router.post(
@@ -48,10 +39,7 @@ router = APIRouter(
     response_model=SuccessResponse,
     responses=get_routers_responses(InvalidParameterError),
 )
-def send_mail(
-    data: SendMailRequest,
-    session: Session = Depends(db_session)
-):
+def send_mail(data: SendMailRequest, session: Session = Depends(db_session)):
     """Send Email"""
     for to_email in data.to_emails:
         mail = Mail()

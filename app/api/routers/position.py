@@ -16,93 +16,67 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from datetime import (
-    timedelta,
-    timezone
-)
+from datetime import timedelta, timezone
 from decimal import Decimal
+from typing import Type, Union
 from zoneinfo import ZoneInfo
+
 from eth_utils import to_checksum_address
-from fastapi import (
-    APIRouter,
-    Depends,
-    Request,
-    Path
-)
-from sqlalchemy import (
-    or_,
-    and_,
-    func,
-    desc,
-    literal,
-    String,
-    null,
-    column,
-    cast
-)
+from fastapi import APIRouter, Depends, Path, Request
+from sqlalchemy import String, and_, cast, column, desc, func, literal, null, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
-from typing import (
-    Union,
-    Type
-)
 from web3 import Web3
 
-from app import config
-from app import log
+from app import config, log
 from app.config import TZ
 from app.contracts import Contract
 from app.database import db_session
 from app.errors import (
-    InvalidParameterError,
     DataNotExistsError,
+    InvalidParameterError,
     NotSupportedError,
-    ServiceUnavailable
+    ServiceUnavailable,
 )
+from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
+from app.model.blockchain import TokenClassTypes as BlockChainTokenModel
 from app.model.db import (
-    Listing,
-    IDXTransfer,
-    IDXPosition,
-    IDXTokenModel,
-    IDXConsumeCoupon,
-    IDXTokenInstance,
-    IDXShareToken,
     IDXBondToken,
+    IDXConsumeCoupon,
     IDXCouponToken,
-    IDXMembershipToken,
-    IDXLockedPosition,
     IDXLock,
-    IDXUnlock
-)
-from app.model.blockchain import (
-    ShareToken,
-    BondToken,
-    MembershipToken,
-    CouponToken,
-    TokenClassTypes as BlockChainTokenModel
+    IDXLockedPosition,
+    IDXMembershipToken,
+    IDXPosition,
+    IDXShareToken,
+    IDXTokenInstance,
+    IDXTokenModel,
+    IDXTransfer,
+    IDXUnlock,
+    Listing,
 )
 from app.model.schema import (
-    ListAllPositionQuery,
-    GenericSuccessResponse,
-    SuccessResponse,
-    SecurityTokenPositionWithDetail,
-    GenericSecurityTokenPositionsResponse,
-    SecurityTokenPositionWithAddress,
-    MembershipPositionsResponse,
-    MembershipPositionWithDetail,
-    MembershipPositionWithAddress,
     CouponPositionsResponse,
-    CouponPositionWithDetail,
     CouponPositionWithAddress,
-    RetrieveStraightBondTokenResponse,
-    RetrieveShareTokenResponse,
+    CouponPositionWithDetail,
+    GenericSecurityTokenPositionsResponse,
+    GenericSuccessResponse,
     GetPositionQuery,
     ListAllLockedPositionQuery,
     ListAllLockedPositionResponse,
     ListAllLockEventQuery,
+    ListAllLockEventsResponse,
+    ListAllPositionQuery,
     LockEventCategory,
     LockEventSortItem,
-    ListAllLockEventsResponse,
+    MembershipPositionsResponse,
+    MembershipPositionWithAddress,
+    MembershipPositionWithDetail,
+    RetrieveShareTokenResponse,
+    RetrieveStraightBondTokenResponse,
+    SecurityTokenPositionWithAddress,
+    SecurityTokenPositionWithDetail,
+    SuccessResponse,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
@@ -112,10 +86,7 @@ LOG = log.get_logger()
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
 
-router = APIRouter(
-    prefix="/Position",
-    tags=["user_position"]
-)
+router = APIRouter(prefix="/Position", tags=["user_position"])
 
 
 class ListAllLock:
@@ -129,7 +100,7 @@ class ListAllLock:
         req: Request,
         request_query: ListAllLockedPositionQuery = Depends(),
         account_address: str = Path(),
-        session: Session = Depends(db_session)
+        session: Session = Depends(db_session),
     ):
         if self.token_type == "IbetShare":
             token_enabled = config.SHARE_TOKEN_ENABLED
@@ -156,7 +127,9 @@ class ListAllLock:
 
         query = session.query(IDXLockedPosition)
         if len(token_address_list) > 0:
-            query = query.filter(IDXLockedPosition.token_address.in_(token_address_list))
+            query = query.filter(
+                IDXLockedPosition.token_address.in_(token_address_list)
+            )
         query = query.filter(IDXLockedPosition.account_address == account_address)
 
         total = query.count()
@@ -195,9 +168,9 @@ class ListAllLock:
                 "count": count,
                 "offset": offset,
                 "limit": limit,
-                "total": total
+                "total": total,
             },
-            "locked_positions": locked_list
+            "locked_positions": locked_list,
         }
 
         return data
@@ -214,7 +187,7 @@ class ListAllLockEvent:
         req: Request,
         request_query: ListAllLockEventQuery = Depends(),
         account_address: str = Path(),
-        session: Session = Depends(db_session)
+        session: Session = Depends(db_session),
     ):
         if self.token_type == "IbetShare":
             token_enabled = config.SHARE_TOKEN_ENABLED
@@ -235,7 +208,9 @@ class ListAllLockEvent:
         category = request_query.category
 
         query_lock = session.query(
-            literal(value=LockEventCategory.Lock.value, type_=String).label("history_category"),
+            literal(value=LockEventCategory.Lock.value, type_=String).label(
+                "history_category"
+            ),
             IDXLock.transaction_hash.label("transaction_hash"),
             IDXLock.token_address.label("token_address"),
             IDXLock.lock_address.label("lock_address"),
@@ -243,10 +218,12 @@ class ListAllLockEvent:
             null().label("recipient_address"),
             IDXLock.value.label("value"),
             IDXLock.data.label("data"),
-            IDXLock.block_timestamp.label("block_timestamp")
+            IDXLock.block_timestamp.label("block_timestamp"),
         )
         query_unlock = session.query(
-            literal(value=LockEventCategory.Unlock.value, type_=String).label("history_category"),
+            literal(value=LockEventCategory.Unlock.value, type_=String).label(
+                "history_category"
+            ),
             IDXUnlock.transaction_hash.label("transaction_hash"),
             IDXUnlock.token_address.label("token_address"),
             IDXUnlock.lock_address.label("lock_address"),
@@ -254,12 +231,16 @@ class ListAllLockEvent:
             IDXUnlock.recipient_address.label("recipient_address"),
             IDXUnlock.value.label("value"),
             IDXUnlock.data.label("data"),
-            IDXUnlock.block_timestamp.label("block_timestamp")
+            IDXUnlock.block_timestamp.label("block_timestamp"),
         )
 
         if len(token_address_list) > 0:
-            query_lock = query_lock.filter(column("token_address").in_(token_address_list))
-            query_unlock = query_unlock.filter(column("token_address").in_(token_address_list))
+            query_lock = query_lock.filter(
+                column("token_address").in_(token_address_list)
+            )
+            query_unlock = query_unlock.filter(
+                column("token_address").in_(token_address_list)
+            )
 
         total = query_lock.count() + query_unlock.count()
 
@@ -276,9 +257,13 @@ class ListAllLockEvent:
         if request_query.lock_address is not None:
             query = query.filter(column("lock_address") == request_query.lock_address)
         if request_query.recipient_address is not None:
-            query = query.filter(column("recipient_address") == request_query.recipient_address)
+            query = query.filter(
+                column("recipient_address") == request_query.recipient_address
+            )
         if request_query.data is not None:
-            query = query.filter(cast(column("data"), String).like("%" + request_query.data + "%"))
+            query = query.filter(
+                cast(column("data"), String).like("%" + request_query.data + "%")
+            )
         count = query.count()
 
         # Sort
@@ -300,28 +285,33 @@ class ListAllLockEvent:
 
         resp_data = []
         for lock_event in lock_events:
-            resp_data.append({
-                "category": lock_event[0],
-                "transaction_hash": lock_event[1],
-                "token_address": lock_event[2],
-                "lock_address": lock_event[3],
-                "account_address": lock_event[4],
-                "recipient_address": lock_event[5],
-                "value": lock_event[6],
-                "data": lock_event[7],
-                "block_timestamp": lock_event[8].replace(tzinfo=UTC).astimezone(local_tz)
-            })
+            resp_data.append(
+                {
+                    "category": lock_event[0],
+                    "transaction_hash": lock_event[1],
+                    "token_address": lock_event[2],
+                    "lock_address": lock_event[3],
+                    "account_address": lock_event[4],
+                    "recipient_address": lock_event[5],
+                    "value": lock_event[6],
+                    "data": lock_event[7],
+                    "block_timestamp": lock_event[8]
+                    .replace(tzinfo=UTC)
+                    .astimezone(local_tz),
+                }
+            )
 
         data = {
             "result_set": {
                 "count": count,
                 "offset": request_query.offset,
                 "limit": request_query.limit,
-                "total": total
+                "total": total,
             },
-            "events": resp_data
+            "events": resp_data,
         }
         return data
+
 
 # ------------------------------
 # Get Lock(Share)
@@ -331,15 +321,10 @@ class ListAllLockEvent:
     summary="Share Token Locked Position",
     operation_id="GetShareTokenLockedPosition",
     response_model=GenericSuccessResponse[ListAllLockedPositionResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def list_all_share_locked_position(
-    data: dict = Depends(ListAllLock("IbetShare"))
-):
-    return json_response({
-        **SuccessResponse.default(),
-        "data": data
-    })
+def list_all_share_locked_position(data: dict = Depends(ListAllLock("IbetShare"))):
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 # ------------------------------
@@ -350,15 +335,11 @@ def list_all_share_locked_position(
     summary="Share Token Lock Events",
     operation_id="GetShareTokenLockEvent",
     response_model=GenericSuccessResponse[ListAllLockEventsResponse],
-    responses=get_routers_responses()
+    responses=get_routers_responses(),
 )
-def list_all_share_lock_events(
-    data: dict = Depends(ListAllLockEvent("IbetShare"))
-):
-    return json_response({
-        **SuccessResponse.default(),
-        "data": data
-    })
+def list_all_share_lock_events(data: dict = Depends(ListAllLockEvent("IbetShare"))):
+    return json_response({**SuccessResponse.default(), "data": data})
+
 
 # ------------------------------
 # Get Lock(StraightBond)
@@ -368,15 +349,12 @@ def list_all_share_lock_events(
     summary="StraightBond Token Locked Position",
     operation_id="GetStraightBondTokenLockedPosition",
     response_model=GenericSuccessResponse[ListAllLockedPositionResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_straight_bond_locked_position(
-    data: dict = Depends(ListAllLock("IbetStraightBond"))
+    data: dict = Depends(ListAllLock("IbetStraightBond")),
 ):
-    return json_response({
-        **SuccessResponse.default(),
-        "data": data
-    })
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 # ------------------------------
@@ -387,15 +365,12 @@ def list_all_straight_bond_locked_position(
     summary="StraightBond Token Lock Events",
     operation_id="GetStraightBondTokenLockEvent",
     response_model=GenericSuccessResponse[ListAllLockEventsResponse],
-    responses=get_routers_responses()
+    responses=get_routers_responses(),
 )
 def list_all_straight_bond_lock_events(
-    data: dict = Depends(ListAllLockEvent("IbetStraightBond"))
+    data: dict = Depends(ListAllLockEvent("IbetStraightBond")),
 ):
-    return json_response({
-        **SuccessResponse.default(),
-        "data": data
-    })
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 class BasePosition:
@@ -410,15 +385,20 @@ class BasePosition:
         token_enabled: bool,
         token_type: str,
         token_model: BlockChainTokenModel,
-        idx_token_model: IDXTokenModel
+        idx_token_model: IDXTokenModel,
     ) -> None:
         self.token_enabled = token_enabled
         self.token_type = token_type
         self.token_model = token_model
         self.idx_token_model = idx_token_model
 
-    def get_list(self, req: Request, request_query: ListAllPositionQuery, session: Session, account_address=None):
-
+    def get_list(
+        self,
+        req: Request,
+        request_query: ListAllPositionQuery,
+        session: Session,
+        account_address=None,
+    ):
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
@@ -437,7 +417,7 @@ class BasePosition:
             data = self.get_list_from_index(
                 request_query=request_query,
                 session=session,
-                account_address=account_address
+                account_address=account_address,
             )
             return data
 
@@ -445,39 +425,61 @@ class BasePosition:
         data = self.get_list_from_contract(
             request_query=request_query,
             session=session,
-            account_address=account_address
+            account_address=account_address,
         )
         return data
 
-    def get_list_from_index(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
+    def get_list_from_index(
+        self,
+        request_query: ListAllPositionQuery,
+        session: Session,
+        account_address: str,
+    ):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
-        query = session.query(Listing.token_address, IDXPosition, func.sum(IDXLockedPosition.value), self.idx_token_model). \
-            join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
-            outerjoin(
+        query = (
+            session.query(
+                Listing.token_address,
+                IDXPosition,
+                func.sum(IDXLockedPosition.value),
+                self.idx_token_model,
+            )
+            .join(
+                self.idx_token_model,
+                Listing.token_address == self.idx_token_model.token_address,
+            )
+            .outerjoin(
                 IDXPosition,
                 and_(
                     Listing.token_address == IDXPosition.token_address,
-                    IDXPosition.account_address == account_address
-                )
-            ). \
-            outerjoin(
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .outerjoin(
                 IDXLockedPosition,
                 and_(
                     Listing.token_address == IDXLockedPosition.token_address,
-                    IDXLockedPosition.account_address == account_address
+                    IDXLockedPosition.account_address == account_address,
+                ),
+            )
+            .filter(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.pending_transfer != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                    IDXLockedPosition.value != 0,
                 )
-            ). \
-            filter(or_(
-                IDXPosition.balance != 0,
-                IDXPosition.pending_transfer != 0,
-                IDXPosition.exchange_balance != 0,
-                IDXPosition.exchange_commitment != 0,
-                IDXLockedPosition.value != 0
-            )). \
-            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLockedPosition.token_address). \
-            order_by(Listing.id)
+            )
+            .group_by(
+                Listing.id,
+                IDXPosition.id,
+                self.idx_token_model.token_address,
+                IDXLockedPosition.token_address,
+            )
+            .order_by(Listing.id)
+        )
 
         total = query.count()
         count = total
@@ -486,16 +488,24 @@ class BasePosition:
         if offset is not None:
             query = query.offset(offset)
 
-        _token_position_list: list[tuple[str, IDXPosition, int | None, IDXTokenInstance]] = query.all()
+        _token_position_list: list[
+            tuple[str, IDXPosition, int | None, IDXTokenInstance]
+        ] = query.all()
 
         position_list = []
         for item in _token_position_list:
             position = {
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "pending_transfer": item[1].pending_transfer if item[1] and item[1].pending_transfer else 0,
-                "exchange_balance": item[1].exchange_balance if item[1] and item[1].exchange_balance else 0,
-                "exchange_commitment": item[1].exchange_commitment if item[1] and item[1].exchange_commitment else 0,
-                "locked": item[2] if item[2] else 0
+                "pending_transfer": item[1].pending_transfer
+                if item[1] and item[1].pending_transfer
+                else 0,
+                "exchange_balance": item[1].exchange_balance
+                if item[1] and item[1].exchange_balance
+                else 0,
+                "exchange_commitment": item[1].exchange_commitment
+                if item[1] and item[1].exchange_commitment
+                else 0,
+                "locked": item[2] if item[2] else 0,
             }
             if include_token_details:
                 position["token"] = self.token_model.from_model(item[3]).__dict__
@@ -507,25 +517,27 @@ class BasePosition:
                 "count": count,
                 "offset": offset,
                 "limit": limit,
-                "total": total
+                "total": total,
             },
-            "positions": position_list
+            "positions": position_list,
         }
 
-    def get_list_from_contract(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
+    def get_list_from_contract(
+        self,
+        request_query: ListAllPositionQuery,
+        session: Session,
+        account_address: str,
+    ):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
         # Get TokenList Contract
         _list_contract = Contract.get_contract(
-            contract_name="TokenList",
-            address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
+            contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
         )
 
         # Get Listing Tokens
-        _token_list = session.query(Listing). \
-            order_by(Listing.id). \
-            all()
+        _token_list = session.query(Listing).order_by(Listing.id).all()
 
         position_list = []
         limit_count = 0
@@ -535,14 +547,18 @@ class BasePosition:
                 contract=_list_contract,
                 function_name="getTokenByAddress",
                 args=(_token.token_address,),
-                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
             )
             token_address = token_info[0]
             token_template = token_info[1]
             if token_template == self.token_type:
-
                 # Get Position
-                position = self._get_position(account_address, token_address, session, is_detail=include_token_details)
+                position = self._get_position(
+                    account_address,
+                    token_address,
+                    session,
+                    is_detail=include_token_details,
+                )
 
                 # Filter
                 if position is None:
@@ -565,12 +581,19 @@ class BasePosition:
                 "count": count,
                 "offset": offset,
                 "limit": limit,
-                "total": count
+                "total": count,
             },
-            "positions": position_list
+            "positions": position_list,
         }
 
-    def get_one(self, req: Request, request_query: GetPositionQuery, session: Session, account_address: str, token_address: str):
+    def get_one(
+        self,
+        req: Request,
+        request_query: GetPositionQuery,
+        session: Session,
+        account_address: str,
+        token_address: str,
+    ):
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
@@ -595,46 +618,65 @@ class BasePosition:
             data = self.get_one_from_index(
                 session=session,
                 account_address=account_address,
-                token_address=token_address
+                token_address=token_address,
             )
             return data
         # If enable_index flag is not set or set false, get position data from contract.
         data = self.get_one_from_contract(
             session=session,
             account_address=account_address,
-            token_address=token_address
+            token_address=token_address,
         )
         return data
 
-    def get_one_from_index(self, session: Session, account_address: str, token_address: str):
+    def get_one_from_index(
+        self, session: Session, account_address: str, token_address: str
+    ):
         query = (
-            session.query(Listing.token_address, IDXPosition, func.sum(IDXLockedPosition.value), self.idx_token_model).
-            join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address).
-            outerjoin(
+            session.query(
+                Listing.token_address,
+                IDXPosition,
+                func.sum(IDXLockedPosition.value),
+                self.idx_token_model,
+            )
+            .join(
+                self.idx_token_model,
+                Listing.token_address == self.idx_token_model.token_address,
+            )
+            .outerjoin(
                 IDXPosition,
                 and_(
                     Listing.token_address == IDXPosition.token_address,
-                    IDXPosition.account_address == account_address
-                )
-            ).
-            outerjoin(
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .outerjoin(
                 IDXLockedPosition,
                 and_(
                     Listing.token_address == IDXLockedPosition.token_address,
-                    IDXLockedPosition.account_address == account_address
+                    IDXLockedPosition.account_address == account_address,
+                ),
+            )
+            .filter(Listing.token_address == token_address)
+            .filter(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.pending_transfer != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                    IDXLockedPosition.value != 0,
                 )
-            ).
-            filter(Listing.token_address == token_address).
-            filter(or_(
-                IDXPosition.balance != 0,
-                IDXPosition.pending_transfer != 0,
-                IDXPosition.exchange_balance != 0,
-                IDXPosition.exchange_commitment != 0,
-                IDXLockedPosition.value != 0
-            )).
-            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLockedPosition.token_address)
+            )
+            .group_by(
+                Listing.id,
+                IDXPosition.id,
+                self.idx_token_model.token_address,
+                IDXLockedPosition.token_address,
+            )
         )
-        result: tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None = query.first()
+        result: tuple[
+            str, IDXPosition | None, int | None, IDXTokenInstance
+        ] | None = query.first()
         if result is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
         _position = result[1]
@@ -643,50 +685,61 @@ class BasePosition:
 
         return {
             "balance": _position.balance if _position and _position.balance else 0,
-            "pending_transfer": _position.pending_transfer if _position and _position.pending_transfer else 0,
-            "exchange_balance":_position.exchange_balance if _position and _position.exchange_balance else 0,
-            "exchange_commitment": _position.exchange_commitment if _position and _position.exchange_commitment else 0,
+            "pending_transfer": _position.pending_transfer
+            if _position and _position.pending_transfer
+            else 0,
+            "exchange_balance": _position.exchange_balance
+            if _position and _position.exchange_balance
+            else 0,
+            "exchange_commitment": _position.exchange_commitment
+            if _position and _position.exchange_commitment
+            else 0,
             "locked": _locked or 0,
-            "token": self.token_model.from_model(token).__dict__
+            "token": self.token_model.from_model(token).__dict__,
         }
 
     def get_one_from_contract(
-        self,
-        session: Session,
-        account_address: str,
-        token_address: str
+        self, session: Session, account_address: str, token_address: str
     ):
         # Get Listing Token
-        _token = session.query(Listing). \
-            filter(Listing.token_address == token_address). \
-            first()
+        _token = (
+            session.query(Listing)
+            .filter(Listing.token_address == token_address)
+            .first()
+        )
         if _token is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         # Get TokenList Contract
         _list_contract = Contract.get_contract(
-            contract_name="TokenList",
-            address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
+            contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
         )
         token_info = Contract.call_function(
             contract=_list_contract,
             function_name="getTokenByAddress",
             args=(token_address,),
-            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
         )
         token_template = token_info[1]
         if token_template != self.token_type:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         # Get Position
-        position = self._get_position(account_address, token_address, session, is_detail=True)
+        position = self._get_position(
+            account_address, token_address, session, is_detail=True
+        )
         if position is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         return position
 
-    def _get_position(self, account_address: str, token_address: str, session: Session, is_detail=False):
-
+    def _get_position(
+        self,
+        account_address: str,
+        token_address: str,
+        session: Session,
+        is_detail=False,
+    ):
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
@@ -695,20 +748,26 @@ class BasePosition:
                 contract=_token_contract,
                 function_name="balanceOf",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             if _exchange_contract is not None:
                 _exchange_balance = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="balanceOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
                 _exchange_commitment = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="commitmentOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
@@ -720,13 +779,12 @@ class BasePosition:
                 return None
             else:
                 token = self.token_model.get(
-                    session=session,
-                    token_address=token_address
+                    session=session, token_address=token_address
                 )
                 position = {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
-                    "exchange_commitment": _exchange_commitment
+                    "exchange_commitment": _exchange_commitment,
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -741,11 +799,9 @@ class BasePosition:
             return None
 
     def _get_contract(self, token_address: str):
-
         # Get Token Contract
         _token_contract = Contract.get_contract(
-            contract_name=self.token_type,
-            address=token_address
+            contract_name=self.token_type, address=token_address
         )
 
         # Get Exchange Contract
@@ -753,13 +809,12 @@ class BasePosition:
             contract=_token_contract,
             function_name="tradableExchange",
             args=(),
-            default_returns=config.ZERO_ADDRESS
+            default_returns=config.ZERO_ADDRESS,
         )
         _exchange_contract = None
         if exchange_address != config.ZERO_ADDRESS:
             _exchange_contract = Contract.get_contract(
-                contract_name="IbetExchangeInterface",
-                address=exchange_address
+                contract_name="IbetExchangeInterface", address=exchange_address
             )
 
         return _token_contract, _exchange_contract
@@ -768,14 +823,16 @@ class BasePosition:
 class BasePositionShare(BasePosition):
     def __init__(self):
         super().__init__(
-            config.SHARE_TOKEN_ENABLED,
-            "IbetShare",
-            ShareToken,
-            IDXShareToken
+            config.SHARE_TOKEN_ENABLED, "IbetShare", ShareToken, IDXShareToken
         )
 
-    def _get_position(self, account_address: str, token_address: str, session: Session, is_detail=False):
-
+    def _get_position(
+        self,
+        account_address: str,
+        token_address: str,
+        session: Session,
+        is_detail=False,
+    ):
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
@@ -784,26 +841,32 @@ class BasePositionShare(BasePosition):
                 contract=_token_contract,
                 function_name="balanceOf",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             pending_transfer = Contract.call_function(
                 contract=_token_contract,
                 function_name="pendingTransfer",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             if _exchange_contract is not None:
                 _exchange_balance = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="balanceOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
                 _exchange_commitment = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="commitmentOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
@@ -812,22 +875,21 @@ class BasePositionShare(BasePosition):
 
             # If balance, pending_transfer, and commitment are non-zero,
             # get the token information from TokenContract.
-            if balance == 0 and \
-                    pending_transfer == 0 and \
-                    _exchange_balance == 0 and \
-                    _exchange_commitment == 0:
+            if (
+                balance == 0
+                and pending_transfer == 0
+                and _exchange_balance == 0
+                and _exchange_commitment == 0
+            ):
                 return None
             else:
-                token = ShareToken.get(
-                    session=session,
-                    token_address=token_address
-                )
+                token = ShareToken.get(session=session, token_address=token_address)
                 position = {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
-                    "locked": None
+                    "locked": None,
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -845,14 +907,16 @@ class BasePositionShare(BasePosition):
 class BasePositionStraightBond(BasePosition):
     def __init__(self):
         super().__init__(
-            config.BOND_TOKEN_ENABLED,
-            "IbetStraightBond",
-            BondToken,
-            IDXBondToken
+            config.BOND_TOKEN_ENABLED, "IbetStraightBond", BondToken, IDXBondToken
         )
 
-    def _get_position(self, account_address: str, token_address: str, session: Session, is_detail=False):
-
+    def _get_position(
+        self,
+        account_address: str,
+        token_address: str,
+        session: Session,
+        is_detail=False,
+    ):
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
@@ -861,26 +925,32 @@ class BasePositionStraightBond(BasePosition):
                 contract=_token_contract,
                 function_name="balanceOf",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             pending_transfer = Contract.call_function(
                 contract=_token_contract,
                 function_name="pendingTransfer",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             if _exchange_contract is not None:
                 _exchange_balance = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="balanceOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
                 _exchange_commitment = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="commitmentOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
@@ -889,22 +959,21 @@ class BasePositionStraightBond(BasePosition):
 
             # If balance, pending_transfer, and commitment are non-zero,
             # get the token information from TokenContract.
-            if balance == 0 and \
-                    pending_transfer == 0 and \
-                    _exchange_balance == 0 and \
-                    _exchange_commitment == 0:
+            if (
+                balance == 0
+                and pending_transfer == 0
+                and _exchange_balance == 0
+                and _exchange_commitment == 0
+            ):
                 return None
             else:
-                token = BondToken.get(
-                    session=session,
-                    token_address=token_address
-                )
+                token = BondToken.get(session=session, token_address=token_address)
                 position = {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
-                    "locked": None
+                    "locked": None,
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -925,23 +994,35 @@ class BasePositionMembership(BasePosition):
             config.MEMBERSHIP_TOKEN_ENABLED,
             "IbetMembership",
             MembershipToken,
-            IDXMembershipToken
+            IDXMembershipToken,
         )
 
-    def get_list_from_index(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
+    def get_list_from_index(
+        self,
+        request_query: ListAllPositionQuery,
+        session: Session,
+        account_address: str,
+    ):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
-        query = session.query(Listing.token_address, IDXPosition, self.idx_token_model). \
-            join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
-            join(IDXPosition, Listing.token_address == IDXPosition.token_address). \
-            filter(IDXPosition.account_address == account_address). \
-            filter(or_(
-                IDXPosition.balance != 0,
-                IDXPosition.exchange_balance != 0,
-                IDXPosition.exchange_commitment != 0
-            )). \
-            order_by(Listing.id)
+        query = (
+            session.query(Listing.token_address, IDXPosition, self.idx_token_model)
+            .join(
+                self.idx_token_model,
+                Listing.token_address == self.idx_token_model.token_address,
+            )
+            .join(IDXPosition, Listing.token_address == IDXPosition.token_address)
+            .filter(IDXPosition.account_address == account_address)
+            .filter(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                )
+            )
+            .order_by(Listing.id)
+        )
 
         total = query.count()
         count = total
@@ -950,14 +1031,20 @@ class BasePositionMembership(BasePosition):
         if offset is not None:
             query = query.offset(offset)
 
-        _token_position_list: list[tuple[str, IDXPosition, IDXTokenInstance]] = query.all()
+        _token_position_list: list[
+            tuple[str, IDXPosition, IDXTokenInstance]
+        ] = query.all()
 
         position_list = []
         for item in _token_position_list:
             position = {
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "exchange_balance": item[1].exchange_balance if item[1] and item[1].exchange_balance else 0,
-                "exchange_commitment": item[1].exchange_commitment if item[1] and item[1].exchange_commitment else 0,
+                "exchange_balance": item[1].exchange_balance
+                if item[1] and item[1].exchange_balance
+                else 0,
+                "exchange_commitment": item[1].exchange_commitment
+                if item[1] and item[1].exchange_commitment
+                else 0,
             }
             if include_token_details:
                 position["token"] = self.token_model.from_model(item[2]).__dict__
@@ -969,23 +1056,24 @@ class BasePositionMembership(BasePosition):
                 "count": count,
                 "offset": offset,
                 "limit": limit,
-                "total": total
+                "total": total,
             },
-            "positions": position_list
+            "positions": position_list,
         }
 
 
 class BasePositionCoupon(BasePosition):
-
     def __init__(self):
         super().__init__(
-            config.COUPON_TOKEN_ENABLED,
-            "IbetCoupon",
-            CouponToken,
-            IDXCouponToken
+            config.COUPON_TOKEN_ENABLED, "IbetCoupon", CouponToken, IDXCouponToken
         )
 
-    def get_list_from_index(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
+    def get_list_from_index(
+        self,
+        request_query: ListAllPositionQuery,
+        session: Session,
+        account_address: str,
+    ):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
@@ -995,43 +1083,54 @@ class BasePositionCoupon(BasePosition):
             session.query(
                 sum_(IDXConsumeCoupon.amount).label("used"),
                 IDXConsumeCoupon.token_address,
-                IDXConsumeCoupon.account_address
-            ).
-            filter(IDXConsumeCoupon.account_address == account_address).
-            group_by(
-                IDXConsumeCoupon.token_address,
-                IDXConsumeCoupon.account_address
-            ).
-            subquery("sub_tx_used")
+                IDXConsumeCoupon.account_address,
+            )
+            .filter(IDXConsumeCoupon.account_address == account_address)
+            .group_by(IDXConsumeCoupon.token_address, IDXConsumeCoupon.account_address)
+            .subquery("sub_tx_used")
         )
         query = (
-            session.query(Listing.token_address, IDXPosition, self.idx_token_model, sub_tx_used.c.used).
-            join(
+            session.query(
+                Listing.token_address,
+                IDXPosition,
                 self.idx_token_model,
-                Listing.token_address == self.idx_token_model.token_address
-            ).
-            outerjoin(IDXPosition, and_(
-                Listing.token_address == IDXPosition.token_address,
-                IDXPosition.account_address == account_address
-            )).
-            outerjoin(sub_tx_used, and_(
-                Listing.token_address == sub_tx_used.c.token_address,
-                sub_tx_used.c.account_address == account_address
-            )).
-            filter(
+                sub_tx_used.c.used,
+            )
+            .join(
+                self.idx_token_model,
+                Listing.token_address == self.idx_token_model.token_address,
+            )
+            .outerjoin(
+                IDXPosition,
+                and_(
+                    Listing.token_address == IDXPosition.token_address,
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .outerjoin(
+                sub_tx_used,
+                and_(
+                    Listing.token_address == sub_tx_used.c.token_address,
+                    sub_tx_used.c.account_address == account_address,
+                ),
+            )
+            .filter(
                 or_(
                     IDXPosition.balance != 0,
                     IDXPosition.exchange_balance != 0,
                     IDXPosition.exchange_commitment != 0,
                     sub_tx_used.c.used != 0,
-                    session.query(IDXTransfer).filter(
+                    session.query(IDXTransfer)
+                    .filter(
                         and_(
                             IDXTransfer.token_address == Listing.token_address,
-                            IDXTransfer.to_address == account_address
+                            IDXTransfer.to_address == account_address,
                         )
-                    ).exists()
+                    )
+                    .exists(),
                 )
-            ).order_by(Listing.id)
+            )
+            .order_by(Listing.id)
         )
 
         total = query.count()
@@ -1041,7 +1140,9 @@ class BasePositionCoupon(BasePosition):
         if offset is not None:
             query = query.offset(offset)
 
-        _token_position_list: list[tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]] = query.all()
+        _token_position_list: list[
+            tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]
+        ] = query.all()
 
         position_list = []
         for item in _token_position_list:
@@ -1050,14 +1151,14 @@ class BasePositionCoupon(BasePosition):
                     "balance": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
-                    "used": int(item[3]) if item[3] else 0
+                    "used": int(item[3]) if item[3] else 0,
                 }
             else:
                 position = {
                     "balance": item[1].balance or 0,
                     "exchange_balance": item[1].exchange_balance or 0,
                     "exchange_commitment": item[1].exchange_commitment or 0,
-                    "used": int(item[3]) if item[3] else 0
+                    "used": int(item[3]) if item[3] else 0,
                 }
             if include_token_details:
                 position["token"] = self.token_model.from_model(item[2]).__dict__
@@ -1069,13 +1170,12 @@ class BasePositionCoupon(BasePosition):
                 "count": count,
                 "offset": offset,
                 "limit": limit,
-                "total": total
+                "total": total,
             },
-            "positions": position_list
+            "positions": position_list,
         }
 
     def _get_position(self, account_address, token_address, session, is_detail=False):
-
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
@@ -1084,26 +1184,32 @@ class BasePositionCoupon(BasePosition):
                 contract=_token_contract,
                 function_name="balanceOf",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             used = Contract.call_function(
                 contract=_token_contract,
                 function_name="usedOf",
                 args=(account_address,),
-                default_returns=0
+                default_returns=0,
             )
             if _exchange_contract is not None:
                 _exchange_balance = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="balanceOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
                 _exchange_commitment = Contract.call_function(
                     contract=_exchange_contract,
                     function_name="commitmentOf",
-                    args=(account_address, token_address,),
-                    default_returns=0
+                    args=(
+                        account_address,
+                        token_address,
+                    ),
+                    default_returns=0,
                 )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
@@ -1112,28 +1218,29 @@ class BasePositionCoupon(BasePosition):
 
             # Retrieving token receipt history from IDXTransfer
             # NOTE: Index data has a lag from the most recent transfer state.
-            received_history = session.query(IDXTransfer). \
-                filter(IDXTransfer.token_address == token_address). \
-                filter(IDXTransfer.to_address == account_address). \
-                first()
+            received_history = (
+                session.query(IDXTransfer)
+                .filter(IDXTransfer.token_address == token_address)
+                .filter(IDXTransfer.to_address == account_address)
+                .first()
+            )
             # If balance, commitment, and used are non-zero, and exist received history,
             # get the token information from TokenContract.
-            if balance == 0 and \
-                    _exchange_balance == 0 and \
-                    _exchange_commitment == 0 and \
-                    used == 0 and \
-                    received_history is None:
+            if (
+                balance == 0
+                and _exchange_balance == 0
+                and _exchange_commitment == 0
+                and used == 0
+                and received_history is None
+            ):
                 return None
             else:
-                token = CouponToken.get(
-                    session=session,
-                    token_address=token_address
-                )
+                token = CouponToken.get(session=session, token_address=token_address)
                 position = {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
-                    "used": used
+                    "used": used,
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -1149,10 +1256,10 @@ class BasePositionCoupon(BasePosition):
 
 
 BasePositionType = Union[
-    Type[BasePositionStraightBond] |
-    Type[BasePositionShare] |
-    Type[BasePositionMembership] |
-    Type[BasePositionCoupon]
+    Type[BasePositionStraightBond]
+    | Type[BasePositionShare]
+    | Type[BasePositionMembership]
+    | Type[BasePositionCoupon]
 ]
 
 
@@ -1167,9 +1274,11 @@ class GetPositionList:
         req: Request,
         account_address: str = Path(),
         request_query: ListAllPositionQuery = Depends(),
-        session: Session = Depends(db_session)
+        session: Session = Depends(db_session),
     ):
-        return self.base_position().get_list(req, request_query, session, account_address)
+        return self.base_position().get_list(
+            req, request_query, session, account_address
+        )
 
 
 class GetPosition:
@@ -1184,9 +1293,11 @@ class GetPosition:
         request_query: GetPositionQuery = Depends(),
         account_address: str = Path(),
         token_address: str = Path(),
-        session: Session = Depends(db_session)
+        session: Session = Depends(db_session),
     ):
-        return self.base_position().get_one(req, request_query, session, account_address, token_address)
+        return self.base_position().get_one(
+            req, request_query, session, account_address, token_address
+        )
 
 
 # ------------------------------
@@ -1196,22 +1307,22 @@ class GetPosition:
     "/{account_address}/Share",
     summary="Share Token Position",
     operation_id="GetShareTokenPosition",
-    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[RetrieveShareTokenResponse]],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    response_model=GenericSuccessResponse[
+        GenericSecurityTokenPositionsResponse[RetrieveShareTokenResponse]
+    ],
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def list_all_share_positions(
     positions: Union[
-        list[SecurityTokenPositionWithDetail],
-        list[SecurityTokenPositionWithAddress]
+        list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionShare))
 ):
     """
     Endpoint: /Position/{account_address}/Share
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": positions
-    })
+    return json_response({**SuccessResponse.default(), "data": positions})
 
 
 # ------------------------------
@@ -1221,22 +1332,22 @@ def list_all_share_positions(
     "/{account_address}/StraightBond",
     summary="StraightBond Token Position",
     operation_id="GetStraightBondTokenPosition",
-    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    response_model=GenericSuccessResponse[
+        GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]
+    ],
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def list_all_straight_bond_positions(
     positions: Union[
-        list[SecurityTokenPositionWithDetail],
-        list[SecurityTokenPositionWithAddress]
+        list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionStraightBond))
 ):
     """
     Endpoint: /Position/{account_address}/StraightBond
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": positions
-    })
+    return json_response({**SuccessResponse.default(), "data": positions})
 
 
 # ------------------------------
@@ -1247,21 +1358,19 @@ def list_all_straight_bond_positions(
     summary="Membership Token Position",
     operation_id="GetMembershipTokenPosition",
     response_model=GenericSuccessResponse[MembershipPositionsResponse],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def list_all_membership_positions(
     positions: Union[
-        list[MembershipPositionWithDetail],
-        list[MembershipPositionWithAddress]
+        list[MembershipPositionWithDetail], list[MembershipPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionMembership))
 ):
     """
     Endpoint: /Position/{account_address}/Membership
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": positions
-    })
+    return json_response({**SuccessResponse.default(), "data": positions})
 
 
 # ------------------------------
@@ -1272,21 +1381,19 @@ def list_all_membership_positions(
     summary="Coupon Token Position",
     operation_id="GetCouponTokenPosition",
     response_model=GenericSuccessResponse[CouponPositionsResponse],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def list_all_coupon_positions(
     positions: Union[
-        list[CouponPositionWithDetail],
-        list[CouponPositionWithAddress]
+        list[CouponPositionWithDetail], list[CouponPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionCoupon))
 ):
     """
     Endpoint: /Position/{account_address}/Coupon
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": positions
-    })
+    return json_response({**SuccessResponse.default(), "data": positions})
 
 
 # ------------------------------
@@ -1296,19 +1403,20 @@ def list_all_coupon_positions(
     "/{account_address}/Share/{token_address}",
     summary="Share Token Position By Token Address",
     operation_id="GetShareTokenPositionByAddress",
-    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    response_model=GenericSuccessResponse[
+        SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]
+    ],
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def retrieve_share_position_by_token_address(
-    position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare))
+    position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare)),
 ):
     """
     Endpoint: /Position/{account_address}/Share/{contract_address}
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": position
-    })
+    return json_response({**SuccessResponse.default(), "data": position})
 
 
 # ------------------------------
@@ -1318,19 +1426,22 @@ def retrieve_share_position_by_token_address(
     "/{account_address}/StraightBond/{token_address}",
     summary="StraightBond Token Position By Token Address",
     operation_id="GetStraightBondTokenPositionByAddress",
-    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    response_model=GenericSuccessResponse[
+        SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]
+    ],
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def retrieve_straight_bond_position_by_token_address(
-    position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionStraightBond))
+    position: SecurityTokenPositionWithDetail = Depends(
+        GetPosition(BasePositionStraightBond)
+    ),
 ):
     """
     Endpoint: /Position/{account_address}/StraightBond/{contract_address}
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": position
-    })
+    return json_response({**SuccessResponse.default(), "data": position})
 
 
 # ------------------------------
@@ -1341,18 +1452,19 @@ def retrieve_straight_bond_position_by_token_address(
     summary="Membership Token Position By Token Address",
     operation_id="GetMembershipTokenPositionByAddress",
     response_model=GenericSuccessResponse[MembershipPositionWithDetail],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def retrieve_membership_position_by_token_address(
-    position: MembershipPositionWithDetail = Depends(GetPosition(BasePositionMembership))
+    position: MembershipPositionWithDetail = Depends(
+        GetPosition(BasePositionMembership)
+    ),
 ):
     """
     Endpoint: /Position/{account_address}/Membership/{contract_address}
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": position
-    })
+    return json_response({**SuccessResponse.default(), "data": position})
 
 
 # ------------------------------
@@ -1363,15 +1475,14 @@ def retrieve_membership_position_by_token_address(
     summary="Coupon Token Position By Token Address",
     operation_id="GetCouponTokenPositionByAddress",
     response_model=GenericSuccessResponse[CouponPositionWithDetail],
-    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(
+        DataNotExistsError, NotSupportedError, InvalidParameterError
+    ),
 )
 def retrieve_coupon_position_by_token_address(
-    position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon))
+    position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon)),
 ):
     """
     Endpoint: /Position/{account_address}/Coupon/{contract_address}
     """
-    return json_response({
-        **SuccessResponse.default(),
-        "data": position
-    })
+    return json_response({**SuccessResponse.default(), "data": position})

@@ -18,43 +18,38 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
-import pytest
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 from unittest import mock
 from unittest.mock import MagicMock
 
+import pytest
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from web3.exceptions import ABIEventFunctionNotFound
+from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    IDXOrder,
-    IDXAgreement,
-    AgreementStatus,
-    Listing
-)
-from tests.conftest import ibet_exchange_contract
+from app.model.db import AgreementStatus, IDXAgreement, IDXOrder, Listing
+from batch import indexer_DEX
+from batch.indexer_DEX import LOG, main
 from tests.account_config import eth_account
+from tests.conftest import ibet_exchange_contract
 from tests.contract_modules import (
+    cancel_agreement,
+    cancel_order,
+    confirm_agreement,
+    coupon_register_list,
+    issue_coupon_token,
+    make_buy,
+    make_sell,
     membership_issue,
     membership_register_list,
     membership_transfer_to_exchange,
-    issue_coupon_token,
-    coupon_register_list,
-    transfer_coupon_token,
-    make_sell,
     take_buy,
-    make_buy,
     take_sell,
-    cancel_order,
-    confirm_agreement,
-    cancel_agreement
+    transfer_coupon_token,
 )
-from batch import indexer_DEX
-from batch.indexer_DEX import main, LOG
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -63,7 +58,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope="function")
 def processor_factory(session, shared_contract):
     def _processor(membership=False, coupon=False):
-
         # Create exchange contract for each test method.
         exchange_address = {
             "membership": None,
@@ -74,12 +68,20 @@ def processor_factory(session, shared_contract):
         indexer_DEX.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         if membership is True:
-            membership_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
-            indexer_DEX.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange["address"]
+            membership_exchange = ibet_exchange_contract(
+                shared_contract["PaymentGateway"]["address"]
+            )
+            indexer_DEX.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
+                "address"
+            ]
             exchange_address["membership"] = membership_exchange["address"]
         if coupon is True:
-            coupon_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
-            indexer_DEX.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
+            coupon_exchange = ibet_exchange_contract(
+                shared_contract["PaymentGateway"]["address"]
+            )
+            indexer_DEX.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange[
+                "address"
+            ]
             exchange_address["coupon"] = coupon_exchange["address"]
 
         processor = indexer_DEX.Processor()
@@ -110,17 +112,17 @@ class TestProcessor:
     def issue_token_membership(issuer, exchange_contract_address, token_list):
         # Issue token
         args = {
-            'name': 'テスト会員権',
-            'symbol': 'MEMBERSHIP',
-            'initialSupply': 1000000,
-            'tradableExchange': exchange_contract_address,
-            'details': '詳細',
-            'returnDetails': 'リターン詳細',
-            'expirationDate': '20191231',
-            'memo': 'メモ',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            "name": "テスト会員権",
+            "symbol": "MEMBERSHIP",
+            "initialSupply": 1000000,
+            "tradableExchange": exchange_contract_address,
+            "details": "詳細",
+            "returnDetails": "リターン詳細",
+            "expirationDate": "20191231",
+            "memo": "メモ",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
         }
         token = membership_issue(issuer, args)
         membership_register_list(issuer, token, token_list)
@@ -131,17 +133,17 @@ class TestProcessor:
     def issue_token_coupon(issuer, exchange_contract_address, token_list):
         # Issue token
         args = {
-            'name': 'テストクーポン',
-            'symbol': 'COUPON',
-            'totalSupply': 1000000,
-            'tradableExchange': exchange_contract_address,
-            'details': 'クーポン詳細',
-            'returnDetails': 'リターン詳細',
-            'memo': 'クーポンメモ欄',
-            'expirationDate': '20191231',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            "name": "テストクーポン",
+            "symbol": "COUPON",
+            "totalSupply": 1000000,
+            "tradableExchange": exchange_contract_address,
+            "details": "クーポン詳細",
+            "returnDetails": "リターン詳細",
+            "memo": "クーポンメモ欄",
+            "expirationDate": "20191231",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
         }
         token = issue_coupon_token(issuer, args)
         coupon_register_list(issuer, token, token_list)
@@ -171,12 +173,18 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
+        )
         block_number = web3.eth.block_number
 
         # Run target process
@@ -201,7 +209,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
 
     # <Normal_2>
@@ -213,12 +223,18 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
+        )
         block_number = web3.eth.block_number
 
         # Cancel Order
@@ -246,7 +262,9 @@ class TestProcessor:
         assert _order.is_cancelled is True
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
 
     # <Normal_3>
@@ -258,12 +276,18 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
+        )
         block_number = web3.eth.block_number
 
         # Order Agreement(Take buy)
@@ -293,7 +317,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -320,17 +346,23 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
-        membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 3000)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, token, 3000
+        )
 
         # Create Order(Make buy)
         make_buy(self.issuer, {"address": exchange_contract_address}, token, 4000, 100)
         block_number = web3.eth.block_number
 
         # Order Agreement(Take sell)
-        membership_transfer_to_exchange(self.trader, {"address": exchange_contract_address}, token, 3000)
+        membership_transfer_to_exchange(
+            self.trader, {"address": exchange_contract_address}, token, 3000
+        )
         take_sell(self.trader, {"address": exchange_contract_address}, 1, 3000)
         block_number2 = web3.eth.block_number
 
@@ -357,7 +389,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -385,12 +419,18 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
+        )
         block_number = web3.eth.block_number
 
         # Order Agreement(Take buy)
@@ -423,7 +463,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -451,12 +493,18 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
+        )
         block_number = web3.eth.block_number
 
         # Order Agreement(Take buy)
@@ -489,7 +537,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -520,31 +570,60 @@ class TestProcessor:
         membership_exchange_contract_address = exchange_address["membership"]
         coupon_exchange_contract_address = exchange_address["coupon"]
 
-        membership_token = self.issue_token_membership(self.issuer, membership_exchange_contract_address, token_list_contract)
+        membership_token = self.issue_token_membership(
+            self.issuer, membership_exchange_contract_address, token_list_contract
+        )
         self.listing_token(membership_token["address"], session)
 
-        coupon_token = self.issue_token_coupon(self.issuer, coupon_exchange_contract_address, token_list_contract)
+        coupon_token = self.issue_token_coupon(
+            self.issuer, coupon_exchange_contract_address, token_list_contract
+        )
         self.listing_token(coupon_token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": membership_exchange_contract_address}, membership_token, 900000)
-        make_sell(self.issuer, {"address": membership_exchange_contract_address}, membership_token, 900000, 100)
+        membership_transfer_to_exchange(
+            self.issuer,
+            {"address": membership_exchange_contract_address},
+            membership_token,
+            900000,
+        )
+        make_sell(
+            self.issuer,
+            {"address": membership_exchange_contract_address},
+            membership_token,
+            900000,
+            100,
+        )
         membership_block_number = web3.eth.block_number
 
-        transfer_coupon_token(self.issuer, coupon_token, coupon_exchange_contract_address, 800000)
-        make_sell(self.issuer, {"address": coupon_exchange_contract_address}, coupon_token, 800000, 200)
+        transfer_coupon_token(
+            self.issuer, coupon_token, coupon_exchange_contract_address, 800000
+        )
+        make_sell(
+            self.issuer,
+            {"address": coupon_exchange_contract_address},
+            coupon_token,
+            800000,
+            200,
+        )
         coupon_block_number = web3.eth.block_number
 
         # Order Agreement(Take buy)
-        take_buy(self.trader, {"address": membership_exchange_contract_address}, 1, 1000)
+        take_buy(
+            self.trader, {"address": membership_exchange_contract_address}, 1, 1000
+        )
         membership_block_number2 = web3.eth.block_number
 
         take_buy(self.trader, {"address": coupon_exchange_contract_address}, 1, 2000)
         coupon_block_number2 = web3.eth.block_number
 
         # Confirm Agreement
-        confirm_agreement(self.agent, {"address": membership_exchange_contract_address}, 1, 1)
-        confirm_agreement(self.agent, {"address": coupon_exchange_contract_address}, 1, 1)
+        confirm_agreement(
+            self.agent, {"address": membership_exchange_contract_address}, 1, 1
+        )
+        confirm_agreement(
+            self.agent, {"address": coupon_exchange_contract_address}, 1, 1
+        )
 
         # Run target process
         processor.sync_new_logs()
@@ -585,7 +664,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 2
 
         block2 = web3.eth.get_block(membership_block_number2)
@@ -626,11 +707,17 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
+        )
 
         # Run target process
         processor.sync_new_logs()
@@ -638,7 +725,9 @@ class TestProcessor:
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
 
     # <Normal_9>
@@ -648,9 +737,13 @@ class TestProcessor:
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        membership_token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        membership_token = self.issue_token_membership(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(membership_token["address"], session)
-        coupon_token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        coupon_token = self.issue_token_coupon(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(coupon_token["address"], session)
 
         # Run target process
@@ -659,7 +752,9 @@ class TestProcessor:
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
 
     # <Normal_10>
@@ -673,7 +768,9 @@ class TestProcessor:
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
 
     ###########################################################################
@@ -686,19 +783,28 @@ class TestProcessor:
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
+    @mock.patch(
+        "web3.contract.ContractEvent.getLogs",
+        MagicMock(side_effect=ABIEventFunctionNotFound()),
+    )
     def test_error_1_1(self, processor_factory, shared_contract, session):
         processor, exchange_address = processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_current = web3.eth.block_number
         # Run initial sync
@@ -707,15 +813,21 @@ class TestProcessor:
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
 
         # Latest_block is incremented in "initial_sync" process.
         assert processor.latest_block == block_number_current
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_current = web3.eth.block_number
         # Run target process
@@ -727,7 +839,9 @@ class TestProcessor:
         session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_current
@@ -739,41 +853,57 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+        ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
 
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         assert processor.latest_block == block_number_bf
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+        ), pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion
         session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -785,40 +915,58 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         assert processor.latest_block == block_number_bf
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion
         session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -830,58 +978,82 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract_address = exchange_address["membership"]
-        token = self.issue_token_membership(self.issuer, exchange_contract_address, token_list_contract)
+        token = self.issue_token_membership(
+            self.issuer, exchange_contract_address, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.initial_sync()
 
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         assert processor.latest_block == block_number_bf
 
         # Create Order
-        membership_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+        membership_transfer_to_exchange(
+            self.issuer, {"address": exchange_contract_address}, token, 500000
+        )
+        make_sell(
+            self.issuer, {"address": exchange_contract_address}, token, 500000, 100
+        )
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.sync_new_logs()
 
         # Assertion
         session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
-        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        _agreement_list = (
+            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        )
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    def test_error_3(self, main_func, processor_factory, shared_contract, session, caplog):
+    def test_error_3(
+        self, main_func, processor_factory, shared_contract, session, caplog
+    ):
         # Mocking time.sleep to break mainloop
         time_mock = MagicMock(wraps=time)
         time_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_DEX.time", time_mock),\
-            mock.patch("batch.indexer_DEX.Processor.initial_sync", return_value=True), \
-            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(TypeError):
+        with mock.patch("batch.indexer_DEX.time", time_mock), mock.patch(
+            "batch.indexer_DEX.Processor.initial_sync", return_value=True
+        ), mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(
+            TypeError
+        ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()
 
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.WARNING, "An external service was unavailable")
+        )
         caplog.clear()

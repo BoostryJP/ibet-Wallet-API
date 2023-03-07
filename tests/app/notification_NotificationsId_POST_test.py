@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -131,16 +132,15 @@ class TestNotificationsIdPOST:
 
         # Request target API
         resp = client.post(
-            self.apiurl.format(id=notification_id),
-            json={
-                "is_flagged": True
-            }
+            self.apiurl.format(id=notification_id), json={"is_flagged": True}
         )
 
         # Assertion
-        n: Notification | None = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
+        n: Notification | None = (
+            session.query(Notification)
+            .filter(Notification.notification_id == notification_id)
+            .first()
+        )
 
         assumed_body = {
             "notification_type": NotificationType.NEW_ORDER,
@@ -154,10 +154,8 @@ class TestNotificationsIdPOST:
             "args": {
                 "hoge": "fuga",
             },
-            "metainfo": {
-                "aaa": "bbb"
-            },
-            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+            "metainfo": {"aaa": "bbb"},
+            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
         }
 
         assert n
@@ -178,13 +176,15 @@ class TestNotificationsIdPOST:
             json={
                 "is_flagged": False,
                 "is_read": True,
-            }
+            },
         )
 
         # Assertion
-        n: Notification | None = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
+        n: Notification | None = (
+            session.query(Notification)
+            .filter(Notification.notification_id == notification_id)
+            .first()
+        )
 
         assumed_body = {
             "notification_type": NotificationType.APPLY_FOR_TRANSFER,
@@ -198,9 +198,8 @@ class TestNotificationsIdPOST:
             "args": {
                 "hoge": "fuga",
             },
-            "metainfo": {
-            },
-            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+            "metainfo": {},
+            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
         }
 
         assert n
@@ -221,13 +220,15 @@ class TestNotificationsIdPOST:
             self.apiurl.format(id=notification_id),
             json={
                 "is_deleted": True,
-            }
+            },
         )
 
         # Assertion
-        n: Notification | None = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
+        n: Notification | None = (
+            session.query(Notification)
+            .filter(Notification.notification_id == notification_id)
+            .first()
+        )
 
         assert n
         assert resp.status_code == 200
@@ -248,20 +249,22 @@ class TestNotificationsIdPOST:
             self.apiurl.format(id=notification_id),
             json={
                 "is_deleted": True,
-            }
+            },
         )
 
         resp = client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_deleted": False,
-            }
+            },
         )
 
         # Assertion
-        n: Notification | None = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
+        n: Notification | None = (
+            session.query(Notification)
+            .filter(Notification.notification_id == notification_id)
+            .first()
+        )
 
         assert n
         assert resp.status_code == 200
@@ -286,13 +289,13 @@ class TestNotificationsIdPOST:
             self.apiurl.format(id=notification_id),
             json={
                 "is_flagged": True,
-            }
+            },
         )
 
         # Assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
-            'code': 30,
-            'message': 'Data Not Exists',
-            'description': 'notification not found'
+            "code": 30,
+            "message": "Data Not Exists",
+            "description": "notification not found",
         }

@@ -30,7 +30,7 @@ class TokenList:
             contract=self.contract,
             function_name="getTokenByAddress",
             args=(address,),
-            default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
         )
         if token_info[0] == ZERO_ADDRESS:
             return False
@@ -43,6 +43,6 @@ class TokenList:
             contract=self.contract,
             function_name="getTokenByAddress",
             args=(address,),
-            default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
         )
         return token_info

@@ -16,187 +16,137 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .base import (
-    # Request
-    ResultSetQuery,
-    # Response
-    SuccessResponse,
-    GenericSuccessResponse
-)
 from .admin import (
-    # Request
-    RegisterAdminTokenRequest,
-    UpdateAdminTokenRequest,
-    # Response
-    RetrieveAdminTokenResponse,
+    GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
-    GetAdminTokenTypeResponse
+    RegisterAdminTokenRequest,
+    RetrieveAdminTokenResponse,
+    UpdateAdminTokenRequest,
 )
-from .node_info import (
-    # Response
-    GetNodeInfoResponse,
-    GetBlockSyncStatusResponse
-)
+from .base import GenericSuccessResponse, ResultSetQuery, SuccessResponse
 from .bc_explorer import (
-    # Request
+    BlockDataDetail,
+    BlockDataListResponse,
+    BlockDataResponse,
     ListBlockDataQuery,
     ListTxDataQuery,
-    # Response
-    BlockDataResponse,
-    BlockDataListResponse,
-    BlockDataDetail,
-    TxDataResponse,
+    TxDataDetail,
     TxDataListResponse,
-    TxDataDetail
-)
-from .contract_abi import (
-    ABI
+    TxDataResponse,
 )
 from .company_info import (
-    # Response
-    RetrieveCompanyInfoResponse,
     ListAllCompanyInfoResponse,
-    ListAllCompanyTokensResponse
+    ListAllCompanyTokensResponse,
+    RetrieveCompanyInfoResponse,
 )
-from .user_info import (
-    # Request
-    RetrievePaymentAccountQuery,
-    RetrievePersonalInfoQuery,
-    # Response
-    RetrievePaymentAccountRegistrationStatusResponse,
-    RetrievePersonalInfoRegistrationStatusResponse
-)
-from .eth import (
-    # Request
-    GetTransactionCountQuery,
-    SendRawTransactionRequest,
-    WaitForTransactionReceiptQuery,
-    # Response
-    TransactionCountResponse,
-    SendRawTransactionsResponse,
-    SendRawTransactionsNoWaitResponse,
-    WaitForTransactionReceiptResponse
-)
-from .token_bond import (
-    # Request
-    ListAllStraightBondTokensQuery,
-    # Response
-    RetrieveStraightBondTokenResponse,
-    ListAllStraightBondTokensResponse,
-    ListAllStraightBondTokenAddressesResponse
-)
-from .token_share import (
-    # Request
-    ListAllShareTokensQuery,
-    # Response
-    RetrieveShareTokenResponse,
-    ListAllShareTokensResponse,
-    ListAllShareTokenAddressesResponse
-)
-from .token_membership import (
-    # Request
-    ListAllMembershipTokensQuery,
-    # Response
-    RetrieveMembershipTokenResponse,
-    ListAllMembershipTokensResponse,
-    ListAllMembershipTokenAddressesResponse
-)
-from .token_coupon import (
-    # Request
-    ListAllCouponTokensQuery,
-    # Response
-    RetrieveCouponTokenResponse,
-    ListAllCouponTokensResponse,
-    ListAllCouponTokenAddressesResponse
-)
-from .token import (
-    # Request
-    CreateTokenHoldersCollectionRequest,
-    RetrieveTokenHoldersCountQuery,
-    ListAllTokenHoldersQuery,
-    ListAllTransferHistoryQuery,
-    # Response
-    TokenStatusResponse,
-    TokenHoldersResponse,
-    TokenHoldersCountResponse,
-    CreateTokenHoldersCollectionResponse,
-    TokenHoldersCollectionResponse,
-    TransferHistoriesResponse,
-    TransferApprovalHistoriesResponse
-)
-from .position import (
-    # Request
-    ListAllPositionQuery,
-    GetPositionQuery,
-    ListAllLockedPositionQuery,
-    LockEventCategory,
-    LockEventSortItem,
-    ListAllLockEventQuery,
-    # Response
-    SecurityTokenPosition,
-    GenericSecurityTokenPositionsResponse,
-    MembershipPositionsResponse,
-    CouponPositionsResponse,
-    SecurityTokenPositionWithDetail,
-    GenericSecurityTokenPositionsResponse,
-    SecurityTokenPositionWithAddress,
-    MembershipPositionsResponse,
-    MembershipPositionWithDetail,
-    MembershipPositionWithAddress,
-    CouponPositionsResponse,
-    CouponPositionWithDetail,
-    CouponPositionWithAddress,
-    ListAllLockedPositionResponse,
-    ListAllLockEventsResponse
-)
-from .notification import (
-    # Request
-    NotificationsQuery,
-    NotificationReadRequest,
-    NotificationsCountQuery,
-    UpdateNotificationRequest,
-    # Response
-    NotificationsResponse,
-    NotificationsCountResponse,
-    NotificationUpdateResponse
-)
-from .e2e_message import (
-    # Response
-    E2EMessageEncryptionKeyResponse
-)
-from .events import (
-    # Request
-    E2EMessagingEventsQuery,
-    IbetEscrowEventsQuery,
-    IbetSecurityTokenEscrowEventsQuery,
-    E2EMessagingEventArguments,
-    EscrowEventArguments,
-    SecurityTokenEventArguments,
-    IbetSecurityTokenInterfaceEventType,
-    IbetSecurityTokenInterfaceEventsQuery,
-    # Response
-    ListAllEventsResponse
-)
+from .contract_abi import ABI
 from .dex_market import (
-    # Request
-    ListAllOrderBookQuery,
     ListAllLastPriceQuery,
-    ListAllTickQuery,
-    RetrieveAgreementQuery,
-    # Response
-    ListAllOrderBookItemResponse,
     ListAllLastPriceResponse,
+    ListAllOrderBookItemResponse,
+    ListAllOrderBookQuery,
+    ListAllTickQuery,
     ListAllTicksResponse,
-    RetrieveAgreementDetailResponse
+    RetrieveAgreementDetailResponse,
+    RetrieveAgreementQuery,
 )
 from .dex_order_list import (
-    # Request
     ListAllOrderListQuery,
-    # Response
     ListAllOrderListResponse,
-    TokenAddress
+    TokenAddress,
 )
-from .mail import (
-    # Request
-    SendMailRequest
+from .e2e_message import E2EMessageEncryptionKeyResponse
+from .eth import (
+    GetTransactionCountQuery,
+    SendRawTransactionRequest,
+    SendRawTransactionsNoWaitResponse,
+    SendRawTransactionsResponse,
+    TransactionCountResponse,
+    WaitForTransactionReceiptQuery,
+    WaitForTransactionReceiptResponse,
+)
+from .events import (
+    E2EMessagingEventArguments,
+    E2EMessagingEventsQuery,
+    EscrowEventArguments,
+    IbetEscrowEventsQuery,
+    IbetSecurityTokenEscrowEventsQuery,
+    IbetSecurityTokenInterfaceEventsQuery,
+    IbetSecurityTokenInterfaceEventType,
+    ListAllEventsResponse,
+    SecurityTokenEventArguments,
+)
+from .mail import SendMailRequest
+from .node_info import GetBlockSyncStatusResponse, GetNodeInfoResponse
+from .notification import (
+    NotificationReadRequest,
+    NotificationsCountQuery,
+    NotificationsCountResponse,
+    NotificationsQuery,
+    NotificationsResponse,
+    NotificationUpdateResponse,
+    UpdateNotificationRequest,
+)
+from .position import (
+    CouponPositionsResponse,
+    CouponPositionWithAddress,
+    CouponPositionWithDetail,
+    GenericSecurityTokenPositionsResponse,
+    GetPositionQuery,
+    ListAllLockedPositionQuery,
+    ListAllLockedPositionResponse,
+    ListAllLockEventQuery,
+    ListAllLockEventsResponse,
+    ListAllPositionQuery,
+    LockEventCategory,
+    LockEventSortItem,
+    MembershipPositionsResponse,
+    MembershipPositionWithAddress,
+    MembershipPositionWithDetail,
+    SecurityTokenPosition,
+    SecurityTokenPositionWithAddress,
+    SecurityTokenPositionWithDetail,
+)
+from .token import (
+    CreateTokenHoldersCollectionRequest,
+    CreateTokenHoldersCollectionResponse,
+    ListAllTokenHoldersQuery,
+    ListAllTransferHistoryQuery,
+    RetrieveTokenHoldersCountQuery,
+    TokenHoldersCollectionResponse,
+    TokenHoldersCountResponse,
+    TokenHoldersResponse,
+    TokenStatusResponse,
+    TransferApprovalHistoriesResponse,
+    TransferHistoriesResponse,
+)
+from .token_bond import (
+    ListAllStraightBondTokenAddressesResponse,
+    ListAllStraightBondTokensQuery,
+    ListAllStraightBondTokensResponse,
+    RetrieveStraightBondTokenResponse,
+)
+from .token_coupon import (
+    ListAllCouponTokenAddressesResponse,
+    ListAllCouponTokensQuery,
+    ListAllCouponTokensResponse,
+    RetrieveCouponTokenResponse,
+)
+from .token_membership import (
+    ListAllMembershipTokenAddressesResponse,
+    ListAllMembershipTokensQuery,
+    ListAllMembershipTokensResponse,
+    RetrieveMembershipTokenResponse,
+)
+from .token_share import (
+    ListAllShareTokenAddressesResponse,
+    ListAllShareTokensQuery,
+    ListAllShareTokensResponse,
+    RetrieveShareTokenResponse,
+)
+from .user_info import (
+    RetrievePaymentAccountQuery,
+    RetrievePaymentAccountRegistrationStatusResponse,
+    RetrievePersonalInfoQuery,
+    RetrievePersonalInfoRegistrationStatusResponse,
 )

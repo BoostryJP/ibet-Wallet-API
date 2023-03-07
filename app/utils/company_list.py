@@ -20,8 +20,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app import config
-from app import log
+from app import config, log
 from app.database import get_engine
 from app.model.db import Company as CompanyModel
 
@@ -31,26 +30,25 @@ LOG = log.get_logger()
 
 
 class CompanyList:
-    DEFAULT = {
-        "address": "",
-        "corporate_name": "",
-        "rsa_publickey": "",
-        "homepage": ""
-    }
+    DEFAULT = {"address": "", "corporate_name": "", "rsa_publickey": "", "homepage": ""}
 
     @classmethod
     def get(cls):
         try:
-            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
+            if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list = []
-                _company_list = json.load(open('data/company_list.json', 'r'))
+                _company_list = json.load(open("data/company_list.json", "r"))
                 for _company in _company_list:
                     company_list.append(Company(_company))
             else:
                 db_session = Session(autocommit=False, autoflush=True, bind=engine)
                 try:
                     company_list = []
-                    _company_list = db_session.query(CompanyModel).order_by(CompanyModel.created).all()
+                    _company_list = (
+                        db_session.query(CompanyModel)
+                        .order_by(CompanyModel.created)
+                        .all()
+                    )
                     for _company in _company_list:
                         company_list.append(Company(_company.json()))
                 finally:
@@ -64,7 +62,6 @@ class CompanyList:
         self.company_list = company_list
 
     def find(self, address):
-
         for company in self.company_list:
             if address == company.address:
                 return company
@@ -77,15 +74,19 @@ class CompanyList:
     @staticmethod
     def get_find(address):
         try:
-            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-                company_list = json.load(open('data/company_list.json', 'r'))
+            if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
+                company_list = json.load(open("data/company_list.json", "r"))
                 for _company in company_list:
                     if address == _company["address"]:
                         return Company(_company)
             else:
                 db_session = Session(autocommit=False, autoflush=True, bind=engine)
                 try:
-                    _company = db_session.query(CompanyModel).filter(CompanyModel.address == address).first()
+                    _company = (
+                        db_session.query(CompanyModel)
+                        .filter(CompanyModel.address == address)
+                        .first()
+                    )
                     if _company is not None:
                         return Company(_company.json())
                 finally:
@@ -97,7 +98,6 @@ class CompanyList:
 
 
 class Company:
-
     def __init__(self, obj):
         self.obj = obj
 

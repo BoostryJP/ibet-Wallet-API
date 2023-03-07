@@ -16,21 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import (
-    Optional
-)
+from typing import Optional
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    conlist,
-    constr
-)
+from pydantic import BaseModel, EmailStr, Field, conlist, constr
 
 ############################
 # REQUEST
 ############################
+
 
 class SendMailRequest(BaseModel):
     to_emails: conlist(EmailStr, min_items=1, max_items=100, unique_items=True)

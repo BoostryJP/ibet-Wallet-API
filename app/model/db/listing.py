@@ -17,18 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import (
-    datetime,
-    timedelta,
-    timezone
-)
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from sqlalchemy import Column
-from sqlalchemy import (
-    String,
-    BigInteger,
-    Boolean
-)
+
+from sqlalchemy import BigInteger, Boolean, Column, String
 
 from app.config import TZ
 from app.model.db import Base
@@ -41,7 +33,8 @@ class Listing(Base):
     """
     取扱対象トークン
     """
-    __tablename__ = 'listing'
+
+    __tablename__ = "listing"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)  # トークンアドレス
     is_public = Column(Boolean)
@@ -75,12 +68,12 @@ class Listing(Base):
         }
 
     FIELDS = {
-        'id': int,
-        'token_address': str,
-        'is_public': bool,
-        'max_holding_quantity': int,
-        'max_sell_amount': int,
-        'owner_address': str,
+        "id": int,
+        "token_address": str,
+        "is_public": bool,
+        "max_holding_quantity": int,
+        "max_sell_amount": int,
+        "owner_address": str,
     }
 
     FIELDS.update(Base.FIELDS)

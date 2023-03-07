@@ -20,33 +20,32 @@ import os
 import sys
 import time
 from dataclasses import dataclass
+from typing import List, Type
+
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
-from typing import List, Type
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app import config
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    Listing,
-    IDXBondToken as BondTokenModel,
-    IDXShareToken as ShareTokenModel,
-    IDXMembershipToken as MembershipTokenModel,
-    IDXCouponToken as CouponTokenModel,
-    IDXTokenInstance
-)
 from app.model.blockchain import (
+    BondToken,
     CouponToken,
     MembershipToken,
-    BondToken,
     ShareToken,
-    TokenClassTypes
+    TokenClassTypes,
 )
-import log
+from app.model.db import IDXBondToken as BondTokenModel
+from app.model.db import IDXCouponToken as CouponTokenModel
+from app.model.db import IDXMembershipToken as MembershipTokenModel
+from app.model.db import IDXShareToken as ShareTokenModel
+from app.model.db import IDXTokenInstance, Listing
 
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)
@@ -56,6 +55,7 @@ db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 class Processor:
     """Processor for indexing token detail attributes for short term"""
+
     @dataclass
     class TargetTokenType:
         template: str
@@ -63,25 +63,41 @@ class Processor:
         token_model: Type[IDXTokenInstance]
 
     target_token_types: List[TargetTokenType]
-    SEC_PER_RECORD: float = config.TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC/1000
+    SEC_PER_RECORD: float = config.TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC / 1000
 
     def __init__(self):
         self.target_token_types = []
         if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetStraightBond", token_class=BondToken, token_model=BondTokenModel)
+                self.TargetTokenType(
+                    template="IbetStraightBond",
+                    token_class=BondToken,
+                    token_model=BondTokenModel,
+                )
             )
         if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetShare", token_class=ShareToken, token_model=ShareTokenModel)
+                self.TargetTokenType(
+                    template="IbetShare",
+                    token_class=ShareToken,
+                    token_model=ShareTokenModel,
+                )
             )
         if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetMembership", token_class=MembershipToken, token_model=MembershipTokenModel)
+                self.TargetTokenType(
+                    template="IbetMembership",
+                    token_class=MembershipToken,
+                    token_model=MembershipTokenModel,
+                )
             )
         if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetCoupon", token_class=CouponToken, token_model=CouponTokenModel)
+                self.TargetTokenType(
+                    template="IbetCoupon",
+                    token_class=CouponToken,
+                    token_model=CouponTokenModel,
+                )
             )
 
     @staticmethod
@@ -105,9 +121,15 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens = local_session.query(token_type.token_model).\
-                join(Listing, token_type.token_model.token_address == Listing.token_address).\
-                filter(Listing.is_public == True).all()
+            available_tokens = (
+                local_session.query(token_type.token_model)
+                .join(
+                    Listing,
+                    token_type.token_model.token_address == Listing.token_address,
+                )
+                .filter(Listing.is_public == True)
+                .all()
+            )
 
             for available_token in available_tokens:
                 try:
@@ -122,7 +144,9 @@ class Processor:
                     elapsed_time = time.time() - start_time
                     time.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
                 except ObjectDeletedError:
-                    LOG.warning("The record may have been deleted in another session during the update")
+                    LOG.warning(
+                        "The record may have been deleted in another session during the update"
+                    )
 
 
 def main():
@@ -141,7 +165,9 @@ def main():
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
-        time_to_sleep = max(config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL - elapsed_time, 0)
+        time_to_sleep = max(
+            config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL - elapsed_time, 0
+        )
         if time_to_sleep == 0:
             LOG.debug("Processing is delayed")
         time.sleep(time_to_sleep)

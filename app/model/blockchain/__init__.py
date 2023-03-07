@@ -18,9 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 from .token import (
     BondToken,
-    ShareToken,
-    MembershipToken,
     CouponToken,
+    MembershipToken,
+    ShareToken,
     TokenClassTypes,
-    TokenInstanceTypes
+    TokenInstanceTypes,
 )

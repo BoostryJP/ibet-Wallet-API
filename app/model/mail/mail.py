@@ -25,19 +25,20 @@ from email.utils import formataddr
 import boto3
 
 from app.config import (
+    AWS_SES_REGION_NAME,
     SMTP_METHOD,
-    SMTP_SENDER_NAME,
     SMTP_SENDER_EMAIL,
+    SMTP_SENDER_NAME,
+    SMTP_SENDER_PASSWORD,
     SMTP_SERVER_HOST,
     SMTP_SERVER_PORT,
-    SMTP_SENDER_PASSWORD,
-    AWS_SES_REGION_NAME
 )
 
 
 class Mail:
-
-    def __init__(self, to_email: str, subject: str, text_content: str, html_content: str):
+    def __init__(
+        self, to_email: str, subject: str, text_content: str, html_content: str
+    ):
         self.sender_email = SMTP_SENDER_EMAIL
         self.to_email = to_email
 
@@ -52,7 +53,9 @@ class Mail:
         self.msg.attach(MIMEText(text_content, "plain"))
         self.msg.attach(MIMEText(html_content, "html"))
         self.msg["Subject"] = subject
-        self.msg["From"] = formataddr((str(Header(SMTP_SENDER_NAME, "utf-8")), SMTP_SENDER_EMAIL))
+        self.msg["From"] = formataddr(
+            (str(Header(SMTP_SENDER_NAME, "utf-8")), SMTP_SENDER_EMAIL)
+        )
         self.msg["To"] = to_email
 
     def send_mail(self):
@@ -71,9 +74,7 @@ class Mail:
             # Send mail
             try:
                 smtp_client.sendmail(
-                    self.sender_email,
-                    [self.to_email],
-                    self.msg.as_bytes()
+                    self.sender_email, [self.to_email], self.msg.as_bytes()
                 )
             finally:
                 smtp_client.quit()
@@ -85,10 +86,8 @@ class Mail:
             # Send mail
             smtp_client.send_raw_email(
                 Source=self.sender_email,
-                Destinations=[
-                    self.to_email
-                ],
+                Destinations=[self.to_email],
                 RawMessage={
                     "Data": self.msg.as_bytes(),
-                }
+                },
             )

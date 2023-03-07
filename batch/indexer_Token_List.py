@@ -29,15 +29,13 @@ from web3.exceptions import ABIEventFunctionNotFound
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    IDXTokenListBlockNumber,
-    IDXTokenListItem
-)
+from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
 from app.utils.web3_utils import Web3Wrapper
-import log
 
 process_name = "INDEXER-TOKEN-LIST"
 LOG = log.get_logger(process_name=process_name)
@@ -51,8 +49,7 @@ class Processor:
 
     def __init__(self):
         self.token_list_contract = Contract.get_contract(
-            contract_name="TokenList",
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+            contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
         self.available_token_template_list = []
         if config.BOND_TOKEN_ENABLED:
@@ -72,23 +69,26 @@ class Processor:
         local_session = self.__get_db_session()
         try:
             latest_block = web3.eth.block_number
-            _from_block = self.__get_idx_token_list_block_number(
-                db_session=local_session,
-                contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS
-            ) + 1
+            _from_block = (
+                self.__get_idx_token_list_block_number(
+                    db_session=local_session,
+                    contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS,
+                )
+                + 1
+            )
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
                 while _to_block < latest_block:
                     self.__sync_all(
                         db_session=local_session,
                         block_from=_from_block,
-                        block_to=_to_block
+                        block_to=_to_block,
                     )
                     _to_block += 1000000
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=latest_block
+                    block_to=latest_block,
                 )
             else:
                 if _from_block > latest_block:
@@ -96,7 +96,7 @@ class Processor:
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=latest_block
+                    block_to=latest_block,
                 )
             self.__set_idx_token_list_block_number(
                 db_session=local_session,
@@ -125,8 +125,7 @@ class Processor:
         """
         try:
             events = self.token_list_contract.events.Register.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
+                fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -139,12 +138,18 @@ class Processor:
                     db_session=db_session,
                     token_address=token_address,
                     token_template=token_template,
-                    owner_address=owner_address
+                    owner_address=owner_address,
                 )
         except Exception as e:
             raise e
 
-    def __sink_on_token_info(self, db_session: Session, token_address: str, token_template: str, owner_address: str):
+    def __sink_on_token_info(
+        self,
+        db_session: Session,
+        token_address: str,
+        token_template: str,
+        owner_address: str,
+    ):
         """Update Token Info item in DB
 
         :param db_session: ORM session
@@ -156,8 +161,11 @@ class Processor:
         if token_template not in self.available_token_template_list:
             return
 
-        idx_token_list: Optional[IDXTokenListItem] = db_session.query(IDXTokenListItem).\
-            filter(IDXTokenListItem.token_address == token_address).first()
+        idx_token_list: Optional[IDXTokenListItem] = (
+            db_session.query(IDXTokenListItem)
+            .filter(IDXTokenListItem.token_address == token_address)
+            .first()
+        )
         if idx_token_list is not None:
             idx_token_list.token_template = token_template
             idx_token_list.owner_address = owner_address
@@ -171,19 +179,27 @@ class Processor:
 
     @staticmethod
     def __get_idx_token_list_block_number(db_session: Session, contract_address: str):
-        """Get token list index for Share """
-        _idx_token_list_block_number = db_session.query(IDXTokenListBlockNumber).\
-            filter(IDXTokenListBlockNumber.contract_address == contract_address).first()
+        """Get token list index for Share"""
+        _idx_token_list_block_number = (
+            db_session.query(IDXTokenListBlockNumber)
+            .filter(IDXTokenListBlockNumber.contract_address == contract_address)
+            .first()
+        )
         if _idx_token_list_block_number is None:
             return -1
         else:
             return _idx_token_list_block_number.latest_block_number
 
     @staticmethod
-    def __set_idx_token_list_block_number(db_session: Session, contract_address: str, block_number: int):
-        """Get token list index for Share """
-        _idx_token_list_block_number = db_session.query(IDXTokenListBlockNumber). \
-            filter(IDXTokenListBlockNumber.contract_address == contract_address).first()
+    def __set_idx_token_list_block_number(
+        db_session: Session, contract_address: str, block_number: int
+    ):
+        """Get token list index for Share"""
+        _idx_token_list_block_number = (
+            db_session.query(IDXTokenListBlockNumber)
+            .filter(IDXTokenListBlockNumber.contract_address == contract_address)
+            .first()
+        )
         if _idx_token_list_block_number is None:
             _idx_token_list_block_number = IDXTokenListBlockNumber()
         _idx_token_list_block_number.latest_block_number = block_number

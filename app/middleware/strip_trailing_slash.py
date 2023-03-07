@@ -16,14 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi import (
-    Request,
-    Response
-)
+from fastapi import Request, Response
 from starlette.middleware.base import RequestResponseEndpoint
-from app import log
-from .base import SuppressNoResponseReturnedMiddleware
 
+from app import log
+
+from .base import SuppressNoResponseReturnedMiddleware
 
 LOG = log.get_logger()
 
@@ -40,7 +38,9 @@ class StripTrailingSlashMiddleware(SuppressNoResponseReturnedMiddleware):
     def __init__(self):
         pass
 
-    async def __call__(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def __call__(
+        self, req: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         # Before process request
         if req.url.path != "/" and req.url.path[-1] == "/":
             replace_path = req.url.path[:-1]

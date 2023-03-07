@@ -23,7 +23,6 @@ from app.model.db import Mail
 
 
 class TestSendEmail:
-
     # Target API endpoint
     api_url = "/Mail"
 
@@ -37,22 +36,13 @@ class TestSendEmail:
             "to_emails": ["test@example.com"],
             "subject": "Test email",
             "text_content": "text content",
-            "html_content": "<p>html content</p>"
+            "html_content": "<p>html content</p>",
         }
-        resp = client.post(
-            self.api_url,
-            json=params
-        )
+        resp = client.post(self.api_url, json=params)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {
-            'meta': {
-                'code': 200,
-                'message': 'OK'
-            },
-            'data': {}
-        }
+        assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
         mail_list = session.query(Mail).all()
         assert len(mail_list) == 1
@@ -67,24 +57,12 @@ class TestSendEmail:
     # Normal_1_2
     # content is None
     def test_normal_1_2(self, client: TestClient, session: Session):
-        params = {
-            "to_emails": ["test@example.com"],
-            "subject": "Test email"
-        }
-        resp = client.post(
-            self.api_url,
-            json=params
-        )
+        params = {"to_emails": ["test@example.com"], "subject": "Test email"}
+        resp = client.post(self.api_url, json=params)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {
-            'meta': {
-                'code': 200,
-                'message': 'OK'
-            },
-            'data': {}
-        }
+        assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
         mail_list = session.query(Mail).all()
         assert len(mail_list) == 1
@@ -103,22 +81,13 @@ class TestSendEmail:
             "to_emails": ["test1@example.com", "test2@example.com"],
             "subject": "Test email",
             "text_content": "text content",
-            "html_content": "<p>html content</p>"
+            "html_content": "<p>html content</p>",
         }
-        resp = client.post(
-            self.api_url,
-            json=params
-        )
+        resp = client.post(self.api_url, json=params)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {
-            'meta': {
-                'code': 200,
-                'message': 'OK'
-            },
-            'data': {}
-        }
+        assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
         mail_list = session.query(Mail).all()
         assert len(mail_list) == 2
@@ -146,62 +115,53 @@ class TestSendEmail:
     # field required
     def test_error_1(self, client: TestClient, session: Session):
         params = {}
-        resp = client.post(
-            self.api_url,
-            json=params
-        )
+        resp = client.post(self.api_url, json=params)
 
         # Assertion
         assert resp.status_code == 400
         assert resp.json() == {
-            'meta': {
-                'code': 88,
-                'message': 'Invalid Parameter',
-                'description': [
+            "meta": {
+                "code": 88,
+                "message": "Invalid Parameter",
+                "description": [
                     {
-                        'loc': ['body', 'to_emails'],
-                        'msg': 'field required',
-                        'type': 'value_error.missing'
+                        "loc": ["body", "to_emails"],
+                        "msg": "field required",
+                        "type": "value_error.missing",
                     },
                     {
-                        'loc': ['body', 'subject'],
-                        'msg': 'field required',
-                        'type': 'value_error.missing'
-                    }
-                ]
+                        "loc": ["body", "subject"],
+                        "msg": "field required",
+                        "type": "value_error.missing",
+                    },
+                ],
             }
         }
 
     # Error_2
     # Invalid Parameter
     def test_error_2(self, client: TestClient, session: Session):
-        params = {
-            "to_emails": ["invalid_email"],
-            "subject": "a" * 101
-        }
-        resp = client.post(
-            self.api_url,
-            json=params
-        )
+        params = {"to_emails": ["invalid_email"], "subject": "a" * 101}
+        resp = client.post(self.api_url, json=params)
 
         # Assertion
         assert resp.status_code == 400
         assert resp.json() == {
-            'meta': {
-                'code': 88,
-                'message': 'Invalid Parameter',
-                'description': [
+            "meta": {
+                "code": 88,
+                "message": "Invalid Parameter",
+                "description": [
                     {
-                        'loc': ['body', 'to_emails', 0],
-                        'msg': 'value is not a valid email address',
-                        'type': 'value_error.email'
+                        "loc": ["body", "to_emails", 0],
+                        "msg": "value is not a valid email address",
+                        "type": "value_error.email",
                     },
                     {
-                        'loc': ['body', 'subject'],
-                        'msg': 'ensure this value has at most 100 characters',
-                        'type': 'value_error.any_str.max_length',
-                        'ctx': {'limit_value': 100}
-                    }
-                ]
+                        "loc": ["body", "subject"],
+                        "msg": "ensure this value has at most 100 characters",
+                        "type": "value_error.any_str.max_length",
+                        "ctx": {"limit_value": 100},
+                    },
+                ],
             }
         }

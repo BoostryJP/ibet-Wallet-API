@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -32,7 +33,6 @@ class TestNotificationsIdDELETE:
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
     def _insert_test_data(self, session):
-
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = "NewOrder"
@@ -49,7 +49,7 @@ class TestNotificationsIdDELETE:
         n.metainfo = {
             "aaa": "bbb",
         }
-        n.created = datetime.strptime("2022/01/01 15:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 15:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -66,7 +66,7 @@ class TestNotificationsIdDELETE:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 16:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 16:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -83,7 +83,7 @@ class TestNotificationsIdDELETE:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 17:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 17:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -100,7 +100,7 @@ class TestNotificationsIdDELETE:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 18:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 18:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -117,7 +117,7 @@ class TestNotificationsIdDELETE:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 19:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 19:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
     ###########################################################################
@@ -142,7 +142,11 @@ class TestNotificationsIdDELETE:
         assert resp.status_code == 200
         _notification_list = session.query(Notification).all()
         assert len(_notification_list) == 4
-        _notification = session.query(Notification).filter(Notification.notification_id == notification_id).first()
+        _notification = (
+            session.query(Notification)
+            .filter(Notification.notification_id == notification_id)
+            .first()
+        )
         assert _notification is None
 
     ###########################################################################
@@ -169,5 +173,5 @@ class TestNotificationsIdDELETE:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "id: xxxxx"
+            "description": "id: xxxxx",
         }

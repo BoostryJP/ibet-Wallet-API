@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 from unittest.mock import ANY
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -28,25 +29,25 @@ from app.contracts import Contract
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    issue_bond_token,
-    register_bond_list,
-    issue_share_token,
-    register_share_list,
-    register_personalinfo,
-    transfer_token,
-    bond_transfer_to_exchange,
-    bond_issue_from,
-    bond_redeem_from,
-    bond_lock,
-    bond_set_transfer_approval_required,
-    bond_unlock,
-    finish_security_token_escrow,
-    get_latest_security_escrow_id,
-    create_security_token_escrow,
     approve_transfer_security_token_escrow,
+    bond_apply_for_transfer,
     bond_approve_transfer,
     bond_cancel_transfer,
-    bond_apply_for_transfer
+    bond_issue_from,
+    bond_lock,
+    bond_redeem_from,
+    bond_set_transfer_approval_required,
+    bond_transfer_to_exchange,
+    bond_unlock,
+    create_security_token_escrow,
+    finish_security_token_escrow,
+    get_latest_security_escrow_id,
+    issue_bond_token,
+    issue_share_token,
+    register_bond_list,
+    register_personalinfo,
+    register_share_list,
+    transfer_token,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -70,12 +71,16 @@ class TestEventsIbetSecurityTokenInterface:
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestEventsIbetSecurityTokenInterface.issuer["account_address"]
+        _listing.owner_address = TestEventsIbetSecurityTokenInterface.issuer[
+            "account_address"
+        ]
         session.add(_listing)
         session.commit()
 
     @staticmethod
-    def issue_token_bond(issuer, exchange_contract_address, personal_info_contract_address, token_list):
+    def issue_token_bond(
+        issuer, exchange_contract_address, personal_info_contract_address, token_list
+    ):
         # Issue token
         args = {
             "name": "テスト債券",
@@ -114,7 +119,9 @@ class TestEventsIbetSecurityTokenInterface:
         return token
 
     @staticmethod
-    def issue_token_share(issuer, exchange_contract_address, personal_info_contract_address, token_list):
+    def issue_token_share(
+        issuer, exchange_contract_address, personal_info_contract_address, token_list
+    ):
         # Issue token
         args = {
             "name": "テスト株式",
@@ -156,7 +163,10 @@ class TestEventsIbetSecurityTokenInterface:
 
         # Issuer issues bond token.
         token = self.issue_token_bond(
-            self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract
+            self.issuer,
+            escrow_contract.address,
+            personal_info_contract["address"],
+            token_list_contract,
         )
         self.listing_token(token["address"], session)
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
@@ -165,8 +175,15 @@ class TestEventsIbetSecurityTokenInterface:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
-        bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
+        transfer_token(
+            token_contract,
+            self.issuer["account_address"],
+            self.user1["account_address"],
+            20000,
+        )
+        bond_transfer_to_exchange(
+            self.user1, {"address": escrow_contract.address}, token, 10000
+        )
         # user1: 20000 trader: 0
 
         # Issuer transfers issued token to user1 and trader.
@@ -186,9 +203,18 @@ class TestEventsIbetSecurityTokenInterface:
             self.agent["account_address"],
             7000,
         )
-        _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
-        finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
-        approve_transfer_security_token_escrow(self.issuer, {"address": escrow_contract.address}, _latest_security_escrow_id, "")
+        _latest_security_escrow_id = get_latest_security_escrow_id(
+            {"address": escrow_contract.address}
+        )
+        finish_security_token_escrow(
+            self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id
+        )
+        approve_transfer_security_token_escrow(
+            self.issuer,
+            {"address": escrow_contract.address},
+            _latest_security_escrow_id,
+            "",
+        )
         # user1: 13000 trader: 17000
 
         create_security_token_escrow(
@@ -199,18 +225,33 @@ class TestEventsIbetSecurityTokenInterface:
             self.agent["account_address"],
             2000,
         )
-        _latest_security_escrow_id = get_latest_security_escrow_id({"address": escrow_contract.address})
-        finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
+        _latest_security_escrow_id = get_latest_security_escrow_id(
+            {"address": escrow_contract.address}
+        )
+        finish_security_token_escrow(
+            self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id
+        )
         # user1: 13000 trader: 17000
 
         bond_lock(self.trader, token, self.issuer["account_address"], 3000)
         # user1: 13000 trader: 17000
 
-        bond_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        bond_unlock(
+            self.issuer,
+            token,
+            self.trader["account_address"],
+            self.user1["account_address"],
+            2000,
+        )
         # user1: 15000 trader: 15000
 
         bond_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 100000)
+        transfer_token(
+            token_contract,
+            self.issuer["account_address"],
+            self.user1["account_address"],
+            100000,
+        )
         # user1: 115000 trader: 15000
 
         bond_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
@@ -239,16 +280,13 @@ class TestEventsIbetSecurityTokenInterface:
             self.apiurl.format(token_address=self.token_address),
             params={
                 "from_block": self.latest_block_number + 1,
-                "to_block": self.latest_block_number + 1
-            }
+                "to_block": self.latest_block_number + 1,
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == []
 
     # Normal_1_2
@@ -262,16 +300,13 @@ class TestEventsIbetSecurityTokenInterface:
             self.apiurl.format(token_address=self.token_address),
             params={
                 "from_block": current_block_number,
-                "to_block": self.latest_block_number
-            }
+                "to_block": self.latest_block_number,
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Transfer",
@@ -279,7 +314,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -287,7 +322,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ChangeTransferApprovalRequired",
@@ -295,7 +330,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ApplyForTransfer",
@@ -303,7 +338,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ApplyForTransfer",
@@ -311,7 +346,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "CancelTransfer",
@@ -319,7 +354,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ApproveTransfer",
@@ -327,7 +362,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -335,7 +370,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Lock",
@@ -343,7 +378,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Unlock",
@@ -351,7 +386,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ChangeTransferApprovalRequired",
@@ -359,7 +394,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -367,7 +402,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Issue",
@@ -375,7 +410,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Redeem",
@@ -383,7 +418,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Issue",
@@ -391,7 +426,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Redeem",
@@ -399,8 +434,8 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_1_3
@@ -416,19 +451,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
                 "argument_filters": json.dumps(
-                    {
-                        "lockAddress": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"lockAddress": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Transfer",
@@ -436,7 +466,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -444,7 +474,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ChangeTransferApprovalRequired",
@@ -452,7 +482,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ApplyForTransfer",
@@ -460,7 +490,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ApplyForTransfer",
@@ -468,7 +498,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "CancelTransfer",
@@ -476,7 +506,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ApproveTransfer",
@@ -484,7 +514,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -492,7 +522,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Lock",
@@ -500,12 +530,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "accountAddress": ANY,
                     "data": "",
                     "lockAddress": self.issuer["account_address"],
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Unlock",
@@ -514,12 +544,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "data": "",
                     "lockAddress": self.issuer["account_address"],
                     "recipientAddress": ANY,
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "ChangeTransferApprovalRequired",
@@ -527,7 +557,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -535,8 +565,8 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_2_1
@@ -551,16 +581,13 @@ class TestEventsIbetSecurityTokenInterface:
             params={
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
-                "event": "Transfer"
-            }
+                "event": "Transfer",
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Transfer",
@@ -568,7 +595,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -576,7 +603,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -584,7 +611,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
@@ -592,8 +619,8 @@ class TestEventsIbetSecurityTokenInterface:
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_2_2
@@ -609,32 +636,25 @@ class TestEventsIbetSecurityTokenInterface:
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
                 "event": "Transfer",
-                "argument_filters": json.dumps(
-                    {
-                        "from": self.user1["account_address"]
-                    }
-                )
-            }
+                "argument_filters": json.dumps({"from": self.user1["account_address"]}),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Transfer",
                 "args": {
                     "from": self.user1["account_address"],
                     "to": ANY,
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -651,45 +671,38 @@ class TestEventsIbetSecurityTokenInterface:
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
                 "event": "Transfer",
-                "argument_filters": json.dumps(
-                    {
-                        "to": self.user1["account_address"]
-                    }
-                )
-            }
+                "argument_filters": json.dumps({"to": self.user1["account_address"]}),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Transfer",
                 "args": {
                     "from": ANY,
                     "to": self.user1["account_address"],
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Transfer",
                 "args": {
                     "from": ANY,
                     "to": self.user1["account_address"],
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_3_1
@@ -704,16 +717,13 @@ class TestEventsIbetSecurityTokenInterface:
             params={
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
-                "event": "Issue"
-            }
+                "event": "Issue",
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Issue",
@@ -721,12 +731,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.issuer["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Issue",
@@ -734,13 +744,13 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.trader["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_3_2
@@ -757,19 +767,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Issue",
                 "argument_filters": json.dumps(
-                    {
-                        "from": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"from": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Issue",
@@ -777,12 +782,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.issuer["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Issue",
@@ -790,13 +795,13 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.trader["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_3_3
@@ -813,19 +818,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Issue",
                 "argument_filters": json.dumps(
-                    {
-                        "targetAddress": self.trader["account_address"]
-                    }
-                )
-            }
+                    {"targetAddress": self.trader["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Issue",
@@ -833,12 +833,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.trader["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -855,20 +855,13 @@ class TestEventsIbetSecurityTokenInterface:
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
                 "event": "Issue",
-                "argument_filters": json.dumps(
-                    {
-                        "lockAddress": config.ZERO_ADDRESS
-                    }
-                )
-            }
+                "argument_filters": json.dumps({"lockAddress": config.ZERO_ADDRESS}),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Issue",
@@ -876,12 +869,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Issue",
@@ -889,13 +882,13 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_4_1
@@ -910,16 +903,13 @@ class TestEventsIbetSecurityTokenInterface:
             params={
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
-                "event": "Redeem"
-            }
+                "event": "Redeem",
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Redeem",
@@ -927,12 +917,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.user1["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Redeem",
@@ -940,13 +930,13 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.issuer["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_4_2
@@ -963,19 +953,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Redeem",
                 "argument_filters": json.dumps(
-                    {
-                        "targetAddress": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"targetAddress": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Redeem",
@@ -983,12 +968,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": self.issuer["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -1006,19 +991,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Redeem",
                 "argument_filters": json.dumps(
-                    {
-                        "targetAddress": self.user1["account_address"]
-                    }
-                )
-            }
+                    {"targetAddress": self.user1["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Redeem",
@@ -1026,12 +1006,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": ANY,
                     "targetAddress": self.user1["account_address"],
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -1048,20 +1028,13 @@ class TestEventsIbetSecurityTokenInterface:
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
                 "event": "Redeem",
-                "argument_filters": json.dumps(
-                    {
-                        "lockAddress": config.ZERO_ADDRESS
-                    }
-                )
-            }
+                "argument_filters": json.dumps({"lockAddress": config.ZERO_ADDRESS}),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Redeem",
@@ -1069,12 +1042,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             },
             {
                 "event": "Redeem",
@@ -1082,13 +1055,13 @@ class TestEventsIbetSecurityTokenInterface:
                     "from": self.issuer["account_address"],
                     "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
-                    "amount": ANY
+                    "amount": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
-            }
+                "log_index": ANY,
+            },
         ]
 
     # Normal_5_1
@@ -1103,16 +1076,13 @@ class TestEventsIbetSecurityTokenInterface:
             params={
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
-                "event": "Lock"
-            }
+                "event": "Lock",
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Lock",
@@ -1120,12 +1090,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "accountAddress": self.trader["account_address"],
                     "lockAddress": self.issuer["account_address"],
                     "data": "",
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -1143,19 +1113,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Lock",
                 "argument_filters": json.dumps(
-                    {
-                        "accountAddress": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"accountAddress": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == []
 
     # Normal_5_3
@@ -1172,19 +1137,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Lock",
                 "argument_filters": json.dumps(
-                    {
-                        "lockAddress": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"lockAddress": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Lock",
@@ -1192,12 +1152,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "accountAddress": self.trader["account_address"],
                     "lockAddress": self.issuer["account_address"],
                     "data": "",
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -1213,16 +1173,13 @@ class TestEventsIbetSecurityTokenInterface:
             params={
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
-                "event": "Unlock"
-            }
+                "event": "Unlock",
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Unlock",
@@ -1231,12 +1188,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "lockAddress": self.issuer["account_address"],
                     "recipientAddress": self.user1["account_address"],
                     "data": "",
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -1254,19 +1211,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Unlock",
                 "argument_filters": json.dumps(
-                    {
-                        "accountAddress": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"accountAddress": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == []
 
     # Normal_6_3
@@ -1283,19 +1235,14 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Unlock",
                 "argument_filters": json.dumps(
-                    {
-                        "lockAddress": self.issuer["account_address"]
-                    }
-                )
-            }
+                    {"lockAddress": self.issuer["account_address"]}
+                ),
+            },
         )
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
             {
                 "event": "Unlock",
@@ -1304,12 +1251,12 @@ class TestEventsIbetSecurityTokenInterface:
                     "lockAddress": self.issuer["account_address"],
                     "recipientAddress": self.user1["account_address"],
                     "data": "",
-                    "value": ANY
+                    "value": ANY,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY
+                "log_index": ANY,
             }
         ]
 
@@ -1325,15 +1272,11 @@ class TestEventsIbetSecurityTokenInterface:
 
         # request target API
         resp = client.get(
-            self.apiurl.format(token_address=self.token_address),
-            params={}
+            self.apiurl.format(token_address=self.token_address), params={}
         )
 
         # request target API
-        resp = client.get(
-            self.apiurl,
-            params={}
-        )
+        resp = client.get(self.apiurl, params={})
 
         # assertion
         assert resp.status_code == 400
@@ -1343,15 +1286,15 @@ class TestEventsIbetSecurityTokenInterface:
                 {
                     "loc": ["query", "from_block"],
                     "msg": "field required",
-                    "type": "value_error.missing"
+                    "type": "value_error.missing",
                 },
                 {
                     "loc": ["query", "to_block"],
                     "msg": "field required",
-                    "type": "value_error.missing"
-                }
+                    "type": "value_error.missing",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -1364,10 +1307,7 @@ class TestEventsIbetSecurityTokenInterface:
         # request target API
         resp = client.get(
             self.apiurl.format(token_address=self.token_address),
-            params={
-                "from_block": 0,
-                "to_block": 0
-            }
+            params={"from_block": 0, "to_block": 0},
         )
 
         # assertion
@@ -1379,16 +1319,16 @@ class TestEventsIbetSecurityTokenInterface:
                     "ctx": {"limit_value": 1},
                     "loc": ["query", "from_block"],
                     "msg": "ensure this value is greater than or equal to 1",
-                    "type": "value_error.number.not_ge"
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {"limit_value": 1},
                     "loc": ["query", "to_block"],
                     "msg": "ensure this value is greater than or equal to 1",
-                    "type": "value_error.number.not_ge"
-                }
+                    "type": "value_error.number.not_ge",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_3_1
@@ -1404,8 +1344,8 @@ class TestEventsIbetSecurityTokenInterface:
             params={
                 "from_block": current_block_number,
                 "to_block": self.latest_block_number,
-                "event": "invalid"
-            }
+                "event": "invalid",
+            },
         )
 
         # assertion
@@ -1428,20 +1368,20 @@ class TestEventsIbetSecurityTokenInterface:
                             "Lock",
                             "Redeem",
                             "Transfer",
-                            "Unlock"
+                            "Unlock",
                         ]
                     },
                     "loc": ["query", "event"],
-                    "msg": 'value is not a valid enumeration member; permitted: '
-                         "'Allot', 'ApplyForOffering', 'ApplyForTransfer', "
-                         "'ApproveTransfer', 'CancelTransfer', "
-                         "'ChangeOfferingStatus', 'ChangeStatus', "
-                         "'ChangeTransferApprovalRequired', 'Issue', 'Lock', "
-                         "'Redeem', 'Transfer', 'Unlock'",
-                    "type": "type_error.enum"
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "'Allot', 'ApplyForOffering', 'ApplyForTransfer', "
+                    "'ApproveTransfer', 'CancelTransfer', "
+                    "'ChangeOfferingStatus', 'ChangeStatus', "
+                    "'ChangeTransferApprovalRequired', 'Issue', 'Lock', "
+                    "'Redeem', 'Transfer', 'Unlock'",
+                    "type": "type_error.enum",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_4
@@ -1456,8 +1396,8 @@ class TestEventsIbetSecurityTokenInterface:
             self.apiurl.format(token_address=self.token_address),
             params={
                 "from_block": self.latest_block_number,
-                "to_block": self.latest_block_number-1
-            }
+                "to_block": self.latest_block_number - 1,
+            },
         )
 
         # assertion
@@ -1468,10 +1408,10 @@ class TestEventsIbetSecurityTokenInterface:
                 {
                     "loc": ["__root__"],
                     "msg": "to_block must be greater than or equal to the from_block",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_5
@@ -1486,8 +1426,8 @@ class TestEventsIbetSecurityTokenInterface:
             self.apiurl.format(token_address=self.token_address),
             params={
                 "from_block": current_block_number,
-                "to_block": current_block_number + 10001
-            }
+                "to_block": current_block_number + 10001,
+            },
         )
 
         # assertion
@@ -1495,5 +1435,5 @@ class TestEventsIbetSecurityTokenInterface:
         assert resp.json()["meta"] == {
             "code": 31,
             "description": "Search request range is over the limit",
-            "message": "Request Block Range Limit Exceeded"
+            "message": "Request Block Range Limit Exceeded",
         }

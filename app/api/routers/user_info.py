@@ -17,31 +17,24 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from eth_utils import to_checksum_address
-from fastapi import (
-    APIRouter,
-    Depends
-)
+from fastapi import APIRouter, Depends
 
-from app import log
-from app import config
+from app import config, log
 from app.contracts import Contract
 from app.model.schema import (
     GenericSuccessResponse,
-    SuccessResponse,
     RetrievePaymentAccountQuery,
     RetrievePaymentAccountRegistrationStatusResponse,
+    RetrievePersonalInfoQuery,
     RetrievePersonalInfoRegistrationStatusResponse,
-    RetrievePersonalInfoQuery
+    SuccessResponse,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(
-    prefix="/User",
-    tags=["user_info"]
-)
+router = APIRouter(prefix="/User", tags=["user_info"])
 
 
 # ------------------------------
@@ -51,18 +44,20 @@ router = APIRouter(
     "/PaymentAccount",
     summary="Registration status to PaymentGateway Contract",
     operation_id="PaymentAccount",
-    response_model=GenericSuccessResponse[RetrievePaymentAccountRegistrationStatusResponse],
-    responses=get_routers_responses()
+    response_model=GenericSuccessResponse[
+        RetrievePaymentAccountRegistrationStatusResponse
+    ],
+    responses=get_routers_responses(),
 )
 def get_payment_account_registration_status(
-    query: RetrievePaymentAccountQuery = Depends()
+    query: RetrievePaymentAccountQuery = Depends(),
 ):
     """
     Endpoint: /User/PaymentAccount
     """
     pg_contract = Contract.get_contract(
         contract_name="PaymentGateway",
-        address=str(config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
+        address=str(config.PAYMENT_GATEWAY_CONTRACT_ADDRESS),
     )
 
     # 口座登録・承認状況を参照
@@ -78,19 +73,16 @@ def get_payment_account_registration_status(
         response_json = {
             "account_address": query.account_address,
             "agent_address": query.agent_address,
-            "approval_status": 0
+            "approval_status": 0,
         }
     else:
         response_json = {
             "account_address": account_info[0],
             "agent_address": account_info[1],
-            "approval_status": account_info[3]
+            "approval_status": account_info[3],
         }
 
-    return json_response({
-        **SuccessResponse.default(),
-        "data": response_json
-    })
+    return json_response({**SuccessResponse.default(), "data": response_json})
 
 
 # ------------------------------
@@ -100,12 +92,12 @@ def get_payment_account_registration_status(
     "/PersonalInfo",
     summary="Registration status to PersonalInfo Contract",
     operation_id="PersonalInfo",
-    response_model=GenericSuccessResponse[RetrievePersonalInfoRegistrationStatusResponse],
-    responses=get_routers_responses()
+    response_model=GenericSuccessResponse[
+        RetrievePersonalInfoRegistrationStatusResponse
+    ],
+    responses=get_routers_responses(),
 )
-def get_personal_info_registration_status(
-    query: RetrievePersonalInfoQuery = Depends()
-):
+def get_personal_info_registration_status(query: RetrievePersonalInfoQuery = Depends()):
     """
     Endpoint: /User/PersonalInfo
     """
@@ -115,8 +107,7 @@ def get_personal_info_registration_status(
     else:
         _personal_info_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
     personal_info_contract = Contract.get_contract(
-        contract_name="PersonalInfo",
-        address=_personal_info_address
+        contract_name="PersonalInfo", address=_personal_info_address
     )
 
     # Get registration status of personal information
@@ -132,16 +123,13 @@ def get_personal_info_registration_status(
         response_json = {
             "account_address": query.account_address,
             "owner_address": query.owner_address,
-            "registered": False
+            "registered": False,
         }
     else:
         response_json = {
             "account_address": info[0],
             "owner_address": info[1],
-            "registered": True
+            "registered": True,
         }
 
-    return json_response({
-        **SuccessResponse.default(),
-        "data": response_json
-    })
+    return json_response({**SuccessResponse.default(), "data": response_json})

@@ -20,25 +20,22 @@ import logging
 
 from app import config
 
-
 logging.basicConfig(level=config.LOG_LEVEL)
-LOG = logging.getLogger('ibet_wallet_app')
+LOG = logging.getLogger("ibet_wallet_app")
 LOG.propagate = False
 
-if config.APP_ENV == 'live':
+if config.APP_ENV == "live":
     stream_handler = logging.StreamHandler(open(config.APP_LOGFILE, "a"))
     formatter = logging.Formatter(
-        config.INFO_LOG_FORMAT.format("[APP-LOG]"),
-        config.LOG_TIMESTAMP_FORMAT
+        config.INFO_LOG_FORMAT.format("[APP-LOG]"), config.LOG_TIMESTAMP_FORMAT
     )
     stream_handler.setFormatter(formatter)
     LOG.addHandler(stream_handler)
 
-if config.APP_ENV == 'dev' or config.APP_ENV == 'local':
+if config.APP_ENV == "dev" or config.APP_ENV == "local":
     stream_handler = logging.StreamHandler(open(config.APP_LOGFILE, "a"))
     formatter = logging.Formatter(
-        config.DEBUG_LOG_FORMAT.format("[APP-LOG]"),
-        config.LOG_TIMESTAMP_FORMAT
+        config.DEBUG_LOG_FORMAT.format("[APP-LOG]"), config.LOG_TIMESTAMP_FORMAT
     )
     stream_handler.setFormatter(formatter)
     LOG.addHandler(stream_handler)
