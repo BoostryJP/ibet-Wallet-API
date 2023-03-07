@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from unittest import mock
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -25,7 +26,7 @@ from app.model.db import Listing
 
 class TestAdminTokenGET:
     # テスト対象API
-    apiurl_base = '/Admin/Tokens/'
+    apiurl_base = "/Admin/Tokens/"
 
     @staticmethod
     def insert_listing_data(session: Session, _token):
@@ -48,7 +49,7 @@ class TestAdminTokenGET:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_listing_data(session, token)
 
@@ -57,15 +58,8 @@ class TestAdminTokenGET:
 
         assert resp.status_code == 200
         assert resp.json() == {
-            "meta": {
-                'code': 200,
-                'message': 'OK'
-            },
-            "data": {
-                "id": 1,
-                "created": mock.ANY,
-                **token
-            }
+            "meta": {"code": 200, "message": "OK"},
+            "data": {"id": 1, "created": mock.ANY, **token},
         }
 
     ###########################################################################

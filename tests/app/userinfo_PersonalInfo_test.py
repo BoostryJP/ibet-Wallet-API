@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -26,7 +27,6 @@ from tests.contract_modules import register_personalinfo
 
 
 class TestUserInfoPersonalInfo:
-
     # Target API
     apiurl = "/User/PersonalInfo"
 
@@ -56,7 +56,7 @@ class TestUserInfoPersonalInfo:
         assumed_body = {
             "account_address": trader,
             "owner_address": issuer,
-            "registered": True
+            "registered": True,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -77,16 +77,18 @@ class TestUserInfoPersonalInfo:
         register_personalinfo(eth_account["trader"], personal_info)
 
         # Request target API
-        query_string = f"account_address={trader}&" \
-                       f"owner_address={issuer}&" \
-                       f"personal_info_address{_personal_info_address}"
+        query_string = (
+            f"account_address={trader}&"
+            f"owner_address={issuer}&"
+            f"personal_info_address{_personal_info_address}"
+        )
         resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
             "account_address": trader,
             "owner_address": issuer,
-            "registered": True
+            "registered": True,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -110,7 +112,7 @@ class TestUserInfoPersonalInfo:
         assumed_body = {
             "account_address": trader,
             "owner_address": issuer,
-            "registered": False
+            "registered": False,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -127,18 +129,14 @@ class TestUserInfoPersonalInfo:
         headers = {"Content-Type": "application/json"}
 
         # Request target API
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            json={}
-        )
+        resp = client.post(self.apiurl, headers=headers, json={})
 
         # Assertion
         assert resp.status_code == 405
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: POST, url: /User/PersonalInfo"
+            "description": "method: POST, url: /User/PersonalInfo",
         }
 
     # Error_2_1
@@ -157,15 +155,15 @@ class TestUserInfoPersonalInfo:
                 {
                     "loc": ["query", "account_address"],
                     "msg": "field required",
-                    "type": "value_error.missing"
+                    "type": "value_error.missing",
                 },
                 {
                     "loc": ["query", "owner_address"],
                     "msg": "field required",
-                    "type": "value_error.missing"
-                }
+                    "type": "value_error.missing",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_2_2
@@ -186,10 +184,10 @@ class TestUserInfoPersonalInfo:
                 {
                     "loc": ["account_address"],
                     "msg": "account_address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_2_3
@@ -210,8 +208,8 @@ class TestUserInfoPersonalInfo:
                 {
                     "loc": ["owner_address"],
                     "msg": "owner_address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }

@@ -18,12 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.model.db import (
-    IDXOrder as Order,
-    IDXAgreement as Agreement,
-    AgreementStatus
-)
 
+from app.model.db import AgreementStatus
+from app.model.db import IDXAgreement as Agreement
+from app.model.db import IDXOrder as Order
 from tests.contract_modules import *
 from tests.utils import PersonalInfoUtils as pi_utils
 
@@ -32,7 +30,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class TestDEXOrderList:
-
     # Test target API
     base_url = "/DEX/OrderList/"
 
@@ -65,7 +62,7 @@ class TestDEXOrderList:
             "memo": "メモ",
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
-            "personalInfoAddress": personal_info["address"]
+            "personalInfoAddress": personal_info["address"],
         }
         return attribute
 
@@ -129,7 +126,7 @@ class TestDEXOrderList:
         pi_utils.register(
             trader["account_address"],
             personal_info["address"],
-            issuer["account_address"]
+            issuer["account_address"],
         )
         order_id = get_latest_orderid(bond_exchange)
         take_buy(trader, bond_exchange, order_id, 100)
@@ -155,7 +152,7 @@ class TestDEXOrderList:
         pi_utils.register(
             trader["account_address"],
             personal_info["address"],
-            issuer["account_address"]
+            issuer["account_address"],
         )
         order_id = get_latest_orderid(bond_exchange)
         take_buy(trader, bond_exchange, order_id, 100)
@@ -178,10 +175,19 @@ class TestDEXOrderList:
         config.COUPON_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange["address"]
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
+            "address"
+        ]
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        return bond_exchange, membership_exchange, coupon_exchange, personal_info, payment_gateway, token_list
+        return (
+            bond_exchange,
+            membership_exchange,
+            coupon_exchange,
+            personal_info,
+            payment_gateway,
+            token_list,
+        )
 
     ###########################################################################
     # Normal Case
@@ -193,14 +199,15 @@ class TestDEXOrderList:
         account = eth_account["issuer"]
 
         # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
+        bond_exchange, _, _, personal_info, _, token_list = self.set_env(
+            shared_contract
+        )
 
         # emit NewOrder event
         bond_token, order_id, _ = self.bond_order_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
-            token_list=token_list
+            token_list=token_list,
         )
 
         # add order event record
@@ -221,13 +228,8 @@ class TestDEXOrderList:
         session.add(order)
 
         # request target API
-        request_params = {
-            "account_address_list": [account["account_address"]]
-        }
-        resp = client.get(
-            self.base_url + bond_token["address"],
-            params=request_params
-        )
+        request_params = {"account_address_list": [account["account_address"]]}
+        resp = client.get(self.base_url + bond_token["address"], params=request_params)
 
         # assertion
         assumed_body = {
@@ -237,7 +239,7 @@ class TestDEXOrderList:
             "price": 1000,
             "is_buy": False,
             "canceled": False,
-            "order_timestamp": "2019/06/17 00:00:00"
+            "order_timestamp": "2019/06/17 00:00:00",
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -252,14 +254,15 @@ class TestDEXOrderList:
         account = eth_account["issuer"]
 
         # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
+        bond_exchange, _, _, personal_info, _, token_list = self.set_env(
+            shared_contract
+        )
 
         # emit CancelOrder event
         bond_token, order_id, _ = self.bond_cancel_order_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
-            token_list=token_list
+            token_list=token_list,
         )
 
         # add order event record
@@ -282,12 +285,9 @@ class TestDEXOrderList:
         # request target API
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": True
+            "include_canceled_items": True,
         }
-        resp = client.get(
-            self.base_url + bond_token["address"],
-            params=request_params
-        )
+        resp = client.get(self.base_url + bond_token["address"], params=request_params)
 
         # assertion
         assumed_body = {
@@ -297,7 +297,7 @@ class TestDEXOrderList:
             "price": 1000,
             "is_buy": False,
             "canceled": True,
-            "order_timestamp": "2019/06/17 00:00:00"
+            "order_timestamp": "2019/06/17 00:00:00",
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -312,14 +312,15 @@ class TestDEXOrderList:
         account = eth_account["trader"]
 
         # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
+        bond_exchange, _, _, personal_info, _, token_list = self.set_env(
+            shared_contract
+        )
 
         # emit Agree event
         bond_token, order_id, agreement_id = self.bond_agreement_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
-            token_list=token_list
+            token_list=token_list,
         )
 
         # add order event record
@@ -355,13 +356,8 @@ class TestDEXOrderList:
         session.add(agreement)
 
         # request target API
-        request_params = {
-            "account_address_list": [account["account_address"]]
-        }
-        resp = client.get(
-            self.base_url + bond_token["address"],
-            params=request_params
-        )
+        request_params = {"account_address_list": [account["account_address"]]}
+        resp = client.get(self.base_url + bond_token["address"], params=request_params)
 
         # assertion
         assumed_body = {
@@ -373,7 +369,7 @@ class TestDEXOrderList:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": False,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             }
         }
         assert resp.status_code == 200
@@ -389,14 +385,15 @@ class TestDEXOrderList:
         account = eth_account["trader"]
 
         # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
+        bond_exchange, _, _, personal_info, _, token_list = self.set_env(
+            shared_contract
+        )
 
         # emit SettlementOK event
         bond_token, order_id, agreement_id = self.bond_settlement_ok_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
-            token_list=token_list
+            token_list=token_list,
         )
 
         # add order event record
@@ -433,13 +430,8 @@ class TestDEXOrderList:
         session.add(agreement)
 
         # request target API
-        request_params = {
-            "account_address_list": [account["account_address"]]
-        }
-        resp = client.get(
-            self.base_url + bond_token["address"],
-            params=request_params
-        )
+        request_params = {"account_address_list": [account["account_address"]]}
+        resp = client.get(self.base_url + bond_token["address"], params=request_params)
 
         # assertion
         assumed_body = {
@@ -451,9 +443,9 @@ class TestDEXOrderList:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": False,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             },
-            "settlement_timestamp": "2019/06/18 00:00:00"
+            "settlement_timestamp": "2019/06/18 00:00:00",
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -461,7 +453,10 @@ class TestDEXOrderList:
         for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["agreement"] == assumed_body["agreement"]
-                assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
+                assert (
+                    order["settlement_timestamp"]
+                    == assumed_body["settlement_timestamp"]
+                )
 
     # Normal_3_2
     # complete_list(canceled)
@@ -469,14 +464,15 @@ class TestDEXOrderList:
         account = eth_account["trader"]
 
         # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
+        bond_exchange, _, _, personal_info, _, token_list = self.set_env(
+            shared_contract
+        )
 
         # emit SettlementNG event
         bond_token, order_id, agreement_id = self.bond_settlement_ng_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
-            token_list=token_list
+            token_list=token_list,
         )
 
         # add order event record
@@ -515,12 +511,9 @@ class TestDEXOrderList:
         # request target API
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": True
+            "include_canceled_items": True,
         }
-        resp = client.get(
-            self.base_url + bond_token["address"],
-            params=request_params
-        )
+        resp = client.get(self.base_url + bond_token["address"], params=request_params)
 
         # assertion
         assumed_body = {
@@ -532,9 +525,9 @@ class TestDEXOrderList:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": True,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             },
-            "settlement_timestamp": "2019/06/18 00:00:00"
+            "settlement_timestamp": "2019/06/18 00:00:00",
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -542,7 +535,10 @@ class TestDEXOrderList:
         for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["agreement"] == assumed_body["agreement"]
-                assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
+                assert (
+                    order["settlement_timestamp"]
+                    == assumed_body["settlement_timestamp"]
+                )
 
     ###########################################################################
     # Error Case
@@ -554,23 +550,20 @@ class TestDEXOrderList:
     def test_error_1(self, client: TestClient, session: Session):
         # request target API
         request_body = json.dumps({})
-        resp = client.get(
-            self.base_url + "invalid_token_address",
-            params=request_body
-        )
+        resp = client.get(self.base_url + "invalid_token_address", params=request_body)
 
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'account_address_list'],
-                    'msg': 'field required',
-                    'type': 'value_error.missing'
+                    "loc": ["query", "account_address_list"],
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -580,42 +573,37 @@ class TestDEXOrderList:
         account = eth_account["trader"]
 
         # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
+        bond_exchange, _, _, personal_info, _, token_list = self.set_env(
+            shared_contract
+        )
 
         # emit NewOrder event
         bond_token, order_id, _ = self.bond_order_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
-            token_list=token_list
+            token_list=token_list,
         )
 
         # request target API
-        request_params = {
-            "account_address_list": [account["account_address"][:-1]]
-        }
-        resp = client.get(
-            self.base_url + bond_token["address"],
-            params=request_params
-        )
+        request_params = {"account_address_list": [account["account_address"][:-1]]}
+        resp = client.get(self.base_url + bond_token["address"], params=request_params)
 
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
+                    "loc": ["account_address_list"],
+                    "msg": "account_address_list has not a valid address",
+                    "type": "value_error",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
 
 class TestDEXOrderListMembership:
-
     # Test target API
     apiurl = "/DEX/OrderList/Membership"
 
@@ -632,7 +620,7 @@ class TestDEXOrderListMembership:
             "memo": "メモ",
             "transferable": True,
             "contactInformation": "問い合わせ先",
-            "privacyPolicy": "プライバシーポリシー"
+            "privacyPolicy": "プライバシーポリシー",
         }
         return attribute
 
@@ -755,7 +743,9 @@ class TestDEXOrderListMembership:
         config.COUPON_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange["address"]
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
+            "address"
+        ]
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         return bond_exchange, membership_exchange, coupon_exchange, token_list
@@ -773,7 +763,9 @@ class TestDEXOrderListMembership:
         _, membership_exchange, _, token_list = self.set_env(shared_contract)
 
         # emit NewOrder event
-        token, order_id, agreement_id = self.order_event(membership_exchange, token_list)
+        token, order_id, agreement_id = self.order_event(
+            membership_exchange, token_list
+        )
 
         # add order event record
         order = Order()
@@ -794,10 +786,7 @@ class TestDEXOrderListMembership:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -820,13 +809,13 @@ class TestDEXOrderListMembership:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': membership_exchange["address"],
+                "tradable_exchange": membership_exchange["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -835,8 +824,8 @@ class TestDEXOrderListMembership:
                 "price": 1000,
                 "is_buy": False,
                 "canceled": False,
-                "order_timestamp": "2019/06/17 00:00:00"
-            }
+                "order_timestamp": "2019/06/17 00:00:00",
+            },
         }
 
         assert resp.status_code == 200
@@ -856,7 +845,9 @@ class TestDEXOrderListMembership:
         _, membership_exchange, _, token_list = self.set_env(shared_contract)
 
         # emit CancelOrder event
-        token, order_id, agreement_id = self.order_event(membership_exchange, token_list)
+        token, order_id, agreement_id = self.order_event(
+            membership_exchange, token_list
+        )
 
         # add order event record
         order = Order()
@@ -878,12 +869,9 @@ class TestDEXOrderListMembership:
         # request target API
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": True
+            "include_canceled_items": True,
         }
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -906,13 +894,13 @@ class TestDEXOrderListMembership:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': membership_exchange["address"],
+                "tradable_exchange": membership_exchange["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -921,8 +909,8 @@ class TestDEXOrderListMembership:
                 "price": 1000,
                 "is_buy": False,
                 "canceled": True,
-                "order_timestamp": "2019/06/17 00:00:00"
-            }
+                "order_timestamp": "2019/06/17 00:00:00",
+            },
         }
 
         assert resp.status_code == 200
@@ -943,8 +931,7 @@ class TestDEXOrderListMembership:
 
         # emit Agree event
         token, order_id, agreement_id = self.agreement_event(
-            exchange=membership_exchange,
-            token_list=token_list
+            exchange=membership_exchange, token_list=token_list
         )
 
         # add agreement event record
@@ -964,101 +951,7 @@ class TestDEXOrderListMembership:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
-
-        # assertion
-        assumed_body = {
-            "token": {
-                "token_address": token["address"],
-                "token_template": "IbetMembership",
-                "owner_address": eth_account["issuer"]["account_address"],
-                "company_name": "",
-                "rsa_publickey": "",
-                "name": "テスト会員権",
-                "symbol": "MEMBERSHIP",
-                "total_supply": 1000000,
-                "details": "詳細",
-                "return_details": "リターン詳細",
-                "expiration_date": "20191231",
-                "memo": "メモ",
-                "transferable": True,
-                "status": True,
-                "initial_offering_status": False,
-                "image_url": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "max_holding_quantity": 0,
-                "max_sell_amount": 0,
-                "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': membership_exchange["address"],
-            },
-            "agreement": {
-                "exchange_address": membership_exchange["address"],
-                "order_id": order_id,
-                "agreement_id": agreement_id,
-                "amount": 100,
-                "price": 1000,
-                "is_buy": True,
-                "canceled": False,
-                "agreement_timestamp": "2019/06/17 12:00:00"
-            }
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json()["data"]["settlement_list"]) >= 1
-        for order in resp.json()["data"]["settlement_list"]:
-            if order["token"]["token_address"] == token["address"]:
-                assert order["token"] == assumed_body["token"]
-                assert order["agreement"] == assumed_body["agreement"]
-
-    # Normal_3_1
-    # complete_list
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
-        account = eth_account["trader"]
-
-        # set environment variables
-        _, membership_exchange, _, token_list = self.set_env(shared_contract)
-
-        # emit SettlementOK event
-        token, order_id, agreement_id = self.settlement_ok_event(
-            exchange=membership_exchange,
-            token_list=token_list
-        )
-
-        # add agreement event record
-        agreement = Agreement()
-        agreement.id = 1
-        agreement.order_id = order_id
-        agreement.agreement_id = agreement_id
-        agreement.exchange_address = membership_exchange["address"]
-        agreement.unique_order_id = membership_exchange["address"] + "_" + str(1)
-        agreement.buyer_address = account["account_address"]
-        agreement.seller_address = ""
-        agreement.counterpart_address = ""
-        agreement.amount = 100
-        agreement.status = AgreementStatus.DONE.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
-        session.add(agreement)
-
-        # request target API
-        request_params = {"account_address_list": [account["account_address"]]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1081,13 +974,13 @@ class TestDEXOrderListMembership:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': membership_exchange["address"],
+                "tradable_exchange": membership_exchange["address"],
             },
             "agreement": {
                 "exchange_address": membership_exchange["address"],
@@ -1097,9 +990,91 @@ class TestDEXOrderListMembership:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": False,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             },
-            "settlement_timestamp": "2019/06/18 00:00:00"
+        }
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["settlement_list"]) >= 1
+        for order in resp.json()["data"]["settlement_list"]:
+            if order["token"]["token_address"] == token["address"]:
+                assert order["token"] == assumed_body["token"]
+                assert order["agreement"] == assumed_body["agreement"]
+
+    # Normal_3_1
+    # complete_list
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+        account = eth_account["trader"]
+
+        # set environment variables
+        _, membership_exchange, _, token_list = self.set_env(shared_contract)
+
+        # emit SettlementOK event
+        token, order_id, agreement_id = self.settlement_ok_event(
+            exchange=membership_exchange, token_list=token_list
+        )
+
+        # add agreement event record
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = membership_exchange["address"]
+        agreement.unique_order_id = membership_exchange["address"] + "_" + str(1)
+        agreement.buyer_address = account["account_address"]
+        agreement.seller_address = ""
+        agreement.counterpart_address = ""
+        agreement.amount = 100
+        agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = "2019-06-17 12:00:00"
+        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        session.add(agreement)
+
+        # request target API
+        request_params = {"account_address_list": [account["account_address"]]}
+        resp = client.get(self.apiurl, params=request_params)
+
+        # assertion
+        assumed_body = {
+            "token": {
+                "token_address": token["address"],
+                "token_template": "IbetMembership",
+                "owner_address": eth_account["issuer"]["account_address"],
+                "company_name": "",
+                "rsa_publickey": "",
+                "name": "テスト会員権",
+                "symbol": "MEMBERSHIP",
+                "total_supply": 1000000,
+                "details": "詳細",
+                "return_details": "リターン詳細",
+                "expiration_date": "20191231",
+                "memo": "メモ",
+                "transferable": True,
+                "status": True,
+                "initial_offering_status": False,
+                "image_url": [
+                    {"id": 1, "url": ""},
+                    {"id": 2, "url": ""},
+                    {"id": 3, "url": ""},
+                ],
+                "max_holding_quantity": 0,
+                "max_sell_amount": 0,
+                "contact_information": "問い合わせ先",
+                "privacy_policy": "プライバシーポリシー",
+                "tradable_exchange": membership_exchange["address"],
+            },
+            "agreement": {
+                "exchange_address": membership_exchange["address"],
+                "order_id": order_id,
+                "agreement_id": agreement_id,
+                "amount": 100,
+                "price": 1000,
+                "is_buy": True,
+                "canceled": False,
+                "agreement_timestamp": "2019/06/17 12:00:00",
+            },
+            "settlement_timestamp": "2019/06/18 00:00:00",
         }
 
         assert resp.status_code == 200
@@ -1109,7 +1084,10 @@ class TestDEXOrderListMembership:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
-                assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
+                assert (
+                    order["settlement_timestamp"]
+                    == assumed_body["settlement_timestamp"]
+                )
 
     # Normal_3_2
     # complete_list(canceled)
@@ -1121,8 +1099,7 @@ class TestDEXOrderListMembership:
 
         # emit SettlementNG event
         token, order_id, agreement_id = self.settlement_ng_event(
-            exchange=membership_exchange,
-            token_list=token_list
+            exchange=membership_exchange, token_list=token_list
         )
 
         # add agreement event record
@@ -1144,12 +1121,9 @@ class TestDEXOrderListMembership:
         # request target API
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": True
+            "include_canceled_items": True,
         }
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1172,13 +1146,13 @@ class TestDEXOrderListMembership:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': membership_exchange["address"],
+                "tradable_exchange": membership_exchange["address"],
             },
             "agreement": {
                 "exchange_address": membership_exchange["address"],
@@ -1188,9 +1162,9 @@ class TestDEXOrderListMembership:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": True,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             },
-            "settlement_timestamp": "2019/06/18 00:00:00"
+            "settlement_timestamp": "2019/06/18 00:00:00",
         }
 
         assert resp.status_code == 200
@@ -1200,7 +1174,10 @@ class TestDEXOrderListMembership:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
-                assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
+                assert (
+                    order["settlement_timestamp"]
+                    == assumed_body["settlement_timestamp"]
+                )
 
     ###########################################################################
     # Error Case
@@ -1211,23 +1188,20 @@ class TestDEXOrderListMembership:
     # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        resp = client.get(
-            self.apiurl,
-            params={}
-        )
+        resp = client.get(self.apiurl, params={})
 
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'account_address_list'],
-                    'msg': 'field required',
-                    'type': 'value_error.missing'
+                    "loc": ["query", "account_address_list"],
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -1238,22 +1212,19 @@ class TestDEXOrderListMembership:
 
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
+                    "loc": ["account_address_list"],
+                    "msg": "account_address_list has not a valid address",
+                    "type": "value_error",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_3
@@ -1265,24 +1236,21 @@ class TestDEXOrderListMembership:
 
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": "test"
+            "include_canceled_items": "test",
         }
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'include_canceled_items'],
-                    'msg': 'value could not be parsed to a boolean',
-                    'type': 'type_error.bool'
+                    "loc": ["query", "include_canceled_items"],
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4
@@ -1295,7 +1263,7 @@ class TestDEXOrderListMembership:
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: POST, url: /DEX/OrderList/Membership"
+            "description": "method: POST, url: /DEX/OrderList/Membership",
         }
 
     # Error_5
@@ -1310,7 +1278,7 @@ class TestDEXOrderListMembership:
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: GET, url: /DEX/OrderList/Membership"
+            "description": "method: GET, url: /DEX/OrderList/Membership",
         }
 
     # Error_6
@@ -1326,12 +1294,11 @@ class TestDEXOrderListMembership:
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: GET, url: /DEX/OrderList/Membership"
+            "description": "method: GET, url: /DEX/OrderList/Membership",
         }
 
 
 class TestDEXOrderListCoupon:
-
     # Test target API
     apiurl = "/DEX/OrderList/Coupon"
 
@@ -1348,7 +1315,7 @@ class TestDEXOrderListCoupon:
             "expirationDate": "20191231",
             "transferable": True,
             "contactInformation": "問い合わせ先",
-            "privacyPolicy": "プライバシーポリシー"
+            "privacyPolicy": "プライバシーポリシー",
         }
         return attribute
 
@@ -1473,7 +1440,9 @@ class TestDEXOrderListCoupon:
         config.COUPON_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange["address"]
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
+            "address"
+        ]
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         return bond_exchange, membership_exchange, coupon_exchange, token_list
@@ -1488,12 +1457,10 @@ class TestDEXOrderListCoupon:
         account = eth_account["issuer"]
 
         # set environment variables
-        _, _, coupon_exchange, token_list = \
-            self.set_env(shared_contract)
+        _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit NewOrder event
-        token, order_id, agreement_id = \
-            self.order_event(coupon_exchange, token_list)
+        token, order_id, agreement_id = self.order_event(coupon_exchange, token_list)
 
         # add order event
         order = Order()
@@ -1514,10 +1481,7 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1540,13 +1504,13 @@ class TestDEXOrderListCoupon:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': coupon_exchange["address"],
+                "tradable_exchange": coupon_exchange["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -1555,8 +1519,8 @@ class TestDEXOrderListCoupon:
                 "price": 1000,
                 "is_buy": False,
                 "canceled": False,
-                "order_timestamp": "2019/06/17 00:00:00"
-            }
+                "order_timestamp": "2019/06/17 00:00:00",
+            },
         }
 
         assert resp.status_code == 200
@@ -1573,12 +1537,12 @@ class TestDEXOrderListCoupon:
         account = eth_account["issuer"]
 
         # set environment variables
-        _, _, coupon_exchange, token_list = \
-            self.set_env(shared_contract)
+        _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit CancelOrder event
-        token, order_id, agreement_id = \
-            self.cancel_order_event(coupon_exchange, token_list)
+        token, order_id, agreement_id = self.cancel_order_event(
+            coupon_exchange, token_list
+        )
 
         # add order event
         order = Order()
@@ -1600,12 +1564,9 @@ class TestDEXOrderListCoupon:
         # request target API
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": True
+            "include_canceled_items": True,
         }
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1628,13 +1589,13 @@ class TestDEXOrderListCoupon:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': coupon_exchange["address"],
+                "tradable_exchange": coupon_exchange["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -1643,8 +1604,8 @@ class TestDEXOrderListCoupon:
                 "price": 1000,
                 "is_buy": False,
                 "canceled": True,
-                "order_timestamp": "2019/06/17 00:00:00"
-            }
+                "order_timestamp": "2019/06/17 00:00:00",
+            },
         }
 
         assert resp.status_code == 200
@@ -1661,12 +1622,12 @@ class TestDEXOrderListCoupon:
         account = eth_account["trader"]
 
         # set environment variables
-        _, _, coupon_exchange, token_list = \
-            self.set_env(shared_contract)
+        _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit Agree event
-        token, order_id, agreement_id = \
-            self.agreement_event(coupon_exchange, token_list)
+        token, order_id, agreement_id = self.agreement_event(
+            coupon_exchange, token_list
+        )
 
         # add agreement event record
         agreement = Agreement()
@@ -1685,10 +1646,7 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1711,13 +1669,13 @@ class TestDEXOrderListCoupon:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': coupon_exchange["address"],
+                "tradable_exchange": coupon_exchange["address"],
             },
             "agreement": {
                 "exchange_address": coupon_exchange["address"],
@@ -1727,8 +1685,8 @@ class TestDEXOrderListCoupon:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": False,
-                "agreement_timestamp": "2019/06/17 12:00:00"
-            }
+                "agreement_timestamp": "2019/06/17 12:00:00",
+            },
         }
 
         assert resp.status_code == 200
@@ -1745,13 +1703,11 @@ class TestDEXOrderListCoupon:
         account = eth_account["trader"]
 
         # set environment variables
-        _, _, coupon_exchange, token_list = \
-            self.set_env(shared_contract)
+        _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit SettlementOK event
         token, order_id, agreement_id = self.settlement_ok_event(
-            exchange=coupon_exchange,
-            token_list=token_list
+            exchange=coupon_exchange, token_list=token_list
         )
 
         # add agreement event record
@@ -1772,10 +1728,7 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1798,13 +1751,13 @@ class TestDEXOrderListCoupon:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': coupon_exchange["address"],
+                "tradable_exchange": coupon_exchange["address"],
             },
             "agreement": {
                 "exchange_address": coupon_exchange["address"],
@@ -1814,9 +1767,9 @@ class TestDEXOrderListCoupon:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": False,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             },
-            "settlement_timestamp": "2019/06/18 00:00:00"
+            "settlement_timestamp": "2019/06/18 00:00:00",
         }
 
         assert resp.status_code == 200
@@ -1826,7 +1779,10 @@ class TestDEXOrderListCoupon:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
-                assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
+                assert (
+                    order["settlement_timestamp"]
+                    == assumed_body["settlement_timestamp"]
+                )
 
     # Normal_3_2
     # complete_list(canceled)
@@ -1834,13 +1790,11 @@ class TestDEXOrderListCoupon:
         account = eth_account["trader"]
 
         # set environment variables
-        _, _, coupon_exchange, token_list = \
-            self.set_env(shared_contract)
+        _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit SettlementNG event
         token, order_id, agreement_id = self.settlement_ng_event(
-            exchange=coupon_exchange,
-            token_list=token_list
+            exchange=coupon_exchange, token_list=token_list
         )
 
         # add agreement event record
@@ -1862,12 +1816,9 @@ class TestDEXOrderListCoupon:
         # request target API
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": True
+            "include_canceled_items": True,
         }
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assumed_body = {
@@ -1890,13 +1841,13 @@ class TestDEXOrderListCoupon:
                 "image_url": [
                     {"id": 1, "url": ""},
                     {"id": 2, "url": ""},
-                    {"id": 3, "url": ""}
+                    {"id": 3, "url": ""},
                 ],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
-                'tradable_exchange': coupon_exchange["address"],
+                "tradable_exchange": coupon_exchange["address"],
             },
             "agreement": {
                 "exchange_address": coupon_exchange["address"],
@@ -1906,9 +1857,9 @@ class TestDEXOrderListCoupon:
                 "price": 1000,
                 "is_buy": True,
                 "canceled": True,
-                "agreement_timestamp": "2019/06/17 12:00:00"
+                "agreement_timestamp": "2019/06/17 12:00:00",
             },
-            "settlement_timestamp": "2019/06/18 00:00:00"
+            "settlement_timestamp": "2019/06/18 00:00:00",
         }
 
         assert resp.status_code == 200
@@ -1918,7 +1869,10 @@ class TestDEXOrderListCoupon:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
-                assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
+                assert (
+                    order["settlement_timestamp"]
+                    == assumed_body["settlement_timestamp"]
+                )
 
     ###########################################################################
     # Error Case
@@ -1929,23 +1883,20 @@ class TestDEXOrderListCoupon:
     # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
-        resp = client.get(
-            self.apiurl,
-            params={}
-        )
+        resp = client.get(self.apiurl, params={})
 
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'account_address_list'],
-                    'msg': 'field required',
-                    'type': 'value_error.missing'
+                    "loc": ["query", "account_address_list"],
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -1956,23 +1907,20 @@ class TestDEXOrderListCoupon:
 
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
+                    "loc": ["account_address_list"],
+                    "msg": "account_address_list has not a valid address",
+                    "type": "value_error",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_3
@@ -1984,24 +1932,21 @@ class TestDEXOrderListCoupon:
 
         request_params = {
             "account_address_list": [account["account_address"]],
-            "include_canceled_items": "test"
+            "include_canceled_items": "test",
         }
-        resp = client.get(
-            self.apiurl,
-            params=request_params
-        )
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'include_canceled_items'],
-                    'msg': 'value could not be parsed to a boolean',
-                    'type': 'type_error.bool'
+                    "loc": ["query", "include_canceled_items"],
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4
@@ -2015,7 +1960,7 @@ class TestDEXOrderListCoupon:
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: POST, url: /DEX/OrderList/Coupon"
+            "description": "method: POST, url: /DEX/OrderList/Coupon",
         }
 
     # Error_5
@@ -2032,7 +1977,7 @@ class TestDEXOrderListCoupon:
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: GET, url: /DEX/OrderList/Coupon"
+            "description": "method: GET, url: /DEX/OrderList/Coupon",
         }
 
     # Error_6
@@ -2049,5 +1994,5 @@ class TestDEXOrderListCoupon:
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: GET, url: /DEX/OrderList/Coupon"
+            "description": "method: GET, url: /DEX/OrderList/Coupon",
         }

@@ -17,9 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-
 from web3 import Web3
 
 from app import config
@@ -27,9 +27,8 @@ from tests.account_config import eth_account
 
 
 class TestEthGetTransactionCount:
-
     # テスト対象API
-    apiurl_base = '/Eth/TransactionCount/'
+    apiurl_base = "/Eth/TransactionCount/"
 
     ###########################################################################
     # Normal
@@ -45,18 +44,18 @@ class TestEthGetTransactionCount:
         apiurl = self.apiurl_base + some_account_address
         resp = client.get(apiurl)
 
-        assumed_body = {'chainid': '2017', 'gasprice': 0, 'nonce': 0}
+        assumed_body = {"chainid": "2017", "gasprice": 0, "nonce": 0}
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # ＜正常系2＞
     # トランザクション実行済みのアドレス
     # -> nonce = （ブロックを直接参照した情報と一致）
     def test_transactioncount_normal_2(self, client: TestClient, session: Session):
         # deployerのアドレス
-        eth_address = eth_account['deployer']['account_address']
+        eth_address = eth_account["deployer"]["account_address"]
 
         apiurl = self.apiurl_base + eth_address
         resp = client.get(apiurl)
@@ -64,17 +63,17 @@ class TestEthGetTransactionCount:
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.get_transaction_count(eth_address)
 
-        assumed_body = {'chainid': '2017', 'gasprice': 0, 'nonce': nonce}
+        assumed_body = {"chainid": "2017", "gasprice": 0, "nonce": nonce}
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # ＜正常系3＞
     # block_identifier = "pending"
     def test_transactioncount_normal_3(self, client: TestClient, session: Session):
         # deployerのアドレス
-        eth_address = eth_account['deployer']['account_address']
+        eth_address = eth_account["deployer"]["account_address"]
 
         apiurl = self.apiurl_base + eth_address
         query_string = "block_identifier=pending"
@@ -83,11 +82,11 @@ class TestEthGetTransactionCount:
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.get_transaction_count(eth_address)
 
-        assumed_body = {'chainid': '2017', 'gasprice': 0, 'nonce': nonce}
+        assumed_body = {"chainid": "2017", "gasprice": 0, "nonce": nonce}
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     ###########################################################################
     # Error
@@ -97,11 +96,10 @@ class TestEthGetTransactionCount:
     # HTTPメソッド不正
     # -> 404エラー
     def test_transactioncount_error_1(self, client: TestClient, session: Session):
-        headers = {'Content-Type': 'application/json'}
+        headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
-        resp = client.post(
-            self.apiurl_base, headers=headers, params=request_body)
+        resp = client.post(self.apiurl_base, headers=headers, params=request_body)
 
         assert resp.status_code == 404
 
@@ -115,10 +113,7 @@ class TestEthGetTransactionCount:
         resp = client.get(apiurl)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
-        }
+        assert resp.json()["meta"] == {"code": 88, "message": "Invalid Parameter"}
 
     # ＜エラー系3＞
     # addressが未設定
@@ -146,13 +141,11 @@ class TestEthGetTransactionCount:
             "code": 88,
             "description": [
                 {
-                    "ctx": {
-                        "enum_values": ["latest", "earliest", "pending"]
-                    },
+                    "ctx": {"enum_values": ["latest", "earliest", "pending"]},
                     "loc": ["query", "block_identifier"],
                     "msg": "value is not a valid enumeration member; permitted: 'latest', 'earliest', 'pending'",
-                    "type": "type_error.enum"
+                    "type": "type_error.enum",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }

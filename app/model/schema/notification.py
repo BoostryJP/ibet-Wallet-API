@@ -17,21 +17,15 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    validator
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field, validator
 from pydantic.dataclasses import dataclass
 from web3 import Web3
 
 from app.model.db import NotificationType
-from app.model.schema.base import (
-    ResultSet,
-    SortOrder
-)
+from app.model.schema.base import ResultSet, SortOrder
 from app.model.schema.token import TokenType
 
 ############################
@@ -42,6 +36,7 @@ from app.model.schema.token import TokenType
 ############################
 # REQUEST
 ############################
+
 
 class NotificationsSortItem(str, Enum):
     notification_type = "notification_type"
@@ -59,10 +54,11 @@ class NotificationsQuery:
     priority: Optional[int] = Query(default=None, ge=0, le=2)
 
     sort_item: Optional[NotificationsSortItem] = Query(
-        default=NotificationsSortItem.created,
-        description="sort item"
+        default=NotificationsSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    sort_order: Optional[SortOrder] = Query(
+        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
+    )
 
     @validator("address")
     def address_is_valid_address(cls, v):
@@ -103,6 +99,7 @@ class UpdateNotificationRequest(BaseModel):
 ############################
 # RESPONSE
 ############################
+
 
 class NotificationMetainfo(BaseModel):
     company_name: str

@@ -17,14 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
-from pydantic.dataclasses import dataclass
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    validator
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field, validator
+from pydantic.dataclasses import dataclass
 from web3 import Web3
 
 ############################
@@ -35,6 +32,7 @@ from web3 import Web3
 ############################
 # REQUEST
 ############################
+
 
 @dataclass
 class RetrievePaymentAccountQuery:
@@ -56,7 +54,9 @@ class RetrievePaymentAccountQuery:
 
 @dataclass
 class RetrievePersonalInfoQuery:
-    personal_info_address: Optional[str] = Query(default=None, description="PersonalInfo contract address")
+    personal_info_address: Optional[str] = Query(
+        default=None, description="PersonalInfo contract address"
+    )
     account_address: str = Query(..., description="account address")
     owner_address: str = Query(..., description="owner(issuer) address")
 
@@ -84,6 +84,7 @@ class RetrievePersonalInfoQuery:
 # RESPONSE
 ############################
 
+
 class ApprovalStatus(int, Enum):
     NONE = 0
     NG = 1
@@ -95,7 +96,9 @@ class ApprovalStatus(int, Enum):
 class RetrievePaymentAccountRegistrationStatusResponse(BaseModel):
     account_address: str
     agent_address: str
-    approval_status: ApprovalStatus = Field(description="approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))")
+    approval_status: ApprovalStatus = Field(
+        description="approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))"
+    )
 
 
 class RetrievePersonalInfoRegistrationStatusResponse(BaseModel):

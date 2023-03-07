@@ -30,7 +30,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class TestE2EMessageEncryptionKey:
-
     # Test API
     apiurl = "/E2EMessage/EncryptionKey/{account_address}"
 
@@ -46,31 +45,19 @@ class TestE2EMessageEncryptionKey:
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract.address
         )
         e2e_messaging_contract.functions.setPublicKey(
-            "test_key",
-            "test_key_type"
-        ).transact({
-            "from": user1
-        })
+            "test_key", "test_key_type"
+        ).transact({"from": user1})
 
         # request target API
-        resp = client.get(
-            self.apiurl.format(account_address=user1)
-        )
+        resp = client.get(self.apiurl.format(account_address=user1))
 
         # assertion
-        assumed_body = {
-            "key": "test_key",
-            "key_type": "test_key_type"
-        }
+        assumed_body = {"key": "test_key", "key_type": "test_key_type"}
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
     ###########################################################################
@@ -87,27 +74,21 @@ class TestE2EMessageEncryptionKey:
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract.address
         )
         e2e_messaging_contract.functions.setPublicKey(
-            "test_key",
-            "test_key_type"
-        ).transact({
-            "from": user1
-        })
+            "test_key", "test_key_type"
+        ).transact({"from": user1})
 
         # request target API
-        resp = client.get(
-            self.apiurl.format(account_address=user1[:-1])
-        )
+        resp = client.get(self.apiurl.format(account_address=user1[:-1]))
 
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address"
+            "description": "invalid account_address",
         }
 
     # Error_2
@@ -119,14 +100,12 @@ class TestE2EMessageEncryptionKey:
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
-        resp = client.get(
-            self.apiurl.format(account_address=user)
-        )
+        resp = client.get(self.apiurl.format(account_address=user))
 
         # assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": f"account_address: {user}"
+            "description": f"account_address: {user}",
         }

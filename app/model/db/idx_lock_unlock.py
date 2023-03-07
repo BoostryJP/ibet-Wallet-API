@@ -17,19 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    JSON,
-    DateTime
-)
+
+from sqlalchemy import JSON, BigInteger, Column, DateTime, String
+
 from app.config import TZ
 from app.model.db import Base
 
@@ -39,6 +31,7 @@ local_tz = ZoneInfo(TZ)
 
 class IDXLock(Base):
     """Token Lock Event (INDEX)"""
+
     __tablename__ = "lock"
 
     # Sequence Id
@@ -69,7 +62,7 @@ class IDXLock(Base):
         "account_address": str,
         "value": int,
         "data": dict,
-        "block_timestamp": datetime
+        "block_timestamp": datetime,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -94,12 +87,13 @@ class IDXLock(Base):
             "account_address": self.account_address,
             "value": self.value,
             "data": self.data,
-            "block_timestamp": self.replace_to_local_tz(self.block_timestamp)
+            "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
         }
 
 
 class IDXUnlock(Base):
     """Token Unlock Event (INDEX)"""
+
     __tablename__ = "unlock"
 
     # Sequence Id
@@ -133,7 +127,7 @@ class IDXUnlock(Base):
         "recipient_address": str,
         "value": int,
         "data": dict,
-        "block_timestamp": datetime
+        "block_timestamp": datetime,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -159,5 +153,5 @@ class IDXUnlock(Base):
             "recipient_address": self.recipient_address,
             "value": self.value,
             "data": self.data,
-            "block_timestamp": self.replace_to_local_tz(self.block_timestamp)
+            "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
         }

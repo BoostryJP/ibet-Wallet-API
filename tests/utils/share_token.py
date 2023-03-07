@@ -31,7 +31,6 @@ gas_limit = 4000000
 
 
 class IbetShareUtils:
-
     @staticmethod
     def issue(tx_from: str, args: Dict):
         web3.eth.default_account = tx_from
@@ -46,18 +45,15 @@ class IbetShareUtils:
             args["dividendRecordDate"],
             args["dividendPaymentDate"],
             args["cancellationDate"],
-            args["principalValue"]
+            args["principalValue"],
         ]
         contract_address, abi = Contract.deploy_contract(
-            contract_name="IbetShare",
-            args=arguments,
-            deployer=tx_from
+            contract_name="IbetShare", args=arguments, deployer=tx_from
         )
 
         # update
         share_contract = Contract.get_contract(
-            contract_name="IbetShare",
-            address=contract_address
+            contract_name="IbetShare", address=contract_address
         )
         if "tradableExchange" in args:
             share_contract.functions.setTradableExchange(
@@ -72,17 +68,15 @@ class IbetShareUtils:
                 args["contactInformation"]
             ).transact({"from": tx_from})
         if "privacyPolicy" in args:
-            share_contract.functions.setPrivacyPolicy(
-                args["privacyPolicy"]
-            ).transact({"from": tx_from})
+            share_contract.functions.setPrivacyPolicy(args["privacyPolicy"]).transact(
+                {"from": tx_from}
+            )
         if "memo" in args:
-            share_contract.functions.setMemo(
-                args["memo"]
-            ).transact({"from": tx_from})
+            share_contract.functions.setMemo(args["memo"]).transact({"from": tx_from})
         if "transferable" in args:
-            share_contract.functions.setTransferable(
-                args["transferable"]
-            ).transact({"from": tx_from})
+            share_contract.functions.setTransferable(args["transferable"]).transact(
+                {"from": tx_from}
+            )
         if "transferApprovalRequired" in args:
             share_contract.functions.setTransferApprovalRequired(
                 args["transferApprovalRequired"]
@@ -93,72 +87,72 @@ class IbetShareUtils:
     @staticmethod
     def register_token_list(tx_from: str, token_address, token_list_contract_address):
         TokenListContract = Contract.get_contract(
-            contract_name="TokenList",
-            address=token_list_contract_address
+            contract_name="TokenList", address=token_list_contract_address
         )
         web3.eth.default_account = tx_from
-        TokenListContract.functions. \
-            register(token_address, "IbetShare"). \
-            transact({"from": tx_from, "gas": gas_limit})
+        TokenListContract.functions.register(token_address, "IbetShare").transact(
+            {"from": tx_from, "gas": gas_limit}
+        )
 
     @staticmethod
-    def sell(tx_from: str,
-             exchange_address: str, token_address: str,
-             amount: int, price: int):
+    def sell(
+        tx_from: str, exchange_address: str, token_address: str, amount: int, price: int
+    ):
         IbetShareUtils.transfer_to_exchange(
             tx_from=tx_from,
             exchange_address=exchange_address,
             token_address=token_address,
-            amount=amount
+            amount=amount,
         )
         IbetShareUtils.make_sell_order(
             tx_from=tx_from,
             exchange_address=exchange_address,
             token_address=token_address,
             amount=amount,
-            price=price
+            price=price,
         )
 
     @staticmethod
-    def transfer_to_exchange(tx_from: str,
-                             exchange_address: str, token_address: str,
-                             amount: int):
+    def transfer_to_exchange(
+        tx_from: str, exchange_address: str, token_address: str, amount: int
+    ):
         web3.eth.default_account = tx_from
         TokenContract = Contract.get_contract(
-            contract_name="IbetShare",
-            address=token_address
+            contract_name="IbetShare", address=token_address
         )
-        TokenContract.functions.transfer(exchange_address, amount). \
-            transact({"from": tx_from, "gas": gas_limit})
+        TokenContract.functions.transfer(exchange_address, amount).transact(
+            {"from": tx_from, "gas": gas_limit}
+        )
 
     @staticmethod
-    def make_sell_order(tx_from: str,
-                        exchange_address: str, token_address: str,
-                        amount: int, price: int):
+    def make_sell_order(
+        tx_from: str, exchange_address: str, token_address: str, amount: int, price: int
+    ):
         web3.eth.default_account = tx_from
         agent_address = eth_account["agent"]["account_address"]
         ExchangeContract = Contract.get_contract(
-            contract_name="IbetExchange",
-            address=exchange_address
+            contract_name="IbetExchange", address=exchange_address
         )
-        ExchangeContract.functions. \
-            createOrder(token_address, amount, price, False, agent_address). \
-            transact({"from": tx_from, "gas": gas_limit})
+        ExchangeContract.functions.createOrder(
+            token_address, amount, price, False, agent_address
+        ).transact({"from": tx_from, "gas": gas_limit})
 
     @staticmethod
-    def set_transfer_approval_required(tx_from: str, token_address: str, required: bool):
+    def set_transfer_approval_required(
+        tx_from: str, token_address: str, required: bool
+    ):
         TokenContract = Contract.get_contract(
-            contract_name="IbetShare",
-            address=token_address
+            contract_name="IbetShare", address=token_address
         )
-        TokenContract.functions.setTransferApprovalRequired(required).\
-            transact({"from": tx_from, "gas": gas_limit})
+        TokenContract.functions.setTransferApprovalRequired(required).transact(
+            {"from": tx_from, "gas": gas_limit}
+        )
 
     @staticmethod
     def apply_for_transfer(tx_from: str, token_address: str, to: str, value: int):
         TokenContract = Contract.get_contract(
-            contract_name="IbetShare",
-            address=token_address
+            contract_name="IbetShare", address=token_address
         )
-        TokenContract.functions.applyForTransfer(to, value, "").\
-            transact({"from": tx_from, "gas": gas_limit})
+        TokenContract.functions.applyForTransfer(to, value, "").transact(
+            {"from": tx_from, "gas": gas_limit}
+        )

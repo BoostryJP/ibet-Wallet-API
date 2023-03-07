@@ -16,19 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from zoneinfo import ZoneInfo
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    JSON
-)
-from datetime import (
-    datetime,
-    timedelta,
-    timezone
-)
+
+from sqlalchemy import JSON, BigInteger, Column, String
+
 from app.config import TZ
 from app.model.db import Base
 
@@ -38,12 +31,14 @@ local_tz = ZoneInfo(TZ)
 
 class IDXTransferSourceEventType(str, Enum):
     """Transfer source event type"""
+
     TRANSFER = "Transfer"
     UNLOCK = "Unlock"
 
 
 class IDXTransfer(Base):
     """Token Transfer Events (INDEX)"""
+
     __tablename__ = "transfer"
 
     # Sequence Id
@@ -94,13 +89,14 @@ class IDXTransfer(Base):
         "to_address": str,
         "value": int,
         "source_event": str,
-        "data": dict
+        "data": dict,
     }
     FIELDS.update(Base.FIELDS)
 
 
 class IDXTransferBlockNumber(Base):
     """Synchronized blockNumber of IDXTransfer"""
+
     __tablename__ = "idx_transfer_block_number"
 
     # target address
@@ -109,8 +105,8 @@ class IDXTransferBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        'contract_address': str,
-        'latest_block_number': int,
+        "contract_address": str,
+        "latest_block_number": int,
     }
 
     FIELDS.update(Base.FIELDS)

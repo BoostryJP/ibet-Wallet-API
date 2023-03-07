@@ -16,17 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import Column
-from sqlalchemy import (
-    String,
-    Text
-)
+from sqlalchemy import Column, String, Text
 
 from app.model.db import Base
 
 
 class Company(Base):
     """Issuer Company"""
+
     __tablename__ = "company"
 
     # Issuer Address
@@ -50,10 +47,10 @@ class Company(Base):
         }
 
     FIELDS = {
-        'address': str,
-        'corporate_name': str,
-        'rsa_publickey': str,
-        'homepage': str,
+        "address": str,
+        "corporate_name": str,
+        "rsa_publickey": str,
+        "homepage": str,
     }
 
     FIELDS.update(Base.FIELDS)

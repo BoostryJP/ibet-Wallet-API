@@ -18,22 +18,18 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 from smtplib import SMTPException
+from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from unittest import mock
-
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.model.db import Mail
-from batch.processor_Send_Mail import (
-    Processor,
-    LOG
-)
+from batch.processor_Send_Mail import LOG, Processor
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def processor(session):
     return Processor()
 
@@ -50,24 +46,20 @@ def caplog(caplog: pytest.LogCaptureFixture):
 
 
 class TestProcessorSendMail:
-
     # Normal_1
     # No unsent email exists
     def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with (
-            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
-            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None))
+        with mock.patch(
+            "app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"
+        ), mock.patch(
+            "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
         ):
             processor.process()
             session.commit()
 
         # Assertion
-        assert 0 == caplog.record_tuples.count((
-            LOG.name,
-            logging.INFO,
-            "Process end"
-        ))
+        assert 0 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     # Normal_2
     # Unsent email exists
@@ -82,9 +74,10 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with (
-            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
-            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None))
+        with mock.patch(
+            "app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"
+        ), mock.patch(
+            "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
         ):
             processor.process()
             session.commit()
@@ -92,11 +85,7 @@ class TestProcessorSendMail:
         # Assertion
         assert session.query(Mail).count() == 0
 
-        assert 1 == caplog.record_tuples.count((
-            LOG.name,
-            logging.INFO,
-            "Process end"
-        ))
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     # Normal_3
     # SMTPException -> skip
@@ -111,10 +100,9 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with (
-            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())),
-            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test")
-        ):
+        with mock.patch(
+            "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())
+        ), mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"):
             processor.process()
             session.commit()
 
@@ -122,17 +110,11 @@ class TestProcessorSendMail:
         mail_list = session.query(Mail).all()
         assert len(mail_list) == 0
 
-        assert 1 == caplog.record_tuples.count((
-            LOG.name,
-            logging.WARNING,
-            "Could not send email: "
-        ))
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.WARNING, "Could not send email: ")
+        )
 
-        assert 1 == caplog.record_tuples.count((
-            LOG.name,
-            logging.INFO,
-            "Process end"
-        ))
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     ###########################################################################
     # Error
@@ -155,7 +137,7 @@ class TestProcessorSendMail:
             mock.patch("app.model.mail.mail.Mail.send_mail", return_value=None),
             mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
-            pytest.raises(SQLAlchemyError)
+            pytest.raises(SQLAlchemyError),
         ):
             processor.process()
 
@@ -163,8 +145,4 @@ class TestProcessorSendMail:
         mail_list = session.query(Mail).all()
         assert len(mail_list) == 1
 
-        assert 0 == caplog.record_tuples.count((
-            LOG.name,
-            logging.INFO,
-            "Process end"
-        ))
+        assert 0 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))

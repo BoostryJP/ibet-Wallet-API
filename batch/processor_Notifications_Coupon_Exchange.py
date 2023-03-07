@@ -18,8 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from sqlalchemy import create_engine
@@ -29,26 +29,23 @@ from sqlalchemy.orm import Session
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app.config import (
     DATABASE_URL,
-    WORKER_COUNT,
+    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
     NOTIFICATION_PROCESS_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS,
-    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+    WORKER_COUNT,
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    Notification,
-    NotificationType,
-    NotificationBlockNumber
-)
-from app.utils.web3_utils import Web3Wrapper
-from batch.lib.token import TokenFactory
+from app.model.db import Notification, NotificationBlockNumber, NotificationType
 from app.utils.company_list import CompanyList
-from batch.lib.token_list import TokenList
+from app.utils.web3_utils import Web3Wrapper
 from batch.lib.misc import wait_all_futures
-import log
+from batch.lib.token import TokenFactory
+from batch.lib.token_list import TokenList
 
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-EXCHANGE")
 
@@ -63,22 +60,21 @@ token_factory = TokenFactory(web3)
 
 # Get coupon IbetExchange contract
 cp_exchange_contract = Contract.get_contract(
-    contract_name="IbetExchange",
-    address=IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+    contract_name="IbetExchange", address=IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
 )
 
 # Get TokenList contract
 list_contract = Contract.get_contract(
-    contract_name="TokenList",
-    address=TOKEN_LIST_CONTRACT_ADDRESS
+    contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
 token_list = TokenList(list_contract, "IbetCoupon")
 
 
 # Watcher
 class Watcher:
-
-    def __init__(self, contract, filter_name: str, filter_params: dict, notification_type: str):
+    def __init__(
+        self, contract, filter_name: str, filter_params: dict, notification_type: str
+    ):
         self.contract = contract
         self.filter_name = filter_name
         self.filter_params = filter_params
@@ -95,7 +91,9 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.utcfromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"])
+        return datetime.utcfromtimestamp(
+            web3.eth.get_block(entry["blockNumber"])["timestamp"]
+        )
 
     def watch(self, db_session: Session, entries):
         pass
@@ -106,11 +104,14 @@ class Watcher:
 
         try:
             # Get synchronized block number
-            from_block_number = self.__get_synchronized_block_number(
-                db_session=db_session,
-                contract_address=self.contract.address,
-                notification_type=self.notification_type
-            ) + 1
+            from_block_number = (
+                self.__get_synchronized_block_number(
+                    db_session=db_session,
+                    contract_address=self.contract.address,
+                    notification_type=self.notification_type,
+                )
+                + 1
+            )
 
             # Get the latest block number
             latest_block_number = web3.eth.block_number
@@ -128,23 +129,19 @@ class Watcher:
             # Get event logs
             _event = getattr(self.contract.events, self.filter_name)
             entries = _event.getLogs(
-                fromBlock=from_block_number,
-                toBlock=to_block_number
+                fromBlock=from_block_number, toBlock=to_block_number
             )
 
             # Register notifications
             if len(entries) > 0:
-                self.watch(
-                    db_session=db_session,
-                    entries=entries
-                )
+                self.watch(db_session=db_session, entries=entries)
 
             # Update synchronized block number
             self.__set_synchronized_block_number(
                 db_session=db_session,
                 contract_address=self.contract.address,
                 notification_type=self.notification_type,
-                block_number=to_block_number
+                block_number=to_block_number,
             )
 
             db_session.commit()
@@ -158,27 +155,40 @@ class Watcher:
         finally:
             db_session.close()
             elapsed_time = time.time() - start_time
-        LOG.info("<{}> finished in {} secs".format(self.__class__.__name__, elapsed_time))
+        LOG.info(
+            "<{}> finished in {} secs".format(self.__class__.__name__, elapsed_time)
+        )
 
     @staticmethod
-    def __get_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str):
+    def __get_synchronized_block_number(
+        db_session: Session, contract_address: str, notification_type: str
+    ):
         """Get latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
-            filter(NotificationBlockNumber.notification_type == notification_type). \
-            filter(NotificationBlockNumber.contract_address == contract_address).\
-            first()
+        notification_block_number: NotificationBlockNumber | None = (
+            db_session.query(NotificationBlockNumber)
+            .filter(NotificationBlockNumber.notification_type == notification_type)
+            .filter(NotificationBlockNumber.contract_address == contract_address)
+            .first()
+        )
         if notification_block_number is None:
             return -1
         else:
             return notification_block_number.latest_block_number
 
     @staticmethod
-    def __set_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str, block_number: int):
+    def __set_synchronized_block_number(
+        db_session: Session,
+        contract_address: str,
+        notification_type: str,
+        block_number: int,
+    ):
         """Set latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
-            filter(NotificationBlockNumber.notification_type == notification_type). \
-            filter(NotificationBlockNumber.contract_address == contract_address). \
-            first()
+        notification_block_number: NotificationBlockNumber | None = (
+            db_session.query(NotificationBlockNumber)
+            .filter(NotificationBlockNumber.notification_type == notification_type)
+            .filter(NotificationBlockNumber.contract_address == contract_address)
+            .first()
+        )
         if notification_block_number is None:
             notification_block_number = NotificationBlockNumber()
         notification_block_number.notification_type = notification_type
@@ -191,7 +201,9 @@ class WatchCouponNewOrder(Watcher):
     """Watch NewOrder event"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "NewOrder", {}, NotificationType.NEW_ORDER)
+        super().__init__(
+            cp_exchange_contract, "NewOrder", {}, NotificationType.NEW_ORDER
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -211,7 +223,7 @@ class WatchCouponNewOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -229,7 +241,9 @@ class WatchCouponCancelOrder(Watcher):
     """Watch CancelOrder event"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "CancelOrder", {}, NotificationType.CANCEL_ORDER)
+        super().__init__(
+            cp_exchange_contract, "CancelOrder", {}, NotificationType.CANCEL_ORDER
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -249,7 +263,7 @@ class WatchCouponCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -267,7 +281,12 @@ class WatchCouponForceCancelOrder(Watcher):
     """Watch ForceCancelOrder event"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "ForceCancelOrder", {}, NotificationType.FORCE_CANCEL_ORDER)
+        super().__init__(
+            cp_exchange_contract,
+            "ForceCancelOrder",
+            {},
+            NotificationType.FORCE_CANCEL_ORDER,
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -287,7 +306,7 @@ class WatchCouponForceCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -305,7 +324,9 @@ class WatchCouponBuyAgreement(Watcher):
     """Watch Agree event (BUY)"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "Agree", {}, NotificationType.BUY_AGREEMENT)
+        super().__init__(
+            cp_exchange_contract, "Agree", {}, NotificationType.BUY_AGREEMENT
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -325,7 +346,7 @@ class WatchCouponBuyAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -343,7 +364,9 @@ class WatchCouponSellAgreement(Watcher):
     """Watch Agree event (SELL)"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "Agree", {}, NotificationType.SELL_AGREEMENT)
+        super().__init__(
+            cp_exchange_contract, "Agree", {}, NotificationType.SELL_AGREEMENT
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -363,7 +386,7 @@ class WatchCouponSellAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -381,7 +404,9 @@ class WatchCouponBuySettlementOK(Watcher):
     """Watch SettlementOK event (BUY)"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementOK", {}, NotificationType.BUY_SETTLEMENT_OK)
+        super().__init__(
+            cp_exchange_contract, "SettlementOK", {}, NotificationType.BUY_SETTLEMENT_OK
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -401,7 +426,7 @@ class WatchCouponBuySettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -419,7 +444,12 @@ class WatchCouponSellSettlementOK(Watcher):
     """Watch SettlementOK event (SELL)"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementOK", {}, NotificationType.SELL_SETTLEMENT_OK)
+        super().__init__(
+            cp_exchange_contract,
+            "SettlementOK",
+            {},
+            NotificationType.SELL_SETTLEMENT_OK,
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -439,7 +469,7 @@ class WatchCouponSellSettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -457,7 +487,9 @@ class WatchCouponBuySettlementNG(Watcher):
     """Watch SettlementNG event (BUY)"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementNG", {}, NotificationType.BUY_SETTLEMENT_NG)
+        super().__init__(
+            cp_exchange_contract, "SettlementNG", {}, NotificationType.BUY_SETTLEMENT_NG
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -477,7 +509,7 @@ class WatchCouponBuySettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()
@@ -495,7 +527,12 @@ class WatchCouponSellSettlementNG(Watcher):
     """Watch SettlementNG event (SELL)"""
 
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementNG", {}, NotificationType.SELL_SETTLEMENT_NG)
+        super().__init__(
+            cp_exchange_contract,
+            "SettlementNG",
+            {},
+            NotificationType.SELL_SETTLEMENT_NG,
+        )
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -515,7 +552,7 @@ class WatchCouponSellSettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
             }
 
             notification = Notification()

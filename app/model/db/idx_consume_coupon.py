@@ -16,18 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    DateTime
-)
+from sqlalchemy import BigInteger, Column, DateTime, String
 
 from app.model.db import Base
 
 
 class IDXConsumeCoupon(Base):
     """Coupon Consume Events (INDEX)"""
+
     __tablename__ = "consume_coupon"
 
     # Sequence Id
@@ -53,7 +49,7 @@ class IDXConsumeCoupon(Base):
         "token_address": str,
         "account_address": str,
         "amount": int,
-        "block_timestamp": str
+        "block_timestamp": str,
     }
 
     FIELDS.update(Base.FIELDS)

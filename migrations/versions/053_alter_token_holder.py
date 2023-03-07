@@ -17,9 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
+
 from migrations.log import LOG
 
 meta = MetaData()
@@ -31,7 +32,7 @@ def upgrade(migrate_engine):
     try:
         # NOTE: カラム追加
         token_holder = Table("token_holder", meta, autoload=True)
-        Column("locked_balance", BigInteger, server_default='0').create(token_holder)
+        Column("locked_balance", BigInteger, server_default="0").create(token_holder)
 
         # NOTE: 新規レコード登録時のデフォルト値設定の削除
         meta.clear()

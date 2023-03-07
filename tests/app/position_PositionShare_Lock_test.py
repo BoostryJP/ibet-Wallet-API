@@ -23,8 +23,8 @@ from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model.db import IDXLockedPosition
 from app import config
+from app.model.db import IDXLockedPosition
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -51,11 +51,13 @@ class TestPositionShareLock:
     account_3 = "0x15D34AAF54267Db7d7c367839aAf71a00A2C6a63"
 
     @staticmethod
-    def create_idx_locked(session: Session,
-                          token_address: str,
-                          lock_address: str,
-                          account_address: str,
-                          value: int):
+    def create_idx_locked(
+        session: Session,
+        token_address: str,
+        lock_address: str,
+        account_address: str,
+        value: int,
+    ):
         # Issue token
         idx_locked = IDXLockedPosition()
         idx_locked.token_address = token_address
@@ -69,13 +71,17 @@ class TestPositionShareLock:
         token_address_list = [self.token_1, self.token_2, self.token_3]
         lock_address_list = [self.lock_1, self.lock_2, self.lock_3]
         account_address_list = [self.account_1, self.account_2, self.account_3]
-        for value, (token_address, lock_address, account_address) in enumerate(itertools.product(token_address_list, lock_address_list, account_address_list)):
+        for value, (token_address, lock_address, account_address) in enumerate(
+            itertools.product(
+                token_address_list, lock_address_list, account_address_list
+            )
+        ):
             self.create_idx_locked(
                 session=session,
                 token_address=token_address,
                 lock_address=lock_address,
                 account_address=account_address,
-                value=value+1
+                value=value + 1,
             )
 
     ###########################################################################
@@ -90,28 +96,66 @@ class TestPositionShareLock:
         # Prepare Data
         self.setup_data(session)
 
-        resp = client.get(
-            self.apiurl_base.format(account_address=self.account_1)
-        )
+        resp = client.get(self.apiurl_base.format(account_address=self.account_1))
 
         assumed_body = {
-            "result_set": {
-                "count": 9,
-                "offset": None,
-                "limit": None,
-                "total": 9
-            },
+            "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_1, "value": 22},
-                {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_1, "value": 25}
-            ]
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 4,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 7,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 13,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 16,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 19,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 22,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 25,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -128,29 +172,49 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "token_address_list": [
-                    self.token_1,
-                    self.token_2
-                ]
-            }
+            params={"token_address_list": [self.token_1, self.token_2]},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 6,
-                "offset": None,
-                "limit": None,
-                "total": 6
-            },
+            "result_set": {"count": 6, "offset": None, "limit": None, "total": 6},
             "locked_positions": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16}
-            ]
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 4,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 7,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 13,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 16,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -167,26 +231,25 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "token_address_list": [
-                    self.token_1
-                ],
-                "offset": 1,
-                "limit": 2
-            }
+            params={"token_address_list": [self.token_1], "offset": 1, "limit": 2},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 3,
-                "offset": 1,
-                "limit": 2,
-                "total": 3
-            },
+            "result_set": {"count": 3, "offset": 1, "limit": 2, "total": 3},
             "locked_positions": [
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7}
-            ]
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 4,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 7,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -203,22 +266,12 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "token_address_list": [
-                    self.token_1
-                ],
-                "offset": 9
-            }
+            params={"token_address_list": [self.token_1], "offset": 9},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 3,
-                "offset": 9,
-                "limit": None,
-                "total": 3
-            },
-            "locked_positions": []
+            "result_set": {"count": 3, "offset": 9, "limit": None, "total": 3},
+            "locked_positions": [],
         }
 
         assert resp.status_code == 200
@@ -235,23 +288,31 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "lock_address": self.lock_1
-            }
+            params={"lock_address": self.lock_1},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 3,
-                "offset": None,
-                "limit": None,
-                "total": 9
-            },
+            "result_set": {"count": 3, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19}
-            ]
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 19,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -268,30 +329,67 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "sort_order": 1,
-                "sort_item": "token_address"
-            }
+            params={"sort_order": 1, "sort_item": "token_address"},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 9,
-                "offset": None,
-                "limit": None,
-                "total": 9
-            },
+            "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_1, "value": 22},
-                {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_1, "value": 25},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-            ]
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 19,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 22,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 25,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 13,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 16,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 4,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 7,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -308,30 +406,67 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "sort_order": 0,
-                "sort_item": "lock_address"
-            }
+            params={"sort_order": 0, "sort_item": "lock_address"},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 9,
-                "offset": None,
-                "limit": None,
-                "total": 9
-            },
+            "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
-                {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_1, "value": 22},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16},
-                {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_1, "value": 25},
-            ]
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 19,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 4,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 13,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 22,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 7,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 16,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 25,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -351,22 +486,32 @@ class TestPositionShareLock:
             params={
                 "lock_address": self.lock_1,
                 "sort_order": 0,
-                "sort_item": "account_address"
-            }
+                "sort_item": "account_address",
+            },
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 3,
-                "offset": None,
-                "limit": None,
-                "total": 9
-            },
+            "result_set": {"count": 3, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19}
-            ]
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 19,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -383,25 +528,31 @@ class TestPositionShareLock:
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
-            params={
-                "lock_address": self.lock_1,
-                "sort_order": 1,
-                "sort_item": "value"
-            }
+            params={"lock_address": self.lock_1, "sort_order": 1, "sort_item": "value"},
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 3,
-                "offset": None,
-                "limit": None,
-                "total": 9
-            },
+            "result_set": {"count": 3, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-            ]
+                {
+                    "token_address": self.token_3,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 19,
+                },
+                {
+                    "token_address": self.token_2,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 10,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+            ],
         }
 
         assert resp.status_code == 200
@@ -427,7 +578,7 @@ class TestPositionShareLock:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address"
+            "description": "invalid account_address",
         }
 
     # <Error_2>
@@ -441,7 +592,7 @@ class TestPositionShareLock:
             params={
                 "offset": -1,
                 "limit": -1,
-            }
+            },
         )
 
         # Assertion
@@ -453,16 +604,16 @@ class TestPositionShareLock:
                     "ctx": {"limit_value": 0},
                     "loc": ["query", "offset"],
                     "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge"
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {"limit_value": 0},
                     "loc": ["query", "limit"],
                     "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge"
-                }
+                    "type": "value_error.number.not_ge",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # <Error_3>
@@ -476,7 +627,7 @@ class TestPositionShareLock:
             params={
                 "offset": "test",
                 "limit": "test",
-            }
+            },
         )
 
         # Assertion
@@ -487,15 +638,15 @@ class TestPositionShareLock:
                 {
                     "loc": ["query", "offset"],
                     "msg": "value is not a valid integer",
-                    "type": "type_error.integer"
+                    "type": "type_error.integer",
                 },
                 {
                     "loc": ["query", "limit"],
                     "msg": "value is not a valid integer",
-                    "type": "type_error.integer"
-                }
+                    "type": "type_error.integer",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # <Error_4>
@@ -511,7 +662,7 @@ class TestPositionShareLock:
         # Assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /Position/some_address/Share/Lock'
+            "code": 10,
+            "message": "Not Supported",
+            "description": "method: GET, url: /Position/some_address/Share/Lock",
         }

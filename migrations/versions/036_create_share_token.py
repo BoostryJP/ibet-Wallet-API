@@ -19,15 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 import logging
 from datetime import datetime
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
-
 
 meta = MetaData()
 
 table = Table(
-    "share_token", meta,
+    "share_token",
+    meta,
     Column("token_address", String(42), primary_key=True),
     Column("token_template", String(40)),
     Column("owner_address", String(42), index=True),
@@ -42,7 +42,6 @@ table = Table(
     Column("status", Boolean),
     Column("max_holding_quantity", BigInteger),
     Column("max_sell_amount", BigInteger),
-
     Column("personal_info_address", String(42), index=True),
     Column("transferable", Boolean),
     Column("is_offering", Boolean),
@@ -53,7 +52,6 @@ table = Table(
     Column("principal_value", BigInteger),
     Column("is_canceled", Boolean),
     Column("dividend_information", JSON),
-
     Column("short_term_cache_created", DateTime),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),

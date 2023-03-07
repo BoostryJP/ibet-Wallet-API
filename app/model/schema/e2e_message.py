@@ -16,10 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from pydantic import (
-    BaseModel,
-    Field,
-)
+from pydantic import BaseModel, Field
 
 ############################
 # COMMON
@@ -34,6 +31,7 @@ from pydantic import (
 ############################
 # RESPONSE
 ############################
+
 
 class E2EMessageEncryptionKeyResponse(BaseModel):
     key: str = Field(description="Message encryption key")

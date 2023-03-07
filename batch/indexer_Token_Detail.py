@@ -16,13 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import List, Type
 import os
 import sys
 import time
-
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List, Type
+
 from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -32,20 +32,13 @@ from sqlalchemy.orm.exc import ObjectDeletedError
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app import config
 from app.errors import ServiceUnavailable
+from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
-from app.model.db import (
-    Listing,
-    IDXTokenListItem,
-)
-from app.model.blockchain import (
-    CouponToken,
-    MembershipToken,
-    BondToken,
-    ShareToken
-)
-import log
+from app.model.db import IDXTokenListItem, Listing
 
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
@@ -76,7 +69,9 @@ class Processor:
             )
         if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetMembership", token_class=MembershipToken)
+                self.TargetTokenType(
+                    template="IbetMembership", token_class=MembershipToken
+                )
             )
         if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
@@ -104,17 +99,25 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens: List[Listing] = local_session.query(Listing).\
-                join(IDXTokenListItem, IDXTokenListItem.token_address == Listing.token_address).\
-                filter(Listing.is_public == True).\
-                filter(IDXTokenListItem.token_template == token_type.template).\
-                order_by(Listing.id).all()
+            available_tokens: List[Listing] = (
+                local_session.query(Listing)
+                .join(
+                    IDXTokenListItem,
+                    IDXTokenListItem.token_address == Listing.token_address,
+                )
+                .filter(Listing.is_public == True)
+                .filter(IDXTokenListItem.token_template == token_type.template)
+                .order_by(Listing.id)
+                .all()
+            )
 
             for available_token in available_tokens:
                 try:
                     start_time = time.time()
                     token_address = to_checksum_address(available_token.token_address)
-                    token_detail_obj = token_type.token_class.fetch(local_session, token_address)
+                    token_detail_obj = token_type.token_class.fetch(
+                        local_session, token_address
+                    )
                     token_detail = token_detail_obj.to_model()
                     token_detail.created = datetime.utcnow()
                     local_session.merge(token_detail)
@@ -124,7 +127,9 @@ class Processor:
                     elapsed_time = time.time() - start_time
                     time.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
                 except ObjectDeletedError:
-                    LOG.warning("The record may have been deleted in another session during the update")
+                    LOG.warning(
+                        "The record may have been deleted in another session during the update"
+                    )
 
 
 def main():

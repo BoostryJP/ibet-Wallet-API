@@ -16,9 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import logging
 import os
 import sys
-import logging
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -27,12 +27,11 @@ from app import config
 
 
 def get_logger(process_name: str = None):
-    LOG = logging.getLogger('ibet_wallet_batch')
+    LOG = logging.getLogger("ibet_wallet_batch")
     LOG.propagate = False
     stream_handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
-        config.INFO_LOG_FORMAT.format(f"[{process_name}]"),
-        config.LOG_TIMESTAMP_FORMAT
+        config.INFO_LOG_FORMAT.format(f"[{process_name}]"), config.LOG_TIMESTAMP_FORMAT
     )
     stream_handler.setFormatter(formatter)
     LOG.addHandler(stream_handler)

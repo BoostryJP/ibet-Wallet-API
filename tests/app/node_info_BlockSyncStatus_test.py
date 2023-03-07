@@ -16,10 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 from unittest import mock
 
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config
@@ -29,12 +29,13 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
 
 class TestNodeInfoBlockSyncStatus:
-
     # target api
     apiurl = "/NodeInfo/BlockSyncStatus"
 
     @staticmethod
-    def insert_node_data(session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0):
+    def insert_node_data(
+        session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0
+    ):
         node = Node()
         node.is_synced = is_synced
         node.endpoint_uri = endpoint_uri
@@ -49,10 +50,19 @@ class TestNodeInfoBlockSyncStatus:
     # Normal_1
     # Node is synced
     def test_normal_1(self, client: TestClient, session: Session):
-        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
+        with mock.patch(
+            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+        ):
             # prepare test data
-            self.insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
-            self.insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
+            self.insert_node_data(
+                session, is_synced=False, endpoint_uri="http://localhost:8546"
+            )
+            self.insert_node_data(
+                session,
+                is_synced=True,
+                endpoint_uri=config.WEB3_HTTP_PROVIDER,
+                priority=1,
+            )
 
             # request target api
             resp = client.get(self.apiurl)
@@ -60,33 +70,31 @@ class TestNodeInfoBlockSyncStatus:
         # assertion
         latest_block_number = web3.eth.block_number
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
             "is_synced": True,
-            "latest_block_number": latest_block_number
+            "latest_block_number": latest_block_number,
         }
 
     # Normal_2
     # Node is not synced
     def test_normal_2(self, client: TestClient, session: Session):
-        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
+        with mock.patch(
+            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+        ):
             # prepare test data
             self.insert_node_data(session, is_synced=False)
-            self.insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
+            self.insert_node_data(
+                session,
+                is_synced=False,
+                endpoint_uri="http://localhost:8546",
+                priority=1,
+            )
 
             # request target api
             resp = client.get(self.apiurl)
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
-        assert resp.json()["data"] == {
-            "is_synced": False,
-            "latest_block_number": None
-        }
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {"is_synced": False, "latest_block_number": None}

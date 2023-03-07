@@ -16,34 +16,34 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 from unittest import mock
 
 from eth_utils import to_checksum_address
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
+from app import config
+from app.contracts import Contract
 from app.model.db import (
-    Listing,
     Company,
+    IDXBondToken,
     IDXCouponToken,
     IDXMembershipToken,
     IDXShareToken,
-    IDXBondToken
+    Listing,
 )
-from app import config
-from app.contracts import Contract
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    coupon_register_list,
     issue_bond_token,
+    issue_coupon_token,
     issue_share_token,
     membership_issue,
-    issue_coupon_token,
+    membership_register_list,
     register_bond_list,
     register_share_list,
-    coupon_register_list,
-    membership_register_list
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -57,71 +57,71 @@ class TestCompanyInfoCompanyInfoList:
     @staticmethod
     def _bond_attribute(exchange_address, personal_info_address):
         attribute = {
-            'name': 'テスト債券',
-            'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'tradableExchange': exchange_address,
-            'faceValue': 10000,
-            'interestRate': 602,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionValue': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。',
-            'memo': 'メモ',
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー',
-            'personalInfoAddress': personal_info_address
+            "name": "テスト債券",
+            "symbol": "BOND",
+            "totalSupply": 1000000,
+            "tradableExchange": exchange_address,
+            "faceValue": 10000,
+            "interestRate": 602,
+            "interestPaymentDate1": "0101",
+            "interestPaymentDate2": "0201",
+            "interestPaymentDate3": "0301",
+            "interestPaymentDate4": "0401",
+            "interestPaymentDate5": "0501",
+            "interestPaymentDate6": "0601",
+            "interestPaymentDate7": "0701",
+            "interestPaymentDate8": "0801",
+            "interestPaymentDate9": "0901",
+            "interestPaymentDate10": "1001",
+            "interestPaymentDate11": "1101",
+            "interestPaymentDate12": "1201",
+            "redemptionDate": "20191231",
+            "redemptionValue": 10000,
+            "returnDate": "20191231",
+            "returnAmount": "商品券をプレゼント",
+            "purpose": "新商品の開発資金として利用。",
+            "memo": "メモ",
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+            "personalInfoAddress": personal_info_address,
         }
         return attribute
 
     @staticmethod
     def _share_attribute(exchange_address, personal_info_address):
         attribute = {
-            'name': 'テスト株式',
-            'symbol': 'SHARE',
-            'tradableExchange': exchange_address,
-            'personalInfoAddress': personal_info_address,
-            'totalSupply': 1000000,
-            'issuePrice': 10000,
-            'principalValue': 10000,
-            'dividends': 101,
-            'dividendRecordDate': '20200909',
-            'dividendPaymentDate': '20201001',
-            'cancellationDate': '20210101',
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー',
-            'memo': 'メモ',
-            'transferable': True
+            "name": "テスト株式",
+            "symbol": "SHARE",
+            "tradableExchange": exchange_address,
+            "personalInfoAddress": personal_info_address,
+            "totalSupply": 1000000,
+            "issuePrice": 10000,
+            "principalValue": 10000,
+            "dividends": 101,
+            "dividendRecordDate": "20200909",
+            "dividendPaymentDate": "20201001",
+            "cancellationDate": "20210101",
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+            "memo": "メモ",
+            "transferable": True,
         }
         return attribute
 
     @staticmethod
     def _membership_attribute(exchange_address):
         attribute = {
-            'name': 'テスト会員権',
-            'symbol': 'MEMBERSHIP',
-            'initialSupply': 1000000,
-            'tradableExchange': exchange_address,
-            'details': '詳細',
-            'returnDetails': 'リターン詳細',
-            'expirationDate': '20191231',
-            'memo': 'メモ',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            "name": "テスト会員権",
+            "symbol": "MEMBERSHIP",
+            "initialSupply": 1000000,
+            "tradableExchange": exchange_address,
+            "details": "詳細",
+            "returnDetails": "リターン詳細",
+            "expirationDate": "20191231",
+            "memo": "メモ",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
         }
         return attribute
 
@@ -138,7 +138,7 @@ class TestCompanyInfoCompanyInfoList:
             "expirationDate": "20191231",
             "transferable": True,
             "contactInformation": "問い合わせ先",
-            "privacyPolicy": "プライバシーポリシー"
+            "privacyPolicy": "プライバシーポリシー",
         }
         return attribute
 
@@ -146,8 +146,9 @@ class TestCompanyInfoCompanyInfoList:
     def tokenlist_contract():
         deployer = eth_account["deployer"]
         web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract. \
-            deploy_contract("TokenList", [], deployer["account_address"])
+        contract_address, abi = Contract.deploy_contract(
+            "TokenList", [], deployer["account_address"]
+        )
         return {"address": contract_address, "abi": abi}
 
     @staticmethod
@@ -194,16 +195,24 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_1_1>
     # 登録済みのトークンアドレスに紐づく会社情報が返却される(ローカルJSON)
     # indexerバッチデータ利用無し
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント
-        issuerList = [eth_account["issuer"], eth_account["deployer"], eth_account["agent"]]
+        issuerList = [
+            eth_account["issuer"],
+            eth_account["deployer"],
+            eth_account["agent"],
+        ]
 
         # TokenListコントラクトアドレスの設定
         token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：新規発行（クーポン）
-        exchange_address = to_checksum_address(shared_contract["IbetCouponExchange"]["address"])
+        exchange_address = to_checksum_address(
+            shared_contract["IbetCouponExchange"]["address"]
+        )
         for i in range(0, 3):
             attribute = self._coupon_attribute(exchange_address)
             token = issue_coupon_token(issuerList[i], attribute)
@@ -220,20 +229,20 @@ class TestCompanyInfoCompanyInfoList:
                 "address": eth_account["issuer"]["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             },
             {
                 "address": eth_account["deployer"]["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             },
             {
                 "address": eth_account["agent"]["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": ""
-            }
+                "homepage": "",
+            },
         ]
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -258,6 +267,7 @@ class TestCompanyInfoCompanyInfoList:
 
         session.commit()  # NOTE:for MySQL
         import time
+
         time.sleep(1)
 
         _company = Company()
@@ -271,7 +281,9 @@ class TestCompanyInfoCompanyInfoList:
         token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(shared_contract["IbetCouponExchange"]["address"])
+        exchange_address = to_checksum_address(
+            shared_contract["IbetCouponExchange"]["address"]
+        )
         for i in range(0, 2):
             attribute = self._coupon_attribute(exchange_address)
             token = issue_coupon_token(issuerList[i], attribute)
@@ -288,14 +300,14 @@ class TestCompanyInfoCompanyInfoList:
                 "address": eth_account["issuer"]["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             },
             {
                 "address": eth_account["deployer"]["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
-            }
+                "homepage": "https://www.aaaa.com/jp/",
+            },
         ]
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -303,7 +315,9 @@ class TestCompanyInfoCompanyInfoList:
 
     # <Normal_2>
     # listing対象とcompanylistが突合されず0件リターン
-    def test_normal_2(self, client: TestClient, shared_contract, mocked_company_list, session: Session):
+    def test_normal_2(
+        self, client: TestClient, shared_contract, mocked_company_list, session: Session
+    ):
         # テスト用アカウント
         issuerList = [eth_account["issuer"], eth_account["deployer"]]
 
@@ -311,7 +325,9 @@ class TestCompanyInfoCompanyInfoList:
         token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(shared_contract["IbetCouponExchange"]["address"])
+        exchange_address = to_checksum_address(
+            shared_contract["IbetCouponExchange"]["address"]
+        )
         for i in range(0, 2):
             attribute = self._coupon_attribute(exchange_address)
             token = issue_coupon_token(issuerList[i], attribute)
@@ -329,7 +345,9 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_3_1>
     # include_private_listing=true
     # indexerバッチデータ利用無し
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
@@ -370,10 +388,7 @@ class TestCompanyInfoCompanyInfoList:
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=true"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assumed_body = [
@@ -381,14 +396,14 @@ class TestCompanyInfoCompanyInfoList:
                 "address": issuer_1["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             },
             {
                 "address": issuer_2["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
-            }
+                "homepage": "https://www.aaaa.com/jp/",
+            },
         ]
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -397,7 +412,9 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_3_2>
     # include_private_listing=false
     # indexerバッチデータ利用無し
-    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_3_2(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
@@ -438,10 +455,7 @@ class TestCompanyInfoCompanyInfoList:
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assumed_body = [
@@ -449,7 +463,7 @@ class TestCompanyInfoCompanyInfoList:
                 "address": issuer_1["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             }
         ]
         assert resp.status_code == 200
@@ -459,7 +473,9 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_4_1>
     # 債権トークン
     # indexerバッチデータ利用有り
-    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_4_1(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
@@ -488,25 +504,30 @@ class TestCompanyInfoCompanyInfoList:
         # データ準備
         exchange_address = shared_contract["IbetStraightBondExchange"]["address"]
 
-        attribute_1 = self._bond_attribute(exchange_address, "0x0000000000000000000000000000000000000000")
+        attribute_1 = self._bond_attribute(
+            exchange_address, "0x0000000000000000000000000000000000000000"
+        )
         token_1 = issue_bond_token(issuerList[0], attribute_1)
         register_bond_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
-        self.store_bond_index_data(session, token_1["address"], issuerList[0]["account_address"])
+        self.store_bond_index_data(
+            session, token_1["address"], issuerList[0]["account_address"]
+        )
 
-        attribute_2 = self._share_attribute(exchange_address, "0x0000000000000000000000000000000000000000")
+        attribute_2 = self._share_attribute(
+            exchange_address, "0x0000000000000000000000000000000000000000"
+        )
         token_2 = issue_share_token(issuerList[1], attribute_2)
         register_share_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
-        self.store_bond_index_data(session, token_2["address"], issuerList[1]["account_address"])
+        self.store_bond_index_data(
+            session, token_2["address"], issuerList[1]["account_address"]
+        )
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
         with mock.patch("app.api.routers.company_info.Contract") as m:
-            resp = client.get(
-                self.apiurl,
-                params=query_string
-            )
+            resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assumed_body = [
@@ -514,7 +535,7 @@ class TestCompanyInfoCompanyInfoList:
                 "address": issuer_1["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             }
         ]
         assert resp.status_code == 200
@@ -527,7 +548,9 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_4_2>
     # 株式トークン
     # indexerバッチデータ利用有り
-    def test_normal_4_2(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_4_2(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
@@ -556,25 +579,30 @@ class TestCompanyInfoCompanyInfoList:
         # データ準備
         exchange_address = shared_contract["IbetShareExchange"]["address"]
 
-        attribute_1 = self._share_attribute(exchange_address, "0x0000000000000000000000000000000000000000")
+        attribute_1 = self._share_attribute(
+            exchange_address, "0x0000000000000000000000000000000000000000"
+        )
         token_1 = issue_share_token(issuerList[0], attribute_1)
         register_share_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
-        self.store_share_index_data(session, token_1["address"], issuerList[0]["account_address"])
+        self.store_share_index_data(
+            session, token_1["address"], issuerList[0]["account_address"]
+        )
 
-        attribute_2 = self._share_attribute(exchange_address, "0x0000000000000000000000000000000000000000")
+        attribute_2 = self._share_attribute(
+            exchange_address, "0x0000000000000000000000000000000000000000"
+        )
         token_2 = issue_share_token(issuerList[1], attribute_2)
         register_share_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
-        self.store_share_index_data(session, token_2["address"], issuerList[1]["account_address"])
+        self.store_share_index_data(
+            session, token_2["address"], issuerList[1]["account_address"]
+        )
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
         with mock.patch("app.api.routers.company_info.Contract") as m:
-            resp = client.get(
-                self.apiurl,
-                params=query_string
-            )
+            resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assumed_body = [
@@ -582,7 +610,7 @@ class TestCompanyInfoCompanyInfoList:
                 "address": issuer_1["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             }
         ]
         assert resp.status_code == 200
@@ -595,7 +623,9 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_4_3>
     # 会員権トークン
     # indexerバッチデータ利用有り
-    def test_normal_4_3(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_4_3(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
@@ -628,21 +658,22 @@ class TestCompanyInfoCompanyInfoList:
         token_1 = membership_issue(issuerList[0], attribute_1)
         membership_register_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
-        self.store_membership_index_data(session, token_1["address"], issuerList[0]["account_address"])
+        self.store_membership_index_data(
+            session, token_1["address"], issuerList[0]["account_address"]
+        )
 
         attribute_2 = self._membership_attribute(exchange_address)
         token_2 = membership_issue(issuerList[1], attribute_2)
         membership_register_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
-        self.store_membership_index_data(session, token_2["address"], issuerList[1]["account_address"])
+        self.store_membership_index_data(
+            session, token_2["address"], issuerList[1]["account_address"]
+        )
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
         with mock.patch("app.api.routers.company_info.Contract") as m:
-            resp = client.get(
-                self.apiurl,
-                params=query_string
-            )
+            resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assumed_body = [
@@ -650,7 +681,7 @@ class TestCompanyInfoCompanyInfoList:
                 "address": issuer_1["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             }
         ]
         assert resp.status_code == 200
@@ -663,7 +694,9 @@ class TestCompanyInfoCompanyInfoList:
     # <Normal_4_4>
     # クーポントークン
     # indexerバッチデータ利用有り
-    def test_normal_4_4(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_normal_4_4(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
@@ -696,21 +729,22 @@ class TestCompanyInfoCompanyInfoList:
         token_1 = issue_coupon_token(issuerList[0], attribute_1)
         coupon_register_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
-        self.store_coupon_index_data(session, token_1["address"], issuerList[0]["account_address"])
+        self.store_coupon_index_data(
+            session, token_1["address"], issuerList[0]["account_address"]
+        )
 
         attribute_2 = self._coupon_attribute(exchange_address)
         token_2 = issue_coupon_token(issuerList[1], attribute_2)
         coupon_register_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
-        self.store_coupon_index_data(session, token_2["address"], issuerList[1]["account_address"])
+        self.store_coupon_index_data(
+            session, token_2["address"], issuerList[1]["account_address"]
+        )
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
         with mock.patch("app.api.routers.company_info.Contract") as m:
-            resp = client.get(
-                self.apiurl,
-                params=query_string
-            )
+            resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assumed_body = [
@@ -718,7 +752,7 @@ class TestCompanyInfoCompanyInfoList:
                 "address": issuer_1["account_address"],
                 "corporate_name": "株式会社DEMO",
                 "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nMIIFIjANBgkqhkiG9w0BAQEFAAOCBQ8AMIIFCgKCBQEAtiBUQ2vdYvIqnCdUzKIC\np7jIYVtJy8KGniy6ktE0DTcYG70pFYkGDyI043meSB6Lkk0rNWaKBn3wyz4lx2oX\n3JySFyXR4vE4DNTEKS0htImO4RuK4M50v7LOfB8VphXzu9JkdVuN8LuMx6L6dhsd\nTN/aUvXULvjOy9AJekl24s44w4BgEfGj/uBYNAmiNmpM3lnIdJOg1T+4aEShHyVN\n98dv1DZ1Hh0YhMmqHqRGIzAQ6pKoly2xSVEmwBV4l2O3XEZ8ErVNgHdi6BRQrIBl\n+zQn5TysSGv5TIO1ahztUIygrzX7aEa+QnF1ROBBJ8yBW0VjjKI2Oh3wDT8ROaWb\ntB7gYQlMX9St/HJvGKaDKPDGurMFsEZeeD9Y4GWlFFkQplKIC3Kr4u6TIxcAZyG3\ntIz1IZomm/Lh9eiFiAbOMLYPdPCzh1A6uCRoJuqrNXYbE2egpLsKSkEe4VAcdaPo\nVuOXLpbDaew0cvXQR5IklHGGPPGVqQV1cmJWIqF5b1bzqziu2No+TLZceUd3N9Eh\nQIYVG4rbX2I/x2/WFeG5RHl9Zc/iSUomUqpnGY3ved61smb7uklF/7ueyj8TIm7O\ncJxhYjj+szXxV2RJyxLvSPzloQ4GDI9wd0zlya2CoYgAONJ7wm82b1LrLLhfpns2\ndSsN8htFX83p0dNn6f8ssKgA3rFbFFnBTQyFxlHO/An4qZflXtk1GsEc56g3mJFp\nrFANLpyum5mkHo9TbkL3K4mRGM1DGcLXWJwFUjDxS/OvjzDXw2dNiyrPeClvTpAb\npFfw/zqVd7ZrnTFg26bpUmM8flc6IRji49veOOMM7jMJN7mmu/pLd/Pg22oez23G\n6QsPDvqqXgjyg1NGo7natX6gyAYMpWZWOHj+Y2lffzcJYUo+wPFt/xNkAuCcDZem\nAiicfsGfniE67G1nfmwkykVwk9rTFCO8SnFei8wMpEAMYETYOS4ldavLfhY6mrF1\nItA5mlkMI84v3ROqPSp3s6F9oGYzPi5zMcgc67wIFGgaPb6i8+puui6BUbj83qOU\nKuKoQAGe9+NRnAkWSpbX07cX6XkPieTkBHEYfGaQTQOnsSs++PIk3kH5Arfjk0R5\nu1ZluzVdOXUn8D5WPfh9UFzqyXzo1HOIHxDkPejpPlNzO1w6qVQC+UiR/R2iug/U\n7StoLz476tQOwbfmnzUA6AbOKjRgN5laRoBac4BbGPJisGysOBruL7lgrw0XVtnh\nknChXfSYezxz/EtiGmO40HKAGudHDkz4gmPDkF4wlIyfDbQZOnNohz4zuOjr9Yi/\nJQVpqKxug2LXyJp38UaxL1LIT6ZyJSsaSrKAB21tsYAbksyPCVS6L6jkz8lsnlYg\nLj7lj6HQcbN8WO72+Z8Ddj/cPXJwEq4OTbtkPiPdcvSZjcBR9f3TmrQjDG0ROspt\nI/m4KhWfm7ed+eZKA1IqygFRyi6i0w6p+VbeBNgXqAiQI5GkDHqAiqv4OVyZoQB8\neunu5qM49r6bw6DJCqlg6lZDCptdKWtNBo9zgEegrJ/3oVI7x0kE7KQ4gPo5uY7j\nvBqGwjw0fIGPjrP/JKIQqGvm/ETwlfPwVbmCsvEHbqEY+6f84TnmolgjPMnbar6Q\nSDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr\n4McG/dPyTRFv9mYtFPpyV50CAwEAAQ==\n-----END PUBLIC KEY-----",
-                "homepage": "https://www.aaaa.com/jp/"
+                "homepage": "https://www.aaaa.com/jp/",
             }
         ]
         assert resp.status_code == 200
@@ -735,13 +769,12 @@ class TestCompanyInfoCompanyInfoList:
     # <Error_1>
     # Invalid Parameter
     # include_private_listing: unallowed value
-    def test_error_1(self, client: TestClient, session: Session, shared_contract, mocked_company_list):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+    ):
         # テスト対象API呼び出し
         query_string = f"include_private_listing=test"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        resp = client.get(self.apiurl, params=query_string)
 
         # 検証
         assert resp.status_code == 400
@@ -751,8 +784,8 @@ class TestCompanyInfoCompanyInfoList:
                 {
                     "loc": ["query", "include_private_listing"],
                     "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool"
+                    "type": "type_error.bool",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }

@@ -16,12 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    BigInteger,
-    String,
-    Text
-)
+from sqlalchemy import BigInteger, Column, String, Text
 
 from app.model.db import Base
 
@@ -30,7 +25,8 @@ class Mail(Base):
     """
     Email message
     """
-    __tablename__ = 'mail'
+
+    __tablename__ = "mail"
 
     # unique id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -48,6 +44,6 @@ class Mail(Base):
         "to_email": str,
         "subject": str,
         "text_content": str,
-        "html_content": str
+        "html_content": str,
     }
     FIELDS.update(Base.FIELDS)

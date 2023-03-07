@@ -16,34 +16,25 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional, List, Dict
 import os
 import sys
 import time
+from typing import Dict, List, Optional
 
+import log
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from web3.exceptions import ABIEventFunctionNotFound
 from web3.contract import Contract
-
-import log
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.model.db import (
-    TokenHoldersList,
-    TokenHolderBatchStatus,
-    TokenHolder
-)
+from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import Contract as ContractOperator
-from app.config import (
-    DATABASE_URL,
-    ZERO_ADDRESS,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-)
 from app.errors import ServiceUnavailable
+from app.model.db import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token_list import TokenList
 
@@ -97,25 +88,37 @@ class Processor:
     def __load_target(self, db_session: Session) -> bool:
         self.target: TokenHoldersList = (
             db_session.query(TokenHoldersList)
-            .filter(TokenHoldersList.batch_status == TokenHolderBatchStatus.PENDING.value)
+            .filter(
+                TokenHoldersList.batch_status == TokenHolderBatchStatus.PENDING.value
+            )
             .first()
         )
         return True if self.target else False
 
     def __load_token_info(self) -> bool:
         # Fetch token list information from TokenList Contract
-        list_contract = ContractOperator.get_contract(contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = ContractOperator.get_contract(
+            contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
+        )
         token_info = TokenList(list_contract).get_token(self.target.token_address)
         self.token_owner_address = token_info[2]
         # Store token contract.
         if token_info[1] == "IbetCoupon":
-            self.token_contract = ContractOperator.get_contract("IbetCoupon", self.target.token_address)
+            self.token_contract = ContractOperator.get_contract(
+                "IbetCoupon", self.target.token_address
+            )
         elif token_info[1] == "IbetMembership":
-            self.token_contract = ContractOperator.get_contract("IbetMembership", self.target.token_address)
+            self.token_contract = ContractOperator.get_contract(
+                "IbetMembership", self.target.token_address
+            )
         elif token_info[1] == "IbetStraightBond":
-            self.token_contract = ContractOperator.get_contract("IbetStraightBond", self.target.token_address)
+            self.token_contract = ContractOperator.get_contract(
+                "IbetStraightBond", self.target.token_address
+            )
         elif token_info[1] == "IbetShare":
-            self.token_contract = ContractOperator.get_contract("IbetShare", self.target.token_address)
+            self.token_contract = ContractOperator.get_contract(
+                "IbetShare", self.target.token_address
+            )
         else:
             return False
         self.token_template = token_info[1]
@@ -128,11 +131,14 @@ class Processor:
             default_returns=ZERO_ADDRESS,
         )
         self.exchange_contract = ContractOperator.get_contract(
-            contract_name="IbetExchangeInterface", address=self.tradable_exchange_address
+            contract_name="IbetExchangeInterface",
+            address=self.tradable_exchange_address,
         )
         return True
 
-    def __load_checkpoint(self, local_session: Session, target_token_address: str, block_to: int) -> int:
+    def __load_checkpoint(
+        self, local_session: Session, target_token_address: str, block_to: int
+    ) -> int:
         _checkpoint: Optional[TokenHoldersList] = (
             local_session.query(TokenHoldersList)
             .filter(TokenHoldersList.token_address == target_token_address)
@@ -143,10 +149,14 @@ class Processor:
         )
         if _checkpoint:
             _holders: List[TokenHolder] = (
-                local_session.query(TokenHolder).filter(TokenHolder.holder_list == _checkpoint.id).all()
+                local_session.query(TokenHolder)
+                .filter(TokenHolder.holder_list == _checkpoint.id)
+                .all()
             )
             for holder in _holders:
-                self.balance_book.store(account_address=holder.account_address, amount=holder.hold_balance)
+                self.balance_book.store(
+                    account_address=holder.account_address, amount=holder.hold_balance
+                )
             block_from = _checkpoint.block_number + 1
             return block_from
         return 0
@@ -164,27 +174,31 @@ class Processor:
                 return
 
             _target_block = self.target.block_number
-            _from_block = self.__load_checkpoint(local_session, target_token_address=self.target.token_address, block_to=_target_block)
+            _from_block = self.__load_checkpoint(
+                local_session,
+                target_token_address=self.target.token_address,
+                block_to=_target_block,
+            )
             _to_block = 999999 + _from_block
             if _target_block > _to_block:
                 while _to_block < _target_block:
                     self.__process_all(
                         db_session=local_session,
                         block_from=_from_block,
-                        block_to=_to_block
+                        block_to=_to_block,
                     )
                     _from_block += 1000000
                     _to_block += 1000000
                 self.__process_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=_target_block
+                    block_to=_target_block,
                 )
             else:
                 self.__process_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=_target_block
+                    block_to=_target_block,
                 )
             self.__update_status(local_session, TokenHolderBatchStatus.DONE)
             local_session.commit()
@@ -201,16 +215,18 @@ class Processor:
         if status == TokenHolderBatchStatus.DONE:
             # Not to store non-holders
             (
-                local_session.query(TokenHolder).
-                filter(TokenHolder.holder_list == self.target.id).
-                filter(TokenHolder.hold_balance == 0).
-                filter(TokenHolder.locked_balance == 0).
-                delete()
+                local_session.query(TokenHolder)
+                .filter(TokenHolder.holder_list == self.target.id)
+                .filter(TokenHolder.hold_balance == 0)
+                .filter(TokenHolder.locked_balance == 0)
+                .delete()
             )
 
         self.target.batch_status = status.value
         local_session.merge(self.target)
-        LOG.info(f"Token holder list({self.target.list_id}) status changes to be {status.value}.")
+        LOG.info(
+            f"Token holder list({self.target.list_id}) status changes to be {status.value}."
+        )
 
         self.target = None
         self.balance_book = self.BalanceBook()
@@ -233,7 +249,13 @@ class Processor:
         if self.token_template == "IbetCoupon":
             self.__process_consume(block_from, block_to)
 
-        self.__save_holders(db_session, self.balance_book, self.target.id, self.target.token_address, self.token_owner_address)
+        self.__save_holders(
+            db_session,
+            self.balance_book,
+            self.target.id,
+            self.target.token_address,
+            self.token_owner_address,
+        )
 
     def __process_transfer(self, block_from: int, block_to: int):
         """Process Transfer Event
@@ -252,15 +274,13 @@ class Processor:
             # Get "HolderChanged" events from exchange contract
             exchange_contract = ContractOperator.get_contract(
                 contract_name="IbetExchangeInterface",
-                address=self.tradable_exchange_address
+                address=self.tradable_exchange_address,
             )
             try:
                 holder_changed_events = exchange_contract.events.HolderChanged.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to,
-                    argument_filters={
-                        "token": self.token_contract.address
-                    }
+                    argument_filters={"token": self.token_contract.address},
                 )
             except ABIEventFunctionNotFound:
                 holder_changed_events = []
@@ -280,8 +300,7 @@ class Processor:
             # Get "Transfer" events from token contract
             try:
                 token_transfer_events = self.token_contract.events.Transfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 token_transfer_events = []
@@ -298,7 +317,9 @@ class Processor:
                 )
 
             # Marge & Sort: block_number > log_index
-            events = sorted(tmp_events, key=lambda x: (x["block_number"], x["log_index"]))
+            events = sorted(
+                tmp_events, key=lambda x: (x["block_number"], x["log_index"])
+            )
 
             for event in events:
                 args = event["args"]
@@ -307,12 +328,17 @@ class Processor:
                 amount = args.get("value")
 
                 # Skip in case of deposit to exchange or withdrawal from exchange
-                if web3.eth.get_code(from_account).hex() != "0x" or web3.eth.get_code(to_account).hex() != "0x":
+                if (
+                    web3.eth.get_code(from_account).hex() != "0x"
+                    or web3.eth.get_code(to_account).hex() != "0x"
+                ):
                     continue
 
                 if amount is not None and amount <= sys.maxsize:
                     # Update Balance（from account）
-                    self.balance_book.store(account_address=from_account, amount=-amount)
+                    self.balance_book.store(
+                        account_address=from_account, amount=-amount
+                    )
                     # Update Balance（to account）
                     self.balance_book.store(account_address=to_account, amount=+amount)
 
@@ -332,8 +358,7 @@ class Processor:
         try:
             # Get "Issue" events from token contract
             events = self.token_contract.events.Issue.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
+                fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -346,7 +371,9 @@ class Processor:
                 if lock_address == ZERO_ADDRESS:
                     if amount is not None and amount <= sys.maxsize:
                         # Update Balance
-                        self.balance_book.store(account_address=account_address, amount=+amount)
+                        self.balance_book.store(
+                            account_address=account_address, amount=+amount
+                        )
 
         except Exception:
             raise
@@ -364,8 +391,7 @@ class Processor:
         try:
             # Get "Redeem" events from token contract
             events = self.token_contract.events.Redeem.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
+                fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -378,7 +404,9 @@ class Processor:
                 if lock_address == ZERO_ADDRESS:
                     if amount is not None and amount <= sys.maxsize:
                         # Update Balance
-                        self.balance_book.store(account_address=account_address, amount=-amount)
+                        self.balance_book.store(
+                            account_address=account_address, amount=-amount
+                        )
         except Exception:
             raise
 
@@ -395,8 +423,7 @@ class Processor:
         try:
             # Get "Consume" events from token contract
             events = self.token_contract.events.Consume.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
+                fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -422,8 +449,7 @@ class Processor:
         try:
             # Get "Lock" events from token contract
             events = self.token_contract.events.Lock.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
+                fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -433,7 +459,9 @@ class Processor:
                 account_address = args.get("accountAddress", ZERO_ADDRESS)
                 amount = args.get("value")
                 if amount is not None and amount <= sys.maxsize:
-                    self.balance_book.store(account_address=account_address, amount=-amount, locked=+amount)
+                    self.balance_book.store(
+                        account_address=account_address, amount=-amount, locked=+amount
+                    )
         except Exception:
             raise
 
@@ -450,8 +478,7 @@ class Processor:
         try:
             # Get "Unlock" events from token contract
             events = self.token_contract.events.Unlock.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
+                fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -462,16 +489,26 @@ class Processor:
                 recipient_address = args.get("recipientAddress", ZERO_ADDRESS)
                 amount = args.get("value")
                 if amount is not None and amount <= sys.maxsize:
-                    self.balance_book.store(account_address=account_address, locked=-amount)
-                    self.balance_book.store(account_address=recipient_address, amount=+amount)
+                    self.balance_book.store(
+                        account_address=account_address, locked=-amount
+                    )
+                    self.balance_book.store(
+                        account_address=recipient_address, amount=+amount
+                    )
         except Exception:
             raise
 
     @staticmethod
     def __save_holders(
-        db_session: Session, balance_book: BalanceBook, holder_list_id: int, token_address: str, token_owner_address: str
+        db_session: Session,
+        balance_book: BalanceBook,
+        holder_list_id: int,
+        token_address: str,
+        token_owner_address: str,
     ):
-        for account_address, page in zip(balance_book.pages.keys(), balance_book.pages.values()):
+        for account_address, page in zip(
+            balance_book.pages.keys(), balance_book.pages.values()
+        ):
             if page.account_address == token_owner_address:
                 # Skip storing data for token owner
                 continue
@@ -486,7 +523,9 @@ class Processor:
                 token_holder.locked_balance = page.locked_balance
                 db_session.merge(token_holder)
             elif page.hold_balance > 0 or page.locked_balance > 0:
-                LOG.debug(f"Collection record created : token_address={token_address}, account_address={account_address}")
+                LOG.debug(
+                    f"Collection record created : token_address={token_address}, account_address={account_address}"
+                )
                 page.holder_list = holder_list_id
                 db_session.add(page)
 

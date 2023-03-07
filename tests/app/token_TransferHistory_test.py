@@ -19,11 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.model.db import (
-    Listing,
-    IDXTransfer,
-    IDXTransferSourceEventType
-)
+from app.model.db import IDXTransfer, IDXTransferSourceEventType, Listing
 
 
 class TestTokenTransferHistory:
@@ -34,7 +30,9 @@ class TestTokenTransferHistory:
     # テスト対象API
     apiurl_base = "/Token/{contract_address}/TransferHistory"
 
-    transaction_hash = "0xc99116e27f0c40201a9e907ad5334f4477863269b90a94444d11a1bc9b9315e6"
+    transaction_hash = (
+        "0xc99116e27f0c40201a9e907ad5334f4477863269b90a94444d11a1bc9b9315e6"
+    )
     token_address = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A740"
     from_address = "0xF13D2aCe101F1e4B55d96d66fBF18aD8a8aF22bF"
     to_address = "0x6431d02363FC69fFD9F69CAa4E05E96d4e79f3da"
@@ -48,9 +46,10 @@ class TestTokenTransferHistory:
 
     @staticmethod
     def insert_transfer_event(
-        session: Session, transfer_event: dict,
+        session: Session,
+        transfer_event: dict,
         transfer_source_event: IDXTransferSourceEventType = IDXTransferSourceEventType.TRANSFER,
-        transfer_event_data: dict | None = None
+        transfer_event_data: dict | None = None,
     ):
         _transfer = IDXTransfer()
         _transfer.transaction_hash = transfer_event["transaction_hash"]
@@ -82,14 +81,14 @@ class TestTokenTransferHistory:
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['result_set'] == {
-            'count': 0,
-            'offset': None,
-            'limit': None,
-            'total': 0
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 0,
+            "offset": None,
+            "limit": None,
+            "total": 0,
         }
-        assert resp.json()['data']['transfer_history'] == assumed_body
+        assert resp.json()["data"]["transfer_history"] == assumed_body
 
     # Normal_2
     # Transferイベントあり：1件
@@ -106,7 +105,7 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(session, transfer_event=transfer_event)
 
@@ -115,20 +114,20 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['result_set'] == {
-            'count': 1,
-            'offset': None,
-            'limit': None,
-            'total': 1
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 1,
         }
-        data = resp.json()['data']['transfer_history']
+        data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1
-        assert data[0]['transaction_hash'] == transfer_event['transaction_hash']
-        assert data[0]['token_address'] == transfer_event['token_address']
-        assert data[0]['from_address'] == transfer_event['from_address']
-        assert data[0]['to_address'] == transfer_event['to_address']
-        assert data[0]['value'] == transfer_event['value']
+        assert data[0]["transaction_hash"] == transfer_event["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event["token_address"]
+        assert data[0]["from_address"] == transfer_event["from_address"]
+        assert data[0]["to_address"] == transfer_event["to_address"]
+        assert data[0]["value"] == transfer_event["value"]
 
     # Normal_3_1
     # Transferイベントあり：2件
@@ -145,13 +144,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None
+            transfer_event_data=None,
         )
 
         # ２件目
@@ -160,13 +159,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.to_address,
             "to_address": self.from_address,
-            "value": 20
+            "value": 20,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"}
+            transfer_event_data={"message": "unlock"},
         )
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -174,28 +173,28 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['result_set'] == {
-            'count': 2,
-            'offset': None,
-            'limit': None,
-            'total': 2
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 2,
+            "offset": None,
+            "limit": None,
+            "total": 2,
         }
-        data = resp.json()['data']['transfer_history']
+        data = resp.json()["data"]["transfer_history"]
         assert len(data) == 2
-        assert data[0]['transaction_hash'] == transfer_event_1['transaction_hash']
-        assert data[0]['token_address'] == transfer_event_1['token_address']
-        assert data[0]['from_address'] == transfer_event_1['from_address']
-        assert data[0]['to_address'] == transfer_event_1['to_address']
-        assert data[0]['value'] == transfer_event_1['value']
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
 
-        assert data[1]['transaction_hash'] == transfer_event_2['transaction_hash']
-        assert data[1]['token_address'] == transfer_event_2['token_address']
-        assert data[1]['from_address'] == transfer_event_2['from_address']
-        assert data[1]['to_address'] == transfer_event_2['to_address']
-        assert data[1]['value'] == transfer_event_2['value']
+        assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_2["token_address"]
+        assert data[1]["from_address"] == transfer_event_2["from_address"]
+        assert data[1]["to_address"] == transfer_event_2["to_address"]
+        assert data[1]["value"] == transfer_event_2["value"]
         assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
         assert data[1]["data"] == {"message": "unlock"}
 
@@ -215,13 +214,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None
+            transfer_event_data=None,
         )
 
         # ２件目
@@ -230,17 +229,19 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.to_address,
             "to_address": self.from_address,
-            "value": 20
+            "value": 20,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"}
+            transfer_event_data={"message": "unlock"},
         )
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.get(apiurl, params={"source_event": IDXTransferSourceEventType.UNLOCK.value})
+        resp = client.get(
+            apiurl, params={"source_event": IDXTransferSourceEventType.UNLOCK.value}
+        )
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -248,7 +249,7 @@ class TestTokenTransferHistory:
             "count": 1,
             "offset": None,
             "limit": None,
-            "total": 2
+            "total": 2,
         }
         data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1
@@ -277,13 +278,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None
+            transfer_event_data=None,
         )
 
         # ２件目
@@ -292,13 +293,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.to_address,
             "to_address": self.from_address,
-            "value": 20
+            "value": 20,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"}
+            transfer_event_data={"message": "unlock"},
         )
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -310,7 +311,7 @@ class TestTokenTransferHistory:
             "count": 1,
             "offset": None,
             "limit": None,
-            "total": 2
+            "total": 2,
         }
         data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1
@@ -339,13 +340,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None
+            transfer_event_data=None,
         )
 
         # ２件目
@@ -354,28 +355,28 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.to_address,
             "to_address": self.from_address,
-            "value": 20
+            "value": 20,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"}
+            transfer_event_data={"message": "unlock"},
         )
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = 'offset=1'
+        query_string = "offset=1"
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['result_set'] == {
-            'count': 2,
-            'offset': 1,
-            'limit': None,
-            'total': 2
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 2,
+            "offset": 1,
+            "limit": None,
+            "total": 2,
         }
-        data = resp.json()['data']['transfer_history']
+        data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1
 
         assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
@@ -402,13 +403,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None
+            transfer_event_data=None,
         )
 
         # ２件目
@@ -417,28 +418,28 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.to_address,
             "to_address": self.from_address,
-            "value": 20
+            "value": 20,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"}
+            transfer_event_data={"message": "unlock"},
         )
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = 'offset=0'
+        query_string = "offset=0"
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['result_set'] == {
-            'count': 2,
-            'offset': 0,
-            'limit': None,
-            'total': 2
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 2,
+            "offset": 0,
+            "limit": None,
+            "total": 2,
         }
-        data = resp.json()['data']['transfer_history']
+        data = resp.json()["data"]["transfer_history"]
         assert len(data) == 2
 
         assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
@@ -473,13 +474,13 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.from_address,
             "to_address": self.to_address,
-            "value": 10
+            "value": 10,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None
+            transfer_event_data=None,
         )
 
         # ２件目
@@ -488,28 +489,28 @@ class TestTokenTransferHistory:
             "token_address": self.token_address,
             "from_address": self.to_address,
             "to_address": self.from_address,
-            "value": 20
+            "value": 20,
         }
         self.insert_transfer_event(
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"}
+            transfer_event_data={"message": "unlock"},
         )
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = 'limit=1'
+        query_string = "limit=1"
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['result_set'] == {
-            'count': 2,
-            'offset': None,
-            'limit': 1,
-            'total': 2
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 2,
+            "offset": None,
+            "limit": 1,
+            "total": 2,
         }
-        data = resp.json()['data']['transfer_history']
+        data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1
 
         assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
@@ -528,15 +529,15 @@ class TestTokenTransferHistory:
     # 無効なコントラクトアドレス
     # 400
     def test_error_1(self, client: TestClient, session: Session):
-        apiurl = self.apiurl_base.format(contract_address='0xabcd')
+        apiurl = self.apiurl_base.format(contract_address="0xabcd")
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': 'invalid contract_address'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": "invalid contract_address",
         }
 
     # Error_2
@@ -548,10 +549,10 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json()['meta'] == {
-            'code': 30,
-            'message': 'Data Not Exists',
-            'description': 'contract_address: ' + self.token_address
+        assert resp.json()["meta"] == {
+            "code": 30,
+            "message": "Data Not Exists",
+            "description": "contract_address: " + self.token_address,
         }
 
     # Error_3_1
@@ -563,16 +564,16 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'offset'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "offset"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_3_2
@@ -584,17 +585,17 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'ctx': {'limit_value': 0},
-                    'loc': ['query', 'offset'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge'
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "offset"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_3_3
@@ -606,16 +607,16 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'offset'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "offset"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4_1
@@ -627,16 +628,16 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'limit'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "limit"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4_2
@@ -648,17 +649,17 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'ctx': {'limit_value': 0},
-                    'loc': ['query', 'limit'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge'
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "limit"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4_3
@@ -670,14 +671,14 @@ class TestTokenTransferHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'limit'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "limit"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }

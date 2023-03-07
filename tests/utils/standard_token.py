@@ -29,7 +29,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class IbetStandardTokenUtils:
-
     @staticmethod
     def issue(tx_from: str, args: Dict):
         """issue token
@@ -45,15 +44,12 @@ class IbetStandardTokenUtils:
             args["totalSupply"],
             args["tradableExchange"],
             args["contactInformation"],
-            args["privacyPolicy"]
+            args["privacyPolicy"],
         ]
         contract_address, abi = Contract.deploy_contract(
-            contract_name="IbetStandardToken",
-            args=arguments,
-            deployer=tx_from
+            contract_name="IbetStandardToken", args=arguments, deployer=tx_from
         )
         contract = Contract.get_contract(
-            contract_name="IbetStandardToken",
-            address=contract_address
+            contract_name="IbetStandardToken", address=contract_address
         )
         return contract

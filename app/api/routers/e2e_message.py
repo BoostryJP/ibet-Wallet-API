@@ -17,35 +17,23 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from eth_utils import to_checksum_address
-from fastapi import (
-    APIRouter,
-    Path
-)
+from fastapi import APIRouter, Path
 from web3 import Web3
 
-from app import (
-    log,
-    config
-)
+from app import config, log
 from app.contracts import Contract
-from app.errors import (
-    InvalidParameterError,
-    DataNotExistsError
-)
+from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.schema import (
-    GenericSuccessResponse,
     E2EMessageEncryptionKeyResponse,
-    SuccessResponse
+    GenericSuccessResponse,
+    SuccessResponse,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(
-    prefix="/E2EMessage",
-    tags=["messaging"]
-)
+router = APIRouter(prefix="/E2EMessage", tags=["messaging"])
 
 
 @router.get(
@@ -53,10 +41,10 @@ router = APIRouter(
     summary="Retrieve message encryption key",
     operation_id="EncryptionKey",
     response_model=GenericSuccessResponse[E2EMessageEncryptionKeyResponse],
-    responses=get_routers_responses(InvalidParameterError, DataNotExistsError)
+    responses=get_routers_responses(InvalidParameterError, DataNotExistsError),
 )
 def retrieve_encryption_key(
-    account_address: str = Path(description="Account address (message receiver)")
+    account_address: str = Path(description="Account address (message receiver)"),
 ):
     """
     Endpoint: /E2EMessage/EncryptionKey/{account_address}
@@ -71,23 +59,16 @@ def retrieve_encryption_key(
 
     # Get public key
     messaging_contract = Contract.get_contract(
-        contract_name="E2EMessaging",
-        address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
+        contract_name="E2EMessaging", address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
     )
     key, key_type = Contract.call_function(
         contract=messaging_contract,
         function_name="getPublicKey",
-        args=(account_address, ),
-        default_returns=("", "")
+        args=(account_address,),
+        default_returns=("", ""),
     )
     if key == "":  # not registered
         raise DataNotExistsError(f"account_address: {account_address}")
     else:
-        encryption_key = {
-            "key": key,
-            "key_type": key_type
-        }
-    return json_response({
-        **SuccessResponse.default(),
-        "data": encryption_key
-    })
+        encryption_key = {"key": key, "key_type": key_type}
+    return json_response({**SuccessResponse.default(), "data": encryption_key})

@@ -16,12 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import logging
 import asyncio
+import logging
+
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 import typer
-
 from src.gui.explorer import ExplorerApp
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
@@ -29,7 +29,9 @@ app = typer.Typer(pretty_exceptions_show_locals=False)
 
 @app.command()
 def run(
-    url: str = typer.Option("http://localhost:5000", help="ibet-Wallet-API server URL to connect"),
+    url: str = typer.Option(
+        "http://localhost:5000", help="ibet-Wallet-API server URL to connect"
+    ),
     lot_size: int = typer.Option(100, help="Lot size to fetch Block Data list"),
 ):
     explorer = ExplorerApp()

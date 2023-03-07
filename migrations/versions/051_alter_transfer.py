@@ -17,9 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
+
 from migrations.log import LOG
 
 meta = MetaData()
@@ -32,7 +33,9 @@ def upgrade(migrate_engine):
         # NOTE: カラム追加
         transfer = Table("transfer", meta, autoload=True)
         Column("data", JSON).create(transfer)
-        Column("source_event", String(50), nullable=False, server_default="Transfer").create(transfer)
+        Column(
+            "source_event", String(50), nullable=False, server_default="Transfer"
+        ).create(transfer)
 
         # NOTE: 新規レコード登録時のデフォルト値設定の削除
         meta.clear()

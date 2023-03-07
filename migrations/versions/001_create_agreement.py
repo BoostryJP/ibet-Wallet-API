@@ -19,15 +19,17 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
+
 from migrations.log import LOG
 
 # Table定義
 meta = MetaData()
 table = Table(
-    "agreement", meta,
+    "agreement",
+    meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("exchange_address", String(256), primary_key=True),
     Column("order_id", BigInteger, primary_key=True),
@@ -40,7 +42,7 @@ table = Table(
     Column("status", Integer),
     Column("settlement_timestamp", DateTime, default=None),
     Column("created", DateTime, default=datetime.utcnow),
-    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
 
 

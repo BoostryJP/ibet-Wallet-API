@@ -17,19 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    StrictStr
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field, StrictStr
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import (
-    ResultSet,
-    SortOrder
-)
+from app.model.schema.base import ResultSet, SortOrder
 
 ############################
 # COMMON
@@ -39,6 +33,7 @@ from app.model.schema.base import (
 ############################
 # REQUEST
 ############################
+
 
 class StraightBondTokensSortItem(str, Enum):
     token_address = "token_address"
@@ -65,25 +60,37 @@ class ListAllStraightBondTokensQuery:
     name: Optional[str] = Query(default=None, description="token name")
     symbol: Optional[str] = Query(default=None, description="token symbol")
     company_name: Optional[str] = Query(default=None, description="company name")
-    tradable_exchange: Optional[str] = Query(default=None, description="tradable exchange address")
+    tradable_exchange: Optional[str] = Query(
+        default=None, description="tradable exchange address"
+    )
     status: Optional[bool] = Query(default=None, description="token status")
-    personal_info_address: Optional[str] = Query(default=None, description="personal information address")
-    transferable: Optional[bool] = Query(default=None, description="transferable status")
+    personal_info_address: Optional[str] = Query(
+        default=None, description="personal information address"
+    )
+    transferable: Optional[bool] = Query(
+        default=None, description="transferable status"
+    )
     is_offering: Optional[bool] = Query(default=None, description="offering status")
-    transfer_approval_required: Optional[bool] = Query(default=None, description="transfer approval required status")
+    transfer_approval_required: Optional[bool] = Query(
+        default=None, description="transfer approval required status"
+    )
     is_redeemed: Optional[bool] = Query(default=None, description="redeem status")
 
     sort_item: Optional[StraightBondTokensSortItem] = Query(
-        default=StraightBondTokensSortItem.created,
-        description="sort item"
+        default=StraightBondTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
-    address_list: list[StrictStr] = Query(default=[], description="list of token address (**this affects total number**)")
+    sort_order: Optional[SortOrder] = Query(
+        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
+    )
+    address_list: list[StrictStr] = Query(
+        default=[], description="list of token address (**this affects total number**)"
+    )
 
 
 ############################
 # RESPONSE
 ############################
+
 
 class RetrieveStraightBondTokenResponse(BaseModel):
     token_address: str

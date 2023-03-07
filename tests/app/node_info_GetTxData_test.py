@@ -21,14 +21,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import (
-    IDXTxData,
-    IDXTokenListItem
-)
+from app.model.db import IDXTokenListItem, IDXTxData
 
 
 class TestGetTxData:
-
     # API to be tested
     apiurl = "/NodeInfo/TxData/{}"
 
@@ -44,7 +40,7 @@ class TestGetTxData:
         "input": "0x5ccef3e7000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000011313635323937363632372e363337373738000000000000000000000000000000",
         "nonce": 199601,
         "transaction_index": 0,
-        "value": 0
+        "value": 0,
     }
 
     @staticmethod
@@ -84,25 +80,29 @@ class TestGetTxData:
         self.insert_tx_data(session, self.tx_data)
 
         # Request target API
-        resp = client.get(self.apiurl.format("0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"))
+        resp = client.get(
+            self.apiurl.format(
+                "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"
+            )
+        )
 
         # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
-            'hash': '0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644',
-            'block_hash': '0x6698ebc4866223855dbea153eec7a9455682fd6d2f8451746102afb320412a6b',
-            'block_number': 10407084,
-            'transaction_index': 0,
-            'from_address': '0x8456ac4FEc4869A16ad5C3584306181Af6410682',
-            'to_address': '0xECeB9FdBd2CF677Be5fA8B1ceEb53e53D582f0Eb',
-            'contract_name': None,
-            'contract_function': None,
-            'contract_parameters': None,
-            'gas': 6000000,
-            'gas_price': 0,
-            'value': 0,
-            'nonce': 199601
+            "hash": "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644",
+            "block_hash": "0x6698ebc4866223855dbea153eec7a9455682fd6d2f8451746102afb320412a6b",
+            "block_number": 10407084,
+            "transaction_index": 0,
+            "from_address": "0x8456ac4FEc4869A16ad5C3584306181Af6410682",
+            "to_address": "0xECeB9FdBd2CF677Be5fA8B1ceEb53e53D582f0Eb",
+            "contract_name": None,
+            "contract_function": None,
+            "contract_parameters": None,
+            "gas": 6000000,
+            "gas_price": 0,
+            "value": 0,
+            "nonce": 199601,
         }
 
     # Normal_2
@@ -114,30 +114,34 @@ class TestGetTxData:
 
         token_info = {
             "token_address": to_checksum_address(self.tx_data.get("to_address")),
-            "token_template": "IbetShare"
+            "token_template": "IbetShare",
         }
         self.insert_token_list(session, token_info)
 
         # Request target API
-        resp = client.get(self.apiurl.format("0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"))
+        resp = client.get(
+            self.apiurl.format(
+                "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"
+            )
+        )
 
         # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
-            'hash': '0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644',
-            'block_hash': '0x6698ebc4866223855dbea153eec7a9455682fd6d2f8451746102afb320412a6b',
-            'block_number': 10407084,
-            'transaction_index': 0,
-            'from_address': '0x8456ac4FEc4869A16ad5C3584306181Af6410682',
-            'to_address': '0xECeB9FdBd2CF677Be5fA8B1ceEb53e53D582f0Eb',
-            'contract_name': 'IbetShare',
-            'contract_function': 'approveTransfer',
-            'contract_parameters': {'_index': 1, '_data': '1652976627.637778'},
-            'gas': 6000000,
-            'gas_price': 0,
-            'value': 0,
-            'nonce': 199601
+            "hash": "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644",
+            "block_hash": "0x6698ebc4866223855dbea153eec7a9455682fd6d2f8451746102afb320412a6b",
+            "block_number": 10407084,
+            "transaction_index": 0,
+            "from_address": "0x8456ac4FEc4869A16ad5C3584306181Af6410682",
+            "to_address": "0xECeB9FdBd2CF677Be5fA8B1ceEb53e53D582f0Eb",
+            "contract_name": "IbetShare",
+            "contract_function": "approveTransfer",
+            "contract_parameters": {"_index": 1, "_data": "1652976627.637778"},
+            "gas": 6000000,
+            "gas_price": 0,
+            "value": 0,
+            "nonce": 199601,
         }
 
     ###########################################################################
@@ -150,14 +154,18 @@ class TestGetTxData:
         config.BC_EXPLORER_ENABLED = False
 
         # Request target API
-        resp = client.get(self.apiurl.format("0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"))
+        resp = client.get(
+            self.apiurl.format(
+                "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"
+            )
+        )
 
         # Assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /NodeInfo/TxData/0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644'
+            "code": 10,
+            "message": "Not Supported",
+            "description": "method: GET, url: /NodeInfo/TxData/0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644",
         }
 
     # Error_2
@@ -166,11 +174,12 @@ class TestGetTxData:
         config.BC_EXPLORER_ENABLED = True
 
         # Request target API
-        resp = client.get(self.apiurl.format("0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"))
+        resp = client.get(
+            self.apiurl.format(
+                "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644"
+            )
+        )
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json()["meta"] == {
-            'code': 30,
-            'message': 'Data Not Exists'
-        }
+        assert resp.json()["meta"] == {"code": 30, "message": "Data Not Exists"}

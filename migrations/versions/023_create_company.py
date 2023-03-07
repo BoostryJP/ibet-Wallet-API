@@ -20,19 +20,20 @@ from datetime import datetime
 
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrations.log import LOG
 
+from migrations.log import LOG
 
 # Table定義
 meta = MetaData()
 table = Table(
-    "company", meta,
+    "company",
+    meta,
     Column("address", String(42), primary_key=True),
     Column("corporate_name", Text),
     Column("rsa_publickey", String(2000)),
     Column("homepage", Text),
     Column("created", DateTime, default=datetime.utcnow),
-    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
 
 

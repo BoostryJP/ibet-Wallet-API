@@ -16,187 +16,132 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .base import (
-    # Request
-    ResultSetQuery,
-    # Response
-    SuccessResponse,
-    GenericSuccessResponse
-)
+from .admin import GetAdminTokenTypeResponse  # Request; Response
 from .admin import (
-    # Request
-    RegisterAdminTokenRequest,
-    UpdateAdminTokenRequest,
-    # Response
-    RetrieveAdminTokenResponse,
     ListAllAdminTokensResponse,
-    GetAdminTokenTypeResponse
+    RegisterAdminTokenRequest,
+    RetrieveAdminTokenResponse,
+    UpdateAdminTokenRequest,
 )
-from .node_info import (
-    # Response
-    GetNodeInfoResponse,
-    GetBlockSyncStatusResponse
-)
+from .base import ResultSetQuery  # Request; Response
+from .base import GenericSuccessResponse, SuccessResponse
+from .bc_explorer import BlockDataDetail  # Request; Response
 from .bc_explorer import (
-    # Request
+    BlockDataListResponse,
+    BlockDataResponse,
     ListBlockDataQuery,
     ListTxDataQuery,
-    # Response
-    BlockDataResponse,
-    BlockDataListResponse,
-    BlockDataDetail,
-    TxDataResponse,
+    TxDataDetail,
     TxDataListResponse,
-    TxDataDetail
+    TxDataResponse,
 )
-from .contract_abi import (
-    ABI
+from .company_info import ListAllCompanyInfoResponse  # Response
+from .company_info import ListAllCompanyTokensResponse, RetrieveCompanyInfoResponse
+from .contract_abi import ABI
+from .dex_market import ListAllLastPriceQuery  # Request; Response
+from .dex_market import (
+    ListAllLastPriceResponse,
+    ListAllOrderBookItemResponse,
+    ListAllOrderBookQuery,
+    ListAllTickQuery,
+    ListAllTicksResponse,
+    RetrieveAgreementDetailResponse,
+    RetrieveAgreementQuery,
 )
-from .company_info import (
-    # Response
-    RetrieveCompanyInfoResponse,
-    ListAllCompanyInfoResponse,
-    ListAllCompanyTokensResponse
-)
-from .user_info import (
-    # Request
-    RetrievePaymentAccountQuery,
-    RetrievePersonalInfoQuery,
-    # Response
-    RetrievePaymentAccountRegistrationStatusResponse,
-    RetrievePersonalInfoRegistrationStatusResponse
-)
+from .dex_order_list import ListAllOrderListQuery  # Request; Response
+from .dex_order_list import ListAllOrderListResponse, TokenAddress
+from .e2e_message import E2EMessageEncryptionKeyResponse  # Response
+from .eth import GetTransactionCountQuery  # Request; Response
 from .eth import (
-    # Request
-    GetTransactionCountQuery,
     SendRawTransactionRequest,
-    WaitForTransactionReceiptQuery,
-    # Response
-    TransactionCountResponse,
-    SendRawTransactionsResponse,
     SendRawTransactionsNoWaitResponse,
-    WaitForTransactionReceiptResponse
+    SendRawTransactionsResponse,
+    TransactionCountResponse,
+    WaitForTransactionReceiptQuery,
+    WaitForTransactionReceiptResponse,
 )
-from .token_bond import (
-    # Request
-    ListAllStraightBondTokensQuery,
-    # Response
-    RetrieveStraightBondTokenResponse,
-    ListAllStraightBondTokensResponse,
-    ListAllStraightBondTokenAddressesResponse
-)
-from .token_share import (
-    # Request
-    ListAllShareTokensQuery,
-    # Response
-    RetrieveShareTokenResponse,
-    ListAllShareTokensResponse,
-    ListAllShareTokenAddressesResponse
-)
-from .token_membership import (
-    # Request
-    ListAllMembershipTokensQuery,
-    # Response
-    RetrieveMembershipTokenResponse,
-    ListAllMembershipTokensResponse,
-    ListAllMembershipTokenAddressesResponse
-)
-from .token_coupon import (
-    # Request
-    ListAllCouponTokensQuery,
-    # Response
-    RetrieveCouponTokenResponse,
-    ListAllCouponTokensResponse,
-    ListAllCouponTokenAddressesResponse
-)
-from .token import (
-    # Request
-    CreateTokenHoldersCollectionRequest,
-    RetrieveTokenHoldersCountQuery,
-    ListAllTokenHoldersQuery,
-    ListAllTransferHistoryQuery,
-    # Response
-    TokenStatusResponse,
-    TokenHoldersResponse,
-    TokenHoldersCountResponse,
-    CreateTokenHoldersCollectionResponse,
-    TokenHoldersCollectionResponse,
-    TransferHistoriesResponse,
-    TransferApprovalHistoriesResponse
-)
-from .position import (
-    # Request
-    ListAllPositionQuery,
-    GetPositionQuery,
-    ListAllLockedPositionQuery,
-    LockEventCategory,
-    LockEventSortItem,
-    ListAllLockEventQuery,
-    # Response
-    SecurityTokenPosition,
-    GenericSecurityTokenPositionsResponse,
-    MembershipPositionsResponse,
-    CouponPositionsResponse,
-    SecurityTokenPositionWithDetail,
-    GenericSecurityTokenPositionsResponse,
-    SecurityTokenPositionWithAddress,
-    MembershipPositionsResponse,
-    MembershipPositionWithDetail,
-    MembershipPositionWithAddress,
-    CouponPositionsResponse,
-    CouponPositionWithDetail,
-    CouponPositionWithAddress,
-    ListAllLockedPositionResponse,
-    ListAllLockEventsResponse
-)
-from .notification import (
-    # Request
-    NotificationsQuery,
-    NotificationReadRequest,
-    NotificationsCountQuery,
-    UpdateNotificationRequest,
-    # Response
-    NotificationsResponse,
-    NotificationsCountResponse,
-    NotificationUpdateResponse
-)
-from .e2e_message import (
-    # Response
-    E2EMessageEncryptionKeyResponse
-)
+from .events import E2EMessagingEventArguments  # Request; Response
 from .events import (
-    # Request
     E2EMessagingEventsQuery,
+    EscrowEventArguments,
     IbetEscrowEventsQuery,
     IbetSecurityTokenEscrowEventsQuery,
-    E2EMessagingEventArguments,
-    EscrowEventArguments,
-    SecurityTokenEventArguments,
-    IbetSecurityTokenInterfaceEventType,
     IbetSecurityTokenInterfaceEventsQuery,
-    # Response
-    ListAllEventsResponse
+    IbetSecurityTokenInterfaceEventType,
+    ListAllEventsResponse,
+    SecurityTokenEventArguments,
 )
-from .dex_market import (
-    # Request
-    ListAllOrderBookQuery,
-    ListAllLastPriceQuery,
-    ListAllTickQuery,
-    RetrieveAgreementQuery,
-    # Response
-    ListAllOrderBookItemResponse,
-    ListAllLastPriceResponse,
-    ListAllTicksResponse,
-    RetrieveAgreementDetailResponse
+from .mail import SendMailRequest  # Request
+from .node_info import GetBlockSyncStatusResponse, GetNodeInfoResponse  # Response
+from .notification import NotificationReadRequest  # Request; Response
+from .notification import (
+    NotificationsCountQuery,
+    NotificationsCountResponse,
+    NotificationsQuery,
+    NotificationsResponse,
+    NotificationUpdateResponse,
+    UpdateNotificationRequest,
 )
-from .dex_order_list import (
-    # Request
-    ListAllOrderListQuery,
-    # Response
-    ListAllOrderListResponse,
-    TokenAddress
+from .position import CouponPositionsResponse  # Request; Response
+from .position import (
+    CouponPositionWithAddress,
+    CouponPositionWithDetail,
+    GenericSecurityTokenPositionsResponse,
+    GetPositionQuery,
+    ListAllLockedPositionQuery,
+    ListAllLockedPositionResponse,
+    ListAllLockEventQuery,
+    ListAllLockEventsResponse,
+    ListAllPositionQuery,
+    LockEventCategory,
+    LockEventSortItem,
+    MembershipPositionsResponse,
+    MembershipPositionWithAddress,
+    MembershipPositionWithDetail,
+    SecurityTokenPosition,
+    SecurityTokenPositionWithAddress,
+    SecurityTokenPositionWithDetail,
 )
-from .mail import (
-    # Request
-    SendMailRequest
+from .token import CreateTokenHoldersCollectionRequest  # Request; Response
+from .token import (
+    CreateTokenHoldersCollectionResponse,
+    ListAllTokenHoldersQuery,
+    ListAllTransferHistoryQuery,
+    RetrieveTokenHoldersCountQuery,
+    TokenHoldersCollectionResponse,
+    TokenHoldersCountResponse,
+    TokenHoldersResponse,
+    TokenStatusResponse,
+    TransferApprovalHistoriesResponse,
+    TransferHistoriesResponse,
+)
+from .token_bond import (  # Request; Response
+    ListAllStraightBondTokenAddressesResponse,
+    ListAllStraightBondTokensQuery,
+    ListAllStraightBondTokensResponse,
+    RetrieveStraightBondTokenResponse,
+)
+from .token_coupon import (  # Request; Response
+    ListAllCouponTokenAddressesResponse,
+    ListAllCouponTokensQuery,
+    ListAllCouponTokensResponse,
+    RetrieveCouponTokenResponse,
+)
+from .token_membership import (  # Request; Response
+    ListAllMembershipTokenAddressesResponse,
+    ListAllMembershipTokensQuery,
+    ListAllMembershipTokensResponse,
+    RetrieveMembershipTokenResponse,
+)
+from .token_share import (  # Request; Response
+    ListAllShareTokenAddressesResponse,
+    ListAllShareTokensQuery,
+    ListAllShareTokensResponse,
+    RetrieveShareTokenResponse,
+)
+from .user_info import RetrievePaymentAccountQuery  # Request; Response
+from .user_info import (
+    RetrievePaymentAccountRegistrationStatusResponse,
+    RetrievePersonalInfoQuery,
+    RetrievePersonalInfoRegistrationStatusResponse,
 )

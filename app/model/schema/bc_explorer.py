@@ -19,24 +19,16 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Optional
 
 from fastapi import Query
-from pydantic import (
-    BaseModel,
-    Field,
-    NonNegativeInt,
-    validator
-)
+from pydantic import BaseModel, Field, NonNegativeInt, validator
 from pydantic.dataclasses import dataclass
 from web3 import Web3
 
-from app.model.schema.base import (
-    ResultSet,
-    SortOrder
-)
-
+from app.model.schema.base import ResultSet, SortOrder
 
 ############################
 # COMMON
 ############################
+
 
 class BlockData(BaseModel):
     number: NonNegativeInt = Field(description="Block number")
@@ -93,6 +85,7 @@ class TxDataDetail(BaseModel):
     value: NonNegativeInt
     nonce: NonNegativeInt
 
+
 ############################
 # REQUEST
 ############################
@@ -104,14 +97,18 @@ class ListBlockDataQuery:
     limit: Optional[NonNegativeInt] = Query(default=None, description="number of set")
     from_block_number: Optional[NonNegativeInt] = Query(default=None)
     to_block_number: Optional[NonNegativeInt] = Query(default=None)
-    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    sort_order: Optional[SortOrder] = Query(
+        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
+    )
 
 
 @dataclass
 class ListTxDataQuery:
     offset: Optional[NonNegativeInt] = Query(default=None, description="start position")
     limit: Optional[NonNegativeInt] = Query(default=None, description="number of set")
-    block_number: Optional[NonNegativeInt] = Query(default=None, description="block number")
+    block_number: Optional[NonNegativeInt] = Query(
+        default=None, description="block number"
+    )
     from_address: Optional[str] = Query(default=None, description="tx from")
     to_address: Optional[str] = Query(default=None, description="tx to")
 
@@ -128,6 +125,7 @@ class ListTxDataQuery:
             if not Web3.isAddress(v):
                 raise ValueError("to_address is not a valid address")
         return v
+
 
 ############################
 # RESPONSE

@@ -16,11 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi import (
-    FastAPI,
-    Request,
-    status
-)
+from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -31,98 +27,57 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app import log
-from app.api.routers import (
-    admin as routers_admin,
-    node_info as routers_node_info,
-    bc_explorer as routers_bc_explorer,
-    contract_abi as routers_contract_abi,
-    company_info as routers_company_info,
-    user_info as routers_user_info,
-    eth as routers_eth,
-    token_bond as routers_token_bond,
-    token_share as routers_token_share,
-    token_membership as routers_token_membership,
-    token_coupon as routers_token_coupon,
-    token as routers_token,
-    position as routers_position,
-    notification as routers_notification,
-    e2e_message as routers_e2e_message,
-    mail as routers_mail,
-    events as routers_events,
-    dex_market as routers_dex_market,
-    dex_order_list as routers_dex_order_list
-)
+from app.api.routers import admin as routers_admin
+from app.api.routers import bc_explorer as routers_bc_explorer
+from app.api.routers import company_info as routers_company_info
+from app.api.routers import contract_abi as routers_contract_abi
+from app.api.routers import dex_market as routers_dex_market
+from app.api.routers import dex_order_list as routers_dex_order_list
+from app.api.routers import e2e_message as routers_e2e_message
+from app.api.routers import eth as routers_eth
+from app.api.routers import events as routers_events
+from app.api.routers import mail as routers_mail
+from app.api.routers import node_info as routers_node_info
+from app.api.routers import notification as routers_notification
+from app.api.routers import position as routers_position
+from app.api.routers import token as routers_token
+from app.api.routers import token_bond as routers_token_bond
+from app.api.routers import token_coupon as routers_token_coupon
+from app.api.routers import token_membership as routers_token_membership
+from app.api.routers import token_share as routers_token_share
+from app.api.routers import user_info as routers_user_info
 from app.config import BRAND_NAME
 from app.errors import (
     AppError,
-    InvalidParameterError,
-    SuspendedTokenError,
-    NotSupportedError,
-    DataNotExistsError,
     DataConflictError,
-    ServiceUnavailable
+    DataNotExistsError,
+    InvalidParameterError,
+    NotSupportedError,
+    ServiceUnavailable,
+    SuspendedTokenError,
 )
-from app.middleware import (
-    ResponseLoggerMiddleware,
-    StripTrailingSlashMiddleware
-)
+from app.middleware import ResponseLoggerMiddleware, StripTrailingSlashMiddleware
 from app.utils.docs_utils import custom_openapi
 
 LOG = log.get_logger()
 
 tags_metadata = [
-    {
-        "name": "root",
-        "description": ""
-    },
-    {
-        "name": "admin",
-        "description": "System administration"
-    },
-    {
-        "name": "node_info",
-        "description": "Information about blockchain and contracts"
-    },
-    {
-        "name": "abi",
-        "description": "Contract ABIs"
-    },
-    {
-        "name": "transaction",
-        "description": "Blockchain transactions"
-    },
-    {
-        "name": "company_info",
-        "description": "Company(token issuer) information"
-    },
-    {
-        "name": "token_info",
-        "description": "Detailed information for listed tokens"
-    },
-    {
-        "name": "user_info",
-        "description": "User information"
-    },
-    {
-        "name": "user_position",
-        "description": "User's token balance"
-    },
-    {
-        "name": "user_notification",
-        "description": "Notifications for users"
-    },
-    {
-        "name": "contract_log",
-        "description": "Contract event logs"
-    },
+    {"name": "root", "description": ""},
+    {"name": "admin", "description": "System administration"},
+    {"name": "node_info", "description": "Information about blockchain and contracts"},
+    {"name": "abi", "description": "Contract ABIs"},
+    {"name": "transaction", "description": "Blockchain transactions"},
+    {"name": "company_info", "description": "Company(token issuer) information"},
+    {"name": "token_info", "description": "Detailed information for listed tokens"},
+    {"name": "user_info", "description": "User information"},
+    {"name": "user_position", "description": "User's token balance"},
+    {"name": "user_notification", "description": "Notifications for users"},
+    {"name": "contract_log", "description": "Contract event logs"},
     {
         "name": "dex",
-        "description": "Trade related functions on IbetExchange (Only for utility tokens)"
+        "description": "Trade related functions on IbetExchange (Only for utility tokens)",
     },
-    {
-        "name": "messaging",
-        "description": "Messaging functions with external systems"
-    }
+    {"name": "messaging", "description": "Messaging functions with external systems"},
 ]
 
 app = FastAPI(
@@ -131,8 +86,11 @@ app = FastAPI(
     terms_of_service="",
     version="23.3.0",
     contact={"email": "dev@boostry.co.jp"},
-    license_info={"name": "Apache 2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0.html"},
-    openapi_tags=tags_metadata
+    license_info={
+        "name": "Apache 2.0",
+        "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+    openapi_tags=tags_metadata,
 )
 
 app.openapi = custom_openapi(app)  # type: ignore
@@ -142,9 +100,11 @@ app.openapi = custom_openapi(app)  # type: ignore
 # ROUTER
 ###############################################################
 
+
 @app.get("/", tags=["root"])
 def root():
     return {"server": BRAND_NAME}
+
 
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
@@ -174,7 +134,13 @@ app.include_router(routers_dex_order_list.router)
 strip_trailing_slash = StripTrailingSlashMiddleware()
 response_logger = ResponseLoggerMiddleware()
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(BaseHTTPMiddleware, dispatch=strip_trailing_slash)
 app.add_middleware(BaseHTTPMiddleware, dispatch=response_logger)
 
@@ -183,13 +149,11 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=response_logger)
 # EXCEPTION
 ###############################################################
 
+
 # 500:InternalServerError
 @app.exception_handler(Exception)
 async def internal_server_error_handler(request: Request, exc: Exception):
-    meta = {
-        "code": 1,
-        "title": "InternalServerError"
-    }
+    meta = {"code": 1, "title": "InternalServerError"}
     LOG.error(exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -200,11 +164,8 @@ async def internal_server_error_handler(request: Request, exc: Exception):
 # 429:TooManyRequests
 @app.exception_handler(OperationalError)
 async def internal_server_error_handler(request: Request, exc: OperationalError):
-    meta = {
-        "code": 1,
-        "title": "TooManyRequestsError"
-    }
-    if exc.orig.args == ("FATAL:  sorry, too many clients already\n", ):
+    meta = {"code": 1, "title": "TooManyRequestsError"}
+    if exc.orig.args == ("FATAL:  sorry, too many clients already\n",):
         # NOTE: If postgres is used and has run out of connections, exception above would be thrown.
 
         return JSONResponse(
@@ -226,10 +187,7 @@ async def internal_server_error_handler(request: Request, exc: OperationalError)
 # 400:InvalidParameterError
 @app.exception_handler(InvalidParameterError)
 async def invalid_parameter_error_handler(request: Request, exc: InvalidParameterError):
-    meta = {
-        "code": exc.error_code,
-        "message": exc.message
-    }
+    meta = {"code": exc.error_code, "message": exc.message}
     if getattr(exc, "description"):
         meta["description"] = exc.description
 
@@ -245,7 +203,7 @@ async def send_transaction_error_handler(request: Request, exc: SuspendedTokenEr
     meta = {
         "code": exc.error_code,
         "message": exc.message,
-        "description": exc.description
+        "description": exc.description,
     }
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -259,7 +217,7 @@ async def not_supported_error_handler(request: Request, exc: NotSupportedError):
     meta = {
         "code": exc.error_code,
         "message": exc.message,
-        "description": exc.description
+        "description": exc.description,
     }
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -270,10 +228,7 @@ async def not_supported_error_handler(request: Request, exc: NotSupportedError):
 # 400-503: AppError
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
-    meta = {
-        "code": exc.error_code,
-        "message": exc.message
-    }
+    meta = {"code": exc.error_code, "message": exc.message}
     if getattr(exc, "description"):
         meta["description"] = exc.description
 
@@ -286,10 +241,7 @@ async def app_error_handler(request: Request, exc: AppError):
 # 404:NotFound
 @app.exception_handler(404)
 async def not_found_error_handler(request: Request, exc: StarletteHTTPException):
-    meta = {
-        "code": 1,
-        "message": "NotFound"
-    }
+    meta = {"code": 1, "message": "NotFound"}
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content=jsonable_encoder({"meta": meta, "detail": exc.detail}),
@@ -298,11 +250,13 @@ async def not_found_error_handler(request: Request, exc: StarletteHTTPException)
 
 # 405:MethodNotAllowed
 @app.exception_handler(405)
-async def method_not_allowed_error_handler(request: Request, exc: StarletteHTTPException):
+async def method_not_allowed_error_handler(
+    request: Request, exc: StarletteHTTPException
+):
     meta = {
         "code": 1,
         "message": "Method Not Allowed",
-        "description": f"method: {request.method}, url: {request.url.path}"
+        "description": f"method: {request.method}, url: {request.url.path}",
     }
     return JSONResponse(
         status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
@@ -313,10 +267,7 @@ async def method_not_allowed_error_handler(request: Request, exc: StarletteHTTPE
 # 409:DataConflict
 @app.exception_handler(DataConflictError)
 async def data_conflict_error_handler(request: Request, exc: DataConflictError):
-    meta = {
-        "code": exc.error_code,
-        "message": exc.message
-    }
+    meta = {"code": exc.error_code, "message": exc.message}
     if getattr(exc, "description"):
         meta["description"] = exc.description
 
@@ -329,10 +280,7 @@ async def data_conflict_error_handler(request: Request, exc: DataConflictError):
 # 404:DataNotExistsError
 @app.exception_handler(DataNotExistsError)
 async def data_not_exists_error_handler(request: Request, exc: DataNotExistsError):
-    meta = {
-        "code": exc.error_code,
-        "message": exc.message
-    }
+    meta = {"code": exc.error_code, "message": exc.message}
     if getattr(exc, "description"):
         meta["description"] = exc.description
     return JSONResponse(
@@ -344,11 +292,7 @@ async def data_not_exists_error_handler(request: Request, exc: DataNotExistsErro
 # 400:RequestValidationError
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    meta = {
-        "code": 88,
-        "message": "Invalid Parameter",
-        "description": exc.errors()
-    }
+    meta = {"code": 88, "message": "Invalid Parameter", "description": exc.errors()}
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),
@@ -359,11 +303,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # NOTE: for exceptions raised directly from Pydantic validation
 @app.exception_handler(ValidationError)
 async def query_validation_exception_handler(request: Request, exc: ValidationError):
-    meta = {
-        "code": 88,
-        "message": "Invalid Parameter",
-        "description": exc.errors()
-    }
+    meta = {"code": 88, "message": "Invalid Parameter", "description": exc.errors()}
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),
@@ -376,11 +316,12 @@ async def service_unavailable_error_handler(request: Request, exc: ServiceUnavai
     meta = {
         "code": 503,
         "message": "Service Unavailable",
-        "description": exc.description
+        "description": exc.description,
     }
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content=jsonable_encoder({"meta": meta}),
     )
+
 
 LOG.info("Service started successfully")

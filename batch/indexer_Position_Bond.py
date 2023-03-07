@@ -17,16 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
-from typing import Optional, List
 import os
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from itertools import groupby
+from typing import List, Optional
 
 from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
@@ -37,23 +33,20 @@ from web3.exceptions import ABIEventFunctionNotFound
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import (
-    DATABASE_URL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    ZERO_ADDRESS
-)
+import log
+
+from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
-    Listing,
+    IDXLock,
+    IDXLockedPosition,
     IDXPosition,
     IDXPositionBondBlockNumber,
-    IDXLockedPosition,
     IDXUnlock,
-    IDXLock
+    Listing,
 )
 from app.utils.web3_utils import Web3Wrapper
-import log
 
 UTC = timezone(timedelta(hours=0), "UTC")
 
@@ -76,7 +69,10 @@ class Processor:
                 start_block_number(int): block number that the processor first reads
                 cursor(int): pointer where next process should be start
             """
-            def __init__(self, token_contract, exchange_address: str, block_number: int):
+
+            def __init__(
+                self, token_contract, exchange_address: str, block_number: int
+            ):
                 self.token_contract = token_contract
                 self.exchange_address = exchange_address
                 self.start_block_number = block_number
@@ -96,7 +92,9 @@ class Processor:
                         self.target_token_list[i].start_block_number = block_number
                         self.target_token_list[i].cursor = block_number
             if not is_duplicate:
-                target_token = self.TargetToken(token_contract, exchange_address, block_number)
+                target_token = self.TargetToken(
+                    token_contract, exchange_address, block_number
+                )
                 self.target_token_list.append(target_token)
 
         def get_cursor(self, token_address: str) -> int:
@@ -119,6 +117,7 @@ class Processor:
                 start_block_number(int): block number that the processor first reads
                 cursor(int): pointer where next process should be start
             """
+
             def __init__(self, exchange_address: str, block_number: int):
                 self.exchange_address = exchange_address
                 self.start_block_number = block_number
@@ -171,16 +170,12 @@ class Processor:
                         block_to=_to_block,
                     )
                     _to_block += 1000000
-                self.__sync_all(
-                    db_session=local_session,
-                    block_to=latest_block
-                )
+                self.__sync_all(db_session=local_session, block_to=latest_block)
             else:
-                self.__sync_all(
-                    db_session=local_session,
-                    block_to=latest_block
-                )
-            self.__set_idx_position_block_number(local_session, self.token_list, latest_block)
+                self.__sync_all(db_session=local_session, block_to=latest_block)
+            self.__set_idx_position_block_number(
+                local_session, self.token_list, latest_block
+            )
             local_session.commit()
         except Exception as e:
             local_session.rollback()
@@ -207,16 +202,12 @@ class Processor:
                         block_to=_to_block,
                     )
                     _to_block += 1000000
-                self.__sync_all(
-                    db_session=local_session,
-                    block_to=latest_block
-                )
+                self.__sync_all(db_session=local_session, block_to=latest_block)
             else:
-                self.__sync_all(
-                    db_session=local_session,
-                    block_to=latest_block
-                )
-            self.__set_idx_position_block_number(local_session, self.token_list, latest_block)
+                self.__sync_all(db_session=local_session, block_to=latest_block)
+            self.__set_idx_position_block_number(
+                local_session, self.token_list, latest_block
+            )
             local_session.commit()
         except Exception as e:
             local_session.rollback()
@@ -232,8 +223,7 @@ class Processor:
         self.exchange_list = self.TargetExchangeList()
 
         list_contract = Contract.get_contract(
-            contract_name="TokenList",
-            address=TOKEN_LIST_CONTRACT_ADDRESS
+            contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
         listed_tokens = db_session.query(Listing).all()
 
@@ -243,26 +233,27 @@ class Processor:
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(listed_token.token_address,),
-                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
             if token_info[1] == "IbetStraightBond":
                 token_contract = Contract.get_contract(
-                    contract_name="IbetStraightBond",
-                    address=listed_token.token_address
+                    contract_name="IbetStraightBond", address=listed_token.token_address
                 )
                 tradable_exchange_address = Contract.call_function(
                     contract=token_contract,
                     function_name="tradableExchange",
                     args=(),
-                    default_returns=ZERO_ADDRESS
+                    default_returns=ZERO_ADDRESS,
                 )
                 synced_block_number = self.__get_idx_position_block_number(
                     db_session=db_session,
                     token_address=listed_token.token_address,
-                    exchange_address=tradable_exchange_address
+                    exchange_address=tradable_exchange_address,
                 )
                 block_from = synced_block_number + 1
-                self.token_list.append(token_contract, tradable_exchange_address, block_from)
+                self.token_list.append(
+                    token_contract, tradable_exchange_address, block_from
+                )
                 if tradable_exchange_address != ZERO_ADDRESS:
                     self.exchange_list.append(tradable_exchange_address, block_from)
 
@@ -309,20 +300,22 @@ class Processor:
                 continue
             try:
                 events = token.events.Transfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["from", "to"]
+                    events=events, account_keys=["from", "to"]
                 )
                 for _account in accounts_filtered:
                     if web3.eth.get_code(_account).hex() == "0x":
-                        _balance, _pending_transfer, _exchange_balance, _exchange_commitment = \
-                            self.__get_account_balance_all(token, _account)
+                        (
+                            _balance,
+                            _pending_transfer,
+                            _exchange_balance,
+                            _exchange_commitment,
+                        ) = self.__get_account_balance_all(token, _account)
                         self.__sink_on_position(
                             db_session=db_session,
                             token_address=to_checksum_address(token.address),
@@ -330,7 +323,7 @@ class Processor:
                             balance=_balance,
                             pending_transfer=_pending_transfer,
                             exchange_balance=_exchange_balance,
-                            exchange_commitment=_exchange_commitment
+                            exchange_commitment=_exchange_commitment,
                         )
             except Exception as e:
                 raise e
@@ -349,8 +342,7 @@ class Processor:
                 continue
             try:
                 events = token.events.Lock.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -374,7 +366,7 @@ class Processor:
                         account_address=account_address,
                         value=value,
                         data_str=data,
-                        block_timestamp=event_created
+                        block_timestamp=event_created,
                     )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
@@ -383,29 +375,32 @@ class Processor:
                 for lock_address in lock_map:
                     for account_address in lock_map[lock_address]:
                         # Update Locked Position
-                        value = self.__get_account_locked_token(token, lock_address, account_address)
+                        value = self.__get_account_locked_token(
+                            token, lock_address, account_address
+                        )
                         self.__sink_on_locked_position(
                             db_session=db_session,
                             token_address=to_checksum_address(token.address),
                             lock_address=lock_address,
                             account_address=account_address,
-                            value=value
+                            value=value,
                         )
             except Exception:
                 pass
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["accountAddress"]
+                    events=events, account_keys=["accountAddress"]
                 )
                 for account in accounts_filtered:
-                    balance, pending_transfer = self.__get_account_balance_token(token, account)
+                    balance, pending_transfer = self.__get_account_balance_token(
+                        token, account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance,
-                        pending_transfer=pending_transfer
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -424,8 +419,7 @@ class Processor:
                 continue
             try:
                 events = token.events.Unlock.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -451,7 +445,7 @@ class Processor:
                         recipient_address=recipient_address,
                         value=value,
                         data_str=data,
-                        block_timestamp=event_created
+                        block_timestamp=event_created,
                     )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
@@ -460,29 +454,32 @@ class Processor:
                 for lock_address in lock_map:
                     for account_address in lock_map[lock_address]:
                         # Update Locked Position
-                        value = self.__get_account_locked_token(token, lock_address, account_address)
+                        value = self.__get_account_locked_token(
+                            token, lock_address, account_address
+                        )
                         self.__sink_on_locked_position(
                             db_session=db_session,
                             token_address=to_checksum_address(token.address),
                             lock_address=lock_address,
                             account_address=account_address,
-                            value=value
+                            value=value,
                         )
             except Exception:
                 pass
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["recipientAddress"]
+                    events=events, account_keys=["recipientAddress"]
                 )
                 for account in accounts_filtered:
-                    balance, pending_transfer = self.__get_account_balance_token(token, account)
+                    balance, pending_transfer = self.__get_account_balance_token(
+                        token, account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance,
-                        pending_transfer=pending_transfer
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -501,24 +498,24 @@ class Processor:
                 continue
             try:
                 events = token.events.Issue.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["targetAddress"]
+                    events=events, account_keys=["targetAddress"]
                 )
                 for account in accounts_filtered:
-                    balance, pending_transfer = self.__get_account_balance_token(token, account)
+                    balance, pending_transfer = self.__get_account_balance_token(
+                        token, account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance,
-                        pending_transfer=pending_transfer
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -537,24 +534,24 @@ class Processor:
                 continue
             try:
                 events = token.events.Redeem.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["targetAddress"]
+                    events=events, account_keys=["targetAddress"]
                 )
                 for account in accounts_filtered:
-                    balance, pending_transfer = self.__get_account_balance_token(token, account)
+                    balance, pending_transfer = self.__get_account_balance_token(
+                        token, account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance,
-                        pending_transfer=pending_transfer
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -573,24 +570,24 @@ class Processor:
                 continue
             try:
                 events = token.events.ApplyForTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["from"]
+                    events=events, account_keys=["from"]
                 )
                 for account in accounts_filtered:
-                    balance, pending_transfer = self.__get_account_balance_token(token, account)
+                    balance, pending_transfer = self.__get_account_balance_token(
+                        token, account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance,
-                        pending_transfer=pending_transfer
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -609,24 +606,24 @@ class Processor:
                 continue
             try:
                 events = token.events.CancelTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["from"]
+                    events=events, account_keys=["from"]
                 )
                 for account in accounts_filtered:
-                    balance, pending_transfer = self.__get_account_balance_token(token, account)
+                    balance, pending_transfer = self.__get_account_balance_token(
+                        token, account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance,
-                        pending_transfer=pending_transfer
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -645,24 +642,24 @@ class Processor:
                 continue
             try:
                 events = token.events.ApproveTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
-                    events=events,
-                    account_keys=["from", "to"]
+                    events=events, account_keys=["from", "to"]
                 )
                 for _account in accounts_filtered:
-                    _balance, _pending_transfer = self.__get_account_balance_token(token, _account)
+                    _balance, _pending_transfer = self.__get_account_balance_token(
+                        token, _account
+                    )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=_account,
                         balance=_balance,
-                        pending_transfer=_pending_transfer
+                        pending_transfer=_pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -681,8 +678,7 @@ class Processor:
             exchange_address = exchange.exchange_address
             try:
                 exchange = Contract.get_contract(
-                    contract_name="IbetExchange",
-                    address=exchange_address
+                    contract_name="IbetExchange", address=exchange_address
                 )
 
                 account_list_tmp = []
@@ -690,120 +686,175 @@ class Processor:
                 # NewOrder event
                 try:
                     _event_list = exchange.events.NewOrder.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("tokenAddress", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("accountAddress", ZERO_ADDRESS)
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "accountAddress", ZERO_ADDRESS
+                            ),
+                        }
+                    )
 
                 # CancelOrder event
                 try:
                     _event_list = exchange.events.CancelOrder.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("tokenAddress", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("accountAddress", ZERO_ADDRESS)
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "accountAddress", ZERO_ADDRESS
+                            ),
+                        }
+                    )
 
                 # ForceCancelOrder event
                 try:
                     _event_list = exchange.events.ForceCancelOrder.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("tokenAddress", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("accountAddress", ZERO_ADDRESS)
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "accountAddress", ZERO_ADDRESS
+                            ),
+                        }
+                    )
 
                 # Agree event
                 try:
                     _event_list = exchange.events.Agree.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("tokenAddress", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("sellAddress", ZERO_ADDRESS)  # only seller has changed
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "sellAddress", ZERO_ADDRESS
+                            ),  # only seller has changed
+                        }
+                    )
 
                 # SettlementOK event
                 try:
                     _event_list = exchange.events.SettlementOK.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("tokenAddress", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("buyAddress", ZERO_ADDRESS)
-                    })
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("sellAddress", ZERO_ADDRESS)
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "buyAddress", ZERO_ADDRESS
+                            ),
+                        }
+                    )
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "sellAddress", ZERO_ADDRESS
+                            ),
+                        }
+                    )
 
                 # SettlementNG event
                 try:
                     _event_list = exchange.events.SettlementNG.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("tokenAddress", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("sellAddress", ZERO_ADDRESS)  # only seller has changed
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get(
+                                "tokenAddress", ZERO_ADDRESS
+                            ),
+                            "account_address": _event["args"].get(
+                                "sellAddress", ZERO_ADDRESS
+                            ),  # only seller has changed
+                        }
+                    )
 
                 # Make temporary list unique
-                account_list_tmp.sort(key=lambda x: (x["token_address"], x["account_address"]))
+                account_list_tmp.sort(
+                    key=lambda x: (x["token_address"], x["account_address"])
+                )
                 account_list_unfiltered = []
-                for k, g in groupby(account_list_tmp, lambda x: (x["token_address"], x["account_address"])):
-                    account_list_unfiltered.append({"token_address": k[0], "account_address": k[1]})
+                for k, g in groupby(
+                    account_list_tmp,
+                    lambda x: (x["token_address"], x["account_address"]),
+                ):
+                    account_list_unfiltered.append(
+                        {"token_address": k[0], "account_address": k[1]}
+                    )
 
                 # Filter account_list by listed token
                 token_address_list = [t.token_contract.address for t in self.token_list]
@@ -816,17 +867,20 @@ class Processor:
                 for _account in account_list:
                     token_address = _account["token_address"]
                     account_address = _account["account_address"]
-                    exchange_balance, exchange_commitment = self.__get_account_balance_exchange(
+                    (
+                        exchange_balance,
+                        exchange_commitment,
+                    ) = self.__get_account_balance_exchange(
                         exchange_address=exchange_address,
                         token_address=token_address,
-                        account_address=account_address
+                        account_address=account_address,
                     )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=token_address,
                         account_address=account_address,
                         exchange_balance=exchange_balance,
-                        exchange_commitment=exchange_commitment
+                        exchange_commitment=exchange_commitment,
                     )
             except Exception as e:
                 raise e
@@ -844,73 +898,97 @@ class Processor:
                 continue
             exchange_address = exchange.exchange_address
             try:
-                escrow = Contract.get_contract("IbetSecurityTokenEscrow", exchange_address)
+                escrow = Contract.get_contract(
+                    "IbetSecurityTokenEscrow", exchange_address
+                )
 
                 account_list_tmp = []
 
                 # EscrowCreated event
                 try:
                     _event_list = escrow.events.EscrowCreated.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("token", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("token", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("sender", ZERO_ADDRESS)  # only sender has changed
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get(
+                                "sender", ZERO_ADDRESS
+                            ),  # only sender has changed
+                        }
+                    )
 
                 # EscrowCanceled event
                 try:
                     _event_list = escrow.events.EscrowCanceled.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("token", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("token", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("sender", ZERO_ADDRESS)  # only sender has changed
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get(
+                                "sender", ZERO_ADDRESS
+                            ),  # only sender has changed
+                        }
+                    )
 
                 # HolderChanged event
                 try:
                     _event_list = escrow.events.HolderChanged.getLogs(
-                        fromBlock=block_from,
-                        toBlock=block_to
+                        fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
-                    token_cursor = self.token_list.get_cursor(_event["args"].get("token", ZERO_ADDRESS))
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
                     if event_block_number < token_cursor:
                         continue
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("token", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("from", ZERO_ADDRESS)
-                    })
-                    account_list_tmp.append({
-                        "token_address": _event["args"].get("token", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("to", ZERO_ADDRESS)
-                    })
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get("from", ZERO_ADDRESS),
+                        }
+                    )
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get("to", ZERO_ADDRESS),
+                        }
+                    )
 
                 # Make temporary list unique
-                account_list_tmp.sort(key=lambda x: (x["token_address"], x["account_address"]))
+                account_list_tmp.sort(
+                    key=lambda x: (x["token_address"], x["account_address"])
+                )
                 account_list_unfiltered = []
-                for k, g in groupby(account_list_tmp, lambda x: (x["token_address"], x["account_address"])):
-                    account_list_unfiltered.append({"token_address": k[0], "account_address": k[1]})
+                for k, g in groupby(
+                    account_list_tmp,
+                    lambda x: (x["token_address"], x["account_address"]),
+                ):
+                    account_list_unfiltered.append(
+                        {"token_address": k[0], "account_address": k[1]}
+                    )
 
                 # Filter account_list by listed token
                 token_address_list = [t.token_contract.address for t in self.token_list]
@@ -923,17 +1001,20 @@ class Processor:
                 for _account in account_list:
                     token_address = _account["token_address"]
                     account_address = _account["account_address"]
-                    exchange_balance, exchange_commitment = self.__get_account_balance_exchange(
+                    (
+                        exchange_balance,
+                        exchange_commitment,
+                    ) = self.__get_account_balance_exchange(
                         exchange_address=exchange_address,
                         token_address=token_address,
-                        account_address=account_address
+                        account_address=account_address,
                     )
                     self.__sink_on_position(
                         db_session=db_session,
                         token_address=token_address,
                         account_address=account_address,
                         exchange_balance=exchange_balance,
-                        exchange_commitment=exchange_commitment
+                        exchange_commitment=exchange_commitment,
                     )
             except Exception as e:
                 raise e
@@ -941,8 +1022,7 @@ class Processor:
     @staticmethod
     def __gen_block_timestamp(event):
         return datetime.fromtimestamp(
-            web3.eth.get_block(event["blockNumber"])["timestamp"],
-            UTC
+            web3.eth.get_block(event["blockNumber"])["timestamp"], UTC
         )
 
     @staticmethod
@@ -957,28 +1037,46 @@ class Processor:
         return oldest_block_number
 
     @staticmethod
-    def __get_idx_position_block_number(db_session: Session, token_address: str, exchange_address: str):
-        """Get position index for Bond """
-        _idx_position_block_number = db_session.query(IDXPositionBondBlockNumber).\
-            filter(IDXPositionBondBlockNumber.token_address == token_address).\
-            filter(IDXPositionBondBlockNumber.exchange_address == exchange_address).first()
+    def __get_idx_position_block_number(
+        db_session: Session, token_address: str, exchange_address: str
+    ):
+        """Get position index for Bond"""
+        _idx_position_block_number = (
+            db_session.query(IDXPositionBondBlockNumber)
+            .filter(IDXPositionBondBlockNumber.token_address == token_address)
+            .filter(IDXPositionBondBlockNumber.exchange_address == exchange_address)
+            .first()
+        )
         if _idx_position_block_number is None:
             return -1
         else:
             return _idx_position_block_number.latest_block_number
 
     @staticmethod
-    def __set_idx_position_block_number(db_session: Session, target_token_list: TargetTokenList, block_number: int):
-        """Set position index for Bond """
+    def __set_idx_position_block_number(
+        db_session: Session, target_token_list: TargetTokenList, block_number: int
+    ):
+        """Set position index for Bond"""
         for target_token in target_token_list:
-            _idx_position_block_number = db_session.query(IDXPositionBondBlockNumber). \
-                filter(IDXPositionBondBlockNumber.token_address == target_token.token_contract.address).\
-                filter(IDXPositionBondBlockNumber.exchange_address == target_token.exchange_address).\
-                populate_existing().first()
+            _idx_position_block_number = (
+                db_session.query(IDXPositionBondBlockNumber)
+                .filter(
+                    IDXPositionBondBlockNumber.token_address
+                    == target_token.token_contract.address
+                )
+                .filter(
+                    IDXPositionBondBlockNumber.exchange_address
+                    == target_token.exchange_address
+                )
+                .populate_existing()
+                .first()
+            )
             if _idx_position_block_number is None:
                 _idx_position_block_number = IDXPositionBondBlockNumber()
             _idx_position_block_number.latest_block_number = block_number
-            _idx_position_block_number.token_address = target_token.token_contract.address
+            _idx_position_block_number.token_address = (
+                target_token.token_contract.address
+            )
             _idx_position_block_number.exchange_address = target_token.exchange_address
             db_session.merge(_idx_position_block_number)
 
@@ -989,13 +1087,13 @@ class Processor:
             contract=token_contract,
             function_name="balanceOf",
             args=(account_address,),
-            default_returns=0
+            default_returns=0,
         )
         pending_transfer = Contract.call_function(
             contract=token_contract,
             function_name="pendingTransfer",
             args=(account_address,),
-            default_returns=0
+            default_returns=0,
         )
         exchange_balance = 0
         exchange_commitment = 0
@@ -1003,22 +1101,29 @@ class Processor:
             contract=token_contract,
             function_name="tradableExchange",
             args=(),
-            default_returns=ZERO_ADDRESS
+            default_returns=ZERO_ADDRESS,
         )
         if tradable_exchange_address != ZERO_ADDRESS:
             exchange_contract = Contract.get_contract(
-                "IbetExchangeInterface", tradable_exchange_address)
+                "IbetExchangeInterface", tradable_exchange_address
+            )
             exchange_balance = Contract.call_function(
                 contract=exchange_contract,
                 function_name="balanceOf",
-                args=(account_address, token_contract.address,),
-                default_returns=0
+                args=(
+                    account_address,
+                    token_contract.address,
+                ),
+                default_returns=0,
             )
             exchange_commitment = Contract.call_function(
                 contract=exchange_contract,
                 function_name="commitmentOf",
-                args=(account_address, token_contract.address,),
-                default_returns=0
+                args=(
+                    account_address,
+                    token_contract.address,
+                ),
+                default_returns=0,
             )
         return balance, pending_transfer, exchange_balance, exchange_commitment
 
@@ -1029,54 +1134,72 @@ class Processor:
             contract=token_contract,
             function_name="balanceOf",
             args=(account_address,),
-            default_returns=0
+            default_returns=0,
         )
         pending_transfer = Contract.call_function(
             contract=token_contract,
             function_name="pendingTransfer",
             args=(account_address,),
-            default_returns=0
+            default_returns=0,
         )
         return balance, pending_transfer
 
     @staticmethod
-    def __get_account_locked_token(token_contract, lock_address: str, account_address: str):
+    def __get_account_locked_token(
+        token_contract, lock_address: str, account_address: str
+    ):
         """Get locked on token"""
         value = Contract.call_function(
             contract=token_contract,
             function_name="lockedOf",
-            args=(lock_address, account_address,),
-            default_returns=0
+            args=(
+                lock_address,
+                account_address,
+            ),
+            default_returns=0,
         )
         return value
 
     @staticmethod
-    def __get_account_balance_exchange(exchange_address: str,
-                                       token_address: str,
-                                       account_address: str):
+    def __get_account_balance_exchange(
+        exchange_address: str, token_address: str, account_address: str
+    ):
         """Get balance on exchange"""
         exchange_contract = Contract.get_contract(
-            contract_name="IbetExchangeInterface",
-            address=exchange_address
+            contract_name="IbetExchangeInterface", address=exchange_address
         )
         exchange_balance = Contract.call_function(
             contract=exchange_contract,
             function_name="balanceOf",
-            args=(account_address, token_address,),
-            default_returns=0
+            args=(
+                account_address,
+                token_address,
+            ),
+            default_returns=0,
         )
         exchange_commitment = Contract.call_function(
             contract=exchange_contract,
             function_name="commitmentOf",
-            args=(account_address, token_address,),
-            default_returns=0
+            args=(
+                account_address,
+                token_address,
+            ),
+            default_returns=0,
         )
         return exchange_balance, exchange_commitment
 
     @staticmethod
-    def __insert_lock_idx(db_session: Session, transaction_hash: str, block_number: int,
-                          token_address: str, lock_address: str, account_address: str,
-                          value: int, data_str: str, block_timestamp: datetime):
+    def __insert_lock_idx(
+        db_session: Session,
+        transaction_hash: str,
+        block_number: int,
+        token_address: str,
+        lock_address: str,
+        account_address: str,
+        value: int,
+        data_str: str,
+        block_timestamp: datetime,
+    ):
         """Registry Lock data in DB
 
         :param transaction_hash: transaction hash
@@ -1104,9 +1227,18 @@ class Processor:
         db_session.add(lock)
 
     @staticmethod
-    def __insert_unlock_idx(db_session: Session, transaction_hash: str, block_number: int,
-                            token_address: str, lock_address: str, account_address: str, recipient_address: str,
-                            value: int, data_str: str, block_timestamp: datetime):
+    def __insert_unlock_idx(
+        db_session: Session,
+        transaction_hash: str,
+        block_number: int,
+        token_address: str,
+        lock_address: str,
+        account_address: str,
+        recipient_address: str,
+        value: int,
+        data_str: str,
+        block_timestamp: datetime,
+    ):
         """Registry Unlock data in DB
 
         :param transaction_hash: transaction hash
@@ -1136,13 +1268,15 @@ class Processor:
         db_session.add(unlock)
 
     @staticmethod
-    def __sink_on_position(db_session: Session,
-                           token_address: str,
-                           account_address: str,
-                           balance: Optional[int] = None,
-                           pending_transfer: Optional[int] = None,
-                           exchange_balance: Optional[int] = None,
-                           exchange_commitment: Optional[int] = None):
+    def __sink_on_position(
+        db_session: Session,
+        token_address: str,
+        account_address: str,
+        balance: Optional[int] = None,
+        pending_transfer: Optional[int] = None,
+        exchange_balance: Optional[int] = None,
+        exchange_commitment: Optional[int] = None,
+    ):
         """Update Position data in DB
 
         :param db_session: ORM session
@@ -1154,10 +1288,12 @@ class Processor:
         :param exchange_commitment: commitment volume on exchange
         :return: None
         """
-        position = db_session.query(IDXPosition). \
-            filter(IDXPosition.token_address == token_address). \
-            filter(IDXPosition.account_address == account_address). \
-            first()
+        position = (
+            db_session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token_address)
+            .filter(IDXPosition.account_address == account_address)
+            .first()
+        )
         if position is not None:
             if balance is not None:
                 position.balance = balance
@@ -1168,8 +1304,15 @@ class Processor:
             if exchange_commitment is not None:
                 position.exchange_commitment = exchange_commitment
             db_session.merge(position)
-        elif any(value is not None and value > 0 for value in
-                 [balance, pending_transfer, exchange_balance, exchange_commitment]):
+        elif any(
+            value is not None and value > 0
+            for value in [
+                balance,
+                pending_transfer,
+                exchange_balance,
+                exchange_commitment,
+            ]
+        ):
             LOG.debug(
                 f"Position created (Bond): token_address={token_address}, account_address={account_address}"
             )
@@ -1183,11 +1326,13 @@ class Processor:
             db_session.add(position)
 
     @staticmethod
-    def __sink_on_locked_position(db_session: Session,
-                         token_address: str,
-                         lock_address: str,
-                         account_address: str,
-                         value: int):
+    def __sink_on_locked_position(
+        db_session: Session,
+        token_address: str,
+        lock_address: str,
+        account_address: str,
+        value: int,
+    ):
         """Update Locked position in DB
 
         :param db_session: ORM session
@@ -1197,11 +1342,13 @@ class Processor:
         :param value: updated locked amount
         :return: None
         """
-        locked = db_session.query(IDXLockedPosition). \
-            filter(IDXLockedPosition.token_address == token_address). \
-            filter(IDXLockedPosition.lock_address == lock_address). \
-            filter(IDXLockedPosition.account_address == account_address). \
-            first()
+        locked = (
+            db_session.query(IDXLockedPosition)
+            .filter(IDXLockedPosition.token_address == token_address)
+            .filter(IDXLockedPosition.lock_address == lock_address)
+            .filter(IDXLockedPosition.account_address == account_address)
+            .first()
+        )
         if locked is not None:
             locked.value = value
             db_session.merge(locked)
@@ -1214,8 +1361,9 @@ class Processor:
             db_session.add(locked)
 
     @staticmethod
-    def remove_duplicate_event_by_token_account_desc(events: List,
-                                                     account_keys: List[str]) -> List[str]:
+    def remove_duplicate_event_by_token_account_desc(
+        events: List, account_keys: List[str]
+    ) -> List[str]:
         """Remove duplicate account from event list.
         Events that have same account key will be removed.
 

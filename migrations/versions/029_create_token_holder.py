@@ -19,15 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 import logging
 from datetime import datetime
 
+from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
-from migrate import *
-
 
 meta = MetaData()
 
 table = Table(
-    "token_holder", meta,
+    "token_holder",
+    meta,
     Column("holder_list", BigInteger, primary_key=True),
     Column("account_address", String(42), primary_key=True),
     Column("hold_balance", BigInteger),

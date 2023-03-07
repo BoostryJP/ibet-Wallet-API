@@ -16,8 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import *
 from migrate import *
+from sqlalchemy import *
+
 from migrations.log import LOG
 
 meta = MetaData()

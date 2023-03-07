@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -117,7 +118,9 @@ class TestNotificationCount:
     def test_notificationcount_normal_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.get(self.apiurl, params={"address": TestNotificationCount.address})
+        resp = client.get(
+            self.apiurl, params={"address": TestNotificationCount.address}
+        )
 
         assumed_body = {
             "unread_counts": 2,
@@ -129,7 +132,9 @@ class TestNotificationCount:
     # ＜正常系1-2＞
     # 未読カウントが0の場合
     def test_notificationcount_normal_2(self, client: TestClient, session: Session):
-        resp = client.get(self.apiurl, params={"address": TestNotificationCount.address})
+        resp = client.get(
+            self.apiurl, params={"address": TestNotificationCount.address}
+        )
 
         assumed_body = {
             "unread_counts": 0,
@@ -152,10 +157,10 @@ class TestNotificationCount:
                 {
                     "loc": ["query", "address"],
                     "msg": "field required",
-                    "type": "value_error.missing"
+                    "type": "value_error.missing",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # ＜エラー系2＞
@@ -172,8 +177,8 @@ class TestNotificationCount:
                 {
                     "loc": ["address"],
                     "msg": "address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }

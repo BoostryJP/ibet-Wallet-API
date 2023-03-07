@@ -59,8 +59,12 @@ def dict_factory(x: list[tuple[str, Any]]):
 
 
 @AsyncTTL(time_to_live=3600, skip_args=1)
-async def list_block_data(session: ClientSession, url: str, query: ListBlockDataQuery) -> BlockDataListResponse:
-    async with session.get(url=f"{url}/NodeInfo/BlockData", params=asdict(query, dict_factory=dict_factory)) as resp:
+async def list_block_data(
+    session: ClientSession, url: str, query: ListBlockDataQuery
+) -> BlockDataListResponse:
+    async with session.get(
+        url=f"{url}/NodeInfo/BlockData", params=asdict(query, dict_factory=dict_factory)
+    ) as resp:
         data = await resp.json()
         if resp.status == 404:
             raise ApiNotEnabledException(data)
@@ -68,15 +72,21 @@ async def list_block_data(session: ClientSession, url: str, query: ListBlockData
 
 
 @AsyncTTL(time_to_live=3600, skip_args=1)
-async def get_block_data(session: ClientSession, url: str, block_number: int) -> BlockDataDetail:
+async def get_block_data(
+    session: ClientSession, url: str, block_number: int
+) -> BlockDataDetail:
     async with session.get(url=f"{url}/NodeInfo/BlockData/{block_number}") as resp:
         data = await resp.json()
         return BlockDataDetail.parse_obj(data.get("data"))
 
 
 @AsyncTTL(time_to_live=3600, skip_args=1)
-async def list_tx_data(session: ClientSession, url: str, query: ListTxDataQuery) -> TxDataListResponse:
-    async with session.get(url=f"{url}/NodeInfo/TxData", params=asdict(query, dict_factory=dict_factory)) as resp:
+async def list_tx_data(
+    session: ClientSession, url: str, query: ListTxDataQuery
+) -> TxDataListResponse:
+    async with session.get(
+        url=f"{url}/NodeInfo/TxData", params=asdict(query, dict_factory=dict_factory)
+    ) as resp:
         data = await resp.json()
         return TxDataListResponse.parse_obj(data.get("data"))
 
