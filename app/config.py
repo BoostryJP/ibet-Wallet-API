@@ -50,6 +50,9 @@ COMPANY_LIST_URL = os.environ.get("COMPANY_LIST_URL")
 COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
 COMPANY_LIST_SLEEP_INTERVAL = int(os.environ.get("COMPANY_LIST_SLEEP_INTERVAL")) if os.environ.get("COMPANY_LIST_SLEEP_INTERVAL") else 3600
 
+# System timezone for REST API
+TZ = os.environ.get("TZ") or "Asia/Tokyo"
+
 ####################################################
 # Server settings
 ####################################################

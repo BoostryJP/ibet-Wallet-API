@@ -19,11 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
@@ -37,7 +34,8 @@ sys.path.append(path)
 from app.config import (
     DATABASE_URL,
     TOKEN_LIST_CONTRACT_ADDRESS,
-    ZERO_ADDRESS
+    ZERO_ADDRESS,
+    TZ
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -48,7 +46,7 @@ from app.model.db import (
 from app.utils.web3_utils import Web3Wrapper
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 process_name = "INDEXER-CONSUME-COUPON"
 LOG = log.get_logger(process_name=process_name)
@@ -170,9 +168,8 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
-                    block_timestamp = datetime.fromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"],
-                        JST
+                    block_timestamp = datetime.utcfromtimestamp(
+                        web3.eth.get_block(event["blockNumber"])["timestamp"]
                     )
                     amount = args.get("value", 0)
                     consumer = args.get("consumer", ZERO_ADDRESS)

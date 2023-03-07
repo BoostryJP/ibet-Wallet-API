@@ -117,7 +117,7 @@ class LockEvent(BaseModel):
     recipient_address: Optional[str] = Field(default=None, description="Recipient address")
     value: int = Field(description="Transfer quantity")
     data: dict = Field(description="Data")
-    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
+    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (local_timezone)")
 
 
 ############################

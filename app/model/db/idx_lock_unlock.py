@@ -22,6 +22,7 @@ from datetime import (
     timezone,
     timedelta
 )
+from zoneinfo import ZoneInfo
 from sqlalchemy import (
     Column,
     String,
@@ -29,11 +30,11 @@ from sqlalchemy import (
     JSON,
     DateTime
 )
-
+from app.config import TZ
 from app.model.db import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class IDXLock(Base):
@@ -73,11 +74,15 @@ class IDXLock(Base):
     FIELDS.update(Base.FIELDS)
 
     @staticmethod
-    def replace_to_JST(_datetime: datetime) -> datetime | None:
+    def replace_to_local_tz(_datetime: datetime) -> datetime | None:
+        """Convert timestamp from UTC to local timezone
+        :param _datetime:
+        :return: datetime | None
+        """
         if _datetime is None:
             return None
-        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetime_jp
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local
 
     def json(self):
         return {
@@ -89,7 +94,7 @@ class IDXLock(Base):
             "account_address": self.account_address,
             "value": self.value,
             "data": self.data,
-            "block_timestamp": self.replace_to_JST(self.block_timestamp)
+            "block_timestamp": self.replace_to_local_tz(self.block_timestamp)
         }
 
 
@@ -133,11 +138,15 @@ class IDXUnlock(Base):
     FIELDS.update(Base.FIELDS)
 
     @staticmethod
-    def replace_to_JST(_datetime: datetime) -> datetime | None:
+    def replace_to_local_tz(_datetime: datetime) -> datetime | None:
+        """Convert timestamp from UTC to local timezone
+        :param _datetime:
+        :return: datetime | None
+        """
         if _datetime is None:
             return None
-        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetime_jp
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local
 
     def json(self):
         return {
@@ -150,5 +159,5 @@ class IDXUnlock(Base):
             "recipient_address": self.recipient_address,
             "value": self.value,
             "data": self.data,
-            "block_timestamp": self.replace_to_JST(self.block_timestamp)
+            "block_timestamp": self.replace_to_local_tz(self.block_timestamp)
         }

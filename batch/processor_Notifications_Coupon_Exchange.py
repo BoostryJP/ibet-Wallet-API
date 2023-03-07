@@ -20,11 +20,7 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -54,7 +50,6 @@ from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-EXCHANGE")
 
 WORKER_COUNT = int(WORKER_COUNT)
@@ -100,7 +95,7 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], JST)
+        return datetime.utcfromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"])
 
     def watch(self, db_session: Session, entries):
         pass

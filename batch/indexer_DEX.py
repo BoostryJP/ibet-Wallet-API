@@ -24,6 +24,7 @@ from datetime import (
     timezone,
     timedelta
 )
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -36,7 +37,8 @@ sys.path.append(path)
 from app.config import (
     DATABASE_URL,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
+    TZ
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -49,7 +51,7 @@ from app.model.db import (
 from app.utils.web3_utils import Web3Wrapper
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 process_name = "INDEXER-DEX"
 LOG = log.get_logger(process_name=process_name)
@@ -170,9 +172,8 @@ class Processor:
                             filter(Listing.token_address == args["tokenAddress"]). \
                             first()
                         transaction_hash = event["transactionHash"].hex()
-                        order_timestamp = datetime.fromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"],
-                            JST
+                        order_timestamp = datetime.utcfromtimestamp(
+                            web3.eth.get_block(event["blockNumber"])["timestamp"]
                         )
                         if available_token is not None:
                             account_address = args["accountAddress"]
@@ -261,9 +262,8 @@ class Processor:
                         else:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].hex()
-                        agreement_timestamp = datetime.fromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"],
-                            JST
+                        agreement_timestamp = datetime.utcfromtimestamp(
+                            web3.eth.get_block(event["blockNumber"])["timestamp"]
                         )
                         self.__sink_on_agree(
                             db_session=db_session,
@@ -292,9 +292,8 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
-                    settlement_timestamp = datetime.fromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"],
-                        JST
+                    settlement_timestamp = datetime.utcfromtimestamp(
+                        web3.eth.get_block(event["blockNumber"])["timestamp"]
                     )
                     self.__sink_on_settlement_ok(
                         db_session=db_session,

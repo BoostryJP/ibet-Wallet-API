@@ -72,7 +72,7 @@ class RetrieveAdminTokenResponse(BaseModel):
     max_holding_quantity: Optional[int]
     max_sell_amount: Optional[int]
     owner_address: str = Field(...)
-    created: str = Field(..., description="Create Datetime (JST)")
+    created: str = Field(..., description="Create Datetime (local timezone)")
 
 
 class ListAllAdminTokensResponse(BaseModel):

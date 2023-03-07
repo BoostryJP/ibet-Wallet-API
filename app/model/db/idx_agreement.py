@@ -57,8 +57,16 @@ class IDXAgreement(Base):
     # Agreement Status
     status = Column(Integer)
     # Agreement Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     agreement_timestamp = Column(DateTime, default=None)
     # Settlement Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     settlement_timestamp = Column(DateTime, default=None)
 
     FIELDS = {

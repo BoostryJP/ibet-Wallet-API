@@ -139,7 +139,7 @@ class TransferHistory(BaseModel):
     value: int = Field(description="Transfer quantity")
     source_event: TransferSourceEvent = Field(description="Source Event")
     data: dict | None = Field(description="Event data")
-    created: str = Field(description="block_timestamp when Transfer log was emitted (JST)")
+    created: str = Field(description="block_timestamp when Transfer log was emitted (local timezone)")
 
 
 class TransferHistoriesResponse(BaseModel):
@@ -154,10 +154,10 @@ class TransferApprovalHistory(BaseModel):
     from_address: str = Field(description="Account address of transfer source")
     to_address: str = Field(description="Account address of transfer destination")
     value: int = Field(description="Transfer quantity")
-    application_datetime: str = Field(description="application datetime (JST)")
-    application_blocktimestamp: str = Field(description="application blocktimestamp (JST)")
-    approval_datetime: Optional[str] = Field(description="approval datetime (JST)")
-    approval_blocktimestamp: Optional[str] = Field(description="approval blocktimestamp (JST)")
+    application_datetime: str = Field(description="application datetime (local timezone)")
+    application_blocktimestamp: str = Field(description="application blocktimestamp (local timezone)")
+    approval_datetime: Optional[str] = Field(description="approval datetime (local timezone)")
+    approval_blocktimestamp: Optional[str] = Field(description="approval blocktimestamp (local timezone)")
     cancelled: Optional[bool] = Field(description="Cancellation status")
     transfer_approved: Optional[bool] = Field(description="transfer approval status")
 

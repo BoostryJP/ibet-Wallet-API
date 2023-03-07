@@ -23,6 +23,7 @@ SQLAlchemy = "~1.4.46"
 sqlalchemy-migrate = "~0.13.0"
 uvicorn = "~0.20.0"
 web3 = "~5.31.3"
+tzdata = "^2022.7"
 
 ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = true}
 textual = {version = "~0.10.1", optional = true}

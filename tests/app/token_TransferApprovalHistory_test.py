@@ -22,8 +22,10 @@ from datetime import (
     timezone,
     timedelta
 )
+from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from app.config import TZ
 
 from app.model.db import (
     Listing,
@@ -31,7 +33,7 @@ from app.model.db import (
 )
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class TestTokenTransferApprovalHistory:
@@ -120,7 +122,7 @@ class TestTokenTransferApprovalHistory:
 
         before_datetime = datetime.utcnow().\
             replace(tzinfo=UTC).\
-            astimezone(JST).\
+            astimezone(local_tz).\
             strftime("%Y/%m/%d %H:%M:%S.%f")
         time.sleep(1)
 
@@ -146,7 +148,7 @@ class TestTokenTransferApprovalHistory:
         time.sleep(1)
         after_datetime = datetime.utcnow().\
             replace(tzinfo=UTC).\
-            astimezone(JST).\
+            astimezone(local_tz).\
             strftime("%Y/%m/%d %H:%M:%S.%f")
 
         # request target API
@@ -191,7 +193,7 @@ class TestTokenTransferApprovalHistory:
 
         before_datetime = datetime.utcnow().\
             replace(tzinfo=UTC).\
-            astimezone(JST).\
+            astimezone(local_tz).\
             strftime("%Y/%m/%d %H:%M:%S.%f")
         time.sleep(1)
 
@@ -218,7 +220,7 @@ class TestTokenTransferApprovalHistory:
         time.sleep(1)
         after_datetime = datetime.utcnow().\
             replace(tzinfo=UTC).\
-            astimezone(JST).\
+            astimezone(local_tz).\
             strftime("%Y/%m/%d %H:%M:%S.%f")
 
         # request target API
@@ -263,7 +265,7 @@ class TestTokenTransferApprovalHistory:
 
         before_datetime = datetime.utcnow(). \
             replace(tzinfo=UTC). \
-            astimezone(JST). \
+            astimezone(local_tz). \
             strftime("%Y/%m/%d %H:%M:%S.%f")
         time.sleep(1)
 
@@ -289,7 +291,7 @@ class TestTokenTransferApprovalHistory:
         time.sleep(1)
         after_datetime = datetime.utcnow(). \
             replace(tzinfo=UTC). \
-            astimezone(JST). \
+            astimezone(local_tz). \
             strftime("%Y/%m/%d %H:%M:%S.%f")
 
         # request target API
@@ -333,7 +335,7 @@ class TestTokenTransferApprovalHistory:
 
         before_datetime = datetime.utcnow(). \
             replace(tzinfo=UTC). \
-            astimezone(JST). \
+            astimezone(local_tz). \
             strftime("%Y/%m/%d %H:%M:%S.%f")
         time.sleep(1)
 
@@ -359,7 +361,7 @@ class TestTokenTransferApprovalHistory:
         time.sleep(1)
         after_datetime = datetime.utcnow(). \
             replace(tzinfo=UTC). \
-            astimezone(JST). \
+            astimezone(local_tz). \
             strftime("%Y/%m/%d %H:%M:%S.%f")
 
         # request target API
@@ -402,7 +404,7 @@ class TestTokenTransferApprovalHistory:
 
         before_datetime = datetime.utcnow(). \
             replace(tzinfo=UTC). \
-            astimezone(JST). \
+            astimezone(local_tz). \
             strftime("%Y/%m/%d %H:%M:%S.%f")
         time.sleep(1)
 
@@ -428,7 +430,7 @@ class TestTokenTransferApprovalHistory:
         time.sleep(1)
         after_datetime = datetime.utcnow(). \
             replace(tzinfo=UTC). \
-            astimezone(JST). \
+            astimezone(local_tz). \
             strftime("%Y/%m/%d %H:%M:%S.%f")
 
         # request target API
