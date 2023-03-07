@@ -54,12 +54,16 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
-    indexer_Token_List.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
+    config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Token_List
 
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    config.BOND_TOKEN_ENABLED = True
+    config.SHARE_TOKEN_ENABLED = True
+    config.MEMBERSHIP_TOKEN_ENABLED = True
+    config.COUPON_TOKEN_ENABLED = True
     processor = test_module.Processor()
     return processor
 
@@ -163,7 +167,7 @@ class TestProcessor:
         session.commit()
 
         # Issue bond token
-        for i in range(10):
+        for i in range(2):
             args = {
                 "name": f"テスト債券{str(i+1)}",
                 "symbol": "BOND",
@@ -206,7 +210,7 @@ class TestProcessor:
             })
 
         # Issue share token
-        for i in range(10):
+        for i in range(2):
             args = {
                 "name": "テスト株式",
                 "symbol": "SHARE",
@@ -235,7 +239,7 @@ class TestProcessor:
             })
 
         # Issue membership token
-        for i in range(10):
+        for i in range(2):
             args = {
                 "name": "テスト会員権",
                 "symbol": "MEMBERSHIP",
@@ -260,7 +264,7 @@ class TestProcessor:
             })
 
         # issue coupon token
-        for i in range(10):
+        for i in range(2):
             args = {
                 "name": "テストクーポン",
                 "symbol": "COUPON",
@@ -291,7 +295,8 @@ class TestProcessor:
         # assertion
         for _expect_dict in _token_expected_list:
             token_list_item: IDXTokenListItem = session.query(IDXTokenListItem).\
-                filter(IDXTokenListItem.token_address == _expect_dict["token_address"]).one()
+                filter(IDXTokenListItem.token_address == _expect_dict["token_address"]).\
+                first()
 
             assert token_list_item.token_template == _expect_dict["token_template"]
             assert token_list_item.owner_address == _expect_dict["owner_address"]

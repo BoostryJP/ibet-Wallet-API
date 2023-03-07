@@ -119,10 +119,10 @@ router = APIRouter(
 
 
 class ListAllLock:
-    token_enabled: bool
+    token_type: str
 
-    def __init__(self, token_enabled: bool):
-        self.token_enabled = token_enabled
+    def __init__(self, token_type: str):
+        self.token_type = token_type
 
     def __call__(
         self,
@@ -131,7 +131,11 @@ class ListAllLock:
         account_address: str = Path(),
         session: Session = Depends(db_session)
     ):
-        if self.token_enabled is False:
+        if self.token_type == "IbetShare":
+            token_enabled = config.SHARE_TOKEN_ENABLED
+        else:  # IbetStraightBond
+            token_enabled = config.BOND_TOKEN_ENABLED
+        if token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
 
         # Validation
@@ -200,10 +204,10 @@ class ListAllLock:
 
 
 class ListAllLockEvent:
-    token_enabled: bool
+    token_type: str
 
-    def __init__(self, token_enabled: bool):
-        self.token_enabled = token_enabled
+    def __init__(self, token_type: str):
+        self.token_type = token_type
 
     def __call__(
         self,
@@ -212,7 +216,11 @@ class ListAllLockEvent:
         account_address: str = Path(),
         session: Session = Depends(db_session)
     ):
-        if self.token_enabled is False:
+        if self.token_type == "IbetShare":
+            token_enabled = config.SHARE_TOKEN_ENABLED
+        else:  # IbetStraightBond
+            token_enabled = config.BOND_TOKEN_ENABLED
+        if token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
 
         # Validation
@@ -326,7 +334,7 @@ class ListAllLockEvent:
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def list_all_share_locked_position(
-    data: dict = Depends(ListAllLock(config.SHARE_TOKEN_ENABLED))
+    data: dict = Depends(ListAllLock("IbetShare"))
 ):
     return json_response({
         **SuccessResponse.default(),
@@ -345,7 +353,7 @@ def list_all_share_locked_position(
     responses=get_routers_responses()
 )
 def list_all_share_lock_events(
-    data: dict = Depends(ListAllLockEvent(config.SHARE_TOKEN_ENABLED))
+    data: dict = Depends(ListAllLockEvent("IbetShare"))
 ):
     return json_response({
         **SuccessResponse.default(),
@@ -363,7 +371,7 @@ def list_all_share_lock_events(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def list_all_straight_bond_locked_position(
-    data: dict = Depends(ListAllLock(config.BOND_TOKEN_ENABLED))
+    data: dict = Depends(ListAllLock("IbetStraightBond"))
 ):
     return json_response({
         **SuccessResponse.default(),
@@ -382,7 +390,7 @@ def list_all_straight_bond_locked_position(
     responses=get_routers_responses()
 )
 def list_all_straight_bond_lock_events(
-    data: dict = Depends(ListAllLockEvent(config.BOND_TOKEN_ENABLED))
+    data: dict = Depends(ListAllLockEvent("IbetStraightBond"))
 ):
     return json_response({
         **SuccessResponse.default(),

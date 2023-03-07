@@ -29,14 +29,7 @@ from web3.exceptions import ABIEventFunctionNotFound
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import (
-    DATABASE_URL,
-    COUPON_TOKEN_ENABLED,
-    MEMBERSHIP_TOKEN_ENABLED,
-    SHARE_TOKEN_ENABLED,
-    BOND_TOKEN_ENABLED,
-    TOKEN_LIST_CONTRACT_ADDRESS
-)
+from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
@@ -50,7 +43,7 @@ process_name = "INDEXER-TOKEN-LIST"
 LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3Wrapper()
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -59,8 +52,17 @@ class Processor:
     def __init__(self):
         self.token_list_contract = Contract.get_contract(
             contract_name="TokenList",
-            address=TOKEN_LIST_CONTRACT_ADDRESS
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
+        self.available_token_template_list = []
+        if config.BOND_TOKEN_ENABLED:
+            self.available_token_template_list.append("IbetStraightBond")
+        if config.SHARE_TOKEN_ENABLED:
+            self.available_token_template_list.append("IbetShare")
+        if config.MEMBERSHIP_TOKEN_ENABLED:
+            self.available_token_template_list.append("IbetMembership")
+        if config.COUPON_TOKEN_ENABLED:
+            self.available_token_template_list.append("IbetCoupon")
 
     @staticmethod
     def __get_db_session():
@@ -72,7 +74,7 @@ class Processor:
             latest_block = web3.eth.block_number
             _from_block = self.__get_idx_token_list_block_number(
                 db_session=local_session,
-                contract_address=TOKEN_LIST_CONTRACT_ADDRESS
+                contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS
             ) + 1
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -98,7 +100,7 @@ class Processor:
                 )
             self.__set_idx_token_list_block_number(
                 db_session=local_session,
-                contract_address=TOKEN_LIST_CONTRACT_ADDRESS,
+                contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS,
                 block_number=latest_block,
             )
             local_session.commit()
@@ -151,7 +153,7 @@ class Processor:
         :param owner_address: owner address
         :return: None
         """
-        if token_template not in self.available_token_template():
+        if token_template not in self.available_token_template_list:
             return
 
         idx_token_list: Optional[IDXTokenListItem] = db_session.query(IDXTokenListItem).\
@@ -166,20 +168,6 @@ class Processor:
             idx_token_list.token_template = token_template
             idx_token_list.owner_address = owner_address
             db_session.add(idx_token_list)
-
-    @staticmethod
-    def available_token_template():
-        """Get available token template"""
-        available_token_template_list = []
-        if BOND_TOKEN_ENABLED:
-            available_token_template_list.append("IbetStraightBond")
-        if SHARE_TOKEN_ENABLED:
-            available_token_template_list.append("IbetShare")
-        if MEMBERSHIP_TOKEN_ENABLED:
-            available_token_template_list.append("IbetMembership")
-        if COUPON_TOKEN_ENABLED:
-            available_token_template_list.append("IbetCoupon")
-        return available_token_template_list
 
     @staticmethod
     def __get_idx_token_list_block_number(db_session: Session, contract_address: str):

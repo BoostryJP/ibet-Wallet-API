@@ -65,6 +65,10 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    config.BOND_TOKEN_ENABLED = True
+    config.SHARE_TOKEN_ENABLED = True
+    config.MEMBERSHIP_TOKEN_ENABLED = True
+    config.COUPON_TOKEN_ENABLED = True
     processor = test_module.Processor()
     return processor
 
