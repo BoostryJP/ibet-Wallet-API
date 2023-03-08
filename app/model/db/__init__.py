@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .base import Base
 from .company import Company
 from .executable_contract import ExecutableContract
 from .idx_agreement import AgreementStatus, IDXAgreement

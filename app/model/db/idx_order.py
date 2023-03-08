@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 from app.utils import alchemy
 
 

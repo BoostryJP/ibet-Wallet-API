@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from sqlalchemy import JSON, BigInteger, Column, Integer, String, Text
 
-from app.model.db import Base
+from app.model.db.base import Base
 
 
 class IDXBlockData(Base):

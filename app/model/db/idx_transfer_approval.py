@@ -22,7 +22,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
 from app.config import TZ
-from app.model.db import Base
+from app.model.db.base import Base
 from app.utils import alchemy
 
 UTC = timezone(timedelta(hours=0), "UTC")

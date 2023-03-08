@@ -20,7 +20,7 @@ from enum import Enum
 
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 from app.utils import alchemy
 
 

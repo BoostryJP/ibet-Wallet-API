@@ -20,7 +20,7 @@ from typing import Type, Union
 
 from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Float, String, Text
 
-from app.model.db import Base
+from app.model.db.base import Base
 
 
 class TokenBase(Base):

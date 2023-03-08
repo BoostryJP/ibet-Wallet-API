@@ -35,7 +35,7 @@ from sqlalchemy import (
 )
 
 from app import config
-from app.model.db import Base
+from app.model.db.base import Base
 
 URI = config.DATABASE_URL
 engine = create_engine(URI, echo=False)
