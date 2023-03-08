@@ -20,9 +20,9 @@ SPDX-License-Identifier: Apache-2.0
 import sys
 
 import pymysql
-from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
+from migrate import *
 
 from app import config
 from migrations.log import LOG

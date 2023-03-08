@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import JSON, BigInteger, Column, DateTime, String
 
 from app.config import TZ
-from app.model.db import Base
+from app.model.db.base import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)

@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from sqlalchemy import BigInteger, Boolean, Column, Integer, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 
 
 class Node(Base):

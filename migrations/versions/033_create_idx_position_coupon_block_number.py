@@ -19,9 +19,9 @@ SPDX-License-Identifier: Apache-2.0
 import logging
 from datetime import datetime
 
-from migrate import *
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
+from migrate import *
 
 meta = MetaData()
 

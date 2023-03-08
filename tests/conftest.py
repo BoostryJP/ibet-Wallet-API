@@ -234,7 +234,7 @@ def db(request):
     app.dependency_overrides[db_session] = override_inject_db_session
 
     # Create DB tables
-    from app.model.db import Base
+    from app.model.db.base import Base
 
     Base.metadata.create_all(engine)
 

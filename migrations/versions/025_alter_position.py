@@ -16,8 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from migrate import *
 from sqlalchemy import *
+from migrate import *
 
 from migrations.log import LOG
 
