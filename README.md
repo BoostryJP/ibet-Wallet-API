@@ -51,7 +51,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 Install python packages with:
 ```bash
-$ poetry install --no-root --only main -E explorer
+$ poetry install --no-root --only main -E ibet-explorer
 ```
 
 ### Setting environment variables
@@ -115,6 +115,7 @@ $ poetry install --no-root
 You can run the tests with:
 ```bash
 $ export UNIT_TEST_MODE=1
+$ export RESPONSE_VALIDATION_MODE=1
 $ pytest tests/
 ```
 
