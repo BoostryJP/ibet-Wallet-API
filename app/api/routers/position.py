@@ -91,9 +91,18 @@ router = APIRouter(prefix="/Position", tags=["user_position"])
 
 class ListAllLock:
     token_type: str
+    token_model: BlockChainTokenModel
+    idx_token_model: IDXTokenModel
 
-    def __init__(self, token_type: str):
+    def __init__(
+        self,
+        token_type: str,
+        token_model: BlockChainTokenModel,
+        idx_token_model: IDXTokenModel,
+    ):
         self.token_type = token_type
+        self.token_model = token_model
+        self.idx_token_model = idx_token_model
 
     def __call__(
         self,
@@ -125,7 +134,10 @@ class ListAllLock:
         sort_item = request_query.sort_item
         sort_order = request_query.sort_order  # default: asc
 
-        query = session.query(IDXLockedPosition)
+        query = session.query(IDXLockedPosition, self.idx_token_model).join(
+            self.idx_token_model,
+            IDXLockedPosition.token_address == self.idx_token_model.token_address,
+        )
         if len(token_address_list) > 0:
             query = query.filter(
                 IDXLockedPosition.token_address.in_(token_address_list)
@@ -157,11 +169,14 @@ class ListAllLock:
         if offset is not None:
             query = query.offset(offset)
 
-        _locked_list: list[IDXLockedPosition] = query.all()
+        _locked_list: list[tuple[IDXLockedPosition, IDXTokenInstance]] = query.all()
         locked_list = []
 
         for _locked in _locked_list:
-            locked_list.append(_locked.json())
+            _locked_data = _locked[0].json()
+            if request_query.include_token_details is True:
+                _locked_data["token"] = self.token_model.from_model(_locked[1]).__dict__
+            locked_list.append(_locked_data)
 
         data = {
             "result_set": {
@@ -178,9 +193,18 @@ class ListAllLock:
 
 class ListAllLockEvent:
     token_type: str
+    token_model: BlockChainTokenModel
+    idx_token_model: IDXTokenModel
 
-    def __init__(self, token_type: str):
+    def __init__(
+        self,
+        token_type: str,
+        token_model: BlockChainTokenModel,
+        idx_token_model: IDXTokenModel,
+    ):
         self.token_type = token_type
+        self.token_model = token_model
+        self.idx_token_model = idx_token_model
 
     def __call__(
         self,
@@ -219,6 +243,11 @@ class ListAllLockEvent:
             IDXLock.value.label("value"),
             IDXLock.data.label("data"),
             IDXLock.block_timestamp.label("block_timestamp"),
+            self.idx_token_model,
+        ).join(
+            self.idx_token_model,
+            IDXLock.token_address.label("token_address")
+            == self.idx_token_model.token_address,
         )
         query_unlock = session.query(
             literal(value=LockEventCategory.Unlock.value, type_=String).label(
@@ -232,14 +261,19 @@ class ListAllLockEvent:
             IDXUnlock.value.label("value"),
             IDXUnlock.data.label("data"),
             IDXUnlock.block_timestamp.label("block_timestamp"),
+            self.idx_token_model,
+        ).join(
+            self.idx_token_model,
+            IDXUnlock.token_address.label("token_address")
+            == self.idx_token_model.token_address,
         )
 
         if len(token_address_list) > 0:
             query_lock = query_lock.filter(
-                column("token_address").in_(token_address_list)
+                IDXLock.token_address.label("token_address").in_(token_address_list)
             )
             query_unlock = query_unlock.filter(
-                column("token_address").in_(token_address_list)
+                IDXUnlock.token_address.label("token_address").in_(token_address_list)
             )
 
         total = query_lock.count() + query_unlock.count()
@@ -285,21 +319,24 @@ class ListAllLockEvent:
 
         resp_data = []
         for lock_event in lock_events:
-            resp_data.append(
-                {
-                    "category": lock_event[0],
-                    "transaction_hash": lock_event[1],
-                    "token_address": lock_event[2],
-                    "lock_address": lock_event[3],
-                    "account_address": lock_event[4],
-                    "recipient_address": lock_event[5],
-                    "value": lock_event[6],
-                    "data": lock_event[7],
-                    "block_timestamp": lock_event[8]
-                    .replace(tzinfo=UTC)
-                    .astimezone(local_tz),
-                }
-            )
+            event_data = {
+                "category": lock_event[0],
+                "transaction_hash": lock_event[1],
+                "token_address": lock_event[2],
+                "lock_address": lock_event[3],
+                "account_address": lock_event[4],
+                "recipient_address": lock_event[5],
+                "value": lock_event[6],
+                "data": lock_event[7],
+                "block_timestamp": lock_event[8]
+                .replace(tzinfo=UTC)
+                .astimezone(local_tz),
+            }
+            if request_query.include_token_details is True:
+                event_data["token"] = self.token_model.from_model(
+                    lock_event[9]
+                ).__dict__
+            resp_data.append(event_data)
 
         data = {
             "result_set": {
@@ -320,10 +357,14 @@ class ListAllLockEvent:
     "/{account_address}/Share/Lock",
     summary="Share Token Locked Position",
     operation_id="GetShareTokenLockedPosition",
-    response_model=GenericSuccessResponse[ListAllLockedPositionResponse],
+    response_model=GenericSuccessResponse[
+        ListAllLockedPositionResponse[RetrieveShareTokenResponse]
+    ],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def list_all_share_locked_position(data: dict = Depends(ListAllLock("IbetShare"))):
+def list_all_share_locked_position(
+    data: dict = Depends(ListAllLock("IbetShare", ShareToken, IDXShareToken))
+):
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -334,10 +375,14 @@ def list_all_share_locked_position(data: dict = Depends(ListAllLock("IbetShare")
     "/{account_address}/Share/Lock/Event",
     summary="Share Token Lock Events",
     operation_id="GetShareTokenLockEvent",
-    response_model=GenericSuccessResponse[ListAllLockEventsResponse],
+    response_model=GenericSuccessResponse[
+        ListAllLockEventsResponse[RetrieveShareTokenResponse]
+    ],
     responses=get_routers_responses(),
 )
-def list_all_share_lock_events(data: dict = Depends(ListAllLockEvent("IbetShare"))):
+def list_all_share_lock_events(
+    data: dict = Depends(ListAllLockEvent("IbetShare", ShareToken, IDXShareToken))
+):
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -348,11 +393,13 @@ def list_all_share_lock_events(data: dict = Depends(ListAllLockEvent("IbetShare"
     "/{account_address}/StraightBond/Lock",
     summary="StraightBond Token Locked Position",
     operation_id="GetStraightBondTokenLockedPosition",
-    response_model=GenericSuccessResponse[ListAllLockedPositionResponse],
+    response_model=GenericSuccessResponse[
+        ListAllLockedPositionResponse[RetrieveStraightBondTokenResponse]
+    ],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_straight_bond_locked_position(
-    data: dict = Depends(ListAllLock("IbetStraightBond")),
+    data: dict = Depends(ListAllLock("IbetStraightBond", BondToken, IDXBondToken)),
 ):
     return json_response({**SuccessResponse.default(), "data": data})
 
@@ -364,11 +411,13 @@ def list_all_straight_bond_locked_position(
     "/{account_address}/StraightBond/Lock/Event",
     summary="StraightBond Token Lock Events",
     operation_id="GetStraightBondTokenLockEvent",
-    response_model=GenericSuccessResponse[ListAllLockEventsResponse],
+    response_model=GenericSuccessResponse[
+        ListAllLockEventsResponse[RetrieveStraightBondTokenResponse]
+    ],
     responses=get_routers_responses(),
 )
 def list_all_straight_bond_lock_events(
-    data: dict = Depends(ListAllLockEvent("IbetStraightBond")),
+    data: dict = Depends(ListAllLockEvent("IbetStraightBond", BondToken, IDXBondToken)),
 ):
     return json_response({**SuccessResponse.default(), "data": data})
 
