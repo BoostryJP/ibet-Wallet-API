@@ -105,7 +105,7 @@ class Locked(BaseModel):
     value: int
 
 
-class LockEvent(BaseModel):
+class LockEvent(BaseModel, Generic[T]):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
     token_address: str = Field(description="Token address")
@@ -119,6 +119,7 @@ class LockEvent(BaseModel):
     block_timestamp: datetime = Field(
         description="block_timestamp when Lock log was emitted (local_timezone)"
     )
+    token: T = Field(description="Token information")
 
 
 ############################
@@ -230,6 +231,6 @@ class ListAllLockedPositionResponse(BaseModel):
     locked_positions: list[Locked]
 
 
-class ListAllLockEventsResponse(BaseModel):
+class ListAllLockEventsResponse(BaseModel, Generic[T]):
     result_set: ResultSet
-    events: list[LockEvent] = Field(description="Lock/Unlock event list")
+    events: list[LockEvent[T]] = Field(description="Lock/Unlock event list")

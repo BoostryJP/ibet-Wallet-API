@@ -17,16 +17,14 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import itertools
-import os
 from datetime import datetime, timedelta
-from unittest import mock
 from unittest.mock import ANY
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import IDXLock, IDXUnlock, Listing
+from app.model.db import IDXLock, IDXShareToken, IDXUnlock, Listing
 from app.model.schema import LockEventCategory
 
 
@@ -37,6 +35,10 @@ class TestPositionShareLockEvent:
 
     # テスト対象API
     apiurl_base = "/Position/{account_address}/Share/Lock/Event"
+
+    issuer_address = "0x0000000000000000000000000000000000000001"
+    exchange_address = "0x0000000000000000000000000000000000000002"
+    personal_info_address = "0x0000000000000000000000000000000000000002"
 
     token_1 = "0xE883a6F441Ad5682D37Df31d34fC012bcb07A741"
     token_2 = "0xE883A6f441AD5682D37df31d34FC012bcB07a742"
@@ -55,11 +57,85 @@ class TestPositionShareLockEvent:
     )
 
     @staticmethod
+    def expected_token_address(token_address: str):
+        return {
+            "token_address": token_address,
+            "owner_address": TestPositionShareLockEvent.issuer_address,
+            "company_name": "",
+            "rsa_publickey": "",
+            "name": "テスト株式",
+            "symbol": "SHARE",
+            "token_template": "IbetShare",
+            "total_supply": 1000000,
+            "issue_price": 1000,
+            "principal_value": 1000,
+            "dividend_information": {
+                "dividends": 0.0000000000101,
+                "dividend_record_date": "20200401",
+                "dividend_payment_date": "20200502",
+            },
+            "cancellation_date": "20200603",
+            "memo": "メモ",
+            "transferable": True,
+            "is_offering": False,
+            "status": True,
+            "transfer_approval_required": False,
+            "is_canceled": False,
+            "contact_information": "問い合わせ先",
+            "privacy_policy": "プライバシーポリシー",
+            "tradable_exchange": TestPositionShareLockEvent.exchange_address,
+            "personal_info_address": TestPositionShareLockEvent.personal_info_address,
+            "max_holding_quantity": 1,
+            "max_sell_amount": 1000,
+        }
+
+    @staticmethod
     def insert_listing(session: Session, token_address: str):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
         session.add(_listing)
+
+    @staticmethod
+    def create_idx_token(
+        session: Session,
+        token_address: str,
+        issuer_address: str,
+        personal_info_address: str,
+        exchange_address: str | None,
+    ):
+        # Issue token
+        idx_token = IDXShareToken()
+        idx_token.token_address = token_address
+        idx_token.owner_address = issuer_address
+        idx_token.company_name = ""
+        idx_token.rsa_publickey = ""
+        idx_token.name = "テスト株式"
+        idx_token.symbol = "SHARE"
+        idx_token.token_template = "IbetShare"
+        idx_token.total_supply = 1000000
+        idx_token.issue_price = 1000
+        idx_token.principal_value = 1000
+        idx_token.dividend_information = {
+            "dividends": 0.0000000000101,
+            "dividend_record_date": "20200401",
+            "dividend_payment_date": "20200502",
+        }
+        idx_token.cancellation_date = "20200603"
+        idx_token.memo = "メモ"
+        idx_token.transferable = True
+        idx_token.is_offering = False
+        idx_token.status = True
+        idx_token.transfer_approval_required = False
+        idx_token.is_canceled = False
+        idx_token.contact_information = "問い合わせ先"
+        idx_token.privacy_policy = "プライバシーポリシー"
+        idx_token.tradable_exchange = exchange_address
+        idx_token.personal_info_address = personal_info_address
+        idx_token.max_holding_quantity = 1
+        idx_token.max_sell_amount = 1000
+        session.add(idx_token)
+        session.commit()
 
     @staticmethod
     def create_idx_lock_event(
@@ -109,6 +185,13 @@ class TestPositionShareLockEvent:
 
     def setup_data(self, session: Session, token_address: str, base_time: datetime):
         self.insert_listing(session=session, token_address=token_address)
+        self.create_idx_token(
+            session=session,
+            token_address=token_address,
+            issuer_address=self.issuer_address,
+            exchange_address=self.exchange_address,
+            personal_info_address=self.personal_info_address,
+        )
 
         lock_address_list = [self.lock_1, self.lock_2]
         account_address_list = [self.account_1, self.account_2]
@@ -177,6 +260,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -188,6 +272,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -199,6 +284,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -210,6 +296,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -250,6 +337,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -322,6 +410,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -333,6 +422,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -344,6 +434,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -355,6 +446,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_1,
@@ -366,6 +458,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -377,6 +470,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -388,6 +482,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -399,6 +494,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -443,6 +539,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -454,6 +551,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -465,6 +563,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -476,6 +575,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -526,6 +626,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -537,6 +638,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -548,6 +650,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -559,6 +662,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_1,
@@ -570,6 +674,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -581,6 +686,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -592,6 +698,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -603,6 +710,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -643,6 +751,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -654,6 +763,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -694,6 +804,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -737,6 +848,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -777,6 +889,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -817,6 +930,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -828,6 +942,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -872,6 +987,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -883,6 +999,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -894,6 +1011,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -905,6 +1023,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_2,
@@ -916,6 +1035,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -927,6 +1047,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -938,6 +1059,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -949,6 +1071,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
         ]
 
@@ -989,6 +1112,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1000,6 +1124,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1011,6 +1136,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1022,6 +1148,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -1062,6 +1189,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1073,6 +1201,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1084,6 +1213,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1095,6 +1225,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -1135,6 +1266,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1146,6 +1278,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1157,6 +1290,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1168,6 +1302,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -1208,6 +1343,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1219,6 +1355,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1230,6 +1367,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1241,6 +1379,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 

@@ -24,7 +24,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import IDXLock, IDXUnlock, Listing
+from app.model.db import IDXBondToken, IDXLock, IDXUnlock, Listing
 from app.model.schema import LockEventCategory
 
 
@@ -35,6 +35,10 @@ class TestPositionStraightBondLockEvent:
 
     # テスト対象API
     apiurl_base = "/Position/{account_address}/StraightBond/Lock/Event"
+
+    issuer_address = "0x0000000000000000000000000000000000000001"
+    exchange_address = "0x0000000000000000000000000000000000000002"
+    personal_info_address = "0x0000000000000000000000000000000000000002"
 
     token_1 = "0xE883a6F441Ad5682D37Df31d34fC012bcb07A741"
     token_2 = "0xE883A6f441AD5682D37df31d34FC012bcB07a742"
@@ -53,11 +57,109 @@ class TestPositionStraightBondLockEvent:
     )
 
     @staticmethod
+    def expected_token_address(token_address: str):
+        return {
+            "token_address": token_address,
+            "owner_address": TestPositionStraightBondLockEvent.issuer_address,
+            "company_name": "",
+            "rsa_publickey": "",
+            "name": "テスト債券",
+            "symbol": "BOND",
+            "token_template": "IbetStraightBond",
+            "total_supply": 1000000,
+            "face_value": 10000,
+            "interest_rate": 0.0602,
+            "interest_payment_date1": "0101",
+            "interest_payment_date2": "0201",
+            "interest_payment_date3": "0301",
+            "interest_payment_date4": "0401",
+            "interest_payment_date5": "0501",
+            "interest_payment_date6": "0601",
+            "interest_payment_date7": "0701",
+            "interest_payment_date8": "0801",
+            "interest_payment_date9": "0901",
+            "interest_payment_date10": "1001",
+            "interest_payment_date11": "1101",
+            "interest_payment_date12": "1201",
+            "redemption_date": "20191231",
+            "redemption_value": 10000,
+            "return_date": "20191231",
+            "return_amount": "商品券をプレゼント",
+            "purpose": "新商品の開発資金として利用。",
+            "max_holding_quantity": 1,
+            "max_sell_amount": 1000,
+            "contact_information": "問い合わせ先",
+            "privacy_policy": "プライバシーポリシー",
+            "is_redeemed": False,
+            "transferable": True,
+            "is_offering": False,
+            "tradable_exchange": TestPositionStraightBondLockEvent.exchange_address,
+            "status": True,
+            "memo": "メモ",
+            "personal_info_address": TestPositionStraightBondLockEvent.personal_info_address,
+            "transfer_approval_required": False,
+        }
+
+    @staticmethod
     def insert_listing(session: Session, token_address: str):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
         session.add(_listing)
+
+    @staticmethod
+    def create_idx_token(
+        session: Session,
+        token_address: str,
+        issuer_address: str,
+        personal_info_address: str,
+        exchange_address: str | None,
+    ):
+        # Issue token
+        idx_token = IDXBondToken()
+        idx_token.token_address = token_address
+        idx_token.owner_address = issuer_address
+        idx_token.company_name = ""
+        idx_token.rsa_publickey = ""
+        idx_token.name = "テスト債券"
+        idx_token.symbol = "BOND"
+        idx_token.token_template = "IbetStraightBond"
+        idx_token.total_supply = 1000000
+        idx_token.face_value = 10000
+        idx_token.interest_rate = 0.0602
+        idx_token.interest_payment_date = [
+            "0101",
+            "0201",
+            "0301",
+            "0401",
+            "0501",
+            "0601",
+            "0701",
+            "0801",
+            "0901",
+            "1001",
+            "1101",
+            "1201",
+        ]
+        idx_token.redemption_date = "20191231"
+        idx_token.redemption_value = 10000
+        idx_token.return_date = "20191231"
+        idx_token.return_amount = "商品券をプレゼント"
+        idx_token.purpose = "新商品の開発資金として利用。"
+        idx_token.max_holding_quantity = 1
+        idx_token.max_sell_amount = 1000
+        idx_token.contact_information = "問い合わせ先"
+        idx_token.privacy_policy = "プライバシーポリシー"
+        idx_token.is_redeemed = False
+        idx_token.transferable = True
+        idx_token.is_offering = False
+        idx_token.tradable_exchange = exchange_address
+        idx_token.status = True
+        idx_token.memo = "メモ"
+        idx_token.personal_info_address = personal_info_address
+        idx_token.transfer_approval_required = False
+        session.add(idx_token)
+        session.commit()
 
     @staticmethod
     def create_idx_lock_event(
@@ -107,6 +209,13 @@ class TestPositionStraightBondLockEvent:
 
     def setup_data(self, session: Session, token_address: str, base_time: datetime):
         self.insert_listing(session=session, token_address=token_address)
+        self.create_idx_token(
+            session=session,
+            token_address=token_address,
+            issuer_address=self.issuer_address,
+            exchange_address=self.exchange_address,
+            personal_info_address=self.personal_info_address,
+        )
 
         lock_address_list = [self.lock_1, self.lock_2]
         account_address_list = [self.account_1, self.account_2]
@@ -175,6 +284,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -186,6 +296,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -197,6 +308,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -208,6 +320,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -248,6 +361,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -320,6 +434,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -331,6 +446,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -342,6 +458,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -353,6 +470,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_1,
@@ -364,6 +482,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -375,6 +494,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -386,6 +506,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -397,6 +518,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -441,6 +563,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -452,6 +575,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -463,6 +587,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -474,6 +599,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -524,6 +650,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -535,6 +662,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -546,6 +674,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -557,6 +686,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_1,
@@ -568,6 +698,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -579,6 +710,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -590,6 +722,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -601,6 +734,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -641,6 +775,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -652,6 +787,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -692,6 +828,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -735,6 +872,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -775,6 +913,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             }
         ]
 
@@ -815,6 +954,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -826,6 +966,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -870,6 +1011,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -881,6 +1023,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -892,6 +1035,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -903,6 +1047,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_2,
@@ -914,6 +1059,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -925,6 +1071,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -936,6 +1083,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
             {
                 "token_address": self.token_2,
@@ -947,6 +1095,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_2),
             },
         ]
 
@@ -987,6 +1136,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -998,6 +1148,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1009,6 +1160,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1020,6 +1172,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -1060,6 +1213,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1071,6 +1225,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1082,6 +1237,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1093,6 +1249,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -1133,6 +1290,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1144,6 +1302,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1155,6 +1314,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1166,6 +1326,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 
@@ -1206,6 +1367,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1217,6 +1379,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1228,6 +1391,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
             {
                 "token_address": self.token_1,
@@ -1239,6 +1403,7 @@ class TestPositionStraightBondLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
+                "token": self.expected_token_address(self.token_1),
             },
         ]
 

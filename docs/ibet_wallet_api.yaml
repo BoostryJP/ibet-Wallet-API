@@ -2752,7 +2752,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.ListAllLockEventsResponse_app.model.schema.token_share.RetrieveShareTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2947,7 +2947,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.ListAllLockEventsResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -5272,22 +5272,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllLastPriceResponse'
-    GenericSuccessResponse_ListAllLockEventsResponse_:
-      title: GenericSuccessResponse[ListAllLockEventsResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListAllLockEventsResponse'
     GenericSuccessResponse_ListAllLockedPositionResponse_:
       title: GenericSuccessResponse[ListAllLockedPositionResponse]
       required:
@@ -5928,6 +5912,38 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/GenericSecurityTokenPositionsResponse'
+    GenericSuccessResponse_app.model.schema.position.ListAllLockEventsResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.ListAllLockEventsResponse[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockEventsResponse'
+    GenericSuccessResponse_app.model.schema.position.ListAllLockEventsResponse_app.model.schema.token_share.RetrieveShareTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.ListAllLockEventsResponse[app.model.schema.token_share.RetrieveShareTokenResponse]]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockEventsResponse'
     GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
       title: GenericSuccessResponse[app.model.schema.position.SecurityTokenPositionWithDetail[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
       required:
@@ -6387,6 +6403,9 @@ components:
           type: string
           description: block_timestamp when Lock log was emitted (local_timezone)
           format: date-time
+        token:
+          title: Token
+          description: Token information
     LockEventCategory:
       title: LockEventCategory
       enum:
