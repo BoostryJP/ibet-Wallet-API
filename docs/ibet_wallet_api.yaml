@@ -2632,13 +2632,22 @@ paths:
             default: []
           name: token_address_list
           in: query
+        - description: include token details
+          required: false
+          schema:
+            title: Include Token Details
+            type: boolean
+            description: include token details
+            default: false
+          name: include_token_details
+          in: query
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.ListAllLockedPositionResponse_app.model.schema.token_share.RetrieveShareTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2746,6 +2755,15 @@ paths:
             default: 1
           name: sort_order
           in: query
+        - description: include token details
+          required: false
+          schema:
+            title: Include Token Details
+            type: boolean
+            description: include token details
+            default: false
+          name: include_token_details
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -2827,13 +2845,22 @@ paths:
             default: []
           name: token_address_list
           in: query
+        - description: include token details
+          required: false
+          schema:
+            title: Include Token Details
+            type: boolean
+            description: include token details
+            default: false
+          name: include_token_details
+          in: query
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.ListAllLockedPositionResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2940,6 +2967,15 @@ paths:
             description: 'sort order(0: ASC, 1: DESC)'
             default: 1
           name: sort_order
+          in: query
+        - description: include token details
+          required: false
+          schema:
+            title: Include Token Details
+            type: boolean
+            description: include token details
+            default: false
+          name: include_token_details
           in: query
       responses:
         '200':
@@ -5272,22 +5308,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllLastPriceResponse'
-    GenericSuccessResponse_ListAllLockedPositionResponse_:
-      title: GenericSuccessResponse[ListAllLockedPositionResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListAllLockedPositionResponse'
     GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
       title: GenericSuccessResponse[ListAllMembershipTokenAddressesResponse]
       required:
@@ -5944,6 +5964,38 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllLockEventsResponse'
+    GenericSuccessResponse_app.model.schema.position.ListAllLockedPositionResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.ListAllLockedPositionResponse[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockedPositionResponse'
+    GenericSuccessResponse_app.model.schema.position.ListAllLockedPositionResponse_app.model.schema.token_share.RetrieveShareTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.ListAllLockedPositionResponse[app.model.schema.token_share.RetrieveShareTokenResponse]]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockedPositionResponse'
     GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
       title: GenericSuccessResponse[app.model.schema.position.SecurityTokenPositionWithDetail[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
       required:
@@ -6209,9 +6261,13 @@ components:
           $ref: '#/components/schemas/ResultSet'
         events:
           title: Events
-          type: array
-          items:
-            $ref: '#/components/schemas/LockEvent'
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/LockEventWithTokenDetail'
+            - type: array
+              items:
+                $ref: '#/components/schemas/LockEvent'
           description: Lock/Unlock event list
     ListAllLockedPositionResponse:
       title: ListAllLockedPositionResponse
@@ -6224,9 +6280,13 @@ components:
           $ref: '#/components/schemas/ResultSet'
         locked_positions:
           title: Locked Positions
-          type: array
-          items:
-            $ref: '#/components/schemas/Locked'
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/LockedWithTokenDetail'
+            - type: array
+              items:
+                $ref: '#/components/schemas/Locked'
     ListAllLockedSortItem:
       title: ListAllLockedSortItem
       enum:
@@ -6403,9 +6463,6 @@ components:
           type: string
           description: block_timestamp when Lock log was emitted (local_timezone)
           format: date-time
-        token:
-          title: Token
-          description: Token information
     LockEventCategory:
       title: LockEventCategory
       enum:
@@ -6423,6 +6480,60 @@ components:
         - block_timestamp
       type: string
       description: An enumeration.
+    LockEventWithTokenDetail:
+      title: LockEventWithTokenDetail
+      required:
+        - category
+        - transaction_hash
+        - token_address
+        - lock_address
+        - account_address
+        - value
+        - data
+        - block_timestamp
+        - token
+      type: object
+      properties:
+        category:
+          allOf:
+            - $ref: '#/components/schemas/LockEventCategory'
+          description: history item category
+        transaction_hash:
+          title: Transaction Hash
+          type: string
+          description: Transaction hash
+        token_address:
+          title: Token Address
+          type: string
+          description: Token address
+        lock_address:
+          title: Lock Address
+          type: string
+          description: Lock address
+        account_address:
+          title: Account Address
+          type: string
+          description: Account address
+        recipient_address:
+          title: Recipient Address
+          type: string
+          description: Recipient address
+        value:
+          title: Value
+          type: integer
+          description: Transfer quantity
+        data:
+          title: Data
+          type: object
+          description: Data
+        block_timestamp:
+          title: Block Timestamp
+          type: string
+          description: block_timestamp when Lock log was emitted (local_timezone)
+          format: date-time
+        token:
+          title: Token
+          description: Token information
     Locked:
       title: Locked
       required:
@@ -6444,6 +6555,31 @@ components:
         value:
           title: Value
           type: integer
+    LockedWithTokenDetail:
+      title: LockedWithTokenDetail
+      required:
+        - token_address
+        - lock_address
+        - account_address
+        - value
+        - token
+      type: object
+      properties:
+        token_address:
+          title: Token Address
+          type: string
+        lock_address:
+          title: Lock Address
+          type: string
+        account_address:
+          title: Account Address
+          type: string
+        value:
+          title: Value
+          type: integer
+        token:
+          title: Token
+          description: Token information
     MembershipImage:
       title: MembershipImage
       required:

@@ -105,6 +105,10 @@ class Locked(BaseModel):
     value: int
 
 
+class LockedWithTokenDetail(Locked, Generic[T]):
+    token: T = Field(..., description="Token information")
+
+
 class LockEvent(BaseModel, Generic[T]):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
@@ -119,7 +123,10 @@ class LockEvent(BaseModel, Generic[T]):
     block_timestamp: datetime = Field(
         description="block_timestamp when Lock log was emitted (local_timezone)"
     )
-    token: T = Field(description="Token information")
+
+
+class LockEventWithTokenDetail(LockEvent, Generic[T]):
+    token: T = Field(..., description="Token information")
 
 
 ############################
@@ -167,6 +174,9 @@ class ListAllLockedPositionQuery:
     token_address_list: list[StrictStr] = Query(
         default=[], description="list of token address (**this affects total number**)"
     )
+    include_token_details: Optional[bool] = Query(
+        default=False, description="include token details"
+    )
 
 
 class LockEventSortItem(str, Enum):
@@ -200,6 +210,9 @@ class ListAllLockEventQuery:
     sort_order: SortOrder = Query(
         default=SortOrder.DESC, description="sort order(0: ASC, 1: DESC)"
     )
+    include_token_details: Optional[bool] = Query(
+        default=False, description="include token details"
+    )
 
 
 ############################
@@ -226,11 +239,13 @@ class CouponPositionsResponse(BaseModel):
     positions: Union[list[CouponPositionWithDetail], list[CouponPositionWithAddress]]
 
 
-class ListAllLockedPositionResponse(BaseModel):
+class ListAllLockedPositionResponse(BaseModel, Generic[T]):
     result_set: ResultSet
-    locked_positions: list[Locked]
+    locked_positions: Union[list[LockedWithTokenDetail[T]] | list[Locked]]
 
 
 class ListAllLockEventsResponse(BaseModel, Generic[T]):
     result_set: ResultSet
-    events: list[LockEvent[T]] = Field(description="Lock/Unlock event list")
+    events: Union[list[LockEventWithTokenDetail[T]], list[LockEvent]] = Field(
+        description="Lock/Unlock event list"
+    )
