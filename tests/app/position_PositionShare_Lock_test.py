@@ -174,6 +174,14 @@ class TestPositionShareLock:
                 account_address=account_address,
                 value=value + 1,
             )
+        for account_address in account_address_list:
+            self.create_idx_locked(
+                session=session,
+                token_address="other_token_address",
+                lock_address="lock_address",
+                account_address=account_address,
+                value=0,
+            )
 
     ###########################################################################
     # Normal
