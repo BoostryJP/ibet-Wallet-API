@@ -142,7 +142,9 @@ class ListAllLock:
             query = query.filter(
                 IDXLockedPosition.token_address.in_(token_address_list)
             )
-        query = query.filter(IDXLockedPosition.account_address == account_address)
+        query = query.filter(
+            IDXLockedPosition.account_address == account_address
+        ).filter(IDXLockedPosition.value > 0)
 
         total = query.count()
 
