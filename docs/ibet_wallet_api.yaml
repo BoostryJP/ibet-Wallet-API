@@ -6234,7 +6234,7 @@ components:
         method:
           title: Method
           type: string
-          description: 'method: [eth, net]'
+          description: 'method: eth_xxx'
         params:
           title: Params
           type: array

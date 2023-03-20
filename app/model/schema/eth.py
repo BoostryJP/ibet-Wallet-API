@@ -34,13 +34,13 @@ from pydantic.dataclasses import dataclass
 
 
 class JsonRPCRequest(BaseModel):
-    method: str = Field(description="method: [eth, net]")
+    method: str = Field(description="method: eth_xxx")
     params: list = Field(description="parameters")
 
     @validator("method")
     def method_is_available(cls, v):
-        if v[: v.index("_")] not in ["eth", "net"]:
-            raise ValueError(f"method:{v} is not available")
+        if v[: v.index("_")] not in ["eth"]:
+            raise ValueError(f"The method {v} is not available")
         return v
 
 

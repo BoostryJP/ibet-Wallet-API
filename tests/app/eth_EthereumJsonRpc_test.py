@@ -101,7 +101,7 @@ class TestEthereumJsonRpc:
             "description": [
                 {
                     "loc": ["body", "method"],
-                    "msg": "method:invalid_method is not available",
+                    "msg": "The method invalid_method is not available",
                     "type": "value_error",
                 }
             ],
