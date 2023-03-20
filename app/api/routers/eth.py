@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Any
 
+import requests
 from eth_account import Account
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends
@@ -30,11 +31,17 @@ from web3.types import TxReceipt
 from app import config, log
 from app.contracts import Contract
 from app.database import db_session
-from app.errors import DataNotExistsError, InvalidParameterError, SuspendedTokenError
+from app.errors import (
+    DataNotExistsError,
+    InvalidParameterError,
+    ServiceUnavailable,
+    SuspendedTokenError,
+)
 from app.model.db import ExecutableContract, Listing
 from app.model.schema import (
     GenericSuccessResponse,
     GetTransactionCountQuery,
+    JsonRPCRequest,
     SendRawTransactionRequest,
     SendRawTransactionsNoWaitResponse,
     SendRawTransactionsResponse,
@@ -51,7 +58,50 @@ from app.utils.web3_utils import Web3Wrapper
 LOG = log.get_logger()
 web3 = Web3Wrapper()
 
-router = APIRouter(prefix="/Eth", tags=["transaction"])
+router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
+
+
+# ------------------------------
+# JSON-RPC
+# ------------------------------
+@router.post(
+    "/RPC",
+    summary="Raw JSON-RPC endpoint",
+    operation_id="EthereumJsonRpc",
+    response_model=GenericSuccessResponse[Any],
+    responses=get_routers_responses(InvalidParameterError),
+)
+def ethereum_json_rpc(data: JsonRPCRequest):
+    """
+    Endpoint: /Eth/RPC
+    """
+    res_data = None
+    res_exc = None
+    try:
+        res_data = requests.post(
+            config.WEB3_HTTP_PROVIDER,
+            json={"jsonrpc": "2.0", "method": data.method, "params": data.params},
+        )
+    except Exception as exc:
+        res_exc = exc
+        pass
+
+    for w3_provider in config.WEB3_HTTP_PROVIDER_STANDBY:
+        try:
+            res_data = requests.post(
+                w3_provider,
+                json={"jsonrpc": "2.0", "method": data.method, "params": data.params},
+            )
+            res_exc = None
+        except Exception as exc:
+            res_exc = exc
+            continue
+
+    if res_exc is not None:
+        LOG.exception(res_exc)
+        raise ServiceUnavailable("Unable to connect to web3 provider")
+    else:
+        return json_response({**SuccessResponse.default(), "data": res_data.json()})
 
 
 # ------------------------------

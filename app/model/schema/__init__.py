@@ -58,6 +58,7 @@ from .dex_order_list import (
 from .e2e_message import E2EMessageEncryptionKeyResponse
 from .eth import (
     GetTransactionCountQuery,
+    JsonRPCRequest,
     SendRawTransactionRequest,
     SendRawTransactionsNoWaitResponse,
     SendRawTransactionsResponse,

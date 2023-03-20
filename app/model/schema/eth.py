@@ -20,7 +20,7 @@ from enum import Enum
 from typing import Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, Field, StrictStr, validator
 from pydantic.dataclasses import dataclass
 
 ############################
@@ -31,6 +31,17 @@ from pydantic.dataclasses import dataclass
 ############################
 # REQUEST
 ############################
+
+
+class JsonRPCRequest(BaseModel):
+    method: str = Field(description="method: [eth, net]")
+    params: list = Field(description="parameters")
+
+    @validator("method")
+    def method_is_available(cls, v):
+        if v[: v.index("_")] not in ["eth", "net"]:
+            raise ValueError(f"method:{v} is not available")
+        return v
 
 
 class BlockIdentifier(str, Enum):

@@ -66,7 +66,7 @@ tags_metadata = [
     {"name": "admin", "description": "System administration"},
     {"name": "node_info", "description": "Information about blockchain and contracts"},
     {"name": "abi", "description": "Contract ABIs"},
-    {"name": "transaction", "description": "Blockchain transactions"},
+    {"name": "eth_rpc", "description": "Ethereum RPC"},
     {"name": "company_info", "description": "Company(token issuer) information"},
     {"name": "token_info", "description": "Detailed information for listed tokens"},
     {"name": "user_info", "description": "User information"},
