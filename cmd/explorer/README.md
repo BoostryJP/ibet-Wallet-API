@@ -1,4 +1,4 @@
-# ibet-Wallet-API BC-Explorer
+# ibet blockchain explorer
 
 ## Run
 
