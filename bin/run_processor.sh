@@ -46,6 +46,10 @@ if [ ! -z "$SMTP_METHOD" ]; then
   python batch/processor_Send_Mail.py &
 fi
 
+if [ ! -z "$CHAT_WEBHOOK_URL" ]; then
+  python batch/processor_Send_Chat_Webhook.py &
+fi
+
 python batch/processor_Block_Sync_Status.py &
 
 tail -f /dev/null

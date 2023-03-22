@@ -36,7 +36,7 @@ from app.api.routers import dex_order_list as routers_dex_order_list
 from app.api.routers import e2e_message as routers_e2e_message
 from app.api.routers import eth as routers_eth
 from app.api.routers import events as routers_events
-from app.api.routers import mail as routers_mail
+from app.api.routers import messaging as routers_mail
 from app.api.routers import node_info as routers_node_info
 from app.api.routers import notification as routers_notification
 from app.api.routers import position as routers_position

@@ -48,7 +48,7 @@ from .idx_transfer import (
 from .idx_transfer_approval import IDXTransferApproval, IDXTransferApprovalBlockNumber
 from .idx_tx_data import IDXTxData
 from .listing import Listing
-from .mail import Mail
+from .messaging import ChatWebhook, Mail
 from .node import Node
 from .notification import Notification, NotificationBlockNumber, NotificationType
 from .tokenholders import TokenHolder, TokenHolderBatchStatus, TokenHoldersList

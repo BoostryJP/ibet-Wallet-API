@@ -77,7 +77,7 @@ from .events import (
     ListAllEventsResponse,
     SecurityTokenEventArguments,
 )
-from .mail import SendMailRequest
+from .messaging import SendMailRequest
 from .node_info import GetBlockSyncStatusResponse, GetNodeInfoResponse
 from .notification import (
     NotificationReadRequest,

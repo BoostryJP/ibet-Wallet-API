@@ -3811,6 +3811,35 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+  /Chat/Webhook:
+    post:
+      tags:
+        - messaging
+      summary: Send chat messages using incoming webhooks
+      description: Send Chat Webhook
+      operationId: SendChatWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendChatWebhookRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Sendchatwebhook
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Events/E2EMessaging:
     get:
       tags:
@@ -7850,6 +7879,17 @@ components:
             - {}
             - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
           description: set when include_token_details=false or null
+    SendChatWebhookRequest:
+      title: SendChatWebhookRequest
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          title: Message
+          type: string
+          description: Message body
+          format: json-string
     SendMailRequest:
       title: SendMailRequest
       required:
