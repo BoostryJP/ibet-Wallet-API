@@ -16,24 +16,26 @@ limitations under the License.
 
 SPDX-License
 """
+import json
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app import log
 from app.database import db_session
 from app.errors import InvalidParameterError
-from app.model.db import Mail
-from app.model.schema import SendMailRequest, SuccessResponse
+from app.model.db import ChatWebhook, Mail
+from app.model.schema import SendChatWebhookRequest, SendMailRequest, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(prefix="/Mail", tags=["messaging"])
+router = APIRouter(prefix="", tags=["messaging"])
 
 
 @router.post(
-    "",
+    "/Mail",
     summary="Send Email",
     operation_id="SendEmail",
     response_model=SuccessResponse,
@@ -49,6 +51,25 @@ def send_mail(data: SendMailRequest, session: Session = Depends(db_session)):
         mail.html_content = data.html_content
         session.add(mail)
 
+    session.commit()
+
+    return json_response(SuccessResponse.default())
+
+
+@router.post(
+    "/Chat/Webhook",
+    summary="Send chat messages using incoming webhooks",
+    operation_id="SendChatWebhook",
+    response_model=SuccessResponse,
+    responses=get_routers_responses(InvalidParameterError),
+)
+def send_chat_webhook(
+    data: SendChatWebhookRequest, session: Session = Depends(db_session)
+):
+    """Send Chat Webhook"""
+    hook = ChatWebhook()
+    hook.message = json.dumps(data.message)
+    session.add(hook)
     session.commit()
 
     return json_response(SuccessResponse.default())

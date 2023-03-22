@@ -41,6 +41,10 @@ if [ ! -z "${SMTP_METHOD}" ]; then
   PROC_LIST="${PROC_LIST} batch/processor_Send_Mail.py"
 fi
 
+if [ ! -z "${CHAT_WEBHOOK_URL}" ]; then
+  PROC_LIST="${PROC_LIST} batch/processor_Send_Chat_Webhook.py"
+fi
+
 PROC_LIST="${PROC_LIST} batch/processor_Block_Sync_Status.py"
 
 for i in ${PROC_LIST}; do

@@ -89,3 +89,8 @@ Amazon SES
 | Variable Name       | Required | Details         | Example   | Default | 
 |---------------------|----------|-----------------|-----------|---------|
 | AWS_SES_REGION_NAME | False    | AWS region name | us-east-1 | --      |
+
+### Chat Webhook
+| Variable Name     | Required | Details          | Example                                                                        | Default | 
+|-------------------|----------|------------------|--------------------------------------------------------------------------------|---------|
+| CHAT_WEBHOOK_URL  | False    | Chat webhook url | https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  | --      |

@@ -47,3 +47,22 @@ class Mail(Base):
         "html_content": str,
     }
     FIELDS.update(Base.FIELDS)
+
+
+class ChatWebhook(Base):
+    """
+    Chat webhook message
+    """
+
+    __tablename__ = "chat_webhook"
+
+    # unique id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # html mail content
+    message = Column(Text, nullable=False)
+
+    FIELDS = {
+        "id": int,
+        "message": str,
+    }
+    FIELDS.update(Base.FIELDS)

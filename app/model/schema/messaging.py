@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, conlist, constr
+from pydantic import BaseModel, EmailStr, Field, Json, conlist, constr
 
 ############################
 # REQUEST
@@ -30,3 +30,7 @@ class SendMailRequest(BaseModel):
     subject: constr(max_length=100) = Field(..., description="Mail subject")
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
+
+
+class SendChatWebhookRequest(BaseModel):
+    message: Json = Field(..., description="Message body")

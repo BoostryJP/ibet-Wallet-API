@@ -292,6 +292,11 @@ SMTP_SENDER_PASSWORD = os.environ.get("SMTP_SENDER_PASSWORD")
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
 
 ####################################################
+# Chat webhook settings
+####################################################
+CHAT_WEBHOOK_URL = os.environ.get("CHAT_WEBHOOK_URL")
+
+####################################################
 # Other settings
 ####################################################
 # Load test
