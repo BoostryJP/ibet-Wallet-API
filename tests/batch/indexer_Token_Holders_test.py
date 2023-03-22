@@ -1205,7 +1205,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 17000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 13000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -1326,7 +1328,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 10000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 20000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -1450,7 +1454,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 11000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 9000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -1574,7 +1580,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 7000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 4000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -1701,7 +1709,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 10000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 20000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -1823,7 +1833,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 11000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 9000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -1943,7 +1955,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 7000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 13000
+        assert trader_record.locked_balance == 0
 
         assert (
             len(
@@ -2003,6 +2017,9 @@ class TestProcessor:
         )
         # user1: 20000 trader: 10000
 
+        bond_lock(self.trader, token, self.issuer["account_address"], 10000)
+        # user1: 20000 trader: (hold: 0, locked: 10000)
+
         # Insert collection record with above token and current block number
         target_token_holders_list1 = self.token_holders_list(
             token, web3.eth.block_number
@@ -2029,8 +2046,17 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 20000
-        assert trader_record.hold_balance == 10000
+        assert user1_record.locked_balance == 0
+        assert trader_record.hold_balance == 0
+        assert trader_record.locked_balance == 10000
 
+        bond_unlock(
+            self.issuer,
+            token,
+            self.trader["account_address"],
+            self.trader["account_address"],
+            10000,
+        )
         bond_transfer_to_exchange(
             self.user1, {"address": exchange_contract["address"]}, token, 10000
         )
@@ -2059,6 +2085,9 @@ class TestProcessor:
         )
         # user1: 10000 trader: 20000
 
+        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        # user1: 10000 trader: (hold: 17000, locked: 3000)
+
         # Insert collection record with above token and current block number
         target_token_holders_list2 = self.token_holders_list(
             token, web3.eth.block_number
@@ -2085,8 +2114,17 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 10000
-        assert trader_record.hold_balance == 20000
+        assert user1_record.locked_balance == 0
+        assert trader_record.hold_balance == 17000
+        assert trader_record.locked_balance == 3000
 
+        bond_unlock(
+            self.issuer,
+            token,
+            self.trader["account_address"],
+            self.trader["account_address"],
+            3000,
+        )
         bond_transfer_to_exchange(self.user1, exchange_contract, token, 4000)
         make_buy(self.trader, exchange_contract, token, 4000, 100)
         _latest_order_id = get_latest_orderid(exchange_contract)
@@ -2145,7 +2183,9 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 6000
+        assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 44000
+        assert trader_record.locked_balance == 0
 
     # <Normal_14>
     # StraightBond
