@@ -744,10 +744,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequestValidationErrorResponse'
+  /Eth/RPC:
+    post:
+      tags:
+        - eth_rpc
+      summary: Raw JSON-RPC endpoint
+      description: 'Endpoint: /Eth/RPC'
+      operationId: EthereumJsonRpc
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JsonRPCRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_Any_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Ethereumjsonrpc
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableResponse'
   /Eth/TransactionCount/{eth_address}:
     get:
       tags:
-        - transaction
+        - eth_rpc
       summary: Transaction count for the specified eth_address
       description: 'Endpoint: /Eth/TransactionCount/{eth_address}'
       operationId: TransactionCount
@@ -782,7 +817,7 @@ paths:
   /Eth/SendRawTransaction:
     post:
       tags:
-        - transaction
+        - eth_rpc
       summary: Send signed transaction
       description: 'Endpoint: /Eth/SendRawTransaction'
       operationId: SendRawTransaction
@@ -811,7 +846,7 @@ paths:
   /Eth/SendRawTransactionNoWait:
     post:
       tags:
-        - transaction
+        - eth_rpc
       summary: Send signed transaction
       description: 'Endpoint: /Eth/SendRawTransactionNoWait'
       operationId: SendRawTransactionNoWait
@@ -840,7 +875,7 @@ paths:
   /Eth/WaitForTransactionReceipt:
     get:
       tags:
-        - transaction
+        - eth_rpc
       summary: Wait for Transaction Receipt
       description: 'Endpoint: /Eth/WaitForTransactionReceipt'
       operationId: WaitForTransactionReceipt
@@ -5052,6 +5087,21 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ABI'
+    GenericSuccessResponse_Any_:
+      title: GenericSuccessResponse[Any]
+      required:
+        - meta
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          title: Data
     GenericSuccessResponse_BlockDataListResponse_:
       title: GenericSuccessResponse[BlockDataListResponse]
       required:
@@ -6180,6 +6230,22 @@ components:
         details:
           title: Details
           type: object
+    JsonRPCRequest:
+      title: JsonRPCRequest
+      required:
+        - method
+        - params
+      type: object
+      properties:
+        method:
+          title: Method
+          type: string
+          description: 'method: eth_xxx'
+        params:
+          title: Params
+          type: array
+          items: {}
+          description: parameters
     LastPrice:
       title: LastPrice
       required:
@@ -7890,6 +7956,32 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/SendRawTransactionResponse'
+    ServiceUnavailableMetainfo:
+      title: ServiceUnavailableMetainfo
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          title: Code
+          type: integer
+          example: 503
+        message:
+          title: Message
+          type: string
+          example: Service Unavailable
+    ServiceUnavailableResponse:
+      title: ServiceUnavailableResponse
+      required:
+        - meta
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/ServiceUnavailableMetainfo'
+        details:
+          title: Details
+          type: object
     ShareTokensSortItem:
       title: ShareTokensSortItem
       enum:
@@ -8529,8 +8621,8 @@ tags:
     description: Information about blockchain and contracts
   - name: abi
     description: Contract ABIs
-  - name: transaction
-    description: Blockchain transactions
+  - name: eth_rpc
+    description: Ethereum RPC
   - name: company_info
     description: Company(token issuer) information
   - name: token_info

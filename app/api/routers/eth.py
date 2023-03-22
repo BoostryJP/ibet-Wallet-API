@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Any
 
+import requests
 from eth_account import Account
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends
@@ -30,11 +31,17 @@ from web3.types import TxReceipt
 from app import config, log
 from app.contracts import Contract
 from app.database import db_session
-from app.errors import DataNotExistsError, InvalidParameterError, SuspendedTokenError
-from app.model.db import ExecutableContract, Listing
+from app.errors import (
+    DataNotExistsError,
+    InvalidParameterError,
+    ServiceUnavailable,
+    SuspendedTokenError,
+)
+from app.model.db import ExecutableContract, Listing, Node
 from app.model.schema import (
     GenericSuccessResponse,
     GetTransactionCountQuery,
+    JsonRPCRequest,
     SendRawTransactionRequest,
     SendRawTransactionsNoWaitResponse,
     SendRawTransactionsResponse,
@@ -51,7 +58,42 @@ from app.utils.web3_utils import Web3Wrapper
 LOG = log.get_logger()
 web3 = Web3Wrapper()
 
-router = APIRouter(prefix="/Eth", tags=["transaction"])
+router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
+
+
+# ------------------------------
+# JSON-RPC
+# ------------------------------
+@router.post(
+    "/RPC",
+    summary="Raw JSON-RPC endpoint",
+    operation_id="EthereumJsonRpc",
+    response_model=GenericSuccessResponse[Any],
+    responses=get_routers_responses(InvalidParameterError, ServiceUnavailable),
+)
+def ethereum_json_rpc(data: JsonRPCRequest, session: Session = Depends(db_session)):
+    """
+    Endpoint: /Eth/RPC
+    """
+    node: Node | None = (
+        session.query(Node)
+        .filter(Node.is_synced == True)
+        .order_by(Node.priority)
+        .first()
+    )
+
+    if node is not None:
+        try:
+            res_data = requests.post(
+                node.endpoint_uri,
+                json={"jsonrpc": "2.0", "method": data.method, "params": data.params},
+            )
+        except Exception:
+            raise ServiceUnavailable("Unable to connect to web3 provider")
+    else:
+        raise ServiceUnavailable("No web3 providers available")
+
+    return json_response({**SuccessResponse.default(), "data": res_data.json()})
 
 
 # ------------------------------
