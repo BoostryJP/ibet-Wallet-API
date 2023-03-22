@@ -20,9 +20,11 @@ from unittest import mock
 from unittest.mock import ANY, MagicMock
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config
+from app.model.db import Node
 
 
 class TestEthereumJsonRpc:
@@ -34,9 +36,25 @@ class TestEthereumJsonRpc:
     ###########################################################################
 
     # Normal_1
-    def test_normal_1(self, client: TestClient):
+    def test_normal_1(self, client: TestClient, session: Session):
+        node_1 = Node()
+        node_1.is_synced = False
+        node_1.endpoint_uri = ""
+        node_1.priority = 0
+        session.add(node_1)
+
+        node_2 = Node()
+        node_2.is_synced = True
+        node_2.endpoint_uri = config.WEB3_HTTP_PROVIDER
+        node_2.priority = 1
+        session.add(node_2)
+
+        session.commit()
+
+        # Request target API
         resp = client.post(self.apiurl, json={"method": "eth_syncing", "params": []})
 
+        # Assertion
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
         assert resp.status_code == 200
@@ -45,9 +63,19 @@ class TestEthereumJsonRpc:
 
     # Normal_2
     # method is not exists
-    def test_normal_2(self, client: TestClient):
+    def test_normal_2(self, client: TestClient, session: Session):
+        node_1 = Node()
+        node_1.is_synced = True
+        node_1.endpoint_uri = config.WEB3_HTTP_PROVIDER
+        node_1.priority = 1
+        session.add(node_1)
+
+        session.commit()
+
+        # Request target API
         resp = client.post(self.apiurl, json={"method": "eth_sync", "params": []})
 
+        # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
@@ -68,8 +96,10 @@ class TestEthereumJsonRpc:
     # Invalid Parameter
     # value_error.missing
     def test_error_1(self, client: TestClient):
+        # Request target API
         resp = client.post(self.apiurl, json={})
 
+        # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
@@ -92,8 +122,10 @@ class TestEthereumJsonRpc:
     # Invalid Parameter
     # method is not available
     def test_error_2(self, client: TestClient):
+        # Request target API
         resp = client.post(self.apiurl, json={"method": "invalid_method", "params": []})
 
+        # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
@@ -107,17 +139,42 @@ class TestEthereumJsonRpc:
             ],
         }
 
-    # Error_3
+    # Error_3_1
     # Service Unavailable
-    def test_error_3(self, client: TestClient):
+    def test_error_3_1(self, client: TestClient, session: Session):
+        node_1 = Node()
+        node_1.is_synced = True
+        node_1.endpoint_uri = config.WEB3_HTTP_PROVIDER
+        node_1.priority = 1
+        session.add(node_1)
+
+        session.commit()
+
+        # Request target API
         with mock.patch("requests.post", MagicMock(side_effect=Exception())):
             resp = client.post(
                 self.apiurl, json={"method": "eth_syncing", "params": []}
             )
 
+        # Assertion
         assert resp.status_code == 503
         assert resp.json()["meta"] == {
             "code": 503,
             "message": "Service Unavailable",
             "description": "Unable to connect to web3 provider",
+        }
+
+    # Error_3_2
+    # Service Unavailable
+    # No web3 providers available
+    def test_error_3_2(self, client: TestClient, session: Session):
+        # Request target API
+        resp = client.post(self.apiurl, json={"method": "eth_syncing", "params": []})
+
+        # Assertion
+        assert resp.status_code == 503
+        assert resp.json()["meta"] == {
+            "code": 503,
+            "message": "Service Unavailable",
+            "description": "No web3 providers available",
         }

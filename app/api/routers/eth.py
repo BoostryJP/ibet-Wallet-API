@@ -37,7 +37,7 @@ from app.errors import (
     ServiceUnavailable,
     SuspendedTokenError,
 )
-from app.model.db import ExecutableContract, Listing
+from app.model.db import ExecutableContract, Listing, Node
 from app.model.schema import (
     GenericSuccessResponse,
     GetTransactionCountQuery,
@@ -69,39 +69,31 @@ router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
     summary="Raw JSON-RPC endpoint",
     operation_id="EthereumJsonRpc",
     response_model=GenericSuccessResponse[Any],
-    responses=get_routers_responses(InvalidParameterError),
+    responses=get_routers_responses(InvalidParameterError, ServiceUnavailable),
 )
-def ethereum_json_rpc(data: JsonRPCRequest):
+def ethereum_json_rpc(data: JsonRPCRequest, session: Session = Depends(db_session)):
     """
     Endpoint: /Eth/RPC
     """
-    res_data = None
-    res_exc = None
-    try:
-        res_data = requests.post(
-            config.WEB3_HTTP_PROVIDER,
-            json={"jsonrpc": "2.0", "method": data.method, "params": data.params},
-        )
-    except Exception as exc:
-        res_exc = exc
-        pass
+    node: Node | None = (
+        session.query(Node)
+        .filter(Node.is_synced == True)
+        .order_by(Node.priority)
+        .first()
+    )
 
-    for w3_provider in config.WEB3_HTTP_PROVIDER_STANDBY:
+    if node is not None:
         try:
             res_data = requests.post(
-                w3_provider,
+                node.endpoint_uri,
                 json={"jsonrpc": "2.0", "method": data.method, "params": data.params},
             )
-            res_exc = None
-        except Exception as exc:
-            res_exc = exc
-            continue
-
-    if res_exc is not None:
-        LOG.exception(res_exc)
-        raise ServiceUnavailable("Unable to connect to web3 provider")
+        except Exception:
+            raise ServiceUnavailable("Unable to connect to web3 provider")
     else:
-        return json_response({**SuccessResponse.default(), "data": res_data.json()})
+        raise ServiceUnavailable("No web3 providers available")
+
+    return json_response({**SuccessResponse.default(), "data": res_data.json()})
 
 
 # ------------------------------

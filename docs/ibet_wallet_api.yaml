@@ -773,6 +773,12 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableResponse'
   /Eth/TransactionCount/{eth_address}:
     get:
       tags:
@@ -7950,6 +7956,32 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/SendRawTransactionResponse'
+    ServiceUnavailableMetainfo:
+      title: ServiceUnavailableMetainfo
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          title: Code
+          type: integer
+          example: 503
+        message:
+          title: Message
+          type: string
+          example: Service Unavailable
+    ServiceUnavailableResponse:
+      title: ServiceUnavailableResponse
+      required:
+        - meta
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/ServiceUnavailableMetainfo'
+        details:
+          title: Details
+          type: object
     ShareTokensSortItem:
       title: ShareTokensSortItem
       enum:
