@@ -128,7 +128,7 @@ class TestEthSendRawTransactionNoWait:
         tx["nonce"] = web3.eth.get_transaction_count(
             to_checksum_address(local_account_1.address)
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
@@ -220,7 +220,7 @@ class TestEthSendRawTransactionNoWait:
         tx["nonce"] = web3.eth.get_transaction_count(
             to_checksum_address(local_account_1.address)
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         token_contract_2 = web3.eth.contract(
             address=to_checksum_address(coupontoken_2["address"]),
@@ -252,7 +252,7 @@ class TestEthSendRawTransactionNoWait:
         tx["nonce"] = web3.eth.get_transaction_count(
             to_checksum_address(local_account_2.address)
         )
-        signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.privateKey)
+        signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.key)
 
         request_params = {
             "raw_tx_hex_list": [
@@ -481,7 +481,7 @@ class TestEthSendRawTransactionNoWait:
         tx["nonce"] = web3.eth.get_transaction_count(
             to_checksum_address(local_account_1.address)
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
@@ -539,7 +539,7 @@ class TestEthSendRawTransactionNoWait:
         tx["nonce"] = web3.eth.get_transaction_count(
             to_checksum_address(local_account_1.address)
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
@@ -596,7 +596,7 @@ class TestEthSendRawTransactionNoWait:
         tx["nonce"] = web3.eth.get_transaction_count(
             to_checksum_address(local_account_1.address)
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
