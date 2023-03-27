@@ -24,7 +24,7 @@ from unittest import mock
 class TestTransactionWaitPollLatency:
     # テスト対象: TRANSACTION_WAIT_POLL_LATENCY
 
-    def teardown(self):
+    def teardown_method(self):
         from app import config
 
         reload(config)
