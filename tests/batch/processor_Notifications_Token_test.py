@@ -38,7 +38,7 @@ from app.model.db import (
     NotificationType,
 )
 from tests.account_config import eth_account
-from tests.conftest import DeployedContract, SharedContract, TestAccount
+from tests.conftest import DeployedContract, SharedContract, UnitTestAccount
 from tests.contract_modules import (
     coupon_register_list,
     coupon_transfer_to_exchange,
@@ -83,7 +83,7 @@ def watcher_factory(
 
 
 def prepare_coupon_token(
-    issuer: TestAccount,
+    issuer: UnitTestAccount,
     exchange: DeployedContract,
     token_list: DeployedContract,
     session: Session,
@@ -118,7 +118,7 @@ def prepare_coupon_token(
 
 
 def prepare_share_token(
-    issuer: TestAccount,
+    issuer: UnitTestAccount,
     exchange: DeployedContract,
     token_list: DeployedContract,
     personal_info: DeployedContract,

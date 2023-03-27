@@ -26,7 +26,7 @@ from web3.middleware import geth_poa_middleware
 from app import config
 from app.contracts import Contract
 from tests.account_config import eth_account
-from tests.conftest import DeployedContract, TestAccount
+from tests.conftest import DeployedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -188,7 +188,7 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
 
 # 債券トークンの移転
 def transfer_bond_token(
-    invoker: TestAccount, to: TestAccount, token: DeployedContract, amount: int
+    invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
     TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
@@ -438,7 +438,7 @@ def share_transfer_to_exchange(invoker, exchange, token, amount):
 
 # 株式トークンの移転
 def transfer_share_token(
-    invoker: TestAccount, to: TestAccount, token: DeployedContract, amount: int
+    invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
     TokenContract = Contract.get_contract("IbetShare", token["address"])

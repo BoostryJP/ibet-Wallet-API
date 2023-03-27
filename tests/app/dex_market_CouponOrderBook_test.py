@@ -33,7 +33,7 @@ class TestDEXMarketCouponOrderBook:
     # テスト対象API
     apiurl = "/DEX/Market/OrderBook/Coupon"
 
-    def setup(self):
+    def setup_method(self):
         # 環境変数設定
         config.AGENT_ADDRESS = eth_account["agent"]["account_address"]
 
