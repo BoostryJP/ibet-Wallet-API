@@ -64,7 +64,7 @@ class SharedContract(TypedDict):
     IbetSecurityTokenEscrow: Web3Contract
 
 
-class TestAccount(TypedDict):
+class UnitTestAccount(TypedDict):
     account_address: ChecksumAddress
     password: str
 
