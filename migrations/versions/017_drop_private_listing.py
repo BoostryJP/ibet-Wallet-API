@@ -18,9 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime
+
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+
 from migrations.log import LOG
 
 meta = MetaData()
@@ -39,13 +41,14 @@ def downgrade(migrate_engine):
     meta.bind = migrate_engine
 
     private_listing = Table(
-        "private_listing", meta,
+        "private_listing",
+        meta,
         Column("id", BigInteger, primary_key=True, autoincrement=True),
         Column("token_address", String(256), index=True),
         Column("max_holding_quantity", BigInteger),
         Column("max_sell_amount", BigInteger),
         Column("created", DateTime, default=datetime.utcnow),
-        Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+        Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
     )
     try:
         private_listing.create()

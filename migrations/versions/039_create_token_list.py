@@ -23,11 +23,11 @@ from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
 
-
 meta = MetaData()
 
 table = Table(
-    "token_list", meta,
+    "token_list",
+    meta,
     Column("token_address", String(42), primary_key=True),
     Column("token_template", String(40)),
     Column("owner_address", String(42), index=True),

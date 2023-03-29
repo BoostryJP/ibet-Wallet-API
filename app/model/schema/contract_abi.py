@@ -32,5 +32,6 @@ from pydantic import BaseModel
 # RESPONSE
 ############################
 
+
 class ABI(BaseModel):
     __root__: list[object]

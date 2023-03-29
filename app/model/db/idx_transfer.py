@@ -16,25 +16,29 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger
-)
-from datetime import (
-    datetime,
-    timedelta,
-    timezone
-)
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from zoneinfo import ZoneInfo
 
-from app.model.db import Base
+from sqlalchemy import JSON, BigInteger, Column, String
+
+from app.config import TZ
+from app.model.db.base import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
+
+
+class IDXTransferSourceEventType(str, Enum):
+    """Transfer source event type"""
+
+    TRANSFER = "Transfer"
+    UNLOCK = "Unlock"
 
 
 class IDXTransfer(Base):
     """Token Transfer Events (INDEX)"""
+
     __tablename__ = "transfer"
 
     # Sequence Id
@@ -49,17 +53,21 @@ class IDXTransfer(Base):
     to_address = Column(String(42))
     # Transfer Amount
     value = Column(BigInteger)
+    # Source Event (IDXTransferSourceEventType)
+    source_event = Column(String(50), nullable=False)
+    # Data
+    data = Column(JSON)
 
     @staticmethod
     def format_timestamp(_datetime: datetime) -> str:
-        """UTCからJSTへ変換
+        """Convert timestamp from UTC to local timezone str
         :param _datetime:
-        :return:
+        :return: str
         """
         if _datetime is None:
             return ""
-        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetime_jp.strftime("%Y/%m/%d %H:%M:%S")
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
         return {
@@ -68,6 +76,8 @@ class IDXTransfer(Base):
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": self.value,
+            "source_event": self.source_event,
+            "data": self.data,
             "created": self.format_timestamp(self.created),
         }
 
@@ -78,12 +88,15 @@ class IDXTransfer(Base):
         "from_address": str,
         "to_address": str,
         "value": int,
+        "source_event": str,
+        "data": dict,
     }
     FIELDS.update(Base.FIELDS)
 
 
 class IDXTransferBlockNumber(Base):
     """Synchronized blockNumber of IDXTransfer"""
+
     __tablename__ = "idx_transfer_block_number"
 
     # target address
@@ -92,8 +105,8 @@ class IDXTransferBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        'contract_address': str,
-        'latest_block_number': int,
+        "contract_address": str,
+        "latest_block_number": int,
     }
 
     FIELDS.update(Base.FIELDS)

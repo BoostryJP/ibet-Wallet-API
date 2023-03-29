@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 .pytest_cache/
 .project
+*.egg-info/
 
 # VSCode
 .vscode
@@ -15,11 +16,6 @@ __pycache__/
 
 # PyEnv
 .python-version
-
-# Poetry
-poetry.lock
-poetry.toml
-pyproject.toml
 
 # Mac
 .DS_Store

@@ -18,17 +18,14 @@ SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
 
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-)
+from sqlalchemy import BigInteger, Column, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 
 
 class TokenHoldersList(Base):
     """Token Holder List"""
+
     __tablename__ = "token_holders_list"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -42,7 +39,7 @@ class TokenHoldersList(Base):
     batch_status = Column(String(256))
 
 
-class TokenHolderBatchStatus(Enum):
+class TokenHolderBatchStatus(str, Enum):
     PENDING = "pending"
     DONE = "done"
     FAILED = "failed"
@@ -50,27 +47,30 @@ class TokenHolderBatchStatus(Enum):
 
 class TokenHolder(Base):
     """Token Holder"""
+
     __tablename__ = "token_holder"
 
     # Related to TokenHoldersList primary key
     holder_list = Column(BigInteger, primary_key=True)
-
     # Account Address
     account_address = Column(String(42), primary_key=True)
-
     # Amounts(including balance/pending_transfer/exchange_balance/exchange_commitment)
     hold_balance = Column(BigInteger)
+    # Amounts(locked)
+    locked_balance = Column(BigInteger)
 
     def json(self):
         return {
             "account_address": self.account_address,
-            "hold_balance": self.hold_balance
+            "hold_balance": self.hold_balance,
+            "locked_balance": self.locked_balance,
         }
 
     FIELDS = {
         "holder_list_id": int,
         "account_address": str,
-        "hold_balance": int
+        "hold_balance": int,
+        "locked_balance": int,
     }
 
     FIELDS.update(Base.FIELDS)

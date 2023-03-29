@@ -17,17 +17,17 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
-import pytest
 from unittest import mock
 from unittest.mock import MagicMock
 
+import pytest
 import requests
 
 from app.model.db import Company
 from batch.indexer_CompanyList import Processor
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def processor(session):
     return Processor()
 
@@ -42,14 +42,13 @@ class MockResponse:
 
 
 class TestProcessor:
-
     ###########################################################################
     # Normal Case
     ###########################################################################
 
     # <Normal_1>
     # 0 record
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -73,9 +72,7 @@ class TestProcessor:
         session.commit()
 
         # Mock
-        mock_get.side_effect = [
-            MockResponse([])
-        ]
+        mock_get.side_effect = [MockResponse([])]
 
         # Run target process
         processor.process()
@@ -86,7 +83,7 @@ class TestProcessor:
 
     # <Normal_2>
     # 1 record
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -111,14 +108,16 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -128,14 +127,16 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
 
     # <Normal_3>
     # 2 record
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -160,19 +161,21 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": None,
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000002",
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": "RSA-KEY 2",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": None,
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000002",
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": "RSA-KEY 2",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -182,12 +185,16 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 2
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == ""
         _company = _company_list[1]
-        assert _company.address == "0x0123456789AbCdEf0123456789aBcDEF00000002"  # checksum address
+        assert (
+            _company.address == "0x0123456789AbCdEf0123456789aBcDEF00000002"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト2"
         assert _company.rsa_publickey == "RSA-KEY 2"
         assert _company.homepage == ""
@@ -196,7 +203,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # address
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_1_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -221,20 +228,22 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": 12345,
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": 12345,
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -244,7 +253,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -253,7 +264,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # corporate_name
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_1_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -278,20 +289,22 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000002",
-                    "corporate_name": 12345,
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000002",
+                        "corporate_name": 12345,
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -301,7 +314,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -310,7 +325,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # rsa_publickey
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_1_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -335,20 +350,22 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000002",
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": 12345,
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000002",
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": 12345,
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -358,7 +375,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -367,7 +386,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # homepage
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_1_4(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -392,20 +411,22 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000002",
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": 12345,
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000002",
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": 12345,
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -415,7 +436,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -424,7 +447,7 @@ class TestProcessor:
     # Insert SKIP
     # required error
     # address
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_2_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -449,19 +472,21 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -471,7 +496,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -480,7 +507,7 @@ class TestProcessor:
     # Insert SKIP
     # required error
     # corporate_name
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_2_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -505,19 +532,21 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000002",
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000002",
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -527,7 +556,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -536,7 +567,7 @@ class TestProcessor:
     # Insert SKIP
     # required error
     # address
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_2_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -561,19 +592,21 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000002",
-                    "corporate_name": "株式会社テスト2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000002",
+                        "corporate_name": "株式会社テスト2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -583,7 +616,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -591,7 +626,7 @@ class TestProcessor:
     # <Normal_4_3>
     # Insert SKIP
     # invalid address error
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -616,20 +651,22 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x01",
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x01",
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -639,7 +676,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -647,7 +686,7 @@ class TestProcessor:
     # <Normal_4_4>
     # Insert SKIP
     # duplicate address error
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_normal_4_4(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -672,20 +711,22 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト2",
-                    "rsa_publickey": "RSA-KEY 2",
-                    "homepage": "http://test2.com",
-                },
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト2",
+                        "rsa_publickey": "RSA-KEY 2",
+                        "homepage": "http://test2.com",
+                    },
+                ]
+            )
         ]
 
         # Run target process
@@ -695,7 +736,9 @@ class TestProcessor:
         _company_list = session.query(Company).order_by(Company.created).all()
         assert len(_company_list) == 1
         _company = _company_list[0]
-        assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
+        assert (
+            _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"
+        )  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
         assert _company.homepage == "http://test1.com"
@@ -707,7 +750,9 @@ class TestProcessor:
     # <Error_1_1>
     # API error
     # Connection error
-    @mock.patch('requests.get', MagicMock(side_effect=requests.exceptions.ConnectionError))
+    @mock.patch(
+        "requests.get", MagicMock(side_effect=requests.exceptions.ConnectionError)
+    )
     def test_error_1_1(self, processor, session):
         # Prepare data
         _company = Company()
@@ -740,7 +785,7 @@ class TestProcessor:
     # <Error_1_2>
     # API error
     # not succeed api
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_error_1_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -764,9 +809,7 @@ class TestProcessor:
         session.commit()
 
         # Mock
-        mock_get.side_effect = [
-            MockResponse([], 400)
-        ]
+        mock_get.side_effect = [MockResponse([], 400)]
 
         # Run target process
         processor.process()
@@ -777,7 +820,7 @@ class TestProcessor:
 
     # <Error_2>
     # not decode response
-    @mock.patch('requests.get', MagicMock(side_effect=json.decoder.JSONDecodeError))
+    @mock.patch("requests.get", MagicMock(side_effect=json.decoder.JSONDecodeError))
     def test_error_2(self, processor, session):
         # Prepare data
         _company = Company()
@@ -809,7 +852,7 @@ class TestProcessor:
 
     # <Error_3>
     # other error
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_error_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -834,15 +877,17 @@ class TestProcessor:
 
         # Mock
         mock_get.side_effect = [
-            MockResponse([
-                {
-                    "address": "0x0123456789abcdef0123456789abcdef00000001",
-                    "corporate_name": "株式会社テスト1",
-                    "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
-                },
-                "aaaaaaaa",  # not dict
-            ])
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000001",
+                        "corporate_name": "株式会社テスト1",
+                        "rsa_publickey": "RSA-KEY 1",
+                        "homepage": "http://test1.com",
+                    },
+                    "aaaaaaaa",  # not dict
+                ]
+            )
         ]
 
         # Run target process

@@ -18,21 +18,23 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import Column
-from sqlalchemy import String, BigInteger, Boolean
+from sqlalchemy import BigInteger, Boolean, Column, String
 
-from app.model.db import Base
+from app.config import TZ
+from app.model.db.base import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class Listing(Base):
     """
     取扱対象トークン
     """
-    __tablename__ = 'listing'
+
+    __tablename__ = "listing"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)  # トークンアドレス
     is_public = Column(Boolean)
@@ -45,14 +47,14 @@ class Listing(Base):
 
     @staticmethod
     def format_timestamp(_datetime: datetime) -> str:
-        """UTCからJSTへ変換
+        """Convert timestamp from UTC to local timezone str
         :param _datetime:
-        :return:
+        :return: str
         """
         if _datetime is None:
             return ""
-        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetime_jp.strftime("%Y/%m/%d %H:%M:%S")
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
         return {
@@ -66,12 +68,12 @@ class Listing(Base):
         }
 
     FIELDS = {
-        'id': int,
-        'token_address': str,
-        'is_public': bool,
-        'max_holding_quantity': int,
-        'max_sell_amount': int,
-        'owner_address': str,
+        "id": int,
+        "token_address": str,
+        "is_public": bool,
+        "max_holding_quantity": int,
+        "max_sell_amount": int,
+        "owner_address": str,
     }
 
     FIELDS.update(Base.FIELDS)

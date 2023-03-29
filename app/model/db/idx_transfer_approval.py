@@ -16,29 +16,22 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    DateTime,
-    Boolean
-)
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
-from app.model.db import Base
+from app.config import TZ
+from app.model.db.base import Base
 from app.utils import alchemy
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class IDXTransferApproval(Base):
     """Token Transfer Approval Events (INDEX)"""
+
     __tablename__ = "transfer_approval"
 
     # Sequence Id
@@ -72,10 +65,14 @@ class IDXTransferApproval(Base):
 
     @staticmethod
     def format_datetime(_datetime: datetime) -> str:
+        """Convert timestamp from UTC to local timezone str
+        :param _datetime:
+        :return: str
+        """
         if _datetime is None:
             return ""
-        _datetime = _datetime.replace(tzinfo=UTC).astimezone(JST)
-        return _datetime.strftime("%Y/%m/%d %H:%M:%S.%f")
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
         return {
@@ -86,12 +83,16 @@ class IDXTransferApproval(Base):
             "to_address": self.to_address,
             "value": self.value,
             "application_datetime": self.format_datetime(self.application_datetime),
-            "application_blocktimestamp": self.format_datetime(self.application_blocktimestamp),
+            "application_blocktimestamp": self.format_datetime(
+                self.application_blocktimestamp
+            ),
             "approval_datetime": self.format_datetime(self.approval_datetime),
-            "approval_blocktimestamp": self.format_datetime(self.approval_blocktimestamp),
+            "approval_blocktimestamp": self.format_datetime(
+                self.approval_blocktimestamp
+            ),
             "cancelled": self.cancelled,
             "escrow_finished": self.escrow_finished,
-            "transfer_approved": self.transfer_approved
+            "transfer_approved": self.transfer_approved,
         }
 
     FIELDS = {
@@ -108,13 +109,14 @@ class IDXTransferApproval(Base):
         "approval_blocktimestamp": alchemy.datetime_to_timestamp,
         "cancelled": bool,
         "escrow_finished": bool,
-        "transfer_approved": bool
+        "transfer_approved": bool,
     }
     FIELDS.update(Base.FIELDS)
 
 
 class IDXTransferApprovalBlockNumber(Base):
     """Synchronized blockNumber of IDXTransferApproval"""
+
     __tablename__ = "idx_transfer_approval_block_number"
 
     # sequence id
@@ -127,10 +129,10 @@ class IDXTransferApprovalBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        'id': int,
-        'token_address': str,
-        'exchange_address': str,
-        'latest_block_number': int,
+        "id": int,
+        "token_address": str,
+        "exchange_address": str,
+        "latest_block_number": int,
     }
 
     FIELDS.update(Base.FIELDS)

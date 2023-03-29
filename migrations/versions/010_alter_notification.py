@@ -23,9 +23,9 @@ import pymysql
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
-from migrations.log import LOG
 
 from app import config
+from migrations.log import LOG
 
 URI = config.DATABASE_URL
 engine = create_engine(URI, echo=False)
@@ -40,7 +40,7 @@ if engine.name != "mysql":
         increment=1,
         minvalue=1,
         maxvalue=sys.maxsize,
-        cache=1
+        cache=1,
     )
 
 
@@ -59,18 +59,16 @@ def upgrade(migrate_engine):
                 "id",
                 BigInteger,
                 server_default=notification_id_seq.next_value(),
-                autoincrement=True
+                autoincrement=True,
             )
         else:
-            col = Column(
-                "id",
-                BigInteger,
-                autoincrement=True
-            )
+            col = Column("id", BigInteger, autoincrement=True)
         col.create(notification_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
         LOG.warning(err.orig)
-    except pymysql.err.OperationalError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する（MySQLの場合）
+    except (
+        pymysql.err.OperationalError
+    ) as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する（MySQLの場合）
         LOG.warning(err)
 
 

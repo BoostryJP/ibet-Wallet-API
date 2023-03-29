@@ -17,13 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
-from sqlalchemy.orm import Session
-from fastapi.testclient import TestClient
 
-from app.model.db import (
-    Listing,
-    ExecutableContract
-)
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.model.db import ExecutableContract, Listing
 
 
 class TestAdminTokenPOST:
@@ -35,7 +33,7 @@ class TestAdminTokenPOST:
         "is_public": True,
         "max_holding_quantity": 100,
         "max_sell_amount": 50000,
-        "owner_address": "0x56f63dc2351BeC560a422f0C646d64Ca718e11D6"
+        "owner_address": "0x56f63dc2351BeC560a422f0C646d64Ca718e11D6",
     }
 
     @staticmethod
@@ -67,7 +65,7 @@ class TestAdminTokenPOST:
             "is_public": False,
             "max_holding_quantity": 200,
             "max_sell_amount": 25000,
-            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590"
+            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590",
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -77,9 +75,11 @@ class TestAdminTokenPOST:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing: Listing = session.query(Listing). \
-            filter(Listing.token_address == token["token_address"]). \
-            first()
+        listing: Listing = (
+            session.query(Listing)
+            .filter(Listing.token_address == token["token_address"])
+            .first()
+        )
         assert listing.token_address == token["token_address"]
         assert listing.is_public == request_params["is_public"]
         assert listing.max_holding_quantity == request_params["max_holding_quantity"]
@@ -98,7 +98,7 @@ class TestAdminTokenPOST:
             "is_public": False,
             "max_holding_quantity": 200,
             "max_sell_amount": 25000,
-            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590"
+            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590",
         }
         headers = {"Content-Type": "invalid_type"}
         request_body = json.dumps(request_params)
@@ -106,16 +106,16 @@ class TestAdminTokenPOST:
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
         assert resp.status_code == 400
         assert resp.json() == {
-            'meta': {
-                'code': 88,
-                'description': [
+            "meta": {
+                "code": 88,
+                "description": [
                     {
-                        'loc': ['body'],
-                        'msg': 'value is not a valid dict',
-                        'type': 'type_error.dict'
+                        "loc": ["body"],
+                        "msg": "value is not a valid dict",
+                        "type": "type_error.dict",
                     }
                 ],
-                'message': 'Invalid Parameter'
+                "message": "Invalid Parameter",
             }
         }
 
@@ -127,7 +127,7 @@ class TestAdminTokenPOST:
             "is_public": False,
             "max_holding_quantity": 200,
             "max_sell_amount": 25000,
-            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D66059"  # アドレスが短い
+            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D66059",  # アドレスが短い
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -142,10 +142,10 @@ class TestAdminTokenPOST:
                     {
                         "loc": ["body", "owner_address"],
                         "msg": "owner_address is not a valid address",
-                        "type": "value_error"
+                        "type": "value_error",
                     }
                 ],
-                "message": "Invalid Parameter"
+                "message": "Invalid Parameter",
             }
         }
 
@@ -157,7 +157,7 @@ class TestAdminTokenPOST:
             "is_public": "False",
             "max_holding_quantity": "200",
             "max_sell_amount": "25000",
-            "owner_address": 1234
+            "owner_address": 1234,
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -172,10 +172,10 @@ class TestAdminTokenPOST:
                     {
                         "loc": ["body", "owner_address"],
                         "msg": "owner_address is not a valid address",
-                        "type": "value_error"
+                        "type": "value_error",
                     }
                 ],
-                "message": "Invalid Parameter"
+                "message": "Invalid Parameter",
             }
         }
 
@@ -187,7 +187,7 @@ class TestAdminTokenPOST:
             "is_public": False,
             "max_holding_quantity": -1,
             "max_sell_amount": -1,
-            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590"
+            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590",
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -203,16 +203,16 @@ class TestAdminTokenPOST:
                         "ctx": {"limit_value": 0},
                         "loc": ["body", "max_holding_quantity"],
                         "msg": "ensure this value is greater than or equal to 0",
-                        "type": "value_error.number.not_ge"
+                        "type": "value_error.number.not_ge",
                     },
                     {
                         "ctx": {"limit_value": 0},
                         "loc": ["body", "max_sell_amount"],
                         "msg": "ensure this value is greater than or equal to 0",
-                        "type": "value_error.number.not_ge"
-                    }
+                        "type": "value_error.number.not_ge",
+                    },
                 ],
-                "message": "Invalid Parameter"
+                "message": "Invalid Parameter",
             }
         }
 
@@ -224,7 +224,7 @@ class TestAdminTokenPOST:
             "is_public": False,
             "max_holding_quantity": 200,
             "max_sell_amount": 25000,
-            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590"
+            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590",
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -232,9 +232,4 @@ class TestAdminTokenPOST:
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 404
-        assert resp.json() == {
-            "meta": {
-                "code": 30,
-                "message": "Data Not Exists"
-            }
-        }
+        assert resp.json() == {"meta": {"code": 30, "message": "Data Not Exists"}}

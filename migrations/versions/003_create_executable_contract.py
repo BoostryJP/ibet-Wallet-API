@@ -22,17 +22,18 @@ from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
-from migrations.log import LOG
 
+from migrations.log import LOG
 
 # Table定義
 meta = MetaData()
 table = Table(
-    "executable_contract", meta,
+    "executable_contract",
+    meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("contract_address", String(256), index=True),
     Column("created", DateTime, default=datetime.utcnow),
-    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
 
 

@@ -16,11 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import pytest
 import time
 from unittest import mock
 from unittest.mock import MagicMock
 
+import pytest
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -32,13 +32,12 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def processor(session):
     return Processor()
 
 
 class TestProcessor:
-
     ###########################################################################
     # Normal Case
     ###########################################################################
@@ -63,7 +62,7 @@ class TestProcessor:
 
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
 
-        # Run 2st: block generation speed down(same the previous)
+        # Run 2nd: block generation speed down(same the previous)
         with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
             processor.process()
             session.commit()
@@ -88,10 +87,7 @@ class TestProcessor:
         block_number = web3.eth.block_number
         with mock.patch("web3.eth.BaseEth._is_syncing") as mock_is_syncing:
             mock_is_syncing.side_effect = [
-                {
-                    "highestBlock": block_number,
-                    "currentBlock": block_number - 3
-                }
+                {"highestBlock": block_number, "currentBlock": block_number - 3}
             ]
             processor.process()
             session.commit()
@@ -106,10 +102,7 @@ class TestProcessor:
         block_number = web3.eth.block_number
         with mock.patch("web3.eth.BaseEth._is_syncing") as mock_is_syncing:
             mock_is_syncing.side_effect = [
-                {
-                    "highestBlock": block_number,
-                    "currentBlock": block_number - 2
-                }
+                {"highestBlock": block_number, "currentBlock": block_number - 2}
             ]
             processor.process()
             session.commit()
@@ -132,15 +125,54 @@ class TestProcessor:
         assert _node.is_synced == False
 
         # node sync(processing)
-        org_value = processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri
-        processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = config.WEB3_HTTP_PROVIDER
+        org_value = processor.node_info["http://test1:1000"][
+            "web3"
+        ].manager.provider.endpoint_uri
+        processor.node_info["http://test1:1000"][
+            "web3"
+        ].manager.provider.endpoint_uri = config.WEB3_HTTP_PROVIDER
         processor.process()
         session.commit()
-        processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = org_value
+        processor.node_info["http://test1:1000"][
+            "web3"
+        ].manager.provider.endpoint_uri = org_value
 
         # assertion
-        _node = session.query(Node).filter(Node.endpoint_uri == "http://test1:1000").first()
+        _node = (
+            session.query(Node).filter(Node.endpoint_uri == "http://test1:1000").first()
+        )
         assert _node.is_synced == True
+
+    # <Normal_3>
+    # Delete old node data
+    def test_normal_3(self, session):
+        node = Node()
+        node.id = 1
+        node.endpoint_uri = "old_node"
+        node.priority = 1
+        node.is_synced = True
+        session.add(node)
+        session.commit()
+
+        processor = Processor()
+
+        # assertion-1
+        old_node = (
+            session.query(Node)
+            .filter(Node.endpoint_uri.not_in(list(config.WEB3_HTTP_PROVIDER)))
+            .all()
+        )
+        assert len(old_node) == 0
+
+        # process
+        processor.process()
+        session.commit()
+
+        # assertion-2
+        new_node = session.query(Node).first()
+        assert new_node.endpoint_uri == config.WEB3_HTTP_PROVIDER
+        assert new_node.priority == 0
+        assert new_node.is_synced == True
 
     ###########################################################################
     # Error Case
@@ -148,8 +180,14 @@ class TestProcessor:
 
     # <Error_1>
     # node down(initialize)
-    @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000", "http://test2:2000"])
-    @mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=Exception()))
+    @mock.patch(
+        "app.config.WEB3_HTTP_PROVIDER_STANDBY",
+        ["http://test1:1000", "http://test2:2000"],
+    )
+    @mock.patch(
+        "web3.providers.rpc.HTTPProvider.make_request",
+        MagicMock(side_effect=Exception()),
+    )
     def test_error_1(self, session):
         Processor()
 
@@ -185,11 +223,17 @@ class TestProcessor:
         assert _node.is_synced == True
 
         # node down(processing)
-        org_value = processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri
-        processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = "http://hogehoge"
+        org_value = processor.node_info[config.WEB3_HTTP_PROVIDER][
+            "web3"
+        ].manager.provider.endpoint_uri
+        processor.node_info[config.WEB3_HTTP_PROVIDER][
+            "web3"
+        ].manager.provider.endpoint_uri = "http://hogehoge"
         processor.process()
         session.commit()
-        processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = org_value
+        processor.node_info[config.WEB3_HTTP_PROVIDER][
+            "web3"
+        ].manager.provider.endpoint_uri = org_value
 
         # assertion
         _node = session.query(Node).first()

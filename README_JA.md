@@ -52,7 +52,7 @@
 
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ pip install -r requirements.txt
+$ poetry install --no-root --only main -E explorer
 ```
 
 ### 環境変数の設定
@@ -73,17 +73,42 @@ API サーバーの起動（停止）
 $ ./bin/run_server.sh start(stop)
 ```
 
+ブラウザで、[http://0.0.0.0:5000](http://0.0.0.0:5000) を開くと、以下のJSONのレスポンスを確認できるはずです。
+```json
+{"server":"ibet-Wallet-API"}
+```
+
 また、バッチプロセスは以下のように起動します。
 ```bash
 $ ./bin/run_indexer.sh
-$ ./bin/run_processor_notification.sh (*optional)
+$ ./bin/run_processor.sh
 ```
+
+### API 仕様書
+
+#### Swagger UI
+
+サーバーを起動した状態で、[http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs) を開いてください。
+
+Swagger UI 形式のドキュメントを参照することができるはずです。
+
+![swagger](https://user-images.githubusercontent.com/963333/209300544-00afcea0-3deb-43a7-9b07-c77650459f5e.png)
+
+
+#### ReDoc
+
+同様に、[http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc) を開いてください。
+
+ReDoc 形式のドキュメントを参照することができるはずです。
+
+![redoc](https://user-images.githubusercontent.com/963333/209300694-2e8565e7-24ce-47ee-82a2-68d7cae92afb.png)
+
 
 ## テストの実行
 
 テストで利用するパッケージをインストールします。
 ```bash
-$ pip install -r tests/requirements.txt
+$ poetry install --no-root
 ```
 
 以下のようにテストを実行します。

@@ -19,41 +19,41 @@ SPDX-License-Identifier: Apache-2.0
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from tests.account_config import eth_account
 from app import config
+from tests.account_config import eth_account
 from tests.contract_modules import (
+    confirm_agreement,
+    get_latest_agreementid,
+    get_latest_orderid,
     membership_issue,
     membership_offer,
-    get_latest_orderid,
     take_buy,
-    get_latest_agreementid,
-    confirm_agreement
 )
 
 
 class TestDEXMarketMembershipLastPrice:
     # テスト対象API
-    apiurl = '/DEX/Market/LastPrice/Membership'
+    apiurl = "/DEX/Market/LastPrice/Membership"
 
     # 約定イベントの作成
     @staticmethod
     def generate_agree_event(exchange):
-        issuer = eth_account['issuer']
-        trader = eth_account['trader']
-        agent = eth_account['agent']
+        issuer = eth_account["issuer"]
+        trader = eth_account["trader"]
+        agent = eth_account["agent"]
 
         attribute = {
-            'name': 'テスト会員権',
-            'symbol': 'MEMBERSHIP',
-            'initialSupply': 1000000,
-            'tradableExchange': exchange['address'],
-            'details': '詳細',
-            'returnDetails': 'リターン詳細',
-            'expirationDate': '20191231',
-            'memo': 'メモ',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            "name": "テスト会員権",
+            "symbol": "MEMBERSHIP",
+            "initialSupply": 1000000,
+            "tradableExchange": exchange["address"],
+            "details": "詳細",
+            "returnDetails": "リターン詳細",
+            "expirationDate": "20191231",
+            "memo": "メモ",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
         }
 
         # 発行体オペレーション
@@ -78,63 +78,66 @@ class TestDEXMarketMembershipLastPrice:
     #  -> 現在値：0円
     def test_normal_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        )
 
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [{
-            'token_address': '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
-            'last_price': 0
-        }]
+        assumed_body = [
+            {
+                "token_address": "0xe883a6f441ad5682d37df31d34fc012bcb07a740",
+                "last_price": 0,
+            }
+        ]
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # 正常系2：約定が発生していないトークンアドレスを指定した場合
     #  -> 現在値：0円
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        exchange = shared_contract['IbetMembershipExchange']
+        exchange = shared_contract["IbetMembershipExchange"]
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange["address"]
 
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [{
-            'token_address': '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
-            'last_price': 0
-        }]
+        assumed_body = [
+            {
+                "token_address": "0xe883a6f441ad5682d37df31d34fc012bcb07a740",
+                "last_price": 0,
+            }
+        ]
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # 正常系3：1000円で約定
     #  -> 現在値1000円が返却される
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
-        exchange = shared_contract['IbetMembershipExchange']
+        exchange = shared_contract["IbetMembershipExchange"]
         token = TestDEXMarketMembershipLastPrice.generate_agree_event(exchange)
-        token_address = token['address']
+        token_address = token["address"]
 
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange["address"]
 
         request_params = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [{
-            'token_address': token_address,
-            'last_price': 1000
-        }]
+        assumed_body = [{"token_address": token_address, "last_price": 1000}]
 
         assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     ###########################################################################
     # Error
@@ -145,7 +148,9 @@ class TestDEXMarketMembershipLastPrice:
     # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        )
 
         resp = client.get(self.apiurl, params={})
 
@@ -156,10 +161,10 @@ class TestDEXMarketMembershipLastPrice:
                 {
                     "loc": ["query", "address_list"],
                     "msg": "field required",
-                    "type": "value_error.missing"
+                    "type": "value_error.missing",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -167,7 +172,9 @@ class TestDEXMarketMembershipLastPrice:
     # Invalid Parameter
     def test_error_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        )
 
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
@@ -180,42 +187,46 @@ class TestDEXMarketMembershipLastPrice:
                 {
                     "loc": ["address_list"],
                     "msg": "address_list has not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # Error_3
     # Method Not Allowed
     def test_error_3(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        )
 
         resp = client.post(self.apiurl)
 
         assert resp.status_code == 405
-        assert resp.json()['meta'] == {
-            'code': 1,
-            'message': 'Method Not Allowed',
-            'description': 'method: POST, url: /DEX/Market/LastPrice/Membership'
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
+            "description": "method: POST, url: /DEX/Market/LastPrice/Membership",
         }
 
     # Error_4_1
     # Membership token is not enabled
     def test_error_4_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = False
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        )
 
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 404
-        assert resp.json()['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /DEX/Market/LastPrice/Membership'
+        assert resp.json()["meta"] == {
+            "code": 10,
+            "message": "Not Supported",
+            "description": "method: GET, url: /DEX/Market/LastPrice/Membership",
         }
 
     # Error_4_2
@@ -229,8 +240,8 @@ class TestDEXMarketMembershipLastPrice:
         resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 404
-        assert resp.json()['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /DEX/Market/LastPrice/Membership'
+        assert resp.json()["meta"] == {
+            "code": 10,
+            "message": "Not Supported",
+            "description": "method: GET, url: /DEX/Market/LastPrice/Membership",
         }

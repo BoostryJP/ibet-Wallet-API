@@ -26,10 +26,7 @@ class AppError(Exception):
     message: str = ""
     description: str | dict | None = None
 
-    def __init__(
-        self,
-        description: str | None = None
-    ):
+    def __init__(self, description: str | None = None):
         self.description = description
 
 
@@ -37,10 +34,12 @@ class AppError(Exception):
 # 400 Bad Request
 #################################################
 
+
 class InvalidParameterError(AppError):
     """
     400 ERROR: Invalid Parameter
     """
+
     status_code = 400
     error_type = "InvalidParameterError"
     error_code = 88
@@ -51,6 +50,7 @@ class SuspendedTokenError(AppError):
     """
     400 ERROR: Suspended tokens
     """
+
     status_code = 400
     error_type = "SuspendedTokenError"
     error_code = 20
@@ -61,19 +61,34 @@ class ResponseLimitExceededError(AppError):
     """
     400 ERROR: Search results are over the limit
     """
+
     status_code = 400
     error_type = "ResponseLimitExceededError"
     error_code = 30
     message = "Response Limit Exceeded"
 
+
+class RequestBlockRangeLimitExceededError(AppError):
+    """
+    400 ERROR: Search request range is over the limit
+    """
+
+    status_code = 400
+    error_type = "RequestBlockRangeLimitExceededError"
+    error_code = 31
+    message = "Request Block Range Limit Exceeded"
+
+
 #################################################
 # 404 Not Found
 #################################################
+
 
 class NotSupportedError(AppError):
     """
     404 ERROR: Unsupported Request
     """
+
     status_code = 404
     error_type = "NotSupportedError"
     error_code = 10
@@ -82,7 +97,7 @@ class NotSupportedError(AppError):
     def __init__(self, method: str | None = None, url: str | None = None):
         description = None
         if method and url:
-            description = 'method: %s, url: %s' % (method, url)
+            description = "method: %s, url: %s" % (method, url)
         super().__init__(description=description)
 
 
@@ -90,34 +105,40 @@ class DataNotExistsError(AppError):
     """
     404 ERROR: Data not exists
     """
+
     status_code = 404
     error_type = "DataNotExistsError"
     error_code = 30
     message = "Data Not Exists"
 
+
 #################################################
 # 409 Conflict
 #################################################
+
 
 class DataConflictError(AppError):
     """
     409 ERROR: Data is conflicted
     """
+
     status_code = 409
     error_type = "DataConflictError"
     error_code = 40
     message = "Data Conflict"
 
+
 #################################################
 # 503 Service Unavailable
 #################################################
+
 
 class ServiceUnavailable(AppError):
     """
     503 ERROR: Service is temporarily unavailable
     """
+
     status_code = 503
     error_type = "ServiceUnavailable"
     error_code = 503
     message = "Service Unavailable"
-

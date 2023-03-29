@@ -19,11 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
@@ -34,21 +31,15 @@ from web3.exceptions import ABIEventFunctionNotFound
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import (
-    DATABASE_URL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    ZERO_ADDRESS
-)
-from app.contracts import Contract
-from app.errors import ServiceUnavailable
-from app.model.db import (
-    Listing,
-    IDXConsumeCoupon
-)
-from app.utils.web3_utils import Web3Wrapper
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
+from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, TZ, ZERO_ADDRESS
+from app.contracts import Contract
+from app.errors import ServiceUnavailable
+from app.model.db import IDXConsumeCoupon, Listing
+from app.utils.web3_utils import Web3Wrapper
+
+local_tz = ZoneInfo(TZ)
 
 process_name = "INDEXER-CONSUME-COUPON"
 LOG = log.get_logger(process_name=process_name)
@@ -59,6 +50,7 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 class Processor:
     """Processor for indexing coupon consumption events"""
+
     latest_block = 0
 
     def __init__(self):
@@ -83,20 +75,20 @@ class Processor:
                     self.__sync_all(
                         db_session=local_session,
                         block_from=_from_block,
-                        block_to=_to_block
+                        block_to=_to_block,
                     )
                     _to_block += 1000000
                     _from_block += 1000000
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=self.latest_block
+                    block_to=self.latest_block,
                 )
             else:
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=self.latest_block
+                    block_to=self.latest_block,
                 )
             local_session.commit()
         except Exception as e:
@@ -120,7 +112,7 @@ class Processor:
             self.__sync_all(
                 db_session=local_session,
                 block_from=self.latest_block + 1,
-                block_to=blockTo
+                block_to=blockTo,
             )
             self.latest_block = blockTo
             local_session.commit()
@@ -135,8 +127,7 @@ class Processor:
     def __get_token_list(self, db_session: Session):
         self.token_list = []
         list_contract = Contract.get_contract(
-            contract_name="TokenList",
-            address=TOKEN_LIST_CONTRACT_ADDRESS
+            contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
         listed_tokens = db_session.query(Listing).all()
         for listed_token in listed_tokens:
@@ -144,12 +135,11 @@ class Processor:
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(listed_token.token_address,),
-                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
             if token_info[1] == "IbetCoupon":
                 coupon_token_contract = Contract.get_contract(
-                    contract_name="IbetCoupon",
-                    address=listed_token.token_address
+                    contract_name="IbetCoupon", address=listed_token.token_address
                 )
                 self.token_list.append(coupon_token_contract)
 
@@ -161,8 +151,7 @@ class Processor:
         for token in self.token_list:
             try:
                 events = token.events.Consume.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -170,9 +159,8 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
-                    block_timestamp = datetime.fromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"],
-                        JST
+                    block_timestamp = datetime.utcfromtimestamp(
+                        web3.eth.get_block(event["blockNumber"])["timestamp"]
                     )
                     amount = args.get("value", 0)
                     consumer = args.get("consumer", ZERO_ADDRESS)
@@ -186,23 +174,27 @@ class Processor:
                                 token_address=to_checksum_address(token.address),
                                 account_address=consumer,
                                 amount=amount,
-                                block_timestamp=block_timestamp
+                                block_timestamp=block_timestamp,
                             )
             except Exception as e:
                 raise e
 
     @staticmethod
-    def __sink_on_consume_coupon(db_session: Session,
-                                 transaction_hash: str,
-                                 token_address: str,
-                                 account_address: str,
-                                 amount: int,
-                                 block_timestamp: datetime):
-        consume_coupon = db_session.query(IDXConsumeCoupon). \
-            filter(IDXConsumeCoupon.transaction_hash == transaction_hash). \
-            filter(IDXConsumeCoupon.token_address == token_address). \
-            filter(IDXConsumeCoupon.account_address == account_address). \
-            first()
+    def __sink_on_consume_coupon(
+        db_session: Session,
+        transaction_hash: str,
+        token_address: str,
+        account_address: str,
+        amount: int,
+        block_timestamp: datetime,
+    ):
+        consume_coupon = (
+            db_session.query(IDXConsumeCoupon)
+            .filter(IDXConsumeCoupon.transaction_hash == transaction_hash)
+            .filter(IDXConsumeCoupon.token_address == token_address)
+            .filter(IDXConsumeCoupon.account_address == account_address)
+            .first()
+        )
         if consume_coupon is None:
             LOG.debug(f"Consume: transaction_hash={transaction_hash}")
             consume_coupon = IDXConsumeCoupon()

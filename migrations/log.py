@@ -17,12 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import sys
 import logging
+import sys
 
 LOG = logging.getLogger("api_migration")
 LOG.propagate = False
-LOG_FORMAT = '[%(levelname)s] %(message)s'
+LOG_FORMAT = "[%(levelname)s] %(message)s"
 stream_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(LOG_FORMAT)
 stream_handler.setFormatter(formatter)

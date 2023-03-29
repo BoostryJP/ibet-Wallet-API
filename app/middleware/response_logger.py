@@ -18,13 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 from datetime import datetime
-from fastapi import (
-    Request,
-    Response
-)
+
+from fastapi import Request, Response
 from starlette.middleware.base import RequestResponseEndpoint
 
 from app import config, log
+
 from .base import SuppressNoResponseReturnedMiddleware
 
 LOG = log.get_logger()
@@ -36,8 +35,7 @@ ACCESS_LOG.propagate = False
 
 stream_handler_access = logging.StreamHandler(open(config.ACCESS_LOGFILE, "a"))
 formatter_access = logging.Formatter(
-    config.INFO_LOG_FORMAT.format("[ACCESS-LOG]"),
-    config.LOG_TIMESTAMP_FORMAT
+    config.INFO_LOG_FORMAT.format("[ACCESS-LOG]"), config.LOG_TIMESTAMP_FORMAT
 )
 stream_handler_access.setFormatter(formatter_access)
 ACCESS_LOG.addHandler(stream_handler_access)
@@ -49,7 +47,9 @@ class ResponseLoggerMiddleware(SuppressNoResponseReturnedMiddleware):
     def __init__(self):
         pass
 
-    async def __call__(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def __call__(
+        self, req: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         # Before process request
         request_start_time = datetime.utcnow()
 

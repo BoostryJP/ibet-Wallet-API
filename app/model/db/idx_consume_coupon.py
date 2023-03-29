@@ -16,18 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    DateTime
-)
+from sqlalchemy import BigInteger, Column, DateTime, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 
 
 class IDXConsumeCoupon(Base):
     """Coupon Consume Events (INDEX)"""
+
     __tablename__ = "consume_coupon"
 
     # Sequence Id
@@ -41,6 +37,10 @@ class IDXConsumeCoupon(Base):
     # Consume Amount
     amount = Column(BigInteger)
     # Block Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     block_timestamp = Column(DateTime, default=None)
 
     FIELDS = {
@@ -49,7 +49,7 @@ class IDXConsumeCoupon(Base):
         "token_address": str,
         "account_address": str,
         "amount": int,
-        "block_timestamp": str
+        "block_timestamp": str,
     }
 
     FIELDS.update(Base.FIELDS)

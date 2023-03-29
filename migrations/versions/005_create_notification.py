@@ -22,13 +22,14 @@ from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
-from migrations.log import LOG
 
+from migrations.log import LOG
 
 # Table定義
 meta = MetaData()
 table = Table(
-    "notification", meta,
+    "notification",
+    meta,
     Column("notification_id", String(256), primary_key=True),
     Column("notification_type", String(256)),
     Column("priority", Integer),
@@ -41,20 +42,15 @@ table = Table(
     Column("args", JSON),
     Column("metainfo", JSON),
     Column("created", DateTime, default=datetime.utcnow),
-    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
 
 notification_index_1 = Index(
-    "notification_index_1",
-    table.c.address,
-    table.c.notification_id
+    "notification_index_1", table.c.address, table.c.notification_id
 )
 
 notification_index_2 = Index(
-    "notification_index_2",
-    table.c.address,
-    table.c.priority,
-    table.c.notification_id
+    "notification_index_2", table.c.address, table.c.priority, table.c.notification_id
 )
 
 

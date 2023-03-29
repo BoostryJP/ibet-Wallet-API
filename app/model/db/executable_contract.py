@@ -17,23 +17,25 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from sqlalchemy import Column
-from sqlalchemy import String, BigInteger
+from sqlalchemy import BigInteger, Column, String
 
-from app.model.db import Base
+from app.model.db.base import Base
+
 
 class ExecutableContract(Base):
-    __tablename__ = 'executable_contract'
+    __tablename__ = "executable_contract"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     contract_address = Column(String(256), index=True)
 
     def __repr__(self):
-        return "<Listing id='%d' contract_address='%s'>" % \
-            (self.id, self.contract_address)
+        return "<Listing id='%d' contract_address='%s'>" % (
+            self.id,
+            self.contract_address,
+        )
 
     FIELDS = {
-        'id': int,
-        'contract_address': str,
+        "id": int,
+        "contract_address": str,
     }
 
     FIELDS.update(Base.FIELDS)

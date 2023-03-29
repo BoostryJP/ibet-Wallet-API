@@ -18,30 +18,27 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
-import pytest
 from unittest import mock
 from unittest.mock import MagicMock
 
+import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from web3.exceptions import ABIEventFunctionNotFound
+from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    Listing,
-    IDXConsumeCoupon
-)
+from app.model.db import IDXConsumeCoupon, Listing
 from batch import indexer_Consume_Coupon
-from batch.indexer_Consume_Coupon import main, LOG
+from batch.indexer_Consume_Coupon import LOG, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    issue_coupon_token,
-    coupon_register_list,
-    transfer_coupon_token,
     consume_coupon_token,
+    coupon_register_list,
+    issue_coupon_token,
+    transfer_coupon_token,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -50,7 +47,9 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
-    indexer_Consume_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
+    indexer_Consume_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
+        "address"
+    ]
     return indexer_Consume_Coupon
 
 
@@ -80,17 +79,17 @@ class TestProcessor:
     def issue_token_coupon(issuer, exchange_contract_address, token_list):
         # Issue token
         args = {
-            'name': 'テストクーポン',
-            'symbol': 'COUPON',
-            'totalSupply': 1000000,
-            'tradableExchange': exchange_contract_address,
-            'details': 'クーポン詳細',
-            'returnDetails': 'リターン詳細',
-            'memo': 'クーポンメモ欄',
-            'expirationDate': '20191231',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            "name": "テストクーポン",
+            "symbol": "COUPON",
+            "totalSupply": 1000000,
+            "tradableExchange": exchange_contract_address,
+            "details": "クーポン詳細",
+            "returnDetails": "リターン詳細",
+            "memo": "クーポンメモ欄",
+            "expirationDate": "20191231",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
         }
         token = issue_coupon_token(issuer, args)
         coupon_register_list(issuer, token, token_list)
@@ -119,7 +118,8 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Consume
@@ -130,7 +130,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 1
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
@@ -148,7 +150,8 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Consume
@@ -162,7 +165,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 2
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
@@ -188,10 +193,12 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
         token2 = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token2["address"], session)
 
         # Consume
@@ -210,7 +217,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 4
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
@@ -251,7 +260,8 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Not Consume
@@ -259,7 +269,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
 
     # <Normal_5>
@@ -268,7 +280,8 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
 
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
@@ -277,7 +290,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
 
     ###########################################################################
@@ -290,11 +305,16 @@ class TestProcessor:
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
+    @mock.patch(
+        "web3.contract.ContractEvent.getLogs",
+        MagicMock(side_effect=ABIEventFunctionNotFound()),
+    )
     def test_error_1_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token = self.issue_token_coupon(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Consume
@@ -305,7 +325,9 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "initial_sync" process.
         assert processor.latest_block == block_number_current
@@ -322,7 +344,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_current
@@ -331,7 +355,9 @@ class TestProcessor:
     def test_error_1_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token = self.issue_token_coupon(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Consume
@@ -339,12 +365,15 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+        ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -353,13 +382,16 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+        ), pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -368,7 +400,9 @@ class TestProcessor:
     def test_error_2_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        token = self.issue_token_coupon(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         # Consume
@@ -376,11 +410,15 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -389,13 +427,17 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -405,19 +447,23 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
         self.listing_token(token["address"], session)
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -426,13 +472,16 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.sync_new_logs()
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        _consume_coupon_list = (
+            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
+        )
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -444,12 +493,18 @@ class TestProcessor:
         time_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Consume_Coupon.time", time_mock),\
-            mock.patch("batch.indexer_Consume_Coupon.Processor.initial_sync", return_value=True), \
-            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(TypeError):
+        with mock.patch("batch.indexer_Consume_Coupon.time", time_mock), mock.patch(
+            "batch.indexer_Consume_Coupon.Processor.initial_sync", return_value=True
+        ), mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(
+            TypeError
+        ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()
 
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.WARNING, "An external service was unavailable")
+        )
         caplog.clear()

@@ -20,27 +20,25 @@ import os
 import sys
 import time
 
-from eth_utils import to_checksum_address
 import requests
+from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
-from sqlalchemy.exc import (
-    IntegrityError,
-    SQLAlchemyError
-)
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app.config import (
-    DATABASE_URL,
-    COMPANY_LIST_URL,
     COMPANY_LIST_SLEEP_INTERVAL,
-    REQUEST_TIMEOUT
+    COMPANY_LIST_URL,
+    DATABASE_URL,
+    REQUEST_TIMEOUT,
 )
 from app.errors import ServiceUnavailable
 from app.model.db import Company
-import log
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
@@ -76,18 +74,26 @@ class Processor:
                 address = company.get("address", "")
                 corporate_name = company.get("corporate_name", "")
                 rsa_publickey = company.get("rsa_publickey", "")
-                homepage = company.get("homepage") if company.get("homepage") is not None else ""
-                if not isinstance(address, str) or \
-                        not isinstance(corporate_name, str) or \
-                        not isinstance(rsa_publickey, str) or \
-                        not isinstance(homepage, str):
+                homepage = (
+                    company.get("homepage")
+                    if company.get("homepage") is not None
+                    else ""
+                )
+                if (
+                    not isinstance(address, str)
+                    or not isinstance(corporate_name, str)
+                    or not isinstance(rsa_publickey, str)
+                    or not isinstance(homepage, str)
+                ):
                     LOG.warning(f"type error: index={i}")
                     continue
                 if address and corporate_name and rsa_publickey:
                     try:
                         address = to_checksum_address(address)
                     except ValueError:
-                        LOG.warning(f"invalid address error: index={i} address={address}")
+                        LOG.warning(
+                            f"invalid address error: index={i} address={address}"
+                        )
                         continue
                     try:
                         self.__sink_on_company(
@@ -98,7 +104,9 @@ class Processor:
                             homepage=homepage,
                         )
                     except IntegrityError:
-                        LOG.warning(f"duplicate address error: index={i} address={address}")
+                        LOG.warning(
+                            f"duplicate address error: index={i} address={address}"
+                        )
                         continue
                 else:
                     LOG.warning(f"required error: index={i}")
@@ -112,11 +120,13 @@ class Processor:
         LOG.info("Sync job has been completed")
 
     @staticmethod
-    def __sink_on_company(db_session: Session,
-                          address: str,
-                          corporate_name: str,
-                          rsa_publickey: str,
-                          homepage: str):
+    def __sink_on_company(
+        db_session: Session,
+        address: str,
+        corporate_name: str,
+        rsa_publickey: str,
+        homepage: str,
+    ):
         _company = db_session.query(Company).filter(Company.address == address).first()
         if _company is None:
             _company = Company()

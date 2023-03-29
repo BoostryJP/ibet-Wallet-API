@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+
 from migrations.log import LOG
 
 meta = MetaData()
@@ -49,7 +50,10 @@ def downgrade(migrate_engine):
         # Restore pre-upgrade record
         con = migrate_engine.connect()
         from datetime import datetime
-        query = node.insert().values(is_synced=True, created=datetime.utcnow(), modified=datetime.utcnow())
+
+        query = node.insert().values(
+            is_synced=True, created=datetime.utcnow(), modified=datetime.utcnow()
+        )
         con.execute(query)
     except sqlalchemy.exc.ProgrammingError as err:
         LOG.warning(err.orig)

@@ -19,11 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -33,23 +30,23 @@ from web3.exceptions import ABIEventFunctionNotFound
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app.config import (
     DATABASE_URL,
+    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+    TZ,
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.db import (
-    IDXAgreement as Agreement,
-    AgreementStatus,
-    IDXOrder as Order,
-    Listing
-)
+from app.model.db import AgreementStatus
+from app.model.db import IDXAgreement as Agreement
+from app.model.db import IDXOrder as Order
+from app.model.db import Listing
 from app.utils.web3_utils import Web3Wrapper
-import log
 
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 process_name = "INDEXER-DEX"
 LOG = log.get_logger(process_name=process_name)
@@ -60,6 +57,7 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 class Processor:
     """Processor for indexing IbetExchange events"""
+
     latest_block = 0
 
     def __init__(self):
@@ -67,15 +65,13 @@ class Processor:
         # MEMBERSHIP Exchange
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = Contract.get_contract(
-                "IbetExchange",
-                IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
+                "IbetExchange", IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(membership_exchange_contract)
         # COUPON Exchange
         if IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is not None:
             coupon_exchange_contract = Contract.get_contract(
-                "IbetExchange",
-                IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+                "IbetExchange", IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
 
@@ -96,20 +92,20 @@ class Processor:
                     self.__sync_all(
                         db_session=local_session,
                         block_from=_from_block,
-                        block_to=_to_block
+                        block_to=_to_block,
                     )
                     _to_block += 1000000
                     _from_block += 1000000
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=self.latest_block
+                    block_to=self.latest_block,
                 )
             else:
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=self.latest_block
+                    block_to=self.latest_block,
                 )
             local_session.commit()
         except Exception as e:
@@ -130,7 +126,7 @@ class Processor:
             self.__sync_all(
                 db_session=local_session,
                 block_from=self.latest_block + 1,
-                block_to=blockTo
+                block_to=blockTo,
             )
             self.latest_block = blockTo
             local_session.commit()
@@ -155,8 +151,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.NewOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -166,13 +161,14 @@ class Processor:
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
                         pass
                     else:
-                        available_token = db_session.query(Listing). \
-                            filter(Listing.token_address == args["tokenAddress"]). \
-                            first()
+                        available_token = (
+                            db_session.query(Listing)
+                            .filter(Listing.token_address == args["tokenAddress"])
+                            .first()
+                        )
                         transaction_hash = event["transactionHash"].hex()
-                        order_timestamp = datetime.fromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"],
-                            JST
+                        order_timestamp = datetime.utcfromtimestamp(
+                            web3.eth.get_block(event["blockNumber"])["timestamp"]
                         )
                         if available_token is not None:
                             account_address = args["accountAddress"]
@@ -191,7 +187,7 @@ class Processor:
                                 price=args["price"],
                                 amount=args["amount"],
                                 agent_address=args["agentAddress"],
-                                order_timestamp=order_timestamp
+                                order_timestamp=order_timestamp,
                             )
             except Exception as e:
                 raise e
@@ -200,8 +196,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.CancelOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -210,7 +205,7 @@ class Processor:
                     self.__sink_on_cancel_order(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
-                        order_id=event["args"]["orderId"]
+                        order_id=event["args"]["orderId"],
                     )
             except Exception as e:
                 raise e
@@ -219,8 +214,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.ForceCancelOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -229,7 +223,7 @@ class Processor:
                     self.__sink_on_force_cancel_order(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
-                        order_id=event["args"]["orderId"]
+                        order_id=event["args"]["orderId"],
                     )
             except Exception as e:
                 raise e
@@ -238,8 +232,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.Agree.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -261,9 +254,8 @@ class Processor:
                         else:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].hex()
-                        agreement_timestamp = datetime.fromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"],
-                            JST
+                        agreement_timestamp = datetime.utcfromtimestamp(
+                            web3.eth.get_block(event["blockNumber"])["timestamp"]
                         )
                         self.__sink_on_agree(
                             db_session=db_session,
@@ -275,7 +267,7 @@ class Processor:
                             seller_address=args["sellAddress"],
                             counterpart_address=counterpart_address,
                             amount=args["amount"],
-                            agreement_timestamp=agreement_timestamp
+                            agreement_timestamp=agreement_timestamp,
                         )
             except Exception as e:
                 raise e
@@ -284,24 +276,22 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.SettlementOK.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 for event in events:
                     args = event["args"]
-                    settlement_timestamp = datetime.fromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"],
-                        JST
+                    settlement_timestamp = datetime.utcfromtimestamp(
+                        web3.eth.get_block(event["blockNumber"])["timestamp"]
                     )
                     self.__sink_on_settlement_ok(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=args["orderId"],
                         agreement_id=args["agreementId"],
-                        settlement_timestamp=settlement_timestamp
+                        settlement_timestamp=settlement_timestamp,
                     )
             except Exception as e:
                 raise e
@@ -310,8 +300,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.SettlementNG.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
+                    fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -322,31 +311,33 @@ class Processor:
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=args["orderId"],
-                        agreement_id=args["agreementId"]
+                        agreement_id=args["agreementId"],
                     )
             except Exception as e:
                 raise e
 
-    def __sink_on_new_order(self,
-                            db_session: Session,
-                            transaction_hash: str,
-                            token_address: str,
-                            exchange_address: str,
-                            order_id: int,
-                            account_address: str,
-                            counterpart_address: str,
-                            is_buy: bool,
-                            price: int,
-                            amount: int,
-                            agent_address: str,
-                            order_timestamp: datetime):
+    def __sink_on_new_order(
+        self,
+        db_session: Session,
+        transaction_hash: str,
+        token_address: str,
+        exchange_address: str,
+        order_id: int,
+        account_address: str,
+        counterpart_address: str,
+        is_buy: bool,
+        price: int,
+        amount: int,
+        agent_address: str,
+        order_timestamp: datetime,
+    ):
         order = self.__get_order(
-            db_session=db_session,
-            exchange_address=exchange_address,
-            order_id=order_id
+            db_session=db_session, exchange_address=exchange_address, order_id=order_id
         )
         if order is None:
-            LOG.debug(f"NewOrder: exchange_address={exchange_address}, order_id={order_id}")
+            LOG.debug(
+                f"NewOrder: exchange_address={exchange_address}, order_id={order_id}"
+            )
             order = Order()
             order.transaction_hash = transaction_hash
             order.token_address = token_address
@@ -363,45 +354,53 @@ class Processor:
             order.order_timestamp = order_timestamp
             db_session.merge(order)
 
-    def __sink_on_cancel_order(self, db_session: Session, exchange_address: str, order_id: int):
+    def __sink_on_cancel_order(
+        self, db_session: Session, exchange_address: str, order_id: int
+    ):
         order = self.__get_order(
-            db_session=db_session,
-            exchange_address=exchange_address,
-            order_id=order_id
+            db_session=db_session, exchange_address=exchange_address, order_id=order_id
         )
         if order is not None:
-            LOG.debug(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
+            LOG.debug(
+                f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}"
+            )
             order.is_cancelled = True
 
-    def __sink_on_force_cancel_order(self, db_session: Session, exchange_address: str, order_id: int):
+    def __sink_on_force_cancel_order(
+        self, db_session: Session, exchange_address: str, order_id: int
+    ):
         order = self.__get_order(
-            db_session=db_session,
-            exchange_address=exchange_address,
-            order_id=order_id
+            db_session=db_session, exchange_address=exchange_address, order_id=order_id
         )
         if order is not None:
-            LOG.debug(f"ForceCancelOrder: exchange_address={exchange_address}, order_id={order_id}")
+            LOG.debug(
+                f"ForceCancelOrder: exchange_address={exchange_address}, order_id={order_id}"
+            )
             order.is_cancelled = True
 
-    def __sink_on_agree(self,
-                        db_session: Session,
-                        transaction_hash: str,
-                        exchange_address: str,
-                        order_id: int,
-                        agreement_id: int,
-                        buyer_address: str,
-                        seller_address: str,
-                        counterpart_address: str,
-                        amount: int,
-                        agreement_timestamp: datetime):
+    def __sink_on_agree(
+        self,
+        db_session: Session,
+        transaction_hash: str,
+        exchange_address: str,
+        order_id: int,
+        agreement_id: int,
+        buyer_address: str,
+        seller_address: str,
+        counterpart_address: str,
+        amount: int,
+        agreement_timestamp: datetime,
+    ):
         agreement = self.__get_agreement(
             db_session=db_session,
             exchange_address=exchange_address,
             order_id=order_id,
-            agreement_id=agreement_id
+            agreement_id=agreement_id,
         )
         if agreement is None:
-            LOG.debug(f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            LOG.debug(
+                f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}"
+            )
             agreement = Agreement()
             agreement.transaction_hash = transaction_hash
             agreement.exchange_address = exchange_address
@@ -416,54 +415,66 @@ class Processor:
             agreement.agreement_timestamp = agreement_timestamp
             db_session.merge(agreement)
 
-    def __sink_on_settlement_ok(self,
-                                db_session: Session,
-                                exchange_address: str,
-                                order_id: int,
-                                agreement_id: int,
-                                settlement_timestamp: datetime):
+    def __sink_on_settlement_ok(
+        self,
+        db_session: Session,
+        exchange_address: str,
+        order_id: int,
+        agreement_id: int,
+        settlement_timestamp: datetime,
+    ):
         agreement = self.__get_agreement(
             db_session=db_session,
             exchange_address=exchange_address,
             order_id=order_id,
-            agreement_id=agreement_id
+            agreement_id=agreement_id,
         )
         if agreement is not None:
             LOG.debug(
-                f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+                f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}"
+            )
             agreement.status = AgreementStatus.DONE.value
             agreement.settlement_timestamp = settlement_timestamp
 
-    def __sink_on_settlement_ng(self,
-                                db_session: Session,
-                                exchange_address: str,
-                                order_id: int,
-                                agreement_id: int):
+    def __sink_on_settlement_ng(
+        self,
+        db_session: Session,
+        exchange_address: str,
+        order_id: int,
+        agreement_id: int,
+    ):
         agreement = self.__get_agreement(
             db_session=db_session,
             exchange_address=exchange_address,
             order_id=order_id,
-            agreement_id=agreement_id
+            agreement_id=agreement_id,
         )
         if agreement is not None:
             LOG.debug(
-                f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+                f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}"
+            )
             agreement.status = AgreementStatus.CANCELED.value
 
     @staticmethod
     def __get_order(db_session: Session, exchange_address: str, order_id: int):
-        return db_session.query(Order). \
-            filter(Order.exchange_address == exchange_address). \
-            filter(Order.order_id == order_id). \
-            first()
+        return (
+            db_session.query(Order)
+            .filter(Order.exchange_address == exchange_address)
+            .filter(Order.order_id == order_id)
+            .first()
+        )
 
     @staticmethod
-    def __get_agreement(db_session: Session, exchange_address: str, order_id: int, agreement_id: int):
-        return db_session.query(Agreement). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.order_id == order_id). \
-            filter(Agreement.agreement_id == agreement_id). \
-            first()
+    def __get_agreement(
+        db_session: Session, exchange_address: str, order_id: int, agreement_id: int
+    ):
+        return (
+            db_session.query(Agreement)
+            .filter(Agreement.exchange_address == exchange_address)
+            .filter(Agreement.order_id == order_id)
+            .filter(Agreement.agreement_id == agreement_id)
+            .first()
+        )
 
 
 def main():

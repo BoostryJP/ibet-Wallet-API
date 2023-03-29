@@ -1,7 +1,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-22.12-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-23.3-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -51,7 +51,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 Install python packages with:
 ```bash
-$ pip install -r requirements.txt
+$ poetry install --no-root --only main -E ibet-explorer
 ```
 
 ### Setting environment variables
@@ -72,23 +72,50 @@ You can start (or stop) the API server with:
 $ ./bin/run_server.sh start(stop)
 ```
 
+Open your browser at [http://0.0.0.0:5000](http://0.0.0.0:5000).
+
+You will see the JSON response as:
+```json
+{"server":"ibet-Wallet-API"}
+```
+
 In addition, batch processes can be started with the following commands.
 
 ```bash
 $ ./bin/run_indexer.sh
-$ ./bin/run_processor_notification.sh (*optional)
+$ ./bin/run_processor.sh
 ```
+
+### API docs
+
+#### Swagger UI
+
+Now go to [http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs).
+
+You will see the automatic interactive API documentation provided by Swagger UI:
+
+![swagger](https://user-images.githubusercontent.com/963333/209300544-00afcea0-3deb-43a7-9b07-c77650459f5e.png)
+
+#### ReDoc
+
+And now, go to [http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc).
+
+You will see the alternative automatic documentation provided by ReDoc:
+
+![redoc](https://user-images.githubusercontent.com/963333/209300694-2e8565e7-24ce-47ee-82a2-68d7cae92afb.png)
+
 
 ## Running the tests
 
 Install packages with:
 ```bash
-$ pip install -r tests/requirements.txt
+$ poetry install --no-root
 ```
 
 You can run the tests with:
 ```bash
 $ export UNIT_TEST_MODE=1
+$ export RESPONSE_VALIDATION_MODE=1
 $ pytest tests/
 ```
 

@@ -16,22 +16,16 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Union, Type
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger,
-    Boolean,
-    Float,
-    Text,
-    JSON,
-    DateTime
-)
-from app.model.db import Base
+from typing import Type, Union
+
+from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Float, String, Text
+
+from app.model.db.base import Base
 
 
 class TokenBase(Base):
     """Token Base Attribute"""
+
     __abstract__ = True
 
     # Token Address
@@ -110,6 +104,7 @@ class TokenBase(Base):
 
 class IDXBondToken(TokenBase):
     """BondToken (INDEX)"""
+
     __tablename__ = "bond_token"
 
     # Personal Info Address
@@ -159,7 +154,7 @@ class IDXBondToken(TokenBase):
         "return_amount": str,
         "purpose": str,
         "memo": str,
-        "is_redeemed": bool
+        "is_redeemed": bool,
     }
 
     FIELDS.update(TokenBase.FIELDS)
@@ -180,12 +175,13 @@ class IDXBondToken(TokenBase):
             "return_amount": self.return_amount,
             "purpose": self.purpose,
             "memo": self.memo,
-            "is_redeemed": self.is_redeemed
+            "is_redeemed": self.is_redeemed,
         }
 
 
 class IDXShareToken(TokenBase):
     """ShareToken (INDEX)"""
+
     __tablename__ = "share_token"
 
     # Personal Info Address
@@ -225,7 +221,7 @@ class IDXShareToken(TokenBase):
         "memo": str,
         "principal_value": int,
         "is_canceled": bool,
-        "dividend_information": slice
+        "dividend_information": slice,
     }
 
     FIELDS.update(TokenBase.FIELDS)
@@ -242,12 +238,13 @@ class IDXShareToken(TokenBase):
             "memo": self.memo,
             "principal_value": self.principal_value,
             "is_canceled": self.is_canceled,
-            "dividend_information": self.dividend_information
+            "dividend_information": self.dividend_information,
         }
 
 
 class IDXMembershipToken(TokenBase):
     """MembershipToken (INDEX)"""
+
     __tablename__ = "membership_token"
 
     # Details
@@ -288,12 +285,13 @@ class IDXMembershipToken(TokenBase):
             "memo": self.memo,
             "transferable": self.transferable,
             "initial_offering_status": self.initial_offering_status,
-            "image_url": self.image_url
+            "image_url": self.image_url,
         }
 
 
 class IDXCouponToken(TokenBase):
     """CouponToken (INDEX)"""
+
     __tablename__ = "coupon_token"
 
     # Details
@@ -334,7 +332,7 @@ class IDXCouponToken(TokenBase):
             "memo": self.memo,
             "transferable": self.transferable,
             "initial_offering_status": self.initial_offering_status,
-            "image_url": self.image_url
+            "image_url": self.image_url,
         }
 
 
@@ -342,11 +340,8 @@ IDXTokenModel = Union[
     Type[IDXShareToken],
     Type[IDXBondToken],
     Type[IDXMembershipToken],
-    Type[IDXCouponToken]
+    Type[IDXCouponToken],
 ]
 IDXTokenInstance = Union[
-    IDXBondToken,
-    IDXShareToken,
-    IDXMembershipToken,
-    IDXCouponToken
+    IDXBondToken, IDXShareToken, IDXMembershipToken, IDXCouponToken
 ]

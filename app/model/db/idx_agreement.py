@@ -18,20 +18,15 @@ SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
 
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    BigInteger,
-    DateTime
-)
+from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 from app.utils import alchemy
 
 
 class IDXAgreement(Base):
     """DEX Agreement Events (INDEX)"""
+
     __tablename__ = "agreement"
 
     # Sequence Id
@@ -57,8 +52,16 @@ class IDXAgreement(Base):
     # Agreement Status
     status = Column(Integer)
     # Agreement Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     agreement_timestamp = Column(DateTime, default=None)
     # Settlement Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     settlement_timestamp = Column(DateTime, default=None)
 
     FIELDS = {

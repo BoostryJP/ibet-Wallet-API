@@ -17,21 +17,17 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.model.db import (
-    Listing,
-    IDXTransferApproval
-)
+from app.config import TZ
+from app.model.db import IDXTransferApproval, Listing
 
 UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
+local_tz = ZoneInfo(TZ)
 
 
 class TestTokenTransferApprovalHistory:
@@ -64,12 +60,22 @@ class TestTokenTransferApprovalHistory:
         _transfer_approval.from_address = transfer_approval["from_address"]
         _transfer_approval.to_address = transfer_approval["to_address"]
         _transfer_approval.value = transfer_approval.get("value")  # nullable
-        _transfer_approval.application_datetime = transfer_approval.get("application_datetime")  # nullable
-        _transfer_approval.application_blocktimestamp = transfer_approval.get("application_blocktimestamp")  # nullable
-        _transfer_approval.approval_datetime = transfer_approval.get("approval_datetime")  # nullable
-        _transfer_approval.approval_blocktimestamp = transfer_approval.get("approval_blocktimestamp")  # nullable
+        _transfer_approval.application_datetime = transfer_approval.get(
+            "application_datetime"
+        )  # nullable
+        _transfer_approval.application_blocktimestamp = transfer_approval.get(
+            "application_blocktimestamp"
+        )  # nullable
+        _transfer_approval.approval_datetime = transfer_approval.get(
+            "approval_datetime"
+        )  # nullable
+        _transfer_approval.approval_blocktimestamp = transfer_approval.get(
+            "approval_blocktimestamp"
+        )  # nullable
         _transfer_approval.cancelled = transfer_approval.get("cancelled")
-        _transfer_approval.transfer_approved = transfer_approval.get("transfer_approved")
+        _transfer_approval.transfer_approved = transfer_approval.get(
+            "transfer_approved"
+        )
         session.add(_transfer_approval)
 
     ####################################################################
@@ -90,18 +96,13 @@ class TestTokenTransferApprovalHistory:
         query_string = ""
         resp = client.get(
             self.apiurl_base.format(contract_address=self.token_address),
-            params=query_string
+            params=query_string,
         )
 
         # assertion
         assumed_body = {
-            "result_set": {
-                "count": 0,
-                "offset": None,
-                "limit": None,
-                "total": 0
-            },
-            "transfer_approval_history": []
+            "result_set": {"count": 0, "offset": None, "limit": None, "total": 0},
+            "transfer_approval_history": [],
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -118,10 +119,12 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_listing(session, listing=listing)
 
-        before_datetime = datetime.utcnow().\
-            replace(tzinfo=UTC).\
-            astimezone(JST).\
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
         time.sleep(1)
 
         for i in range(2, -1, -1):
@@ -136,18 +139,17 @@ class TestTokenTransferApprovalHistory:
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
                 "cancelled": False,
-                "transfer_approved": True
+                "transfer_approved": True,
             }
-            self.insert_transfer_approval(
-                session,
-                transfer_approval=transfer_approval
-            )
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
 
         time.sleep(1)
-        after_datetime = datetime.utcnow().\
-            replace(tzinfo=UTC).\
-            astimezone(JST).\
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -159,10 +161,10 @@ class TestTokenTransferApprovalHistory:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
         assert resp.json()["data"]["result_set"] == {
-                "count": 3,
-                "offset": None,
-                "limit": None,
-                "total": 3
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
         }
         data = resp.json()["data"]["transfer_approval_history"]
         for i, item in enumerate(data):
@@ -189,10 +191,12 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_listing(session, listing=listing)
 
-        before_datetime = datetime.utcnow().\
-            replace(tzinfo=UTC).\
-            astimezone(JST).\
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
         time.sleep(1)
 
         for i in range(2, -1, -1):
@@ -208,18 +212,17 @@ class TestTokenTransferApprovalHistory:
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
                 "cancelled": False,
-                "transfer_approved": True
+                "transfer_approved": True,
             }
-            self.insert_transfer_approval(
-                session,
-                transfer_approval=transfer_approval
-            )
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
 
         time.sleep(1)
-        after_datetime = datetime.utcnow().\
-            replace(tzinfo=UTC).\
-            astimezone(JST).\
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -231,10 +234,10 @@ class TestTokenTransferApprovalHistory:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
         assert resp.json()["data"]["result_set"] == {
-                "count": 3,
-                "offset": None,
-                "limit": None,
-                "total": 3
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
         }
         data = resp.json()["data"]["transfer_approval_history"]
         for i, item in enumerate(data):
@@ -261,10 +264,12 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_listing(session, listing=listing)
 
-        before_datetime = datetime.utcnow(). \
-            replace(tzinfo=UTC). \
-            astimezone(JST). \
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
         time.sleep(1)
 
         for i in range(2, -1, -1):
@@ -279,18 +284,17 @@ class TestTokenTransferApprovalHistory:
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
                 "cancelled": False,
-                "transfer_approved": True
+                "transfer_approved": True,
             }
-            self.insert_transfer_approval(
-                session,
-                transfer_approval=transfer_approval
-            )
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
 
         time.sleep(1)
-        after_datetime = datetime.utcnow(). \
-            replace(tzinfo=UTC). \
-            astimezone(JST). \
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -304,7 +308,7 @@ class TestTokenTransferApprovalHistory:
             "count": 3,
             "offset": 1,
             "limit": None,
-            "total": 3
+            "total": 3,
         }
         data = resp.json()["data"]["transfer_approval_history"]
         assert len(data) == 2
@@ -331,10 +335,12 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_listing(session, listing=listing)
 
-        before_datetime = datetime.utcnow(). \
-            replace(tzinfo=UTC). \
-            astimezone(JST). \
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
         time.sleep(1)
 
         for i in range(2, -1, -1):
@@ -349,18 +355,17 @@ class TestTokenTransferApprovalHistory:
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
                 "cancelled": False,
-                "transfer_approved": True
+                "transfer_approved": True,
             }
-            self.insert_transfer_approval(
-                session,
-                transfer_approval=transfer_approval
-            )
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
 
         time.sleep(1)
-        after_datetime = datetime.utcnow(). \
-            replace(tzinfo=UTC). \
-            astimezone(JST). \
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -374,7 +379,7 @@ class TestTokenTransferApprovalHistory:
             "count": 3,
             "offset": 2,
             "limit": 2,
-            "total": 3
+            "total": 3,
         }
         data = resp.json()["data"]["transfer_approval_history"]
         assert len(data) == 1
@@ -400,10 +405,12 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_listing(session, listing=listing)
 
-        before_datetime = datetime.utcnow(). \
-            replace(tzinfo=UTC). \
-            astimezone(JST). \
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
         time.sleep(1)
 
         for i in range(2, -1, -1):
@@ -418,18 +425,17 @@ class TestTokenTransferApprovalHistory:
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
                 "cancelled": False,
-                "transfer_approved": True
+                "transfer_approved": True,
             }
-            self.insert_transfer_approval(
-                session,
-                transfer_approval=transfer_approval
-            )
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
 
         time.sleep(1)
-        after_datetime = datetime.utcnow(). \
-            replace(tzinfo=UTC). \
-            astimezone(JST). \
-            strftime("%Y/%m/%d %H:%M:%S.%f")
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -443,7 +449,7 @@ class TestTokenTransferApprovalHistory:
             "count": 3,
             "offset": None,
             "limit": 1,
-            "total": 3
+            "total": 3,
         }
         data = resp.json()["data"]["transfer_approval_history"]
         assert len(data) == 1
@@ -481,12 +487,9 @@ class TestTokenTransferApprovalHistory:
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
                 "cancelled": False,
-                "transfer_approved": True
+                "transfer_approved": True,
             }
-            self.insert_transfer_approval(
-                session,
-                transfer_approval=transfer_approval
-            )
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -500,7 +503,7 @@ class TestTokenTransferApprovalHistory:
             "count": 3,
             "offset": None,
             "limit": 0,
-            "total": 3
+            "total": 3,
         }
         data = resp.json()["data"]["transfer_approval_history"]
         assert len(data) == 0
@@ -521,7 +524,7 @@ class TestTokenTransferApprovalHistory:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address"
+            "description": "invalid contract_address",
         }
 
     # Error_2
@@ -536,7 +539,7 @@ class TestTokenTransferApprovalHistory:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + self.token_address
+            "description": "contract_address: " + self.token_address,
         }
 
     # Error_3_1
@@ -548,16 +551,16 @@ class TestTokenTransferApprovalHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'offset'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "offset"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_3_2
@@ -569,17 +572,17 @@ class TestTokenTransferApprovalHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'ctx': {'limit_value': 0},
-                    'loc': ['query', 'offset'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge'
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "offset"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_3_3
@@ -591,16 +594,16 @@ class TestTokenTransferApprovalHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'offset'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "offset"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4_1
@@ -612,16 +615,16 @@ class TestTokenTransferApprovalHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'limit'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "limit"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4_2
@@ -633,17 +636,17 @@ class TestTokenTransferApprovalHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'ctx': {'limit_value': 0},
-                    'loc': ['query', 'limit'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge'
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "limit"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }
 
     # Error_4_3
@@ -655,14 +658,14 @@ class TestTokenTransferApprovalHistory:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
                 {
-                    'loc': ['query', 'limit'],
-                    'msg': 'value is not a valid integer',
-                    'type': 'type_error.integer'
+                    "loc": ["query", "limit"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
-            'message': 'Invalid Parameter'
+            "message": "Invalid Parameter",
         }

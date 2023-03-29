@@ -41,7 +41,7 @@ class TestListTxData:
         "input": "0x5ccef3e7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000010313634393237303331302e383734303400000000000000000000000000000000",
         "nonce": 86942,
         "transaction_index": 0,
-        "value": 0
+        "value": 0,
     }
     A_tx_2 = {
         "block_hash": "0x077e42cfe8bc9577b85a6347136c2d38a2b165e7b31bb340c33d302565b900b6",
@@ -54,7 +54,7 @@ class TestListTxData:
         "input": "0x5ccef3e7000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000011313634393237303331322e383235303432000000000000000000000000000000",
         "nonce": 86943,
         "transaction_index": 0,
-        "value": 0
+        "value": 0,
     }
     B_tx_1 = {
         "block_hash": "0x6698ebc4866223855dbea153eec7a9455682fd6d2f8451746102afb320412a6b",
@@ -67,7 +67,7 @@ class TestListTxData:
         "input": "0x5ccef3e7000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000011313635323937363632372e363337373738000000000000000000000000000000",
         "nonce": 199601,
         "transaction_index": 0,
-        "value": 0
+        "value": 0,
     }
 
     @staticmethod
@@ -78,7 +78,7 @@ class TestListTxData:
             "block_number": tx_data.get("block_number"),
             "transaction_index": tx_data.get("transaction_index"),
             "from_address": tx_data.get("from_address"),
-            "to_address": tx_data.get("to_address")
+            "to_address": tx_data.get("to_address"),
         }
 
     @staticmethod
@@ -122,12 +122,12 @@ class TestListTxData:
             "count": 3,
             "offset": None,
             "limit": None,
-            "total": 3
+            "total": 3,
         }
         assert response_data["tx_data"] == [
             self.filter_response_item(self.B_tx_1),
             self.filter_response_item(self.A_tx_2),
-            self.filter_response_item(self.A_tx_1)
+            self.filter_response_item(self.A_tx_1),
         ]
 
     # Normal_2_1
@@ -152,11 +152,9 @@ class TestListTxData:
             "count": 1,
             "offset": None,
             "limit": None,
-            "total": 3
+            "total": 3,
         }
-        assert response_data["tx_data"] == [
-            self.filter_response_item(self.A_tx_2)
-        ]
+        assert response_data["tx_data"] == [self.filter_response_item(self.A_tx_2)]
 
     # Normal_2_2
     # Query parameter: from_address
@@ -180,11 +178,11 @@ class TestListTxData:
             "count": 2,
             "offset": None,
             "limit": None,
-            "total": 3
+            "total": 3,
         }
         assert response_data["tx_data"] == [
             self.filter_response_item(self.A_tx_2),
-            self.filter_response_item(self.A_tx_1)
+            self.filter_response_item(self.A_tx_1),
         ]
 
     # Normal_2_3
@@ -209,11 +207,9 @@ class TestListTxData:
             "count": 1,
             "offset": None,
             "limit": None,
-            "total": 3
+            "total": 3,
         }
-        assert response_data["tx_data"] == [
-            self.filter_response_item(self.B_tx_1)
-        ]
+        assert response_data["tx_data"] == [self.filter_response_item(self.B_tx_1)]
 
     # Normal_3_1
     # Pagination: offset
@@ -237,11 +233,11 @@ class TestListTxData:
             "count": 3,
             "offset": 1,
             "limit": None,
-            "total": 3
+            "total": 3,
         }
         assert response_data["tx_data"] == [
             self.filter_response_item(self.A_tx_2),
-            self.filter_response_item(self.A_tx_1)
+            self.filter_response_item(self.A_tx_1),
         ]
 
     # Normal_3_2
@@ -266,11 +262,9 @@ class TestListTxData:
             "count": 3,
             "offset": None,
             "limit": 1,
-            "total": 3
+            "total": 3,
         }
-        assert response_data["tx_data"] == [
-            self.filter_response_item(self.B_tx_1)
-        ]
+        assert response_data["tx_data"] == [self.filter_response_item(self.B_tx_1)]
 
     ###########################################################################
     # Error
@@ -287,9 +281,9 @@ class TestListTxData:
         # Assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /NodeInfo/TxData'
+            "code": 10,
+            "message": "Not Supported",
+            "description": "method: GET, url: /NodeInfo/TxData",
         }
 
     # Error_2_1
@@ -298,38 +292,34 @@ class TestListTxData:
         config.BC_EXPLORER_ENABLED = True
 
         # Request target API
-        params = {
-            "offset": -1,
-            "limit": -1,
-            "block_number": -1
-        }
+        params = {"offset": -1, "limit": -1, "block_number": -1}
         resp = client.get(self.apiurl, params=params)
 
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': [
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": [
                 {
-                    'loc': ['query', 'offset'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge',
-                    'ctx': {'limit_value': 0}
+                    "loc": ["query", "offset"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
+                    "ctx": {"limit_value": 0},
                 },
                 {
-                    'loc': ['query', 'limit'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge',
-                    'ctx': {'limit_value': 0}
+                    "loc": ["query", "limit"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
+                    "ctx": {"limit_value": 0},
                 },
                 {
-                    'loc': ['query', 'block_number'],
-                    'msg': 'ensure this value is greater than or equal to 0',
-                    'type': 'value_error.number.not_ge',
-                    'ctx': {'limit_value': 0}
-                }
-            ]
+                    "loc": ["query", "block_number"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
+                    "ctx": {"limit_value": 0},
+                },
+            ],
         }
 
     # Error_2_2
@@ -338,28 +328,26 @@ class TestListTxData:
         config.BC_EXPLORER_ENABLED = True
 
         # Request target API
-        params = {
-            "from_address": "abcd",
-            "to_address": "abcd"
-        }
+        params = {"from_address": "abcd", "to_address": "abcd"}
         resp = client.get(self.apiurl, params=params)
 
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': [
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": [
                 {
-                    'loc': ['from_address'],
-                    'msg': 'from_address is not a valid address',
-                    'type': 'value_error'
+                    "loc": ["from_address"],
+                    "msg": "from_address is not a valid address",
+                    "type": "value_error",
                 },
                 {
-                    'loc': ['to_address'],
-                    'msg': 'to_address is not a valid address',
-                    'type': 'value_error'}
-            ]
+                    "loc": ["to_address"],
+                    "msg": "to_address is not a valid address",
+                    "type": "value_error",
+                },
+            ],
         }
 
     # Error_3
@@ -377,8 +365,8 @@ class TestListTxData:
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json()["meta"] ==  {
-            'code': 30,
-            'message': 'Response Limit Exceeded',
-            'description': 'Search results exceed the limit'
+        assert resp.json()["meta"] == {
+            "code": 30,
+            "message": "Response Limit Exceeded",
+            "description": "Search results exceed the limit",
         }

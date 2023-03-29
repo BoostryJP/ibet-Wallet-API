@@ -28,15 +28,13 @@ gas_limit = 4000000
 
 
 class PersonalInfoUtils:
-
     @staticmethod
-    def register(tx_from:str, personal_info_address:str, link_address:str):
+    def register(tx_from: str, personal_info_address: str, link_address: str):
         web3.eth.default_account = tx_from
         PersonalInfoContract = Contract.get_contract(
-            contract_name="PersonalInfo",
-            address=personal_info_address
+            contract_name="PersonalInfo", address=personal_info_address
         )
         encrypted_info = "some_encrypted_info"
-        PersonalInfoContract.functions.\
-            register(link_address, encrypted_info). \
-            transact({"from": tx_from, "gas": 4000000})
+        PersonalInfoContract.functions.register(link_address, encrypted_info).transact(
+            {"from": tx_from, "gas": 4000000}
+        )

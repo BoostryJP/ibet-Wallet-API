@@ -16,47 +16,38 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional
+
 from eth_utils import to_checksum_address
-from fastapi import (
-    APIRouter,
-    Depends,
-    Request,
-    Query
-)
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
-from typing import Optional
 from web3 import Web3
 
-from app import log
+from app import config, log
 from app.database import db_session
 from app.errors import (
+    DataNotExistsError,
     InvalidParameterError,
     NotSupportedError,
-    DataNotExistsError
+    ServiceUnavailable,
 )
-from app import config
 from app.model.blockchain import ShareToken
+from app.model.db import IDXShareToken, Listing
 from app.model.schema import (
     GenericSuccessResponse,
+    ListAllShareTokenAddressesResponse,
     ListAllShareTokensQuery,
     ListAllShareTokensResponse,
+    RetrieveShareTokenResponse,
     SuccessResponse,
-    ListAllShareTokenAddressesResponse,
-    RetrieveShareTokenResponse
-)
-from app.model.db import (
-    Listing,
-    IDXShareToken
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(
-    prefix="/Token/Share",
-    tags=["Token"]
-)
+router = APIRouter(prefix="/Token/Share", tags=["token_info"])
 
 
 @router.get(
@@ -64,19 +55,21 @@ router = APIRouter(
     summary="Token detail list of Share tokens",
     operation_id="ShareTokens",
     response_model=GenericSuccessResponse[ListAllShareTokensResponse],
-    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def list_all_share_tokens(
     req: Request,
-    address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
+    address_list: list[str] = Query(
+        default=[], description="list of token address (**this affects total number**)"
+    ),
     request_query: ListAllShareTokensQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/Share
     """
     if config.SHARE_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     for address in address_list:
         if address is not None:
@@ -92,19 +85,23 @@ def list_all_share_tokens(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[bool] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[
+        bool
+    ] = request_query.transfer_approval_required
     is_canceled: Optional[bool] = request_query.is_canceled
 
     sort_item = request_query.sort_item
-    sort_order =request_query.sort_order
+    sort_order = request_query.sort_order
     offset = request_query.offset
     limit = request_query.limit
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = session.query(IDXShareToken).\
-        join(Listing, Listing.token_address == IDXShareToken.token_address).\
-        filter(Listing.is_public == True)
+    query = (
+        session.query(IDXShareToken)
+        .join(Listing, Listing.token_address == IDXShareToken.token_address)
+        .filter(Listing.is_public == True)
+    )
     if len(address_list):
         query = query.filter(IDXShareToken.token_address.in_(address_list))
     total = query.count()
@@ -123,13 +120,17 @@ def list_all_share_tokens(
     if status is not None:
         query = query.filter(IDXShareToken.status == status)
     if personal_info_address is not None:
-        query = query.filter(IDXShareToken.personal_info_address == personal_info_address)
+        query = query.filter(
+            IDXShareToken.personal_info_address == personal_info_address
+        )
     if transferable is not None:
         query = query.filter(IDXShareToken.transferable == transferable)
     if is_offering is not None:
         query = query.filter(IDXShareToken.is_offering == is_offering)
     if transfer_approval_required is not None:
-        query = query.filter(IDXShareToken.transfer_approval_required == transfer_approval_required)
+        query = query.filter(
+            IDXShareToken.transfer_approval_required == transfer_approval_required
+        )
     if is_canceled is not None:
         query = query.filter(IDXShareToken.is_canceled == is_canceled)
     count = query.count()
@@ -161,15 +162,12 @@ def list_all_share_tokens(
             "count": count,
             "offset": offset,
             "limit": limit,
-            "total": total
+            "total": total,
         },
-        "tokens": tokens
+        "tokens": tokens,
     }
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": data
-    }
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.get(
@@ -177,18 +175,18 @@ def list_all_share_tokens(
     summary="List of Share token address",
     operation_id="ShareTokenAddresses",
     response_model=GenericSuccessResponse[ListAllShareTokenAddressesResponse],
-    responses=get_routers_responses(NotSupportedError)
+    responses=get_routers_responses(NotSupportedError),
 )
 def list_all_share_token_addresses(
     req: Request,
     request_query: ListAllShareTokensQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/Share/Addresses
     """
     if config.SHARE_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     owner_address: Optional[str] = request_query.owner_address
     name: Optional[str] = request_query.name
@@ -199,19 +197,23 @@ def list_all_share_token_addresses(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[bool] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[
+        bool
+    ] = request_query.transfer_approval_required
     is_canceled: Optional[bool] = request_query.is_canceled
 
     sort_item = request_query.sort_item
-    sort_order =request_query.sort_order
+    sort_order = request_query.sort_order
     offset = request_query.offset
     limit = request_query.limit
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = session.query(IDXShareToken).\
-        join(Listing, Listing.token_address == IDXShareToken.token_address).\
-        filter(Listing.is_public == True)
+    query = (
+        session.query(IDXShareToken)
+        .join(Listing, Listing.token_address == IDXShareToken.token_address)
+        .filter(Listing.is_public == True)
+    )
     total = query.count()
 
     # Search Filter
@@ -228,13 +230,17 @@ def list_all_share_token_addresses(
     if status is not None:
         query = query.filter(IDXShareToken.status == status)
     if personal_info_address is not None:
-        query = query.filter(IDXShareToken.personal_info_address == personal_info_address)
+        query = query.filter(
+            IDXShareToken.personal_info_address == personal_info_address
+        )
     if transferable is not None:
         query = query.filter(IDXShareToken.transferable == transferable)
     if is_offering is not None:
         query = query.filter(IDXShareToken.is_offering == is_offering)
     if transfer_approval_required is not None:
-        query = query.filter(IDXShareToken.transfer_approval_required == transfer_approval_required)
+        query = query.filter(
+            IDXShareToken.transfer_approval_required == transfer_approval_required
+        )
     if is_canceled is not None:
         query = query.filter(IDXShareToken.is_canceled == is_canceled)
     count = query.count()
@@ -262,15 +268,12 @@ def list_all_share_token_addresses(
             "count": count,
             "offset": offset,
             "limit": limit,
-            "total": total
+            "total": total,
         },
-        "address_list": [_token.token_address for _token in _token_list]
+        "address_list": [_token.token_address for _token in _token_list],
     }
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": data
-    }
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.get(
@@ -278,46 +281,44 @@ def list_all_share_token_addresses(
     summary="Share token details",
     operation_id="ShareTokenDetails",
     response_model=GenericSuccessResponse[RetrieveShareTokenResponse],
-    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def retrieve_share_token(
-    req: Request,
-    token_address: str,
-    session: Session = Depends(db_session)
+    req: Request, token_address: str, session: Session = Depends(db_session)
 ):
     """
     Endpoint: /Token/Share/{contract_address}
     """
     if config.SHARE_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # 取扱トークン情報を取得
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.query(Listing).\
-        filter(Listing.token_address == contract_address). \
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     token_address = to_checksum_address(contract_address)
 
     try:
         token_detail = ShareToken.get(session=session, token_address=token_address)
+    except ServiceUnavailable as e:
+        LOG.warning(e)
+        raise DataNotExistsError("contract_address: %s" % contract_address) from None
     except Exception as e:
         LOG.error(e)
-        raise DataNotExistsError('contract_address: %s' % contract_address) from None
+        raise DataNotExistsError("contract_address: %s" % contract_address) from None
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": token_detail.__dict__
-    }
+    return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

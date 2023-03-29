@@ -16,19 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi.openapi.utils import get_openapi
 from functools import lru_cache
-from pydantic import (
-    BaseModel,
-    create_model,
-    Field
-)
-from typing import (
-    Any,
-    Type,
-    Union,
-    TypeVar
-)
+from typing import Any, Type, TypeVar, Union
+
+from fastapi.openapi.utils import get_openapi
+from pydantic import BaseModel, Field, create_model
 
 from app.errors import AppError
 
@@ -86,11 +78,16 @@ def create_error_model(app_error: Type[AppError]):
     metainfo_model = create_model(
         f"{app_error.error_type.strip()}Metainfo",
         code=(int, Field(..., example=app_error.error_code)),
-        message=(str, Field(..., example=app_error.message))
+        message=(str, Field(..., example=app_error.message)),
     )
     error_model = create_model(
         f"{app_error.error_type.strip()}Response",
-        meta=(metainfo_model, Field(...,)),
+        meta=(
+            metainfo_model,
+            Field(
+                ...,
+            ),
+        ),
         details=(dict | None, Field(default=None, example=None)),
     )
     return error_model
@@ -120,7 +117,11 @@ def get_routers_responses(*args: Type[AppErrorType]):
 
         if len(error_models) > 0:
             if status_code == 400:
-                ret[status_code] = {"model": Union[tuple(error_models) + (RequestValidationErrorResponse, )]}
+                ret[status_code] = {
+                    "model": Union[
+                        tuple(error_models) + (RequestValidationErrorResponse,)
+                    ]
+                }
             else:
                 ret[status_code] = {"model": Union[tuple(error_models)]}
     return ret
@@ -153,7 +154,6 @@ def custom_openapi(app):
         if paths is not None:
             for path_info in paths.values():
                 for router in path_info.values():
-
                     # Remove Default Validation Error Response Structure
                     # NOTE:
                     # HTTPValidationError is automatically added to APIs docs that have path, header, query,
@@ -162,7 +162,9 @@ def custom_openapi(app):
                     # and some APIs do not generate a Validation Error(API with no-required string parameter only, etc).
                     resp_422 = _get(router, "responses", "422")
                     if resp_422 is not None:
-                        ref = _get(resp_422, "content", "application/json", "schema", "$ref")
+                        ref = _get(
+                            resp_422, "content", "application/json", "schema", "$ref"
+                        )
                         if ref == "#/components/schemas/HTTPValidationError":
                             router["responses"].pop("422")
 

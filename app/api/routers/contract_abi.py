@@ -18,26 +18,18 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from fastapi import (
-    APIRouter,
-    Request
-)
 
-from app import log, config
+from fastapi import APIRouter, Request
+
+from app import config, log
 from app.errors import NotSupportedError
-from app.model.schema import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    ABI
-)
+from app.model.schema import ABI, GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(
-    prefix="/ABI",
-    tags=["ABI"]
-)
+router = APIRouter(prefix="/ABI", tags=["abi"])
 
 
 # ------------------------------
@@ -48,21 +40,20 @@ router = APIRouter(
     summary="StraightBond ABI",
     operation_id="StraightBondABI",
     response_model=GenericSuccessResponse[ABI],
-    responses=get_routers_responses(NotSupportedError)
+    responses=get_routers_responses(NotSupportedError),
 )
 def get_straight_bond_abi(req: Request):
     """
     Endpoint: /ABI/StraightBond
     """
     if config.BOND_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
-    ibet_straightbond_json = json.load(open("app/contracts/json/IbetStraightBond.json", "r"))
-    abi = ibet_straightbond_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
-        "data": abi
-    }
+    ibet_straightbond_json = json.load(
+        open("app/contracts/json/IbetStraightBond.json", "r")
+    )
+    abi = ibet_straightbond_json["abi"]
+    return json_response({**SuccessResponse.default(), "data": abi})
 
 
 # ------------------------------
@@ -73,21 +64,18 @@ def get_straight_bond_abi(req: Request):
     summary="Share ABI",
     operation_id="ShareABI",
     response_model=GenericSuccessResponse[ABI],
-    responses=get_routers_responses(NotSupportedError)
+    responses=get_routers_responses(NotSupportedError),
 )
 def get_share_abi(req: Request):
     """
     Endpoint: /ABI/Share
     """
     if config.SHARE_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     ibet_share_json = json.load(open("app/contracts/json/IbetShare.json", "r"))
-    abi = ibet_share_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
-        "data": abi
-    }
+    abi = ibet_share_json["abi"]
+    return json_response({**SuccessResponse.default(), "data": abi})
 
 
 # ------------------------------
@@ -98,21 +86,20 @@ def get_share_abi(req: Request):
     summary="Membership ABI",
     operation_id="MembershipABI",
     response_model=GenericSuccessResponse[ABI],
-    responses=get_routers_responses(NotSupportedError)
+    responses=get_routers_responses(NotSupportedError),
 )
 def get_membership_abi(req: Request):
     """
     Endpoint: /ABI/Membership
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
-    ibet_membership_json = json.load(open("app/contracts/json/IbetMembership.json", "r"))
-    abi = ibet_membership_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
-        "data": abi
-    }
+    ibet_membership_json = json.load(
+        open("app/contracts/json/IbetMembership.json", "r")
+    )
+    abi = ibet_membership_json["abi"]
+    return json_response({**SuccessResponse.default(), "data": abi})
 
 
 # ------------------------------
@@ -123,18 +110,15 @@ def get_membership_abi(req: Request):
     summary="Coupon ABI",
     operation_id="CouponABI",
     response_model=GenericSuccessResponse[ABI],
-    responses=get_routers_responses(NotSupportedError)
+    responses=get_routers_responses(NotSupportedError),
 )
 def get_coupon_abi(req: Request):
     """
     Endpoint: /ABI/Coupon
     """
     if config.COUPON_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     ibet_coupon_json = json.load(open("app/contracts/json/IbetCoupon.json", "r"))
-    abi = ibet_coupon_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
-        "data": abi
-    }
+    abi = ibet_coupon_json["abi"]
+    return json_response({**SuccessResponse.default(), "data": abi})

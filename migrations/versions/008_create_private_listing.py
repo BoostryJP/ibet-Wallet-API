@@ -22,13 +22,14 @@ from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
-from migrations.log import LOG
 
+from migrations.log import LOG
 
 # Table定義
 meta = MetaData()
 table = Table(
-    "private_listing", meta,
+    "private_listing",
+    meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("token_address", String(256), index=True),
     Column("max_holding_quantity", BigInteger),
@@ -36,7 +37,7 @@ table = Table(
     Column("payment_method_credit_card", Boolean),
     Column("payment_method_bank", Boolean),
     Column("created", DateTime, default=datetime.utcnow),
-    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
 
 

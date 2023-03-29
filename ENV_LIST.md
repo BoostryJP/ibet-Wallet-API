@@ -15,6 +15,7 @@ The list of environment variables that can be set for this system is as follows.
 | TEST_DATABASE_URL       | False    | Test database URL (for development use)  | postgresql://xxxx:xxxx@yyyy:5432/zzzz    | postgresql://ethuser:ethpass@localhost:5432/ethcache_test |
 | APP_LOGFILE             | False    | Output location for application logs     | /some/directory                          | /dev/stdout (standard output)                             |
 | ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                          | /dev/stdout (standard output)                             |
+| TZ                      | False    | Time Zone                                | Europe/Berlin                            | Asia/Tokyo                                                |
 
 
 ## API Server Settings
@@ -36,10 +37,10 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 ### Token
 | Variable Name                  | Required | Details                                                            | Example                                    | Default | 
 |--------------------------------|----------|--------------------------------------------------------------------|--------------------------------------------|---------|
-| BOND_TOKEN_ENABLED             | False    | Using ibet Bond token (security token)                             | 0 (not using) / 1 (using)                  | 1       |
-| SHARE_TOKEN_ENABLED            | False    | Using ibet Share token (security token)                            | 0 (not using) / 1 (using)                  | 1       |
-| MEMBERSHIP_TOKEN_ENABLED       | False    | Using ibet Membership token                                        | 0 (not using) / 1 (using)                  | 1       |
-| COUPON_TOKEN_ENABLED           | False    | Using ibet Coupon token                                            | 0 (not using) / 1 (using)                  | 1       |
+| BOND_TOKEN_ENABLED             | False    | Using ibet Bond token (security token)                             | 0 (not using) / 1 (using)                  | 0       |
+| SHARE_TOKEN_ENABLED            | False    | Using ibet Share token (security token)                            | 0 (not using) / 1 (using)                  | 0       |
+| MEMBERSHIP_TOKEN_ENABLED       | False    | Using ibet Membership token                                        | 0 (not using) / 1 (using)                  | 0       |
+| COUPON_TOKEN_ENABLED           | False    | Using ibet Coupon token                                            | 0 (not using) / 1 (using)                  | 0       |
 | TOKEN_LIST_CONTRACT_ADDRESS    | True     | TokenList contract address                                         | 0x0000000000000000000000000000000000000000 | --      |
 | PERSONAL_INFO_CONTRACT_ADDRESS | True*    | PersonalInfo contract address (*Set if you enable security tokens) | 0x0000000000000000000000000000000000000000 | --      |
 | TOKEN_NOTIFICATION_ENABLED     | True*    | Use of token-related notification (*Set if you enable tokens)      | 0 (not using) / 1 (using)                  | --      |
@@ -65,3 +66,31 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | Variable Name       | Required | Details                                             | Example                   | Default | 
 |---------------------|----------|-----------------------------------------------------|---------------------------|---------|
 | BC_EXPLORER_ENABLED | False    | Parameter for starting the Blockchain Explorer      | 0 (not using) / 1 (using) | 0       |
+
+### Email
+Common
+
+| Variable Name     | Required | Details              | Example                     | Default | 
+|-------------------|----------|----------------------|-----------------------------|---------|
+| SMTP_METHOD       | False    | Email sending method | 0:SMTP server, 1:Amazon SES | 0       |
+| SMTP_SENDER_NAME  | False    | Sender name          |                             | --      |
+| SMTP_SENDER_EMAIL | False    | Sender email address | example@example.com         | --      |
+
+SMTP server
+
+| Variable Name        | Required | Details               | Example             | Default | 
+|----------------------|----------|-----------------------|---------------------|---------|
+| SMTP_SERVER_HOST     | False    | SMTP server name      | smtp.office365.com  | --      |
+| SMTP_SERVER_PORT     | False    | SMTP server port      | 587                 | --      |
+| SMTP_SENDER_PASSWORD | False    | Sender email password |                     | --      |
+
+Amazon SES
+
+| Variable Name       | Required | Details         | Example   | Default | 
+|---------------------|----------|-----------------|-----------|---------|
+| AWS_SES_REGION_NAME | False    | AWS region name | us-east-1 | --      |
+
+### Chat Webhook
+| Variable Name     | Required | Details          | Example                                                                        | Default | 
+|-------------------|----------|------------------|--------------------------------------------------------------------------------|---------|
+| CHAT_WEBHOOK_URL  | False    | Chat webhook url | https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  | --      |

@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+
 from migrations.log import LOG
 
 meta = MetaData()

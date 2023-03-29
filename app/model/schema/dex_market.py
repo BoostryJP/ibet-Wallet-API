@@ -17,16 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    validator
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field, validator
 from pydantic.dataclasses import dataclass
 from web3 import Web3
-
 
 ############################
 # COMMON
@@ -37,6 +33,7 @@ from web3 import Web3
 # REQUEST
 ############################
 
+
 class OrderType(str, Enum):
     buy = "buy"
     sell = "sell"
@@ -46,12 +43,16 @@ class OrderType(str, Enum):
 class ListAllOrderBookQuery:
     account_address: Optional[str] = Query(
         default=None,
-        description="Orderer's account address. Orders from the given address will not be included in the response."
+        description="Orderer's account address. Orders from the given address will not be included in the response.",
     )
     token_address: str = Query(description="Token address")
-    exchange_agent_address: str = Query(description="Settlement agent address on ibet exchange")
-    order_type: OrderType = Query(description="Order type to be executed by the Orderer. "
-                                              "If \"buy\" is selected, the sell order book will be returned.")
+    exchange_agent_address: str = Query(
+        description="Settlement agent address on ibet exchange"
+    )
+    order_type: OrderType = Query(
+        description="Order type to be executed by the Orderer. "
+        'If "buy" is selected, the sell order book will be returned.'
+    )
 
     @validator("token_address")
     def token_address_is_valid_address(cls, v):
@@ -116,6 +117,7 @@ class RetrieveAgreementQuery:
 # RESPONSE
 ############################
 
+
 class OrderBookItem(BaseModel):
     exchange_address: str = Field(description="Exchange contract address")
     order_id: int = Field(description="Order id")
@@ -166,4 +168,3 @@ class RetrieveAgreementDetailResponse(BaseModel):
     canceled: bool = Field(description="agreement canceled status")
     paid: bool = Field(description="agreement payment status")
     expiry: str = Field(description="expiry (unixtime)")
-

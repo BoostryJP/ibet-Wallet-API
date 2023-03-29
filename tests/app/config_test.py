@@ -24,8 +24,9 @@ from unittest import mock
 class TestTransactionWaitPollLatency:
     # テスト対象: TRANSACTION_WAIT_POLL_LATENCY
 
-    def teardown(self):
+    def teardown_method(self):
         from app import config
+
         reload(config)
 
     # ＜正常系1＞: デフォルト値
@@ -39,7 +40,9 @@ class TestTransactionWaitPollLatency:
 
     # ＜正常系2＞: 小数値
     def test_normal_2(self):
-        with mock.patch.dict(os.environ, {"TRANSACTION_WAIT_POLL_LATENCY": "0.1"}, clear=False):
+        with mock.patch.dict(
+            os.environ, {"TRANSACTION_WAIT_POLL_LATENCY": "0.1"}, clear=False
+        ):
             from app import config
 
             # Reload imported module to initialize with mocked env value
@@ -49,7 +52,9 @@ class TestTransactionWaitPollLatency:
 
     # ＜正常系3＞: 整数値
     def test_normal_3(self):
-        with mock.patch.dict(os.environ, {"TRANSACTION_WAIT_POLL_LATENCY": "1.0"}, clear=False):
+        with mock.patch.dict(
+            os.environ, {"TRANSACTION_WAIT_POLL_LATENCY": "1.0"}, clear=False
+        ):
             from app import config
 
             # Reload imported module to initialize with mocked env value

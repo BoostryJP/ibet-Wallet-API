@@ -21,13 +21,14 @@ from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
-from migrations.log import LOG
 
+from migrations.log import LOG
 
 # Table definition
 meta = MetaData()
 table = Table(
-    "transfer_approval", meta,
+    "transfer_approval",
+    meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("token_address", String(42), index=True),
     Column("application_id", BigInteger, index=True),
@@ -40,7 +41,7 @@ table = Table(
     Column("approval_blocktimestamp", DateTime),
     Column("cancelled", Boolean),
     Column("created", DateTime, default=datetime.utcnow),
-    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
 
 

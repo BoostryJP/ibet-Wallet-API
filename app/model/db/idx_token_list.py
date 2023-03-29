@@ -16,17 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    String,
-    BigInteger
-)
+from sqlalchemy import BigInteger, Column, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 
 
 class IDXTokenListItem(Base):
     """Token List Items (INDEX)"""
+
     __tablename__ = "token_list"
 
     # Token Address
@@ -47,6 +44,7 @@ class IDXTokenListItem(Base):
 
 class IDXTokenListBlockNumber(Base):
     """Synchronized blockNumber of IDXTokenList"""
+
     __tablename__ = "idx_token_list_block_number"
 
     # target address
@@ -55,8 +53,8 @@ class IDXTokenListBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        'contract_address': str,
-        'latest_block_number': int,
+        "contract_address": str,
+        "latest_block_number": int,
     }
 
     FIELDS.update(Base.FIELDS)

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 class TestOpenAPIDoc:
     # テスト対象API
-    apiurl_base = '/openapi.json'
+    apiurl_base = "/openapi.json"
 
     ###########################################################################
     # Normal

@@ -16,20 +16,15 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import (
-    Column,
-    DateTime,
-    String,
-    BigInteger,
-    Boolean
-)
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
-from app.model.db import Base
+from app.model.db.base import Base
 from app.utils import alchemy
 
 
 class IDXOrder(Base):
     """DEX Order Events (INDEX)"""
+
     __tablename__ = "order"
 
     # Sequence Id
@@ -59,6 +54,10 @@ class IDXOrder(Base):
     # Cancellation Status
     is_cancelled = Column(Boolean)
     # Order Timestamp (datetime)
+    # NOTE:
+    #  Postgres: Stored as UTC datetime.
+    #  MySQL: Before 23.3, stored as JST datetime.
+    #         From 23.3, stored as UTC datetime.
     order_timestamp = Column(DateTime, default=None)
 
     FIELDS = {

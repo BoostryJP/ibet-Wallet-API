@@ -17,10 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field
-)
+
+from pydantic import BaseModel, Field
 
 ############################
 # COMMON
@@ -35,6 +33,7 @@ from pydantic import (
 ############################
 # RESPONSE
 ############################
+
 
 class GetNodeInfoResponse(BaseModel):
     payment_gateway_address: Optional[str]
@@ -55,5 +54,6 @@ class GetNodeInfoResponse(BaseModel):
 
 class GetBlockSyncStatusResponse(BaseModel):
     is_synced: bool = Field(..., description="block sync status")
-    latest_block_number: Optional[int] = Field(..., description="latest block number (returns null if is_synced is "
-                                                                "false)")
+    latest_block_number: Optional[int] = Field(
+        ..., description="latest block number (returns null if is_synced is " "false)"
+    )

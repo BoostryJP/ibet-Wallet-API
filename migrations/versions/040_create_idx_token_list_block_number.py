@@ -23,11 +23,11 @@ from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
 
-
 meta = MetaData()
 
 table = Table(
-    "idx_token_list_block_number", meta,
+    "idx_token_list_block_number",
+    meta,
     Column("contract_address", String(42), primary_key=True),
     Column("latest_block_number", BigInteger),
     Column("created", DateTime, default=datetime.utcnow),

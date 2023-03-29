@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -32,7 +33,6 @@ class TestNotificationsGet:
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
     def _insert_test_data(self, session):
-
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = "NewOrder"
@@ -49,7 +49,7 @@ class TestNotificationsGet:
         n.metainfo = {
             "aaa": "bbb",
         }
-        n.created = datetime.strptime("2022/01/01 15:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 15:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -66,7 +66,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 16:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 16:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -83,7 +83,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 17:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 17:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -100,7 +100,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 18:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 18:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
         n = Notification()
@@ -117,7 +117,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 19:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 19:20:30", "%Y/%m/%d %H:%M:%S")
         session.add(n)
 
     ###########################################################################
@@ -131,17 +131,10 @@ class TestNotificationsGet:
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.get(
-            self.apiurl
-        )
+        resp = client.get(self.apiurl)
 
         assumed_body = {
-            "result_set": {
-                "count": 5,
-                "offset": None,
-                "limit": None,
-                "total": 5
-            },
+            "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
                     "notification_type": "NewOrder",
@@ -156,11 +149,9 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                        "aaa": "bbb"
-                    },
+                    "metainfo": {"aaa": "bbb"},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 15:20:30"
+                    "created": "2022/01/01 15:20:30",
                 },
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -177,7 +168,7 @@ class TestNotificationsGet:
                     },
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 16:20:30"
+                    "created": "2022/01/01 16:20:30",
                 },
                 {
                     "notification_type": "NewOrder",
@@ -192,10 +183,9 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30",
                 },
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -210,10 +200,9 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
-                    "created": "2022/01/01 18:20:30"
+                    "created": "2022/01/01 18:20:30",
                 },
                 {
                     "notification_type": "NewOrder",
@@ -228,12 +217,11 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 19:20:30"
+                    "created": "2022/01/01 19:20:30",
                 },
-            ]
+            ],
         }
 
         # Assertion
@@ -252,16 +240,11 @@ class TestNotificationsGet:
             params={
                 "offset": 1,
                 "limit": 2,
-            }
+            },
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 5,
-                "offset": 1,
-                "limit": 2,
-                "total": 5
-            },
+            "result_set": {"count": 5, "offset": 1, "limit": 2, "total": 5},
             "notifications": [
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -278,7 +261,7 @@ class TestNotificationsGet:
                     },
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 16:20:30"
+                    "created": "2022/01/01 16:20:30",
                 },
                 {
                     "notification_type": "NewOrder",
@@ -293,12 +276,11 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30",
                 },
-            ]
+            ],
         }
 
         # Assertion
@@ -316,17 +298,12 @@ class TestNotificationsGet:
             self.apiurl,
             params={
                 "offset": 5,
-            }
+            },
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 5,
-                "offset": 5,
-                "limit": None,
-                "total": 5
-            },
-            "notifications": []
+            "result_set": {"count": 5, "offset": 5, "limit": None, "total": 5},
+            "notifications": [],
         }
 
         # Assertion
@@ -346,16 +323,11 @@ class TestNotificationsGet:
                 "address": self.address,
                 "notification_type": "NewOrder",
                 "priority": 2,
-            }
+            },
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 1,
-                "offset": None,
-                "limit": None,
-                "total": 5
-            },
+            "result_set": {"count": 1, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
                     "notification_type": "NewOrder",
@@ -370,12 +342,11 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30",
                 },
-            ]
+            ],
         }
 
         # Assertion
@@ -395,17 +366,12 @@ class TestNotificationsGet:
                 "address": self.address_2,
                 "notification_type": "NewOrder",
                 "priority": 1,
-            }
+            },
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 0,
-                "offset": None,
-                "limit": None,
-                "total": 5
-            },
-            "notifications": []
+            "result_set": {"count": 0, "offset": None, "limit": None, "total": 5},
+            "notifications": [],
         }
 
         # Assertion
@@ -424,16 +390,11 @@ class TestNotificationsGet:
             params={
                 "sort_item": "priority",
                 "sort_order": 1,
-            }
+            },
         )
 
         assumed_body = {
-            "result_set": {
-                "count": 5,
-                "offset": None,
-                "limit": None,
-                "total": 5
-            },
+            "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
                     "notification_type": "NewOrder",
@@ -448,10 +409,9 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30",
                 },
                 {
                     "notification_type": "NewOrder",
@@ -466,11 +426,9 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                        "aaa": "bbb"
-                    },
+                    "metainfo": {"aaa": "bbb"},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 15:20:30"
+                    "created": "2022/01/01 15:20:30",
                 },
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -487,7 +445,7 @@ class TestNotificationsGet:
                     },
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 16:20:30"
+                    "created": "2022/01/01 16:20:30",
                 },
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -502,10 +460,9 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
-                    "created": "2022/01/01 18:20:30"
+                    "created": "2022/01/01 18:20:30",
                 },
                 {
                     "notification_type": "NewOrder",
@@ -520,12 +477,11 @@ class TestNotificationsGet:
                     "args": {
                         "hoge": "fuga",
                     },
-                    "metainfo": {
-                    },
+                    "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created": "2022/01/01 19:20:30"
+                    "created": "2022/01/01 19:20:30",
                 },
-            ]
+            ],
         }
 
         # Assertion
@@ -549,7 +505,7 @@ class TestNotificationsGet:
                 "sort_order": -1,
                 "offset": -1,
                 "limit": -1,
-            }
+            },
         )
 
         # Assertion
@@ -561,13 +517,13 @@ class TestNotificationsGet:
                     "ctx": {"limit_value": 0},
                     "loc": ["query", "offset"],
                     "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge"
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {"limit_value": 0},
                     "loc": ["query", "limit"],
                     "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge"
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {
@@ -586,25 +542,25 @@ class TestNotificationsGet:
                             "Transfer",
                             "ApplyForTransfer",
                             "ApproveTransfer",
-                            "CancelTransfer"
+                            "CancelTransfer",
                         ]
                     },
                     "loc": ["query", "notification_type"],
                     "msg": "value is not a valid enumeration member; permitted: "
-                           "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', "
-                           "'CancelOrderCounterpart', 'ForceCancelOrder', "
-                           "'BuyAgreement', 'BuySettlementOK', "
-                           "'BuySettlementNG', 'SellAgreement', "
-                           "'SellSettlementOK', 'SellSettlementNG', 'Transfer', "
-                           "'ApplyForTransfer', 'ApproveTransfer', "
-                           "'CancelTransfer'",
-                    "type": "type_error.enum"
+                    "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', "
+                    "'CancelOrderCounterpart', 'ForceCancelOrder', "
+                    "'BuyAgreement', 'BuySettlementOK', "
+                    "'BuySettlementNG', 'SellAgreement', "
+                    "'SellSettlementOK', 'SellSettlementNG', 'Transfer', "
+                    "'ApplyForTransfer', 'ApproveTransfer', "
+                    "'CancelTransfer'",
+                    "type": "type_error.enum",
                 },
                 {
                     "ctx": {"limit_value": 0},
                     "loc": ["query", "priority"],
                     "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge"
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {
@@ -612,23 +568,23 @@ class TestNotificationsGet:
                             "notification_type",
                             "priority",
                             "block_timestamp",
-                            "created"
+                            "created",
                         ]
                     },
                     "loc": ["query", "sort_item"],
                     "msg": "value is not a valid enumeration member; permitted: "
-                           "'notification_type', 'priority', 'block_timestamp', "
-                           "'created'",
-                    "type": "type_error.enum"
+                    "'notification_type', 'priority', 'block_timestamp', "
+                    "'created'",
+                    "type": "type_error.enum",
                 },
                 {
                     "ctx": {"enum_values": [0, 1]},
                     "loc": ["query", "sort_order"],
                     "msg": "value is not a valid enumeration member; permitted: 0, 1",
-                    "type": "type_error.enum"
-                }
+                    "type": "type_error.enum",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # <Error_2>
@@ -641,7 +597,7 @@ class TestNotificationsGet:
                 "address": self.address,
                 "priority": 3,
                 "sort_order": 2,
-            }
+            },
         )
 
         # Assertion
@@ -653,28 +609,23 @@ class TestNotificationsGet:
                     "ctx": {"limit_value": 2},
                     "loc": ["query", "priority"],
                     "msg": "ensure this value is less than or equal to 2",
-                    "type": "value_error.number.not_le"
+                    "type": "value_error.number.not_le",
                 },
                 {
                     "ctx": {"enum_values": [0, 1]},
                     "loc": ["query", "sort_order"],
                     "msg": "value is not a valid enumeration member; permitted: 0, 1",
-                    "type": "type_error.enum"
-                }
+                    "type": "type_error.enum",
+                },
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }
 
     # <Error_3>
     # Invalid Parameter (invalid address)
     def test_error_3(self, client: TestClient, session: Session):
         # Request target API
-        resp = client.get(
-            self.apiurl,
-            params={
-                "address": "0x11"
-            }
-        )
+        resp = client.get(self.apiurl, params={"address": "0x11"})
 
         # Assertion
         assert resp.status_code == 400
@@ -684,8 +635,8 @@ class TestNotificationsGet:
                 {
                     "loc": ["address"],
                     "msg": "address is not a valid address",
-                    "type": "value_error"
+                    "type": "value_error",
                 }
             ],
-            "message": "Invalid Parameter"
+            "message": "Invalid Parameter",
         }

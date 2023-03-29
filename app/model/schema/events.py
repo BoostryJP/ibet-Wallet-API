@@ -17,15 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from fastapi import Query
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    root_validator,
-    StrictStr
-)
+
+from fastapi import Query
+from pydantic import BaseModel, Field, StrictStr, root_validator
 from pydantic.dataclasses import dataclass
+
+from app.contracts import create_abi_event_argument_models
 
 ############################
 # COMMON
@@ -35,6 +33,7 @@ from pydantic.dataclasses import dataclass
 ############################
 # REQUEST
 ############################
+
 
 @dataclass
 class EventsQuery:
@@ -61,14 +60,16 @@ class E2EMessagingEventArguments(BaseModel):
 
 @dataclass
 class E2EMessagingEventsQuery(EventsQuery):
-    event: Optional[E2EMessagingEventType] = Query(default=None, description="events to get")
+    event: Optional[E2EMessagingEventType] = Query(
+        default=None, description="events to get"
+    )
     argument_filters: Optional[str] = Query(
         default=None,
         description="filter argument. serialize obj to a JSON formatted str required."
-                    "eg."
-                    "```"
-                    "{\"sender\": \"0x0000000000000000000000000000000000000000\"}"
-                    "```"
+        "eg."
+        "```"
+        '{"sender": "0x0000000000000000000000000000000000000000"}'
+        "```",
     )
 
 
@@ -88,17 +89,19 @@ class EscrowEventArguments(BaseModel):
 
 @dataclass
 class IbetEscrowEventsQuery(EventsQuery):
-    event: Optional[IbetEscrowEventType] = Query(default=None, description="events to get")
+    event: Optional[IbetEscrowEventType] = Query(
+        default=None, description="events to get"
+    )
     argument_filters: Optional[str] = Query(
         default=None,
         description="filter argument. serialize obj to a JSON formatted str required."
-                    "eg."
-                    "```"
-                    "{"
-                    "    \"escrowId\": 0"
-                    "    \"token\": \"0x0000000000000000000000000000000000000000\""
-                    "}"
-                    "```"
+        "eg."
+        "```"
+        "{"
+        '    "escrowId": 0'
+        '    "token": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
     )
 
 
@@ -117,23 +120,64 @@ class IbetSecurityTokenEscrowEventType(str, Enum):
 
 @dataclass
 class IbetSecurityTokenEscrowEventsQuery(EventsQuery):
-    event: Optional[IbetSecurityTokenEscrowEventType] = Query(default=None, description="events to get")
+    event: Optional[IbetSecurityTokenEscrowEventType] = Query(
+        default=None, description="events to get"
+    )
     argument_filters: Optional[str] = Query(
         default=None,
         description="filter argument. serialize obj to a JSON formatted str required."
-                    "eg."
-                    "```"
-                    "{"
-                    "    \"escrowId\": 0"
-                    "    \"token\": \"0x0000000000000000000000000000000000000000\""
-                    "}"
-                    "```"
+        "eg."
+        "```"
+        "{"
+        '    "escrowId": 0'
+        '    "token": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
+    )
+
+
+class SecurityTokenEventArguments(BaseModel):
+    __root__: create_abi_event_argument_models("IbetSecurityTokenInterface")
+
+
+class IbetSecurityTokenInterfaceEventType(str, Enum):
+    Allot = "Allot"
+    ApplyForOffering = "ApplyForOffering"
+    ApplyForTransfer = "ApplyForTransfer"
+    ApproveTransfer = "ApproveTransfer"
+    CancelTransfer = "CancelTransfer"
+    ChangeOfferingStatus = "ChangeOfferingStatus"
+    ChangeStatus = "ChangeStatus"
+    ChangeTransferApprovalRequired = "ChangeTransferApprovalRequired"
+    Issue = "Issue"
+    Lock = "Lock"
+    Redeem = "Redeem"
+    Transfer = "Transfer"
+    Unlock = "Unlock"
+
+
+@dataclass
+class IbetSecurityTokenInterfaceEventsQuery(EventsQuery):
+    event: Optional[IbetSecurityTokenInterfaceEventType] = Query(
+        default=None, description="events to get"
+    )
+    argument_filters: Optional[str] = Query(
+        default=None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+        "eg."
+        "```"
+        "{"
+        '    "from": "0x0000000000000000000000000000000000000000"'
+        '    "to": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
     )
 
 
 ############################
 # RESPONSE
 ############################
+
 
 class Event(BaseModel):
     event: str = Field(description="the event name")

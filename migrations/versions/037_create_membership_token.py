@@ -23,11 +23,11 @@ from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
 
-
 meta = MetaData()
 
 table = Table(
-    "membership_token", meta,
+    "membership_token",
+    meta,
     Column("token_address", String(42), primary_key=True),
     Column("token_template", String(40)),
     Column("owner_address", String(42), index=True),
@@ -42,7 +42,6 @@ table = Table(
     Column("status", Boolean),
     Column("max_holding_quantity", BigInteger),
     Column("max_sell_amount", BigInteger),
-
     Column("details", String(2000)),
     Column("return_details", String(2000)),
     Column("expiration_date", String(8)),
@@ -50,7 +49,6 @@ table = Table(
     Column("transferable", Boolean),
     Column("initial_offering_status", Boolean),
     Column("image_url", JSON),
-
     Column("short_term_cache_created", DateTime),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),

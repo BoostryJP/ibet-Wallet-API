@@ -18,15 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
-from sqlalchemy import create_engine, and_
+from sqlalchemy import and_, create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.contract import Contract as Web3Contract
@@ -35,28 +31,28 @@ from web3.types import EventData
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
+import log
+
 from app.config import (
     DATABASE_URL,
-    WORKER_COUNT,
     NOTIFICATION_PROCESS_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    WORKER_COUNT,
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
-    Notification,
-    NotificationType,
-    NotificationBlockNumber,
+    IDXTokenListItem,
     Listing,
-    IDXTokenListItem
+    Notification,
+    NotificationBlockNumber,
+    NotificationType,
 )
-from app.utils.web3_utils import Web3Wrapper
 from app.utils.company_list import CompanyList
-from batch.lib.token_list import TokenList
+from app.utils.web3_utils import Web3Wrapper
 from batch.lib.misc import wait_all_futures
-import log
+from batch.lib.token_list import TokenList
 
-JST = timezone(timedelta(hours=+9), "JST")
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")
 
 WORKER_COUNT = int(WORKER_COUNT)
@@ -68,8 +64,7 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 # Get TokenList contract
 list_contract = Contract.get_contract(
-    contract_name="TokenList",
-    address=TOKEN_LIST_CONTRACT_ADDRESS
+    contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
 token_list = TokenList(list_contract)
 
@@ -94,26 +89,36 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], JST)
+        return datetime.utcfromtimestamp(
+            web3.eth.get_block(entry["blockNumber"])["timestamp"]
+        )
 
     @staticmethod
     def _get_token_all_list(db_session: Session):
         _tokens = []
         registered_tokens: list[IDXTokenListItem] = (
-            db_session.query(IDXTokenListItem).
-            join(Listing, and_(Listing.token_address == IDXTokenListItem.token_address)).all()
+            db_session.query(IDXTokenListItem)
+            .join(
+                Listing, and_(Listing.token_address == IDXTokenListItem.token_address)
+            )
+            .all()
         )
         for registered_token in registered_tokens:
-            _tokens.append({
-                "token": registered_token,
-                "token_type": registered_token.token_template
-            })
+            _tokens.append(
+                {
+                    "token": registered_token,
+                    "token_type": registered_token.token_template,
+                }
+            )
         return _tokens
 
     def db_merge(
-        self, db_session: Session,
-        token_contract: Web3Contract, token_type: str,
-        log_entries: list[EventData], token_owner_address: str
+        self,
+        db_session: Session,
+        token_contract: Web3Contract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
     ):
         pass
 
@@ -128,11 +133,14 @@ class Watcher:
 
             for _token in _token_list:
                 # Get synchronized block number
-                from_block_number = self.__get_synchronized_block_number(
-                    db_session=db_session,
-                    contract_address=_token["token"].token_address,
-                    notification_type=self.notification_type
-                ) + 1
+                from_block_number = (
+                    self.__get_synchronized_block_number(
+                        db_session=db_session,
+                        contract_address=_token["token"].token_address,
+                        notification_type=self.notification_type,
+                    )
+                    + 1
+                )
 
                 # Get the latest block number
                 if from_block_number > latest_block_number:
@@ -148,17 +156,20 @@ class Watcher:
 
                 # Get event logs
                 try:
-                    token_contract = self.contract_cache.get(_token["token"].token_address, None)
+                    token_contract = self.contract_cache.get(
+                        _token["token"].token_address, None
+                    )
                     if token_contract is None:
                         token_contract = Contract.get_contract(
                             contract_name=_token["token_type"],
-                            address=_token["token"].token_address
+                            address=_token["token"].token_address,
                         )
-                        self.contract_cache[_token["token"].token_address] = token_contract
+                        self.contract_cache[
+                            _token["token"].token_address
+                        ] = token_contract
                     _event = getattr(token_contract.events, self.filter_name)
                     entries = _event.getLogs(
-                        fromBlock=from_block_number,
-                        toBlock=to_block_number
+                        fromBlock=from_block_number, toBlock=to_block_number
                     )
                 except FileNotFoundError:
                     continue
@@ -173,7 +184,7 @@ class Watcher:
                         token_contract=token_contract,
                         token_type=_token["token_type"],
                         log_entries=entries,
-                        token_owner_address=_token["token"].owner_address
+                        token_owner_address=_token["token"].owner_address,
                     )
 
                 # Update synchronized block number
@@ -181,7 +192,7 @@ class Watcher:
                     db_session=db_session,
                     contract_address=_token["token"].token_address,
                     notification_type=self.notification_type,
-                    block_number=to_block_number
+                    block_number=to_block_number,
                 )
 
                 db_session.commit()
@@ -193,27 +204,40 @@ class Watcher:
         finally:
             db_session.close()
             elapsed_time = time.time() - start_time
-            LOG.info("<{}> finished in {} secs".format(self.__class__.__name__, elapsed_time))
+            LOG.info(
+                "<{}> finished in {} secs".format(self.__class__.__name__, elapsed_time)
+            )
 
     @staticmethod
-    def __get_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str):
+    def __get_synchronized_block_number(
+        db_session: Session, contract_address: str, notification_type: str
+    ):
         """Get latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
-            filter(NotificationBlockNumber.notification_type == notification_type). \
-            filter(NotificationBlockNumber.contract_address == contract_address).\
-            first()
+        notification_block_number: NotificationBlockNumber | None = (
+            db_session.query(NotificationBlockNumber)
+            .filter(NotificationBlockNumber.notification_type == notification_type)
+            .filter(NotificationBlockNumber.contract_address == contract_address)
+            .first()
+        )
         if notification_block_number is None:
             return -1
         else:
             return notification_block_number.latest_block_number
 
     @staticmethod
-    def __set_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str, block_number: int):
+    def __set_synchronized_block_number(
+        db_session: Session,
+        contract_address: str,
+        notification_type: str,
+        block_number: int,
+    ):
         """Set latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
-            filter(NotificationBlockNumber.notification_type == notification_type). \
-            filter(NotificationBlockNumber.contract_address == contract_address). \
-            first()
+        notification_block_number: NotificationBlockNumber | None = (
+            db_session.query(NotificationBlockNumber)
+            .filter(NotificationBlockNumber.notification_type == notification_type)
+            .filter(NotificationBlockNumber.contract_address == contract_address)
+            .first()
+        )
         if notification_block_number is None:
             notification_block_number = NotificationBlockNumber()
         notification_block_number.notification_type = notification_type
@@ -228,20 +252,21 @@ class WatchTransfer(Watcher):
     - Process for registering a notification when a token is received
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
+
     def __init__(self):
         super().__init__("Transfer", {}, NotificationType.TRANSFER)
 
     def db_merge(
-        self, db_session: Session,
-        token_contract: Web3Contract, token_type: str,
-        log_entries: list[EventData], token_owner_address: str
+        self,
+        db_session: Session,
+        token_contract: Web3Contract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
     ):
         company_list = CompanyList.get()
         token_name = Contract.call_function(
-            contract=token_contract,
-            function_name="name",
-            args=(),
-            default_returns=""
+            contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             # If the contract address is the source of the transfer, skip the process
@@ -254,7 +279,7 @@ class WatchTransfer(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": token_type
+                "token_type": token_type,
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -273,20 +298,21 @@ class WatchApplyForTransfer(Watcher):
     - Process for registering a notification when application for transfer is submitted
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
+
     def __init__(self):
         super().__init__("ApplyForTransfer", {}, NotificationType.APPLY_FOR_TRANSFER)
 
     def db_merge(
-        self, db_session: Session,
-        token_contract: Web3Contract, token_type: str,
-        log_entries: list[EventData], token_owner_address: str
+        self,
+        db_session: Session,
+        token_contract: Web3Contract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
     ):
         company_list = CompanyList.get()
         token_name = Contract.call_function(
-            contract=token_contract,
-            function_name="name",
-            args=(),
-            default_returns=""
+            contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             if not token_list.is_registered(entry["address"]):
@@ -298,7 +324,7 @@ class WatchApplyForTransfer(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": token_type
+                "token_type": token_type,
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -317,20 +343,21 @@ class WatchApproveTransfer(Watcher):
     - Process for registering a notification when application for transfer is approved
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
+
     def __init__(self):
         super().__init__("ApproveTransfer", {}, NotificationType.APPROVE_TRANSFER)
 
     def db_merge(
-        self, db_session: Session,
-        token_contract: Web3Contract, token_type: str,
-        log_entries: list[EventData], token_owner_address: str
+        self,
+        db_session: Session,
+        token_contract: Web3Contract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
     ):
         company_list = CompanyList.get()
         token_name = Contract.call_function(
-            contract=token_contract,
-            function_name="name",
-            args=(),
-            default_returns=""
+            contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             if not token_list.is_registered(entry["address"]):
@@ -342,7 +369,7 @@ class WatchApproveTransfer(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": token_type
+                "token_type": token_type,
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -361,20 +388,21 @@ class WatchCancelTransfer(Watcher):
     - Process for registering a notification when application for transfer is canceled
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
+
     def __init__(self):
         super().__init__("CancelTransfer", {}, NotificationType.CANCEL_TRANSFER)
 
     def db_merge(
-        self, db_session: Session,
-        token_contract: Web3Contract, token_type: str,
-        log_entries: list[EventData], token_owner_address: str
+        self,
+        db_session: Session,
+        token_contract: Web3Contract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
     ):
         company_list = CompanyList.get()
         token_name = Contract.call_function(
-            contract=token_contract,
-            function_name="name",
-            args=(),
-            default_returns=""
+            contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             if not token_list.is_registered(entry["address"]):
@@ -386,7 +414,7 @@ class WatchCancelTransfer(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": token_type
+                "token_type": token_type,
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -405,7 +433,7 @@ def main():
         WatchTransfer(),
         WatchApplyForTransfer(),
         WatchApproveTransfer(),
-        WatchCancelTransfer()
+        WatchCancelTransfer(),
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)

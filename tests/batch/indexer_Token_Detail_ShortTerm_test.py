@@ -20,38 +20,36 @@ import logging
 import time
 from datetime import datetime
 from decimal import Decimal
+from unittest import mock
+from unittest.mock import MagicMock
+
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from unittest import mock
-from unittest.mock import MagicMock
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.blockchain import BondToken, ShareToken, MembershipToken, CouponToken
-from app.model.db import (
-    Listing,
-    IDXBondToken as BondTokenModel,
-    IDXShareToken as ShareTokenModel,
-    IDXMembershipToken as MembershipTokenModel,
-    IDXCouponToken as CouponTokenModel,
-    IDXTokenListItem
-)
+from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
+from app.model.db import IDXBondToken as BondTokenModel
+from app.model.db import IDXCouponToken as CouponTokenModel
+from app.model.db import IDXMembershipToken as MembershipTokenModel
+from app.model.db import IDXShareToken as ShareTokenModel
+from app.model.db import IDXTokenListItem, Listing
 from batch import indexer_Token_Detail_ShortTerm
-from batch.indexer_Token_Detail_ShortTerm import Processor, LOG, main
+from batch.indexer_Token_Detail_ShortTerm import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    issue_bond_token,
-    register_bond_list,
-    issue_share_token,
-    register_share_list,
-    issue_coupon_token,
     coupon_register_list,
+    issue_bond_token,
+    issue_coupon_token,
+    issue_share_token,
     membership_issue,
-    membership_register_list
+    membership_register_list,
+    register_bond_list,
+    register_share_list,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -65,6 +63,10 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    config.BOND_TOKEN_ENABLED = True
+    config.SHARE_TOKEN_ENABLED = True
+    config.MEMBERSHIP_TOKEN_ENABLED = True
+    config.COUPON_TOKEN_ENABLED = True
     processor = test_module.Processor()
     return processor
 
@@ -142,22 +144,28 @@ class TestProcessor:
 
     # <Normal_1>
     # Multiple listed tokens and no events
-    def test_normal_1(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_1(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         _bond_token_expected_list = []
         # Issue bond token
         for i in range(10):
             args = {
                 "name": f"テスト債券{str(i+1)}",
                 "symbol": f"BOND{str(i+1)}",
-                "totalSupply": 1000000+1,
+                "totalSupply": 1000000 + 1,
                 "tradableExchange": exchange_contract["address"],
-                "faceValue": int((i+1)*10000),
-                "interestRate": 602+1,
+                "faceValue": int((i + 1) * 10000),
+                "interestRate": 602 + 1,
                 "interestPaymentDate1": "0101",
                 "interestPaymentDate2": "0201",
                 "interestPaymentDate3": "0301",
@@ -171,7 +179,7 @@ class TestProcessor:
                 "interestPaymentDate11": "1101",
                 "interestPaymentDate12": "1201",
                 "redemptionDate": "20191231",
-                "redemptionValue": 10000+1,
+                "redemptionValue": 10000 + 1,
                 "returnDate": "20191231",
                 "returnAmount": f"商品券をプレゼント{str(i+1)}",
                 "purpose": f"新商品の開発資金として利用。{str(i+1)}",
@@ -198,10 +206,10 @@ class TestProcessor:
                 "symbol": f"SHARE{str(i+1)}",
                 "tradableExchange": exchange_contract["address"],
                 "personalInfoAddress": personal_info_contract["address"],
-                "issuePrice": int((i+1)*1000),
-                "principalValue": 1000+i,
-                "totalSupply": 1000000+i,
-                "dividends": 101+i,
+                "issuePrice": int((i + 1) * 1000),
+                "principalValue": 1000 + i,
+                "totalSupply": 1000000 + i,
+                "dividends": 101 + i,
                 "dividendRecordDate": "20200401",
                 "dividendPaymentDate": "20200502",
                 "cancellationDate": "20200603",
@@ -224,7 +232,7 @@ class TestProcessor:
             args = {
                 "name": f"テスト会員権{str(i+1)}",
                 "symbol": f"MEMBERSHIP{str(i+1)}",
-                "initialSupply": int((i+1)*1000000),
+                "initialSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
                 "details": f"詳細{str(i+1)}",
                 "returnDetails": f"リターン詳細{str(i+1)}",
@@ -248,7 +256,7 @@ class TestProcessor:
             args = {
                 "name": f"テストクーポン{str(i+1)}",
                 "symbol": f"COUPON{str(i+1)}",
-                "totalSupply":  int((i+1)*1000000),
+                "totalSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
                 "details": f"クーポン詳細{str(i+1)}",
                 "returnDetails": f"リターン詳細{str(i+1)}",
@@ -279,23 +287,37 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = session.query(BondTokenModel).\
-                filter(BondTokenModel.token_address == _expect_dict["token_address"]).one()
+            _bond_token: BondTokenModel = (
+                session.query(BondTokenModel)
+                .filter(BondTokenModel.token_address == _expect_dict["token_address"])
+                .one()
+            )
             assert _bond_token.short_term_cache_created > current
 
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = session.query(ShareTokenModel).\
-                filter(ShareTokenModel.token_address == _expect_dict["token_address"]).one()
+            _share_token: ShareTokenModel = (
+                session.query(ShareTokenModel)
+                .filter(ShareTokenModel.token_address == _expect_dict["token_address"])
+                .one()
+            )
             assert _share_token.short_term_cache_created > current
 
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = session.query(MembershipTokenModel).\
-                filter(MembershipTokenModel.token_address == _expect_dict["token_address"]).one()
+            _membership_token: MembershipTokenModel = (
+                session.query(MembershipTokenModel)
+                .filter(
+                    MembershipTokenModel.token_address == _expect_dict["token_address"]
+                )
+                .one()
+            )
             assert _membership_token.short_term_cache_created > current
 
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
-                filter(CouponTokenModel.token_address == _expect_dict["token_address"]).one()
+            _coupon_token: CouponTokenModel = (
+                session.query(CouponTokenModel)
+                .filter(CouponTokenModel.token_address == _expect_dict["token_address"])
+                .one()
+            )
             assert _coupon_token.short_term_cache_created > current
 
     # <Normal_2>
@@ -308,12 +330,18 @@ class TestProcessor:
     #   - ChangeOfferingStatus
     #   - ChangeToRedeemed
     #   - ChangeOwner
-    def test_normal_2(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_2(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         _bond_token_expected_list = []
         # Issue bond token
@@ -321,10 +349,10 @@ class TestProcessor:
             args = {
                 "name": f"テスト債券{str(i+1)}",
                 "symbol": f"BOND{str(i+1)}",
-                "totalSupply": 1000000+1,
+                "totalSupply": 1000000 + 1,
                 "tradableExchange": exchange_contract["address"],
                 "faceValue": int(10000),
-                "interestRate": 602+1,
+                "interestRate": 602 + 1,
                 "interestPaymentDate1": "0101",
                 "interestPaymentDate2": "0201",
                 "interestPaymentDate3": "0301",
@@ -338,7 +366,7 @@ class TestProcessor:
                 "interestPaymentDate11": "1101",
                 "interestPaymentDate12": "1201",
                 "redemptionDate": "20191231",
-                "redemptionValue": 10000+1,
+                "redemptionValue": 10000 + 1,
                 "returnDate": "20191231",
                 "returnAmount": f"商品券をプレゼント{str(i+1)}",
                 "purpose": f"新商品の開発資金として利用。{str(i+1)}",
@@ -358,48 +386,33 @@ class TestProcessor:
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
-                contract_name="IbetStraightBond",
-                address=token["address"]
+                contract_name="IbetStraightBond", address=token["address"]
             )
-            token_contract.functions.setRedemptionValue(
-                99999
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.changeToRedeemed(
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.changeOfferingStatus(
-                False
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.setTransferApprovalRequired(
-                True
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.setFaceValue(
-                1
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.setStatus(
-                False
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            token_contract.functions.setRedemptionValue(99999).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.changeToRedeemed().transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.changeOfferingStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.setTransferApprovalRequired(True).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.setFaceValue(1).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.setStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable",
-                address=token["address"]
+                contract_name="Ownable", address=token["address"]
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            ).transact({"from": self.issuer["account_address"]})
 
             # Fetch data for cache
             _bond_token_expected_list.append({"token_address": token["address"]})
@@ -411,8 +424,11 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = session.query(BondTokenModel).\
-                filter(BondTokenModel.token_address == _expect_dict["token_address"]).one()
+            _bond_token: BondTokenModel = (
+                session.query(BondTokenModel)
+                .filter(BondTokenModel.token_address == _expect_dict["token_address"])
+                .one()
+            )
             # Short-Term Cache attributes is updated instantly.
             assert _bond_token.is_redeemed == True
             assert _bond_token.is_offering == False
@@ -424,7 +440,6 @@ class TestProcessor:
             assert _bond_token.redemption_value == 10001
             assert _bond_token.face_value == 10000
 
-
     # <Normal_3>
     # Multiple listed tokens and multiple events
     # - Share
@@ -434,12 +449,18 @@ class TestProcessor:
     #   - ChangeDividendInformation
     #   - ChangeToCanceled
     #   - ChangeOwner
-    def test_normal_3(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_3(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         _share_token_expected_list = []
         # Issue bond token
@@ -449,10 +470,10 @@ class TestProcessor:
                 "symbol": f"SHARE{str(i+1)}",
                 "tradableExchange": exchange_contract["address"],
                 "personalInfoAddress": personal_info_contract["address"],
-                "issuePrice": int((i+1)*1000),
-                "principalValue": 1000+i,
-                "totalSupply": 1000000+i,
-                "dividends": 101+i,
+                "issuePrice": int((i + 1) * 1000),
+                "principalValue": 1000 + i,
+                "totalSupply": 1000000 + i,
+                "dividends": 101 + i,
                 "dividendRecordDate": "20200401",
                 "dividendPaymentDate": "20200502",
                 "cancellationDate": "20200603",
@@ -471,44 +492,31 @@ class TestProcessor:
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
-                contract_name="IbetShare",
-                address=token["address"]
+                contract_name="IbetShare", address=token["address"]
             )
 
-            token_contract.functions.setStatus(
-                False
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.setTransferApprovalRequired(
-                True
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.changeOfferingStatus(
-                False
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
-            token_contract.functions.changeToCanceled(
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            token_contract.functions.setStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.setTransferApprovalRequired(True).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.changeOfferingStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token_contract.functions.changeToCanceled().transact(
+                {"from": self.issuer["account_address"]}
+            )
             token_contract.functions.setDividendInformation(
                 50, "20200401", "20200401"
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            ).transact({"from": self.issuer["account_address"]})
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable",
-                address=token["address"]
+                contract_name="Ownable", address=token["address"]
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            ).transact({"from": self.issuer["account_address"]})
 
             _share_token_expected_list.append({"token_address": token["address"]})
 
@@ -519,17 +527,20 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = session.query(ShareTokenModel).\
-                filter(ShareTokenModel.token_address == _expect_dict["token_address"]).one()
+            _share_token: ShareTokenModel = (
+                session.query(ShareTokenModel)
+                .filter(ShareTokenModel.token_address == _expect_dict["token_address"])
+                .one()
+            )
             # Short-Term Cache attributes is updated instantly.
             assert _share_token.status == False
             assert _share_token.transfer_approval_required == True
             assert _share_token.is_offering == False
             assert _share_token.is_canceled == True
             assert _share_token.dividend_information == {
-                'dividends': float(Decimal(str(50)) * Decimal("0.0000000000001")),
-                'dividend_record_date': "20200401",
-                'dividend_payment_date': "20200401",
+                "dividends": float(Decimal(str(50)) * Decimal("0.0000000000001")),
+                "dividend_record_date": "20200401",
+                "dividend_payment_date": "20200401",
             }
             assert _share_token.owner_address == self.agent["account_address"]
 
@@ -538,11 +549,17 @@ class TestProcessor:
     # - Membership/Coupon
     #   - ChangeStatus
     #   - ChangeOwner
-    def test_normal_4(self, processor: Processor, shared_contract, session: Session, block_number: None):
+    def test_normal_4(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+    ):
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         _membership_token_expected_list = []
         # Issue bond token
@@ -550,7 +567,7 @@ class TestProcessor:
             args = {
                 "name": f"テスト会員権{str(i+1)}",
                 "symbol": f"MEMBERSHIP{str(i+1)}",
-                "initialSupply": int((i+1)*1000000),
+                "initialSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
                 "details": f"詳細{str(i+1)}",
                 "returnDetails": f"リターン詳細{str(i+1)}",
@@ -568,25 +585,19 @@ class TestProcessor:
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
-                contract_name="IbetMembership",
-                address=token["address"]
+                contract_name="IbetMembership", address=token["address"]
             )
 
-            token_contract.functions.setStatus(
-                False
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            token_contract.functions.setStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable",
-                address=token["address"]
+                contract_name="Ownable", address=token["address"]
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            ).transact({"from": self.issuer["account_address"]})
 
             # Fetch data for cache
             _membership_token_expected_list.append({"token_address": token["address"]})
@@ -597,7 +608,7 @@ class TestProcessor:
             args = {
                 "name": f"テストクーポン{str(i+1)}",
                 "symbol": f"COUPON{str(i+1)}",
-                "totalSupply":  int((i+1)*1000000),
+                "totalSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
                 "details": f"クーポン詳細{str(i+1)}",
                 "returnDetails": f"リターン詳細{str(i+1)}",
@@ -616,25 +627,19 @@ class TestProcessor:
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
-                contract_name="IbetCoupon",
-                address=token["address"]
+                contract_name="IbetCoupon", address=token["address"]
             )
 
-            token_contract.functions.setStatus(
-                False
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            token_contract.functions.setStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable",
-                address=token["address"]
+                contract_name="Ownable", address=token["address"]
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
-            ).transact({
-                "from": self.issuer["account_address"]
-            })
+            ).transact({"from": self.issuer["account_address"]})
 
             # Fetch data for cache
             _coupon_token_expected_list.append({"token_address": token["address"]})
@@ -646,15 +651,23 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = session.query(MembershipTokenModel).\
-                filter(MembershipTokenModel.token_address == _expect_dict["token_address"]).one()
+            _membership_token: MembershipTokenModel = (
+                session.query(MembershipTokenModel)
+                .filter(
+                    MembershipTokenModel.token_address == _expect_dict["token_address"]
+                )
+                .one()
+            )
             assert _membership_token.status == False
             assert _membership_token.owner_address == self.agent["account_address"]
 
         # assertion
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
-                filter(CouponTokenModel.token_address == _expect_dict["token_address"]).one()
+            _coupon_token: CouponTokenModel = (
+                session.query(CouponTokenModel)
+                .filter(CouponTokenModel.token_address == _expect_dict["token_address"])
+                .one()
+            )
             assert _coupon_token.status == False
             assert _coupon_token.owner_address == self.agent["account_address"]
 
@@ -673,7 +686,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -683,7 +696,9 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], "IbetCoupon", session)
         coupon_data = CouponToken.get(session, token["address"])
         session.add(coupon_data.to_model())
@@ -693,16 +708,23 @@ class TestProcessor:
         current = datetime.utcnow()
 
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.process()
 
         # Assertion
-        _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
-            filter(CouponTokenModel.token_address == token["address"]).one()
+        _coupon_token: CouponTokenModel = (
+            session.query(CouponTokenModel)
+            .filter(CouponTokenModel.token_address == token["address"])
+            .one()
+        )
         assert _coupon_token.short_term_cache_created < current
 
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], "IbetCoupon", session)
         coupon_data = CouponToken.get(session, token["address"])
         session.add(coupon_data.to_model())
@@ -712,14 +734,19 @@ class TestProcessor:
         current = datetime.utcnow()
 
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(ServiceUnavailable):
+        with mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(ServiceUnavailable):
             processor.process()
 
         # Assertion
         session.rollback()
-        _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
-            filter(CouponTokenModel.token_address == token["address"]).one()
+        _coupon_token: CouponTokenModel = (
+            session.query(CouponTokenModel)
+            .filter(CouponTokenModel.token_address == token["address"])
+            .one()
+        )
         assert _coupon_token.short_term_cache_created < current
 
     # <Error_1_2>: SQLAlchemyError occurs in "process".
@@ -730,7 +757,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -740,7 +767,9 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], "IbetCoupon", session)
         coupon_data = CouponToken.get(session, token["address"])
         session.add(coupon_data.to_model())
@@ -750,16 +779,22 @@ class TestProcessor:
         current = datetime.utcnow()
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.process()
 
         # Assertion
-        _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
-            filter(CouponTokenModel.token_address == token["address"]).one()
+        _coupon_token: CouponTokenModel = (
+            session.query(CouponTokenModel)
+            .filter(CouponTokenModel.token_address == token["address"])
+            .one()
+        )
         assert _coupon_token.short_term_cache_created < current
 
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], "IbetCoupon", session)
         coupon_data = CouponToken.get(session, token["address"])
         session.add(coupon_data.to_model())
@@ -769,14 +804,18 @@ class TestProcessor:
         current = datetime.utcnow()
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
-                pytest.raises(SQLAlchemyError):
+        with mock.patch.object(
+            Session, "commit", side_effect=SQLAlchemyError()
+        ), pytest.raises(SQLAlchemyError):
             processor.process()
 
         # Assertion
         session.rollback()
-        _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
-            filter(CouponTokenModel.token_address == token["address"]).one()
+        _coupon_token: CouponTokenModel = (
+            session.query(CouponTokenModel)
+            .filter(CouponTokenModel.token_address == token["address"])
+            .one()
+        )
         assert _coupon_token.short_term_cache_created < current
 
     # <Error_2>: ServiceUnavailable occurs and is handled in mainloop.
@@ -787,7 +826,7 @@ class TestProcessor:
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
-            "totalSupply":  1000000,
+            "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
             "details": "クーポン詳細",
             "returnDetails": "リターン詳細",
@@ -797,7 +836,9 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
+        token = self.issue_token_coupon_with_args(
+            self.issuer, token_list_contract, args
+        )
         self.listing_token(token["address"], "IbetCoupon", session)
         coupon_data = CouponToken.get(session, token["address"])
         session.add(coupon_data.to_model())
@@ -809,12 +850,21 @@ class TestProcessor:
         time_mock.sleep.side_effect = [TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Token_Detail_ShortTerm.time", time_mock),\
-            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
-                pytest.raises(TypeError):
+        with mock.patch(
+            "batch.indexer_Token_Detail_ShortTerm.time", time_mock
+        ), mock.patch(
+            "web3.providers.rpc.HTTPProvider.make_request",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ), pytest.raises(
+            TypeError
+        ):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
             main_func()
 
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Service started successfully"))
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.INFO, "Service started successfully")
+        )
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.WARNING, "An external service was unavailable")
+        )
         caplog.clear()

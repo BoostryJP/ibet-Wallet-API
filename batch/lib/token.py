@@ -25,19 +25,19 @@ class TokenFactory:
         self.web3 = web3
 
     def get_straight_bond(self, address):
-        contract = Contract.get_contract('IbetStraightBond', address)
+        contract = Contract.get_contract("IbetStraightBond", address)
         return Token(contract)
 
     def get_share(self, address):
-        contract = Contract.get_contract('IbetShare', address)
+        contract = Contract.get_contract("IbetShare", address)
         return Token(contract)
 
     def get_membership(self, address):
-        contract = Contract.get_contract('IbetMembership', address)
+        contract = Contract.get_contract("IbetMembership", address)
         return Token(contract)
 
     def get_coupon(self, address):
-        contract = Contract.get_contract('IbetCoupon', address)
+        contract = Contract.get_contract("IbetCoupon", address)
         return Token(contract)
 
 
@@ -48,17 +48,11 @@ class Token:
     @property
     def name(self):
         return Contract.call_function(
-            contract=self.contract,
-            function_name="name",
-            args=(),
-            default_returns=""
+            contract=self.contract, function_name="name", args=(), default_returns=""
         )
 
     @property
     def owner_address(self):
         return Contract.call_function(
-            contract=self.contract,
-            function_name="owner",
-            args=(),
-            default_returns=""
+            contract=self.contract, function_name="owner", args=(), default_returns=""
         )

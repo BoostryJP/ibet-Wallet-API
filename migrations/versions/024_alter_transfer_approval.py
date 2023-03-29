@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+
 from migrations.log import LOG
 
 meta = MetaData()
@@ -29,7 +30,10 @@ def upgrade(migrate_engine):
     try:
         transfer_approval = Table("transfer_approval", meta, autoload=True)
         Column("exchange_address", String(42)).create(transfer_approval)
-        Index("ix_transfer_approval_exchange_address", transfer_approval.c.exchange_address).create()
+        Index(
+            "ix_transfer_approval_exchange_address",
+            transfer_approval.c.exchange_address,
+        ).create()
     except sqlalchemy.exc.ProgrammingError as err:
         LOG.warning(err.orig)
 

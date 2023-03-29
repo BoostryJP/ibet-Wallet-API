@@ -17,63 +17,51 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from uuid import UUID
-from typing import List
-from fastapi import (
-    APIRouter,
-    Depends,
-    Path
-)
-from sqlalchemy import (
-    or_,
-    desc,
-    asc
-)
-from web3 import Web3
-from eth_utils import to_checksum_address
-from sqlalchemy.orm import Session
 
-from app import log
-from app.database import db_session
-from app.errors import (
-    InvalidParameterError,
-    DataNotExistsError
-)
-from app import config
+from eth_utils import to_checksum_address
+from fastapi import APIRouter, Depends, Path
+from sqlalchemy import String, and_, asc, cast, desc, func, or_
+from sqlalchemy.orm import Session
+from web3 import Web3
+
+from app import config, log
 from app.contracts import Contract
-from app.model.schema import (
-    CreateTokenHoldersCollectionRequest,
-    RetrieveTokenHoldersCountQuery,
-    ResultSetQuery,
-    GenericSuccessResponse,
-    TokenStatusResponse,
-    SuccessResponse,
-    TokenHoldersResponse,
-    TokenHoldersCountResponse,
-    CreateTokenHoldersCollectionResponse,
-    TokenHoldersCollectionResponse,
-    TransferHistoriesResponse,
-    ListAllTokenHoldersQuery,
-    TransferApprovalHistoriesResponse
-)
-from app.utils.docs_utils import get_routers_responses
-from app.utils.web3_utils import Web3Wrapper
+from app.database import db_session
+from app.errors import DataNotExistsError, InvalidParameterError, ServiceUnavailable
 from app.model.db import (
-    Listing,
+    IDXLockedPosition,
     IDXPosition,
     IDXTransfer,
     IDXTransferApproval,
-    TokenHoldersList,
+    Listing,
+    TokenHolder,
     TokenHolderBatchStatus,
-    TokenHolder
+    TokenHoldersList,
 )
+from app.model.schema import (  # Request; Response
+    CreateTokenHoldersCollectionRequest,
+    CreateTokenHoldersCollectionResponse,
+    GenericSuccessResponse,
+    ListAllTokenHoldersQuery,
+    ListAllTransferHistoryQuery,
+    ResultSetQuery,
+    RetrieveTokenHoldersCountQuery,
+    SuccessResponse,
+    TokenHoldersCollectionResponse,
+    TokenHoldersCountResponse,
+    TokenHoldersResponse,
+    TokenStatusResponse,
+    TransferApprovalHistoriesResponse,
+    TransferHistoriesResponse,
+)
+from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
+from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
 
 
-router = APIRouter(
-    prefix="/Token",
-    tags=["Token"]
-)
+router = APIRouter(prefix="/Token", tags=["token_info"])
 
 
 @router.get(
@@ -81,11 +69,11 @@ router = APIRouter(
     summary="Token Status",
     operation_id="TokenStatus",
     response_model=GenericSuccessResponse[TokenStatusResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_status(
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Status
@@ -95,19 +83,23 @@ def get_token_status(
     try:
         contract_address = to_checksum_address(token_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # 取扱トークンチェック
-    listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # TokenList-Contractへの接続
-    list_contract = Contract.get_contract('TokenList', str(config.TOKEN_LIST_CONTRACT_ADDRESS))
+    list_contract = Contract.get_contract(
+        "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
+    )
 
     # TokenList-Contractからトークンの情報を取得する
     token_address = to_checksum_address(contract_address)
@@ -115,7 +107,7 @@ def get_token_status(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(token_address,),
-        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
 
     token_template = token[1]
@@ -123,28 +115,24 @@ def get_token_status(
         # Token-Contractへの接続
         token_contract = Contract.get_contract(token_template, token_address)
         status = Contract.call_function(
-            contract=token_contract,
-            function_name="status",
-            args=()
+            contract=token_contract, function_name="status", args=()
         )
         transferable = Contract.call_function(
-            contract=token_contract,
-            function_name="transferable",
-            args=()
+            contract=token_contract, function_name="transferable", args=()
         )
+    except ServiceUnavailable as e:
+        LOG.warning(e)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
     except Exception as e:
         LOG.error(e)
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     response_json = {
-        'token_template': token_template,
-        'status': status,
-        'transferable': transferable
+        "token_template": token_template,
+        "status": status,
+        "transferable": transferable,
     }
-    return {
-        **SuccessResponse.use().dict(),
-        "data": response_json
-    }
+    return json_response({**SuccessResponse.default(), "data": response_json})
 
 
 @router.get(
@@ -152,12 +140,12 @@ def get_token_status(
     summary="Token holders",
     operation_id="TokenHolders",
     response_model=GenericSuccessResponse[TokenHoldersResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders(
     token_address: str = Path(description="token address"),
     request_query: ListAllTokenHoldersQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders
@@ -165,48 +153,64 @@ def get_token_holders(
     try:
         contract_address = to_checksum_address(token_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # Check if the token exists in the list
-    listed_token = session.query(Listing).\
-        filter(Listing.token_address == contract_address).\
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    query = session.query(IDXPosition). \
-        filter(IDXPosition.token_address == contract_address). \
-        filter(or_(
-            IDXPosition.balance > 0,
-            IDXPosition.pending_transfer > 0,
-            IDXPosition.exchange_balance > 0,
-            IDXPosition.exchange_commitment > 0))
+    query = (
+        session.query(IDXPosition, func.sum(IDXLockedPosition.value))
+        .outerjoin(
+            IDXLockedPosition,
+            and_(
+                IDXLockedPosition.token_address == token_address,
+                IDXLockedPosition.account_address == IDXPosition.account_address,
+            ),
+        )
+        .filter(IDXPosition.token_address == token_address)
+        .filter(
+            or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0,
+                IDXLockedPosition.value > 0,
+            )
+        )
+        .group_by(IDXPosition.id, IDXLockedPosition.account_address)
+    )
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
-    holders: list[IDXPosition] = query.order_by(desc(IDXPosition.id)).all()
+    holders: list[tuple[IDXPosition, int | None]] = query.order_by(
+        desc(IDXPosition.id)
+    ).all()
 
     resp_body = []
     for holder in holders:
-        resp_body.append({
-            "token_address": holder.token_address,
-            "account_address": holder.account_address,
-            "amount": holder.balance,
-            "pending_transfer": holder.pending_transfer,
-            "exchange_balance": holder.exchange_balance,
-            "exchange_commitment": holder.exchange_commitment
-        })
+        resp_body.append(
+            {
+                "token_address": holder[0].token_address,
+                "account_address": holder[0].account_address,
+                "amount": holder[0].balance,
+                "pending_transfer": holder[0].pending_transfer,
+                "exchange_balance": holder[0].exchange_balance,
+                "exchange_commitment": holder[0].exchange_commitment,
+                "locked": holder[1] if holder[1] else 0,
+            }
+        )
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": resp_body
-    }
+    return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
 @router.get(
@@ -214,12 +218,12 @@ def get_token_holders(
     summary="Token holders count",
     operation_id="TokenHoldersCount",
     response_model=GenericSuccessResponse[TokenHoldersCountResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders_count(
     token_address: str = Path(description="token address"),
     request_query: RetrieveTokenHoldersCountQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Count
@@ -228,41 +232,50 @@ def get_token_holders_count(
     try:
         contract_address = to_checksum_address(token_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # Check if the token exists in the list
-    listed_token = session.query(Listing).\
-        filter(Listing.token_address == contract_address).\
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    query = session.query(IDXPosition). \
-        filter(IDXPosition.token_address == contract_address). \
-        filter(or_(
-            IDXPosition.balance > 0,
-            IDXPosition.pending_transfer > 0,
-            IDXPosition.exchange_balance > 0,
-            IDXPosition.exchange_commitment > 0))
+    query = (
+        session.query(IDXPosition, func.sum(IDXLockedPosition.value))
+        .outerjoin(
+            IDXLockedPosition,
+            and_(
+                IDXLockedPosition.token_address == token_address,
+                IDXLockedPosition.account_address == IDXPosition.account_address,
+            ),
+        )
+        .filter(IDXPosition.token_address == token_address)
+        .filter(
+            or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0,
+                IDXLockedPosition.value > 0,
+            )
+        )
+        .group_by(IDXPosition.id, IDXLockedPosition.account_address)
+    )
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
     _count = query.order_by(desc(IDXPosition.id)).count()
 
-    resp_body = {
-        "count": _count
-    }
+    resp_body = {"count": _count}
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": resp_body
-    }
+    return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
 @router.post(
@@ -270,12 +283,12 @@ def get_token_holders_count(
     summary="Execute Batch Getting Token Holders At Specific BlockNumber",
     operation_id="TokenHoldersCollection",
     response_model=GenericSuccessResponse[CreateTokenHoldersCollectionResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def create_token_holders_collection(
     data: CreateTokenHoldersCollectionRequest,
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Collection
@@ -300,35 +313,41 @@ def create_token_holders_collection(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.query(Listing).\
-        filter(Listing.token_address == contract_address).\
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # list_idの衝突チェック
-    _same_list_id_record = session.query(TokenHoldersList). \
-        filter(TokenHoldersList.list_id == list_id). \
-        first()
+    _same_list_id_record = (
+        session.query(TokenHoldersList)
+        .filter(TokenHoldersList.list_id == list_id)
+        .first()
+    )
     if _same_list_id_record is not None:
         raise InvalidParameterError("list_id must be unique.")
 
-    _same_combi_record = session.query(TokenHoldersList). \
-        filter(TokenHoldersList.token_address == contract_address). \
-        filter(TokenHoldersList.block_number == block_number). \
-        filter(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED.value). \
-        first()
+    _same_combi_record = (
+        session.query(TokenHoldersList)
+        .filter(TokenHoldersList.token_address == contract_address)
+        .filter(TokenHoldersList.block_number == block_number)
+        .filter(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED)
+        .first()
+    )
 
     if _same_combi_record is not None:
         # 同じブロックナンバー・トークンアドレスのコレクションが、PENDINGかDONEで既に存在する場合、
         # そのlist_idとstatusを返却する。
-        return {
-            **SuccessResponse.use().dict(),
-            "data": {
-                "list_id": _same_combi_record.list_id,
-                "status": _same_combi_record.batch_status,
+        return json_response(
+            {
+                **SuccessResponse.default(),
+                "data": {
+                    "list_id": _same_combi_record.list_id,
+                    "status": _same_combi_record.batch_status,
+                },
             }
-        }
+        )
     else:
         token_holder_list = TokenHoldersList()
         token_holder_list.list_id = list_id
@@ -338,13 +357,15 @@ def create_token_holders_collection(
         session.add(token_holder_list)
         session.commit()
 
-        return {
-            **SuccessResponse.use().dict(),
-            "data": {
-                "list_id": token_holder_list.list_id,
-                "status": token_holder_list.batch_status,
+        return json_response(
+            {
+                **SuccessResponse.default(),
+                "data": {
+                    "list_id": token_holder_list.list_id,
+                    "status": token_holder_list.batch_status,
+                },
             }
-        }
+        )
 
 
 @router.get(
@@ -352,29 +373,30 @@ def create_token_holders_collection(
     summary="Token Holder At Specific BlockNumber",
     operation_id="TokenHoldersList",
     response_model=GenericSuccessResponse[TokenHoldersCollectionResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders_collection(
     token_address: str = Path(description="token address"),
-    list_id: UUID = Path(description="Unique id to be assigned to each token holder list."
-                                          "This must be Version4 UUID.",
-                              example="cfd83622-34dc-4efe-a68b-2cc275d3d824"),
-    session: Session = Depends(db_session)
+    list_id: UUID = Path(
+        description="Unique id to be assigned to each token holder list."
+        "This must be Version4 UUID.",
+        example="cfd83622-34dc-4efe-a68b-2cc275d3d824",
+    ),
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Collection/{list_id}
     """
-    """Token holders collection Id"""
     contract_address = token_address
 
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(contract_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # 入力IDフォーマットチェック
@@ -388,36 +410,45 @@ def get_token_holders_collection(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.query(Listing).\
-        filter(Listing.token_address == contract_address).\
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # 既存レコードの存在チェック
-    _same_list_id_record: TokenHoldersList = session.query(TokenHoldersList). \
-        filter(TokenHoldersList.list_id == str(list_id)). \
-        first()
+    _same_list_id_record: TokenHoldersList = (
+        session.query(TokenHoldersList)
+        .filter(TokenHoldersList.list_id == str(list_id))
+        .first()
+    )
 
     if not _same_list_id_record:
         raise DataNotExistsError("list_id: %s" % str(list_id))
     if _same_list_id_record.token_address != contract_address:
-        description = "list_id: %s is not collection for contract_address: %s" % (str(list_id), contract_address)
+        description = "list_id: %s is not collection for contract_address: %s" % (
+            str(list_id),
+            contract_address,
+        )
         raise InvalidParameterError(description=description)
 
-    _token_holders: List[TokenHolder] = session.query(TokenHolder). \
-        filter(TokenHolder.holder_list == _same_list_id_record.id). \
-        order_by(asc(TokenHolder.account_address)).\
-        all()
+    _token_holders = (
+        session.query(TokenHolder)
+        .filter(TokenHolder.holder_list == _same_list_id_record.id)
+        .order_by(asc(TokenHolder.account_address))
+        .all()
+    )
     token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": {
-            "status": _same_list_id_record.batch_status,
-            "holders": token_holders
+    return json_response(
+        {
+            **SuccessResponse.default(),
+            "data": {
+                "status": _same_list_id_record.batch_status,
+                "holders": token_holders,
+            },
         }
-    }
+    )
 
 
 @router.get(
@@ -425,14 +456,13 @@ def get_token_holders_collection(
     summary="Token Transfer History",
     operation_id="TransferHistory",
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_transfer_histories(
-    request_query: ResultSetQuery = Depends(),
+    request_query: ListAllTransferHistoryQuery = Depends(),
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
-
     """
     Endpoint: /Token/{contract_address}/TransferHistory
     """
@@ -440,24 +470,37 @@ def list_all_transfer_histories(
     try:
         contract_address = to_checksum_address(token_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # 取扱トークンチェック
-    listed_token = session.query(Listing). \
-        filter(Listing.token_address == contract_address). \
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # 移転履歴取得
-    query = session.query(IDXTransfer). \
-        filter(IDXTransfer.token_address == contract_address). \
-        order_by(IDXTransfer.id)
-    list_length = query.count()
+    query = (
+        session.query(IDXTransfer)
+        .filter(IDXTransfer.token_address == contract_address)
+        .order_by(IDXTransfer.id)
+    )
+    total = query.count()
+
+    if request_query.source_event is not None:
+        query = query.filter(
+            IDXTransfer.source_event == request_query.source_event.value
+        )
+    if request_query.data is not None:
+        query = query.filter(
+            cast(IDXTransfer.data, String).like("%" + request_query.data + "%")
+        )
+
+    count = query.count()
 
     if request_query.offset is not None:
         query = query.offset(request_query.offset)
@@ -471,18 +514,15 @@ def list_all_transfer_histories(
 
     data = {
         "result_set": {
-            "count": list_length,
+            "count": count,
             "offset": request_query.offset,
             "limit": request_query.limit,
-            "total": list_length
+            "total": total,
         },
-        "transfer_history": resp_data
+        "transfer_history": resp_data,
     }
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": data
-    }
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.get(
@@ -490,12 +530,12 @@ def list_all_transfer_histories(
     summary="Token Transfer Approval History",
     operation_id="TransferApprovalHistory",
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_transfer_approval_histories(
     request_query: ResultSetQuery = Depends(),
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/TransferApprovalHistory
@@ -509,19 +549,20 @@ def list_all_transfer_approval_histories(
         raise InvalidParameterError("invalid contract_address")
 
     # Check that it is a listed token
-    _listed_token = session.query(Listing). \
-        filter(Listing.token_address == contract_address). \
-        first()
+    _listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if _listed_token is None:
         raise DataNotExistsError(f"contract_address: {contract_address}")
 
     # Get transfer approval data
-    query = session.query(IDXTransferApproval). \
-        filter(IDXTransferApproval.token_address == contract_address). \
-        order_by(
-            IDXTransferApproval.exchange_address,
-            IDXTransferApproval.application_id
+    query = (
+        session.query(IDXTransferApproval)
+        .filter(IDXTransferApproval.token_address == contract_address)
+        .order_by(
+            IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
         )
+    )
     list_length = query.count()
 
     # パラメータを設定
@@ -539,13 +580,9 @@ def list_all_transfer_approval_histories(
             "count": list_length,
             "offset": request_query.offset,
             "limit": request_query.limit,
-            "total": list_length
+            "total": list_length,
         },
-        "transfer_approval_history": resp_data
+        "transfer_approval_history": resp_data,
     }
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": data
-    }
-
+    return json_response({**SuccessResponse.default(), "data": data})

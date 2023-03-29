@@ -16,47 +16,38 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional
+
 from eth_utils import to_checksum_address
-from fastapi import (
-    APIRouter,
-    Depends,
-    Request,
-    Query
-)
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
-from typing import Optional
 from web3 import Web3
 
-from app import log
+from app import config, log
 from app.database import db_session
 from app.errors import (
+    DataNotExistsError,
     InvalidParameterError,
     NotSupportedError,
-    DataNotExistsError
+    ServiceUnavailable,
 )
-from app import config
 from app.model.blockchain import BondToken
+from app.model.db import IDXBondToken, Listing
 from app.model.schema import (
     GenericSuccessResponse,
+    ListAllStraightBondTokenAddressesResponse,
     ListAllStraightBondTokensQuery,
     ListAllStraightBondTokensResponse,
+    RetrieveStraightBondTokenResponse,
     SuccessResponse,
-    ListAllStraightBondTokenAddressesResponse,
-    RetrieveStraightBondTokenResponse
-)
-from app.model.db import (
-    Listing,
-    IDXBondToken
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
-router = APIRouter(
-    prefix="/Token/StraightBond",
-    tags=["Token"]
-)
+router = APIRouter(prefix="/Token/StraightBond", tags=["token_info"])
 
 
 @router.get(
@@ -64,19 +55,21 @@ router = APIRouter(
     summary="Token detail list of StraightBond tokens",
     operation_id="StraightBondTokens",
     response_model=GenericSuccessResponse[ListAllStraightBondTokensResponse],
-    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def list_all_straight_bond_tokens(
     req: Request,
-    address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
+    address_list: list[str] = Query(
+        default=[], description="list of token address (**this affects total number**)"
+    ),
     request_query: ListAllStraightBondTokensQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/StraightBond
     """
     if config.BOND_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     for address in address_list:
         if address is not None:
@@ -92,7 +85,9 @@ def list_all_straight_bond_tokens(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[bool] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[
+        bool
+    ] = request_query.transfer_approval_required
     is_redeemed: Optional[bool] = request_query.is_redeemed
 
     sort_item = request_query.sort_item
@@ -102,9 +97,11 @@ def list_all_straight_bond_tokens(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = session.query(IDXBondToken).\
-        join(Listing, Listing.token_address == IDXBondToken.token_address).\
-        filter(Listing.is_public == True)
+    query = (
+        session.query(IDXBondToken)
+        .join(Listing, Listing.token_address == IDXBondToken.token_address)
+        .filter(Listing.is_public == True)
+    )
     if len(address_list):
         query = query.filter(IDXBondToken.token_address.in_(address_list))
     total = query.count()
@@ -123,13 +120,17 @@ def list_all_straight_bond_tokens(
     if status is not None:
         query = query.filter(IDXBondToken.status == status)
     if personal_info_address is not None:
-        query = query.filter(IDXBondToken.personal_info_address == personal_info_address)
+        query = query.filter(
+            IDXBondToken.personal_info_address == personal_info_address
+        )
     if transferable is not None:
         query = query.filter(IDXBondToken.transferable == transferable)
     if is_offering is not None:
         query = query.filter(IDXBondToken.is_offering == is_offering)
     if transfer_approval_required is not None:
-        query = query.filter(IDXBondToken.transfer_approval_required == transfer_approval_required)
+        query = query.filter(
+            IDXBondToken.transfer_approval_required == transfer_approval_required
+        )
     if is_redeemed is not None:
         query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
     count = query.count()
@@ -161,15 +162,12 @@ def list_all_straight_bond_tokens(
             "count": count,
             "offset": offset,
             "limit": limit,
-            "total": total
+            "total": total,
         },
-        "tokens": tokens
+        "tokens": tokens,
     }
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": data
-    }
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.get(
@@ -177,18 +175,18 @@ def list_all_straight_bond_tokens(
     summary="List of StraightBond token address",
     operation_id="StraightBondTokenAddresses",
     response_model=GenericSuccessResponse[ListAllStraightBondTokenAddressesResponse],
-    responses=get_routers_responses(NotSupportedError)
+    responses=get_routers_responses(NotSupportedError),
 )
 def list_all_straight_bond_token_addresses(
     req: Request,
     request_query: ListAllStraightBondTokensQuery = Depends(),
-    session: Session = Depends(db_session)
+    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/StraightBond/Addresses
     """
     if config.BOND_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     owner_address: Optional[str] = request_query.owner_address
     name: Optional[str] = request_query.name
@@ -199,7 +197,9 @@ def list_all_straight_bond_token_addresses(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[bool] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[
+        bool
+    ] = request_query.transfer_approval_required
     is_redeemed: Optional[bool] = request_query.is_redeemed
 
     sort_item = request_query.sort_item
@@ -209,9 +209,11 @@ def list_all_straight_bond_token_addresses(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = session.query(IDXBondToken).\
-        join(Listing, Listing.token_address == IDXBondToken.token_address).\
-        filter(Listing.is_public == True)
+    query = (
+        session.query(IDXBondToken)
+        .join(Listing, Listing.token_address == IDXBondToken.token_address)
+        .filter(Listing.is_public == True)
+    )
     total = query.count()
 
     # Search Filter
@@ -228,13 +230,17 @@ def list_all_straight_bond_token_addresses(
     if status is not None:
         query = query.filter(IDXBondToken.status == status)
     if personal_info_address is not None:
-        query = query.filter(IDXBondToken.personal_info_address == personal_info_address)
+        query = query.filter(
+            IDXBondToken.personal_info_address == personal_info_address
+        )
     if transferable is not None:
         query = query.filter(IDXBondToken.transferable == transferable)
     if is_offering is not None:
         query = query.filter(IDXBondToken.is_offering == is_offering)
     if transfer_approval_required is not None:
-        query = query.filter(IDXBondToken.transfer_approval_required == transfer_approval_required)
+        query = query.filter(
+            IDXBondToken.transfer_approval_required == transfer_approval_required
+        )
     if is_redeemed is not None:
         query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
     count = query.count()
@@ -262,15 +268,12 @@ def list_all_straight_bond_token_addresses(
             "count": count,
             "offset": offset,
             "limit": limit,
-            "total": total
+            "total": total,
         },
-        "address_list": [_token.token_address for _token in _token_list]
+        "address_list": [_token.token_address for _token in _token_list],
     }
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": data
-    }
+    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.get(
@@ -278,49 +281,49 @@ def list_all_straight_bond_token_addresses(
     summary="StraightBond token details",
     operation_id="StraightBondTokenDetails",
     response_model=GenericSuccessResponse[RetrieveStraightBondTokenResponse],
-    responses=get_routers_responses(NotSupportedError, DataNotExistsError, InvalidParameterError)
+    responses=get_routers_responses(
+        NotSupportedError, DataNotExistsError, InvalidParameterError
+    ),
 )
 def retrieve_straight_bond_token(
-    req: Request,
-    token_address: str,
-    session: Session = Depends(db_session)
+    req: Request, token_address: str, session: Session = Depends(db_session)
 ):
     """
     Endpoint: /Token/StraightBond/{contract_address}
     """
     if config.BOND_TOKEN_ENABLED is False:
-        raise NotSupportedError(method='GET', url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
         if not Web3.isAddress(contract_address):
-            description = 'invalid contract_address'
+            description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
-        description = 'invalid contract_address'
+        description = "invalid contract_address"
         raise InvalidParameterError(description=description)
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.query(Listing).\
-        filter(Listing.token_address == contract_address).\
-        first()
+    listed_token = (
+        session.query(Listing).filter(Listing.token_address == contract_address).first()
+    )
     if listed_token is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
     token_address = to_checksum_address(contract_address)
     try:
         token_detail = BondToken.get(session=session, token_address=token_address)
 
+    except ServiceUnavailable as e:
+        LOG.warning(e)
+        raise DataNotExistsError("contract_address: %s" % contract_address) from None
     except Exception as e:
         LOG.error(e)
-        raise DataNotExistsError('contract_address: %s' % contract_address) from None
+        raise DataNotExistsError("contract_address: %s" % contract_address) from None
 
     if token_detail is None:
-        raise DataNotExistsError('contract_address: %s' % contract_address)
+        raise DataNotExistsError("contract_address: %s" % contract_address)
 
-    return {
-        **SuccessResponse.use().dict(),
-        "data": token_detail.__dict__
-    }
+    return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

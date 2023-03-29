@@ -19,9 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, DateTime
+from sqlalchemy.orm import declarative_base
 
 from app import log
 from app.utils import alchemy
@@ -39,7 +38,11 @@ class BaseModel(object):
 
     @classmethod
     def find_update(cls, session, id, args):
-        return session.query(cls).filter(cls.get_id() == id).update(args, synchronize_session=False)
+        return (
+            session.query(cls)
+            .filter(cls.get_id() == id)
+            .update(args, synchronize_session=False)
+        )
 
     @classmethod
     def get_id(cls):
@@ -47,16 +50,22 @@ class BaseModel(object):
 
     def to_dict(self):
         intersection = set(self.__table__.columns.keys()) & set(self.FIELDS)
-        return dict(map(
-            lambda key:
-                (key,
-                    (lambda value: self.FIELDS[key](value) if value else None)
-                    (getattr(self, key))),
-                intersection))
+        return dict(
+            map(
+                lambda key: (
+                    key,
+                    (lambda value: self.FIELDS[key](value) if value else None)(
+                        getattr(self, key)
+                    ),
+                ),
+                intersection,
+            )
+        )
 
     FIELDS = {
-        'created': alchemy.datetime_to_timestamp,
-        'modified': alchemy.datetime_to_timestamp,
+        "created": alchemy.datetime_to_timestamp,
+        "modified": alchemy.datetime_to_timestamp,
     }
+
 
 Base = declarative_base(cls=BaseModel)
