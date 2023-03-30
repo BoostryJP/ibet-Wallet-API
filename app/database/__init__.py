@@ -47,3 +47,10 @@ def db_session():
         yield db
     finally:
         db.close()
+
+
+def get_db_schema():
+    if config.DATABASE_SCHEMA and engine.name != "mysql":
+        return config.DATABASE_SCHEMA
+    else:
+        return None

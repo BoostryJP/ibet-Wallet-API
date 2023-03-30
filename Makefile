@@ -18,5 +18,8 @@ black:
 test:
 	pytest tests/ ${ARG}
 
+test_migrations:
+	poetry run pytest -vv --test-alembic -m "alembic"
+
 run:
 	gunicorn --worker-class server.AppUvicornWorker app.main:app

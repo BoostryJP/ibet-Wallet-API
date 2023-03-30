@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Type, Union
 
 from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Float, String, Text
+from app.database import engine
 
 from app.model.db.base import Base
 
@@ -135,7 +136,10 @@ class IDXBondToken(TokenBase):
     # Purpose
     purpose = Column(String(2000))
     # Memo
-    memo = Column(String(2000))
+    if engine.name == "mysql":
+        memo = Column(Text)
+    else:
+        memo = Column(String(10000))
     # Is Redeemed
     # NOTE: Short-term cache required
     is_redeemed = Column(Boolean)
@@ -200,7 +204,10 @@ class IDXShareToken(TokenBase):
     # Cancellation Date
     cancellation_date = Column(String(8))
     # Memo
-    memo = Column(String(2000))
+    if engine.name == "mysql":
+        memo = Column(Text)
+    else:
+        memo = Column(String(10000))
     # Principal Value
     # NOTE: Short-term cache required
     principal_value = Column(BigInteger)
