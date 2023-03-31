@@ -31,7 +31,12 @@ def upgrade(migrate_engine):
 
     try:
         token = Table("share_token", meta, autoload=True)
-        token.c.memo.alter(type=String(10000))
+        # NOTE: WARN: Lines below are not compatible to MySQL originally
+        #       Fixed only for unit tests.
+        if migrate_engine.name == "mysql":
+            token.c.memo.alter(type=Text)
+        else:
+            token.c.memo.alter(type=String(10000))
     except sqlalchemy.exc.ProgrammingError as err:
         LOG.warning(err.orig)
 

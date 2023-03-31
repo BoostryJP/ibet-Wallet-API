@@ -125,6 +125,26 @@ files = [
 frozenlist = ">=1.1.0"
 
 [[package]]
+name = "alembic"
+version = "1.10.2"
+description = "A database migration tool for SQLAlchemy."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "alembic-1.10.2-py3-none-any.whl", hash = "sha256:8b48368f6533c064b39c024e1daba15ae7f947eac84185c28c06bbe1301a5497"},
+    {file = "alembic-1.10.2.tar.gz", hash = "sha256:457eafbdc0769d855c2c92cbafe6b7f319f916c80cf4ed02b8f394f38b51b89d"},
+]
+
+[package.dependencies]
+Mako = "*"
+SQLAlchemy = ">=1.3.0"
+typing-extensions = ">=4"
+
+[package.extras]
+tz = ["python-dateutil"]
+
+[[package]]
 name = "anyio"
 version = "3.6.2"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
@@ -854,7 +874,7 @@ cython = ["cython"]
 name = "decorator"
 version = "5.1.1"
 description = "Decorators for Humans"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.5"
 files = [
@@ -1766,6 +1786,26 @@ files = [
 test = ["pytest"]
 
 [[package]]
+name = "mako"
+version = "1.2.4"
+description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "Mako-1.2.4-py3-none-any.whl", hash = "sha256:c97c79c018b9165ac9922ae4f32da095ffd3c4e6872b45eded42926deea46818"},
+    {file = "Mako-1.2.4.tar.gz", hash = "sha256:d60a3903dc3bb01a18ad6a89cdbe2e4eadc69c0bc8ef1e3773ba53d44c3f7a34"},
+]
+
+[package.dependencies]
+MarkupSafe = ">=0.9.2"
+
+[package.extras]
+babel = ["Babel"]
+lingua = ["lingua"]
+testing = ["pytest"]
+
+[[package]]
 name = "markdown-it-py"
 version = "2.2.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -1794,7 +1834,7 @@ testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
 name = "markupsafe"
 version = "2.1.2"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2243,7 +2283,7 @@ files = [
 name = "pbr"
 version = "5.11.1"
 description = "Python Build Reasonableness"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.6"
 files = [
@@ -2642,6 +2682,23 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
+
+[[package]]
+name = "pytest-alembic"
+version = "0.10.0"
+description = "A pytest plugin for verifying alembic migrations."
+category = "dev"
+optional = false
+python-versions = ">=3.6,<4"
+files = [
+    {file = "pytest_alembic-0.10.0-py3-none-any.whl", hash = "sha256:6f9b70f2c974ca9ab2e0fd6a6a69292ea31fcc11761d7b728dab2e189de5d111"},
+    {file = "pytest_alembic-0.10.0.tar.gz", hash = "sha256:bf1ea0de93201f41b8a178f9f092653fc2fb3a747216012120e82cec90473b89"},
+]
+
+[package.dependencies]
+alembic = "*"
+pytest = ">=6.0"
+sqlalchemy = "*"
 
 [[package]]
 name = "pytest-cov"
@@ -3062,7 +3119,7 @@ sqlcipher = ["sqlcipher3-binary"]
 name = "sqlalchemy-migrate"
 version = "0.13.0"
 description = "Database schema migration for SQLAlchemy"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -3097,7 +3154,7 @@ typing-extensions = ">=3.7.4"
 name = "sqlparse"
 version = "0.4.3"
 description = "A non-validating SQL parser."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.5"
 files = [
@@ -3127,7 +3184,7 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 name = "tempita"
 version = "0.5.2"
 description = "A very small text templating language"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -3571,4 +3628,4 @@ ibet-explorer = ["aiohttp", "async-cache", "ibet-wallet-api-explorer", "textual"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.10.4"
-content-hash = "0b9b9b6b095bb6e35c97f0ef8e36eebb2d98aba87608013a1d6bbfed33c005ee"
+content-hash = "c4ec71251a54d8c6f821984c29e3fbc42f80fbdfdee9b284e64f9214d6708dd4"

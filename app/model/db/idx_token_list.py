@@ -29,7 +29,7 @@ class IDXTokenListItem(Base):
     # Token Address
     token_address = Column(String(42), primary_key=True)
     # Token Template
-    token_template = Column(String(40), nullable=False)
+    token_template = Column(String(40))
     # Owner Address
     owner_address = Column(String(42), index=True)
 

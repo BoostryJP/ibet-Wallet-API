@@ -20,7 +20,6 @@ PyMySQL = "~1.0.2"
 psycopg2-binary = "~2.9.5"
 pydantic = {extras = ["email"], version = "~1.10.5"}
 SQLAlchemy = "~1.4.46"
-sqlalchemy-migrate = "~0.13.0"
 uvicorn = "~0.20.0"
 web3 = "~5.31.3"
 tzdata = "^2022.7"
@@ -30,6 +29,7 @@ textual = {version = "~0.10.1", optional = true}
 async-cache = {version = "~1.1.1", optional = true}
 typer = {version = "~0.7.0", optional = true}
 aiohttp = {version = "~3.8.4", optional = true}
+alembic = "^1.10.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "7.2.1"
@@ -42,6 +42,8 @@ mypy = "^1.0.0"
 isort = "^5.12.0"
 pre-commit = "^3.1.1"
 sqlalchemy = {version = "~1.4.46", extras = ["mypy"]}
+sqlalchemy-migrate = "~0.13.0"
+pytest-alembic = "^0.10.0"
 
 [tool.poetry.extras]
 ibet-explorer = [

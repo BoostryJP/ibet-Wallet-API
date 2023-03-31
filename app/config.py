@@ -102,6 +102,7 @@ else:
         or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
     )
 DB_ECHO = True if CONFIG["database"]["echo"] == "yes" else False
+DATABASE_SCHEMA = os.environ.get("DATABASE_SCHEMA")
 
 # Logging
 LOG_LEVEL = CONFIG["logging"]["level"]
