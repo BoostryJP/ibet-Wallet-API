@@ -162,9 +162,18 @@ def upgrade():
     )
     op.add_column(
         "transfer",
-        sa.Column("source_event", sa.String(length=50), nullable=False),
+        sa.Column("source_event", sa.String(length=50), nullable=True),
         schema=get_db_schema(),
     )
+    op.get_bind().execute(f"UPDATE transfer SET source_event = 'Transfer';")
+    op.alter_column(
+        "transfer",
+        "source_event",
+        existing_type=sa.VARCHAR(length=50),
+        nullable=False,
+        schema=get_db_schema(),
+    )
+
     op.add_column(
         "transfer",
         sa.Column("data", sa.JSON(), nullable=True),
