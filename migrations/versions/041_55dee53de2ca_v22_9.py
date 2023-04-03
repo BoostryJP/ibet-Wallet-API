@@ -261,7 +261,7 @@ def upgrade():
     # NOTE: Update sqlalchemy-migrate version
     tables = sa.inspect(connection).get_table_names()
     if "migrate_version" in tables:
-        op.get_bind().execute(f"UPDATE migrate_version SET version = 41;")
+        op.get_bind().execute(sa.text(f"UPDATE migrate_version SET version = 41;"))
     # ### end Alembic commands ###
 
 
@@ -336,5 +336,5 @@ def downgrade():
     # NOTE: Update sqlalchemy-migrate version
     tables = sa.inspect(connection).get_table_names()
     if "migrate_version" in tables:
-        op.get_bind().execute(f"UPDATE migrate_version SET version = 34;")
+        op.get_bind().execute(sa.text(f"UPDATE migrate_version SET version = 34;"))
     # ### end Alembic commands ###

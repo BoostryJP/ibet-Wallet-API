@@ -17,9 +17,9 @@ gevent = "~22.10.2"
 hexbytes = "~0.3.0"
 orjson = "~3.8.7"
 PyMySQL = "~1.0.2"
-psycopg2-binary = "~2.9.5"
+psycopg = {extras = ["binary"], version = "^3.1.8"}
 pydantic = {extras = ["email"], version = "~1.10.5"}
-SQLAlchemy = "~1.4.46"
+sqlalchemy = "~2.0.8"
 uvicorn = "~0.20.0"
 web3 = "~5.31.3"
 tzdata = "^2022.7"
@@ -41,8 +41,6 @@ flake8 = "^6.0.0"
 mypy = "^1.0.0"
 isort = "^5.12.0"
 pre-commit = "^3.1.1"
-sqlalchemy = {version = "~1.4.46", extras = ["mypy"]}
-sqlalchemy-migrate = "~0.13.0"
 pytest-alembic = "^0.10.0"
 
 [tool.poetry.extras]

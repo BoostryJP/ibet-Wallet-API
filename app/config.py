@@ -101,6 +101,7 @@ else:
         os.environ.get("DATABASE_URL")
         or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
     )
+DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
 DB_ECHO = True if CONFIG["database"]["echo"] == "yes" else False
 DATABASE_SCHEMA = os.environ.get("DATABASE_SCHEMA")
 
