@@ -56,20 +56,20 @@ class ListAllOrderBookQuery:
 
     @validator("token_address")
     def token_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("token_address is not a valid address")
         return v
 
     @validator("exchange_agent_address")
     def exchange_agent_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("exchange_agent_address is not a valid address")
         return v
 
     @validator("account_address")
     def account_address_is_valid_address(cls, v):
         if v is not None:
-            if not Web3.isAddress(v):
+            if not Web3.is_address(v):
                 raise ValueError("account_address is not a valid address")
         return v
 
@@ -82,7 +82,7 @@ class ListAllLastPriceQuery:
     def address_list_is_valid_address(cls, v):
         for address in v:
             if address is not None:
-                if not Web3.isAddress(address):
+                if not Web3.is_address(address):
                     raise ValueError("address_list has not a valid address")
         return v
 
@@ -95,7 +95,7 @@ class ListAllTickQuery:
     def address_list_is_valid_address(cls, v):
         for address in v:
             if address is not None:
-                if not Web3.isAddress(address):
+                if not Web3.is_address(address):
                     raise ValueError("address_list has not a valid address")
         return v
 
@@ -108,7 +108,7 @@ class RetrieveAgreementQuery:
 
     @validator("exchange_address")
     def exchange_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("owner_address is not a valid address")
         return v
 

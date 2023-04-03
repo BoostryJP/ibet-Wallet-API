@@ -299,7 +299,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Transfer.getLogs(
+                events = token.events.Transfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -341,7 +341,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Lock.getLogs(
+                events = token.events.Lock.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -418,7 +418,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Unlock.getLogs(
+                events = token.events.Unlock.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -497,7 +497,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Issue.getLogs(
+                events = token.events.Issue.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -533,7 +533,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Redeem.getLogs(
+                events = token.events.Redeem.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -569,7 +569,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApplyForTransfer.getLogs(
+                events = token.events.ApplyForTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -605,7 +605,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.CancelTransfer.getLogs(
+                events = token.events.CancelTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -641,7 +641,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApproveTransfer.getLogs(
+                events = token.events.ApproveTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -685,7 +685,7 @@ class Processor:
 
                 # NewOrder event
                 try:
-                    _event_list = exchange.events.NewOrder.getLogs(
+                    _event_list = exchange.events.NewOrder.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -710,7 +710,7 @@ class Processor:
 
                 # CancelOrder event
                 try:
-                    _event_list = exchange.events.CancelOrder.getLogs(
+                    _event_list = exchange.events.CancelOrder.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -735,7 +735,7 @@ class Processor:
 
                 # ForceCancelOrder event
                 try:
-                    _event_list = exchange.events.ForceCancelOrder.getLogs(
+                    _event_list = exchange.events.ForceCancelOrder.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -760,7 +760,7 @@ class Processor:
 
                 # Agree event
                 try:
-                    _event_list = exchange.events.Agree.getLogs(
+                    _event_list = exchange.events.Agree.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -785,7 +785,7 @@ class Processor:
 
                 # SettlementOK event
                 try:
-                    _event_list = exchange.events.SettlementOK.getLogs(
+                    _event_list = exchange.events.SettlementOK.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -820,7 +820,7 @@ class Processor:
 
                 # SettlementNG event
                 try:
-                    _event_list = exchange.events.SettlementNG.getLogs(
+                    _event_list = exchange.events.SettlementNG.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -906,7 +906,7 @@ class Processor:
 
                 # EscrowCreated event
                 try:
-                    _event_list = escrow.events.EscrowCreated.getLogs(
+                    _event_list = escrow.events.EscrowCreated.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -929,7 +929,7 @@ class Processor:
 
                 # EscrowCanceled event
                 try:
-                    _event_list = escrow.events.EscrowCanceled.getLogs(
+                    _event_list = escrow.events.EscrowCanceled.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -952,7 +952,7 @@ class Processor:
 
                 # HolderChanged event
                 try:
-                    _event_list = escrow.events.HolderChanged.getLogs(
+                    _event_list = escrow.events.HolderChanged.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:

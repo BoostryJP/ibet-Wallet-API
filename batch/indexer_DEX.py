@@ -150,7 +150,7 @@ class Processor:
     def __sync_new_order(self, db_session: Session, block_from: int, block_to: int):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.NewOrder.getLogs(
+                events = exchange_contract.events.NewOrder.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -195,7 +195,7 @@ class Processor:
     def __sync_cancel_order(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.CancelOrder.getLogs(
+                events = exchange_contract.events.CancelOrder.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -213,7 +213,7 @@ class Processor:
     def __sync_force_cancel_order(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.ForceCancelOrder.getLogs(
+                events = exchange_contract.events.ForceCancelOrder.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -231,7 +231,7 @@ class Processor:
     def __sync_agree(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.Agree.getLogs(
+                events = exchange_contract.events.Agree.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -275,7 +275,7 @@ class Processor:
     def __sync_settlement_ok(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.SettlementOK.getLogs(
+                events = exchange_contract.events.SettlementOK.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -299,7 +299,7 @@ class Processor:
     def __sync_settlement_ng(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.SettlementNG.getLogs(
+                events = exchange_contract.events.SettlementNG.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:

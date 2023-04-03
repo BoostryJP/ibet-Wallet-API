@@ -172,7 +172,7 @@ def retrieve_company(eth_address: str = Path(..., description="address")):
     """
     Endpoint: /Companies/{eth_address}
     """
-    if not Web3.isAddress(eth_address):
+    if not Web3.is_address(eth_address):
         description = "invalid eth_address"
         raise InvalidParameterError(description=description)
 
@@ -204,7 +204,7 @@ def retrieve_company_tokens(
     Endpoint: /Companies/{eth_address}/Tokens
     """
     # Validation
-    if not Web3.isAddress(eth_address):
+    if not Web3.is_address(eth_address):
         description = "invalid eth_address"
         raise InvalidParameterError(description=description)
 

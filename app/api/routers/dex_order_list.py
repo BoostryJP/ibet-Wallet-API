@@ -675,7 +675,7 @@ class OrderList(BaseOrderList):
         # path validation
         try:
             token_address = to_checksum_address(token_address)
-            if not Web3.isAddress(token_address):
+            if not Web3.is_address(token_address):
                 description = "invalid token_address"
                 raise InvalidParameterError(description=description)
         except:

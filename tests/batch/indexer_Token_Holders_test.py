@@ -2553,7 +2553,7 @@ class TestProcessor:
     # <Error_3>
     # Failed to get Logs because of ABIEventFunctionNotFound.
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs",
+        "web3.contract.contract.ContractEvent.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_3(

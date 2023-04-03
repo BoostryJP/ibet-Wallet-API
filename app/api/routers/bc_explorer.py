@@ -24,7 +24,7 @@ from pydantic import NonNegativeInt
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from starlette.requests import Request
-from web3.contract import ContractFunction
+from web3.contract.contract import ContractFunction
 
 from app import config, log
 from app.contracts import Contract

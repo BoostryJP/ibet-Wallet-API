@@ -311,7 +311,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApplyForTransfer.getLogs(
+                events = token.events.ApplyForTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -351,7 +351,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.CancelTransfer.getLogs(
+                events = token.events.CancelTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -383,7 +383,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApproveTransfer.getLogs(
+                events = token.events.ApproveTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -418,7 +418,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.ApplyForTransfer.getLogs(
+                events = exchange.events.ApplyForTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -465,7 +465,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.CancelTransfer.getLogs(
+                events = exchange.events.CancelTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -504,7 +504,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.EscrowFinished.getLogs(
+                events = exchange.events.EscrowFinished.get_logs(
                     fromBlock=block_from,
                     toBlock=block_to,
                     argument_filters={"transferApprovalRequired": True},
@@ -545,7 +545,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.ApproveTransfer.getLogs(
+                events = exchange.events.ApproveTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:

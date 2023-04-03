@@ -1218,7 +1218,7 @@ class TestProcessor:
         # Get events for token address
         events = Contract.get_contract(
             "IbetStraightBond", token["address"]
-        ).events.Transfer.getLogs(fromBlock=0, toBlock=10000)
+        ).events.Transfer.get_logs(fromBlock=0, toBlock=10000)
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5
         filtered_events = processor.remove_duplicate_event_by_token_account_desc(
@@ -1450,7 +1450,7 @@ class TestProcessor:
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs",
+        "web3.contract.contract.ContractEvent.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1_1(self, processor, shared_contract, session):

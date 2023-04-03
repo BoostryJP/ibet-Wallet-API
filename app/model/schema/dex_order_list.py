@@ -49,7 +49,7 @@ class ListAllOrderListQuery:
     def account_address_list_is_valid_address(cls, v):
         for address in v:
             if address is not None:
-                if not Web3.isAddress(address):
+                if not Web3.is_address(address):
                     raise ValueError("account_address_list has not a valid address")
         return v
 

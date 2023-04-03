@@ -82,7 +82,7 @@ def get_token_status(
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -152,7 +152,7 @@ def get_token_holders(
     """
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -231,7 +231,7 @@ def get_token_holders_count(
     # Validation
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -301,7 +301,7 @@ def create_token_holders_collection(
     # contract_addressのフォーマットチェック
     contract_address = token_address
     try:
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             raise InvalidParameterError("Invalid contract address")
     except Exception as err:
         LOG.debug(f"invalid contract address: {err}")
@@ -392,7 +392,7 @@ def get_token_holders_collection(
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(contract_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -469,7 +469,7 @@ def list_all_transfer_histories(
     # 入力値チェック
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -543,7 +543,7 @@ def list_all_transfer_approval_histories(
     # Validation
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             raise InvalidParameterError("invalid contract_address")
     except:
         raise InvalidParameterError("invalid contract_address")
