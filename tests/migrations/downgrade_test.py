@@ -19,13 +19,14 @@ SPDX-License-Identifier: Apache-2.0
 import importlib
 import logging
 from typing import Final
-from app.database import engine
-from pytest_alembic import MigrationContext
+
 from pytest import LogCaptureFixture, fixture, mark
-from sqlalchemy import MetaData, Table, Column, String, Integer, Text, insert, text
+from pytest_alembic import MigrationContext
+from sqlalchemy import Column, Integer, MetaData, String, Table, Text, insert, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.schema import CreateTable
 
+from app.database import engine
 
 REVISION_22_3: Final = "a80595c53d52"
 REVISION_22_6: Final = "e8d970fdd886"

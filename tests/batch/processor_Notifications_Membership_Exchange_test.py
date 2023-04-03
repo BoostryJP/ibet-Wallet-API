@@ -286,7 +286,8 @@ class TestWatchMembershipNewOrder:
     # <Error_4>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -523,7 +524,8 @@ class TestWatchMembershipCancelOrder:
     # <Error_4>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -819,7 +821,8 @@ class TestWatchMembershipForceCancelOrder:
     # <Error_4>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -1061,7 +1064,8 @@ class TestWatchMembershipBuyAgreement:
     # <Error_4>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -1303,7 +1307,8 @@ class TestWatchMembershipSellAgreement:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -1561,7 +1566,8 @@ class TestWatchMembershipBuySettlementOK:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -1819,7 +1825,8 @@ class TestWatchMembershipSellSettlementOK:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -2077,7 +2084,8 @@ class TestWatchMembershipBuySettlementNG:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -2335,7 +2343,8 @@ class TestWatchMembershipSellSettlementNG:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list

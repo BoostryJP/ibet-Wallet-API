@@ -73,7 +73,7 @@ def list_all_coupon_tokens(
 
     for address in address_list:
         if address is not None:
-            if not Web3.isAddress(address):
+            if not Web3.is_address(address):
                 raise InvalidParameterError(f"invalid token_address: {address}")
 
     owner_address: Optional[str] = request_query.owner_address
@@ -271,7 +271,7 @@ def retrieve_coupon_token(
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:

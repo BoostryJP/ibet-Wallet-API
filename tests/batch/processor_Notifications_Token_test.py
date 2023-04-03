@@ -433,7 +433,8 @@ class TestWatchTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -715,7 +716,8 @@ class TestWatchApplyForTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -1012,7 +1014,8 @@ class TestWatchApproveTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list
@@ -1304,7 +1307,8 @@ class TestWatchCancelTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception())
+        "web3.contract.contract.ContractEvent.get_logs",
+        MagicMock(side_effect=Exception()),
     )
     def test_error_1(
         self, watcher_factory, session, shared_contract, mocked_company_list

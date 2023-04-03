@@ -41,13 +41,13 @@ class RetrievePaymentAccountQuery:
 
     @validator("account_address")
     def account_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("account_address is not a valid address")
         return v
 
     @validator("agent_address")
     def agent_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("agent_address is not a valid address")
         return v
 
@@ -63,19 +63,19 @@ class RetrievePersonalInfoQuery:
     @validator("personal_info_address")
     def personal_info_address_is_valid_address(cls, v):
         if v is not None:
-            if not Web3.isAddress(v):
+            if not Web3.is_address(v):
                 raise ValueError("personal_info_address is not a valid address")
         return v
 
     @validator("account_address")
     def account_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("account_address is not a valid address")
         return v
 
     @validator("owner_address")
     def owner_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("owner_address is not a valid address")
         return v
 

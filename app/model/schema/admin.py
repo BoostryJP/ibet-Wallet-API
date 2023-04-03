@@ -43,7 +43,7 @@ class RegisterAdminTokenRequest(BaseModel):
 
     @validator("contract_address")
     def contract_address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("token_address is not a valid address")
         return v
 
@@ -57,7 +57,7 @@ class UpdateAdminTokenRequest(BaseModel):
     @validator("owner_address")
     def owner_address_is_valid_address(cls, v):
         if v is not None:
-            if not Web3.isAddress(v):
+            if not Web3.is_address(v):
                 raise ValueError("owner_address is not a valid address")
         return v
 

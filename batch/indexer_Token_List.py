@@ -124,7 +124,7 @@ class Processor:
         :return: None
         """
         try:
-            events = self.token_list_contract.events.Register.getLogs(
+            events = self.token_list_contract.events.Register.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:

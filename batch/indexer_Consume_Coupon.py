@@ -150,7 +150,7 @@ class Processor:
     def __sync_consume(self, db_session: Session, block_from: int, block_to: int):
         for token in self.token_list:
             try:
-                events = token.events.Consume.getLogs(
+                events = token.events.Consume.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:

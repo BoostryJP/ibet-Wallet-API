@@ -331,7 +331,7 @@ class TestProcessor:
 
     # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.ContractEvent.getLogs",
+        "web3.contract.contract.ContractEvent.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1(self, processor: Processor, shared_contract, session):

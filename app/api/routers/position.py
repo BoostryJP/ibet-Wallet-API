@@ -121,7 +121,7 @@ class ListAllLock:
         # Validation
         try:
             account_address = to_checksum_address(account_address)
-            if not Web3.isAddress(account_address):
+            if not Web3.is_address(account_address):
                 raise InvalidParameterError(description="invalid account_address")
         except:
             raise InvalidParameterError(description="invalid account_address")
@@ -225,7 +225,7 @@ class ListAllLockEvent:
         # Validation
         try:
             account_address = to_checksum_address(account_address)
-            if not Web3.isAddress(account_address):
+            if not Web3.is_address(account_address):
                 raise InvalidParameterError(description="invalid account_address")
         except:
             raise InvalidParameterError(description="invalid account_address")
@@ -457,7 +457,7 @@ class BasePosition:
         # Validation
         try:
             account_address = to_checksum_address(account_address)
-            if not Web3.isAddress(account_address):
+            if not Web3.is_address(account_address):
                 raise InvalidParameterError(description="invalid account_address")
         except:
             raise InvalidParameterError(description="invalid account_address")
@@ -652,13 +652,13 @@ class BasePosition:
         # Validation
         try:
             account_address = to_checksum_address(account_address)
-            if not Web3.isAddress(account_address):
+            if not Web3.is_address(account_address):
                 raise InvalidParameterError(description="invalid account_address")
         except:
             raise InvalidParameterError(description="invalid account_address")
         try:
             token_address = to_checksum_address(token_address)
-            if not Web3.isAddress(token_address):
+            if not Web3.is_address(token_address):
                 raise InvalidParameterError(description="invalid contract_address")
         except:
             raise InvalidParameterError(description="invalid contract_address")

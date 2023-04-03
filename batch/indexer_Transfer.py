@@ -317,14 +317,14 @@ class Processor:
                 elif skip_block is not None and block_from <= skip_block < block_to:
                     # block_from <= skip_block < block_to
                     LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events = token.events.Transfer.getLogs(
+                    events = token.events.Transfer.get_logs(
                         fromBlock=skip_block + 1, toBlock=block_to
                     )
                 else:
                     # No logs or
                     # skip_block < block_from < block_to
                     LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = token.events.Transfer.getLogs(
+                    events = token.events.Transfer.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
             except ABIEventFunctionNotFound:
@@ -382,14 +382,14 @@ class Processor:
                 elif skip_block is not None and block_from <= skip_block < block_to:
                     # block_from <= skip_block < block_to
                     LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events = token.events.Unlock.getLogs(
+                    events = token.events.Unlock.get_logs(
                         fromBlock=skip_block + 1, toBlock=block_to
                     )
                 else:
                     # No logs or
                     # skip_block < block_from < block_to
                     LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = token.events.Unlock.getLogs(
+                    events = token.events.Unlock.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
             except ABIEventFunctionNotFound:

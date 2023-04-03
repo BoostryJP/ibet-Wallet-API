@@ -92,7 +92,7 @@ def list_all_e2e_messaging_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.getLogs(
+        events = contract_event.get_logs(
             fromBlock=request_query.from_block,
             toBlock=request_query.to_block,
             argument_filters=argument_filters_dict,
@@ -168,7 +168,7 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.getLogs(
+        events = contract_event.get_logs(
             fromBlock=request_query.from_block,
             toBlock=request_query.to_block,
             argument_filters=argument_filters_dict,
@@ -256,7 +256,7 @@ def list_all_ibet_security_token_escrow_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.getLogs(
+        events = contract_event.get_logs(
             fromBlock=request_query.from_block,
             toBlock=request_query.to_block,
             argument_filters=argument_filters_dict,
@@ -311,7 +311,7 @@ def list_all_ibet_security_token_interface_event_logs(
             raise InvalidParameterError("invalid argument_filters")
     try:
         token_address = to_checksum_address(token_address)
-        if not Web3.isAddress(token_address):
+        if not Web3.is_address(token_address):
             description = "invalid token_address"
             raise InvalidParameterError(description=description)
     except:
@@ -329,7 +329,7 @@ def list_all_ibet_security_token_interface_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.getLogs(
+        events = contract_event.get_logs(
             fromBlock=request_query.from_block,
             toBlock=request_query.to_block,
             argument_filters=argument_filters_dict,
