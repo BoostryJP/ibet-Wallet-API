@@ -165,7 +165,7 @@ def upgrade():
         sa.Column("source_event", sa.String(length=50), nullable=True),
         schema=get_db_schema(),
     )
-    op.get_bind().execute(f"UPDATE transfer SET source_event = 'Transfer';")
+    op.get_bind().execute(sa.text(f"UPDATE transfer SET source_event = 'Transfer';"))
     op.alter_column(
         "transfer",
         "source_event",
@@ -182,7 +182,7 @@ def upgrade():
     # NOTE: Update sqlalchemy-migrate version
     tables = sa.inspect(connection).get_table_names()
     if "migrate_version" in tables:
-        op.get_bind().execute(f"UPDATE migrate_version SET version = 54;")
+        op.get_bind().execute(sa.text(f"UPDATE migrate_version SET version = 54;"))
     # ### end Alembic commands ###
 
 
@@ -246,5 +246,5 @@ def downgrade():
     # NOTE: Update sqlalchemy-migrate version
     tables = sa.inspect(connection).get_table_names()
     if "migrate_version" in tables:
-        op.get_bind().execute(f"UPDATE migrate_version SET version = 47;")
+        op.get_bind().execute(sa.text(f"UPDATE migrate_version SET version = 47;"))
     # ### end Alembic commands ###

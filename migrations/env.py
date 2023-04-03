@@ -4,7 +4,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from alembic.autogenerate import render
-from sqlalchemy import engine_from_config, pool, inspect
+from sqlalchemy import engine_from_config, pool, inspect, text
 from sqlalchemy.exc import ProgrammingError
 
 from app.database import engine, get_db_schema
@@ -101,7 +101,7 @@ def run_migrations_online():
             if "migrate_version" in tables:
                 sqlalchemy_migrate_version = (
                     context.get_bind()
-                    .execute("SELECT version FROM migrate_version")
+                    .execute(text("SELECT version FROM migrate_version"))
                     .scalar()
                 )
             else:
