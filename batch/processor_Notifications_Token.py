@@ -21,6 +21,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import Type
 
 from sqlalchemy import and_, create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -96,7 +97,7 @@ class Watcher:
     @staticmethod
     def _get_token_all_list(db_session: Session):
         _tokens = []
-        registered_tokens: list[IDXTokenListItem] = (
+        registered_tokens: list[Type[IDXTokenListItem]] = (
             db_session.query(IDXTokenListItem)
             .join(
                 Listing, and_(Listing.token_address == IDXTokenListItem.token_address)

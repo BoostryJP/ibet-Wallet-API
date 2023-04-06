@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine

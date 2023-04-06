@@ -27,12 +27,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
-from app.model.db import (
-    IDXLockedPosition,
-    Listing,
-    TokenHolderBatchStatus,
-    TokenHoldersList,
-)
+from app.model.db import Listing, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))

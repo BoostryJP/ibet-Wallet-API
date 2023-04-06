@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional, Type
 from uuid import UUID
 
 from eth_utils import to_checksum_address
@@ -417,7 +418,7 @@ def get_token_holders_collection(
         raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # 既存レコードの存在チェック
-    _same_list_id_record: TokenHoldersList = (
+    _same_list_id_record: Optional[Type[TokenHoldersList]] = (
         session.query(TokenHoldersList)
         .filter(TokenHoldersList.list_id == str(list_id))
         .first()
