@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional
 
 import log
 from sqlalchemy import create_engine
@@ -514,7 +514,7 @@ class Processor:
             if page.account_address == token_owner_address:
                 # Skip storing data for token owner
                 continue
-            token_holder: Optional[Type[TokenHolder]] = (
+            token_holder: Optional[TokenHolder] = (
                 db_session.query(TokenHolder)
                 .filter(TokenHolder.holder_list == holder_list_id)
                 .filter(TokenHolder.account_address == account_address)

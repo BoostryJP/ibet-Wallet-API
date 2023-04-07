@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
-from typing import Optional, Type
+from typing import Optional
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
@@ -199,7 +199,7 @@ def update_notification(
     Endpoint: /Notifications/{id}
     """
     # Update Notification
-    notification: Optional[Type[Notification]] = (
+    notification: Optional[Notification] = (
         session.query(Notification)
         .filter(Notification.notification_id == notification_id)
         .first()

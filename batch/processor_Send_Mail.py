@@ -20,7 +20,6 @@ import os
 import sys
 import time
 from smtplib import SMTPException
-from typing import Type
 
 from botocore.exceptions import ClientError as SESException
 from sqlalchemy import create_engine
@@ -45,7 +44,7 @@ class Processor:
     def process(self):
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            mail_list: list[Type[Mail]] = db_session.query(Mail).all()
+            mail_list: list[Mail] = db_session.query(Mail).all()
             if len(mail_list) > 0:
                 LOG.info("Process start")
                 for mail in mail_list:
