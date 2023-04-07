@@ -31,7 +31,7 @@ from web3 import Web3
 from app import config, log
 from app.config import TZ
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -106,10 +106,10 @@ class ListAllLock:
 
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         request_query: ListAllLockedPositionQuery = Depends(),
         account_address: str = Path(),
-        session: Session = Depends(db_session),
     ):
         if self.token_type == "IbetShare":
             token_enabled = config.SHARE_TOKEN_ENABLED
@@ -210,10 +210,10 @@ class ListAllLockEvent:
 
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         request_query: ListAllLockEventQuery = Depends(),
         account_address: str = Path(),
-        session: Session = Depends(db_session),
     ):
         if self.token_type == "IbetShare":
             token_enabled = config.SHARE_TOKEN_ENABLED
@@ -1322,10 +1322,10 @@ class GetPositionList:
 
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         account_address: str = Path(),
         request_query: ListAllPositionQuery = Depends(),
-        session: Session = Depends(db_session),
     ):
         return self.base_position().get_list(
             req, request_query, session, account_address
@@ -1340,11 +1340,11 @@ class GetPosition:
 
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         request_query: GetPositionQuery = Depends(),
         account_address: str = Path(),
         token_address: str = Path(),
-        session: Session = Depends(db_session),
     ):
         return self.base_position().get_one(
             req, request_query, session, account_address, token_address

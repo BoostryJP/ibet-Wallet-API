@@ -18,11 +18,10 @@ SPDX-License
 """
 import json
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 
 from app import log
-from app.database import db_session
+from app.database import DBSession
 from app.errors import InvalidParameterError
 from app.model.db import ChatWebhook, Mail
 from app.model.schema import SendChatWebhookRequest, SendMailRequest, SuccessResponse
@@ -41,7 +40,7 @@ router = APIRouter(prefix="", tags=["messaging"])
     response_model=SuccessResponse,
     responses=get_routers_responses(InvalidParameterError),
 )
-def send_mail(data: SendMailRequest, session: Session = Depends(db_session)):
+def send_mail(session: DBSession, data: SendMailRequest):
     """Send Email"""
     for to_email in data.to_emails:
         mail = Mail()
@@ -63,9 +62,7 @@ def send_mail(data: SendMailRequest, session: Session = Depends(db_session)):
     response_model=SuccessResponse,
     responses=get_routers_responses(InvalidParameterError),
 )
-def send_chat_webhook(
-    data: SendChatWebhookRequest, session: Session = Depends(db_session)
-):
+def send_chat_webhook(session: DBSession, data: SendChatWebhookRequest):
     """Send Chat Webhook"""
     hook = ChatWebhook()
     hook.message = json.dumps(data.message)
