@@ -21,11 +21,10 @@ from typing import Optional
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config, log
-from app.database import db_session
+from app.database import DBSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -58,12 +57,12 @@ router = APIRouter(prefix="/Token/Coupon", tags=["token_info"])
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def list_all_coupon_tokens(
+    session: DBSession,
     req: Request,
     address_list: list[str] = Query(
         default=[], description="list of token address (**this affects total number**)"
     ),
     request_query: ListAllCouponTokensQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/Coupon
@@ -165,9 +164,9 @@ def list_all_coupon_tokens(
     responses=get_routers_responses(NotSupportedError),
 )
 def list_all_coupon_token_addresses(
+    session: DBSession,
     req: Request,
     request_query: ListAllCouponTokensQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/Coupon/Addresses
@@ -259,9 +258,7 @@ def list_all_coupon_token_addresses(
         NotSupportedError, InvalidParameterError, DataNotExistsError
     ),
 )
-def retrieve_coupon_token(
-    req: Request, token_address: str, session: Session = Depends(db_session)
-):
+def retrieve_coupon_token(session: DBSession, req: Request, token_address: str):
     """
     Endpoint: /Token/Coupon/{contract_address}
     """

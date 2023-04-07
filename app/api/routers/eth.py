@@ -24,13 +24,12 @@ from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends
 from hexbytes import HexBytes
 from rlp import decode
-from sqlalchemy.orm import Session
 from web3.exceptions import ContractLogicError, TimeExhausted
 from web3.types import TxReceipt
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -71,7 +70,7 @@ router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
     response_model=GenericSuccessResponse[Any],
     responses=get_routers_responses(InvalidParameterError, ServiceUnavailable),
 )
-def ethereum_json_rpc(data: JsonRPCRequest, session: Session = Depends(db_session)):
+def ethereum_json_rpc(session: DBSession, data: JsonRPCRequest):
     """
     Endpoint: /Eth/RPC
     """
@@ -140,9 +139,7 @@ def get_transaction_count(
     response_model_exclude_unset=True,
     responses=get_routers_responses(SuspendedTokenError),
 )
-def send_raw_transaction(
-    data: SendRawTransactionRequest, session: Session = Depends(db_session)
-):
+def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
     """
     Endpoint: /Eth/SendRawTransaction
     """
@@ -302,9 +299,7 @@ def send_raw_transaction(
     response_model_exclude_unset=True,
     responses=get_routers_responses(SuspendedTokenError),
 )
-def send_raw_transaction_no_wait(
-    data: SendRawTransactionRequest, session: Session = Depends(db_session)
-):
+def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionRequest):
     """
     Endpoint: /Eth/SendRawTransactionNoWait
     """

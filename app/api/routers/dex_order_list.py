@@ -19,12 +19,11 @@ SPDX-License-Identifier: Apache-2.0
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import InvalidParameterError, NotSupportedError
 from app.model.blockchain import CouponToken, MembershipToken
 from app.model.db import AgreementStatus
@@ -491,9 +490,9 @@ class BaseOrderList(object):
 class MembershipOrderList(BaseOrderList):
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         request_query: ListAllOrderListQuery = Depends(),
-        session: Session = Depends(db_session),
     ):
         if (
             config.MEMBERSHIP_TOKEN_ENABLED is False
@@ -579,9 +578,9 @@ def list_all_membership_order_history(
 class CouponOrderList(BaseOrderList):
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         request_query: ListAllOrderListQuery = Depends(),
-        session: Session = Depends(db_session),
     ):
         if (
             config.COUPON_TOKEN_ENABLED is False
@@ -667,10 +666,10 @@ def list_all_coupon_order_history(
 class OrderList(BaseOrderList):
     def __call__(
         self,
+        session: DBSession,
         req: Request,
         request_query: ListAllOrderListQuery = Depends(),
         token_address: str = Path(),
-        session: Session = Depends(db_session),
     ):
         # path validation
         try:

@@ -22,12 +22,11 @@ from uuid import UUID
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
 from sqlalchemy import String, and_, asc, cast, desc, func, or_
-from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import DataNotExistsError, InvalidParameterError, ServiceUnavailable
 from app.model.db import (
     IDXLockedPosition,
@@ -73,8 +72,8 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_status(
+    session: DBSession,
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Status
@@ -144,9 +143,9 @@ def get_token_status(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders(
+    session: DBSession,
     token_address: str = Path(description="token address"),
     request_query: ListAllTokenHoldersQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders
@@ -222,9 +221,9 @@ def get_token_holders(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders_count(
+    session: DBSession,
     token_address: str = Path(description="token address"),
     request_query: RetrieveTokenHoldersCountQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Count
@@ -287,9 +286,9 @@ def get_token_holders_count(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def create_token_holders_collection(
+    session: DBSession,
     data: CreateTokenHoldersCollectionRequest,
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Collection
@@ -377,13 +376,13 @@ def create_token_holders_collection(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders_collection(
+    session: DBSession,
     token_address: str = Path(description="token address"),
     list_id: UUID = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
         example="cfd83622-34dc-4efe-a68b-2cc275d3d824",
     ),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Collection/{list_id}
@@ -460,9 +459,9 @@ def get_token_holders_collection(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_transfer_histories(
+    session: DBSession,
     request_query: ListAllTransferHistoryQuery = Depends(),
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/TransferHistory
@@ -534,9 +533,9 @@ def list_all_transfer_histories(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_transfer_approval_histories(
+    session: DBSession,
     request_query: ResultSetQuery = Depends(),
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/TransferApprovalHistory

@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from fastapi import APIRouter, Depends, Path
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Path
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import (
     AppError,
     DataConflictError,
@@ -65,7 +64,7 @@ router = APIRouter(prefix="/Admin", tags=["admin"])
     operation_id="TokensGET",
     response_model=GenericSuccessResponse[ListAllAdminTokensResponse],
 )
-def list_all_admin_tokens(session: Session = Depends(db_session)):
+def list_all_admin_tokens(session: DBSession):
     """
     Endpoint: /Admin/Tokens
       - GET: 取扱トークン一覧取得
@@ -90,9 +89,7 @@ def list_all_admin_tokens(session: Session = Depends(db_session)):
     response_model=SuccessResponse,
     responses=get_routers_responses(DataConflictError, InvalidParameterError),
 )
-def register_admin_token(
-    data: RegisterAdminTokenRequest, session: Session = Depends(db_session)
-):
+def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     """
     Endpoint: /Admin/Tokens
       - POST: 取扱トークン登録
@@ -228,8 +225,8 @@ def get_admin_token_type():
     responses=get_routers_responses(DataNotExistsError),
 )
 def retrieve_admin_token(
+    session: DBSession,
     token_address: str = Path(description="Token Address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Admin/Tokens/{token_address}
@@ -253,9 +250,9 @@ def retrieve_admin_token(
     responses=get_routers_responses(InvalidParameterError, DataNotExistsError),
 )
 def update_token(
+    session: DBSession,
     data: UpdateAdminTokenRequest,
     token_address: str = Path(description="Token Address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Admin/Tokens/{contract_address}
@@ -302,8 +299,8 @@ def update_token(
     responses=get_routers_responses(AppError),
 )
 def delete_token(
+    session: DBSession,
     token_address: str = Path(description="Token Address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Admin/Tokens/{contract_address}
