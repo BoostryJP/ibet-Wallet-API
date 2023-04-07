@@ -26,12 +26,10 @@ class IDXPosition(Base):
 
     __tablename__ = "position"
 
-    # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address = Column(String(42), primary_key=True)
     # Account Address
-    account_address = Column(String(42))
+    account_address = Column(String(42), primary_key=True)
     # Balance
     balance = Column(BigInteger)
     # Exchange Balance

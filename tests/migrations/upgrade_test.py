@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import importlib
 import logging
+from datetime import datetime
 from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
@@ -230,6 +231,7 @@ class TestMigrationsUpgrade:
         with engine.connect() as conn:
             conn.execute(stmt1)
             conn.execute(stmt2)
+            conn.commit()
 
         # 3. Migrate up to head
         alembic_runner.migrate_up_to("head")
@@ -264,6 +266,7 @@ class TestMigrationsUpgrade:
         with engine.connect() as conn:
             conn.execute(stmt1)
             conn.execute(stmt2)
+            conn.commit()
 
         # 3. Migrate up to head
         alembic_runner.migrate_up_to("head")
@@ -306,9 +309,94 @@ class TestMigrationsUpgrade:
         node = meta.tables.get("node")
         stmt1 = insert(node).values(id=1, is_synced=None)
         stmt2 = insert(node).values(id=2, is_synced=True)
+
         with engine.connect() as conn:
             conn.execute(stmt1)
             conn.execute(stmt2)
+            conn.commit()
+
+        position = meta.tables.get("position")
+        stmt1 = insert(position).values(
+            id=1,
+            token_address=None,
+            account_address=None,
+            modified=datetime(2023, 4, 1, 0, 0, 0),
+        )  # removed after migration
+        stmt2 = insert(position).values(
+            id=2,
+            token_address=None,
+            account_address=None,
+            modified=datetime(2023, 4, 2, 0, 0, 0),
+        )  # removed after migration
+        stmt3 = insert(position).values(
+            id=3,
+            token_address="token_address1",
+            account_address=None,
+            modified=datetime(2023, 4, 3, 0, 0, 0),
+        )  # removed after migration
+        stmt4 = insert(position).values(
+            id=4,
+            token_address=None,
+            account_address="account_address1",
+            modified=datetime(2023, 4, 4, 0, 0, 0),
+        )  # removed after migration
+        stmt5 = insert(position).values(
+            id=5,
+            token_address="token_address1",
+            account_address="account_address1",
+            modified=datetime(2023, 4, 5, 0, 0, 0),
+        )  # removed after migration
+        stmt6 = insert(position).values(
+            id=6,
+            token_address="token_address1",
+            account_address="account_address1",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt7 = insert(position).values(
+            id=7,
+            token_address="token_address1",
+            account_address="account_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt8 = insert(position).values(
+            id=8,
+            token_address="token_address2",
+            account_address="account_address2",
+            modified=datetime(2023, 4, 5, 0, 0, 0),
+        )  # removed after migration
+        stmt9 = insert(position).values(
+            id=9,
+            token_address="token_address2",
+            account_address="account_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.execute(stmt4)
+            conn.execute(stmt5)
+            conn.execute(stmt6)
+            conn.execute(stmt7)
+            conn.execute(stmt8)
+            conn.execute(stmt9)
+            conn.commit()
 
         # 3. Run to head
         alembic_runner.migrate_up_to("head")
+
+        with engine.connect() as conn:
+            all_row_count = conn.execute(text("SELECT COUNT(*) FROM position")).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM position WHERE token_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 3 records.
+            #    (token_address1, account_address1)
+            #    (token_address1, account_address2)
+            #    (token_address2, account_address2)
+            assert all_row_count == 3
+            assert token_address_1_count == 2
