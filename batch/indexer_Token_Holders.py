@@ -514,7 +514,7 @@ class Processor:
             if page.account_address == token_owner_address:
                 # Skip storing data for token owner
                 continue
-            token_holder: TokenHolder = (
+            token_holder: Optional[TokenHolder] = (
                 db_session.query(TokenHolder)
                 .filter(TokenHolder.holder_list == holder_list_id)
                 .filter(TokenHolder.account_address == account_address)

@@ -72,7 +72,7 @@ def list_all_admin_tokens(session: Session = Depends(db_session)):
     """
     res_body = []
 
-    listed_tokens = session.query(Listing).all()
+    listed_tokens: list[Listing] = session.query(Listing).all()
     for token in listed_tokens:
         item = token.json()
         res_body.append(item)
