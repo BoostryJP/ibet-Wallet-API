@@ -15,7 +15,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ## Dependencies
 - [python3](https://www.python.org/)
-  - Version 3.10
+  - Version 3.11
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 13
   - [MySQL](https://www.mysql.com/) - Version 5.7

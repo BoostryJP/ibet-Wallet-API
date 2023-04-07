@@ -16,7 +16,7 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.10
+  - バージョン 3.11
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 13
   - [MySQL](https://www.mysql.com/) - バージョン 5.7
