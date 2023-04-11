@@ -77,6 +77,12 @@ from .events import (
     ListAllEventsResponse,
     SecurityTokenEventArguments,
 )
+from .lock import (
+    ListAllLockQuery,
+    ListAllLockResponse,
+    RetrieveLockCountQuery,
+    RetrieveLockCountResponse,
+)
 from .messaging import SendChatWebhookRequest, SendMailRequest
 from .node_info import GetBlockSyncStatusResponse, GetNodeInfoResponse
 from .notification import (

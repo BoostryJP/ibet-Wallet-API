@@ -36,6 +36,7 @@ from app.api.routers import dex_order_list as routers_dex_order_list
 from app.api.routers import e2e_message as routers_e2e_message
 from app.api.routers import eth as routers_eth
 from app.api.routers import events as routers_events
+from app.api.routers import lock as routers_lock
 from app.api.routers import messaging as routers_mail
 from app.api.routers import node_info as routers_node_info
 from app.api.routers import notification as routers_notification
@@ -71,6 +72,7 @@ tags_metadata = [
     {"name": "token_info", "description": "Detailed information for listed tokens"},
     {"name": "user_info", "description": "User information"},
     {"name": "user_position", "description": "User's token balance"},
+    {"name": "user_lock", "description": "User's lock"},
     {"name": "user_notification", "description": "Notifications for users"},
     {"name": "contract_log", "description": "Contract event logs"},
     {
@@ -119,6 +121,7 @@ app.include_router(routers_token_membership.router)
 app.include_router(routers_token_coupon.router)
 app.include_router(routers_token.router)
 app.include_router(routers_position.router)
+app.include_router(routers_lock.router)
 app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)
 app.include_router(routers_mail.router)
