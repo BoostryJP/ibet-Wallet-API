@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-from app.database import get_db_schema
+from app.database import get_db_schema, engine
 
 # revision identifiers, used by Alembic.
 revision = "40ee030e9302"
@@ -28,7 +28,7 @@ def upgrade():
     op.get_bind().execute(sa.text(f"DELETE FROM position WHERE modified IS null;"))
     op.get_bind().execute(
         sa.text(
-            f"DELETE FROM POSITION WHERE (modified) NOT IN (SELECT latest_position.max_modified AS modified FROM (SELECT  max(modified) AS max_modified FROM position GROUP BY token_address, account_address) AS latest_position);"
+            f"DELETE FROM position WHERE (modified) NOT IN (SELECT latest_position.max_modified AS modified FROM (SELECT  max(modified) AS max_modified FROM position GROUP BY token_address, account_address) AS latest_position);"
         )
     )
 
@@ -52,9 +52,39 @@ def upgrade():
         schema=get_db_schema(),
     )
     op.drop_column("position", "id", schema=get_db_schema())
-    # op.drop_constraint("position_pkey", "position", type_="primary")
     op.create_primary_key(
         "position_pkey", "position", ["token_address", "account_address"]
+    )
+
+    op.get_bind().execute(
+        sa.text(f"DELETE FROM executable_contract WHERE contract_address IS null;")
+    )
+    op.get_bind().execute(
+        sa.text(f"DELETE FROM executable_contract WHERE contract_address IS null;")
+    )
+    op.get_bind().execute(
+        sa.text(f"DELETE FROM executable_contract WHERE modified IS null;")
+    )
+    op.get_bind().execute(
+        sa.text(
+            f"DELETE FROM executable_contract WHERE (modified) NOT IN (SELECT latest_executable_contract.max_modified AS modified FROM (SELECT  max(modified) AS max_modified FROM executable_contract GROUP BY contract_address) AS latest_executable_contract);"
+        )
+    )
+    op.alter_column(
+        "executable_contract",
+        "contract_address",
+        existing_type=sa.VARCHAR(length=256),
+        nullable=False,
+        schema=get_db_schema(),
+    )
+    op.drop_index(
+        "ix_executable_contract_contract_address",
+        table_name="executable_contract",
+        schema=get_db_schema(),
+    )
+    op.drop_column("executable_contract", "id", schema=get_db_schema())
+    op.create_primary_key(
+        "executable_contract_pkey", "executable_contract", ["contract_address"]
     )
 
 
@@ -89,3 +119,13 @@ def downgrade():
         nullable=True,
         schema=get_db_schema(),
     )
+
+    op.add_column(
+        "executable_contract",
+        sa.Column("id", sa.BIGINT(), autoincrement=True, nullable=False),
+        schema=get_db_schema(),
+    )
+    op.drop_constraint(
+        "executable_contract_pkey", "executable_contract", type_="primary"
+    )
+    op.create_primary_key("executable_contract_pkey", "executable_contract", ["id"])

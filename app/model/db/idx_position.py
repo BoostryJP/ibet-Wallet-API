@@ -40,7 +40,6 @@ class IDXPosition(Base):
     pending_transfer = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "account_address": str,
         "balance": int,

@@ -153,7 +153,6 @@ class TestProcessor:
             .first()
         )
         _position = _position_list[1]
-        assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
@@ -161,7 +160,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -203,7 +201,6 @@ class TestProcessor:
             .first()
         )
         _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -211,7 +208,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[1]
-        assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -219,7 +215,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[2]
-        assert _position.id == 3
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
@@ -271,7 +266,6 @@ class TestProcessor:
             .first()
         )
         _position = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -279,7 +273,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[1]
-        assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -287,7 +280,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[2]
-        assert _position.id == 3
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
@@ -295,7 +287,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[3]
-        assert _position.id == 4
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 5000
@@ -303,7 +294,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[4]
-        assert _position.id == 5
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -311,7 +301,6 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
         _position = _position_list[5]
-        assert _position.id == 6
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 5000 - 3000
@@ -363,7 +352,6 @@ class TestProcessor:
             .first()
         )
         _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 + 111 + 222
@@ -426,7 +414,6 @@ class TestProcessor:
             .first()
         )
         _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
@@ -434,7 +421,6 @@ class TestProcessor:
         assert _position.exchange_balance == 10000 - 200 - 300
         assert _position.exchange_commitment == 300
         _position: IDXPosition = _position_list[1]
-        assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 0
@@ -678,7 +664,6 @@ class TestProcessor:
             .first()
         )
         _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token1["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 + 55

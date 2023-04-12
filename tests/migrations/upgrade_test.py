@@ -383,11 +383,54 @@ class TestMigrationsUpgrade:
             conn.execute(stmt9)
             conn.commit()
 
+        executable_contract = meta.tables.get("executable_contract")
+        stmt1 = insert(executable_contract).values(
+            id=1,
+            contract_address=None,
+            modified=datetime(2023, 4, 1, 0, 0, 0),
+        )  # removed after migration
+        stmt2 = insert(executable_contract).values(
+            id=2,
+            contract_address=None,
+            modified=datetime(2023, 4, 2, 0, 0, 0),
+        )  # removed after migration
+        stmt3 = insert(executable_contract).values(
+            id=3,
+            contract_address="token_address1",
+            modified=datetime(2023, 4, 3, 0, 0, 0),
+        )  # removed after migration
+        stmt4 = insert(executable_contract).values(
+            id=4,
+            contract_address="token_address1",
+            modified=datetime(2023, 4, 4, 0, 0, 0),
+        )  # remains after migration
+        stmt5 = insert(executable_contract).values(
+            id=5,
+            contract_address="token_address2",
+            modified=datetime(2023, 4, 5, 0, 0, 0),
+        )  # removed after migration
+        stmt6 = insert(executable_contract).values(
+            id=6,
+            contract_address="token_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.execute(stmt4)
+            conn.execute(stmt5)
+            conn.execute(stmt6)
+            conn.commit()
+
         # 3. Run to head
         alembic_runner.migrate_up_to("head")
 
         with engine.connect() as conn:
-            all_row_count = conn.execute(text("SELECT COUNT(*) FROM position")).scalar()
+            all_position_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM position")
+            ).scalar()
             token_address_1_count = conn.execute(
                 text(
                     "SELECT COUNT(*) FROM position WHERE token_address = 'token_address1'"
@@ -398,5 +441,20 @@ class TestMigrationsUpgrade:
             #    (token_address1, account_address1)
             #    (token_address1, account_address2)
             #    (token_address2, account_address2)
-            assert all_row_count == 3
+            assert all_position_row_count == 3
             assert token_address_1_count == 2
+
+            all_executable_contract_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM executable_contract")
+            ).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM executable_contract WHERE contract_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 2 records.
+            #    (token_address1)
+            #    (token_address2)
+            assert all_executable_contract_row_count == 2
+            assert token_address_1_count == 1
