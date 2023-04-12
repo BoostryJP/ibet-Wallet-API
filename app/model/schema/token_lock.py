@@ -50,7 +50,7 @@ class ListAllLockSortItem(str, Enum):
 
 
 @dataclass
-class ListAllLockQuery:
+class ListAllTokenLockQuery:
     lock_address: Optional[str] = Query(default=None, description="lock address")
     account_address: Optional[str] = Query(default=None, description="account address")
     offset: Optional[int] = Query(default=None, description="start position", ge=0)
@@ -67,7 +67,7 @@ class ListAllLockQuery:
 
 
 @dataclass
-class RetrieveLockCountQuery:
+class RetrieveTokenLockCountQuery:
     lock_address: Optional[str] = Query(default=None, description="lock address")
     account_address: Optional[str] = Query(default=None, description="account address")
     token_address_list: list[StrictStr] = Query(
@@ -80,10 +80,10 @@ class RetrieveLockCountQuery:
 ############################
 
 
-class ListAllLockResponse(BaseModel):
+class ListAllTokenLockResponse(BaseModel):
     result_set: ResultSet
     locked_list: list[Locked]
 
 
-class RetrieveLockCountResponse(BaseModel):
+class RetrieveTokenLockCountResponse(BaseModel):
     count: int

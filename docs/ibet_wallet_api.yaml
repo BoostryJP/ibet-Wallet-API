@@ -2599,6 +2599,142 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
+  /Token/Lock:
+    get:
+      tags:
+        - token_info
+      summary: Token Lock
+      operationId: ListAllTokenLock
+      parameters:
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: account address
+          required: false
+          schema:
+            title: Account Address
+            type: string
+            description: account address
+          name: account_address
+          in: query
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: sort item
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ListAllLockSortItem'
+            description: sort item
+            default: token_address
+          name: sort_item
+          in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 0
+          name: sort_order
+          in: query
+        - description: list of token address (**this affects total number**)
+          required: false
+          schema:
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: token_address_list
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTokenLockResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Listalltokenlock
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+  /Token/Lock/Count:
+    get:
+      tags:
+        - token_info
+      summary: Token Lock Count
+      operationId: RetrieveTokenLockCount
+      parameters:
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: account address
+          required: false
+          schema:
+            title: Account Address
+            type: string
+            description: account address
+          name: account_address
+          in: query
+        - description: list of token address
+          required: false
+          schema:
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address
+            default: []
+          name: token_address_list
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveTokenLockCountResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Retrievetokenlockcount
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Position/{account_address}/Share/Lock:
     get:
       tags:
@@ -3541,142 +3677,6 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
                   - $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /Lock:
-    get:
-      tags:
-        - user_lock
-      summary: Lock
-      operationId: ListAllLock
-      parameters:
-        - description: lock address
-          required: false
-          schema:
-            title: Lock Address
-            type: string
-            description: lock address
-          name: lock_address
-          in: query
-        - description: account address
-          required: false
-          schema:
-            title: Account Address
-            type: string
-            description: account address
-          name: account_address
-          in: query
-        - description: start position
-          required: false
-          schema:
-            title: Offset
-            minimum: 0
-            type: integer
-            description: start position
-          name: offset
-          in: query
-        - description: number of set
-          required: false
-          schema:
-            title: Limit
-            minimum: 0
-            type: integer
-            description: number of set
-          name: limit
-          in: query
-        - description: sort item
-          required: false
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/ListAllLockSortItem'
-            description: sort item
-            default: token_address
-          name: sort_item
-          in: query
-        - description: 'sort order(0: ASC, 1: DESC)'
-          required: false
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
-            description: 'sort order(0: ASC, 1: DESC)'
-            default: 0
-          name: sort_order
-          in: query
-        - description: list of token address (**this affects total number**)
-          required: false
-          schema:
-            title: Token Address List
-            type: array
-            items:
-              type: string
-            description: list of token address (**this affects total number**)
-            default: []
-          name: token_address_list
-          in: query
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                title: Response 400 Listalllock
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-  /Lock/Count:
-    get:
-      tags:
-        - user_lock
-      summary: Lock Count
-      operationId: RetrieveLockCount
-      parameters:
-        - description: lock address
-          required: false
-          schema:
-            title: Lock Address
-            type: string
-            description: lock address
-          name: lock_address
-          in: query
-        - description: account address
-          required: false
-          schema:
-            title: Account Address
-            type: string
-            description: account address
-          name: account_address
-          in: query
-        - description: list of token address
-          required: false
-          schema:
-            title: Token Address List
-            type: array
-            items:
-              type: string
-            description: list of token address
-            default: []
-          name: token_address_list
-          in: query
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveLockCountResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                title: Response 400 Retrievelockcount
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Notifications:
     get:
       tags:
@@ -5523,22 +5523,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllLastPriceResponse'
-    GenericSuccessResponse_ListAllLockResponse_:
-      title: GenericSuccessResponse[ListAllLockResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListAllLockResponse'
     GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
       title: GenericSuccessResponse[ListAllMembershipTokenAddressesResponse]
       required:
@@ -5667,6 +5651,22 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllTicksResponse'
+    GenericSuccessResponse_ListAllTokenLockResponse_:
+      title: GenericSuccessResponse[ListAllTokenLockResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllTokenLockResponse'
     GenericSuccessResponse_MembershipPositionWithDetail_:
       title: GenericSuccessResponse[MembershipPositionWithDetail]
       required:
@@ -5811,22 +5811,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/RetrieveCouponTokenResponse'
-    GenericSuccessResponse_RetrieveLockCountResponse_:
-      title: GenericSuccessResponse[RetrieveLockCountResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/RetrieveLockCountResponse'
     GenericSuccessResponse_RetrieveMembershipTokenResponse_:
       title: GenericSuccessResponse[RetrieveMembershipTokenResponse]
       required:
@@ -5907,6 +5891,22 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+    GenericSuccessResponse_RetrieveTokenLockCountResponse_:
+      title: GenericSuccessResponse[RetrieveTokenLockCountResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/RetrieveTokenLockCountResponse'
     GenericSuccessResponse_SendRawTransactionsNoWaitResponse_:
       title: GenericSuccessResponse[SendRawTransactionsNoWaitResponse]
       required:
@@ -6532,20 +6532,6 @@ components:
               items:
                 $ref: '#/components/schemas/LockEvent'
           description: Lock/Unlock event list
-    ListAllLockResponse:
-      title: ListAllLockResponse
-      required:
-        - result_set
-        - locked_list
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        locked_list:
-          title: Locked List
-          type: array
-          items:
-            $ref: '#/components/schemas/app__model__schema__lock__Locked'
     ListAllLockSortItem:
       title: ListAllLockSortItem
       enum:
@@ -6699,6 +6685,20 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Ticks'
+    ListAllTokenLockResponse:
+      title: ListAllTokenLockResponse
+      required:
+        - result_set
+        - locked_list
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        locked_list:
+          title: Locked List
+          type: array
+          items:
+            $ref: '#/components/schemas/app__model__schema__token_lock__Locked'
     LockEvent:
       title: LockEvent
       required:
@@ -7605,15 +7605,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CouponImage'
-    RetrieveLockCountResponse:
-      title: RetrieveLockCountResponse
-      required:
-        - count
-      type: object
-      properties:
-        count:
-          title: Count
-          type: integer
     RetrieveMembershipTokenResponse:
       title: RetrieveMembershipTokenResponse
       required:
@@ -7996,6 +7987,15 @@ components:
         is_redeemed:
           title: Is Redeemed
           type: boolean
+    RetrieveTokenLockCountResponse:
+      title: RetrieveTokenLockCountResponse
+      required:
+        - count
+      type: object
+      properties:
+        count:
+          title: Count
+          type: integer
     SecurityTokenPositionWithAddress:
       title: SecurityTokenPositionWithAddress
       required:
@@ -8822,27 +8822,6 @@ components:
         token_address:
           title: Token Address
           type: string
-    app__model__schema__lock__Locked:
-      title: Locked
-      required:
-        - token_address
-        - lock_address
-        - account_address
-        - value
-      type: object
-      properties:
-        token_address:
-          title: Token Address
-          type: string
-        lock_address:
-          title: Lock Address
-          type: string
-        account_address:
-          title: Account Address
-          type: string
-        value:
-          title: Value
-          type: integer
     app__model__schema__position__Locked:
       title: Locked
       required:
@@ -8873,6 +8852,27 @@ components:
         token_address:
           title: Token Address
           type: string
+    app__model__schema__token_lock__Locked:
+      title: Locked
+      required:
+        - token_address
+        - lock_address
+        - account_address
+        - value
+      type: object
+      properties:
+        token_address:
+          title: Token Address
+          type: string
+        lock_address:
+          title: Lock Address
+          type: string
+        account_address:
+          title: Account Address
+          type: string
+        value:
+          title: Value
+          type: integer
 tags:
   - name: root
     description: ''
@@ -8892,8 +8892,6 @@ tags:
     description: User information
   - name: user_position
     description: User's token balance
-  - name: user_lock
-    description: User's lock
   - name: user_notification
     description: Notifications for users
   - name: contract_log

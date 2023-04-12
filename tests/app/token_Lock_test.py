@@ -32,13 +32,13 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-class TestLock:
+class TestTokenLock:
     """
-    Test Case for lock.Lock
+    Test Case for token.Lock
     """
 
     # テスト対象API
-    apiurl = "/Lock"
+    apiurl = "/Token/Lock"
 
     issuer_address = "0x0000000000000000000000000000000000000001"
     exchange_address = "0x0000000000000000000000000000000000000002"

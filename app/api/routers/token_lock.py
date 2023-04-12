@@ -29,10 +29,10 @@ from app.errors import InvalidParameterError
 from app.model.db import IDXLockedPosition
 from app.model.schema import (
     GenericSuccessResponse,
-    ListAllLockQuery,
-    ListAllLockResponse,
-    RetrieveLockCountQuery,
-    RetrieveLockCountResponse,
+    ListAllTokenLockQuery,
+    ListAllTokenLockResponse,
+    RetrieveTokenLockCountQuery,
+    RetrieveTokenLockCountResponse,
     SuccessResponse,
 )
 from app.utils.docs_utils import get_routers_responses
@@ -43,17 +43,17 @@ LOG = log.get_logger()
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
 
-router = APIRouter(prefix="/Lock", tags=["user_lock"])
+router = APIRouter(prefix="/Token/Lock", tags=["token_info"])
 
 
 @router.get(
     "",
-    summary="Lock",
-    operation_id="ListAllLock",
-    response_model=GenericSuccessResponse[ListAllLockResponse],
+    summary="Token Lock",
+    operation_id="ListAllTokenLock",
+    response_model=GenericSuccessResponse[ListAllTokenLockResponse],
     responses=get_routers_responses(InvalidParameterError),
 )
-def list_all_lock(session: DBSession, request_query: ListAllLockQuery = Depends()):
+def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Depends()):
     token_address_list = request_query.token_address_list
     lock_address = request_query.lock_address
     account_address = request_query.account_address
@@ -109,13 +109,13 @@ def list_all_lock(session: DBSession, request_query: ListAllLockQuery = Depends(
 
 @router.get(
     "/Count",
-    summary="Lock Count",
-    operation_id="RetrieveLockCount",
-    response_model=GenericSuccessResponse[RetrieveLockCountResponse],
+    summary="Token Lock Count",
+    operation_id="RetrieveTokenLockCount",
+    response_model=GenericSuccessResponse[RetrieveTokenLockCountResponse],
     responses=get_routers_responses(InvalidParameterError),
 )
 def retrieve_lock_count(
-    session: DBSession, request_query: RetrieveLockCountQuery = Depends()
+    session: DBSession, request_query: RetrieveTokenLockCountQuery = Depends()
 ):
     token_address_list = request_query.token_address_list
     lock_address = request_query.lock_address
