@@ -49,6 +49,23 @@ def migration_test(caplog: LogCaptureFixture):
     if engine.name != "mysql":
         with engine.connect() as connect:
             connect.execute(text("DROP SEQUENCE IF EXISTS notification_id_seq"))
+            connect.execute(text("DROP SEQUENCE IF EXISTS position_id_seq"))
+            connect.execute(text("DROP SEQUENCE IF EXISTS executable_contract_id_seq"))
+            connect.execute(
+                text("DROP SEQUENCE IF EXISTS idx_position_bond_block_number_id_seq")
+            )
+            connect.execute(
+                text("DROP SEQUENCE IF EXISTS idx_position_share_block_number_id_seq")
+            )
+            connect.execute(
+                text(
+                    "DROP SEQUENCE IF EXISTS idx_position_membership_block_number_id_seq"
+                )
+            )
+            connect.execute(
+                text("DROP SEQUENCE IF EXISTS idx_position_coupon_block_number_id_seq")
+            )
+
             connect.commit()
 
     LOG = logging.getLogger("alembic.runtime.migration")
@@ -67,6 +84,22 @@ def migration_test(caplog: LogCaptureFixture):
     if engine.name != "mysql":
         with engine.connect() as connect:
             connect.execute(text("DROP SEQUENCE IF EXISTS notification_id_seq"))
+            connect.execute(text("DROP SEQUENCE IF EXISTS position_id_seq"))
+            connect.execute(text("DROP SEQUENCE IF EXISTS executable_contract_id_seq"))
+            connect.execute(
+                text("DROP SEQUENCE IF EXISTS idx_position_bond_block_number_id_seq")
+            )
+            connect.execute(
+                text("DROP SEQUENCE IF EXISTS idx_position_share_block_number_id_seq")
+            )
+            connect.execute(
+                text(
+                    "DROP SEQUENCE IF EXISTS idx_position_membership_block_number_id_seq"
+                )
+            )
+            connect.execute(
+                text("DROP SEQUENCE IF EXISTS idx_position_coupon_block_number_id_seq")
+            )
             connect.commit()
 
 

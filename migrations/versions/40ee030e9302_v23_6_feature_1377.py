@@ -235,6 +235,9 @@ def downgrade():
     # Migration for position
     ############################
     if op.get_context().dialect.name != "mysql":
+        op.get_bind().execute(
+            sa.text("CREATE SEQUENCE IF NOT EXISTS position_id_seq START 1")
+        )
         op.add_column(
             "position",
             sa.Column(
@@ -300,6 +303,9 @@ def downgrade():
     # Migration for executable_contract
     ############################
     if op.get_context().dialect.name != "mysql":
+        op.get_bind().execute(
+            sa.text("CREATE SEQUENCE IF NOT EXISTS executable_contract_id_seq START 1")
+        )
         op.add_column(
             "executable_contract",
             sa.Column(
@@ -362,6 +368,11 @@ def downgrade():
     # Migration for idx_position_bond_block_number
     ############################
     if op.get_context().dialect.name != "mysql":
+        op.get_bind().execute(
+            sa.text(
+                "CREATE SEQUENCE IF NOT EXISTS idx_position_bond_block_number_id_seq START 1"
+            )
+        )
         op.add_column(
             "idx_position_bond_block_number",
             sa.Column(
@@ -422,6 +433,11 @@ def downgrade():
     # Migration for idx_position_share_block_number
     ############################
     if op.get_context().dialect.name != "mysql":
+        op.get_bind().execute(
+            sa.text(
+                "CREATE SEQUENCE IF NOT EXISTS idx_position_share_block_number_id_seq START 1"
+            )
+        )
         op.add_column(
             "idx_position_share_block_number",
             sa.Column(
@@ -482,6 +498,11 @@ def downgrade():
     # Migration for idx_position_coupon_block_number
     ############################
     if op.get_context().dialect.name != "mysql":
+        op.get_bind().execute(
+            sa.text(
+                "CREATE SEQUENCE IF NOT EXISTS idx_position_coupon_block_number_id_seq START 1"
+            )
+        )
         op.add_column(
             "idx_position_coupon_block_number",
             sa.Column(
@@ -542,6 +563,11 @@ def downgrade():
     # Migration for idx_position_membership_block_number
     ############################
     if op.get_context().dialect.name != "mysql":
+        op.get_bind().execute(
+            sa.text(
+                "CREATE SEQUENCE IF NOT EXISTS idx_position_membership_block_number_id_seq START 1"
+            )
+        )
         op.add_column(
             "idx_position_membership_block_number",
             sa.Column(
