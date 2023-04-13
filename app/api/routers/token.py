@@ -197,7 +197,7 @@ def get_token_holders(
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
     holders: list[tuple[IDXPosition, int | None]] = query.order_by(
-        desc(IDXPosition.modified)
+        desc(IDXPosition.created)
     ).all()
 
     resp_body = []
