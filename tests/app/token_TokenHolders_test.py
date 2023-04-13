@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -59,6 +61,8 @@ class TestTokenTokenHolders:
         _position.pending_transfer = position.get("pending_transfer")  # nullable
         _position.exchange_balance = position.get("exchange_balance")  # nullable
         _position.exchange_commitment = position.get("exchange_commitment")  # nullable
+        if "created" in position:
+            _position.created = position.get("created")
         session.add(_position)
         session.commit()
 
@@ -119,6 +123,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 10,
             "pending_transfer": 5,
             "exchange_commitment": 5,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
         }
         self.insert_position(session, position_1)
         position_2 = {
@@ -128,6 +133,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 20,
             "pending_transfer": 10,
             "exchange_commitment": 10,
+            "created": datetime(2023, 4, 14, 0, 0, 0),
         }
         self.insert_position(session, position_2)
 
@@ -139,6 +145,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 0,
             "pending_transfer": 0,
             "exchange_commitment": 0,
+            "created": datetime(2023, 4, 15, 0, 0, 0),
         }
         self.insert_position(session, other_position_1)
         other_position_2 = {
@@ -148,6 +155,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 20,
             "pending_transfer": 10,
             "exchange_commitment": 10,
+            "created": datetime(2023, 4, 16, 0, 0, 0),
         }
         self.insert_position(session, other_position_2)
 
@@ -204,6 +212,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 0,
             "pending_transfer": 0,
             "exchange_commitment": 0,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
         }
         self.insert_position(session, position_1)
         position_2 = {
@@ -213,6 +222,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 20,
             "pending_transfer": 10,
             "exchange_commitment": 10,
+            "created": datetime(2023, 4, 14, 0, 0, 0),
         }
         self.insert_position(session, position_2)
 
@@ -224,6 +234,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 0,
             "pending_transfer": 0,
             "exchange_commitment": 0,
+            "created": datetime(2023, 4, 15, 0, 0, 0),
         }
         self.insert_position(session, other_position_1)
         other_position_2 = {
@@ -233,6 +244,7 @@ class TestTokenTokenHolders:
             "exchange_balance": 20,
             "pending_transfer": 10,
             "exchange_commitment": 10,
+            "created": datetime(2023, 4, 16, 0, 0, 0),
         }
         self.insert_position(session, other_position_2)
 
