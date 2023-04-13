@@ -133,6 +133,12 @@ from .token_coupon import (
     ListAllCouponTokensResponse,
     RetrieveCouponTokenResponse,
 )
+from .token_lock import (
+    ListAllTokenLockQuery,
+    ListAllTokenLockResponse,
+    RetrieveTokenLockCountQuery,
+    RetrieveTokenLockCountResponse,
+)
 from .token_membership import (
     ListAllMembershipTokenAddressesResponse,
     ListAllMembershipTokensQuery,

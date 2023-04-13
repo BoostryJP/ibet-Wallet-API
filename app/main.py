@@ -43,6 +43,7 @@ from app.api.routers import position as routers_position
 from app.api.routers import token as routers_token
 from app.api.routers import token_bond as routers_token_bond
 from app.api.routers import token_coupon as routers_token_coupon
+from app.api.routers import token_lock as routers_token_lock
 from app.api.routers import token_membership as routers_token_membership
 from app.api.routers import token_share as routers_token_share
 from app.api.routers import user_info as routers_user_info
@@ -118,6 +119,7 @@ app.include_router(routers_token_share.router)
 app.include_router(routers_token_membership.router)
 app.include_router(routers_token_coupon.router)
 app.include_router(routers_token.router)
+app.include_router(routers_token_lock.router)
 app.include_router(routers_position.router)
 app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)
