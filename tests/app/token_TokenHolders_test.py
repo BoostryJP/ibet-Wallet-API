@@ -32,8 +32,10 @@ class TestTokenTokenHolders:
     apiurl_base = "/Token/{contract_address}/Holders"
 
     token_address = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A740"
-    account_address_1 = "0x52D0784B3460E206ED69393ae1f9Ed37941089eD"
-    account_address_2 = "0x34C987DDe783EfbFe1E573727165E6c15D660590"
+    account_address_1 = "0x52D0784B3460E206ed69393AE1f9ed37941089eC"
+    account_address_2 = "0x52D0784B3460E206ED69393ae1f9Ed37941089eD"
+    account_address_3 = "0x52d0784b3460e206ed69393aE1F9Ed37941089Ee"
+    account_address_4 = "0x52d0784b3460E206ED69393AE1F9eD37941089Ef"
     issuer_address = "0x02D0784B3460E206ED69393ae1f9Ed37941089eD"
 
     lock_address_1 = eth_account["user1"]["account_address"]
@@ -306,7 +308,7 @@ class TestTokenTokenHolders:
         # Prepare data (pending_transfer = 0)
         position_2 = {
             "token_address": self.token_address,
-            "account_address": self.account_address_1,
+            "account_address": self.account_address_2,
             "pending_transfer": 0,
         }
         self.insert_position(session, position=position_2)
@@ -314,7 +316,7 @@ class TestTokenTokenHolders:
         # Prepare data (exchange_balance = 0)
         position_3 = {
             "token_address": self.token_address,
-            "account_address": self.account_address_1,
+            "account_address": self.account_address_3,
             "exchange_balance": 0,
         }
         self.insert_position(session, position=position_3)
@@ -322,7 +324,7 @@ class TestTokenTokenHolders:
         # Prepare data (exchange_commitment = 0)
         position_4 = {
             "token_address": self.token_address,
-            "account_address": self.account_address_1,
+            "account_address": self.account_address_4,
             "exchange_commitment": 0,
         }
         self.insert_position(session, position=position_4)

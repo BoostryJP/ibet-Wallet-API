@@ -1210,7 +1210,6 @@ class TestProcessor:
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 idx_position_share_block_number = IDXPositionShareBlockNumber()
-                idx_position_share_block_number.id = 1
                 idx_position_share_block_number.token_address = token["address"]
                 idx_position_share_block_number.exchange_address = (
                     escrow_contract.address
@@ -1377,7 +1376,6 @@ class TestProcessor:
         )
 
         _position1: IDXPosition = _position_list[0]
-        assert _position1.id == 1
         assert _position1.token_address == token1["address"]
         assert _position1.account_address == self.issuer["account_address"]
         assert _position1.balance == 1000000 - 10000 + 55 - 100
@@ -1387,7 +1385,6 @@ class TestProcessor:
         assert _idx_position_share_block_number1.latest_block_number == block_number2
 
         _position2: IDXPosition = _position_list[1]
-        assert _position2.id == 2
         assert _position2.token_address == token2["address"]
         assert _position2.account_address == self.issuer["account_address"]
         assert _position2.balance == 1000000 - 10000 + 55
