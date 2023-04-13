@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import importlib
 import logging
+from datetime import datetime
 from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
@@ -46,7 +47,9 @@ def migration_test(caplog: LogCaptureFixture):
     m.reflect(engine)
     m.drop_all(engine)
     if engine.name != "mysql":
-        engine.execute(text("DROP SEQUENCE IF EXISTS notification_id_seq"))
+        with engine.connect() as connect:
+            connect.execute(text("DROP SEQUENCE IF EXISTS notification_id_seq"))
+            connect.commit()
 
     LOG = logging.getLogger("alembic.runtime.migration")
     default_log_level = LOG.level
@@ -62,7 +65,9 @@ def migration_test(caplog: LogCaptureFixture):
     m.reflect(engine)
     m.drop_all(engine)
     if engine.name != "mysql":
-        engine.execute(text("DROP SEQUENCE IF EXISTS notification_id_seq"))
+        with engine.connect() as connect:
+            connect.execute(text("DROP SEQUENCE IF EXISTS notification_id_seq"))
+            connect.commit()
 
 
 @fixture(scope="function", autouse=True)
@@ -132,3 +137,283 @@ class TestMigrationsDowngrade:
             return connection.execute(
                 text("SELECT version FROM migrate_version")
             ).scalar()
+
+    def test_downgrade_from_v23_6(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        # 1-1. Migrate to v23.3
+        alembic_runner.migrate_up_to(REVISION_23_3)
+        metadata_bf = MetaData()
+        metadata_bf.reflect(bind=engine)
+        tables_bf = metadata_bf.tables
+        table_name_list = set(metadata_bf.tables.keys())
+
+        # 1-2. Migrate to v23.6
+        alembic_runner.migrate_up_to("40ee030e9302")
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # 2. Insert test record
+        # NOTE: node data
+        node = meta.tables.get("node")
+        stmt1 = insert(node).values(id=2, is_synced=True)
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.commit()
+
+        # NOTE: position data
+        position = meta.tables.get("position")
+        stmt1 = insert(position).values(
+            token_address="token_address1",
+            account_address="account_address1",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt2 = insert(position).values(
+            token_address="token_address1",
+            account_address="account_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt3 = insert(position).values(
+            token_address="token_address2",
+            account_address="account_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        # NOTE: executable_contract data
+        executable_contract = meta.tables.get("executable_contract")
+        stmt1 = insert(executable_contract).values(
+            contract_address="token_address1",
+            modified=datetime(2023, 4, 4, 0, 0, 0),
+        )  # remains after migration
+        stmt2 = insert(executable_contract).values(
+            contract_address="token_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.commit()
+
+        # NOTE: idx_position_bond_block_number data
+        idx_position_bond_block_number = meta.tables.get(
+            "idx_position_bond_block_number"
+        )
+        stmt1 = insert(idx_position_bond_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address1",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt2 = insert(idx_position_bond_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt3 = insert(idx_position_bond_block_number).values(
+            token_address="token_address2",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        # NOTE: idx_position_share_block_number data
+        idx_position_share_block_number = meta.tables.get(
+            "idx_position_share_block_number"
+        )
+        stmt1 = insert(idx_position_share_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address1",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt2 = insert(idx_position_share_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt3 = insert(idx_position_share_block_number).values(
+            token_address="token_address2",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        # NOTE: idx_position_coupon_block_number data
+        idx_position_coupon_block_number = meta.tables.get(
+            "idx_position_coupon_block_number"
+        )
+        stmt1 = insert(idx_position_coupon_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address1",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt2 = insert(idx_position_coupon_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt3 = insert(idx_position_coupon_block_number).values(
+            token_address="token_address2",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        # NOTE: idx_position_membership_block_number data
+        idx_position_membership_block_number = meta.tables.get(
+            "idx_position_membership_block_number"
+        )
+        stmt1 = insert(idx_position_membership_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address1",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt2 = insert(idx_position_membership_block_number).values(
+            token_address="token_address1",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+        stmt3 = insert(idx_position_membership_block_number).values(
+            token_address="token_address2",
+            exchange_address="exchange_address2",
+            modified=datetime(2023, 4, 6, 0, 0, 0),
+        )  # remains after migration
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        # 3. Downgrade
+        alembic_runner.migrate_down_to(REVISION_23_3)
+        metadata_af = MetaData()
+        metadata_af.reflect(bind=engine)
+        tables_af = metadata_af.tables
+
+        with engine.connect() as conn:
+            # NOTE: position
+            all_row_count = conn.execute(text("SELECT COUNT(*) FROM position")).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM position WHERE token_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 3 records.
+            #    (token_address1, account_address1)
+            #    (token_address1, account_address2)
+            #    (token_address2, account_address2)
+            assert all_row_count == 3
+            assert token_address_1_count == 2
+
+            # NOTE: executable_contract
+            all_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM executable_contract")
+            ).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM executable_contract WHERE contract_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 2 records.
+            #    (token_address1)
+            #    (token_address2)
+            assert all_row_count == 2
+            assert token_address_1_count == 1
+
+            # NOTE: idx_position_bond_block_number
+            all_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM idx_position_bond_block_number")
+            ).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM idx_position_bond_block_number WHERE token_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 3 records.
+            #    (token_address1, exchange_address1)
+            #    (token_address1, exchange_address2)
+            #    (token_address2, exchange_address2)
+            assert all_row_count == 3
+            assert token_address_1_count == 2
+
+            # NOTE: idx_position_share_block_number
+            all_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM idx_position_share_block_number")
+            ).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM idx_position_share_block_number WHERE token_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 3 records.
+            #    (token_address1, exchange_address1)
+            #    (token_address1, exchange_address2)
+            #    (token_address2, exchange_address2)
+            assert all_row_count == 3
+            assert token_address_1_count == 2
+
+            # NOTE: idx_position_coupon_block_number
+            all_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM idx_position_coupon_block_number")
+            ).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM idx_position_coupon_block_number WHERE token_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 3 records.
+            #    (token_address1, exchange_address1)
+            #    (token_address1, exchange_address2)
+            #    (token_address2, exchange_address2)
+            assert all_row_count == 3
+            assert token_address_1_count == 2
+
+            # NOTE: idx_position_membership_block_number
+            all_row_count = conn.execute(
+                text("SELECT COUNT(*) FROM idx_position_membership_block_number")
+            ).scalar()
+            token_address_1_count = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM idx_position_membership_block_number WHERE token_address = 'token_address1'"
+                )
+            ).scalar()
+
+            # Ensure that there are 3 records.
+            #    (token_address1, exchange_address1)
+            #    (token_address1, exchange_address2)
+            #    (token_address2, exchange_address2)
+            assert all_row_count == 3
+            assert token_address_1_count == 2
+
+        for assert_table_name in table_name_list:
+            table_bf = self.create_sorted_table(tables_bf[assert_table_name])
+            table_af = self.create_sorted_table(tables_af[assert_table_name])
+            assert (
+                CreateTable(table_af).compile(engine).string
+                == CreateTable(table_bf).compile(engine).string
+            )

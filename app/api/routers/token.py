@@ -187,13 +187,17 @@ def get_token_holders(
                 IDXLockedPosition.value > 0,
             )
         )
-        .group_by(IDXPosition.id, IDXLockedPosition.account_address)
+        .group_by(
+            IDXPosition.token_address,
+            IDXPosition.account_address,
+            IDXLockedPosition.account_address,
+        )
     )
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
     holders: list[tuple[IDXPosition, int | None]] = query.order_by(
-        desc(IDXPosition.id)
+        desc(IDXPosition.modified)
     ).all()
 
     resp_body = []
@@ -266,12 +270,16 @@ def get_token_holders_count(
                 IDXLockedPosition.value > 0,
             )
         )
-        .group_by(IDXPosition.id, IDXLockedPosition.account_address)
+        .group_by(
+            IDXPosition.token_address,
+            IDXPosition.account_address,
+            IDXLockedPosition.account_address,
+        )
     )
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
-    _count = query.order_by(desc(IDXPosition.id)).count()
+    _count = query.count()
 
     resp_body = {"count": _count}
 
