@@ -129,3 +129,8 @@ def downgrade():
         "executable_contract_pkey", "executable_contract", type_="primary"
     )
     op.create_primary_key("executable_contract_pkey", "executable_contract", ["id"])
+    op.create_index(
+        "ix_executable_contract_contract_address",
+        "executable_contract",
+        ["contract_address"],
+    )

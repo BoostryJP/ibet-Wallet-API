@@ -1,4 +1,4 @@
-"""v22.6_feature/alembic
+"""v23.6_feature/alembic
 
 Revision ID: ca8ff8c0c01d
 Revises: 1055cb068506
