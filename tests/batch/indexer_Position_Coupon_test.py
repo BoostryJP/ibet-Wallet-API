@@ -153,14 +153,22 @@ class TestProcessor:
             .filter(IDXPositionCouponBlockNumber.token_address == token["address"])
             .first()
         )
-        _position = _position_list[1]
-        assert _position.id == 2
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer is None
-        _position = _position_list[0]
-        assert _position.id == 1
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -195,24 +203,36 @@ class TestProcessor:
             .filter(IDXPositionCouponBlockNumber.token_address == token["address"])
             .first()
         )
-        _position: IDXPosition = _position_list[2]
-        assert _position.id == 3
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[0]
-        assert _position.id == 1
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[1]
-        assert _position.id == 2
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader2["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -258,48 +278,72 @@ class TestProcessor:
             .order_by(IDXPositionCouponBlockNumber.created.desc())
             .first()
         )
-        _position = _position_list[0]
-        assert _position.id == 1
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[1]
-        assert _position.id == 2
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader2["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[2]
-        assert _position.id == 3
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[3]
-        assert _position.id == 4
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token2["address"])
+            .filter(IDXPosition.account_address == self.trader["account_address"])
+            .first()
+        )
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 5000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[4]
-        assert _position.id == 5
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token2["address"])
+            .filter(IDXPosition.account_address == self.trader2["account_address"])
+            .first()
+        )
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[5]
-        assert _position.id == 6
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token2["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 5000 - 3000
@@ -339,16 +383,24 @@ class TestProcessor:
             .filter(IDXPositionCouponBlockNumber.token_address == token["address"])
             .first()
         )
-        _position = _position_list[1]
-        assert _position.id == 2
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = _position_list[0]
-        assert _position.id == 1
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -396,7 +448,6 @@ class TestProcessor:
             .first()
         )
         _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 + 111 + 222
@@ -458,16 +509,24 @@ class TestProcessor:
             .filter(IDXPositionCouponBlockNumber.token_address == token["address"])
             .first()
         )
-        _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 10000 - 200 - 300
         assert _position.exchange_commitment == 300
-        _position: IDXPosition = _position_list[1]
-        assert _position.id == 2
+        _position = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token["address"])
+            .filter(IDXPosition.account_address == self.trader["account_address"])
+            .first()
+        )
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 0
@@ -599,7 +658,6 @@ class TestProcessor:
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 idx_position_coupon_block_number = IDXPositionCouponBlockNumber()
-                idx_position_coupon_block_number.id = 1
                 idx_position_coupon_block_number.token_address = token["address"]
                 idx_position_coupon_block_number.exchange_address = (
                     escrow_contract.address
@@ -714,7 +772,6 @@ class TestProcessor:
             .first()
         )
         _position: IDXPosition = _position_list[0]
-        assert _position.id == 1
         assert _position.token_address == token1["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 + 55 - 100
@@ -749,8 +806,12 @@ class TestProcessor:
             .first()
         )
 
-        _position1: IDXPosition = _position_list[0]
-        assert _position1.id == 1
+        _position1 = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token1["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position1.token_address == token1["address"]
         assert _position1.account_address == self.issuer["account_address"]
         assert _position1.balance == 1000000 - 10000 + 55 - 100
@@ -758,8 +819,12 @@ class TestProcessor:
         assert _position1.exchange_commitment == 66
         assert _idx_position_coupon_block_number1.latest_block_number == block_number2
 
-        _position2: IDXPosition = _position_list[1]
-        assert _position2.id == 2
+        _position2 = (
+            session.query(IDXPosition)
+            .filter(IDXPosition.token_address == token2["address"])
+            .filter(IDXPosition.account_address == self.issuer["account_address"])
+            .first()
+        )
         assert _position2.token_address == token2["address"]
         assert _position2.account_address == self.issuer["account_address"]
         assert _position2.balance == 1000000 - 10000 + 55

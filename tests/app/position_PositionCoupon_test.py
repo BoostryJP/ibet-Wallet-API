@@ -1044,7 +1044,7 @@ class TestPositionAccountAddressCoupon:
         )
         self.create_idx_position(
             session,
-            token_3["address"],
+            token_4["address"],
             self.account_1["account_address"],
             exchange_commitment=1000000,
         )

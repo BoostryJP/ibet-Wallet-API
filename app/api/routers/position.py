@@ -525,7 +525,8 @@ class BasePosition:
             )
             .group_by(
                 Listing.id,
-                IDXPosition.id,
+                IDXPosition.token_address,
+                IDXPosition.account_address,
                 self.idx_token_model.token_address,
                 IDXLockedPosition.token_address,
             )
@@ -720,7 +721,8 @@ class BasePosition:
             )
             .group_by(
                 Listing.id,
-                IDXPosition.id,
+                IDXPosition.token_address,
+                IDXPosition.account_address,
                 self.idx_token_model.token_address,
                 IDXLockedPosition.token_address,
             )

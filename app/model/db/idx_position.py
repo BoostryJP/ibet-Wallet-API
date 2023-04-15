@@ -26,12 +26,10 @@ class IDXPosition(Base):
 
     __tablename__ = "position"
 
-    # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address = Column(String(42), primary_key=True)
     # Account Address
-    account_address = Column(String(42))
+    account_address = Column(String(42), primary_key=True)
     # Balance
     balance = Column(BigInteger)
     # Exchange Balance
@@ -42,7 +40,6 @@ class IDXPosition(Base):
     pending_transfer = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "account_address": str,
         "balance": int,
@@ -58,8 +55,6 @@ class IDXPositionBondBlockNumber(Base):
 
     __tablename__ = "idx_position_bond_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -68,7 +63,6 @@ class IDXPositionBondBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
@@ -82,8 +76,6 @@ class IDXPositionShareBlockNumber(Base):
 
     __tablename__ = "idx_position_share_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -92,7 +84,6 @@ class IDXPositionShareBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
@@ -106,8 +97,6 @@ class IDXPositionCouponBlockNumber(Base):
 
     __tablename__ = "idx_position_coupon_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -116,7 +105,6 @@ class IDXPositionCouponBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
@@ -130,8 +118,6 @@ class IDXPositionMembershipBlockNumber(Base):
 
     __tablename__ = "idx_position_membership_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -140,7 +126,6 @@ class IDXPositionMembershipBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
