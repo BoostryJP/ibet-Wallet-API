@@ -50,6 +50,7 @@ from app.model.db import (
     IDXPosition,
     IDXShareToken,
     IDXTokenInstance,
+    IDXTokenListItem,
     IDXTokenModel,
     IDXTransfer,
     IDXUnlock,
@@ -67,6 +68,7 @@ from app.model.schema import (
     ListAllLockEventQuery,
     ListAllLockEventsResponse,
     ListAllPositionQuery,
+    ListAllTokenPositionQuery,
     LockEventCategory,
     LockEventSortItem,
     MembershipPositionsResponse,
@@ -77,7 +79,9 @@ from app.model.schema import (
     SecurityTokenPositionWithAddress,
     SecurityTokenPositionWithDetail,
     SuccessResponse,
+    TokenPositionsResponse,
 )
+from app.model.schema.token import TokenType
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
 
@@ -1532,10 +1536,220 @@ def retrieve_membership_position_by_token_address(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def retrieve_coupon_position_by_token_address(
+def list_all_coupon_position_by_token_address(
     position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon)),
 ):
     """
     Endpoint: /Position/{account_address}/Coupon/{contract_address}
     """
     return json_response({**SuccessResponse.default(), "data": position})
+
+
+# ------------------------------
+# Get Position
+# ------------------------------
+@router.get(
+    "/{account_address}",
+    summary="Token Position",
+    operation_id="GetTokenPosition",
+    response_model=GenericSuccessResponse[TokenPositionsResponse],
+    responses=get_routers_responses(InvalidParameterError),
+)
+def list_all_token_position(
+    session: DBSession,
+    request_query: ListAllTokenPositionQuery = Depends(),
+    account_address: str = Path(),
+):
+    offset = request_query.offset
+    limit = request_query.limit
+    token_type_list = request_query.token_type_list
+
+    include_bond_token = False
+    include_share_token = False
+    include_coupon_token = False
+    include_membership_token = False
+
+    if config.BOND_TOKEN_ENABLED and (
+        not token_type_list or TokenType.IbetStraightBond in token_type_list
+    ):
+        include_bond_token = True
+    if config.SHARE_TOKEN_ENABLED and (
+        not token_type_list or TokenType.IbetShare in token_type_list
+    ):
+        include_share_token = True
+    if config.COUPON_TOKEN_ENABLED and (
+        not token_type_list or TokenType.IbetCoupon in token_type_list
+    ):
+        include_coupon_token = True
+    if config.MEMBERSHIP_TOKEN_ENABLED and (
+        not token_type_list or TokenType.IbetMembership in token_type_list
+    ):
+        include_membership_token = True
+
+    query_target = [
+        Listing.token_address,
+        IDXTokenListItem.token_template,
+        IDXPosition,
+        func.sum(IDXLockedPosition.value),
+        func.sum(IDXConsumeCoupon.amount),
+        IDXBondToken if include_bond_token else None,
+        IDXShareToken if include_share_token else None,
+        IDXCouponToken if include_coupon_token else None,
+        IDXMembershipToken if include_membership_token else None,
+    ]
+    group_by_columns = [
+        Listing.id,
+        IDXTokenListItem.token_address,
+        IDXPosition.token_address,
+        IDXPosition.account_address,
+        IDXLockedPosition.token_address,
+        IDXConsumeCoupon.token_address,
+    ]
+    token_type_filter = []
+
+    if include_bond_token:
+        group_by_columns.append(IDXBondToken.token_address)
+        token_type_filter.append(
+            IDXTokenListItem.token_template == TokenType.IbetStraightBond.value
+        )
+    if include_share_token:
+        group_by_columns.append(IDXShareToken.token_address)
+        token_type_filter.append(
+            IDXTokenListItem.token_template == TokenType.IbetShare.value
+        )
+    if include_coupon_token:
+        group_by_columns.append(IDXCouponToken.token_address)
+        token_type_filter.append(
+            IDXTokenListItem.token_template == TokenType.IbetCoupon.value
+        )
+    if include_membership_token:
+        group_by_columns.append(IDXMembershipToken.token_address)
+        token_type_filter.append(
+            IDXTokenListItem.token_template == TokenType.IbetMembership.value
+        )
+
+    query = (
+        session.query(*query_target)
+        .join(
+            IDXTokenListItem,
+            and_(
+                IDXTokenListItem.token_address == Listing.token_address,
+                or_(*token_type_filter),
+            ),
+        )
+        .outerjoin(
+            IDXPosition,
+            and_(
+                IDXPosition.token_address == Listing.token_address,
+                IDXPosition.account_address == account_address,
+            ),
+        )
+        .outerjoin(
+            IDXLockedPosition,
+            and_(
+                Listing.token_address == IDXLockedPosition.token_address,
+                IDXLockedPosition.account_address == account_address,
+            ),
+        )
+        .outerjoin(
+            IDXConsumeCoupon,
+            and_(
+                Listing.token_address == IDXConsumeCoupon.token_address,
+                IDXConsumeCoupon.account_address == account_address,
+            ),
+        )
+    )
+
+    if not token_type_list or TokenType.IbetStraightBond in token_type_list:
+        query = query.outerjoin(
+            IDXBondToken,
+            Listing.token_address == IDXBondToken.token_address,
+        )
+
+    if not token_type_list or TokenType.IbetShare in token_type_list:
+        query = query.outerjoin(
+            IDXShareToken,
+            Listing.token_address == IDXShareToken.token_address,
+        )
+
+    if not token_type_list or TokenType.IbetCoupon in token_type_list:
+        query = query.outerjoin(
+            IDXCouponToken,
+            Listing.token_address == IDXCouponToken.token_address,
+        )
+
+    if not token_type_list or TokenType.IbetMembership in token_type_list:
+        query = query.outerjoin(
+            IDXMembershipToken,
+            Listing.token_address == IDXMembershipToken.token_address,
+        )
+
+    query = (
+        query.filter(
+            or_(
+                IDXPosition.balance != 0,
+                IDXPosition.pending_transfer != 0,
+                IDXPosition.exchange_balance != 0,
+                IDXPosition.exchange_commitment != 0,
+                IDXLockedPosition.value != 0,
+                IDXConsumeCoupon.amount != 0,
+            )
+        )
+        .group_by(*group_by_columns)
+        .order_by(Listing.id)
+    )
+
+    total = query.count()
+    count = total
+
+    if limit is not None:
+        query = query.limit(limit)
+    if offset is not None:
+        query = query.offset(offset)
+
+    _token_position_list = query.all()
+
+    position_list = []
+    for item in _token_position_list:
+        if item[1] == TokenType.IbetStraightBond.value:
+            position_list.append(
+                {
+                    **IDXPosition.bond(item[2]),
+                    "locked": item[3] if item[3] else 0,
+                    "token": BondToken.from_model(item[5]).__dict__,
+                }
+            )
+        elif item[1] == TokenType.IbetShare.value:
+            position_list.append(
+                {
+                    **IDXPosition.share(item[2]),
+                    "locked": item[3] if item[3] else 0,
+                    "token": ShareToken.from_model(item[6]).__dict__,
+                }
+            )
+        elif item[1] == TokenType.IbetCoupon.value:
+            position_list.append(
+                {
+                    **IDXPosition.coupon(item[2]),
+                    "used": int(item[4]) if item[4] else 0,
+                    "token": CouponToken.from_model(item[7]).__dict__,
+                }
+            )
+        elif item[1] == TokenType.IbetMembership.value:
+            position_list.append(
+                {
+                    **IDXPosition.membership(item[2]),
+                    "token": MembershipToken.from_model(item[8]).__dict__,
+                }
+            )
+
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+        },
+        "positions": position_list,
+    }
+    return json_response({**SuccessResponse.default(), "data": data})

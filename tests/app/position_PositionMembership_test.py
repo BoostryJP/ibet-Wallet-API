@@ -25,7 +25,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
-from app.model.db import IDXMembershipToken, IDXPosition, Listing
+from app.model.db import IDXMembershipToken, IDXPosition, IDXTokenListItem, Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
     membership_issue,
@@ -174,6 +174,13 @@ class TestPositionMembership:
         idx_token.contact_information = "問い合わせ先"
         idx_token.privacy_policy = "プライバシーポリシー"
         session.add(idx_token)
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token_address
+        idx_token_list_item.token_template = "IbetMembership"
+        idx_token_list_item.owner_address = TestPositionMembership.issuer[
+            "account_address"
+        ]
+        session.add(idx_token_list_item)
         session.commit()
 
     @staticmethod
