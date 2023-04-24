@@ -1536,7 +1536,7 @@ def retrieve_membership_position_by_token_address(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def list_all_coupon_position_by_token_address(
+def retrieve_coupon_position_by_token_address(
     position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon)),
 ):
     """
