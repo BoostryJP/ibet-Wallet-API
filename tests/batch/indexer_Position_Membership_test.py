@@ -575,16 +575,18 @@ class TestProcessor:
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
         self.listing_token(token["address"], session)
+        from_block = web3.eth.block_number
         for i in range(0, 5):
             # Transfer
             membership_transfer_to_exchange(
                 self.issuer, {"address": self.trader["account_address"]}, token, 10000
             )
+        to_block = web3.eth.block_number
 
         # Get events for token address
         events = Contract.get_contract(
             "IbetMembership", token["address"]
-        ).events.Transfer.get_logs(fromBlock=0, toBlock=10000)
+        ).events.Transfer.get_logs(fromBlock=from_block, toBlock=to_block)
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5
         filtered_events = processor.remove_duplicate_event_by_token_account_desc(

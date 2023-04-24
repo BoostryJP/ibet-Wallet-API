@@ -937,6 +937,10 @@ class TestPosition:
         )
 
     def setup_data(self, session: Session, shared_contract, index=0):
+        config.BOND_TOKEN_ENABLED = False
+        config.SHARE_TOKEN_ENABLED = False
+        config.COUPON_TOKEN_ENABLED = False
+        config.MEMBERSHIP_TOKEN_ENABLED = False
         # StraightBond
         self.setup_bond(session=session, shared_contract=shared_contract, index=index)
         # Share
@@ -1764,6 +1768,10 @@ class TestPosition:
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
             ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
                 "app.config.SHARE_TOKEN_ENABLED", True
+            ), mock.patch(
+                "app.config.COUPON_TOKEN_ENABLED", False
+            ), mock.patch(
+                "app.config.MEMBERSHIP_TOKEN_ENABLED", False
             ):
                 # Request target API
                 resp = client.get(
