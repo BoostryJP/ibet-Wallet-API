@@ -242,6 +242,7 @@ class ListAllLockEvent:
                 "history_category"
             ),
             IDXLock.transaction_hash.label("transaction_hash"),
+            IDXLock.msg_sender.label("msg_sender"),
             IDXLock.token_address.label("token_address"),
             IDXLock.lock_address.label("lock_address"),
             IDXLock.account_address.label("account_address"),
@@ -260,6 +261,7 @@ class ListAllLockEvent:
                 "history_category"
             ),
             IDXUnlock.transaction_hash.label("transaction_hash"),
+            IDXUnlock.msg_sender.label("msg_sender"),
             IDXUnlock.token_address.label("token_address"),
             IDXUnlock.lock_address.label("lock_address"),
             IDXUnlock.account_address.label("account_address"),
@@ -328,19 +330,20 @@ class ListAllLockEvent:
             event_data = {
                 "category": lock_event[0],
                 "transaction_hash": lock_event[1],
-                "token_address": lock_event[2],
-                "lock_address": lock_event[3],
-                "account_address": lock_event[4],
-                "recipient_address": lock_event[5],
-                "value": lock_event[6],
-                "data": lock_event[7],
-                "block_timestamp": lock_event[8]
+                "msg_sender": lock_event[2],
+                "token_address": lock_event[3],
+                "lock_address": lock_event[4],
+                "account_address": lock_event[5],
+                "recipient_address": lock_event[6],
+                "value": lock_event[7],
+                "data": lock_event[8],
+                "block_timestamp": lock_event[9]
                 .replace(tzinfo=UTC)
                 .astimezone(local_tz),
             }
             if request_query.include_token_details is True:
                 event_data["token"] = self.token_model.from_model(
-                    lock_event[9]
+                    lock_event[10]
                 ).__dict__
             resp_data.append(event_data)
 

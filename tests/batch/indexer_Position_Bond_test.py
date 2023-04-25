@@ -485,6 +485,7 @@ class TestProcessor:
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
         assert _lock1.token_address == token["address"]
+        assert _lock1.msg_sender == self.issuer["account_address"]
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 1500
@@ -492,6 +493,7 @@ class TestProcessor:
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
         assert _lock2.token_address == token["address"]
+        assert _lock2.msg_sender == self.issuer["account_address"]
         assert _lock2.lock_address == self.trader["account_address"]
         assert _lock2.account_address == self.issuer["account_address"]
         assert _lock2.value == 1500
@@ -588,6 +590,7 @@ class TestProcessor:
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
         assert _lock1.token_address == token["address"]
+        assert _lock1.msg_sender == self.issuer["account_address"]
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 3000
@@ -598,6 +601,7 @@ class TestProcessor:
         _unlock1 = _unlock_list[0]
         assert _unlock1.id == 1
         assert _unlock1.token_address == token["address"]
+        assert _unlock1.msg_sender == self.trader["account_address"]
         assert _unlock1.lock_address == self.trader["account_address"]
         assert _unlock1.account_address == self.issuer["account_address"]
         assert _unlock1.recipient_address == self.trader2["account_address"]

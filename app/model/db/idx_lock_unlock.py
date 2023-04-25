@@ -38,6 +38,8 @@ class IDXLock(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
     transaction_hash = Column(String(66), index=True, nullable=False)
+    # Message Sender of Transaction
+    msg_sender = Column(String(42), index=True, nullable=False)
     # Block Number
     block_number = Column(BigInteger, nullable=False)
     # Token Address
@@ -56,6 +58,7 @@ class IDXLock(Base):
     FIELDS = {
         "id": int,
         "transaction_hash": str,
+        "msg_sender": str,
         "block_number": int,
         "token_address": str,
         "lock_address": str,
@@ -81,6 +84,7 @@ class IDXLock(Base):
         return {
             "id": self.id,
             "transaction_hash": self.transaction_hash,
+            "msg_sender": self.msg_sender,
             "block_number": self.block_number,
             "token_address": self.token_address,
             "lock_address": self.lock_address,
@@ -100,6 +104,8 @@ class IDXUnlock(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
     transaction_hash = Column(String(66), index=True, nullable=False)
+    # Message Sender of Transaction
+    msg_sender = Column(String(42), index=True, nullable=False)
     # Block Number
     block_number = Column(BigInteger, nullable=False)
     # Token Address
@@ -120,6 +126,7 @@ class IDXUnlock(Base):
     FIELDS = {
         "id": int,
         "transaction_hash": str,
+        "msg_sender": str,
         "block_number": int,
         "token_address": str,
         "lock_address": str,
@@ -146,6 +153,7 @@ class IDXUnlock(Base):
         return {
             "id": self.id,
             "transaction_hash": self.transaction_hash,
+            "msg_sender": self.msg_sender,
             "block_number": self.block_number,
             "token_address": self.token_address,
             "lock_address": self.lock_address,

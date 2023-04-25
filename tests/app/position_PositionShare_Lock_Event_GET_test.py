@@ -142,6 +142,7 @@ class TestPositionShareLockEvent:
     def create_idx_lock_event(
         session: Session,
         transaction_hash: str,
+        msg_sender: str,
         block_number: int,
         token_address: str,
         lock_address: str,
@@ -151,6 +152,7 @@ class TestPositionShareLockEvent:
     ):
         _lock = IDXLock()
         _lock.transaction_hash = transaction_hash
+        _lock.msg_sender = msg_sender
         _lock.block_number = block_number
         _lock.token_address = token_address
         _lock.lock_address = lock_address
@@ -164,6 +166,7 @@ class TestPositionShareLockEvent:
     def create_idx_unlock_event(
         session: Session,
         transaction_hash: str,
+        msg_sender: str,
         block_number: int,
         token_address: str,
         lock_address: str,
@@ -174,6 +177,7 @@ class TestPositionShareLockEvent:
     ):
         _unlock = IDXUnlock()
         _unlock.transaction_hash = transaction_hash
+        _unlock.msg_sender = msg_sender
         _unlock.block_number = block_number
         _unlock.token_address = token_address
         _unlock.lock_address = lock_address
@@ -204,6 +208,7 @@ class TestPositionShareLockEvent:
             self.create_idx_lock_event(
                 session=session,
                 transaction_hash=self.transaction_hash,
+                msg_sender=account_address,
                 block_number=value + 1,
                 token_address=token_address,
                 lock_address=lock_address,
@@ -221,6 +226,7 @@ class TestPositionShareLockEvent:
             self.create_idx_unlock_event(
                 session=session,
                 transaction_hash=self.transaction_hash,
+                msg_sender=lock_address,
                 block_number=value + 1,
                 token_address=token_address,
                 lock_address=lock_address,
@@ -267,6 +273,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -278,6 +285,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -289,6 +297,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -300,6 +309,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -353,6 +363,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -451,6 +462,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -462,6 +474,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -473,6 +486,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -484,6 +498,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -495,6 +510,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -506,6 +522,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -517,6 +534,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -528,6 +546,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -585,6 +604,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -596,6 +616,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -607,6 +628,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -618,6 +640,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -682,6 +705,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -693,6 +717,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -704,6 +729,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -715,6 +741,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -726,6 +753,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -737,6 +765,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -748,6 +777,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -759,6 +789,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -812,6 +843,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -823,6 +855,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -876,6 +909,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -933,6 +967,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -990,6 +1025,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1043,6 +1079,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1054,6 +1091,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1111,6 +1149,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -1122,6 +1161,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1133,6 +1173,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -1144,6 +1185,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1155,6 +1197,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -1166,6 +1209,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1177,6 +1221,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -1188,6 +1233,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1241,6 +1287,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1252,6 +1299,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1263,6 +1311,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -1274,6 +1323,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -1327,6 +1377,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1338,6 +1389,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -1349,6 +1401,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -1360,6 +1413,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1381,7 +1435,7 @@ class TestPositionShareLockEvent:
         }
         assert resp.json()["data"]["events"] == assumed_body
 
-    # Normal_5_5
+    # Normal_5_4
     # Sort(value)
     @pytest.mark.parametrize(
         "get_params",
@@ -1391,7 +1445,7 @@ class TestPositionShareLockEvent:
             {},
         ],
     )
-    def test_normal_5_5(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_4(self, get_params, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1413,6 +1467,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1424,6 +1479,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1435,6 +1491,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
@@ -1446,6 +1503,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -1467,7 +1525,7 @@ class TestPositionShareLockEvent:
         }
         assert resp.json()["data"]["events"] == assumed_body
 
-    # Normal_5_6
+    # Normal_5_5
     # Sort(block_timestamp)
     @pytest.mark.parametrize(
         "get_params",
@@ -1477,7 +1535,7 @@ class TestPositionShareLockEvent:
             {},
         ],
     )
-    def test_normal_5_6(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_5(self, get_params, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1499,6 +1557,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
@@ -1510,6 +1569,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": None,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.account_1,
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
@@ -1521,6 +1581,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_1,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
@@ -1532,6 +1593,7 @@ class TestPositionShareLockEvent:
                 "recipient_address": self.recipient_2,
                 "block_timestamp": ANY,
                 "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_2,
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,

@@ -27,6 +27,7 @@ from sqlalchemy import Column, Integer, MetaData, String, Table, Text, insert, t
 from sqlalchemy.engine import Engine
 from sqlalchemy.schema import CreateTable
 
+from app.config import ZERO_ADDRESS
 from app.database import engine
 
 REVISION_22_3: Final = "a80595c53d52"
@@ -181,7 +182,7 @@ class TestMigrationsDowngrade:
         table_name_list = set(metadata_bf.tables.keys())
 
         # 1-2. Migrate to v23.6
-        alembic_runner.migrate_up_to("40ee030e9302")
+        alembic_runner.migrate_up_to("37cfcb200317")
         meta = MetaData()
         meta.reflect(bind=engine)
 
@@ -336,6 +337,61 @@ class TestMigrationsDowngrade:
             conn.execute(stmt3)
             conn.commit()
 
+        idx_lock = meta.tables.get("lock")
+        idx_unlock = meta.tables.get("unlock")
+        stmt1 = insert(idx_lock).values(
+            transaction_hash="." * 66,
+            msg_sender=ZERO_ADDRESS,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        stmt2 = insert(idx_lock).values(
+            transaction_hash="." * 66,
+            msg_sender=ZERO_ADDRESS,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        stmt3 = insert(idx_unlock).values(
+            transaction_hash="." * 66,
+            msg_sender=ZERO_ADDRESS,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            recipient_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        stmt4 = insert(idx_unlock).values(
+            transaction_hash="." * 66,
+            msg_sender=ZERO_ADDRESS,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            recipient_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.execute(stmt4)
+            conn.commit()
+
         # 3. Downgrade
         alembic_runner.migrate_down_to(REVISION_23_3)
         metadata_af = MetaData()
@@ -441,6 +497,14 @@ class TestMigrationsDowngrade:
             #    (token_address2, exchange_address2)
             assert all_row_count == 3
             assert token_address_1_count == 2
+
+            # NOTE: idx_lock
+            all_row_count = conn.execute(text(f"SELECT COUNT(*) FROM lock")).scalar()
+            assert all_row_count == 2
+
+            # NOTE: idx_unlock
+            all_row_count = conn.execute(text(f"SELECT COUNT(*) FROM unlock")).scalar()
+            assert all_row_count == 2
 
         for assert_table_name in table_name_list:
             table_bf = self.create_sorted_table(tables_bf[assert_table_name])

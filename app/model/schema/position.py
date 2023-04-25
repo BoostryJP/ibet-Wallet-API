@@ -143,6 +143,7 @@ class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
 class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
+    msg_sender: str = Field(description="Message sender")
     token_address: str = Field(description="Token address")
     lock_address: str = Field(description="Lock address")
     account_address: str = Field(description="Account address")

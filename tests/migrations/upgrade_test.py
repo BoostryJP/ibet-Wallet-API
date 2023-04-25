@@ -26,6 +26,7 @@ from pytest_alembic import MigrationContext
 from sqlalchemy import Column, Integer, MetaData, String, Table, Text, insert, text
 from sqlalchemy.engine import Engine
 
+from app.config import ZERO_ADDRESS
 from app.database import engine
 
 REVISION_22_3: Final = "a80595c53d52"
@@ -632,6 +633,62 @@ class TestMigrationsUpgrade:
             conn.execute(stmt5)
             conn.commit()
 
+        # NOTE: idx_lock/idx_unlock data
+        idx_lock = meta.tables.get("lock")
+        idx_unlock = meta.tables.get("unlock")
+        stmt1 = insert(idx_lock).values(
+            id=1,
+            transaction_hash="." * 66,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        stmt2 = insert(idx_lock).values(
+            id=2,
+            transaction_hash="." * 66,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        stmt3 = insert(idx_unlock).values(
+            id=1,
+            transaction_hash="." * 66,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            recipient_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        stmt4 = insert(idx_unlock).values(
+            id=2,
+            transaction_hash="." * 66,
+            block_number=1,
+            token_address="." * 42,
+            lock_address="." * 42,
+            account_address="." * 42,
+            recipient_address="." * 42,
+            value=1,
+            data={},
+            block_timestamp=datetime(2023, 4, 25, 18, 50, 0),
+        )
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.execute(stmt4)
+            conn.commit()
+
         # 3. Run to head
         alembic_runner.migrate_up_to("head")
 
@@ -734,3 +791,15 @@ class TestMigrationsUpgrade:
             #    (token_address2, exchange_address2)
             assert all_row_count == 3
             assert token_address_1_count == 2
+
+            # NOTE: idx_lock
+            all_row_count = conn.execute(
+                text(f"SELECT COUNT(*) FROM lock WHERE msg_sender = '{ZERO_ADDRESS}'")
+            ).scalar()
+            assert all_row_count == 2
+
+            # NOTE: idx_unlock
+            all_row_count = conn.execute(
+                text(f"SELECT COUNT(*) FROM unlock WHERE msg_sender = '{ZERO_ADDRESS}'")
+            ).scalar()
+            assert all_row_count == 2

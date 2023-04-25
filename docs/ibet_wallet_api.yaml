@@ -6776,6 +6776,7 @@ components:
       required:
         - category
         - transaction_hash
+        - msg_sender
         - token_address
         - lock_address
         - account_address
@@ -6792,6 +6793,10 @@ components:
           title: Transaction Hash
           type: string
           description: Transaction hash
+        msg_sender:
+          title: Msg Sender
+          type: string
+          description: Message sender
         token_address:
           title: Token Address
           type: string
@@ -6843,6 +6848,7 @@ components:
       required:
         - category
         - transaction_hash
+        - msg_sender
         - token_address
         - lock_address
         - account_address
@@ -6860,6 +6866,10 @@ components:
           title: Transaction Hash
           type: string
           description: Transaction hash
+        msg_sender:
+          title: Msg Sender
+          type: string
+          description: Message sender
         token_address:
           title: Token Address
           type: string
