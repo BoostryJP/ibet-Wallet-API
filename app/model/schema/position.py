@@ -25,8 +25,11 @@ from pydantic import BaseModel, Field, StrictStr
 from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import ResultSet, SortOrder
+from app.model.schema.token import TokenType
+from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
+from app.model.schema.token_share import RetrieveShareTokenResponse
 
 ############################
 # COMMON
@@ -47,17 +50,45 @@ class SecurityTokenPosition(BaseModel):
     )
 
 
-T = TypeVar("T")
+SecurityTokenResponseT = TypeVar(
+    "SecurityTokenResponseT",
+    RetrieveStraightBondTokenResponse,
+    RetrieveShareTokenResponse,
+)
 
 
-class SecurityTokenPositionWithDetail(SecurityTokenPosition, Generic[T]):
-    token: T | TokenAddress = Field(
+class StraightBondPositionWithDetail(SecurityTokenPosition):
+    token: RetrieveStraightBondTokenResponse = Field(
+        description="set when include_token_details=true"
+    )
+
+
+class StraightBondPositionWithAddress(SecurityTokenPosition):
+    token_address: str = Field(description="set when include_token_details=false")
+
+
+class SharePositionWithDetail(SecurityTokenPosition):
+    token: RetrieveShareTokenResponse = Field(
+        description="set when include_token_details=true"
+    )
+
+
+class SharePositionWithAddress(SecurityTokenPosition):
+    token_address: str = Field(description="set when include_token_details=false")
+
+
+class SecurityTokenPositionWithDetail(
+    SecurityTokenPosition, Generic[SecurityTokenResponseT]
+):
+    token: SecurityTokenResponseT | TokenAddress = Field(
         description="set when include_token_details=false or null"
     )
 
 
 class SecurityTokenPositionWithAddress(SecurityTokenPosition):
-    token_address: str = Field(description="set when include_token_details=true")
+    token_address: str = Field(
+        description="set when include_token_details=false or null"
+    )
 
 
 class MembershipPosition(BaseModel):
@@ -68,12 +99,12 @@ class MembershipPosition(BaseModel):
 
 class MembershipPositionWithDetail(MembershipPosition):
     token: RetrieveMembershipTokenResponse = Field(
-        description="set when include_token_details=false or null"
+        description="set when include_token_details=true"
     )
 
 
 class MembershipPositionWithAddress(MembershipPosition):
-    token_address: str = Field(description="set when include_token_details=true")
+    token_address: str = Field(description="set when include_token_details=false")
 
 
 class CouponPosition(BaseModel):
@@ -105,11 +136,11 @@ class Locked(BaseModel):
     value: int
 
 
-class LockedWithTokenDetail(Locked, Generic[T]):
-    token: T = Field(..., description="Token information")
+class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
+    token: SecurityTokenResponseT = Field(..., description="Token information")
 
 
-class LockEvent(BaseModel, Generic[T]):
+class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
     token_address: str = Field(description="Token address")
@@ -125,13 +156,22 @@ class LockEvent(BaseModel, Generic[T]):
     )
 
 
-class LockEventWithTokenDetail(LockEvent, Generic[T]):
-    token: T = Field(..., description="Token information")
+class LockEventWithTokenDetail(LockEvent, Generic[SecurityTokenResponseT]):
+    token: SecurityTokenResponseT = Field(..., description="Token information")
 
 
 ############################
 # REQUEST
 ############################
+
+
+@dataclass
+class ListAllTokenPositionQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    token_type_list: Optional[list[TokenType]] = Query(
+        default=None, description="type of token"
+    )
 
 
 @dataclass
@@ -220,10 +260,25 @@ class ListAllLockEventQuery:
 ############################
 
 
-class GenericSecurityTokenPositionsResponse(BaseModel, Generic[T]):
+class TokenPositionsResponse(BaseModel):
     result_set: ResultSet
     positions: Union[
-        list[SecurityTokenPositionWithDetail[T]], list[SecurityTokenPositionWithAddress]
+        list[
+            Union[
+                StraightBondPositionWithDetail,
+                SharePositionWithDetail,
+                CouponPositionWithDetail,
+                MembershipPositionWithDetail,
+            ]
+        ]
+    ]
+
+
+class GenericSecurityTokenPositionsResponse(BaseModel, Generic[SecurityTokenResponseT]):
+    result_set: ResultSet
+    positions: Union[
+        list[SecurityTokenPositionWithDetail[SecurityTokenResponseT]],
+        list[SecurityTokenPositionWithAddress],
     ]
 
 
@@ -239,13 +294,15 @@ class CouponPositionsResponse(BaseModel):
     positions: Union[list[CouponPositionWithDetail], list[CouponPositionWithAddress]]
 
 
-class ListAllLockedPositionResponse(BaseModel, Generic[T]):
+class ListAllLockedPositionResponse(BaseModel, Generic[SecurityTokenResponseT]):
     result_set: ResultSet
-    locked_positions: Union[list[LockedWithTokenDetail[T]] | list[Locked]]
+    locked_positions: Union[
+        list[LockedWithTokenDetail[SecurityTokenResponseT]] | list[Locked]
+    ]
 
 
-class ListAllLockEventsResponse(BaseModel, Generic[T]):
+class ListAllLockEventsResponse(BaseModel, Generic[SecurityTokenResponseT]):
     result_set: ResultSet
-    events: Union[list[LockEventWithTokenDetail[T]], list[LockEvent]] = Field(
-        description="Lock/Unlock event list"
-    )
+    events: Union[
+        list[LockEventWithTokenDetail[SecurityTokenResponseT]], list[LockEvent]
+    ] = Field(description="Lock/Unlock event list")

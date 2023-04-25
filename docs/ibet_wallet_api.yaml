@@ -3677,6 +3677,62 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
                   - $ref: '#/components/schemas/NotSupportedErrorResponse'
+  /Position/{account_address}:
+    get:
+      tags:
+        - user_position
+      summary: Token Position
+      operationId: GetTokenPosition
+      parameters:
+        - required: true
+          schema:
+            title: Account Address
+            type: string
+          name: account_address
+          in: path
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: type of token
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/TokenType'
+            description: type of token
+          name: token_type_list
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenPositionsResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Gettokenposition
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Notifications:
     get:
       tags:
@@ -5987,6 +6043,22 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/TokenHoldersResponse'
+    GenericSuccessResponse_TokenPositionsResponse_:
+      title: GenericSuccessResponse[TokenPositionsResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TokenPositionsResponse'
     GenericSuccessResponse_TokenStatusResponse_:
       title: GenericSuccessResponse[TokenStatusResponse]
       required:
@@ -6819,6 +6891,9 @@ components:
           format: date-time
         token:
           title: Token
+          anyOf:
+            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
           description: Token information
     LockedWithTokenDetail:
       title: LockedWithTokenDetail
@@ -6844,6 +6919,9 @@ components:
           type: integer
         token:
           title: Token
+          anyOf:
+            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
           description: Token information
     MembershipImage:
       title: MembershipImage
@@ -6879,7 +6957,7 @@ components:
         token_address:
           title: Token Address
           type: string
-          description: set when include_token_details=true
+          description: set when include_token_details=false
     MembershipPositionWithDetail:
       title: MembershipPositionWithDetail
       required:
@@ -6902,7 +6980,7 @@ components:
           title: Token
           allOf:
             - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
-          description: set when include_token_details=false or null
+          description: set when include_token_details=true
     MembershipPositionsResponse:
       title: MembershipPositionsResponse
       required:
@@ -8025,7 +8103,7 @@ components:
         token_address:
           title: Token Address
           type: string
-          description: set when include_token_details=true
+          description: set when include_token_details=false or null
     SecurityTokenPositionWithDetail:
       title: SecurityTokenPositionWithDetail
       required:
@@ -8055,7 +8133,9 @@ components:
         token:
           title: Token
           anyOf:
-            - {}
+            - anyOf:
+                - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+                - $ref: '#/components/schemas/RetrieveShareTokenResponse'
             - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
           description: set when include_token_details=false or null
     SendChatWebhookRequest:
@@ -8201,6 +8281,37 @@ components:
         details:
           title: Details
           type: object
+    SharePositionWithDetail:
+      title: SharePositionWithDetail
+      required:
+        - balance
+        - pending_transfer
+        - exchange_balance
+        - exchange_commitment
+        - token
+      type: object
+      properties:
+        balance:
+          title: Balance
+          type: integer
+        pending_transfer:
+          title: Pending Transfer
+          type: integer
+        exchange_balance:
+          title: Exchange Balance
+          type: integer
+        exchange_commitment:
+          title: Exchange Commitment
+          type: integer
+        locked:
+          title: Locked
+          type: integer
+          description: set when enable_index=true
+        token:
+          title: Token
+          allOf:
+            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+          description: set when include_token_details=true
     ShareTokensSortItem:
       title: ShareTokensSortItem
       enum:
@@ -8226,6 +8337,37 @@ components:
         - 1
       type: integer
       description: An enumeration.
+    StraightBondPositionWithDetail:
+      title: StraightBondPositionWithDetail
+      required:
+        - balance
+        - pending_transfer
+        - exchange_balance
+        - exchange_commitment
+        - token
+      type: object
+      properties:
+        balance:
+          title: Balance
+          type: integer
+        pending_transfer:
+          title: Pending Transfer
+          type: integer
+        exchange_balance:
+          title: Exchange Balance
+          type: integer
+        exchange_commitment:
+          title: Exchange Commitment
+          type: integer
+        locked:
+          title: Locked
+          type: integer
+          description: set when enable_index=true
+        token:
+          title: Token
+          allOf:
+            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+          description: set when include_token_details=true
     StraightBondTokensSortItem:
       title: StraightBondTokensSortItem
       enum:
@@ -8441,6 +8583,24 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/TokenHolder'
+    TokenPositionsResponse:
+      title: TokenPositionsResponse
+      required:
+        - result_set
+        - positions
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        positions:
+          title: Positions
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/StraightBondPositionWithDetail'
+              - $ref: '#/components/schemas/SharePositionWithDetail'
+              - $ref: '#/components/schemas/CouponPositionWithDetail'
+              - $ref: '#/components/schemas/MembershipPositionWithDetail'
     TokenStatusResponse:
       title: TokenStatusResponse
       required:
