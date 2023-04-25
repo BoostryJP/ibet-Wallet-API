@@ -26,7 +26,7 @@ def upgrade():
         sa.Column("msg_sender", sa.String(length=42), nullable=True),
         schema=get_db_schema(),
     )
-    op.get_bind().execute(sa.text(f"UPDATE lock SET msg_sender = '{ZERO_ADDRESS}';"))
+    op.get_bind().execute(sa.text(f"UPDATE `lock` SET msg_sender = '{ZERO_ADDRESS}';"))
     op.alter_column(
         "lock",
         "msg_sender",
@@ -46,7 +46,9 @@ def upgrade():
         sa.Column("msg_sender", sa.String(length=42), nullable=True),
         schema=get_db_schema(),
     )
-    op.get_bind().execute(sa.text(f"UPDATE unlock SET msg_sender = '{ZERO_ADDRESS}';"))
+    op.get_bind().execute(
+        sa.text(f"UPDATE `unlock` SET msg_sender = '{ZERO_ADDRESS}';")
+    )
     op.alter_column(
         "unlock",
         "msg_sender",

@@ -499,11 +499,13 @@ class TestMigrationsDowngrade:
             assert token_address_1_count == 2
 
             # NOTE: idx_lock
-            all_row_count = conn.execute(text(f"SELECT COUNT(*) FROM lock")).scalar()
+            all_row_count = conn.execute(text(f"SELECT COUNT(*) FROM `lock`")).scalar()
             assert all_row_count == 2
 
             # NOTE: idx_unlock
-            all_row_count = conn.execute(text(f"SELECT COUNT(*) FROM unlock")).scalar()
+            all_row_count = conn.execute(
+                text(f"SELECT COUNT(*) FROM `unlock`")
+            ).scalar()
             assert all_row_count == 2
 
         for assert_table_name in table_name_list:

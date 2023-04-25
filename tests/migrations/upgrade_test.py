@@ -794,12 +794,14 @@ class TestMigrationsUpgrade:
 
             # NOTE: idx_lock
             all_row_count = conn.execute(
-                text(f"SELECT COUNT(*) FROM lock WHERE msg_sender = '{ZERO_ADDRESS}'")
+                text(f"SELECT COUNT(*) FROM `lock` WHERE msg_sender = '{ZERO_ADDRESS}'")
             ).scalar()
             assert all_row_count == 2
 
             # NOTE: idx_unlock
             all_row_count = conn.execute(
-                text(f"SELECT COUNT(*) FROM unlock WHERE msg_sender = '{ZERO_ADDRESS}'")
+                text(
+                    f"SELECT COUNT(*) FROM `unlock` WHERE msg_sender = '{ZERO_ADDRESS}'"
+                )
             ).scalar()
             assert all_row_count == 2
