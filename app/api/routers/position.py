@@ -296,6 +296,8 @@ class ListAllLockEvent:
 
         query = query.filter(column("account_address") == account_address)
 
+        if request_query.msg_sender is not None:
+            query = query.filter(column("msg_sender") == request_query.msg_sender)
         if request_query.lock_address is not None:
             query = query.filter(column("lock_address") == request_query.lock_address)
         if request_query.recipient_address is not None:

@@ -836,7 +836,7 @@ class TestPositionStraightBondLockEvent:
         assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_2
-    # Filter(lock_address)
+    # Filter(msg_sender)
     @pytest.mark.parametrize(
         "get_params",
         [
@@ -846,6 +846,60 @@ class TestPositionStraightBondLockEvent:
         ],
     )
     def test_normal_4_2(self, get_params, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
+        # Prepare Data
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(
+            session=session, token_address=self.token_1, base_time=base_time
+        )
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={**get_params, "msg_sender": self.lock_1},
+        )
+
+        assumed_body = [
+            {
+                "token_address": self.token_1,
+                "lock_address": self.lock_1,
+                "account_address": self.account_1,
+                "recipient_address": self.recipient_1,
+                "block_timestamp": ANY,
+                "transaction_hash": self.transaction_hash,
+                "msg_sender": self.lock_1,
+                "data": {"message": "1"},
+                "value": 1,
+                "category": LockEventCategory.Unlock,
+            },
+        ]
+        if get_params.get("include_token_details") is True:
+            assumed_body = [
+                {**b, "token": self.expected_token(b["token_address"])}
+                for b in assumed_body
+            ]
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 8,
+        }
+        assert resp.json()["data"]["events"] == assumed_body
+
+    # Normal_4_3
+    # Filter(lock_address)
+    @pytest.mark.parametrize(
+        "get_params",
+        [
+            {"include_token_details": True},
+            {"include_token_details": False},
+            {},
+        ],
+    )
+    def test_normal_4_3(self, get_params, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -901,7 +955,7 @@ class TestPositionStraightBondLockEvent:
         }
         assert resp.json()["data"]["events"] == assumed_body
 
-    # Normal_4_3
+    # Normal_4_4
     # Filter(recipient_address)
     @pytest.mark.parametrize(
         "get_params",
@@ -911,7 +965,7 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_3(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_4(self, get_params, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -955,7 +1009,7 @@ class TestPositionStraightBondLockEvent:
         }
         assert resp.json()["data"]["events"] == assumed_body
 
-    # Normal_4_4
+    # Normal_4_5
     # Filter(category=Lock)
     @pytest.mark.parametrize(
         "get_params",
@@ -965,7 +1019,7 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_4(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_5(self, get_params, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data

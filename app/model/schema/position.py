@@ -143,7 +143,7 @@ class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
 class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
-    msg_sender: str = Field(description="Message sender")
+    msg_sender: Optional[str] = Field(description="Message sender", nullable=True)
     token_address: str = Field(description="Token address")
     lock_address: str = Field(description="Lock address")
     account_address: str = Field(description="Account address")
@@ -236,6 +236,7 @@ class ListAllLockEventQuery:
     token_address_list: list[StrictStr] = Query(
         default=[], description="list of token address (**this affects total number**)"
     )
+    msg_sender: Optional[str] = Query(default=None, description="message sender")
     lock_address: Optional[str] = Query(default=None, description="lock address")
     recipient_address: Optional[str] = Query(
         default=None, description="recipient address"
