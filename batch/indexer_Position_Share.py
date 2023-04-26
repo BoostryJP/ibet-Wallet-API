@@ -355,11 +355,14 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = self.__gen_block_timestamp(event=event)
+                    tx = web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
 
                     # Index Lock event
                     self.__insert_lock_idx(
                         db_session=db_session,
                         transaction_hash=event["transactionHash"].hex(),
+                        msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
                         lock_address=lock_address,
@@ -433,11 +436,14 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = self.__gen_block_timestamp(event=event)
+                    tx = web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
 
                     # Index Unlock event
                     self.__insert_unlock_idx(
                         db_session=db_session,
                         transaction_hash=event["transactionHash"].hex(),
+                        msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
                         lock_address=lock_address,
@@ -1191,6 +1197,7 @@ class Processor:
     def __insert_lock_idx(
         db_session: Session,
         transaction_hash: str,
+        msg_sender: str,
         block_number: int,
         token_address: str,
         lock_address: str,
@@ -1202,6 +1209,7 @@ class Processor:
         """Registry Lock data in DB
 
         :param transaction_hash: transaction hash
+        :param msg_sender: message sender
         :param token_address: token address
         :param lock_address: lock address
         :param account_address: account address
@@ -1216,6 +1224,7 @@ class Processor:
             data = {}
         lock = IDXLock()
         lock.transaction_hash = transaction_hash
+        lock.msg_sender = msg_sender
         lock.block_number = block_number
         lock.token_address = token_address
         lock.lock_address = lock_address
@@ -1229,6 +1238,7 @@ class Processor:
     def __insert_unlock_idx(
         db_session: Session,
         transaction_hash: str,
+        msg_sender: str,
         block_number: int,
         token_address: str,
         lock_address: str,
@@ -1241,6 +1251,7 @@ class Processor:
         """Registry Unlock data in DB
 
         :param transaction_hash: transaction hash
+        :param msg_sender: message sender
         :param token_address: token address
         :param lock_address: lock address
         :param account_address: account address
@@ -1256,6 +1267,7 @@ class Processor:
             data = {}
         unlock = IDXUnlock()
         unlock.transaction_hash = transaction_hash
+        unlock.msg_sender = msg_sender
         unlock.block_number = block_number
         unlock.token_address = token_address
         unlock.lock_address = lock_address

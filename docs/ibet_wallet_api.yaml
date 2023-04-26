@@ -2876,6 +2876,14 @@ paths:
             default: []
           name: token_address_list
           in: query
+        - description: message sender
+          required: false
+          schema:
+            title: Msg Sender
+            type: string
+            description: message sender
+          name: msg_sender
+          in: query
         - description: lock address
           required: false
           schema:
@@ -3088,6 +3096,14 @@ paths:
             description: list of token address (**this affects total number**)
             default: []
           name: token_address_list
+          in: query
+        - description: message sender
+          required: false
+          schema:
+            title: Msg Sender
+            type: string
+            description: message sender
+          name: msg_sender
           in: query
         - description: lock address
           required: false
@@ -6792,6 +6808,11 @@ components:
           title: Transaction Hash
           type: string
           description: Transaction hash
+        msg_sender:
+          title: Msg Sender
+          type: string
+          description: Message sender
+          nullable: true
         token_address:
           title: Token Address
           type: string
@@ -6860,6 +6881,11 @@ components:
           title: Transaction Hash
           type: string
           description: Transaction hash
+        msg_sender:
+          title: Msg Sender
+          type: string
+          description: Message sender
+          nullable: true
         token_address:
           title: Token Address
           type: string
