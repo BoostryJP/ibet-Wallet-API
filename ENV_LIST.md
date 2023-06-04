@@ -70,19 +70,20 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 ### Email
 Common
 
-| Variable Name     | Required | Details              | Example                     | Default | 
-|-------------------|----------|----------------------|-----------------------------|---------|
-| SMTP_METHOD       | False    | Email sending method | 0:SMTP server, 1:Amazon SES | 0       |
-| SMTP_SENDER_NAME  | False    | Sender name          |                             | --      |
-| SMTP_SENDER_EMAIL | False    | Sender email address | example@example.com         | --      |
+| Variable Name                   | Required | Details                                    | Example                         | Default | 
+|---------------------------------|----------|--------------------------------------------|---------------------------------|---------|
+| SMTP_METHOD                     | False    | Email sending method                       | 0:SMTP server, 1:Amazon SES     | 0       |
+| SMTP_SENDER_NAME                | False    | Sender name                                |                                 | --      |
+| SMTP_SENDER_EMAIL               | False    | Sender email address                       | example@example.com             | --      |
 
 SMTP server
 
-| Variable Name        | Required | Details               | Example             | Default | 
-|----------------------|----------|-----------------------|---------------------|---------|
-| SMTP_SERVER_HOST     | False    | SMTP server name      | smtp.office365.com  | --      |
-| SMTP_SERVER_PORT     | False    | SMTP server port      | 587                 | --      |
-| SMTP_SENDER_PASSWORD | False    | Sender email password |                     | --      |
+| Variable Name                 | Required | Details                                   | Example                         | Default | 
+|-------------------------------|----------|-------------------------------------------|---------------------------------|---------|
+| SMTP_SERVER_HOST              | False    | SMTP server name                          | smtp.office365.com              | --      |
+| SMTP_SERVER_PORT              | False    | SMTP server port                          | 587                             | --      |
+| SMTP_SERVER_ENCRYPTION_METHOD | False    | SMTP server connection encryption method  | 0:STARTTLS, 1:SSL, 2:NO-ENCRYPT | 0       |
+| SMTP_SENDER_PASSWORD          | False    | Sender email password                     | (Only if needed)                | --      |
 
 Amazon SES
 

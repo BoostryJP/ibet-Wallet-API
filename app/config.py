@@ -282,6 +282,11 @@ BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else 
 SMTP_METHOD = (
     int(os.environ.get("SMTP_METHOD")) if os.environ.get("SMTP_METHOD") else 0
 )  # 0:SMTP server, 1:Amazon SES
+SMTP_SERVER_ENCRYPTION_METHOD = (
+    int(os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD"))
+    if os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD")
+    else 0
+)  # 0:STARTTLS, 1:SSL, 2:NO-ENCRYPT
 SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME")
 SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL")
 
