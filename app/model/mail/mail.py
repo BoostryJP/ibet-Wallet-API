@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import smtplib
+import ssl
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -30,6 +31,7 @@ from app.config import (
     SMTP_SENDER_EMAIL,
     SMTP_SENDER_NAME,
     SMTP_SENDER_PASSWORD,
+    SMTP_SERVER_ENCRYPTION_METHOD,
     SMTP_SERVER_HOST,
     SMTP_SERVER_PORT,
 )
@@ -61,15 +63,23 @@ class Mail:
     def send_mail(self):
         if SMTP_METHOD == 0:  # SMTP server
             # Initialize a new smtp client
-            smtp_client = smtplib.SMTP(self.server_host, self.server_port)
-            smtp_client.ehlo()
-
-            # STARTTLS
-            smtp_client.starttls()
-            smtp_client.ehlo()
+            if SMTP_SERVER_ENCRYPTION_METHOD == 0:  # STARTTLS
+                smtp_client = smtplib.SMTP(host=self.server_host, port=self.server_port)
+                smtp_client.ehlo()
+                smtp_client.starttls()
+                smtp_client.ehlo()
+            elif SMTP_SERVER_ENCRYPTION_METHOD == 1:  # SSL
+                smtp_client = smtplib.SMTP_SSL(
+                    host=self.server_host,
+                    port=self.server_port,
+                    context=ssl.create_default_context(),
+                )
+            else:  # NO-ENCRYPT
+                smtp_client = smtplib.SMTP(host=self.server_host, port=self.server_port)
 
             # LOGIN
-            smtp_client.login(self.sender_email, self.sender_password)
+            if self.sender_password is not None:
+                smtp_client.login(self.sender_email, self.sender_password)
 
             # Send mail
             try:
