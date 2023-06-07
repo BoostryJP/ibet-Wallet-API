@@ -378,18 +378,18 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.26.146"
+version = "1.26.148"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "boto3-1.26.146-py3-none-any.whl", hash = "sha256:a03e42dfa09c785cd223422d59c06e8babf667983b513a9a172b73c106f3b37e"},
-    {file = "boto3-1.26.146.tar.gz", hash = "sha256:3d7f1b43d2e5a10ee29d4940e714d72a2f6f1a6f6ba856c82ba9328d83062605"},
+    {file = "boto3-1.26.148-py3-none-any.whl", hash = "sha256:53328b99847e65ca60dbbd5a86550101ecf903dff36724b6a4e74876dd973bdf"},
+    {file = "boto3-1.26.148.tar.gz", hash = "sha256:ed90522019c97db32ce1bfd1076864c57c3b65af40abc2349b2391bbac7e4865"},
 ]
 
 [package.dependencies]
-botocore = ">=1.29.146,<1.30.0"
+botocore = ">=1.29.148,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -398,14 +398,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.146"
+version = "1.29.148"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.146-py3-none-any.whl", hash = "sha256:ac57003292f18206ee942eafc381ecd9a3420a3844d6b7e1c1b0f4b88b28263b"},
-    {file = "botocore-1.29.146.tar.gz", hash = "sha256:77f7793cb36074eb84d606a23ad6e1d57c20f7a2eeab7d9136d3e63c584e0504"},
+    {file = "botocore-1.29.148-py3-none-any.whl", hash = "sha256:71c512fbd42e0ef171388b53bf82f9cb9e66283467156917b69717daeb05eba6"},
+    {file = "botocore-1.29.148.tar.gz", hash = "sha256:36bccc4e094faf1bfbda2241eb1c71e72a63f3c12b2adfc4c3cbd02349bc416b"},
 ]
 
 [package.dependencies]
@@ -1109,14 +1109,14 @@ test = ["hypothesis (>=4.43.0,<5.0.0)", "pytest (>=6.2.5,<7)", "pytest-xdist", "
 
 [[package]]
 name = "fastapi"
-version = "0.95.2"
+version = "0.96.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "fastapi-0.95.2-py3-none-any.whl", hash = "sha256:d374dbc4ef2ad9b803899bd3360d34c534adc574546e25314ab72c0c4411749f"},
-    {file = "fastapi-0.95.2.tar.gz", hash = "sha256:4d9d3e8c71c73f11874bcf5e33626258d143252e329a01002f767306c64fb982"},
+    {file = "fastapi-0.96.0-py3-none-any.whl", hash = "sha256:b8e11fe81e81eab4e1504209917338e0b80f783878a42c2b99467e5e1019a1e9"},
+    {file = "fastapi-0.96.0.tar.gz", hash = "sha256:71232d47c2787446991c81c41c249f8a16238d52d779c0e6b43927d3773dbe3c"},
 ]
 
 [package.dependencies]
@@ -3627,4 +3627,4 @@ ibet-explorer = ["ibet-wallet-api-explorer", "textual", "async-cache", "typer", 
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.2"
-content-hash = "20a8aa0dccbe356e6522c84b0de1bf52514eafb6a2f1e442c9dc50c7ae28c5b3"
+content-hash = "70cffd4da4b502e492551d7bb8cdc51c4263c14fa90fb9bb964de391d016da7d"
