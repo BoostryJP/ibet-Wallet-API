@@ -16,21 +16,31 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, create_engine
+from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import declarative_base
 
-from app import log
+from app import config, log
 from app.utils import alchemy
 
 LOG = log.get_logger()
 
+URI = config.DATABASE_URL
+engine = create_engine(URI, echo=False)
+
 
 class BaseModel(object):
-    created = Column(DateTime, default=datetime.utcnow)
-    modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    if engine.name == "mysql":
+        # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
+        created = Column(MySQLDATETIME(fsp=6), default=datetime.utcnow)
+        modified = Column(
+            MySQLDATETIME(fsp=6), default=datetime.utcnow, onupdate=datetime.utcnow
+        )
+    else:
+        created = Column(DateTime, default=datetime.utcnow)
+        modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @classmethod
     def find_one(cls, session, id):

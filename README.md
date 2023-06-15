@@ -18,7 +18,7 @@ English | <a href='./README_JA.md'>日本語</a>
   - Version 3.11
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 13
-  - [MySQL](https://www.mysql.com/) - Version 5.7
+  - [MySQL](https://www.mysql.com/) - Version 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
   - We use [ganache](https://github.com/trufflesuite/ganache) (a.k.a. ganache-cli) for local development and unit testing, and we use the latest version.
