@@ -2,7 +2,7 @@ version: "3"
 
 services:
   postgres:
-    image: postgres:13.8
+    image: postgres:13.10
     ports:
       - "5432:5432"
     environment:
@@ -10,7 +10,7 @@ services:
       - POSTGRES_PASSWORD=apluserpass
       - POSTGRES_DB=apldb
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0
     environment:
       - MYSQL_USER=apluser
       - MYSQL_PASSWORD=apluserpass
