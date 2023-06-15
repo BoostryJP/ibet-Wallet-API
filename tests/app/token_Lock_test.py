@@ -828,126 +828,65 @@ class TestTokenLock:
             },
         )
 
-        if engine.name == "mysql":
-            assumed_body = {
-                "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
-                "locked_list": [
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_1,
-                        "account_address": self.account_3,
-                        "value": 3,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_1,
-                        "account_address": self.account_2,
-                        "value": 2,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_1,
-                        "account_address": self.account_1,
-                        "value": 1,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_2,
-                        "account_address": self.account_3,
-                        "value": 6,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_2,
-                        "account_address": self.account_2,
-                        "value": 5,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_2,
-                        "account_address": self.account_1,
-                        "value": 4,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_3,
-                        "account_address": self.account_3,
-                        "value": 9,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_3,
-                        "account_address": self.account_2,
-                        "value": 8,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_3,
-                        "account_address": self.account_1,
-                        "value": 7,
-                    },
-                ],
-            }
-        else:
-            assumed_body = {
-                "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
-                "locked_list": [
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_1,
-                        "account_address": self.account_1,
-                        "value": 1,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_1,
-                        "account_address": self.account_2,
-                        "value": 2,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_1,
-                        "account_address": self.account_3,
-                        "value": 3,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_2,
-                        "account_address": self.account_1,
-                        "value": 4,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_2,
-                        "account_address": self.account_2,
-                        "value": 5,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_2,
-                        "account_address": self.account_3,
-                        "value": 6,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_3,
-                        "account_address": self.account_1,
-                        "value": 7,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_3,
-                        "account_address": self.account_2,
-                        "value": 8,
-                    },
-                    {
-                        "token_address": self.token_1,
-                        "lock_address": self.lock_3,
-                        "account_address": self.account_3,
-                        "value": 9,
-                    },
-                ],
-            }
+        assumed_body = {
+            "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
+            "locked_list": [
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_1,
+                    "value": 1,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_2,
+                    "value": 2,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_1,
+                    "account_address": self.account_3,
+                    "value": 3,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_1,
+                    "value": 4,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_2,
+                    "value": 5,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_2,
+                    "account_address": self.account_3,
+                    "value": 6,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_1,
+                    "value": 7,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_2,
+                    "value": 8,
+                },
+                {
+                    "token_address": self.token_1,
+                    "lock_address": self.lock_3,
+                    "account_address": self.account_3,
+                    "value": 9,
+                },
+            ],
+        }
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
