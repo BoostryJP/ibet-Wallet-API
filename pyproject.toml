@@ -21,7 +21,7 @@ psycopg = {extras = ["binary"], version = "^3.1.8"}
 pydantic = {extras = ["email"], version = "~1.10.5"}
 sqlalchemy = "~2.0.8"
 uvicorn = "~0.20.0"
-web3 = "~6.0.0"
+web3 = "~6.5.0"
 tzdata = "^2022.7"
 
 ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = true}
