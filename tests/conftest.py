@@ -20,6 +20,8 @@ import os
 import sys
 from typing import TypedDict
 
+from sqlalchemy import text
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 path = os.path.join(os.path.dirname(__file__), "../batch/")
@@ -242,7 +244,28 @@ def db(request):
 
     # Remove DB tables
     db.rollback()
-    Base.metadata.drop_all(engine)
+    if engine.name == "mysql":
+        db.begin()
+        db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        for table in Base.metadata.sorted_tables:
+            db.execute(table.delete())
+            if table.autoincrement_column is not None:
+                db.execute(text(f"ALTER TABLE `{table.name}` auto_increment = 1;"))
+        db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+        db.commit()
+    else:
+        db.begin()
+        for table in Base.metadata.sorted_tables:
+            db.execute(text(f'ALTER TABLE "{table.name}" DISABLE TRIGGER ALL;'))
+            db.execute(table.delete())
+            if table.autoincrement_column is not None:
+                db.execute(
+                    text(
+                        f"ALTER SEQUENCE {table.name}_{table.autoincrement_column.name}_seq RESTART WITH 1;"
+                    )
+                )
+            db.execute(text(f'ALTER TABLE "{table.name}" ENABLE TRIGGER ALL;'))
+        db.commit()
     db.close()
 
     app.dependency_overrides[db_session] = db_session
