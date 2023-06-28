@@ -63,7 +63,7 @@ class NotificationsQuery:
     @validator("address")
     def address_is_valid_address(cls, v):
         if v is not None:
-            if not Web3.isAddress(v):
+            if not Web3.is_address(v):
                 raise ValueError("address is not a valid address")
         return v
 
@@ -74,7 +74,7 @@ class NotificationReadRequest(BaseModel):
 
     @validator("address")
     def address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("address is not a valid address")
         return v
 
@@ -85,7 +85,7 @@ class NotificationsCountQuery:
 
     @validator("address")
     def address_is_valid_address(cls, v):
-        if not Web3.isAddress(v):
+        if not Web3.is_address(v):
             raise ValueError("address is not a valid address")
         return v
 

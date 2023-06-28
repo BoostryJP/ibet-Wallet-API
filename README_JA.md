@@ -16,10 +16,10 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.10
+  - バージョン 3.11
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 13
-  - [MySQL](https://www.mysql.com/) - バージョン 5.7
+  - [MySQL](https://www.mysql.com/) - バージョン 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - [ibet-Network](https://github.com/BoostryJP/ibet-Network) の公式の GoQuorum をサポートしています。
   - 最新の [ganache](https://github.com/trufflesuite/ganache) (ganache-cli) をローカル開発およびユニットテストで利用しています。

@@ -25,7 +25,13 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
-from app.model.db import IDXBondToken, IDXLockedPosition, IDXPosition, Listing
+from app.model.db import (
+    IDXBondToken,
+    IDXLockedPosition,
+    IDXPosition,
+    IDXTokenListItem,
+    Listing,
+)
 from tests.account_config import eth_account
 from tests.contract_modules import (
     bond_lock,
@@ -244,6 +250,13 @@ class TestPositionStraightBond:
         idx_token.personal_info_address = personal_info_address
         idx_token.transfer_approval_required = False
         session.add(idx_token)
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token_address
+        idx_token_list_item.token_template = "IbetStraightBond"
+        idx_token_list_item.owner_address = TestPositionStraightBond.issuer[
+            "account_address"
+        ]
+        session.add(idx_token_list_item)
         session.commit()
 
     @staticmethod

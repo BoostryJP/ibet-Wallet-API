@@ -299,7 +299,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Transfer.getLogs(
+                events = token.events.Transfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -341,7 +341,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Lock.getLogs(
+                events = token.events.Lock.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -355,11 +355,14 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = self.__gen_block_timestamp(event=event)
+                    tx = web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
 
                     # Index Lock event
                     self.__insert_lock_idx(
                         db_session=db_session,
                         transaction_hash=event["transactionHash"].hex(),
+                        msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
                         lock_address=lock_address,
@@ -418,7 +421,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Unlock.getLogs(
+                events = token.events.Unlock.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -433,11 +436,14 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = self.__gen_block_timestamp(event=event)
+                    tx = web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
 
                     # Index Unlock event
                     self.__insert_unlock_idx(
                         db_session=db_session,
                         transaction_hash=event["transactionHash"].hex(),
+                        msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
                         lock_address=lock_address,
@@ -497,7 +503,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Issue.getLogs(
+                events = token.events.Issue.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -533,7 +539,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.Redeem.getLogs(
+                events = token.events.Redeem.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -569,7 +575,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApplyForTransfer.getLogs(
+                events = token.events.ApplyForTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -605,7 +611,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.CancelTransfer.getLogs(
+                events = token.events.CancelTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -641,7 +647,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApproveTransfer.getLogs(
+                events = token.events.ApproveTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -685,7 +691,7 @@ class Processor:
 
                 # NewOrder event
                 try:
-                    _event_list = exchange.events.NewOrder.getLogs(
+                    _event_list = exchange.events.NewOrder.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -710,7 +716,7 @@ class Processor:
 
                 # CancelOrder event
                 try:
-                    _event_list = exchange.events.CancelOrder.getLogs(
+                    _event_list = exchange.events.CancelOrder.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -735,7 +741,7 @@ class Processor:
 
                 # ForceCancelOrder event
                 try:
-                    _event_list = exchange.events.ForceCancelOrder.getLogs(
+                    _event_list = exchange.events.ForceCancelOrder.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -760,7 +766,7 @@ class Processor:
 
                 # Agree event
                 try:
-                    _event_list = exchange.events.Agree.getLogs(
+                    _event_list = exchange.events.Agree.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -785,7 +791,7 @@ class Processor:
 
                 # SettlementOK event
                 try:
-                    _event_list = exchange.events.SettlementOK.getLogs(
+                    _event_list = exchange.events.SettlementOK.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -820,7 +826,7 @@ class Processor:
 
                 # SettlementNG event
                 try:
-                    _event_list = exchange.events.SettlementNG.getLogs(
+                    _event_list = exchange.events.SettlementNG.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -906,7 +912,7 @@ class Processor:
 
                 # EscrowCreated event
                 try:
-                    _event_list = escrow.events.EscrowCreated.getLogs(
+                    _event_list = escrow.events.EscrowCreated.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -929,7 +935,7 @@ class Processor:
 
                 # EscrowCanceled event
                 try:
-                    _event_list = escrow.events.EscrowCanceled.getLogs(
+                    _event_list = escrow.events.EscrowCanceled.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -952,7 +958,7 @@ class Processor:
 
                 # HolderChanged event
                 try:
-                    _event_list = escrow.events.HolderChanged.getLogs(
+                    _event_list = escrow.events.HolderChanged.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
                 except ABIEventFunctionNotFound:
@@ -1191,6 +1197,7 @@ class Processor:
     def __insert_lock_idx(
         db_session: Session,
         transaction_hash: str,
+        msg_sender: str,
         block_number: int,
         token_address: str,
         lock_address: str,
@@ -1202,6 +1209,7 @@ class Processor:
         """Registry Lock data in DB
 
         :param transaction_hash: transaction hash
+        :param msg_sender: message sender
         :param token_address: token address
         :param lock_address: lock address
         :param account_address: account address
@@ -1216,6 +1224,7 @@ class Processor:
             data = {}
         lock = IDXLock()
         lock.transaction_hash = transaction_hash
+        lock.msg_sender = msg_sender
         lock.block_number = block_number
         lock.token_address = token_address
         lock.lock_address = lock_address
@@ -1229,6 +1238,7 @@ class Processor:
     def __insert_unlock_idx(
         db_session: Session,
         transaction_hash: str,
+        msg_sender: str,
         block_number: int,
         token_address: str,
         lock_address: str,
@@ -1241,6 +1251,7 @@ class Processor:
         """Registry Unlock data in DB
 
         :param transaction_hash: transaction hash
+        :param msg_sender: message sender
         :param token_address: token address
         :param lock_address: lock address
         :param account_address: account address
@@ -1256,6 +1267,7 @@ class Processor:
             data = {}
         unlock = IDXUnlock()
         unlock.transaction_hash = transaction_hash
+        unlock.msg_sender = msg_sender
         unlock.block_number = block_number
         unlock.token_address = token_address
         unlock.lock_address = lock_address

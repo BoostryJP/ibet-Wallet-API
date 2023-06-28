@@ -17,14 +17,14 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+from typing import Optional
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
 
 from app import log
-from app.database import db_session
+from app.database import DBSession
 from app.errors import DataNotExistsError
 from app.model.db import Notification
 from app.model.schema import (
@@ -55,8 +55,8 @@ router = APIRouter(prefix="/Notifications", tags=["user_notification"])
     responses=get_routers_responses(),
 )
 def list_all_notifications(
+    session: DBSession,
     request_query: NotificationsQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Notifications/
@@ -130,7 +130,8 @@ def list_all_notifications(
     responses=get_routers_responses(),
 )
 def read_all_notifications(
-    data: NotificationReadRequest, session: Session = Depends(db_session)
+    session: DBSession,
+    data: NotificationReadRequest,
 ):
     """
     Endpoint: /Notifications/Read/
@@ -154,8 +155,8 @@ def read_all_notifications(
     responses=get_routers_responses(),
 )
 def count_notifications(
+    session: DBSession,
     request_query: NotificationsCountQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Notifications/Count/
@@ -190,15 +191,15 @@ def count_notifications(
     responses=get_routers_responses(DataNotExistsError),
 )
 def update_notification(
+    session: DBSession,
     data: UpdateNotificationRequest,
     notification_id: str = Path(description="Notification id"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Notifications/{id}
     """
     # Update Notification
-    notification: Notification = (
+    notification: Optional[Notification] = (
         session.query(Notification)
         .filter(Notification.notification_id == notification_id)
         .first()
@@ -230,8 +231,8 @@ def update_notification(
     responses=get_routers_responses(DataNotExistsError),
 )
 def delete_notification(
+    session: DBSession,
     notification_id: str = Path(description="Notification id"),
-    session: Session = Depends(db_session),
 ):
     # Get Notification
     _notification = (

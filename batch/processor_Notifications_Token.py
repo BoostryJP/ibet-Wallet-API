@@ -168,7 +168,7 @@ class Watcher:
                             _token["token"].token_address
                         ] = token_contract
                     _event = getattr(token_contract.events, self.filter_name)
-                    entries = _event.getLogs(
+                    entries = _event.get_logs(
                         fromBlock=from_block_number, toBlock=to_block_number
                     )
                 except FileNotFoundError:

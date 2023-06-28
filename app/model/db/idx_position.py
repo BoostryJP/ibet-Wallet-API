@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional
+
 from sqlalchemy import BigInteger, Column, String
 
 from app.model.db.base import Base
@@ -26,12 +28,10 @@ class IDXPosition(Base):
 
     __tablename__ = "position"
 
-    # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address = Column(String(42), primary_key=True)
     # Account Address
-    account_address = Column(String(42))
+    account_address = Column(String(42), primary_key=True)
     # Balance
     balance = Column(BigInteger)
     # Exchange Balance
@@ -42,7 +42,6 @@ class IDXPosition(Base):
     pending_transfer = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "account_address": str,
         "balance": int,
@@ -52,14 +51,66 @@ class IDXPosition(Base):
     }
     FIELDS.update(Base.FIELDS)
 
+    @staticmethod
+    def bond(position: Optional["IDXPosition"]):
+        return {
+            "balance": position.balance if position and position.balance else 0,
+            "pending_transfer": position.pending_transfer
+            if position and position.pending_transfer
+            else 0,
+            "exchange_balance": position.exchange_balance
+            if position and position.exchange_balance
+            else 0,
+            "exchange_commitment": position.exchange_commitment
+            if position and position.exchange_commitment
+            else 0,
+        }
+
+    @staticmethod
+    def share(share: Optional["IDXPosition"]):
+        return {
+            "balance": share.balance if share and share.balance else 0,
+            "pending_transfer": share.pending_transfer
+            if share and share.pending_transfer
+            else 0,
+            "exchange_balance": share.exchange_balance
+            if share and share.exchange_balance
+            else 0,
+            "exchange_commitment": share.exchange_commitment
+            if share and share.exchange_commitment
+            else 0,
+        }
+
+    @staticmethod
+    def coupon(coupon: Optional["IDXPosition"]):
+        return {
+            "balance": coupon.balance if coupon and coupon.balance else 0,
+            "exchange_balance": coupon.exchange_balance
+            if coupon and coupon.exchange_balance
+            else 0,
+            "exchange_commitment": coupon.exchange_commitment
+            if coupon and coupon.exchange_commitment
+            else 0,
+        }
+
+    @staticmethod
+    def membership(membership: Optional["IDXPosition"]):
+        return {
+            "balance": membership.balance if membership and membership.balance else 0,
+            "exchange_balance": membership.exchange_balance
+            if membership and membership.exchange_balance
+            else 0,
+            "exchange_commitment": membership.exchange_commitment
+            if membership and membership.exchange_commitment
+            else 0,
+        }
+
 
 class IDXPositionBondBlockNumber(Base):
     """Synchronized blockNumber of IDXPosition(Bond token)"""
 
     __tablename__ = "idx_position_bond_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -68,7 +119,6 @@ class IDXPositionBondBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
@@ -82,8 +132,6 @@ class IDXPositionShareBlockNumber(Base):
 
     __tablename__ = "idx_position_share_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -92,7 +140,6 @@ class IDXPositionShareBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
@@ -106,8 +153,6 @@ class IDXPositionCouponBlockNumber(Base):
 
     __tablename__ = "idx_position_coupon_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -116,7 +161,6 @@ class IDXPositionCouponBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,
@@ -130,8 +174,6 @@ class IDXPositionMembershipBlockNumber(Base):
 
     __tablename__ = "idx_position_membership_block_number"
 
-    # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
     # target exchange address
@@ -140,7 +182,6 @@ class IDXPositionMembershipBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "exchange_address": str,
         "latest_block_number": int,

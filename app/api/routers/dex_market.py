@@ -19,11 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import and_, desc, func
-from sqlalchemy.orm import Session
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import InvalidParameterError, NotSupportedError
 from app.model.db import AgreementStatus
 from app.model.db import IDXAgreement as Agreement
@@ -132,9 +131,9 @@ def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Dep
     responses=get_routers_responses(NotSupportedError),
 )
 def list_all_membership_order_book(
+    session: DBSession,
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """[会員権]板情報取得"""
     if (
@@ -275,9 +274,9 @@ def list_all_membership_last_price(
     responses=get_routers_responses(NotSupportedError),
 )
 def list_all_membership_tick(
+    session: DBSession,
     req: Request,
     request_query: ListAllTickQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """[会員権]歩み値取得"""
     if (
@@ -333,9 +332,9 @@ def list_all_membership_tick(
     responses=get_routers_responses(NotSupportedError),
 )
 def list_all_coupon_order_book(
+    session: DBSession,
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """[クーポン]板情報取得"""
     if (
@@ -473,9 +472,9 @@ def list_all_coupon_last_price(
     responses=get_routers_responses(NotSupportedError),
 )
 def list_all_coupon_tick(
+    session: DBSession,
     req: Request,
     request_query: ListAllTickQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """[クーポン]歩み値取得"""
     if (

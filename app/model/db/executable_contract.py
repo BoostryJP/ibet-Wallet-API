@@ -24,17 +24,12 @@ from app.model.db.base import Base
 
 class ExecutableContract(Base):
     __tablename__ = "executable_contract"
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contract_address = Column(String(256), index=True)
+    contract_address = Column(String(256), primary_key=True)
 
     def __repr__(self):
-        return "<Listing id='%d' contract_address='%s'>" % (
-            self.id,
-            self.contract_address,
-        )
+        return "<Listing contract_address='%s'>" % (self.contract_address,)
 
     FIELDS = {
-        "id": int,
         "contract_address": str,
     }
 

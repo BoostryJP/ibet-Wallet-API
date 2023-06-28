@@ -19,14 +19,13 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Callable, Optional
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Path, Query
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.db import (
@@ -63,10 +62,10 @@ router = APIRouter(prefix="/Companies", tags=["company_info"])
     responses=get_routers_responses(),
 )
 def list_all_companies(
+    session: DBSession,
     include_private_listing: Optional[bool] = Query(
         default=False, description="include private listing token issuers"
     ),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Companies
@@ -172,7 +171,7 @@ def retrieve_company(eth_address: str = Path(..., description="address")):
     """
     Endpoint: /Companies/{eth_address}
     """
-    if not Web3.isAddress(eth_address):
+    if not Web3.is_address(eth_address):
         description = "invalid eth_address"
         raise InvalidParameterError(description=description)
 
@@ -194,17 +193,17 @@ def retrieve_company(eth_address: str = Path(..., description="address")):
     responses=get_routers_responses(),
 )
 def retrieve_company_tokens(
+    session: DBSession,
     eth_address: str = Path(..., description="address"),
     include_private_listing: Optional[bool] = Query(
         default=False, description="include private listing token issuers"
     ),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Companies/{eth_address}/Tokens
     """
     # Validation
-    if not Web3.isAddress(eth_address):
+    if not Web3.is_address(eth_address):
         description = "invalid eth_address"
         raise InvalidParameterError(description=description)
 

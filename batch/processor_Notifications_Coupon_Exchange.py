@@ -128,7 +128,7 @@ class Watcher:
 
             # Get event logs
             _event = getattr(self.contract.events, self.filter_name)
-            entries = _event.getLogs(
+            entries = _event.get_logs(
                 fromBlock=from_block_number, toBlock=to_block_number
             )
 

@@ -29,6 +29,7 @@ from app.model.db import (
     IDXConsumeCoupon,
     IDXCouponToken,
     IDXPosition,
+    IDXTokenListItem,
     IDXTransfer,
     IDXTransferSourceEventType,
     Listing,
@@ -45,7 +46,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-class TestPositionAccountAddressCoupon:
+class TestPositionCoupon:
     # Test API
     apiurl = "/Position/{account_address}/Coupon"
 
@@ -71,12 +72,10 @@ class TestPositionAccountAddressCoupon:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = issue_coupon_token(TestPositionAccountAddressCoupon.issuer, args)
-        coupon_register_list(
-            TestPositionAccountAddressCoupon.issuer, token, token_list_contract
-        )
+        token = issue_coupon_token(TestPositionCoupon.issuer, args)
+        coupon_register_list(TestPositionCoupon.issuer, token, token_list_contract)
         transfer_coupon_token(
-            TestPositionAccountAddressCoupon.issuer,
+            TestPositionCoupon.issuer,
             token,
             account["account_address"],
             1000000,
@@ -91,7 +90,7 @@ class TestPositionAccountAddressCoupon:
         account, exchange_contract, token_list_contract, commitment
     ):
         # Issue token
-        token = TestPositionAccountAddressCoupon.create_balance_data(
+        token = TestPositionCoupon.create_balance_data(
             account, exchange_contract, token_list_contract
         )
 
@@ -113,7 +112,7 @@ class TestPositionAccountAddressCoupon:
     @staticmethod
     def create_used_data(account, exchange_contract, token_list_contract, used):
         # Issue token
-        token = TestPositionAccountAddressCoupon.create_balance_data(
+        token = TestPositionCoupon.create_balance_data(
             account, exchange_contract, token_list_contract
         )
 
@@ -129,7 +128,7 @@ class TestPositionAccountAddressCoupon:
         account, to_account, exchange_contract, token_list_contract
     ):
         # Issue token
-        token = TestPositionAccountAddressCoupon.create_balance_data(
+        token = TestPositionCoupon.create_balance_data(
             account, exchange_contract, token_list_contract
         )
 
@@ -181,9 +180,7 @@ class TestPositionAccountAddressCoupon:
         idx_token = IDXCouponToken()
         idx_token.company_name = ""
         idx_token.token_address = token_address
-        idx_token.owner_address = TestPositionAccountAddressCoupon.issuer[
-            "account_address"
-        ]
+        idx_token.owner_address = TestPositionCoupon.issuer["account_address"]
         idx_token.token_template = "IbetCoupon"
         idx_token.name = "テストクーポン"
         idx_token.symbol = "COUPON"
@@ -207,6 +204,11 @@ class TestPositionAccountAddressCoupon:
         idx_token.contact_information = "問い合わせ先"
         idx_token.privacy_policy = "プライバシーポリシー"
         session.add(idx_token)
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token_address
+        idx_token_list_item.token_template = "IbetCoupon"
+        idx_token_list_item.owner_address = TestPositionCoupon.issuer["account_address"]
+        session.add(idx_token_list_item)
         session.commit()
 
     @staticmethod
@@ -1044,7 +1046,7 @@ class TestPositionAccountAddressCoupon:
         )
         self.create_idx_position(
             session,
-            token_3["address"],
+            token_4["address"],
             self.account_1["account_address"],
             exchange_commitment=1000000,
         )

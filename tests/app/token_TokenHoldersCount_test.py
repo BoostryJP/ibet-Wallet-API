@@ -32,7 +32,10 @@ class TestTokenTokenHoldersCount:
     apiurl_base = "/Token/{contract_address}/Holders/Count"
 
     token_address = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A740"
-    account_address = "0x52D0784B3460E206ED69393ae1f9Ed37941089eD"
+    account_address_1 = "0x52D0784B3460E206ed69393AE1f9ed37941089eC"
+    account_address_2 = "0x52D0784B3460E206ED69393ae1f9Ed37941089eD"
+    account_address_3 = "0x52d0784b3460e206ed69393aE1F9Ed37941089Ee"
+    account_address_4 = "0x52d0784b3460E206ED69393AE1F9eD37941089Ef"
     issuer_address = "0x02D0784B3460E206ED69393ae1f9Ed37941089eD"
 
     lock_address_1 = eth_account["user1"]["account_address"]
@@ -109,7 +112,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (balance > 0)
         position_1 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 10,
             "exchange_balance": 10,
         }
@@ -118,7 +121,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (pending_transfer > 0)
         position_2 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_2,
             "pending_transfer": 5,
         }
         self.insert_position(session, position=position_2)
@@ -126,7 +129,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (other token position)
         other_position_1 = {
             "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
@@ -163,7 +166,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (balance > 0)
         position = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 0,
             "exchange_balance": 0,
             "pending_transfer": 0,
@@ -175,7 +178,7 @@ class TestTokenTokenHoldersCount:
         locked_position_1 = {
             "token_address": self.token_address,
             "lock_address": self.lock_address_1,
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "value": 1,
         }
         self.insert_locked_position(session, locked_position_1)
@@ -183,7 +186,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (other token position)
         other_position_1 = {
             "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
@@ -220,7 +223,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (balance = 0)
         position_1 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 0,
         }
         self.insert_position(session, position=position_1)
@@ -228,7 +231,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (pending_transfer = 0)
         position_2 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_2,
             "pending_transfer": 0,
         }
         self.insert_position(session, position=position_2)
@@ -236,7 +239,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (exchange_balance = 0)
         position_3 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_3,
             "exchange_balance": 0,
         }
         self.insert_position(session, position=position_3)
@@ -244,7 +247,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (exchange_commitment = 0)
         position_4 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_4,
             "exchange_commitment": 0,
         }
         self.insert_position(session, position=position_4)
@@ -252,7 +255,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (other token position)
         other_position_1 = {
             "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,
@@ -289,7 +292,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (balance > 0)
         position_1 = {
             "token_address": self.token_address,
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 10,
             "exchange_balance": 10,
         }
@@ -306,7 +309,7 @@ class TestTokenTokenHoldersCount:
         # Prepare data (other token position)
         other_position_1 = {
             "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
-            "account_address": self.account_address,
+            "account_address": self.account_address_1,
             "balance": 10,
             "exchange_balance": 10,
             "pending_transfer": 10,

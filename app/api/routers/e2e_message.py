@@ -52,7 +52,7 @@ def retrieve_encryption_key(
     # Validation
     try:
         account_address = to_checksum_address(account_address)
-        if not Web3.isAddress(account_address):
+        if not Web3.is_address(account_address):
             raise InvalidParameterError(description="invalid account_address")
     except:
         raise InvalidParameterError(description="invalid account_address")

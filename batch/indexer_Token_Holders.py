@@ -279,7 +279,7 @@ class Processor:
                 address=self.tradable_exchange_address,
             )
             try:
-                holder_changed_events = exchange_contract.events.HolderChanged.getLogs(
+                holder_changed_events = exchange_contract.events.HolderChanged.get_logs(
                     fromBlock=block_from,
                     toBlock=block_to,
                     argument_filters={"token": self.token_contract.address},
@@ -301,7 +301,7 @@ class Processor:
 
             # Get "Transfer" events from token contract
             try:
-                token_transfer_events = self.token_contract.events.Transfer.getLogs(
+                token_transfer_events = self.token_contract.events.Transfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -359,7 +359,7 @@ class Processor:
         """
         try:
             # Get "Issue" events from token contract
-            events = self.token_contract.events.Issue.getLogs(
+            events = self.token_contract.events.Issue.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
@@ -392,7 +392,7 @@ class Processor:
         """
         try:
             # Get "Redeem" events from token contract
-            events = self.token_contract.events.Redeem.getLogs(
+            events = self.token_contract.events.Redeem.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
@@ -424,7 +424,7 @@ class Processor:
         """
         try:
             # Get "Consume" events from token contract
-            events = self.token_contract.events.Consume.getLogs(
+            events = self.token_contract.events.Consume.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
@@ -450,7 +450,7 @@ class Processor:
         """
         try:
             # Get "Lock" events from token contract
-            events = self.token_contract.events.Lock.getLogs(
+            events = self.token_contract.events.Lock.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
@@ -479,7 +479,7 @@ class Processor:
         """
         try:
             # Get "Unlock" events from token contract
-            events = self.token_contract.events.Unlock.getLogs(
+            events = self.token_contract.events.Unlock.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
@@ -514,7 +514,7 @@ class Processor:
             if page.account_address == token_owner_address:
                 # Skip storing data for token owner
                 continue
-            token_holder: TokenHolder = (
+            token_holder: Optional[TokenHolder] = (
                 db_session.query(TokenHolder)
                 .filter(TokenHolder.holder_list == holder_list_id)
                 .filter(TokenHolder.account_address == account_address)

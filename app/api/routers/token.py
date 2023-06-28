@@ -16,17 +16,17 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional
 from uuid import UUID
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
 from sqlalchemy import String, and_, asc, cast, desc, func, or_
-from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import DataNotExistsError, InvalidParameterError, ServiceUnavailable
 from app.model.db import (
     IDXLockedPosition,
@@ -72,8 +72,8 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_status(
+    session: DBSession,
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Status
@@ -82,7 +82,7 @@ def get_token_status(
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -143,16 +143,16 @@ def get_token_status(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders(
+    session: DBSession,
     token_address: str = Path(description="token address"),
     request_query: ListAllTokenHoldersQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders
     """
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -187,13 +187,17 @@ def get_token_holders(
                 IDXLockedPosition.value > 0,
             )
         )
-        .group_by(IDXPosition.id, IDXLockedPosition.account_address)
+        .group_by(
+            IDXPosition.token_address,
+            IDXPosition.account_address,
+            IDXLockedPosition.account_address,
+        )
     )
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
     holders: list[tuple[IDXPosition, int | None]] = query.order_by(
-        desc(IDXPosition.id)
+        desc(IDXPosition.created)
     ).all()
 
     resp_body = []
@@ -221,9 +225,9 @@ def get_token_holders(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders_count(
+    session: DBSession,
     token_address: str = Path(description="token address"),
     request_query: RetrieveTokenHoldersCountQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Count
@@ -231,7 +235,7 @@ def get_token_holders_count(
     # Validation
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -266,12 +270,16 @@ def get_token_holders_count(
                 IDXLockedPosition.value > 0,
             )
         )
-        .group_by(IDXPosition.id, IDXLockedPosition.account_address)
+        .group_by(
+            IDXPosition.token_address,
+            IDXPosition.account_address,
+            IDXLockedPosition.account_address,
+        )
     )
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
-    _count = query.order_by(desc(IDXPosition.id)).count()
+    _count = query.count()
 
     resp_body = {"count": _count}
 
@@ -286,9 +294,9 @@ def get_token_holders_count(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def create_token_holders_collection(
+    session: DBSession,
     data: CreateTokenHoldersCollectionRequest,
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Collection
@@ -301,7 +309,7 @@ def create_token_holders_collection(
     # contract_addressのフォーマットチェック
     contract_address = token_address
     try:
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             raise InvalidParameterError("Invalid contract address")
     except Exception as err:
         LOG.debug(f"invalid contract address: {err}")
@@ -376,13 +384,13 @@ def create_token_holders_collection(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def get_token_holders_collection(
+    session: DBSession,
     token_address: str = Path(description="token address"),
     list_id: UUID = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
         example="cfd83622-34dc-4efe-a68b-2cc275d3d824",
     ),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders/Collection/{list_id}
@@ -392,7 +400,7 @@ def get_token_holders_collection(
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(contract_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -417,7 +425,7 @@ def get_token_holders_collection(
         raise DataNotExistsError("contract_address: %s" % contract_address)
 
     # 既存レコードの存在チェック
-    _same_list_id_record: TokenHoldersList = (
+    _same_list_id_record: Optional[TokenHoldersList] = (
         session.query(TokenHoldersList)
         .filter(TokenHoldersList.list_id == str(list_id))
         .first()
@@ -459,9 +467,9 @@ def get_token_holders_collection(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_transfer_histories(
+    session: DBSession,
     request_query: ListAllTransferHistoryQuery = Depends(),
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/TransferHistory
@@ -469,7 +477,7 @@ def list_all_transfer_histories(
     # 入力値チェック
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
@@ -533,9 +541,9 @@ def list_all_transfer_histories(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 def list_all_transfer_approval_histories(
+    session: DBSession,
     request_query: ResultSetQuery = Depends(),
     token_address: str = Path(description="token address"),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/{contract_address}/TransferApprovalHistory
@@ -543,7 +551,7 @@ def list_all_transfer_approval_histories(
     # Validation
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             raise InvalidParameterError("invalid contract_address")
     except:
         raise InvalidParameterError("invalid contract_address")

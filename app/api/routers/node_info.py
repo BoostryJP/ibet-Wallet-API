@@ -18,11 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 
 from app import config, log
-from app.database import db_session
+from app.database import DBSession
 from app.model.db import Node
 from app.model.schema import (
     GenericSuccessResponse,
@@ -92,7 +91,7 @@ def get_node_info():
     operation_id="NodeInfoBlockSyncStatus",
     response_model=GenericSuccessResponse[GetBlockSyncStatusResponse],
 )
-def get_block_sync_status(session: Session = Depends(db_session)):
+def get_block_sync_status(session: DBSession):
     """
     Endpoint: /NodeInfo/BlockSyncStatus
     """

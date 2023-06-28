@@ -99,6 +99,7 @@ from .position import (
     ListAllLockEventQuery,
     ListAllLockEventsResponse,
     ListAllPositionQuery,
+    ListAllTokenPositionQuery,
     LockEventCategory,
     LockEventSortItem,
     MembershipPositionsResponse,
@@ -107,6 +108,7 @@ from .position import (
     SecurityTokenPosition,
     SecurityTokenPositionWithAddress,
     SecurityTokenPositionWithDetail,
+    TokenPositionsResponse,
 )
 from .token import (
     CreateTokenHoldersCollectionRequest,
@@ -132,6 +134,12 @@ from .token_coupon import (
     ListAllCouponTokensQuery,
     ListAllCouponTokensResponse,
     RetrieveCouponTokenResponse,
+)
+from .token_lock import (
+    ListAllTokenLockQuery,
+    ListAllTokenLockResponse,
+    RetrieveTokenLockCountQuery,
+    RetrieveTokenLockCountResponse,
 )
 from .token_membership import (
     ListAllMembershipTokenAddressesResponse,

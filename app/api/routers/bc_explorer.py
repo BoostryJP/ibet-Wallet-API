@@ -22,13 +22,12 @@ from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
 from pydantic import NonNegativeInt
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
 from starlette.requests import Request
-from web3.contract import ContractFunction
+from web3.contract.contract import ContractFunction
 
 from app import config, log
 from app.contracts import Contract
-from app.database import db_session
+from app.database import DBSession
 from app.errors import DataNotExistsError, NotSupportedError, ResponseLimitExceededError
 from app.model.db import (
     IDXBlockData,
@@ -69,9 +68,9 @@ router = APIRouter(prefix="/NodeInfo", tags=["node_info"])
     responses=get_routers_responses(NotSupportedError, ResponseLimitExceededError),
 )
 def list_block_data(
+    session: DBSession,
     req: Request,
     request_query: ListBlockDataQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Returns a list of block data within the specified block number range.
@@ -180,9 +179,9 @@ def list_block_data(
     responses=get_routers_responses(NotSupportedError, DataNotExistsError),
 )
 def get_block_data(
+    session: DBSession,
     req: Request,
     block_number: NonNegativeInt = Path(description="Block number"),
-    session: Session = Depends(db_session),
 ):
     """
     Returns block data in the specified block number.
@@ -234,9 +233,9 @@ def get_block_data(
     responses=get_routers_responses(NotSupportedError, ResponseLimitExceededError),
 )
 def list_tx_data(
+    session: DBSession,
     req: Request,
     request_query: ListTxDataQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Returns a list of transactions by various search parameters.
@@ -315,9 +314,9 @@ def list_tx_data(
     responses=get_routers_responses(NotSupportedError, DataNotExistsError),
 )
 def get_tx_data(
+    session: DBSession,
     req: Request,
     hash: str = Path(description="Transaction hash"),
-    session: Session = Depends(db_session),
 ):
     """
     Searching for the transaction by transaction hash

@@ -21,11 +21,10 @@ from typing import Optional
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
 from web3 import Web3
 
 from app import config, log
-from app.database import db_session
+from app.database import DBSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -58,12 +57,12 @@ router = APIRouter(prefix="/Token/StraightBond", tags=["token_info"])
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def list_all_straight_bond_tokens(
+    session: DBSession,
     req: Request,
     address_list: list[str] = Query(
         default=[], description="list of token address (**this affects total number**)"
     ),
     request_query: ListAllStraightBondTokensQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/StraightBond
@@ -73,7 +72,7 @@ def list_all_straight_bond_tokens(
 
     for address in address_list:
         if address is not None:
-            if not Web3.isAddress(address):
+            if not Web3.is_address(address):
                 raise InvalidParameterError(f"invalid token_address: {address}")
 
     owner_address: Optional[str] = request_query.owner_address
@@ -178,9 +177,9 @@ def list_all_straight_bond_tokens(
     responses=get_routers_responses(NotSupportedError),
 )
 def list_all_straight_bond_token_addresses(
+    session: DBSession,
     req: Request,
     request_query: ListAllStraightBondTokensQuery = Depends(),
-    session: Session = Depends(db_session),
 ):
     """
     Endpoint: /Token/StraightBond/Addresses
@@ -285,9 +284,7 @@ def list_all_straight_bond_token_addresses(
         NotSupportedError, DataNotExistsError, InvalidParameterError
     ),
 )
-def retrieve_straight_bond_token(
-    req: Request, token_address: str, session: Session = Depends(db_session)
-):
+def retrieve_straight_bond_token(session: DBSession, req: Request, token_address: str):
     """
     Endpoint: /Token/StraightBond/{contract_address}
     """
@@ -297,7 +294,7 @@ def retrieve_straight_bond_token(
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
-        if not Web3.isAddress(contract_address):
+        if not Web3.is_address(contract_address):
             description = "invalid contract_address"
             raise InvalidParameterError(description=description)
     except:
