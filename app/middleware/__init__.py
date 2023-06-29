@@ -16,6 +16,5 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .base import SuppressNoResponseReturnedMiddleware
 from .response_logger import ResponseLoggerMiddleware
 from .strip_trailing_slash import StripTrailingSlashMiddleware
