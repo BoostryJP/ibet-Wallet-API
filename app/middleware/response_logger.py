@@ -24,8 +24,6 @@ from starlette.middleware.base import RequestResponseEndpoint
 
 from app import config, log
 
-from .base import SuppressNoResponseReturnedMiddleware
-
 LOG = log.get_logger()
 
 
@@ -41,7 +39,7 @@ stream_handler_access.setFormatter(formatter_access)
 ACCESS_LOG.addHandler(stream_handler_access)
 
 
-class ResponseLoggerMiddleware(SuppressNoResponseReturnedMiddleware):
+class ResponseLoggerMiddleware:
     """Response Logger Middleware"""
 
     def __init__(self):
@@ -54,7 +52,7 @@ class ResponseLoggerMiddleware(SuppressNoResponseReturnedMiddleware):
         request_start_time = datetime.utcnow()
 
         # Process request
-        res: Response = await self.handle(req, call_next)
+        res: Response = await call_next(req)
 
         # After process request
         if req.url.path != "/":

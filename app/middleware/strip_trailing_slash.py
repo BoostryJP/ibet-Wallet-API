@@ -21,12 +21,10 @@ from starlette.middleware.base import RequestResponseEndpoint
 
 from app import log
 
-from .base import SuppressNoResponseReturnedMiddleware
-
 LOG = log.get_logger()
 
 
-class StripTrailingSlashMiddleware(SuppressNoResponseReturnedMiddleware):
+class StripTrailingSlashMiddleware:
     """
     Strip Trailing Slash Middleware
 
@@ -49,7 +47,7 @@ class StripTrailingSlashMiddleware(SuppressNoResponseReturnedMiddleware):
             req.scope["raw_path"] = replace_path.encode()
 
         # Process request
-        res: Response = await self.handle(req, call_next)
+        res: Response = await call_next(req)
 
         # After process request
 
