@@ -248,7 +248,7 @@ def db(request):
         db.begin()
         db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
         for table in Base.metadata.sorted_tables:
-            db.execute(table.delete())
+            db.execute(text(f"TRUNCATE TABLE `{table.name}`;"))
             if table.autoincrement_column is not None:
                 db.execute(text(f"ALTER TABLE `{table.name}` auto_increment = 1;"))
         db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
@@ -257,7 +257,7 @@ def db(request):
         db.begin()
         for table in Base.metadata.sorted_tables:
             db.execute(text(f'ALTER TABLE "{table.name}" DISABLE TRIGGER ALL;'))
-            db.execute(table.delete())
+            db.execute(text(f'TRUNCATE TABLE "{table.name}";'))
             if table.autoincrement_column is not None:
                 db.execute(
                     text(
