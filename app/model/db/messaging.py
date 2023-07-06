@@ -38,6 +38,10 @@ class Mail(Base):
     text_content = Column(Text, nullable=False)
     # html mail content
     html_content = Column(Text, nullable=False)
+    # file content
+    file_content = Column(Text, nullable=True)
+    # file name
+    file_name = Column(String(144), nullable=True)
 
     FIELDS = {
         "id": int,
@@ -45,6 +49,8 @@ class Mail(Base):
         "subject": str,
         "text_content": str,
         "html_content": str,
+        "file_content": str,
+        "file_name": str,
     }
     FIELDS.update(Base.FIELDS)
 

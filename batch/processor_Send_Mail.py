@@ -25,6 +25,7 @@ from botocore.exceptions import ClientError as SESException
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from app.model.mail.mail import File
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -49,11 +50,15 @@ class Processor:
                 LOG.info("Process start")
                 for mail in mail_list:
                     try:
+                        file = None
+                        if mail.file_name and mail.file_content:
+                            file = File(name=mail.file_name, content=mail.file_content)
                         smtp_mail = SMTPMail(
                             to_email=mail.to_email,
                             subject=mail.subject,
                             text_content=mail.text_content,
                             html_content=mail.html_content,
+                            file=file,
                         )
                         smtp_mail.send_mail()
                     except (SMTPException, SESException) as err:

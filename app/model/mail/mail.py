@@ -16,9 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import mimetypes
 import smtplib
 import ssl
+from email import encoders
 from email.header import Header
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
@@ -37,9 +40,23 @@ from app.config import (
 )
 
 
+class File:
+    content: str
+    name: str
+
+    def __init__(self, content: str, name: str):
+        self.content = content
+        self.name = name
+
+
 class Mail:
     def __init__(
-        self, to_email: str, subject: str, text_content: str, html_content: str
+        self,
+        to_email: str,
+        subject: str,
+        text_content: str,
+        html_content: str,
+        file: File | None,
     ):
         self.sender_email = SMTP_SENDER_EMAIL
         self.to_email = to_email
@@ -59,6 +76,19 @@ class Mail:
             (str(Header(SMTP_SENDER_NAME, "utf-8")), SMTP_SENDER_EMAIL)
         )
         self.msg["To"] = to_email
+
+        if file:
+            mimetype, encoding = mimetypes.guess_type(file.name)
+            if encoding or mimetype is None:
+                mimetype = "application/octet-stream"
+            maintype, subtype = mimetype.split("/")
+            attach_file = MIMEBase(maintype, subtype)
+            attach_file.set_payload(file.content)
+            encoders.encode_base64(attach_file)
+            attach_file.add_header(
+                "Content-Disposition", "attachment", filename=file.name
+            )
+            self.msg.attach(attach_file)
 
     def send_mail(self):
         if SMTP_METHOD == 0:  # SMTP server
