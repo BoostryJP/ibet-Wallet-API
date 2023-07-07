@@ -50,7 +50,7 @@ class Mail(Base):
         "text_content": str,
         "html_content": str,
         "file_name": str,
-        "file_content": str,
+        "file_content": bytes,
     }
     FIELDS.update(Base.FIELDS)
 

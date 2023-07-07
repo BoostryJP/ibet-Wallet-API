@@ -32,16 +32,26 @@ from pydantic import (
     validator,
 )
 
+############################
+# COMMON
+############################
+
 
 def _get_unprintable_ascii_chars() -> list[str]:
     return [chr(c) for c in range(128) if chr(c) not in string.printable]
 
 
+# ASCII control characters
 UNPRINTABLE_ASCII_CHARS = tuple(_get_unprintable_ascii_chars())
+# Not allowed characters for path
 INVALID_PATH_CHARS = "".join(UNPRINTABLE_ASCII_CHARS)
+# Not allowed characters for file name
 INVALID_FILENAME_CHARS = INVALID_PATH_CHARS + "/"
+# Not allowed characters for path on Windows OS
 INVALID_WIN_PATH_CHARS = INVALID_PATH_CHARS + ':*?"<>|\t\n\r\x0b\x0c'
+# Not allowed characters for file name on Windows OS
 INVALID_WIN_FILENAME_CHARS = INVALID_FILENAME_CHARS + INVALID_WIN_PATH_CHARS + "\\"
+# Regex object for file name validation
 RE_INVALID_WIN_FILENAME = re.compile(
     f"[{re.escape(INVALID_WIN_FILENAME_CHARS):s}]", re.UNICODE
 )
@@ -56,7 +66,7 @@ class SendMailRequest(BaseModel):
     subject: constr(max_length=100) = Field(..., description="Mail subject")
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
-    file_name: Optional[constr(min_length=1, max_length=144)] = Field(
+    file_name: Optional[constr(min_length=1, max_length=255)] = Field(
         default=None, description="File name"
     )
     file_content: Optional[conbytes(min_length=1)] = Field(
