@@ -23,7 +23,7 @@ def upgrade():
 
     op.add_column(
         "mail",
-        sa.Column("file_name", sa.String(length=144), nullable=True),
+        sa.Column("file_name", sa.String(length=255), nullable=True),
         schema=get_db_schema(),
     )
     op.add_column(

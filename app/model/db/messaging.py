@@ -39,7 +39,7 @@ class Mail(Base):
     # html mail content
     html_content = Column(Text, nullable=False)
     # file name
-    file_name = Column(String(144), nullable=True)
+    file_name = Column(String(255), nullable=True)
     # file content
     file_content = Column(LargeBinary, nullable=True)
 
