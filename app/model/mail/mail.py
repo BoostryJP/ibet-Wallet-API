@@ -84,7 +84,7 @@ class Mail:
             maintype, subtype = mimetype.split("/")
             attach_file = MIMEBase(maintype, subtype)
             attach_file.set_payload(file.content)
-            encoders.encode_base64(attach_file)
+            attach_file.add_header("Content-Transfer-Encoding", "base64")
             attach_file.add_header(
                 "Content-Disposition", "attachment", filename=file.name
             )

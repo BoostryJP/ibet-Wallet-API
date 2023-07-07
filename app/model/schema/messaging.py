@@ -24,7 +24,6 @@ from pydantic import (
     BaseModel,
     EmailStr,
     Field,
-    FilePath,
     Json,
     conbytes,
     conlist,
@@ -57,11 +56,11 @@ class SendMailRequest(BaseModel):
     subject: constr(max_length=100) = Field(..., description="Mail subject")
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
-    file_content: Optional[constr(min_length=1)] = Field(
-        default=None, description="File content(Base64 encoded)"
-    )
     file_name: Optional[constr(min_length=1, max_length=144)] = Field(
         default=None, description="File name"
+    )
+    file_content: Optional[conbytes(min_length=1)] = Field(
+        default=None, description="File content(Base64 encoded)"
     )
 
     @validator("file_name")
@@ -74,8 +73,8 @@ class SendMailRequest(BaseModel):
 
     @root_validator
     def validate_file(cls, values):
-        if (values["file_content"] and not values["file_name"]) or (
-            not values["file_content"] and values["file_name"]
+        if (values.get("file_content") and not values.get("file_name")) or (
+            not values.get("file_content") and values.get("file_name")
         ):
             raise ValueError("File content should be posted with name.")
         return values

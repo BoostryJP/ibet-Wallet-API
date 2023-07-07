@@ -2,7 +2,7 @@
 
 Revision ID: cd25c53c036c
 Revises: 37cfcb200317
-Create Date: 2023-07-07 14:24:39.523196
+Create Date: 2023-07-07 15:38:20.524163
 
 """
 from alembic import op
@@ -23,12 +23,12 @@ def upgrade():
 
     op.add_column(
         "mail",
-        sa.Column("file_content", sa.LargeBinary(), nullable=True),
+        sa.Column("file_name", sa.String(length=144), nullable=True),
         schema=get_db_schema(),
     )
     op.add_column(
         "mail",
-        sa.Column("file_name", sa.String(length=144), nullable=True),
+        sa.Column("file_content", sa.LargeBinary(), nullable=True),
         schema=get_db_schema(),
     )
 
@@ -36,5 +36,5 @@ def upgrade():
 def downgrade():
     connection = op.get_bind()
 
-    op.drop_column("mail", "file_name", schema=get_db_schema())
     op.drop_column("mail", "file_content", schema=get_db_schema())
+    op.drop_column("mail", "file_name", schema=get_db_schema())

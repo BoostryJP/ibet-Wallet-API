@@ -8211,6 +8211,7 @@ components:
           minLength: 1
           type: string
           description: File content(Base64 encoded)
+          format: binary
         file_name:
           title: File Name
           maxLength: 144
