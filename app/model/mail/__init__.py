@@ -16,4 +16,4 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .mail import Mail
+from .mail import File, Mail

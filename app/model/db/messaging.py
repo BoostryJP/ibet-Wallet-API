@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import BigInteger, Column, String, Text
+from sqlalchemy import BigInteger, Column, LargeBinary, String, Text
 
 from app.model.db.base import Base
 
@@ -38,6 +38,10 @@ class Mail(Base):
     text_content = Column(Text, nullable=False)
     # html mail content
     html_content = Column(Text, nullable=False)
+    # file name
+    file_name = Column(String(255), nullable=True)
+    # file content
+    file_content = Column(LargeBinary, nullable=True)
 
     FIELDS = {
         "id": int,
@@ -45,6 +49,8 @@ class Mail(Base):
         "subject": str,
         "text_content": str,
         "html_content": str,
+        "file_name": str,
+        "file_content": bytes,
     }
     FIELDS.update(Base.FIELDS)
 

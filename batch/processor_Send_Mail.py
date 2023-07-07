@@ -33,6 +33,7 @@ import log
 
 from app.config import DATABASE_URL
 from app.model.db import Mail
+from app.model.mail import File
 from app.model.mail import Mail as SMTPMail
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
@@ -49,11 +50,15 @@ class Processor:
                 LOG.info("Process start")
                 for mail in mail_list:
                     try:
+                        file = None
+                        if mail.file_name and mail.file_content:
+                            file = File(name=mail.file_name, content=mail.file_content)
                         smtp_mail = SMTPMail(
                             to_email=mail.to_email,
                             subject=mail.subject,
                             text_content=mail.text_content,
                             html_content=mail.html_content,
+                            file=file,
                         )
                         smtp_mail.send_mail()
                     except (SMTPException, SESException) as err:

@@ -8206,6 +8206,18 @@ components:
           type: string
           description: HTML mail content
           default: ''
+        file_name:
+          title: File Name
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: File name
+        file_content:
+          title: File Content
+          minLength: 1
+          type: string
+          description: File content(Base64 encoded)
+          format: binary
     SendRawTransactionNoWaitResponse:
       title: SendRawTransactionNoWaitResponse
       required:

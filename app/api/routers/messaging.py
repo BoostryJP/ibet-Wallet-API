@@ -48,6 +48,10 @@ def send_mail(session: DBSession, data: SendMailRequest):
         mail.subject = data.subject
         mail.text_content = data.text_content
         mail.html_content = data.html_content
+        if data.file_content:
+            mail.file_content = data.file_content
+        if data.file_name:
+            mail.file_name = data.file_name
         session.add(mail)
 
     session.commit()
