@@ -41,12 +41,12 @@ from app.config import (
 
 
 class File:
-    content: str
     name: str
+    content: bytes
 
-    def __init__(self, content: str, name: str):
-        self.content = content
+    def __init__(self, name: str, content: bytes):
         self.name = name
+        self.content = content
 
 
 class Mail:

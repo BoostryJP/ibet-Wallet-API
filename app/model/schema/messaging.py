@@ -57,7 +57,7 @@ class SendMailRequest(BaseModel):
     subject: constr(max_length=100) = Field(..., description="Mail subject")
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
-    file_content: Optional[conbytes(strip_whitespace=True, min_length=1)] = Field(
+    file_content: Optional[constr(min_length=1)] = Field(
         default=None, description="File content(Base64 encoded)"
     )
     file_name: Optional[constr(min_length=1, max_length=144)] = Field(

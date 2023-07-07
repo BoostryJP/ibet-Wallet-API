@@ -25,7 +25,6 @@ from botocore.exceptions import ClientError as SESException
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from app.model.mail.mail import File
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -34,6 +33,7 @@ import log
 
 from app.config import DATABASE_URL
 from app.model.db import Mail
+from app.model.mail import File
 from app.model.mail import Mail as SMTPMail
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")

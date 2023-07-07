@@ -1,8 +1,8 @@
 """v23_9_feature_1399
 
-Revision ID: 89675a75634b
+Revision ID: cd25c53c036c
 Revises: 37cfcb200317
-Create Date: 2023-07-07 07:59:54.869008
+Create Date: 2023-07-07 14:24:39.523196
 
 """
 from alembic import op
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from app.database import get_db_schema
 
 # revision identifiers, used by Alembic.
-revision = "89675a75634b"
+revision = "cd25c53c036c"
 down_revision = "37cfcb200317"
 branch_labels = None
 depends_on = None
@@ -23,7 +23,7 @@ def upgrade():
 
     op.add_column(
         "mail",
-        sa.Column("file_content", sa.Text(), nullable=True),
+        sa.Column("file_content", sa.LargeBinary(), nullable=True),
         schema=get_db_schema(),
     )
     op.add_column(

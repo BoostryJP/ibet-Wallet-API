@@ -49,7 +49,7 @@ def send_mail(session: DBSession, data: SendMailRequest):
         mail.text_content = data.text_content
         mail.html_content = data.html_content
         if data.file_content:
-            mail.file_content = data.file_content
+            mail.file_content = bytes(data.file_content, "utf-8")
         if data.file_name:
             mail.file_name = data.file_name
         session.add(mail)
