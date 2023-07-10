@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from fastapi import APIRouter
+from sqlalchemy import select
 
 from app import config, log
 from app.database import DBSession
@@ -96,12 +97,9 @@ def get_block_sync_status(session: DBSession):
     Endpoint: /NodeInfo/BlockSyncStatus
     """
     # Get block sync status
-    node: Node = (
-        session.query(Node)
-        .filter(Node.is_synced == True)
-        .order_by(Node.priority)
-        .first()
-    )
+    node: Node = session.scalars(
+        select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
+    ).first()
 
     # Get the latest block number
     is_synced = False

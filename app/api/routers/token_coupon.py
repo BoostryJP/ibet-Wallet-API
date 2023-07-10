@@ -20,7 +20,7 @@ from typing import Optional
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Query, Request
-from sqlalchemy import desc
+from sqlalchemy import desc, func, select
 from web3 import Web3
 
 from app import config, log
@@ -91,53 +91,53 @@ def list_all_coupon_tokens(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXCouponToken)
+    stmt = (
+        select(IDXCouponToken)
         .join(Listing, Listing.token_address == IDXCouponToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
     if len(address_list):
-        query = query.filter(IDXCouponToken.token_address.in_(address_list))
-    total = query.count()
+        stmt = stmt.where(IDXCouponToken.token_address.in_(address_list))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXCouponToken.owner_address == owner_address)
+        stmt = stmt.where(IDXCouponToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXCouponToken.name.contains(name))
+        stmt = stmt.where(IDXCouponToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXCouponToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXCouponToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXCouponToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXCouponToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXCouponToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXCouponToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXCouponToken.status == status)
+        stmt = stmt.where(IDXCouponToken.status == status)
     if transferable is not None:
-        query = query.filter(IDXCouponToken.transferable == transferable)
+        stmt = stmt.where(IDXCouponToken.transferable == transferable)
     if initial_offering_status is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXCouponToken.initial_offering_status == initial_offering_status
         )
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXCouponToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXCouponToken.created)
+        stmt = stmt.order_by(IDXCouponToken.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXCouponToken] = query.all()
+    _token_list: list[IDXCouponToken] = session.scalars(stmt).all()
     tokens = []
 
     for _token in _token_list:
@@ -190,51 +190,51 @@ def list_all_coupon_token_addresses(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXCouponToken)
+    stmt = (
+        select(IDXCouponToken)
         .join(Listing, Listing.token_address == IDXCouponToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
-    total = query.count()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXCouponToken.owner_address == owner_address)
+        stmt = stmt.where(IDXCouponToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXCouponToken.name.contains(name))
+        stmt = stmt.where(IDXCouponToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXCouponToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXCouponToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXCouponToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXCouponToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXCouponToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXCouponToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXCouponToken.status == status)
+        stmt = stmt.where(IDXCouponToken.status == status)
     if transferable is not None:
-        query = query.filter(IDXCouponToken.transferable == transferable)
+        stmt = stmt.where(IDXCouponToken.transferable == transferable)
     if initial_offering_status is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXCouponToken.initial_offering_status == initial_offering_status
         )
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXCouponToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXCouponToken.created)
+        stmt = stmt.order_by(IDXCouponToken.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXCouponToken] = query.all()
+    _token_list: list[IDXCouponToken] = session.scalars(stmt).all()
 
     data = {
         "result_set": {
@@ -277,9 +277,9 @@ def retrieve_coupon_token(session: DBSession, req: Request, token_address: str):
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == contract_address).limit(1)
+    ).first()
     if listed_token is None:
         raise DataNotExistsError("contract_address: %s" % contract_address)
 

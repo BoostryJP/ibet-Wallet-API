@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine, desc
+from sqlalchemy import create_engine, desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
@@ -123,17 +123,19 @@ class Processor:
         :param token_address: token address
         :return: latest timestamp, latest block number
         """
-        latest_registered: Optional[IDXTransfer] = (
-            db_session.query(IDXTransfer)
-            .filter(IDXTransfer.token_address == token_address)
+        latest_registered: Optional[IDXTransfer] = db_session.scalars(
+            select(IDXTransfer)
+            .where(IDXTransfer.token_address == token_address)
             .order_by(desc(IDXTransfer.created))
-            .first()
-        )
-        latest_registered_block_number: Optional[IDXTransferBlockNumber] = (
-            db_session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == token_address)
-            .first()
-        )
+            .limit(1)
+        ).first()
+        latest_registered_block_number: Optional[
+            IDXTransferBlockNumber
+        ] = db_session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == token_address)
+            .limit(1)
+        ).first()
         if latest_registered is not None and latest_registered_block_number is not None:
             return (
                 latest_registered.created.replace(tzinfo=UTC),
@@ -195,11 +197,11 @@ class Processor:
     ):
         for target in token_list:
             token = target.token_contract
-            idx_block_number: Optional[IDXTransferBlockNumber] = (
-                db_session.query(IDXTransferBlockNumber)
-                .filter(IDXTransferBlockNumber.contract_address == token.address)
-                .first()
-            )
+            idx_block_number: Optional[IDXTransferBlockNumber] = db_session.scalars(
+                select(IDXTransferBlockNumber)
+                .where(IDXTransferBlockNumber.contract_address == token.address)
+                .limit(1)
+            ).first()
             if idx_block_number is None:
                 idx_block_number = IDXTransferBlockNumber()
                 idx_block_number.contract_address = token.address
@@ -250,7 +252,7 @@ class Processor:
     def __get_token_list(self, db_session: Session):
         self.token_list = self.TargetTokenList()
         list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
-        listed_tokens = db_session.query(Listing).all()
+        listed_tokens = db_session.scalars(select(Listing)).all()
         for listed_token in listed_tokens:
             token_info = Contract.call_function(
                 contract=list_contract,

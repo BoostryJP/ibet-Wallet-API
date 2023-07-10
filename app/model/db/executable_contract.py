@@ -17,14 +17,15 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from sqlalchemy import BigInteger, Column, String
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
 
 class ExecutableContract(Base):
     __tablename__ = "executable_contract"
-    contract_address = Column(String(256), primary_key=True)
+    contract_address: Mapped[str] = mapped_column(String(256), primary_key=True)
 
     def __repr__(self):
         return "<Listing contract_address='%s'>" % (self.contract_address,)

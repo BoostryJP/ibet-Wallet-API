@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from web3 import Web3
 
 from app import config, log
@@ -61,16 +61,18 @@ class BaseOrderList(object):
         exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter order events that are generated from account_address
-        query = (
-            session.query(Order.id, Order.order_id, Order.order_timestamp)
-            .filter(Order.exchange_address == exchange_address)
-            .filter(Order.account_address == account_address)
+        stmt = (
+            select(Order.id, Order.order_id, Order.order_timestamp)
+            .where(Order.exchange_address == exchange_address)
+            .where(Order.account_address == account_address)
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _order_events = query.all()
+            _order_events = session.execute(stmt).all()
         else:  # default
-            _order_events = query.filter(Order.is_cancelled == False).all()
+            _order_events = session.execute(
+                stmt.where(Order.is_cancelled == False)
+            ).all()
 
         order_list = []
         for id, order_id, order_timestamp in _order_events:
@@ -116,24 +118,23 @@ class BaseOrderList(object):
         exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement not completed) generated from account_address
-        _agreement_events = (
-            session.query(
+        _agreement_events = session.execute(
+            select(
                 Agreement.id,
                 Agreement.order_id,
                 Agreement.agreement_id,
                 Agreement.agreement_timestamp,
                 Agreement.buyer_address,
             )
-            .filter(Agreement.exchange_address == exchange_address)
-            .filter(
+            .where(Agreement.exchange_address == exchange_address)
+            .where(
                 or_(
                     Agreement.buyer_address == account_address,
                     Agreement.seller_address == account_address,
                 )
             )
-            .filter(Agreement.status == AgreementStatus.PENDING.value)
-            .all()
-        )
+            .where(Agreement.status == AgreementStatus.PENDING.value)
+        ).all()
 
         settlement_list = []
         for (
@@ -195,8 +196,8 @@ class BaseOrderList(object):
         exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement completed) generated from account_address
-        query = (
-            session.query(
+        stmt = (
+            select(
                 Agreement.id,
                 Agreement.order_id,
                 Agreement.agreement_id,
@@ -204,8 +205,8 @@ class BaseOrderList(object):
                 Agreement.settlement_timestamp,
                 Agreement.buyer_address,
             )
-            .filter(Agreement.exchange_address == exchange_address)
-            .filter(
+            .where(Agreement.exchange_address == exchange_address)
+            .where(
                 or_(
                     Agreement.buyer_address == account_address,
                     Agreement.seller_address == account_address,
@@ -214,15 +215,17 @@ class BaseOrderList(object):
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _agreement_events = query.filter(
-                or_(
-                    Agreement.status == AgreementStatus.DONE.value,
-                    Agreement.status == AgreementStatus.CANCELED.value,
+            _agreement_events = session.execute(
+                stmt.where(
+                    or_(
+                        Agreement.status == AgreementStatus.DONE.value,
+                        Agreement.status == AgreementStatus.CANCELED.value,
+                    )
                 )
             ).all()
         else:  # default
-            _agreement_events = query.filter(
-                Agreement.status == AgreementStatus.DONE.value
+            _agreement_events = session.execute(
+                stmt.where(Agreement.status == AgreementStatus.DONE.value)
             ).all()
 
         complete_list = []
@@ -286,18 +289,20 @@ class BaseOrderList(object):
         """List orders from accounts filtered by token address (DEX)"""
 
         # Filter order events that are generated from account_address
-        query = (
-            session.query(
+        stmt = (
+            select(
                 Order.id, Order.exchange_address, Order.order_id, Order.order_timestamp
             )
-            .filter(Order.token_address == token_address)
-            .filter(Order.account_address == account_address)
+            .where(Order.token_address == token_address)
+            .where(Order.account_address == account_address)
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _order_events = query.all()
+            _order_events = session.execute(stmt).all()
         else:  # default
-            _order_events = query.filter(Order.is_cancelled == False).all()
+            _order_events = session.execute(
+                stmt.where(Order.is_cancelled == False)
+            ).all()
 
         order_list = []
         for id, exchange_contract_address, order_id, order_timestamp in _order_events:
@@ -335,8 +340,8 @@ class BaseOrderList(object):
         """List all orders in process of settlement (DEX)"""
 
         # Filter agreement events (settlement not completed) generated from account_address
-        _agreement_events = (
-            session.query(
+        _agreement_events = session.execute(
+            select(
                 Agreement.id,
                 Agreement.exchange_address,
                 Agreement.order_id,
@@ -345,16 +350,15 @@ class BaseOrderList(object):
                 Agreement.buyer_address,
             )
             .outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id)
-            .filter(Order.token_address == token_address)
-            .filter(
+            .where(Order.token_address == token_address)
+            .where(
                 or_(
                     Agreement.buyer_address == account_address,
                     Agreement.seller_address == account_address,
                 )
             )
-            .filter(Agreement.status == AgreementStatus.PENDING.value)
-            .all()
-        )
+            .where(Agreement.status == AgreementStatus.PENDING.value)
+        ).all()
 
         settlement_list = []
         for (
@@ -403,8 +407,8 @@ class BaseOrderList(object):
         """List all orders that have been settled (DEX)"""
 
         # Filter agreement events (settlement completed) generated from account_address
-        query = (
-            session.query(
+        stmt = (
+            select(
                 Agreement.id,
                 Agreement.exchange_address,
                 Agreement.order_id,
@@ -414,25 +418,27 @@ class BaseOrderList(object):
                 Agreement.buyer_address,
             )
             .outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id)
-            .filter(
+            .where(
                 or_(
                     Agreement.buyer_address == account_address,
                     Agreement.seller_address == account_address,
                 )
             )
-            .filter(Order.token_address == token_address)
+            .where(Order.token_address == token_address)
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _agreement_events = query.filter(
-                or_(
-                    Agreement.status == AgreementStatus.DONE.value,
-                    Agreement.status == AgreementStatus.CANCELED.value,
+            _agreement_events = session.execute(
+                stmt.where(
+                    or_(
+                        Agreement.status == AgreementStatus.DONE.value,
+                        Agreement.status == AgreementStatus.CANCELED.value,
+                    )
                 )
             ).all()
         else:  # default
-            _agreement_events = query.filter(
-                Agreement.status == AgreementStatus.DONE.value
+            _agreement_events = session.execute(
+                stmt.where(Agreement.status == AgreementStatus.DONE.value)
             ).all()
 
         complete_list = []

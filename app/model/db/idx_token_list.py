@@ -16,7 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import BigInteger, Column, String
+from sqlalchemy import BigInteger, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
@@ -27,11 +28,11 @@ class IDXTokenListItem(Base):
     __tablename__ = "token_list"
 
     # Token Address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Token Template
-    token_template = Column(String(40))
+    token_template: Mapped[str | None] = mapped_column(String(40))
     # Owner Address
-    owner_address = Column(String(42), index=True)
+    owner_address: Mapped[str | None] = mapped_column(String(42), index=True)
 
     FIELDS = {
         "token_address": str,
@@ -48,9 +49,9 @@ class IDXTokenListBlockNumber(Base):
     __tablename__ = "idx_token_list_block_number"
 
     # target address
-    contract_address = Column(String(42), primary_key=True)
+    contract_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "contract_address": str,

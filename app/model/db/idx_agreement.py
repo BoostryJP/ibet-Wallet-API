@@ -16,9 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, String
+from sqlalchemy import BigInteger, DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 from app.utils import alchemy
@@ -30,39 +32,41 @@ class IDXAgreement(Base):
     __tablename__ = "agreement"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
-    transaction_hash = Column(String(66))
+    transaction_hash: Mapped[str | None] = mapped_column(String(66))
     # Exchange(DEX) Address
-    exchange_address = Column(String(42), primary_key=True)
+    exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Order Id
-    order_id = Column(BigInteger, primary_key=True)
+    order_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     # Agreement Id
-    agreement_id = Column(BigInteger, primary_key=True)
+    agreement_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     # Unique Order Id: exchange_address + "_" + str(order_id)
-    unique_order_id = Column(String(256), index=True)
+    unique_order_id: Mapped[str | None] = mapped_column(String(256), index=True)
     # Buyer Address
-    buyer_address = Column(String(42), index=True)
+    buyer_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Seller Address
-    seller_address = Column(String(42), index=True)
+    seller_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Counterpart Address
-    counterpart_address = Column(String(42))
+    counterpart_address: Mapped[str | None] = mapped_column(String(42))
     # Agreement Amount
-    amount = Column(BigInteger)
+    amount: Mapped[int | None] = mapped_column(BigInteger)
     # Agreement Status
-    status = Column(Integer)
+    status: Mapped[int | None] = mapped_column(Integer)
     # Agreement Timestamp (datetime)
     # NOTE:
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    agreement_timestamp = Column(DateTime, default=None)
+    agreement_timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=None)
     # Settlement Timestamp (datetime)
     # NOTE:
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    settlement_timestamp = Column(DateTime, default=None)
+    settlement_timestamp: Mapped[datetime | None] = mapped_column(
+        DateTime, default=None
+    )
 
     FIELDS = {
         "id": int,

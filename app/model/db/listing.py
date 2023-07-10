@@ -20,7 +20,8 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import BigInteger, Boolean, Column, String
+from sqlalchemy import BigInteger, Boolean, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
 from app.model.db.base import Base
@@ -35,12 +36,14 @@ class Listing(Base):
     """
 
     __tablename__ = "listing"
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    token_address = Column(String(256), index=True)  # トークンアドレス
-    is_public = Column(Boolean)
-    max_holding_quantity = Column(BigInteger)  # 最大保有数量
-    max_sell_amount = Column(BigInteger)  # 売却価格上限
-    owner_address = Column(String(256))  # 発行体アドレス
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    token_address: Mapped[str | None] = mapped_column(
+        String(256), index=True
+    )  # トークンアドレス
+    is_public: Mapped[bool | None] = mapped_column(Boolean)
+    max_holding_quantity: Mapped[int | None] = mapped_column(BigInteger)  # 最大保有数量
+    max_sell_amount: Mapped[int | None] = mapped_column(BigInteger)  # 売却価格上限
+    owner_address: Mapped[str | None] = mapped_column(String(256))  # 発行体アドレス
 
     def __repr__(self):
         return "<Listing id='%d'>" % self.id

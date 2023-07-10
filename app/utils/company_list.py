@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import config, log
@@ -45,8 +46,10 @@ class CompanyList:
                 try:
                     company_list = []
                     _company_list = (
-                        db_session.query(CompanyModel)
-                        .order_by(CompanyModel.created)
+                        db_session.execute(
+                            select(CompanyModel).order_by(CompanyModel.created)
+                        )
+                        .scalars()
                         .all()
                     )
                     for _company in _company_list:
@@ -83,8 +86,10 @@ class CompanyList:
                 db_session = Session(autocommit=False, autoflush=True, bind=engine)
                 try:
                     _company = (
-                        db_session.query(CompanyModel)
-                        .filter(CompanyModel.address == address)
+                        db_session.execute(
+                            select(CompanyModel).where(CompanyModel.address == address)
+                        )
+                        .scalars()
                         .first()
                     )
                     if _company is not None:

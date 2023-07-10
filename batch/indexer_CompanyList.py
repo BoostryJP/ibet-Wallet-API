@@ -22,7 +22,7 @@ import time
 
 import requests
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -65,7 +65,7 @@ class Processor:
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
             # Delete all company list from DB
-            _company_list = db_session.query(Company).all()
+            _company_list = db_session.scalars(select(Company)).all()
             for _company in _company_list:
                 db_session.delete(_company)
 
@@ -127,7 +127,9 @@ class Processor:
         rsa_publickey: str,
         homepage: str,
     ):
-        _company = db_session.query(Company).filter(Company.address == address).first()
+        _company = db_session.scalars(
+            select(Company).where(Company.address == address).limit(1)
+        ).first()
         if _company is None:
             _company = Company()
             _company.address = address

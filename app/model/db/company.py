@@ -16,7 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import Column, String, Text
+from sqlalchemy import String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
@@ -27,13 +28,13 @@ class Company(Base):
     __tablename__ = "company"
 
     # Issuer Address
-    address = Column(String(42), primary_key=True)
+    address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Corporate Name
-    corporate_name = Column(Text)
+    corporate_name: Mapped[str | None] = mapped_column(Text)
     # RSA Public Key
-    rsa_publickey = Column(String(2000))
+    rsa_publickey: Mapped[str | None] = mapped_column(String(2000))
     # Homepage URL
-    homepage = Column(Text)
+    homepage: Mapped[str | None] = mapped_column(Text)
 
     def __repr__(self):
         return "<Company address='%s'>" % self.address

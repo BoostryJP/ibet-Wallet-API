@@ -21,7 +21,7 @@ import sys
 import time
 from typing import Any, Callable
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -186,7 +186,9 @@ class Processor:
         history.append(data)
 
         # Update database
-        _node = db_session.query(Node).filter(Node.endpoint_uri == endpoint_uri).first()
+        _node = db_session.scalars(
+            select(Node).where(Node.endpoint_uri == endpoint_uri).limit(1)
+        ).first()
         status_changed = (
             False if _node is not None and _node.is_synced == is_synced else True
         )
@@ -223,17 +225,17 @@ class Processor:
 
     @staticmethod
     def __delete_old_node(db_session: Session, valid_endpoint_uri_list: list[str]):
-        _node = (
-            db_session.query(Node)
-            .filter(Node.endpoint_uri.not_in(valid_endpoint_uri_list))
-            .delete()
+        _node = db_session.execute(
+            delete(Node).where(Node.endpoint_uri.not_in(valid_endpoint_uri_list))
         )
 
     @staticmethod
     def __sink_on_node(
         db_session: Session, endpoint_uri: str, priority: int, is_synced: bool
     ):
-        _node = db_session.query(Node).filter(Node.endpoint_uri == endpoint_uri).first()
+        _node = db_session.scalars(
+            select(Node).where(Node.endpoint_uri == endpoint_uri).limit(1)
+        ).first()
         if _node is not None:
             _node.is_synced = is_synced
             db_session.merge(_node)

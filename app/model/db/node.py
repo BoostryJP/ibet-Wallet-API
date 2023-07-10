@@ -17,7 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from sqlalchemy import BigInteger, Boolean, Column, Integer, String
+from sqlalchemy import BigInteger, Boolean, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
@@ -29,13 +30,13 @@ class Node(Base):
 
     __tablename__ = "node"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # endpoint uri(http[s]://domain:port)
-    endpoint_uri = Column(String(267))
+    endpoint_uri: Mapped[str | None] = mapped_column(String(267))
     # connect priority(top priority is lower number)
-    priority = Column(Integer)
+    priority: Mapped[int | None] = mapped_column(Integer)
     # node synchronized status
-    is_synced = Column(Boolean, nullable=False)
+    is_synced: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     def __repr__(self):
         return "<Node id='%d' is_synced='%s'>" % (self.id, self.is_synced)

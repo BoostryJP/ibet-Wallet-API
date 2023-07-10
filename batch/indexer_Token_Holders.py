@@ -22,7 +22,7 @@ import time
 from typing import Dict, List, Optional
 
 import log
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.contract import Contract
@@ -86,13 +86,13 @@ class Processor:
         return Session(autocommit=False, autoflush=True, bind=db_engine)
 
     def __load_target(self, db_session: Session) -> bool:
-        self.target: TokenHoldersList = (
-            db_session.query(TokenHoldersList)
-            .filter(
+        self.target: TokenHoldersList = db_session.scalars(
+            select(TokenHoldersList)
+            .where(
                 TokenHoldersList.batch_status == TokenHolderBatchStatus.PENDING.value
             )
-            .first()
-        )
+            .limit(1)
+        ).first()
         return True if self.target else False
 
     def __load_token_info(self) -> bool:
@@ -139,20 +139,18 @@ class Processor:
     def __load_checkpoint(
         self, local_session: Session, target_token_address: str, block_to: int
     ) -> int:
-        _checkpoint: Optional[TokenHoldersList] = (
-            local_session.query(TokenHoldersList)
-            .filter(TokenHoldersList.token_address == target_token_address)
-            .filter(TokenHoldersList.block_number < block_to)
-            .filter(TokenHoldersList.batch_status == TokenHolderBatchStatus.DONE.value)
+        _checkpoint: Optional[TokenHoldersList] = local_session.scalars(
+            select(TokenHoldersList)
+            .where(TokenHoldersList.token_address == target_token_address)
+            .where(TokenHoldersList.block_number < block_to)
+            .where(TokenHoldersList.batch_status == TokenHolderBatchStatus.DONE.value)
             .order_by(TokenHoldersList.block_number.desc())
-            .first()
-        )
+            .limit(1)
+        ).first()
         if _checkpoint:
-            _holders: List[TokenHolder] = (
-                local_session.query(TokenHolder)
-                .filter(TokenHolder.holder_list == _checkpoint.id)
-                .all()
-            )
+            _holders: List[TokenHolder] = local_session.scalars(
+                select(TokenHolder).where(TokenHolder.holder_list == _checkpoint.id)
+            ).all()
             for holder in _holders:
                 self.balance_book.store(
                     account_address=holder.account_address,
@@ -217,11 +215,12 @@ class Processor:
         if status == TokenHolderBatchStatus.DONE:
             # Not to store non-holders
             (
-                local_session.query(TokenHolder)
-                .filter(TokenHolder.holder_list == self.target.id)
-                .filter(TokenHolder.hold_balance == 0)
-                .filter(TokenHolder.locked_balance == 0)
-                .delete()
+                local_session.execute(
+                    delete(TokenHolder)
+                    .where(TokenHolder.holder_list == self.target.id)
+                    .where(TokenHolder.hold_balance == 0)
+                    .where(TokenHolder.locked_balance == 0)
+                )
             )
 
         self.target.batch_status = status.value
@@ -514,12 +513,12 @@ class Processor:
             if page.account_address == token_owner_address:
                 # Skip storing data for token owner
                 continue
-            token_holder: Optional[TokenHolder] = (
-                db_session.query(TokenHolder)
-                .filter(TokenHolder.holder_list == holder_list_id)
-                .filter(TokenHolder.account_address == account_address)
-                .first()
-            )
+            token_holder: Optional[TokenHolder] = db_session.scalars(
+                select(TokenHolder)
+                .where(TokenHolder.holder_list == holder_list_id)
+                .where(TokenHolder.account_address == account_address)
+                .limit(1)
+            ).first()
             if token_holder is not None:
                 token_holder.hold_balance = page.hold_balance
                 token_holder.locked_balance = page.locked_balance
