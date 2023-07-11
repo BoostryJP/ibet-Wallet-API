@@ -21,7 +21,7 @@ from typing import Any, Dict, Tuple
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
 from pydantic import NonNegativeInt
-from sqlalchemy import desc
+from sqlalchemy import and_, desc, func, select
 from starlette.requests import Request
 from web3.contract.contract import ContractFunction
 
@@ -87,11 +87,11 @@ def list_block_data(
 
     # NOTE: The more data, the slower the SELECT COUNT(1) query becomes.
     #       To get total number of block data, latest block number where block data synced is used here.
-    idx_block_data_block_number = (
-        session.query(IDXBlockDataBlockNumber)
-        .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-        .first()
-    )
+    idx_block_data_block_number = session.scalars(
+        select(IDXBlockDataBlockNumber)
+        .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+        .limit(1)
+    ).first()
     if idx_block_data_block_number is None:
         return json_response(
             {
@@ -110,37 +110,42 @@ def list_block_data(
 
     total = idx_block_data_block_number.latest_block_number + 1
 
-    query = session.query(IDXBlockData)
+    stmt = select(IDXBlockData)
 
     # Search Filter
     if from_block_number is not None and to_block_number is not None:
-        query = query.filter(
-            IDXBlockData.number >= from_block_number,
-            IDXBlockData.number <= to_block_number,
+        stmt = stmt.where(
+            and_(
+                IDXBlockData.number >= from_block_number,
+                IDXBlockData.number <= to_block_number,
+            )
         )
     elif from_block_number is not None:
-        query = query.filter(IDXBlockData.number >= from_block_number)
+        stmt = stmt.where(IDXBlockData.number >= from_block_number)
     elif to_block_number is not None:
-        query = query.filter(IDXBlockData.number <= to_block_number)
+        stmt = stmt.where(IDXBlockData.number <= to_block_number)
 
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Sort
     if sort_order == 0:
-        query = query.order_by(IDXBlockData.number)
+        stmt = stmt.order_by(IDXBlockData.number)
     else:
-        query = query.order_by(desc(IDXBlockData.number))
+        stmt = stmt.order_by(desc(IDXBlockData.number))
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    if query.count() > BLOCK_RESPONSE_LIMIT:
+    if (
+        session.scalar(select(func.count()).select_from(stmt.subquery()))
+        > BLOCK_RESPONSE_LIMIT
+    ):
         raise ResponseLimitExceededError("Search results exceed the limit")
 
-    block_data_tmp: list[IDXBlockData] = query.all()
+    block_data_tmp: list[IDXBlockData] = session.scalars(stmt).all()
     block_data = []
     for bd in block_data_tmp:
         block_data.append(
@@ -189,9 +194,9 @@ def get_block_data(
     if config.BC_EXPLORER_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    block_data = (
-        session.query(IDXBlockData).filter(IDXBlockData.number == block_number).first()
-    )
+    block_data = session.scalars(
+        select(IDXBlockData).where(IDXBlockData.number == block_number).limit(1)
+    ).first()
     if block_data is None:
         raise DataNotExistsError
 
@@ -250,34 +255,35 @@ def list_tx_data(
     from_address = request_query.from_address
     to_address = request_query.to_address
 
-    query = session.query(IDXTxData)
-    total = query.count()
+    stmt = select(IDXTxData)
+    total = session.scalar(select(func.count(IDXTxData.hash)))
 
     # Search Filter
     if block_number is not None:
-        query = query.filter(IDXTxData.block_number == block_number)
+        stmt = stmt.where(IDXTxData.block_number == block_number)
     if from_address is not None:
-        query = query.filter(
-            IDXTxData.from_address == to_checksum_address(from_address)
-        )
+        stmt = stmt.where(IDXTxData.from_address == to_checksum_address(from_address))
     if to_address is not None:
-        query = query.filter(IDXTxData.to_address == to_checksum_address(to_address))
+        stmt = stmt.where(IDXTxData.to_address == to_checksum_address(to_address))
 
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Sort
-    query = query.order_by(desc(IDXTxData.created))
+    stmt = stmt.order_by(desc(IDXTxData.created))
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    if query.count() > TX_RESPONSE_LIMIT:
+    if (
+        session.scalar(select(func.count()).select_from(stmt.subquery()))
+        > TX_RESPONSE_LIMIT
+    ):
         raise ResponseLimitExceededError("Search results exceed the limit")
 
-    tx_data_tmp: list[IDXTxData] = query.all()
+    tx_data_tmp: list[IDXTxData] = session.scalars(stmt).all()
     tx_data = []
     for txd in tx_data_tmp:
         tx_data.append(
@@ -325,7 +331,9 @@ def get_tx_data(
         raise NotSupportedError(method="GET", url=req.url.path)
 
     # Search tx data
-    tx_data = session.query(IDXTxData).filter(IDXTxData.hash == hash).first()
+    tx_data = session.scalars(
+        select(IDXTxData).where(IDXTxData.hash == hash).limit(1)
+    ).first()
     if tx_data is None:
         raise DataNotExistsError
 
@@ -333,11 +341,11 @@ def get_tx_data(
     contract_name: str | None = None
     contract_function: str | None = None
     contract_parameters: dict | None = None
-    token_contract = (
-        session.query(IDXTokenListItem)
-        .filter(IDXTokenListItem.token_address == tx_data.to_address)
-        .first()
-    )
+    token_contract = session.scalars(
+        select(IDXTokenListItem)
+        .where(IDXTokenListItem.token_address == tx_data.to_address)
+        .limit(1)
+    ).first()
     if token_contract is not None:
         contract_name = token_contract.token_template
         try:

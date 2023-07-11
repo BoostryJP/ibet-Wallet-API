@@ -16,7 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import BigInteger, Column, DateTime, String
+from datetime import datetime
+
+from sqlalchemy import BigInteger, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
@@ -27,21 +30,21 @@ class IDXConsumeCoupon(Base):
     __tablename__ = "consume_coupon"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
-    transaction_hash = Column(String(66), index=True)
+    transaction_hash: Mapped[str | None] = mapped_column(String(66), index=True)
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Account Address
-    account_address = Column(String(42), index=True)
+    account_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Consume Amount
-    amount = Column(BigInteger)
+    amount: Mapped[int | None] = mapped_column(BigInteger)
     # Block Timestamp (datetime)
     # NOTE:
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    block_timestamp = Column(DateTime, default=None)
+    block_timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     FIELDS = {
         "id": int,

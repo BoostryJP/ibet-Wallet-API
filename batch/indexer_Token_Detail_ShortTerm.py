@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass
 from typing import List, Type
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -121,15 +121,14 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens = (
-                local_session.query(token_type.token_model)
+            available_tokens = local_session.scalars(
+                select(token_type.token_model)
                 .join(
                     Listing,
                     token_type.token_model.token_address == Listing.token_address,
                 )
-                .filter(Listing.is_public == True)
-                .all()
-            )
+                .where(Listing.is_public == True)
+            ).all()
 
             for available_token in available_tokens:
                 try:

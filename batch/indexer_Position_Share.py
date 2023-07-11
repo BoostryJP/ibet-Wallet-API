@@ -25,7 +25,7 @@ from itertools import groupby
 from typing import List, Optional
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
@@ -225,7 +225,7 @@ class Processor:
         list_contract = Contract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        listed_tokens = db_session.query(Listing).all()
+        listed_tokens = db_session.scalars(select(Listing)).all()
 
         _exchange_list_tmp = []
         for listed_token in listed_tokens:
@@ -1047,12 +1047,12 @@ class Processor:
         db_session: Session, token_address: str, exchange_address: str
     ):
         """Get position index for Share"""
-        _idx_position_block_number = (
-            db_session.query(IDXPositionShareBlockNumber)
-            .filter(IDXPositionShareBlockNumber.token_address == token_address)
-            .filter(IDXPositionShareBlockNumber.exchange_address == exchange_address)
-            .first()
-        )
+        _idx_position_block_number = db_session.scalars(
+            select(IDXPositionShareBlockNumber)
+            .where(IDXPositionShareBlockNumber.token_address == token_address)
+            .where(IDXPositionShareBlockNumber.exchange_address == exchange_address)
+            .limit(1)
+        ).first()
         if _idx_position_block_number is None:
             return -1
         else:
@@ -1064,18 +1064,18 @@ class Processor:
     ):
         """Set position index for Share"""
         for target_token in target_token_list:
-            _idx_position_block_number = (
-                db_session.query(IDXPositionShareBlockNumber)
-                .filter(
+            _idx_position_block_number = db_session.scalars(
+                select(IDXPositionShareBlockNumber)
+                .where(
                     IDXPositionShareBlockNumber.token_address
                     == target_token.token_contract.address
                 )
-                .filter(
+                .where(
                     IDXPositionShareBlockNumber.exchange_address
                     == target_token.exchange_address
                 )
-                .first()
-            )
+                .limit(1)
+            ).first()
             if _idx_position_block_number is None:
                 _idx_position_block_number = IDXPositionShareBlockNumber()
             _idx_position_block_number.latest_block_number = block_number
@@ -1299,12 +1299,12 @@ class Processor:
         :param exchange_commitment: commitment volume on exchange
         :return: None
         """
-        position = (
-            db_session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token_address)
-            .filter(IDXPosition.account_address == account_address)
-            .first()
-        )
+        position = db_session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.token_address == token_address)
+            .where(IDXPosition.account_address == account_address)
+            .limit(1)
+        ).first()
         if position is not None:
             if balance is not None:
                 position.balance = balance
@@ -1353,13 +1353,13 @@ class Processor:
         :param value: updated locked amount
         :return: None
         """
-        locked = (
-            db_session.query(IDXLockedPosition)
-            .filter(IDXLockedPosition.token_address == token_address)
-            .filter(IDXLockedPosition.lock_address == lock_address)
-            .filter(IDXLockedPosition.account_address == account_address)
-            .first()
-        )
+        locked = db_session.scalars(
+            select(IDXLockedPosition)
+            .where(IDXLockedPosition.token_address == token_address)
+            .where(IDXLockedPosition.lock_address == lock_address)
+            .where(IDXLockedPosition.account_address == account_address)
+            .limit(1)
+        ).first()
         if locked is not None:
             locked.value = value
             db_session.merge(locked)

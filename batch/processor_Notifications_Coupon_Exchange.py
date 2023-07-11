@@ -22,7 +22,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -164,12 +164,12 @@ class Watcher:
         db_session: Session, contract_address: str, notification_type: str
     ):
         """Get latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = (
-            db_session.query(NotificationBlockNumber)
-            .filter(NotificationBlockNumber.notification_type == notification_type)
-            .filter(NotificationBlockNumber.contract_address == contract_address)
-            .first()
-        )
+        notification_block_number: NotificationBlockNumber | None = db_session.scalars(
+            select(NotificationBlockNumber)
+            .where(NotificationBlockNumber.notification_type == notification_type)
+            .where(NotificationBlockNumber.contract_address == contract_address)
+            .limit(1)
+        ).first()
         if notification_block_number is None:
             return -1
         else:
@@ -183,12 +183,12 @@ class Watcher:
         block_number: int,
     ):
         """Set latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = (
-            db_session.query(NotificationBlockNumber)
-            .filter(NotificationBlockNumber.notification_type == notification_type)
-            .filter(NotificationBlockNumber.contract_address == contract_address)
-            .first()
-        )
+        notification_block_number: NotificationBlockNumber | None = db_session.scalars(
+            select(NotificationBlockNumber)
+            .where(NotificationBlockNumber.notification_type == notification_type)
+            .where(NotificationBlockNumber.contract_address == contract_address)
+            .limit(1)
+        ).first()
         if notification_block_number is None:
             notification_block_number = NotificationBlockNumber()
         notification_block_number.notification_type = notification_type

@@ -24,6 +24,7 @@ from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends
 from hexbytes import HexBytes
 from rlp import decode
+from sqlalchemy import select
 from web3.exceptions import ContractLogicError, TimeExhausted
 from web3.types import TxReceipt
 
@@ -74,12 +75,9 @@ def ethereum_json_rpc(session: DBSession, data: JsonRPCRequest):
     """
     Endpoint: /Eth/RPC
     """
-    node: Node | None = (
-        session.query(Node)
-        .filter(Node.is_synced == True)
-        .order_by(Node.priority)
-        .first()
-    )
+    node: Node | None = session.scalars(
+        select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
+    ).first()
 
     if node is not None:
         try:
@@ -160,11 +158,9 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
             LOG.warning(f"RLP decoding failed: {err}")
             continue
 
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == to_contract_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == to_contract_address).limit(1)
+        ).first()
         if listed_token is not None:
             LOG.debug(f"Token Address: {to_contract_address}")
             token_attribute = Contract.call_function(
@@ -198,11 +194,11 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
             continue
 
         # Check that contract is executable
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(to_contract_address == ExecutableContract.contract_address)
-            .first()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract)
+            .where(to_contract_address == ExecutableContract.contract_address)
+            .limit(1)
+        ).first()
         if executable_contract is None:
             # If it is not a default contract, return error status.
             if (
@@ -320,11 +316,9 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
             LOG.warning(f"RLP decoding failed: {err}")
             continue
 
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == to_contract_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == to_contract_address).limit(1)
+        ).first()
 
         if listed_token is not None:
             LOG.debug(f"Token Address: {to_contract_address}")
@@ -359,11 +353,11 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
             continue
 
         # Check that contract is executable
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(to_contract_address == ExecutableContract.contract_address)
-            .first()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract)
+            .where(to_contract_address == ExecutableContract.contract_address)
+            .limit(1)
+        ).first()
         if executable_contract is None:
             # If it is not a default contract, return error status.
             if (

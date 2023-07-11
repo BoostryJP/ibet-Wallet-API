@@ -25,6 +25,7 @@ from decimal import Decimal
 from typing import Callable, Optional, Type, Union
 
 from eth_utils import to_checksum_address
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import log
@@ -80,11 +81,11 @@ def token_db_cache(TargetModel: IDXTokenModel):
                 return func(cls, session, token_address)
 
             # Get data from cache
-            cached_token: Optional[IDXTokenInstance] = (
-                session.query(TargetModel)
-                .filter(TargetModel.token_address == token_address)
-                .first()
-            )
+            cached_token: Optional[IDXTokenInstance] = session.scalars(
+                select(TargetModel)
+                .where(TargetModel.token_address == token_address)
+                .limit(1)
+            ).first()
             if (
                 cached_token
                 and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL)
@@ -361,11 +362,9 @@ class BondToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         bondtoken = BondToken()
         bondtoken.token_address = token_address
@@ -556,11 +555,9 @@ class ShareToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         sharetoken = ShareToken()
         sharetoken.token_address = token_address
@@ -716,11 +713,9 @@ class MembershipToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         membershiptoken = MembershipToken()
         membershiptoken.token_address = token_address
@@ -871,11 +866,9 @@ class CouponToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         coupontoken = CouponToken()
         coupontoken.token_address = token_address

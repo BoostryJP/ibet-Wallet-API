@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from fastapi import APIRouter, Path
+from sqlalchemy import delete, select
 
 from app import config, log
 from app.contracts import Contract
@@ -71,7 +72,7 @@ def list_all_admin_tokens(session: DBSession):
     """
     res_body = []
 
-    listed_tokens: list[Listing] = session.query(Listing).all()
+    listed_tokens = session.scalars(select(Listing)).all()
     for token in listed_tokens:
         item = token.json()
         res_body.append(item)
@@ -97,17 +98,18 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     contract_address = data.contract_address
 
     # 既存レコードの存在チェック
-    _listing = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    _listing = session.scalars(
+        select(Listing).where(Listing.token_address == contract_address).limit(1)
+    ).first()
+
     if _listing is not None:
         raise DataConflictError(description="contract_address already exist")
 
-    _executable_contract = (
-        session.query(ExecutableContract)
-        .filter(ExecutableContract.contract_address == contract_address)
-        .first()
-    )
+    _executable_contract = session.scalars(
+        select(ExecutableContract)
+        .where(ExecutableContract.contract_address == contract_address)
+        .limit(1)
+    ).first()
     if _executable_contract is not None:
         raise DataConflictError(description="contract_address already exist")
 
@@ -135,16 +137,16 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     max_holding_quantity = data.max_holding_quantity
     max_sell_amount = data.max_sell_amount
 
-    listing = Listing()
-    listing.token_address = contract_address
-    listing.is_public = is_public
-    listing.max_holding_quantity = max_holding_quantity
-    listing.max_sell_amount = max_sell_amount
-    listing.owner_address = owner_address
+    listing = Listing(
+        token_address=contract_address,
+        is_public=is_public,
+        max_holding_quantity=max_holding_quantity,
+        max_sell_amount=max_sell_amount,
+        owner_address=owner_address,
+    )
     session.add(listing)
 
-    executable_contract = ExecutableContract()
-    executable_contract.contract_address = contract_address
+    executable_contract = ExecutableContract(contract_address=contract_address)
     session.add(executable_contract)
 
     token_type = token[1]
@@ -172,13 +174,14 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
         token_address=contract_address,
         account_address=owner_address,
     )
-    position = IDXPosition()
-    position.token_address = contract_address
-    position.account_address = owner_address
-    position.balance = balance or 0
-    position.pending_transfer = pending_transfer or 0
-    position.exchange_balance = exchange_balance or 0
-    position.exchange_commitment = exchange_commitment or 0
+    position = IDXPosition(
+        token_address=contract_address,
+        account_address=owner_address,
+        balance=balance or 0,
+        pending_transfer=pending_transfer or 0,
+        exchange_balance=exchange_balance or 0,
+        exchange_commitment=exchange_commitment or 0,
+    )
     session.merge(position)
     session.commit()
 
@@ -232,9 +235,9 @@ def retrieve_admin_token(
     Endpoint: /Admin/Tokens/{token_address}
       - GET: 取扱トークン情報取得（個別）
     """
-    token = (
-        session.query(Listing).filter(Listing.token_address == token_address).first()
-    )
+    token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
 
     if token is not None:
         return json_response({**SuccessResponse.default(), "data": token.json()})
@@ -260,9 +263,9 @@ def update_token(
     """
     # 更新対象レコードを取得
     # 更新対象のレコードが存在しない場合は404エラーを返す
-    token = (
-        session.query(Listing).filter(Listing.token_address == token_address).first()
-    )
+    token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if token is None:
         raise DataNotExistsError()
 
@@ -307,22 +310,26 @@ def delete_token(
       - DELETE: 取扱トークン情報削除（個別）
     """
     try:
-        session.query(Listing).filter(Listing.token_address == token_address).delete()
-        session.query(ExecutableContract).filter(
-            ExecutableContract.contract_address == token_address
-        ).delete()
-        session.query(IDXBondToken).filter(
-            IDXBondToken.token_address == token_address
-        ).delete()
-        session.query(IDXShareToken).filter(
-            IDXShareToken.token_address == token_address
-        ).delete()
-        session.query(IDXMembershipToken).filter(
-            IDXMembershipToken.token_address == token_address
-        ).delete()
-        session.query(IDXCouponToken).filter(
-            IDXCouponToken.token_address == token_address
-        ).delete()
+        session.execute(delete(Listing).where(Listing.token_address == token_address))
+        session.execute(
+            delete(ExecutableContract).where(
+                ExecutableContract.contract_address == token_address
+            )
+        )
+        session.execute(
+            delete(IDXBondToken).where(IDXBondToken.token_address == token_address)
+        )
+        session.execute(
+            delete(IDXShareToken).where(IDXShareToken.token_address == token_address)
+        )
+        session.execute(
+            delete(IDXMembershipToken).where(
+                IDXMembershipToken.token_address == token_address
+            )
+        )
+        session.execute(
+            delete(IDXCouponToken).where(IDXCouponToken.token_address == token_address)
+        )
     except Exception as err:
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()

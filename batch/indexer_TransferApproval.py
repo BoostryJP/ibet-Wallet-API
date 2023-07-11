@@ -22,7 +22,7 @@ import time
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
@@ -172,7 +172,7 @@ class Processor:
         list_contract = Contract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        listed_tokens = db_session.query(Listing).all()
+        listed_tokens = db_session.scalars(select(Listing)).all()
 
         _exchange_list_tmp = []
         for listed_token in listed_tokens:
@@ -589,12 +589,12 @@ class Processor:
         db_session: Session, token_address: str, exchange_address: str
     ):
         """Get position index for Bond"""
-        _idx_transfer_approval_block_number = (
-            db_session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token_address)
-            .filter(IDXTransferApprovalBlockNumber.exchange_address == exchange_address)
-            .first()
-        )
+        _idx_transfer_approval_block_number = db_session.scalars(
+            select(IDXTransferApprovalBlockNumber)
+            .where(IDXTransferApprovalBlockNumber.token_address == token_address)
+            .where(IDXTransferApprovalBlockNumber.exchange_address == exchange_address)
+            .limit(1)
+        ).first()
         if _idx_transfer_approval_block_number is None:
             return -1
         else:
@@ -606,18 +606,18 @@ class Processor:
     ):
         """Set position index for Bond"""
         for target_token in target_token_list:
-            _idx_transfer_approval_block_number = (
-                db_session.query(IDXTransferApprovalBlockNumber)
-                .filter(
+            _idx_transfer_approval_block_number = db_session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(
                     IDXTransferApprovalBlockNumber.token_address
                     == target_token.token_contract.address
                 )
-                .filter(
+                .where(
                     IDXTransferApprovalBlockNumber.exchange_address
                     == target_token.exchange_address
                 )
-                .first()
-            )
+                .limit(1)
+            ).first()
             if _idx_transfer_approval_block_number is None:
                 _idx_transfer_approval_block_number = IDXTransferApprovalBlockNumber()
             _idx_transfer_approval_block_number.latest_block_number = block_number
@@ -657,13 +657,13 @@ class Processor:
         :param block_timestamp: block timestamp
         :return: None
         """
-        transfer_approval = (
-            db_session.query(IDXTransferApproval)
-            .filter(IDXTransferApproval.token_address == token_address)
-            .filter(IDXTransferApproval.exchange_address == exchange_address)
-            .filter(IDXTransferApproval.application_id == application_id)
-            .first()
-        )
+        transfer_approval = db_session.scalars(
+            select(IDXTransferApproval)
+            .where(IDXTransferApproval.token_address == token_address)
+            .where(IDXTransferApproval.exchange_address == exchange_address)
+            .where(IDXTransferApproval.application_id == application_id)
+            .limit(1)
+        ).first()
         if event_type == "ApplyFor":
             if transfer_approval is None:
                 transfer_approval = IDXTransferApproval()

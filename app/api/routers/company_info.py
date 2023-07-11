@@ -20,7 +20,7 @@ from typing import Callable, Optional
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Path, Query
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 from web3 import Web3
 
 from app import config, log
@@ -77,8 +77,8 @@ def list_all_companies(
 
     # Get the token listed
     if include_private_listing:
-        available_tokens = (
-            session.query(
+        available_tokens = session.execute(
+            select(
                 Listing,
                 IDXBondToken.owner_address,
                 IDXShareToken.owner_address,
@@ -98,18 +98,17 @@ def list_all_companies(
             .outerjoin(
                 IDXCouponToken, Listing.token_address == IDXCouponToken.token_address
             )
-            .all()
-        )
+        ).all()
     else:
-        available_tokens = (
-            session.query(
+        available_tokens = session.execute(
+            select(
                 Listing,
                 IDXBondToken.owner_address,
                 IDXShareToken.owner_address,
                 IDXMembershipToken.owner_address,
                 IDXCouponToken.owner_address,
             )
-            .filter(Listing.is_public == True)
+            .where(Listing.is_public == True)
             .outerjoin(
                 IDXBondToken, Listing.token_address == IDXBondToken.token_address
             )
@@ -123,8 +122,7 @@ def list_all_companies(
             .outerjoin(
                 IDXCouponToken, Listing.token_address == IDXCouponToken.token_address
             )
-            .all()
-        )
+        ).all()
 
     # Filter only issuers that issue the listed tokens
     listing_owner_list = []
@@ -214,20 +212,18 @@ def retrieve_company_tokens(
 
     # Get the token listed
     if include_private_listing:
-        available_list = (
-            session.query(Listing)
-            .filter(Listing.owner_address == eth_address)
+        available_list = session.scalars(
+            select(Listing)
+            .where(Listing.owner_address == eth_address)
             .order_by(desc(Listing.id))
-            .all()
-        )
+        ).all()
     else:
-        available_list = (
-            session.query(Listing)
-            .filter(Listing.owner_address == eth_address)
-            .filter(Listing.is_public == True)
+        available_list = session.scalars(
+            select(Listing)
+            .where(Listing.owner_address == eth_address)
+            .where(Listing.is_public == True)
             .order_by(desc(Listing.id))
-            .all()
-        )
+        ).all()
 
     # Get token attributes
     token_list = []

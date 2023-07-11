@@ -24,7 +24,7 @@ from datetime import datetime
 from typing import List, Type
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -99,17 +99,16 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens: List[Listing] = (
-                local_session.query(Listing)
+            available_tokens: List[Listing] = local_session.scalars(
+                select(Listing)
                 .join(
                     IDXTokenListItem,
                     IDXTokenListItem.token_address == Listing.token_address,
                 )
-                .filter(Listing.is_public == True)
-                .filter(IDXTokenListItem.token_template == token_type.template)
+                .where(Listing.is_public == True)
+                .where(IDXTokenListItem.token_template == token_type.template)
                 .order_by(Listing.id)
-                .all()
-            )
+            ).all()
 
             for available_token in available_tokens:
                 try:

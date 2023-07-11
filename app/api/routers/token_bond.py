@@ -20,7 +20,7 @@ from typing import Optional
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Query, Request
-from sqlalchemy import desc
+from sqlalchemy import desc, func, select
 from web3 import Web3
 
 from app import config, log
@@ -96,61 +96,59 @@ def list_all_straight_bond_tokens(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXBondToken)
+    stmt = (
+        select(IDXBondToken)
         .join(Listing, Listing.token_address == IDXBondToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
     if len(address_list):
-        query = query.filter(IDXBondToken.token_address.in_(address_list))
-    total = query.count()
+        stmt = stmt.where(IDXBondToken.token_address.in_(address_list))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXBondToken.owner_address == owner_address)
+        stmt = stmt.where(IDXBondToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXBondToken.name.contains(name))
+        stmt = stmt.where(IDXBondToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXBondToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXBondToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXBondToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXBondToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXBondToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXBondToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXBondToken.status == status)
+        stmt = stmt.where(IDXBondToken.status == status)
     if personal_info_address is not None:
-        query = query.filter(
-            IDXBondToken.personal_info_address == personal_info_address
-        )
+        stmt = stmt.where(IDXBondToken.personal_info_address == personal_info_address)
     if transferable is not None:
-        query = query.filter(IDXBondToken.transferable == transferable)
+        stmt = stmt.where(IDXBondToken.transferable == transferable)
     if is_offering is not None:
-        query = query.filter(IDXBondToken.is_offering == is_offering)
+        stmt = stmt.where(IDXBondToken.is_offering == is_offering)
     if transfer_approval_required is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXBondToken.transfer_approval_required == transfer_approval_required
         )
     if is_redeemed is not None:
-        query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
-    count = query.count()
+        stmt = stmt.where(IDXBondToken.is_redeemed == is_redeemed)
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXBondToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXBondToken.created)
+        stmt = stmt.order_by(IDXBondToken.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXBondToken] = query.all()
+    _token_list: list[IDXBondToken] = session.scalars(stmt).all()
     tokens = []
 
     for _token in _token_list:
@@ -208,59 +206,57 @@ def list_all_straight_bond_token_addresses(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXBondToken)
+    stmt = (
+        select(IDXBondToken)
         .join(Listing, Listing.token_address == IDXBondToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
-    total = query.count()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXBondToken.owner_address == owner_address)
+        stmt = stmt.where(IDXBondToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXBondToken.name.contains(name))
+        stmt = stmt.where(IDXBondToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXBondToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXBondToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXBondToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXBondToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXBondToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXBondToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXBondToken.status == status)
+        stmt = stmt.where(IDXBondToken.status == status)
     if personal_info_address is not None:
-        query = query.filter(
-            IDXBondToken.personal_info_address == personal_info_address
-        )
+        stmt = stmt.where(IDXBondToken.personal_info_address == personal_info_address)
     if transferable is not None:
-        query = query.filter(IDXBondToken.transferable == transferable)
+        stmt = stmt.where(IDXBondToken.transferable == transferable)
     if is_offering is not None:
-        query = query.filter(IDXBondToken.is_offering == is_offering)
+        stmt = stmt.where(IDXBondToken.is_offering == is_offering)
     if transfer_approval_required is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXBondToken.transfer_approval_required == transfer_approval_required
         )
     if is_redeemed is not None:
-        query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
-    count = query.count()
+        stmt = stmt.where(IDXBondToken.is_redeemed == is_redeemed)
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXBondToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXBondToken.created)
+        stmt = stmt.order_by(IDXBondToken.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXBondToken] = query.all()
+    _token_list: list[IDXBondToken] = session.scalars(stmt).all()
 
     data = {
         "result_set": {
@@ -303,9 +299,9 @@ def retrieve_straight_bond_token(session: DBSession, req: Request, token_address
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == contract_address).limit(1)
+    ).first()
     if listed_token is None:
         raise DataNotExistsError("contract_address: %s" % contract_address)
 

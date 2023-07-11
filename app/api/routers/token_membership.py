@@ -20,7 +20,7 @@ from typing import Optional
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Query, Request
-from sqlalchemy import desc
+from sqlalchemy import desc, func, select
 from web3 import Web3
 
 from app import config, log
@@ -91,53 +91,53 @@ def list_all_membership_tokens(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXMembershipToken)
+    stmt = (
+        select(IDXMembershipToken)
         .join(Listing, Listing.token_address == IDXMembershipToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
     if len(address_list):
-        query = query.filter(IDXMembershipToken.token_address.in_(address_list))
-    total = query.count()
+        stmt = stmt.where(IDXMembershipToken.token_address.in_(address_list))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXMembershipToken.owner_address == owner_address)
+        stmt = stmt.where(IDXMembershipToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXMembershipToken.name.contains(name))
+        stmt = stmt.where(IDXMembershipToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXMembershipToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXMembershipToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXMembershipToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXMembershipToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXMembershipToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXMembershipToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXMembershipToken.status == status)
+        stmt = stmt.where(IDXMembershipToken.status == status)
     if transferable is not None:
-        query = query.filter(IDXMembershipToken.transferable == transferable)
+        stmt = stmt.where(IDXMembershipToken.transferable == transferable)
     if initial_offering_status is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXMembershipToken.initial_offering_status == initial_offering_status
         )
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXMembershipToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXMembershipToken.created)
+        stmt = stmt.order_by(IDXMembershipToken.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXMembershipToken] = query.all()
+    _token_list: list[IDXMembershipToken] = session.scalars(stmt).all()
     tokens = []
 
     for _token in _token_list:
@@ -190,51 +190,51 @@ def list_all_membership_token_addresses(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXMembershipToken)
+    stmt = (
+        select(IDXMembershipToken)
         .join(Listing, Listing.token_address == IDXMembershipToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
-    total = query.count()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXMembershipToken.owner_address == owner_address)
+        stmt = stmt.where(IDXMembershipToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXMembershipToken.name.contains(name))
+        stmt = stmt.where(IDXMembershipToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXMembershipToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXMembershipToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXMembershipToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXMembershipToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXMembershipToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXMembershipToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXMembershipToken.status == status)
+        stmt = stmt.where(IDXMembershipToken.status == status)
     if transferable is not None:
-        query = query.filter(IDXMembershipToken.transferable == transferable)
+        stmt = stmt.where(IDXMembershipToken.transferable == transferable)
     if initial_offering_status is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXMembershipToken.initial_offering_status == initial_offering_status
         )
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXMembershipToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXMembershipToken.created)
+        stmt = stmt.order_by(IDXMembershipToken.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXMembershipToken] = query.all()
+    _token_list: list[IDXMembershipToken] = session.scalars(stmt).all()
 
     data = {
         "result_set": {
@@ -275,9 +275,9 @@ def retrieve_membership_token(session: DBSession, req: Request, token_address: s
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == contract_address).limit(1)
+    ).first()
     if listed_token is None:
         raise DataNotExistsError("contract_address: %s" % contract_address)
 

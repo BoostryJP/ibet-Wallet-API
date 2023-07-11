@@ -16,9 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import datetime
 from typing import Type, Union
 
-from sqlalchemy import JSON, BigInteger, Boolean, Column, DateTime, Float, String, Text
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import engine
 from app.model.db.base import Base
@@ -30,39 +32,39 @@ class TokenBase(Base):
     __abstract__ = True
 
     # Token Address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Token Template
-    token_template = Column(String(40))
+    token_template: Mapped[str | None] = mapped_column(String(40))
     # Owner Address
-    owner_address = Column(String(42), index=True)
+    owner_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Company Name(Corporate)
     # NOTE: Short-term cache required
-    company_name = Column(Text)
+    company_name: Mapped[str | None] = mapped_column(Text)
     # RSA Public Key(Corporate)
     # NOTE: Short-term cache required
-    rsa_publickey = Column(String(2000))
+    rsa_publickey: Mapped[str | None] = mapped_column(String(2000))
     # Name
-    name = Column(String(200))
+    name: Mapped[str | None] = mapped_column(String(200))
     # Symbol
-    symbol = Column(String(200))
+    symbol: Mapped[str | None] = mapped_column(String(200))
     # Total Supply
     # NOTE: Short-term cache required
-    total_supply = Column(BigInteger)
+    total_supply: Mapped[int | None] = mapped_column(BigInteger)
     # Tradable Exchange
-    tradable_exchange = Column(String(42), index=True)
+    tradable_exchange: Mapped[str | None] = mapped_column(String(42), index=True)
     # Contact Information
-    contact_information = Column(String(2000))
+    contact_information: Mapped[str | None] = mapped_column(String(2000))
     # Privacy Policy
-    privacy_policy = Column(String(5000))
+    privacy_policy: Mapped[str | None] = mapped_column(String(5000))
     # Status
     # NOTE: Short-term cache required
-    status = Column(Boolean)
+    status: Mapped[bool | None] = mapped_column(Boolean)
     # Max Holding Quantity
-    max_holding_quantity = Column(BigInteger)
+    max_holding_quantity: Mapped[int | None] = mapped_column(BigInteger)
     # Max Sell Amount
-    max_sell_amount = Column(BigInteger)
+    max_sell_amount: Mapped[int | None] = mapped_column(BigInteger)
     # Cached time of short-term cache
-    short_term_cache_created = Column(DateTime)
+    short_term_cache_created: Mapped[datetime.datetime | None] = mapped_column(DateTime)
 
     FIELDS = {
         "id": int,
@@ -109,40 +111,40 @@ class IDXBondToken(TokenBase):
     __tablename__ = "bond_token"
 
     # Personal Info Address
-    personal_info_address = Column(String(42), index=True)
+    personal_info_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transferable
     # NOTE: Short-term cache required
-    transferable = Column(Boolean)
+    transferable: Mapped[bool | None] = mapped_column(Boolean)
     # Is Offering
     # NOTE: Short-term cache required
-    is_offering = Column(Boolean)
+    is_offering: Mapped[bool | None] = mapped_column(Boolean)
     # Transfer Approval Required
     # NOTE: Short-term cache required
-    transfer_approval_required = Column(Boolean)
+    transfer_approval_required: Mapped[bool | None] = mapped_column(Boolean)
     # Face Value
-    face_value = Column(BigInteger)
+    face_value: Mapped[int | None] = mapped_column(BigInteger)
     # Interest Rate
-    interest_rate = Column(Float)
+    interest_rate: Mapped[float | None] = mapped_column(Float)
     # Interest Payment Date(JSON)
-    interest_payment_date = Column(JSON)
+    interest_payment_date: Mapped[dict | None] = mapped_column(JSON)
     # Redemption Date
-    redemption_date = Column(String(8))
+    redemption_date: Mapped[str | None] = mapped_column(String(8))
     # Redemption Value
-    redemption_value = Column(BigInteger)
+    redemption_value: Mapped[int | None] = mapped_column(BigInteger)
     # Return Date
-    return_date = Column(String(8))
+    return_date: Mapped[str | None] = mapped_column(String(8))
     # Return Amount
-    return_amount = Column(String(2000))
+    return_amount: Mapped[str | None] = mapped_column(String(2000))
     # Purpose
-    purpose = Column(String(2000))
+    purpose: Mapped[str | None] = mapped_column(String(2000))
     # Memo
     if engine.name == "mysql":
-        memo = Column(Text)
+        memo: Mapped[str | None] = mapped_column(Text)
     else:
-        memo = Column(String(10000))
+        memo: Mapped[str | None] = mapped_column(String(10000))
     # Is Redeemed
     # NOTE: Short-term cache required
-    is_redeemed = Column(Boolean)
+    is_redeemed: Mapped[bool | None] = mapped_column(Boolean)
 
     FIELDS = {
         "personal_info_address": str,
@@ -189,34 +191,34 @@ class IDXShareToken(TokenBase):
     __tablename__ = "share_token"
 
     # Personal Info Address
-    personal_info_address = Column(String(42), index=True)
+    personal_info_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transferable
     # NOTE: Short-term cache required
-    transferable = Column(Boolean)
+    transferable: Mapped[bool | None] = mapped_column(Boolean)
     # Is Offering
     # NOTE: Short-term cache required
-    is_offering = Column(Boolean)
+    is_offering: Mapped[bool | None] = mapped_column(Boolean)
     # Transfer Approval Required
     # NOTE: Short-term cache required
-    transfer_approval_required = Column(Boolean)
+    transfer_approval_required: Mapped[bool | None] = mapped_column(Boolean)
     # Issue Price
-    issue_price = Column(BigInteger)
+    issue_price: Mapped[int | None] = mapped_column(BigInteger)
     # Cancellation Date
-    cancellation_date = Column(String(8))
+    cancellation_date: Mapped[str | None] = mapped_column(String(8))
     # Memo
     if engine.name == "mysql":
-        memo = Column(Text)
+        memo: Mapped[str | None] = mapped_column(Text)
     else:
-        memo = Column(String(10000))
+        memo: Mapped[str | None] = mapped_column(String(10000))
     # Principal Value
     # NOTE: Short-term cache required
-    principal_value = Column(BigInteger)
+    principal_value: Mapped[int | None] = mapped_column(BigInteger)
     # Is Canceled
     # NOTE: Short-term cache required
-    is_canceled = Column(Boolean)
+    is_canceled: Mapped[int | None] = mapped_column(Boolean)
     # Dividend Information(JSON)
     # NOTE: Short-term cache required
-    dividend_information = Column(JSON)
+    dividend_information: Mapped[dict | None] = mapped_column(JSON)
 
     FIELDS = {
         "personal_info_address": str,
@@ -255,21 +257,21 @@ class IDXMembershipToken(TokenBase):
     __tablename__ = "membership_token"
 
     # Details
-    details = Column(String(2000))
+    details: Mapped[str | None] = mapped_column(String(2000))
     # Return Details
-    return_details = Column(String(2000))
+    return_details: Mapped[str | None] = mapped_column(String(2000))
     # Expiration Date
-    expiration_date = Column(String(8))
+    expiration_date: Mapped[str | None] = mapped_column(String(8))
     # Memo
-    memo = Column(String(2000))
+    memo: Mapped[str | None] = mapped_column(String(2000))
     # Transferable
     # NOTE: Short-term cache required
-    transferable = Column(Boolean)
+    transferable: Mapped[bool | None] = mapped_column(Boolean)
     # Initial Offering Status
     # NOTE: Short-term cache required
-    initial_offering_status = Column(Boolean)
+    initial_offering_status: Mapped[bool | None] = mapped_column(Boolean)
     # Image URL(JSON)
-    image_url = Column(JSON)
+    image_url: Mapped[dict | None] = mapped_column(JSON)
 
     FIELDS = {
         "details": str,
@@ -302,21 +304,21 @@ class IDXCouponToken(TokenBase):
     __tablename__ = "coupon_token"
 
     # Details
-    details = Column(String(2000))
+    details: Mapped[str | None] = mapped_column(String(2000))
     # Return Details
-    return_details = Column(String(2000))
+    return_details: Mapped[str | None] = mapped_column(String(2000))
     # Expiration Date
-    expiration_date = Column(String(8))
+    expiration_date: Mapped[str | None] = mapped_column(String(8))
     # Memo
-    memo = Column(String(2000))
+    memo: Mapped[str | None] = mapped_column(String(2000))
     # Transferable
     # NOTE: Short-term cache required
-    transferable = Column(Boolean)
+    transferable: Mapped[bool | None] = mapped_column(Boolean)
     # Initial Offering Status
     # NOTE: Short-term cache required
-    initial_offering_status = Column(Boolean)
+    initial_offering_status: Mapped[bool | None] = mapped_column(Boolean)
     # Image URL(JSON)
-    image_url = Column(JSON)
+    image_url: Mapped[dict | None] = mapped_column(JSON)
 
     FIELDS = {
         "details": str,

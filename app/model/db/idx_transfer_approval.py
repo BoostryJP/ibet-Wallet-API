@@ -19,7 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
+from sqlalchemy import BigInteger, Boolean, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
 from app.model.db.base import Base
@@ -35,33 +36,33 @@ class IDXTransferApproval(Base):
     __tablename__ = "transfer_approval"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Exchange Address (value is set if the event is from exchange)
-    exchange_address = Column(String(42), index=True)
+    exchange_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Application Id
-    application_id = Column(BigInteger, index=True)
+    application_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
     # Transfer From
-    from_address = Column(String(42))
+    from_address: Mapped[str | None] = mapped_column(String(42))
     # Transfer To
-    to_address = Column(String(42))
+    to_address: Mapped[str | None] = mapped_column(String(42))
     # Transfer Amount
-    value = Column(BigInteger)
+    value: Mapped[int | None] = mapped_column(BigInteger)
     # Application Datetime
-    application_datetime = Column(DateTime)
+    application_datetime: Mapped[datetime | None] = mapped_column(DateTime)
     # Application Blocktimestamp
-    application_blocktimestamp = Column(DateTime)
+    application_blocktimestamp: Mapped[datetime | None] = mapped_column(DateTime)
     # Approval Datetime (ownership vesting datetime)
-    approval_datetime = Column(DateTime)
+    approval_datetime: Mapped[datetime | None] = mapped_column(DateTime)
     # Approval Blocktimestamp (ownership vesting block timestamp)
-    approval_blocktimestamp = Column(DateTime)
+    approval_blocktimestamp: Mapped[datetime | None] = mapped_column(DateTime)
     # Cancellation Status
-    cancelled = Column(Boolean)
+    cancelled: Mapped[bool | None] = mapped_column(Boolean)
     # Escrow Finished Status
-    escrow_finished = Column(Boolean)
+    escrow_finished: Mapped[bool | None] = mapped_column(Boolean)
     # Approve Status
-    transfer_approved = Column(Boolean)
+    transfer_approved: Mapped[bool | None] = mapped_column(Boolean)
 
     @staticmethod
     def format_datetime(_datetime: datetime) -> str:
@@ -120,13 +121,13 @@ class IDXTransferApprovalBlockNumber(Base):
     __tablename__ = "idx_transfer_approval_block_number"
 
     # sequence id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # target exchange address
-    exchange_address = Column(String(42), primary_key=True)
+    exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "id": int,

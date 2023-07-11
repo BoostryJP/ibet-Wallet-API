@@ -23,7 +23,18 @@ from zoneinfo import ZoneInfo
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
-from sqlalchemy import String, and_, cast, column, desc, func, literal, null, or_
+from sqlalchemy import (
+    String,
+    and_,
+    cast,
+    column,
+    desc,
+    func,
+    literal,
+    null,
+    or_,
+    select,
+)
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
 from web3 import Web3
@@ -138,44 +149,44 @@ class ListAllLock:
         sort_item = request_query.sort_item
         sort_order = request_query.sort_order  # default: asc
 
-        query = session.query(IDXLockedPosition, self.idx_token_model).join(
+        stmt = select(IDXLockedPosition, self.idx_token_model).join(
             self.idx_token_model,
             IDXLockedPosition.token_address == self.idx_token_model.token_address,
         )
         if len(token_address_list) > 0:
-            query = query.filter(
-                IDXLockedPosition.token_address.in_(token_address_list)
-            )
-        query = query.filter(
-            IDXLockedPosition.account_address == account_address
-        ).filter(IDXLockedPosition.value > 0)
+            stmt = stmt.where(IDXLockedPosition.token_address.in_(token_address_list))
+        stmt = stmt.where(IDXLockedPosition.account_address == account_address).where(
+            IDXLockedPosition.value > 0
+        )
 
-        total = query.count()
+        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
         if lock_address is not None:
-            query = query.filter(IDXLockedPosition.lock_address == lock_address)
+            stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-        count = query.count()
+        count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
         sort_attr = getattr(IDXLockedPosition, sort_item, None)
 
         if sort_order == 0:  # ASC
-            query = query.order_by(sort_attr)
+            stmt = stmt.order_by(sort_attr)
         else:  # DESC
-            query = query.order_by(desc(sort_attr))
+            stmt = stmt.order_by(desc(sort_attr))
 
         # NOTE: Set secondary sort for consistent results
         if sort_item != "token_address":
-            query = query.order_by(IDXLockedPosition.token_address)
+            stmt = stmt.order_by(IDXLockedPosition.token_address)
         else:
-            query = query.order_by(IDXLockedPosition.created)
+            stmt = stmt.order_by(IDXLockedPosition.created)
 
         if limit is not None:
-            query = query.limit(limit)
+            stmt = stmt.limit(limit)
         if offset is not None:
-            query = query.offset(offset)
+            stmt = stmt.offset(offset)
 
-        _locked_list: list[tuple[IDXLockedPosition, IDXTokenInstance]] = query.all()
+        _locked_list: list[
+            tuple[IDXLockedPosition, IDXTokenInstance]
+        ] = session.execute(stmt).all()
         locked_list = []
 
         for _locked in _locked_list:
@@ -237,95 +248,95 @@ class ListAllLockEvent:
         token_address_list = request_query.token_address_list
         category = request_query.category
 
-        query_lock = session.query(
+        stmt_lock = select(
             literal(value=LockEventCategory.Lock.value, type_=String).label(
                 "history_category"
             ),
             IDXLock.transaction_hash.label("transaction_hash"),
             IDXLock.msg_sender.label("msg_sender"),
-            IDXLock.token_address.label("token_address"),
+            IDXLock.token_address.label("token_address_alias"),
             IDXLock.lock_address.label("lock_address"),
             IDXLock.account_address.label("account_address"),
             null().label("recipient_address"),
             IDXLock.value.label("value"),
             IDXLock.data.label("data"),
             IDXLock.block_timestamp.label("block_timestamp"),
-            self.idx_token_model,
-        ).join(
-            self.idx_token_model,
-            IDXLock.token_address.label("token_address")
-            == self.idx_token_model.token_address,
         )
-        query_unlock = session.query(
+        stmt_unlock = select(
             literal(value=LockEventCategory.Unlock.value, type_=String).label(
                 "history_category"
             ),
             IDXUnlock.transaction_hash.label("transaction_hash"),
             IDXUnlock.msg_sender.label("msg_sender"),
-            IDXUnlock.token_address.label("token_address"),
+            IDXUnlock.token_address.label("token_address_alias"),
             IDXUnlock.lock_address.label("lock_address"),
             IDXUnlock.account_address.label("account_address"),
             IDXUnlock.recipient_address.label("recipient_address"),
             IDXUnlock.value.label("value"),
             IDXUnlock.data.label("data"),
             IDXUnlock.block_timestamp.label("block_timestamp"),
-            self.idx_token_model,
-        ).join(
-            self.idx_token_model,
-            IDXUnlock.token_address.label("token_address")
-            == self.idx_token_model.token_address,
         )
 
         if len(token_address_list) > 0:
-            query_lock = query_lock.filter(
+            stmt_lock = stmt_lock.where(
                 IDXLock.token_address.label("token_address").in_(token_address_list)
             )
-            query_unlock = query_unlock.filter(
+            stmt_unlock = stmt_unlock.where(
                 IDXUnlock.token_address.label("token_address").in_(token_address_list)
             )
 
-        total = query_lock.count() + query_unlock.count()
+        total = session.scalar(
+            select(func.count()).select_from(stmt_lock.subquery())
+        ) + session.scalar(select(func.count()).select_from(stmt_unlock.subquery()))
 
         match category:
             case LockEventCategory.Lock:
-                query = query_lock
+                stmt = stmt_lock.subquery()
             case LockEventCategory.Unlock:
-                query = query_unlock
+                stmt = stmt_unlock.subquery()
             case _:
-                query = query_lock.union_all(query_unlock)
+                stmt = stmt_lock.union_all(stmt_unlock).subquery()
 
-        query = query.filter(column("account_address") == account_address)
+        stmt = (
+            select(stmt)
+            .join(
+                self.idx_token_model,
+                column("token_address_alias") == self.idx_token_model.token_address,
+            )
+            .add_columns(self.idx_token_model)
+        )
+        stmt = stmt.where(column("account_address") == account_address)
 
         if request_query.msg_sender is not None:
-            query = query.filter(column("msg_sender") == request_query.msg_sender)
+            stmt = stmt.where(column("msg_sender") == request_query.msg_sender)
         if request_query.lock_address is not None:
-            query = query.filter(column("lock_address") == request_query.lock_address)
+            stmt = stmt.where(column("lock_address") == request_query.lock_address)
         if request_query.recipient_address is not None:
-            query = query.filter(
+            stmt = stmt.where(
                 column("recipient_address") == request_query.recipient_address
             )
         if request_query.data is not None:
-            query = query.filter(
+            stmt = stmt.where(
                 cast(column("data"), String).like("%" + request_query.data + "%")
             )
-        count = query.count()
+        count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
         # Sort
         sort_attr = column(request_query.sort_item)
         if request_query.sort_order == 0:  # ASC
-            query = query.order_by(sort_attr.is_(None), sort_attr)
+            stmt = stmt.order_by(sort_attr.is_(None), sort_attr)
         else:  # DESC
-            query = query.order_by(sort_attr.is_(None), desc(sort_attr))
+            stmt = stmt.order_by(sort_attr.is_(None), desc(sort_attr))
         if request_query.sort_item != LockEventSortItem.block_timestamp:
             # NOTE: Set secondary sort for consistent results
-            query = query.order_by(desc(column(LockEventSortItem.block_timestamp)))
+            stmt = stmt.order_by(desc(column(LockEventSortItem.block_timestamp)))
 
         # Pagination
         if request_query.offset is not None:
-            query = query.offset(request_query.offset)
+            stmt = stmt.offset(request_query.offset)
         if request_query.limit is not None:
-            query = query.limit(request_query.limit)
-        lock_events = query.all()
+            stmt = stmt.limit(request_query.limit)
+        lock_events = session.execute(stmt).all()
 
         resp_data = []
         for lock_event in lock_events:
@@ -498,8 +509,8 @@ class BasePosition:
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
-        query = (
-            session.query(
+        stmt = (
+            select(
                 Listing.token_address,
                 IDXPosition,
                 func.sum(IDXLockedPosition.value),
@@ -523,7 +534,7 @@ class BasePosition:
                     IDXLockedPosition.account_address == account_address,
                 ),
             )
-            .filter(
+            .where(
                 or_(
                     IDXPosition.balance != 0,
                     IDXPosition.pending_transfer != 0,
@@ -542,16 +553,16 @@ class BasePosition:
             .order_by(Listing.id)
         )
 
-        total = query.count()
+        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
         count = total
         if limit is not None:
-            query = query.limit(limit)
+            stmt = stmt.limit(limit)
         if offset is not None:
-            query = query.offset(offset)
+            stmt = stmt.offset(offset)
 
         _token_position_list: list[
             tuple[str, IDXPosition, int | None, IDXTokenInstance]
-        ] = query.all()
+        ] = session.execute(stmt).all()
 
         position_list = []
         for item in _token_position_list:
@@ -598,7 +609,7 @@ class BasePosition:
         )
 
         # Get Listing Tokens
-        _token_list = session.query(Listing).order_by(Listing.id).all()
+        _token_list = session.scalars(select(Listing).order_by(Listing.id)).all()
 
         position_list = []
         limit_count = 0
@@ -693,8 +704,8 @@ class BasePosition:
     def get_one_from_index(
         self, session: Session, account_address: str, token_address: str
     ):
-        query = (
-            session.query(
+        stmt = (
+            select(
                 Listing.token_address,
                 IDXPosition,
                 func.sum(IDXLockedPosition.value),
@@ -718,8 +729,8 @@ class BasePosition:
                     IDXLockedPosition.account_address == account_address,
                 ),
             )
-            .filter(Listing.token_address == token_address)
-            .filter(
+            .where(Listing.token_address == token_address)
+            .where(
                 or_(
                     IDXPosition.balance != 0,
                     IDXPosition.pending_transfer != 0,
@@ -735,10 +746,11 @@ class BasePosition:
                 self.idx_token_model.token_address,
                 IDXLockedPosition.token_address,
             )
+            .limit(1)
         )
         result: tuple[
             str, IDXPosition | None, int | None, IDXTokenInstance
-        ] | None = query.first()
+        ] | None = session.execute(stmt).first()
         if result is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
         _position = result[1]
@@ -764,11 +776,9 @@ class BasePosition:
         self, session: Session, account_address: str, token_address: str
     ):
         # Get Listing Token
-        _token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        _token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
         if _token is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
@@ -1068,15 +1078,15 @@ class BasePositionMembership(BasePosition):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
-        query = (
-            session.query(Listing.token_address, IDXPosition, self.idx_token_model)
+        stmt = (
+            select(Listing.token_address, IDXPosition, self.idx_token_model)
             .join(
                 self.idx_token_model,
                 Listing.token_address == self.idx_token_model.token_address,
             )
             .join(IDXPosition, Listing.token_address == IDXPosition.token_address)
-            .filter(IDXPosition.account_address == account_address)
-            .filter(
+            .where(IDXPosition.account_address == account_address)
+            .where(
                 or_(
                     IDXPosition.balance != 0,
                     IDXPosition.exchange_balance != 0,
@@ -1086,16 +1096,16 @@ class BasePositionMembership(BasePosition):
             .order_by(Listing.id)
         )
 
-        total = query.count()
+        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
         count = total
         if limit is not None:
-            query = query.limit(limit)
+            stmt = stmt.limit(limit)
         if offset is not None:
-            query = query.offset(offset)
+            stmt = stmt.offset(offset)
 
         _token_position_list: list[
             tuple[str, IDXPosition, IDXTokenInstance]
-        ] = query.all()
+        ] = session.execute(stmt).all()
 
         position_list = []
         for item in _token_position_list:
@@ -1142,17 +1152,17 @@ class BasePositionCoupon(BasePosition):
 
         # NOTE: Sub Query for sum of used amount
         sub_tx_used = (
-            session.query(
+            select(
                 sum_(IDXConsumeCoupon.amount).label("used"),
                 IDXConsumeCoupon.token_address,
                 IDXConsumeCoupon.account_address,
             )
-            .filter(IDXConsumeCoupon.account_address == account_address)
+            .where(IDXConsumeCoupon.account_address == account_address)
             .group_by(IDXConsumeCoupon.token_address, IDXConsumeCoupon.account_address)
             .subquery("sub_tx_used")
         )
-        query = (
-            session.query(
+        stmt = (
+            select(
                 Listing.token_address,
                 IDXPosition,
                 self.idx_token_model,
@@ -1176,14 +1186,14 @@ class BasePositionCoupon(BasePosition):
                     sub_tx_used.c.account_address == account_address,
                 ),
             )
-            .filter(
+            .where(
                 or_(
                     IDXPosition.balance != 0,
                     IDXPosition.exchange_balance != 0,
                     IDXPosition.exchange_commitment != 0,
                     sub_tx_used.c.used != 0,
-                    session.query(IDXTransfer)
-                    .filter(
+                    select(IDXTransfer)
+                    .where(
                         and_(
                             IDXTransfer.token_address == Listing.token_address,
                             IDXTransfer.to_address == account_address,
@@ -1195,16 +1205,16 @@ class BasePositionCoupon(BasePosition):
             .order_by(Listing.id)
         )
 
-        total = query.count()
+        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
         count = total
         if limit is not None:
-            query = query.limit(limit)
+            stmt = stmt.limit(limit)
         if offset is not None:
-            query = query.offset(offset)
+            stmt = stmt.offset(offset)
 
         _token_position_list: list[
             tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]
-        ] = query.all()
+        ] = session.execute(stmt).all()
 
         position_list = []
         for item in _token_position_list:
@@ -1280,12 +1290,12 @@ class BasePositionCoupon(BasePosition):
 
             # Retrieving token receipt history from IDXTransfer
             # NOTE: Index data has a lag from the most recent transfer state.
-            received_history = (
-                session.query(IDXTransfer)
-                .filter(IDXTransfer.token_address == token_address)
-                .filter(IDXTransfer.to_address == account_address)
-                .first()
-            )
+            received_history = session.scalars(
+                select(IDXTransfer)
+                .where(IDXTransfer.token_address == token_address)
+                .where(IDXTransfer.to_address == account_address)
+                .limit(1)
+            ).first()
             # If balance, commitment, and used are non-zero, and exist received history,
             # get the token information from TokenContract.
             if (
@@ -1633,8 +1643,8 @@ def list_all_token_position(
             IDXTokenListItem.token_template == TokenType.IbetMembership.value
         )
 
-    query = (
-        session.query(*query_target)
+    stmt = (
+        select(*query_target)
         .join(
             IDXTokenListItem,
             and_(
@@ -1666,31 +1676,31 @@ def list_all_token_position(
     )
 
     if not token_type_list or TokenType.IbetStraightBond in token_type_list:
-        query = query.outerjoin(
+        stmt = stmt.outerjoin(
             IDXBondToken,
             Listing.token_address == IDXBondToken.token_address,
         )
 
     if not token_type_list or TokenType.IbetShare in token_type_list:
-        query = query.outerjoin(
+        stmt = stmt.outerjoin(
             IDXShareToken,
             Listing.token_address == IDXShareToken.token_address,
         )
 
     if not token_type_list or TokenType.IbetCoupon in token_type_list:
-        query = query.outerjoin(
+        stmt = stmt.outerjoin(
             IDXCouponToken,
             Listing.token_address == IDXCouponToken.token_address,
         )
 
     if not token_type_list or TokenType.IbetMembership in token_type_list:
-        query = query.outerjoin(
+        stmt = stmt.outerjoin(
             IDXMembershipToken,
             Listing.token_address == IDXMembershipToken.token_address,
         )
 
-    query = (
-        query.filter(
+    stmt = (
+        stmt.where(
             or_(
                 IDXPosition.balance != 0,
                 IDXPosition.pending_transfer != 0,
@@ -1704,15 +1714,15 @@ def list_all_token_position(
         .order_by(Listing.id)
     )
 
-    total = query.count()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
     count = total
 
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_position_list = query.all()
+    _token_position_list = session.execute(stmt).all()
 
     position_list = []
     for item in _token_position_list:
