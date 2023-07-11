@@ -1714,9 +1714,7 @@ def list_all_token_position(
         .order_by(Listing.id)
     )
 
-    total = session.execute(
-        select(func.count()).select_from(stmt.subquery())
-    ).scalar_one()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
     count = total
 
     if limit is not None:

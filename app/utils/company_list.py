@@ -45,13 +45,9 @@ class CompanyList:
                 db_session = Session(autocommit=False, autoflush=True, bind=engine)
                 try:
                     company_list = []
-                    _company_list = (
-                        db_session.execute(
-                            select(CompanyModel).order_by(CompanyModel.created)
-                        )
-                        .scalars()
-                        .all()
-                    )
+                    _company_list = db_session.scalars(
+                        select(CompanyModel).order_by(CompanyModel.created)
+                    ).all()
                     for _company in _company_list:
                         company_list.append(Company(_company.json()))
                 finally:
@@ -85,13 +81,11 @@ class CompanyList:
             else:
                 db_session = Session(autocommit=False, autoflush=True, bind=engine)
                 try:
-                    _company = (
-                        db_session.execute(
-                            select(CompanyModel).where(CompanyModel.address == address)
-                        )
-                        .scalars()
-                        .first()
-                    )
+                    _company = db_session.scalars(
+                        select(CompanyModel)
+                        .where(CompanyModel.address == address)
+                        .limit(1)
+                    ).first()
                     if _company is not None:
                         return Company(_company.json())
                 finally:

@@ -140,7 +140,7 @@ def list_block_data(
         stmt = stmt.offset(offset)
 
     if (
-        session.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
+        session.scalar(select(func.count()).select_from(stmt.subquery()))
         > BLOCK_RESPONSE_LIMIT
     ):
         raise ResponseLimitExceededError("Search results exceed the limit")

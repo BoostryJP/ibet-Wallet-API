@@ -264,7 +264,7 @@ def update_token(
     # 更新対象レコードを取得
     # 更新対象のレコードが存在しない場合は404エラーを返す
     token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address)
+        select(Listing).where(Listing.token_address == token_address).limit(1)
     ).first()
     if token is None:
         raise DataNotExistsError()
