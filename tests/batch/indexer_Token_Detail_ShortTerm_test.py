@@ -33,11 +33,14 @@ from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import IDXTokenListItem, Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    IDXTokenListItem,
+    Listing,
+)
 from batch import indexer_Token_Detail_ShortTerm
 from batch.indexer_Token_Detail_ShortTerm import LOG, Processor, main
 from tests.account_config import eth_account

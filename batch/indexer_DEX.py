@@ -40,10 +40,12 @@ from app.config import (
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.db import AgreementStatus
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
-from app.model.db import Listing
+from app.model.db import (
+    AgreementStatus,
+    IDXAgreement as Agreement,
+    IDXOrder as Order,
+    Listing,
+)
 from app.utils.web3_utils import Web3Wrapper
 
 local_tz = ZoneInfo(TZ)

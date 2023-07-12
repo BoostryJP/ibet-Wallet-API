@@ -58,6 +58,8 @@ plugins = [
 ]
 
 [tool.isort]
+profile = "black"
+combine_as_imports = true
 skip_glob = ["migrations/*"]
 
 [build-system]

@@ -36,11 +36,13 @@ from app.config import (
     ZERO_ADDRESS,
 )
 from app.contracts import Contract
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    Listing,
+)
 from app.model.db.idx_token import IDXTokenInstance, IDXTokenModel
 from app.utils.company_list import CompanyList
 

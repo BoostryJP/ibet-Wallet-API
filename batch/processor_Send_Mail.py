@@ -33,8 +33,7 @@ import log
 
 from app.config import DATABASE_URL
 from app.model.db import Mail
-from app.model.mail import File
-from app.model.mail import Mail as SMTPMail
+from app.model.mail import File, Mail as SMTPMail
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
 
