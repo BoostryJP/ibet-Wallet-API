@@ -20,11 +20,11 @@ import logging
 import os
 import sys
 import uuid
-from typing import List
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
@@ -421,19 +421,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 6000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 41000
@@ -442,9 +449,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -581,19 +590,27 @@ class TestProcessor:
             token_list_contract["address"],
         ):
             processor.collect()
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
 
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 15000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 14000
@@ -602,9 +619,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -720,28 +739,37 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 17000
         assert trader_record.hold_balance == 13000
 
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -891,19 +919,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 37000
@@ -912,9 +947,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1052,19 +1089,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 15000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 14000
@@ -1073,9 +1117,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1191,18 +1237,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
 
         assert user1_record.hold_balance == 17000
         assert user1_record.locked_balance == 0
@@ -1212,9 +1266,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1314,18 +1370,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
 
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
@@ -1335,9 +1399,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1440,18 +1506,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
 
         assert user1_record.hold_balance == 11000
         assert user1_record.locked_balance == 0
@@ -1461,9 +1535,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1566,18 +1642,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
 
         assert user1_record.hold_balance == 7000
         assert user1_record.locked_balance == 0
@@ -1587,9 +1671,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1689,25 +1775,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        issuer_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.issuer["account_address"])
-            .first()
-        )
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 20000
@@ -1716,9 +1803,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1819,18 +1908,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
 
         assert user1_record.hold_balance == 11000
         assert user1_record.locked_balance == 0
@@ -1840,9 +1937,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -1941,18 +2040,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
 
         assert user1_record.hold_balance == 7000
         assert user1_record.locked_balance == 0
@@ -1962,9 +2069,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.query(TokenHolder).filter(
-                        TokenHolder.holder_list == target_token_holders_list.id
-                    )
+                    session.scalars(
+                        select(TokenHolder).where(
+                            TokenHolder.holder_list == target_token_holders_list.id
+                        )
+                    ).all()
                 )
             )
             == 2
@@ -2032,19 +2141,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list1.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list1.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 20000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 0
@@ -2100,19 +2216,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list2.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list2.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list2.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list2.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 17000
@@ -2169,19 +2292,26 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list3.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list3.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list3.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list3.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record.hold_balance == 6000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 44000
@@ -2279,23 +2409,30 @@ class TestProcessor:
         ):
             processor.collect()
 
-        user1_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
-            .filter(TokenHolder.account_address == self.user1["account_address"])
-            .first()
-        )
-        trader_record: TokenHolder = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
-            .filter(TokenHolder.account_address == self.trader["account_address"])
-            .first()
-        )
-
+        user1_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list1.id,
+                    TokenHolder.account_address == self.user1["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        trader_record: TokenHolder = session.scalars(
+            select(TokenHolder)
+            .where(
+                and_(
+                    TokenHolder.holder_list == target_token_holders_list1.id,
+                    TokenHolder.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert user1_record is None
         assert trader_record is None
 
-        assert len(session.query(TokenHolder).all()) == 0
+        assert len(session.scalars(select(TokenHolder)).all()) == 0
 
     # <Normal_15>
     # StraightBond
@@ -2469,11 +2606,11 @@ class TestProcessor:
             )
 
             session.rollback()
-            processed_list = (
-                session.query(TokenHoldersList)
-                .filter(TokenHoldersList.id == target_token_holders_list.id)
-                .first()
-            )
+            processed_list = session.scalars(
+                select(TokenHoldersList)
+                .where(TokenHoldersList.id == target_token_holders_list.id)
+                .limit(1)
+            ).first()
             assert processed_list.block_number == 19999999
             assert processed_list.batch_status == TokenHolderBatchStatus.DONE.value
 
@@ -2543,9 +2680,12 @@ class TestProcessor:
         # Batch status of token holders list expects to be "ERROR"
         error_record_num = len(
             list(
-                session.query(TokenHoldersList).filter(
-                    TokenHoldersList.batch_status == TokenHolderBatchStatus.FAILED.value
-                )
+                session.scalars(
+                    select(TokenHoldersList).where(
+                        TokenHoldersList.batch_status
+                        == TokenHolderBatchStatus.FAILED.value
+                    )
+                ).all()
             )
         )
         assert error_record_num == 1
@@ -2605,11 +2745,11 @@ class TestProcessor:
             token_list_contract["address"],
         ):
             processor.collect()
-        _records: List[TokenHolder] = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .all()
-        )
+        _records = session.scalars(
+            select(TokenHolder).where(
+                TokenHolder.holder_list == target_token_holders_list.id
+            )
+        ).all()
         assert len(_records) == 0
 
     # <Error_4>
@@ -2668,11 +2808,11 @@ class TestProcessor:
         ):
             processor.collect()
 
-        _records: List[TokenHolder] = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .all()
-        )
+        _records = session.scalars(
+            select(TokenHolder).where(
+                TokenHolder.holder_list == target_token_holders_list.id
+            )
+        ).all()
         assert len(_records) == 0
 
         transfer_token(
@@ -2702,9 +2842,9 @@ class TestProcessor:
             processor.collect()
 
         session.rollback()
-        _records: List[TokenHolder] = (
-            session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
-            .all()
-        )
+        _records = session.scalars(
+            select(TokenHolder).where(
+                TokenHolder.holder_list == target_token_holders_list.id
+            )
+        ).all()
         assert len(_records) == 0

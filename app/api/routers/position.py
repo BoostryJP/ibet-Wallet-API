@@ -49,8 +49,13 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
-from app.model.blockchain import TokenClassTypes as BlockChainTokenModel
+from app.model.blockchain import (
+    BondToken,
+    CouponToken,
+    MembershipToken,
+    ShareToken,
+    TokenClassTypes as BlockChainTokenModel,
+)
 from app.model.db import (
     IDXBondToken,
     IDXConsumeCoupon,

@@ -22,6 +22,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -184,38 +185,51 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single Token
@@ -253,38 +267,51 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi Token
@@ -340,86 +367,119 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 6
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader2["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader2["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token2["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 5000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token2["address"])
-            .filter(IDXPosition.account_address == self.trader2["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.account_address == self.trader2["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token2["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 5000 - 3000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # Single Token
@@ -452,14 +512,18 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 1
 
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
         _position = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
@@ -468,20 +532,20 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _locked_list = (
-            session.query(IDXLockedPosition).order_by(IDXLockedPosition.created).all()
-        )
+        _locked_list: list[IDXLockedPosition] = session.scalars(
+            select(IDXLockedPosition).order_by(IDXLockedPosition.created)
+        ).all()
         assert len(_locked_list) == 1
-
         _locked1 = _locked_list[0]
         assert _locked1.token_address == token["address"]
         assert _locked1.lock_address == self.trader["account_address"]
         assert _locked1.account_address == self.issuer["account_address"]
         assert _locked1.value == 3000
 
-        _lock_list = session.query(IDXLock).order_by(IDXLock.id).all()
+        _lock_list: list[IDXLock] = session.scalars(
+            select(IDXLock).order_by(IDXLock.id)
+        ).all()
         assert len(_lock_list) == 2
-
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
         assert _lock1.token_address == token["address"]
@@ -498,8 +562,6 @@ class TestProcessor:
         assert _lock2.account_address == self.issuer["account_address"]
         assert _lock2.value == 1500
         assert _lock2.data == {"message": "locked2"}
-
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Single Token
@@ -538,21 +600,28 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
 
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
 
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 3000
@@ -560,12 +629,16 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader2["account_address"])
-            .first()
-        )
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader2["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 100
@@ -573,20 +646,20 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _locked_list = (
-            session.query(IDXLockedPosition).order_by(IDXLockedPosition.created).all()
-        )
+        _locked_list: list[IDXLockedPosition] = session.scalars(
+            select(IDXLockedPosition).order_by(IDXLockedPosition.created)
+        ).all()
         assert len(_locked_list) == 1
-
         _locked = _locked_list[0]
         assert _locked.token_address == token["address"]
         assert _locked.lock_address == self.trader["account_address"]
         assert _locked.account_address == self.issuer["account_address"]
         assert _locked.value == 2900
 
-        _lock_list = session.query(IDXLock).order_by(IDXLock.id).all()
+        _lock_list: list[IDXLock] = session.scalars(
+            select(IDXLock).order_by(IDXLock.id)
+        ).all()
         assert len(_lock_list) == 1
-
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
         assert _lock1.token_address == token["address"]
@@ -595,9 +668,11 @@ class TestProcessor:
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 3000
         assert _lock1.data == {"message": "locked1"}
-        _unlock_list = session.query(IDXUnlock).order_by(IDXUnlock.id).all()
-        assert len(_unlock_list) == 1
 
+        _unlock_list: list[IDXUnlock] = session.scalars(
+            select(IDXUnlock).order_by(IDXUnlock.id)
+        ).all()
+        assert len(_unlock_list) == 1
         _unlock1 = _unlock_list[0]
         assert _unlock1.id == 1
         assert _unlock1.token_address == token["address"]
@@ -607,8 +682,6 @@ class TestProcessor:
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
         assert _unlock1.data == {"message": "unlocked1"}
-
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_6>
     # Single Token
@@ -638,13 +711,16 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         _position = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
@@ -682,13 +758,18 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
         _position = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
@@ -696,7 +777,6 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_8>
     # Single Token
@@ -748,38 +828,51 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000 - 2000
         assert _position.pending_transfer == 2000
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_9>
     # Single Token
@@ -838,50 +931,68 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 3
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader2["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader2["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 2000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000 - 2000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_10>
     # Single Token
@@ -940,38 +1051,51 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_11>
     # Single Token
@@ -1029,38 +1153,51 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000 - 200 - 300
         assert _position.exchange_commitment == 300
-        _position = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token["address"])
-            .filter(IDXPosition.account_address == self.trader["account_address"])
-            .first()
-        )
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 0
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 200
         assert _position.exchange_commitment == 0
-        assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_12>
     # Single Token
@@ -1101,13 +1238,10 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
         _position: IDXPosition = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
@@ -1115,6 +1249,12 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000 - 111 - 222 - 333
         assert _position.exchange_commitment == 333
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_13>
@@ -1169,13 +1309,10 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
         _position: IDXPosition = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
@@ -1183,6 +1320,12 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_14>
@@ -1205,13 +1348,16 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_15>
@@ -1243,13 +1389,18 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .all()
-        )
+
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(
+            select(IDXPositionBondBlockNumber).where(
+                IDXPositionBondBlockNumber.token_address == token["address"]
+            )
+        ).all()
         assert len(_idx_position_bond_block_number) == 0
 
         # Listing
@@ -1260,13 +1411,16 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_16>
@@ -1463,14 +1617,10 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 1
-
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token1["address"])
-            .first()
-        )
         _position: IDXPosition = _position_list[0]
         assert _position.token_address == token1["address"]
         assert _position.account_address == self.issuer["account_address"]
@@ -1478,6 +1628,12 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token1["address"])
+            .limit(1)
+        ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number1
 
         # Token2 Listing
@@ -1488,47 +1644,60 @@ class TestProcessor:
         processor.sync_new_logs()
 
         session.rollback()
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+
+        # Assertion
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 2
 
-        _idx_position_bond_block_number1 = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token1["address"])
-            .first()
-        )
-        _idx_position_bond_block_number2 = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token2["address"])
-            .first()
-        )
+        _idx_position_bond_block_number1: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token1["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number1.latest_block_number == block_number2
 
-        _position1 = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token1["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+        _idx_position_bond_block_number2: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token2["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number2.latest_block_number == block_number2
+
+        _position1: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token1["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position1.token_address == token1["address"]
         assert _position1.account_address == self.issuer["account_address"]
         assert _position1.balance == 1000000 - 10000 + 55 - 100
         assert _position1.pending_transfer == 0
         assert _position1.exchange_balance == 10000 - 55 - 66
         assert _position1.exchange_commitment == 66
-        assert _idx_position_bond_block_number1.latest_block_number == block_number2
 
-        _position2 = (
-            session.query(IDXPosition)
-            .filter(IDXPosition.token_address == token2["address"])
-            .filter(IDXPosition.account_address == self.issuer["account_address"])
-            .first()
-        )
+        _position2: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
         assert _position2.token_address == token2["address"]
         assert _position2.account_address == self.issuer["account_address"]
         assert _position2.balance == 1000000 - 10000 + 55
         assert _position2.pending_transfer == 0
         assert _position2.exchange_balance == 10000 - 55 - 66
         assert _position2.exchange_commitment == 66
-        assert _idx_position_bond_block_number2.latest_block_number == block_number2
 
     ###########################################################################
     # Error Case
@@ -1570,14 +1739,17 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 0
+
         # Latest_block is incremented in "initial_sync" process.
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert (
             _idx_position_bond_block_number.latest_block_number == block_number_current
         )
@@ -1597,15 +1769,17 @@ class TestProcessor:
         # Clear cache in DB session.
         session.rollback()
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
         assert len(_position_list) == 0
 
         # Latest_block is incremented in "sync_new_logs" process.
-        _idx_position_bond_block_number = (
-            session.query(IDXPositionBondBlockNumber)
-            .filter(IDXPositionBondBlockNumber.token_address == token["address"])
-            .first()
-        )
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert (
             _idx_position_bond_block_number.latest_block_number == block_number_current
         )
@@ -1638,16 +1812,22 @@ class TestProcessor:
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.initial_sync()
+
         # Clear cache in DB session.
         session.rollback()
+
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
-        assert len(_position_list) == 0
-        # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_bond_block_number = session.query(
-            IDXPositionBondBlockNumber
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
         ).all()
+        assert len(_position_list) == 0
+
+        # Any latest_block is not saved in "initial_sync" process.
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(select(IDXPositionBondBlockNumber)).all()
         assert len(_idx_position_bond_block_number) == 0
+
         # Clear cache in DB session.
         session.rollback()
 
@@ -1663,13 +1843,17 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
-        assert len(_position_list) == 0
-        # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_bond_block_number = session.query(
-            IDXPositionBondBlockNumber
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
         ).all()
+        assert len(_position_list) == 0
+
+        # Any latest_block is not saved in "sync_new_logs" process.
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(select(IDXPositionBondBlockNumber)).all()
         assert len(_idx_position_bond_block_number) == 0
+
         assert 0 == caplog.record_tuples.count(
             (
                 LOG.name,
@@ -1708,16 +1892,22 @@ class TestProcessor:
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
+
         # Clear cache in DB session.
         session.rollback()
+
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
-        assert len(_position_list) == 0
-        # Any latest_block is not saved in "initial_sync" process when ServiceUnavailable occurs.
-        _idx_position_bond_block_number = session.query(
-            IDXPositionBondBlockNumber
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
         ).all()
+        assert len(_position_list) == 0
+
+        # Any latest_block is not saved in "initial_sync" process when ServiceUnavailable occurs.
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(select(IDXPositionBondBlockNumber)).all()
         assert len(_idx_position_bond_block_number) == 0
+
         # Clear cache in DB session.
         session.rollback()
 
@@ -1725,6 +1915,7 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000
         )
+
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
             "web3.providers.rpc.HTTPProvider.make_request",
@@ -1734,14 +1925,19 @@ class TestProcessor:
 
         # Clear cache in DB session.
         session.rollback()
+
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
-        assert len(_position_list) == 0
-        # Any latest_block is not saved in "sync_new_logs" process when ServiceUnavailable occurs.
-        _idx_position_bond_block_number = session.query(
-            IDXPositionBondBlockNumber
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
         ).all()
+        assert len(_position_list) == 0
+
+        # Any latest_block is not saved in "sync_new_logs" process when ServiceUnavailable occurs.
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(select(IDXPositionBondBlockNumber)).all()
         assert len(_idx_position_bond_block_number) == 0
+
         assert 0 == caplog.record_tuples.count(
             (
                 LOG.name,
@@ -1779,17 +1975,22 @@ class TestProcessor:
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
             processor.initial_sync()
+
         # Clear cache in DB session.
         session.rollback()
 
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
-        assert len(_position_list) == 0
-        # Any latest_block is not saved in "initial_sync" process when SQLAlchemyError occurs.
-        _idx_position_bond_block_number = session.query(
-            IDXPositionBondBlockNumber
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
         ).all()
+        assert len(_position_list) == 0
+
+        # Any latest_block is not saved in "initial_sync" process when SQLAlchemyError occurs.
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(select(IDXPositionBondBlockNumber)).all()
         assert len(_idx_position_bond_block_number) == 0
+
         # Clear cache in DB session.
         session.rollback()
 
@@ -1806,14 +2007,19 @@ class TestProcessor:
 
         # Clear cache in DB session.
         session.rollback()
+
         # Assertion
-        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
-        assert len(_position_list) == 0
-        # Any latest_block is not saved in "sync_new_logs" process when SQLAlchemyError occurs.
-        _idx_position_bond_block_number = session.query(
-            IDXPositionBondBlockNumber
+        _position_list: list[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
         ).all()
+        assert len(_position_list) == 0
+
+        # Any latest_block is not saved in "sync_new_logs" process when SQLAlchemyError occurs.
+        _idx_position_bond_block_number: list[
+            IDXPositionBondBlockNumber
+        ] = session.scalars(select(IDXPositionBondBlockNumber)).all()
         assert len(_idx_position_bond_block_number) == 0
+
         assert 0 == caplog.record_tuples.count(
             (
                 LOG.name,

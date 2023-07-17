@@ -22,6 +22,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -93,7 +94,7 @@ class TestProcessorSendMail:
             session.commit()
 
         # Assertion
-        assert session.query(Mail).count() == 0
+        assert len(session.scalars(select(Mail)).all()) == 0
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
@@ -117,8 +118,7 @@ class TestProcessorSendMail:
             session.commit()
 
         # Assertion
-        mail_list = session.query(Mail).all()
-        assert len(mail_list) == 0
+        assert len(session.scalars(select(Mail)).all()) == 0
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.WARNING, "Could not send email: ")
@@ -152,7 +152,6 @@ class TestProcessorSendMail:
             processor.process()
 
         # Assertion
-        mail_list = session.query(Mail).all()
-        assert len(mail_list) == 1
+        assert len(session.scalars(select(Mail)).all()) == 1
 
         assert 0 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))

@@ -20,6 +20,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import TZ
@@ -134,6 +135,7 @@ class TestNotificationsRead:
     ):
         self._insert_test_data(session)
 
+        # Request target API
         resp = client.post(
             self.apiurl,
             json={
@@ -142,19 +144,21 @@ class TestNotificationsRead:
             },
         )
 
-        notification_1_list = (
-            session.query(Notification)
-            .filter(Notification.address == TestNotificationsRead.address_1)
-            .all()
-        )
-
-        notification_2_list = (
-            session.query(Notification)
-            .filter(Notification.address == TestNotificationsRead.address_2)
-            .all()
-        )
-
+        # Assertion
         assert resp.status_code == 200
+
+        notification_1_list = session.scalars(
+            select(Notification).where(
+                Notification.address == TestNotificationsRead.address_1
+            )
+        ).all()
+
+        notification_2_list = session.scalars(
+            select(Notification).where(
+                Notification.address == TestNotificationsRead.address_2
+            )
+        ).all()
+
         assert len(notification_1_list) == 4
         assert len(notification_2_list) == 1
 
@@ -179,8 +183,7 @@ class TestNotificationsRead:
             },
         )
 
-        notification_list = session.query(Notification).all()
-
+        notification_list = session.scalars(select(Notification)).all()
         assert resp.status_code == 200
         assert len(notification_list) == 5
 

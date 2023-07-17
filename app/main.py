@@ -27,26 +27,28 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app import log
-from app.api.routers import admin as routers_admin
-from app.api.routers import bc_explorer as routers_bc_explorer
-from app.api.routers import company_info as routers_company_info
-from app.api.routers import contract_abi as routers_contract_abi
-from app.api.routers import dex_market as routers_dex_market
-from app.api.routers import dex_order_list as routers_dex_order_list
-from app.api.routers import e2e_message as routers_e2e_message
-from app.api.routers import eth as routers_eth
-from app.api.routers import events as routers_events
-from app.api.routers import messaging as routers_mail
-from app.api.routers import node_info as routers_node_info
-from app.api.routers import notification as routers_notification
-from app.api.routers import position as routers_position
-from app.api.routers import token as routers_token
-from app.api.routers import token_bond as routers_token_bond
-from app.api.routers import token_coupon as routers_token_coupon
-from app.api.routers import token_lock as routers_token_lock
-from app.api.routers import token_membership as routers_token_membership
-from app.api.routers import token_share as routers_token_share
-from app.api.routers import user_info as routers_user_info
+from app.api.routers import (
+    admin as routers_admin,
+    bc_explorer as routers_bc_explorer,
+    company_info as routers_company_info,
+    contract_abi as routers_contract_abi,
+    dex_market as routers_dex_market,
+    dex_order_list as routers_dex_order_list,
+    e2e_message as routers_e2e_message,
+    eth as routers_eth,
+    events as routers_events,
+    messaging as routers_mail,
+    node_info as routers_node_info,
+    notification as routers_notification,
+    position as routers_position,
+    token as routers_token,
+    token_bond as routers_token_bond,
+    token_coupon as routers_token_coupon,
+    token_lock as routers_token_lock,
+    token_membership as routers_token_membership,
+    token_share as routers_token_share,
+    user_info as routers_user_info,
+)
 from app.config import BRAND_NAME
 from app.errors import (
     AppError,

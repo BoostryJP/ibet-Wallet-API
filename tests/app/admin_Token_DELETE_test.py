@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import (
@@ -105,25 +106,23 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == token["token_address"])
-            .all()
-        )
+        listing = session.scalars(
+            select(Listing).where(Listing.token_address == token["token_address"])
+        ).all()
         assert listing == []
 
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(ExecutableContract.contract_address == token["token_address"])
-            .all()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract).where(
+                ExecutableContract.contract_address == token["token_address"]
+            )
+        ).all()
         assert executable_contract == []
 
-        idx_token = (
-            session.query(IDXBondToken)
-            .filter(IDXBondToken.token_address == token["token_address"])
-            .all()
-        )
+        idx_token = session.scalars(
+            select(IDXBondToken).where(
+                IDXBondToken.token_address == token["token_address"]
+            )
+        ).all()
         assert idx_token == []
 
     # Normal_2
@@ -150,25 +149,23 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == token["token_address"])
-            .all()
-        )
+        listing = session.scalars(
+            select(Listing).where(Listing.token_address == token["token_address"])
+        ).all()
         assert listing == []
 
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(ExecutableContract.contract_address == token["token_address"])
-            .all()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract).where(
+                ExecutableContract.contract_address == token["token_address"]
+            )
+        ).all()
         assert executable_contract == []
 
-        idx_token = (
-            session.query(IDXShareToken)
-            .filter(IDXShareToken.token_address == token["token_address"])
-            .all()
-        )
+        idx_token = session.scalars(
+            select(IDXShareToken).where(
+                IDXShareToken.token_address == token["token_address"]
+            )
+        ).all()
         assert idx_token == []
 
     # Normal_3
@@ -195,25 +192,23 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == token["token_address"])
-            .all()
-        )
+        listing = session.scalars(
+            select(Listing).where(Listing.token_address == token["token_address"])
+        ).all()
         assert listing == []
 
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(ExecutableContract.contract_address == token["token_address"])
-            .all()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract).where(
+                ExecutableContract.contract_address == token["token_address"]
+            )
+        ).all()
         assert executable_contract == []
 
-        idx_token = (
-            session.query(IDXMembershipToken)
-            .filter(IDXMembershipToken.token_address == token["token_address"])
-            .all()
-        )
+        idx_token = session.scalars(
+            select(IDXMembershipToken).where(
+                IDXMembershipToken.token_address == token["token_address"]
+            )
+        ).all()
         assert idx_token == []
 
     # Normal_4
@@ -240,25 +235,23 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == token["token_address"])
-            .all()
-        )
+        listing = session.scalars(
+            select(Listing).where(Listing.token_address == token["token_address"])
+        ).all()
         assert listing == []
 
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(ExecutableContract.contract_address == token["token_address"])
-            .all()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract).where(
+                ExecutableContract.contract_address == token["token_address"]
+            )
+        ).all()
         assert executable_contract == []
 
-        idx_token = (
-            session.query(IDXCouponToken)
-            .filter(IDXCouponToken.token_address == token["token_address"])
-            .all()
-        )
+        idx_token = session.scalars(
+            select(IDXCouponToken).where(
+                IDXCouponToken.token_address == token["token_address"]
+            )
+        ).all()
         assert idx_token == []
 
     # Normal_5
@@ -286,30 +279,28 @@ class TestAdminTokenDELETE:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == token["token_address"])
-            .all()
-        )
+        listing = session.scalars(
+            select(Listing).where(Listing.token_address == token["token_address"])
+        ).all()
         assert listing == []
 
-        executable_contract = (
-            session.query(ExecutableContract)
-            .filter(ExecutableContract.contract_address == token["token_address"])
-            .all()
-        )
+        executable_contract = session.scalars(
+            select(ExecutableContract).where(
+                ExecutableContract.contract_address == token["token_address"]
+            )
+        ).all()
         assert executable_contract == []
 
-        idx_token = (
-            session.query(IDXBondToken)
-            .filter(IDXBondToken.token_address == token["token_address"])
-            .all()
-        )
+        idx_token = session.scalars(
+            select(IDXBondToken).where(
+                IDXBondToken.token_address == token["token_address"]
+            )
+        ).all()
         assert idx_token == []
 
-        idx_token = (
-            session.query(IDXCouponToken)
-            .filter(IDXCouponToken.token_address == token["token_address"])
-            .all()
-        )
+        idx_token = session.scalars(
+            select(IDXCouponToken).where(
+                IDXCouponToken.token_address == token["token_address"]
+            )
+        ).all()
         assert idx_token == []

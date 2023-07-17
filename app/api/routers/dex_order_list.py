@@ -26,9 +26,7 @@ from app.contracts import Contract
 from app.database import DBSession
 from app.errors import InvalidParameterError, NotSupportedError
 from app.model.blockchain import CouponToken, MembershipToken
-from app.model.db import AgreementStatus
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
+from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from app.model.schema import (
     GenericSuccessResponse,
     ListAllOrderListQuery,

@@ -23,9 +23,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import AgreementStatus
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
+from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from tests.account_config import eth_account
 
 

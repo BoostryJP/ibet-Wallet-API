@@ -24,6 +24,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -33,11 +34,14 @@ from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import IDXTokenListItem, Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    IDXTokenListItem,
+    Listing,
+)
 from batch import indexer_Token_Detail_ShortTerm
 from batch.indexer_Token_Detail_ShortTerm import LOG, Processor, main
 from tests.account_config import eth_account
@@ -287,37 +291,37 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = (
-                session.query(BondTokenModel)
-                .filter(BondTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _bond_token: BondTokenModel = session.scalars(
+                select(BondTokenModel)
+                .where(BondTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             assert _bond_token.short_term_cache_created > current
 
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = (
-                session.query(ShareTokenModel)
-                .filter(ShareTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _share_token: ShareTokenModel = session.scalars(
+                select(ShareTokenModel)
+                .where(ShareTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             assert _share_token.short_term_cache_created > current
 
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = (
-                session.query(MembershipTokenModel)
-                .filter(
+            _membership_token: MembershipTokenModel = session.scalars(
+                select(MembershipTokenModel)
+                .where(
                     MembershipTokenModel.token_address == _expect_dict["token_address"]
                 )
-                .one()
-            )
+                .limit(1)
+            ).first()
             assert _membership_token.short_term_cache_created > current
 
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = (
-                session.query(CouponTokenModel)
-                .filter(CouponTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _coupon_token: CouponTokenModel = session.scalars(
+                select(CouponTokenModel)
+                .where(CouponTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             assert _coupon_token.short_term_cache_created > current
 
     # <Normal_2>
@@ -424,11 +428,11 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = (
-                session.query(BondTokenModel)
-                .filter(BondTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _bond_token: BondTokenModel = session.scalars(
+                select(BondTokenModel)
+                .where(BondTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             # Short-Term Cache attributes is updated instantly.
             assert _bond_token.is_redeemed == True
             assert _bond_token.is_offering == False
@@ -527,11 +531,11 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = (
-                session.query(ShareTokenModel)
-                .filter(ShareTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _share_token: ShareTokenModel = session.scalars(
+                select(ShareTokenModel)
+                .where(ShareTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             # Short-Term Cache attributes is updated instantly.
             assert _share_token.status == False
             assert _share_token.transfer_approval_required == True
@@ -651,23 +655,23 @@ class TestProcessor:
         session.rollback()
         # assertion
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = (
-                session.query(MembershipTokenModel)
-                .filter(
+            _membership_token: MembershipTokenModel = session.scalars(
+                select(MembershipTokenModel)
+                .where(
                     MembershipTokenModel.token_address == _expect_dict["token_address"]
                 )
-                .one()
-            )
+                .limit(1)
+            ).first()
             assert _membership_token.status == False
             assert _membership_token.owner_address == self.agent["account_address"]
 
         # assertion
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = (
-                session.query(CouponTokenModel)
-                .filter(CouponTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _coupon_token: CouponTokenModel = session.scalars(
+                select(CouponTokenModel)
+                .where(CouponTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             assert _coupon_token.status == False
             assert _coupon_token.owner_address == self.agent["account_address"]
 
@@ -715,11 +719,11 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        _coupon_token: CouponTokenModel = (
-            session.query(CouponTokenModel)
-            .filter(CouponTokenModel.token_address == token["address"])
-            .one()
-        )
+        _coupon_token: CouponTokenModel = session.scalars(
+            select(CouponTokenModel)
+            .where(CouponTokenModel.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _coupon_token.short_term_cache_created < current
 
         token = self.issue_token_coupon_with_args(
@@ -742,11 +746,11 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _coupon_token: CouponTokenModel = (
-            session.query(CouponTokenModel)
-            .filter(CouponTokenModel.token_address == token["address"])
-            .one()
-        )
+        _coupon_token: CouponTokenModel = session.scalars(
+            select(CouponTokenModel)
+            .where(CouponTokenModel.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _coupon_token.short_term_cache_created < current
 
     # <Error_1_2>: SQLAlchemyError occurs in "process".
@@ -785,11 +789,11 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        _coupon_token: CouponTokenModel = (
-            session.query(CouponTokenModel)
-            .filter(CouponTokenModel.token_address == token["address"])
-            .one()
-        )
+        _coupon_token: CouponTokenModel = session.scalars(
+            select(CouponTokenModel)
+            .where(CouponTokenModel.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _coupon_token.short_term_cache_created < current
 
         token = self.issue_token_coupon_with_args(
@@ -811,11 +815,11 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _coupon_token: CouponTokenModel = (
-            session.query(CouponTokenModel)
-            .filter(CouponTokenModel.token_address == token["address"])
-            .one()
-        )
+        _coupon_token: CouponTokenModel = session.scalars(
+            select(CouponTokenModel)
+            .where(CouponTokenModel.token_address == token["address"])
+            .limit(1)
+        ).first()
         assert _coupon_token.short_term_cache_created < current
 
     # <Error_2>: ServiceUnavailable occurs and is handled in mainloop.

@@ -41,11 +41,14 @@ from app.model.blockchain import (
     ShareToken,
     TokenClassTypes,
 )
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import IDXTokenInstance, Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    IDXTokenInstance,
+    Listing,
+)
 
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)

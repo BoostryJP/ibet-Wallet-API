@@ -20,8 +20,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
+from app.model.db import IDXAgreement as Agreement, IDXOrder as Order
 
 
 class TestDEXMarketMembershipTick:

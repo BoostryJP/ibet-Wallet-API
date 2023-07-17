@@ -22,6 +22,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -191,7 +192,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 1
 
         block = web3.eth.get_block(block_number)
@@ -209,9 +212,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
 
     # <Normal_2>
@@ -244,7 +247,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 1
 
         block = web3.eth.get_block(block_number)
@@ -262,9 +267,9 @@ class TestProcessor:
         assert _order.is_cancelled is True
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
 
     # <Normal_3>
@@ -298,7 +303,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 1
 
         block = web3.eth.get_block(block_number)
@@ -317,9 +324,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -370,7 +377,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 1
 
         block = web3.eth.get_block(block_number)
@@ -389,9 +398,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -444,7 +453,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 1
 
         block = web3.eth.get_block(block_number)
@@ -463,9 +474,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -518,7 +529,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 1
 
         block = web3.eth.get_block(block_number)
@@ -537,9 +550,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 1
 
         block2 = web3.eth.get_block(block_number2)
@@ -629,7 +642,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 2
 
         block = web3.eth.get_block(membership_block_number)
@@ -664,9 +679,9 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 2
 
         block2 = web3.eth.get_block(membership_block_number2)
@@ -723,11 +738,13 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
 
     # <Normal_9>
@@ -750,11 +767,13 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
 
     # <Normal_10>
@@ -766,11 +785,13 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
 
     ###########################################################################
@@ -811,11 +832,13 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
 
         # Latest_block is incremented in "initial_sync" process.
@@ -837,11 +860,13 @@ class TestProcessor:
         processor.sync_new_logs()
         # Assertion
         session.rollback()
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_current
@@ -874,11 +899,13 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -899,11 +926,13 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -936,11 +965,13 @@ class TestProcessor:
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -962,11 +993,13 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -999,11 +1032,13 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -1024,11 +1059,13 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        _order_list: list[IDXOrder] = session.scalars(
+            select(IDXOrder).order_by(IDXOrder.created)
+        ).all()
         assert len(_order_list) == 0
-        _agreement_list = (
-            session.query(IDXAgreement).order_by(IDXAgreement.created).all()
-        )
+        _agreement_list: list[IDXAgreement] = session.scalars(
+            select(IDXAgreement).order_by(IDXAgreement.created)
+        ).all()
         assert len(_agreement_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf

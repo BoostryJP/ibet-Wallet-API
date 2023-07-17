@@ -21,6 +21,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import and_, select
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from web3.types import RPCEndpoint
@@ -124,9 +125,9 @@ class TestWatchMembershipNewOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 0
         )
@@ -151,16 +152,18 @@ class TestWatchMembershipNewOrder:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type == NotificationType.NEW_ORDER
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.NEW_ORDER,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -186,9 +189,9 @@ class TestWatchMembershipNewOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -241,16 +244,18 @@ class TestWatchMembershipNewOrder:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type == NotificationType.NEW_ORDER
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.NEW_ORDER,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -271,12 +276,14 @@ class TestWatchMembershipNewOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -298,12 +305,14 @@ class TestWatchMembershipNewOrder:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -344,9 +353,9 @@ class TestWatchMembershipCancelOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
         )
@@ -371,17 +380,18 @@ class TestWatchMembershipCancelOrder:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.CANCEL_ORDER
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.CANCEL_ORDER,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -413,9 +423,9 @@ class TestWatchMembershipCancelOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -468,17 +478,18 @@ class TestWatchMembershipCancelOrder:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.CANCEL_ORDER
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.CANCEL_ORDER,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -509,12 +520,14 @@ class TestWatchMembershipCancelOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -536,12 +549,14 @@ class TestWatchMembershipCancelOrder:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -597,9 +612,9 @@ class TestWatchMembershipForceCancelOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
         )
@@ -626,17 +641,18 @@ class TestWatchMembershipForceCancelOrder:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.FORCE_CANCEL_ORDER
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.FORCE_CANCEL_ORDER,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -695,9 +711,9 @@ class TestWatchMembershipForceCancelOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -754,17 +770,18 @@ class TestWatchMembershipForceCancelOrder:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.FORCE_CANCEL_ORDER
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.FORCE_CANCEL_ORDER,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -806,12 +823,14 @@ class TestWatchMembershipForceCancelOrder:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -833,12 +852,14 @@ class TestWatchMembershipForceCancelOrder:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -880,9 +901,9 @@ class TestWatchMembershipBuyAgreement:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
         )
@@ -908,17 +929,18 @@ class TestWatchMembershipBuyAgreement:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.BUY_AGREEMENT
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.BUY_AGREEMENT,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -951,9 +973,9 @@ class TestWatchMembershipBuyAgreement:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -1008,17 +1030,18 @@ class TestWatchMembershipBuyAgreement:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.BUY_AGREEMENT
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.BUY_AGREEMENT,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -1049,12 +1072,14 @@ class TestWatchMembershipBuyAgreement:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1076,12 +1101,14 @@ class TestWatchMembershipBuyAgreement:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -1123,9 +1150,9 @@ class TestWatchMembershipSellAgreement:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
         )
@@ -1151,17 +1178,18 @@ class TestWatchMembershipSellAgreement:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.SELL_AGREEMENT
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.SELL_AGREEMENT,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -1194,9 +1222,9 @@ class TestWatchMembershipSellAgreement:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -1251,17 +1279,18 @@ class TestWatchMembershipSellAgreement:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.SELL_AGREEMENT
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.SELL_AGREEMENT,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -1292,12 +1321,14 @@ class TestWatchMembershipSellAgreement:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1319,12 +1350,14 @@ class TestWatchMembershipSellAgreement:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -1369,9 +1402,9 @@ class TestWatchMembershipBuySettlementOK:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 1
         )
@@ -1399,17 +1432,18 @@ class TestWatchMembershipBuySettlementOK:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.BUY_SETTLEMENT_OK
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.BUY_SETTLEMENT_OK,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -1446,9 +1480,9 @@ class TestWatchMembershipBuySettlementOK:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -1507,17 +1541,18 @@ class TestWatchMembershipBuySettlementOK:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.BUY_SETTLEMENT_OK
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.BUY_SETTLEMENT_OK,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -1551,12 +1586,14 @@ class TestWatchMembershipBuySettlementOK:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1578,12 +1615,14 @@ class TestWatchMembershipBuySettlementOK:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -1628,9 +1667,9 @@ class TestWatchMembershipSellSettlementOK:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 2
         )
@@ -1658,17 +1697,18 @@ class TestWatchMembershipSellSettlementOK:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.SELL_SETTLEMENT_OK
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.SELL_SETTLEMENT_OK,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -1705,9 +1745,9 @@ class TestWatchMembershipSellSettlementOK:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -1766,17 +1806,18 @@ class TestWatchMembershipSellSettlementOK:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.SELL_SETTLEMENT_OK
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.SELL_SETTLEMENT_OK,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -1810,12 +1851,14 @@ class TestWatchMembershipSellSettlementOK:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1837,12 +1880,14 @@ class TestWatchMembershipSellSettlementOK:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -1887,9 +1932,9 @@ class TestWatchMembershipBuySettlementNG:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
         )
@@ -1917,17 +1962,18 @@ class TestWatchMembershipBuySettlementNG:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.BUY_SETTLEMENT_NG
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.BUY_SETTLEMENT_NG,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -1964,9 +2010,9 @@ class TestWatchMembershipBuySettlementNG:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -2025,17 +2071,18 @@ class TestWatchMembershipBuySettlementNG:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.BUY_SETTLEMENT_NG
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.BUY_SETTLEMENT_NG,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -2069,12 +2116,14 @@ class TestWatchMembershipBuySettlementNG:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2096,12 +2145,14 @@ class TestWatchMembershipBuySettlementNG:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
 
 
@@ -2146,9 +2197,9 @@ class TestWatchMembershipSellSettlementNG:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
         )
@@ -2176,17 +2227,18 @@ class TestWatchMembershipSellSettlementNG:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.SELL_SETTLEMENT_NG
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.SELL_SETTLEMENT_NG,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -2223,9 +2275,9 @@ class TestWatchMembershipSellSettlementNG:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = (
-            session.query(Notification).order_by(Notification.created).all()
-        )
+        _notification_list = session.scalars(
+            select(Notification).order_by(Notification.created)
+        ).all()
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
@@ -2284,17 +2336,18 @@ class TestWatchMembershipSellSettlementNG:
             "token_type": "IbetMembership",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
-            session.query(NotificationBlockNumber)
-            .filter(
-                NotificationBlockNumber.notification_type
-                == NotificationType.SELL_SETTLEMENT_NG
+        _notification_block_number: NotificationBlockNumber = session.scalars(
+            select(NotificationBlockNumber)
+            .where(
+                and_(
+                    NotificationBlockNumber.notification_type
+                    == NotificationType.SELL_SETTLEMENT_NG,
+                    NotificationBlockNumber.contract_address
+                    == exchange_contract_address,
+                )
             )
-            .filter(
-                NotificationBlockNumber.contract_address == exchange_contract_address
-            )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
@@ -2328,12 +2381,14 @@ class TestWatchMembershipSellSettlementNG:
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2355,10 +2410,12 @@ class TestWatchMembershipSellSettlementNG:
         watcher.loop()
 
         # Assertion
-        _notification = (
-            session.query(Notification).order_by(Notification.created).first()
-        )
+        _notification = session.scalars(
+            select(Notification).order_by(Notification.created).limit(1)
+        ).first()
         assert _notification is None
 
-        _notification_block_number = session.query(NotificationBlockNumber).first()
+        _notification_block_number = session.scalars(
+            select(NotificationBlockNumber).limit(1)
+        ).first()
         assert _notification_block_number is None
