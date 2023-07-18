@@ -25,6 +25,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -33,11 +34,14 @@ from web3.middleware import geth_poa_middleware
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import IDXTokenListItem, Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    IDXTokenListItem,
+    Listing,
+)
 from batch import indexer_Token_Detail
 from batch.indexer_Token_Detail import LOG, Processor, main
 from tests.account_config import eth_account
@@ -312,43 +316,43 @@ class TestProcessor:
 
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = (
-                session.query(BondTokenModel)
-                .filter(BondTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _bond_token: BondTokenModel = session.scalars(
+                select(BondTokenModel)
+                .where(BondTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             _bond_token_obj = BondToken.from_model(_bond_token)
             for k, v in _expect_dict.items():
                 assert v == getattr(_bond_token_obj, k)
 
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = (
-                session.query(ShareTokenModel)
-                .filter(ShareTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _share_token: ShareTokenModel = session.scalars(
+                select(ShareTokenModel)
+                .where(ShareTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             _share_token_obj = ShareToken.from_model(_share_token)
             for k, v in _expect_dict.items():
                 assert v == getattr(_share_token_obj, k)
 
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = (
-                session.query(MembershipTokenModel)
-                .filter(
+            _membership_token: MembershipTokenModel = session.scalars(
+                select(MembershipTokenModel)
+                .where(
                     MembershipTokenModel.token_address == _expect_dict["token_address"]
                 )
-                .one()
-            )
+                .limit(1)
+            ).first()
             _membership_token_obj = MembershipToken.from_model(_membership_token)
             for k, v in _expect_dict.items():
                 assert v == getattr(_membership_token_obj, k)
 
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = (
-                session.query(CouponTokenModel)
-                .filter(CouponTokenModel.token_address == _expect_dict["token_address"])
-                .one()
-            )
+            _coupon_token: CouponTokenModel = session.scalars(
+                select(CouponTokenModel)
+                .where(CouponTokenModel.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
             _coupon_token_obj = CouponToken.from_model(_coupon_token)
             for k, v in _expect_dict.items():
                 assert v == getattr(_coupon_token_obj, k)
@@ -391,8 +395,8 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        _coupon_token_list: List[CouponTokenModel] = session.query(
-            CouponTokenModel
+        _coupon_token_list: List[CouponTokenModel] = session.scalars(
+            select(CouponTokenModel)
         ).all()
         assert len(_coupon_token_list) == 0
 
@@ -410,8 +414,8 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _coupon_token_list: List[CouponTokenModel] = session.query(
-            CouponTokenModel
+        _coupon_token_list: List[CouponTokenModel] = session.scalars(
+            select(CouponTokenModel)
         ).all()
         assert len(_coupon_token_list) == 0
 
@@ -445,8 +449,8 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        _coupon_token_list: List[CouponTokenModel] = session.query(
-            CouponTokenModel
+        _coupon_token_list: List[CouponTokenModel] = session.scalars(
+            select(CouponTokenModel)
         ).all()
         assert len(_coupon_token_list) == 0
 
@@ -463,8 +467,8 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _coupon_token_list: List[CouponTokenModel] = session.query(
-            CouponTokenModel
+        _coupon_token_list: List[CouponTokenModel] = session.scalars(
+            select(CouponTokenModel)
         ).all()
         assert len(_coupon_token_list) == 0
 

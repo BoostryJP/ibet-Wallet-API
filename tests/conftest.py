@@ -16,26 +16,24 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
 import os
 import sys
 from typing import TypedDict
 
-from sqlalchemy import text
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-path = os.path.join(os.path.dirname(__file__), "../batch/")
-sys.path.append(path)
-
-import json
-
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.eth import Contract as Web3Contract
 from web3.middleware import geth_poa_middleware
 from web3.types import ChecksumAddress, RPCEndpoint
+
+path = os.path.join(os.path.dirname(__file__), "../")
+sys.path.append(path)
+path = os.path.join(os.path.dirname(__file__), "../batch/")
+sys.path.append(path)
 
 from app import config
 from app.contracts import Contract

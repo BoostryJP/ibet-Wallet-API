@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import Mail
@@ -44,7 +45,7 @@ class TestSendEmail:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
-        mail_list = session.query(Mail).all()
+        mail_list = session.scalars(select(Mail)).all()
         assert len(mail_list) == 1
 
         mail = mail_list[0]
@@ -64,7 +65,7 @@ class TestSendEmail:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
-        mail_list = session.query(Mail).all()
+        mail_list = session.scalars(select(Mail)).all()
         assert len(mail_list) == 1
 
         mail = mail_list[0]
@@ -91,7 +92,7 @@ class TestSendEmail:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
-        mail_list = session.query(Mail).all()
+        mail_list = session.scalars(select(Mail)).all()
         assert len(mail_list) == 1
 
         mail = mail_list[0]
@@ -121,7 +122,7 @@ class TestSendEmail:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
-        mail_list = session.query(Mail).all()
+        mail_list = session.scalars(select(Mail)).all()
         assert len(mail_list) == 2
 
         mail = mail_list[0]

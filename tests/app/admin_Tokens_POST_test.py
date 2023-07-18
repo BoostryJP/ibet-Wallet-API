@@ -20,6 +20,7 @@ import json
 
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -140,11 +141,11 @@ class TestAdminTokensPOST:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == self.token_param_1["contract_address"])
-            .first()
-        )
+        listing: Listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == self.token_param_1["contract_address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == self.token_param_1["contract_address"]
         assert listing.is_public == self.token_param_1["is_public"]
         assert (
@@ -153,24 +154,24 @@ class TestAdminTokensPOST:
         assert listing.max_sell_amount == self.token_param_1["max_sell_amount"]
         assert listing.owner_address == issuer["account_address"]
 
-        executable_contract: ExecutableContract = (
-            session.query(ExecutableContract)
-            .filter(
+        executable_contract: ExecutableContract = session.scalars(
+            select(ExecutableContract)
+            .where(
                 ExecutableContract.contract_address
                 == self.token_param_1["contract_address"]
             )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert (
             executable_contract.contract_address
             == self.token_param_1["contract_address"]
         )
 
-        bond: IDXBondToken = session.query(IDXBondToken).first()
+        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond.token_address == self.token_param_1["contract_address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.query(IDXPosition).first()
+        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
         assert position.token_address == self.token_param_1["contract_address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
@@ -205,22 +206,22 @@ class TestAdminTokensPOST:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == bond_token["address"])
-            .first()
-        )
+        listing: Listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == bond_token["address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == bond_token["address"]
         assert listing.is_public == self.token_param_2["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond: IDXBondToken = session.query(IDXBondToken).first()
+        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond.token_address == bond_token["address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.query(IDXPosition).first()
+        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
         assert position.token_address == bond_token["address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
@@ -262,22 +263,22 @@ class TestAdminTokensPOST:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == bond_token["address"])
-            .first()
-        )
+        listing: Listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == bond_token["address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == bond_token["address"]
         assert listing.is_public == self.token_param_2["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond: IDXBondToken = session.query(IDXBondToken).first()
+        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond.token_address == bond_token["address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.query(IDXPosition).first()
+        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
         assert position.token_address == bond_token["address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000

@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import ExecutableContract, Listing
@@ -75,11 +76,11 @@ class TestAdminTokenPOST:
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == token["token_address"])
-            .first()
-        )
+        listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == token["token_address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == token["token_address"]
         assert listing.is_public == request_params["is_public"]
         assert listing.max_holding_quantity == request_params["max_holding_quantity"]

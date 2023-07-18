@@ -22,6 +22,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -72,7 +73,7 @@ class TestProcessorSendChatWebhook:
             session.commit()
 
         # Assertion
-        assert session.query(ChatWebhook).count() == 0
+        assert len(session.scalars(select(ChatWebhook)).all()) == 0
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
@@ -91,8 +92,7 @@ class TestProcessorSendChatWebhook:
             session.commit()
 
         # Assertion
-        hook_list = session.query(ChatWebhook).all()
-        assert len(hook_list) == 0
+        assert len(session.scalars(select(ChatWebhook)).all()) == 0
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.ERROR, "Failed to send chat webhook")
@@ -123,7 +123,6 @@ class TestProcessorSendChatWebhook:
             session.commit()
 
         # Assertion
-        hook_list = session.query(ChatWebhook).all()
-        assert len(hook_list) == 1
+        assert len(session.scalars(select(ChatWebhook)).all()) == 1
 
         assert 0 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))

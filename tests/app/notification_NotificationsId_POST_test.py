@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import Notification, NotificationType
@@ -136,12 +137,6 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n: Notification | None = (
-            session.query(Notification)
-            .filter(Notification.notification_id == notification_id)
-            .first()
-        )
-
         assumed_body = {
             "notification_type": NotificationType.NEW_ORDER,
             "id": "0x00000021034300000000000000",
@@ -157,10 +152,14 @@ class TestNotificationsIdPOST:
             "metainfo": {"aaa": "bbb"},
             "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
         }
-
-        assert n
         assert resp.status_code == 200
         assert resp.json()["data"] == assumed_body
+
+        n: Notification = session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        ).first()
         assert n.is_flagged == True
 
     # <Normal_2>
@@ -180,12 +179,6 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n: Notification | None = (
-            session.query(Notification)
-            .filter(Notification.notification_id == notification_id)
-            .first()
-        )
-
         assumed_body = {
             "notification_type": NotificationType.APPLY_FOR_TRANSFER,
             "id": "0x00000011034000000000000000",
@@ -201,10 +194,14 @@ class TestNotificationsIdPOST:
             "metainfo": {},
             "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
         }
-
-        assert n
         assert resp.status_code == 200
         assert resp.json()["data"] == assumed_body
+
+        n: Notification = session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        ).first()
         assert n.is_flagged == False
         assert n.is_read == True
 
@@ -224,14 +221,13 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n: Notification | None = (
-            session.query(Notification)
-            .filter(Notification.notification_id == notification_id)
-            .first()
-        )
-
-        assert n
         assert resp.status_code == 200
+
+        n: Notification = session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        ).first()
         assert n.is_read == False
         assert n.is_flagged == True
         assert n.is_deleted == True
@@ -260,14 +256,13 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n: Notification | None = (
-            session.query(Notification)
-            .filter(Notification.notification_id == notification_id)
-            .first()
-        )
-
-        assert n
         assert resp.status_code == 200
+
+        n: Notification = session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        ).first()
         assert n.is_read == False
         assert n.is_flagged == True
         assert n.is_deleted == False

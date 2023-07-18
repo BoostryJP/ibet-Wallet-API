@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import Notification
@@ -140,13 +141,15 @@ class TestNotificationsIdDELETE:
         # Assertion
         session.rollback()
         assert resp.status_code == 200
-        _notification_list = session.query(Notification).all()
+
+        _notification_list = session.scalars(select(Notification)).all()
         assert len(_notification_list) == 4
-        _notification = (
-            session.query(Notification)
-            .filter(Notification.notification_id == notification_id)
-            .first()
-        )
+
+        _notification: Notification = session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        ).first()
         assert _notification is None
 
     ###########################################################################
