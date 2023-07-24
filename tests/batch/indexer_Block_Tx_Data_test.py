@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -92,12 +93,12 @@ class TestProcessor:
         ).first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data: list[IDXBlockData] = session.scalars(
+        block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
         assert len(block_data) == 0
 
-        tx_data: list[IDXTxData] = session.scalars(
+        tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
         ).all()
         assert len(tx_data) == 0
@@ -127,13 +128,13 @@ class TestProcessor:
         ).first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = session.scalars(
+        block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
 
-        tx_data: list[IDXTxData] = session.scalars(
+        tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
         ).all()
         assert len(tx_data) == 0
@@ -183,14 +184,14 @@ class TestProcessor:
         ).first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = session.scalars(
+        block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
         assert len(block_data[0].transactions) == 1
 
-        tx_data: list[IDXTxData] = session.scalars(
+        tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
         ).all()
         assert len(tx_data) == 1
@@ -237,7 +238,7 @@ class TestProcessor:
         ).first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = session.scalars(
+        block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
         assert len(block_data) == 2
@@ -248,7 +249,7 @@ class TestProcessor:
         assert block_data[1].number == before_block_number + 2
         assert len(block_data[1].transactions) == 1
 
-        tx_data: list[IDXTxData] = session.scalars(
+        tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
         ).all()
         assert len(tx_data) == 2
@@ -290,12 +291,12 @@ class TestProcessor:
         ).first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data: list[IDXBlockData] = session.scalars(
+        block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
         assert len(block_data) == 0
 
-        tx_data: list[IDXTxData] = session.scalars(
+        tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
         ).all()
         assert len(tx_data) == 0
@@ -322,12 +323,12 @@ class TestProcessor:
         ).first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data: list[IDXBlockData] = session.scalars(
+        block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
         assert len(block_data) == 0
 
-        tx_data: list[IDXTxData] = session.scalars(
+        tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
         ).all()
         assert len(tx_data) == 0

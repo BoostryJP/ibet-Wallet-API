@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
@@ -145,7 +145,7 @@ def list_block_data(
     ):
         raise ResponseLimitExceededError("Search results exceed the limit")
 
-    block_data_tmp: list[IDXBlockData] = session.scalars(stmt).all()
+    block_data_tmp: Sequence[IDXBlockData] = session.scalars(stmt).all()
     block_data = []
     for bd in block_data_tmp:
         block_data.append(
@@ -283,7 +283,7 @@ def list_tx_data(
     ):
         raise ResponseLimitExceededError("Search results exceed the limit")
 
-    tx_data_tmp: list[IDXTxData] = session.scalars(stmt).all()
+    tx_data_tmp: Sequence[IDXTxData] = session.scalars(stmt).all()
     tx_data = []
     for txd in tx_data_tmp:
         tx_data.append(

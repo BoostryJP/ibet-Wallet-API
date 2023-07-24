@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-from typing import Dict, List, Optional
+from typing import Dict, Optional, Sequence
 
 import log
 from sqlalchemy import create_engine, delete, select
@@ -148,7 +148,7 @@ class Processor:
             .limit(1)
         ).first()
         if _checkpoint:
-            _holders: List[TokenHolder] = local_session.scalars(
+            _holders: Sequence[TokenHolder] = local_session.scalars(
                 select(TokenHolder).where(TokenHolder.holder_list == _checkpoint.id)
             ).all()
             for holder in _holders:

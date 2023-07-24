@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Sequence
+
 from fastapi import APIRouter, Path
 from sqlalchemy import delete, select
 
@@ -72,7 +74,7 @@ def list_all_admin_tokens(session: DBSession):
     """
     res_body = []
 
-    listed_tokens = session.scalars(select(Listing)).all()
+    listed_tokens: Sequence[Listing] = session.scalars(select(Listing)).all()
     for token in listed_tokens:
         item = token.json()
         res_body.append(item)

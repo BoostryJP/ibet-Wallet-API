@@ -21,7 +21,7 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Type
+from typing import List, Sequence, Type
 
 from eth_utils import to_checksum_address
 from sqlalchemy import create_engine, select
@@ -99,7 +99,7 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens: List[Listing] = local_session.scalars(
+            available_tokens: Sequence[Listing] = local_session.scalars(
                 select(Listing)
                 .join(
                     IDXTokenListItem,

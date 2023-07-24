@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
@@ -99,7 +99,7 @@ def list_all_notifications(
         stmt = stmt.offset(offset)
         sort_id = offset
 
-    _notification_list = session.scalars(stmt).all()
+    _notification_list: Sequence[Notification] = session.scalars(stmt).all()
 
     notifications = []
     for _notification in _notification_list:

@@ -21,7 +21,7 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from sqlalchemy import create_engine, desc, select
@@ -252,7 +252,7 @@ class Processor:
     def __get_token_list(self, db_session: Session):
         self.token_list = self.TargetTokenList()
         list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
-        listed_tokens = db_session.scalars(select(Listing)).all()
+        listed_tokens: Sequence[Listing] = db_session.scalars(select(Listing)).all()
         for listed_token in listed_tokens:
             token_info = Contract.call_function(
                 contract=list_contract,

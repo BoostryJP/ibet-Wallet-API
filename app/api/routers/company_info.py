@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Path, Query
@@ -77,7 +77,9 @@ def list_all_companies(
 
     # Get the token listed
     if include_private_listing:
-        available_tokens = session.execute(
+        available_tokens: Sequence[
+            tuple[Listing, str, str, str, str]
+        ] = session.execute(
             select(
                 Listing,
                 IDXBondToken.owner_address,
@@ -100,7 +102,9 @@ def list_all_companies(
             )
         ).all()
     else:
-        available_tokens = session.execute(
+        available_tokens: Sequence[
+            tuple[Listing, str, str, str, str]
+        ] = session.execute(
             select(
                 Listing,
                 IDXBondToken.owner_address,
@@ -212,13 +216,13 @@ def retrieve_company_tokens(
 
     # Get the token listed
     if include_private_listing:
-        available_list = session.scalars(
+        available_list: Sequence[Listing] = session.scalars(
             select(Listing)
             .where(Listing.owner_address == eth_address)
             .order_by(desc(Listing.id))
         ).all()
     else:
-        available_list = session.scalars(
+        available_list: Sequence[Listing] = session.scalars(
             select(Listing)
             .where(Listing.owner_address == eth_address)
             .where(Listing.is_public == True)

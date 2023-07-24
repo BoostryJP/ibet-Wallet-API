@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -79,7 +80,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 0
@@ -127,7 +128,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -187,7 +188,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 2
@@ -257,7 +258,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -320,7 +321,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -383,7 +384,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -446,7 +447,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -508,7 +509,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -570,7 +571,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -632,7 +633,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -694,7 +695,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -756,7 +757,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 1
@@ -804,7 +805,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 3
@@ -842,7 +843,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 3
@@ -876,7 +877,7 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 3
@@ -926,7 +927,7 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        _company_list: list[Company] = session.scalars(
+        _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 3

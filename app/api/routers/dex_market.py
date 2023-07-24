@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Sequence
+
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import and_, desc, func, select
@@ -291,27 +293,33 @@ def list_all_membership_tick(
         token = to_checksum_address(token_address)
         tick = []
         try:
-            entries = session.execute(
-                select(Agreement, Order)
-                .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                .where(Order.token_address == token)
-                .where(Agreement.status == AgreementStatus.DONE.value)
-                .order_by(desc(Agreement.settlement_timestamp))
-            ).all()
+            entries: Sequence[tuple[Agreement, Order]] = (
+                session.execute(
+                    select(Agreement, Order)
+                    .join(Order, Agreement.unique_order_id == Order.unique_order_id)
+                    .where(Order.token_address == token)
+                    .where(Agreement.status == AgreementStatus.DONE.value)
+                    .order_by(desc(Agreement.settlement_timestamp))
+                )
+                .tuples()
+                .all()
+            )
 
             for entry in entries:
-                block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
+                agreement = entry[0]
+                order = entry[1]
+                block_timestamp_utc = agreement.settlement_timestamp
                 tick.append(
                     {
                         "block_timestamp": block_timestamp_utc.strftime(
                             "%Y/%m/%d %H:%M:%S"
                         ),
-                        "buy_address": entry.IDXAgreement.buyer_address,
-                        "sell_address": entry.IDXAgreement.seller_address,
-                        "order_id": entry.IDXAgreement.order_id,
-                        "agreement_id": entry.IDXAgreement.agreement_id,
-                        "price": entry.IDXOrder.price,
-                        "amount": entry.IDXAgreement.amount,
+                        "buy_address": agreement.buyer_address,
+                        "sell_address": agreement.seller_address,
+                        "order_id": agreement.order_id,
+                        "agreement_id": agreement.agreement_id,
+                        "price": order.price,
+                        "amount": agreement.amount,
                     }
                 )
             tick_list.append({"token_address": token_address, "tick": tick})
@@ -490,27 +498,33 @@ def list_all_coupon_tick(
         token = to_checksum_address(token_address)
         tick = []
         try:
-            entries = session.execute(
-                select(Agreement, Order)
-                .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                .where(Order.token_address == token)
-                .where(Agreement.status == AgreementStatus.DONE.value)
-                .order_by(desc(Agreement.settlement_timestamp))
-            ).all()
+            entries: Sequence[tuple[Agreement, Order]] = (
+                session.execute(
+                    select(Agreement, Order)
+                    .join(Order, Agreement.unique_order_id == Order.unique_order_id)
+                    .where(Order.token_address == token)
+                    .where(Agreement.status == AgreementStatus.DONE.value)
+                    .order_by(desc(Agreement.settlement_timestamp))
+                )
+                .tuples()
+                .all()
+            )
 
             for entry in entries:
-                block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
+                agreement = entry[0]
+                order = entry[1]
+                block_timestamp_utc = agreement.settlement_timestamp
                 tick.append(
                     {
                         "block_timestamp": block_timestamp_utc.strftime(
                             "%Y/%m/%d %H:%M:%S"
                         ),
-                        "buy_address": entry.IDXAgreement.buyer_address,
-                        "sell_address": entry.IDXAgreement.seller_address,
-                        "order_id": entry.IDXAgreement.order_id,
-                        "agreement_id": entry.IDXAgreement.agreement_id,
-                        "price": entry.IDXOrder.price,
-                        "amount": entry.IDXAgreement.amount,
+                        "buy_address": agreement.buyer_address,
+                        "sell_address": agreement.seller_address,
+                        "order_id": agreement.order_id,
+                        "agreement_id": agreement.agreement_id,
+                        "price": order.price,
+                        "amount": agreement.amount,
                     }
                 )
             tick_list.append({"token_address": token_address, "tick": tick})

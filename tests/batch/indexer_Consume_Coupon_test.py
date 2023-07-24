@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -131,7 +132,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 1
@@ -166,7 +167,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 2
@@ -218,7 +219,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 4
@@ -270,7 +271,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -291,7 +292,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -326,7 +327,7 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -345,7 +346,7 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -372,7 +373,7 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -390,7 +391,7 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -417,7 +418,7 @@ class TestProcessor:
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -436,7 +437,7 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -462,7 +463,7 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0
@@ -480,7 +481,7 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list: list[IDXConsumeCoupon] = session.scalars(
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
         ).all()
         assert len(_consume_coupon_list) == 0

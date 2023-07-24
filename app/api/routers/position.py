@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from datetime import timedelta, timezone
 from decimal import Decimal
-from typing import Type, Union
+from typing import Sequence, Type, Union
 from zoneinfo import ZoneInfo
 
 from eth_utils import to_checksum_address
@@ -189,7 +189,7 @@ class ListAllLock:
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _locked_list: list[
+        _locked_list: Sequence[
             tuple[IDXLockedPosition, IDXTokenInstance]
         ] = session.execute(stmt).all()
         locked_list = []
@@ -565,9 +565,9 @@ class BasePosition:
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _token_position_list: list[
+        _token_position_list: Sequence[
             tuple[str, IDXPosition, int | None, IDXTokenInstance]
-        ] = session.execute(stmt).all()
+        ] = (session.execute(stmt).tuples().all())
 
         position_list = []
         for item in _token_position_list:
@@ -614,7 +614,9 @@ class BasePosition:
         )
 
         # Get Listing Tokens
-        _token_list = session.scalars(select(Listing).order_by(Listing.id)).all()
+        _token_list: Sequence[Listing] = session.scalars(
+            select(Listing).order_by(Listing.id)
+        ).all()
 
         position_list = []
         limit_count = 0
@@ -1108,9 +1110,9 @@ class BasePositionMembership(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _token_position_list: list[
-            tuple[str, IDXPosition, IDXTokenInstance]
-        ] = session.execute(stmt).all()
+        _token_position_list: Sequence[tuple[str, IDXPosition, IDXTokenInstance]] = (
+            session.execute(stmt).tuples().all()
+        )
 
         position_list = []
         for item in _token_position_list:
@@ -1217,9 +1219,9 @@ class BasePositionCoupon(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _token_position_list: list[
+        _token_position_list: Sequence[
             tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]
-        ] = session.execute(stmt).all()
+        ] = (session.execute(stmt).tuples().all())
 
         position_list = []
         for item in _token_position_list:
