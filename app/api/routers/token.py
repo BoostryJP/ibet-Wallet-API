@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
+from typing import Optional, Sequence
 from uuid import UUID
 
 from eth_utils import to_checksum_address
@@ -196,7 +196,7 @@ def get_token_holders(
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
-    holders: list[tuple[IDXPosition, int | None]] = session.execute(
+    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
         stmt.order_by(desc(IDXPosition.created))
     ).all()
 
@@ -439,7 +439,7 @@ def get_token_holders_collection(
         )
         raise InvalidParameterError(description=description)
 
-    _token_holders = session.scalars(
+    _token_holders: Sequence[TokenHolder] = session.scalars(
         select(TokenHolder)
         .where(TokenHolder.holder_list == _same_list_id_record.id)
         .order_by(asc(TokenHolder.account_address))
@@ -510,7 +510,7 @@ def list_all_transfer_histories(
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
         stmt = stmt.limit(request_query.limit)
-    transfer_history = session.scalars(stmt).all()
+    transfer_history: Sequence[IDXTransfer] = session.scalars(stmt).all()
 
     resp_data = []
     for transfer_event in transfer_history:
@@ -574,7 +574,9 @@ def list_all_transfer_approval_histories(
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
         stmt = stmt.limit(request_query.limit)
-    transfer_approval_history = session.scalars(stmt).all()
+    transfer_approval_history: Sequence[IDXTransferApproval] = session.scalars(
+        stmt
+    ).all()
 
     resp_data = []
     for transfer_approval_event in transfer_approval_history:

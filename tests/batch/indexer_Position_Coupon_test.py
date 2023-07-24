@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -147,7 +148,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 2
@@ -212,7 +213,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 3
@@ -306,7 +307,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 6
@@ -447,7 +448,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 2
@@ -526,7 +527,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 1
@@ -594,7 +595,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 2
@@ -658,7 +659,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
@@ -691,12 +692,12 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(
             select(IDXPositionCouponBlockNumber).where(
@@ -713,7 +714,7 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 2
@@ -886,7 +887,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 1
@@ -920,7 +921,7 @@ class TestProcessor:
         session.rollback()
 
         assert eth_getCode_mock.call_count == 2
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 2
@@ -1007,7 +1008,7 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
@@ -1041,7 +1042,7 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
@@ -1082,13 +1083,13 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
         assert len(_idx_position_coupon_block_number) == 0
@@ -1109,13 +1110,13 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
         assert len(_idx_position_coupon_block_number) == 0
@@ -1153,13 +1154,13 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process when ServiceUnavailable occurs.
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
         assert len(_idx_position_coupon_block_number) == 0
@@ -1183,13 +1184,13 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "sync_new_logs" process when ServiceUnavailable occurs.
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
         assert len(_idx_position_coupon_block_number) == 0
@@ -1226,13 +1227,13 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process when SQLAlchemyError occurs.
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
         assert len(_idx_position_coupon_block_number) == 0
@@ -1255,13 +1256,13 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _position_list: list[IDXPosition] = session.scalars(
+        _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
         assert len(_position_list) == 0
 
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_coupon_block_number: list[
+        _idx_position_coupon_block_number: Sequence[
             IDXPositionCouponBlockNumber
         ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
         assert len(_idx_position_coupon_block_number) == 0

@@ -22,7 +22,7 @@ import time
 
 import requests
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -65,9 +65,7 @@ class Processor:
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
             # Delete all company list from DB
-            _company_list = db_session.scalars(select(Company)).all()
-            for _company in _company_list:
-                db_session.delete(_company)
+            db_session.execute(delete(Company))
 
             # Insert company list
             for i, company in enumerate(company_list_json):

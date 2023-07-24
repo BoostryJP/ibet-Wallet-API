@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -192,7 +193,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 1
@@ -212,7 +213,7 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -247,7 +248,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 1
@@ -267,7 +268,7 @@ class TestProcessor:
         assert _order.is_cancelled is True
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -303,7 +304,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 1
@@ -324,7 +325,7 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 1
@@ -377,7 +378,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 1
@@ -398,7 +399,7 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 1
@@ -453,7 +454,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 1
@@ -474,7 +475,7 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 1
@@ -529,7 +530,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 1
@@ -550,7 +551,7 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 1
@@ -642,7 +643,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 2
@@ -679,7 +680,7 @@ class TestProcessor:
         assert _order.is_cancelled is False
         assert _order.order_timestamp is not None
 
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 2
@@ -738,11 +739,11 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -767,11 +768,11 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -785,11 +786,11 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -832,11 +833,11 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -860,11 +861,11 @@ class TestProcessor:
         processor.sync_new_logs()
         # Assertion
         session.rollback()
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -899,11 +900,11 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -926,11 +927,11 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -965,11 +966,11 @@ class TestProcessor:
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -993,11 +994,11 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -1032,11 +1033,11 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0
@@ -1059,11 +1060,11 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _order_list: list[IDXOrder] = session.scalars(
+        _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
         ).all()
         assert len(_order_list) == 0
-        _agreement_list: list[IDXAgreement] = session.scalars(
+        _agreement_list: Sequence[IDXAgreement] = session.scalars(
             select(IDXAgreement).order_by(IDXAgreement.created)
         ).all()
         assert len(_agreement_list) == 0

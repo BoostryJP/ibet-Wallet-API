@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import timedelta, timezone
+from typing import Sequence
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
@@ -93,7 +94,7 @@ def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Dep
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _locked_list: list[IDXLockedPosition] = session.scalars(stmt).all()
+    _locked_list: Sequence[IDXLockedPosition] = session.scalars(stmt).all()
 
     data = {
         "result_set": {

@@ -20,7 +20,7 @@ import os
 import sys
 import time
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -172,7 +172,7 @@ class Processor:
         list_contract = Contract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        listed_tokens = db_session.scalars(select(Listing)).all()
+        listed_tokens: Sequence[Listing] = db_session.scalars(select(Listing)).all()
 
         _exchange_list_tmp = []
         for listed_token in listed_tokens:

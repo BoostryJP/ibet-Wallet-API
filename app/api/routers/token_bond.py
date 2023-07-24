@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
+from typing import Optional, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Query, Request
@@ -148,7 +148,7 @@ def list_all_straight_bond_tokens(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: list[IDXBondToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXBondToken] = session.scalars(stmt).all()
     tokens = []
 
     for _token in _token_list:
@@ -256,7 +256,7 @@ def list_all_straight_bond_token_addresses(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: list[IDXBondToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXBondToken] = session.scalars(stmt).all()
 
     data = {
         "result_set": {

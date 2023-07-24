@@ -20,6 +20,7 @@ import os
 import sys
 import time
 from datetime import datetime
+from typing import Sequence
 from zoneinfo import ZoneInfo
 
 from eth_utils import to_checksum_address
@@ -129,7 +130,7 @@ class Processor:
         list_contract = Contract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        listed_tokens = db_session.scalars(select(Listing)).all()
+        listed_tokens: Sequence[Listing] = db_session.scalars(select(Listing)).all()
         for listed_token in listed_tokens:
             token_info = Contract.call_function(
                 contract=list_contract,
