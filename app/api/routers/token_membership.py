@@ -121,7 +121,10 @@ def list_all_membership_tokens(
         )
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
-    sort_attr = getattr(IDXMembershipToken, sort_item, None)
+    if sort_item == "created":
+        sort_attr = getattr(Listing, sort_item, None)
+    else:
+        sort_attr = getattr(IDXMembershipToken, sort_item, None)
 
     if sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
@@ -129,7 +132,7 @@ def list_all_membership_tokens(
         stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        stmt = stmt.order_by(IDXMembershipToken.created)
+        stmt = stmt.order_by(Listing.created)
 
     # Pagination
     if limit is not None:
@@ -218,7 +221,10 @@ def list_all_membership_token_addresses(
         )
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
-    sort_attr = getattr(IDXMembershipToken, sort_item, None)
+    if sort_item == "created":
+        sort_attr = getattr(Listing, sort_item, None)
+    else:
+        sort_attr = getattr(IDXMembershipToken, sort_item, None)
 
     if sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
@@ -226,7 +232,7 @@ def list_all_membership_token_addresses(
         stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        stmt = stmt.order_by(IDXMembershipToken.created)
+        stmt = stmt.order_by(Listing.created)
 
     # Pagination
     if limit is not None:

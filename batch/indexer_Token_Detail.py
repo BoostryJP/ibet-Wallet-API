@@ -120,7 +120,6 @@ class Processor:
                     token_detail = token_detail_obj.to_model()
                     token_detail.created = datetime.utcnow()
                     local_session.merge(token_detail)
-                    local_session.commit()
 
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time
@@ -129,6 +128,8 @@ class Processor:
                     LOG.warning(
                         "The record may have been deleted in another session during the update"
                     )
+
+            local_session.commit()
 
 
 def main():
