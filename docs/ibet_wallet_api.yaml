@@ -227,6 +227,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccessResponse_GetBlockSyncStatusResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableResponse'
   /NodeInfo/BlockData:
     get:
       tags:

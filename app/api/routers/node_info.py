@@ -18,11 +18,13 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 
+import requests
 from fastapi import APIRouter
 from sqlalchemy import select
 
 from app import config, log
 from app.database import DBSession
+from app.errors import ServiceUnavailable
 from app.model.db import Node
 from app.model.schema import (
     GenericSuccessResponse,
@@ -30,11 +32,11 @@ from app.model.schema import (
     GetNodeInfoResponse,
     SuccessResponse,
 )
+from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
-web3 = Web3Wrapper()
 
 
 router = APIRouter(prefix="/NodeInfo", tags=["node_info"])
@@ -91,6 +93,7 @@ def get_node_info():
     summary="Block synchronization status of the connected blockchain node",
     operation_id="NodeInfoBlockSyncStatus",
     response_model=GenericSuccessResponse[GetBlockSyncStatusResponse],
+    responses=get_routers_responses(ServiceUnavailable),
 )
 def get_block_sync_status(session: DBSession):
     """
@@ -106,7 +109,11 @@ def get_block_sync_status(session: DBSession):
     latest_block_number = None
     if node is not None:
         is_synced = True
-        latest_block_number = web3.eth.block_number
+        try:
+            web3 = Web3Wrapper(request_timeout=1)
+            latest_block_number = web3.eth.block_number
+        except requests.exceptions.ReadTimeout:
+            raise ServiceUnavailable("Temporarily unable to connect to web3 provider")
 
     return json_response(
         {
