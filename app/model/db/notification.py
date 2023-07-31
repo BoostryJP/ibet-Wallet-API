@@ -76,16 +76,16 @@ class Notification(Base):
     notification_id: Mapped[str] = mapped_column(String(256), primary_key=True)
 
     # 通知タイプ(例：BuySettlementOK, BuyAgreementなど)
-    notification_type: Mapped[str | None] = mapped_column(String(256))
+    notification_type: Mapped[str | None] = mapped_column(String(256), index=True)
 
     # 通知の重要度
     #   0: Low
     #   1: Medium
     #   2: High
-    priority: Mapped[int | None] = mapped_column(Integer)
+    priority: Mapped[int | None] = mapped_column(Integer, index=True)
 
     # 通知対象のユーザーのアドレス
-    address: Mapped[str | None] = mapped_column(String(256))
+    address: Mapped[str | None] = mapped_column(String(256), index=True)
 
     # 既読フラグ
     is_read: Mapped[bool | None] = mapped_column(Boolean, default=False)
