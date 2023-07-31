@@ -293,9 +293,8 @@ def has_listing_owner_function_creator(
     listing_owner_set: set[str],
 ) -> Callable[[dict], bool]:
     def has_listing_owner_function(company_info: dict):
-        for address in listing_owner_set:
-            if to_checksum_address(company_info["address"]) == address:
-                return True
+        if to_checksum_address(company_info["address"]) in listing_owner_set:
+            return True
         return False
 
     return has_listing_owner_function
