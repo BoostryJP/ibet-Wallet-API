@@ -129,12 +129,12 @@ def list_all_companies(
         ).all()
 
     # Filter only issuers that issue the listed tokens
-    listing_owner_list = []
+    listing_owner_set = set()
     for token in available_tokens:
         try:
             owner_address_is_cached = [t for t in token[1:5] if t is not None]
             if owner_address_is_cached:
-                listing_owner_list.append(owner_address_is_cached[0])
+                listing_owner_set.add(owner_address_is_cached[0])
                 continue
 
             token_address = to_checksum_address(token[0].token_address)
@@ -147,11 +147,11 @@ def list_all_companies(
                 args=(),
                 default_returns=config.ZERO_ADDRESS,
             )
-            listing_owner_list.append(owner_address)
+            listing_owner_set.add(owner_address)
         except Exception as e:
             LOG.warning(e)
 
-    has_listing_owner_function = has_listing_owner_function_creator(listing_owner_list)
+    has_listing_owner_function = has_listing_owner_function_creator(listing_owner_set)
     filtered_company_list = filter(has_listing_owner_function, company_list)
 
     return json_response(
@@ -290,10 +290,10 @@ def get_token_model(token_template: str):
 
 
 def has_listing_owner_function_creator(
-    listing_owner_list: list[str],
+    listing_owner_set: set[str],
 ) -> Callable[[dict], bool]:
-    def has_listing_owner_function(company_info):
-        for address in listing_owner_list:
+    def has_listing_owner_function(company_info: dict):
+        for address in listing_owner_set:
             if to_checksum_address(company_info["address"]) == address:
                 return True
         return False
