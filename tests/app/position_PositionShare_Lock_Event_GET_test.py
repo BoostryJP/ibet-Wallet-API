@@ -1716,7 +1716,6 @@ class TestPositionShareLockEvent:
                     "loc": ["query", "offset"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -1724,7 +1723,6 @@ class TestPositionShareLockEvent:
                     "loc": ["query", "limit"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1755,7 +1753,6 @@ class TestPositionShareLockEvent:
                     "msg": "Input should be a valid integer, unable to parse "
                     "string as an integer",
                     "type": "int_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 },
                 {
                     "input": "test",
@@ -1763,7 +1760,6 @@ class TestPositionShareLockEvent:
                     "msg": "Input should be a valid integer, unable to parse "
                     "string as an integer",
                     "type": "int_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 },
             ],
             "message": "Invalid Parameter",

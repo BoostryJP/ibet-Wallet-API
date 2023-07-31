@@ -1537,21 +1537,18 @@ class TestDEXMarketMembershipOrderBook:
                     "loc": ["query", "token_address"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
                     "input": None,
                     "loc": ["query", "exchange_agent_address"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
                     "input": None,
                     "loc": ["query", "order_type"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1588,7 +1585,6 @@ class TestDEXMarketMembershipOrderBook:
                     "loc": ["token_address"],
                     "msg": "Value error, token_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1626,7 +1622,6 @@ class TestDEXMarketMembershipOrderBook:
                     "msg": "Value error, exchange_agent_address is not a valid "
                     "address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1663,7 +1658,6 @@ class TestDEXMarketMembershipOrderBook:
                     "loc": ["account_address"],
                     "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

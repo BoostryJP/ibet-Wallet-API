@@ -257,7 +257,6 @@ class TestEthWaitForTransactionReceipt:
                     "loc": ["query", "timeout"],
                     "msg": "Input should be greater than or equal to 1",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 }
             ],
             "message": "Invalid Parameter",
@@ -285,7 +284,6 @@ class TestEthWaitForTransactionReceipt:
                     "loc": ["query", "timeout"],
                     "msg": "Input should be less than or equal to 30",
                     "type": "less_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/less_than_equal",
                 }
             ],
             "message": "Invalid Parameter",
@@ -311,7 +309,6 @@ class TestEthWaitForTransactionReceipt:
                     "msg": "Input should be a valid integer, unable to parse "
                     "string as an integer",
                     "type": "int_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 }
             ],
             "message": "Invalid Parameter",

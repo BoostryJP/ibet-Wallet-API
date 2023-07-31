@@ -120,7 +120,6 @@ class TestAdminTokenPOST:
                         "msg": "Input should be a valid dictionary or "
                         "object to extract fields from",
                         "type": "model_attributes_type",
-                        "url": "https://errors.pydantic.dev/2.1/v/model_attributes_type",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -153,7 +152,6 @@ class TestAdminTokenPOST:
                         "loc": ["body", "owner_address"],
                         "msg": "Value error, owner_address is not a valid " "address",
                         "type": "value_error",
-                        "url": "https://errors.pydantic.dev/2.1/v/value_error",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -185,7 +183,6 @@ class TestAdminTokenPOST:
                         "loc": ["body", "owner_address"],
                         "msg": "Input should be a valid string",
                         "type": "string_type",
-                        "url": "https://errors.pydantic.dev/2.1/v/string_type",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -218,7 +215,6 @@ class TestAdminTokenPOST:
                         "loc": ["body", "max_holding_quantity"],
                         "msg": "Input should be greater than or equal to 0",
                         "type": "greater_than_equal",
-                        "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                     },
                     {
                         "ctx": {"ge": 0},
@@ -226,7 +222,6 @@ class TestAdminTokenPOST:
                         "loc": ["body", "max_sell_amount"],
                         "msg": "Input should be greater than or equal to 0",
                         "type": "greater_than_equal",
-                        "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                     },
                 ],
                 "message": "Invalid Parameter",

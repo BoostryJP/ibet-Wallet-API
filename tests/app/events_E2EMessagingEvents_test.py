@@ -356,14 +356,12 @@ class TestEventsE2EMessaging:
                     "loc": ["query", "from_block"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
                     "input": None,
                     "loc": ["query", "to_block"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -390,7 +388,6 @@ class TestEventsE2EMessaging:
                     "loc": ["query", "from_block"],
                     "msg": "Input should be greater than or equal to 1",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 1},
@@ -398,7 +395,6 @@ class TestEventsE2EMessaging:
                     "loc": ["query", "to_block"],
                     "msg": "Input should be greater than or equal to 1",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",
@@ -499,7 +495,6 @@ class TestEventsE2EMessaging:
                     "msg": "Value error, to_block must be greater than or equal "
                     "to the from_block",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

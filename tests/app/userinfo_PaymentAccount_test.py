@@ -130,7 +130,6 @@ class TestUserInfoPaymentAccount:
                     "loc": ["query", "account_address"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -160,7 +159,6 @@ class TestUserInfoPaymentAccount:
                     "loc": ["account_address"],
                     "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -186,7 +184,6 @@ class TestUserInfoPaymentAccount:
                     "loc": ["query", "agent_address"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -213,7 +210,6 @@ class TestUserInfoPaymentAccount:
                     "loc": ["agent_address"],
                     "msg": "Value error, agent_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

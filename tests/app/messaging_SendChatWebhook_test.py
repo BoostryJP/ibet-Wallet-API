@@ -73,7 +73,6 @@ class TestChatWebhook:
                         "loc": ["body", "message"],
                         "msg": "Field required",
                         "type": "missing",
-                        "url": "https://errors.pydantic.dev/2.1/v/missing",
                     }
                 ],
             }
@@ -99,7 +98,6 @@ class TestChatWebhook:
                         "loc": ["body", "message"],
                         "msg": "Invalid JSON: expected ident at line 1 " "column 2",
                         "type": "json_invalid",
-                        "url": "https://errors.pydantic.dev/2.1/v/json_invalid",
                     }
                 ],
             }

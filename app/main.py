@@ -301,8 +301,8 @@ def convert_errors(
     for error in e.errors():
         # "url" field which Pydantic V2 adds when validation error occurs is not needed for API response.
         # https://docs.pydantic.dev/2.1/errors/errors/
-        # if "url" in error.keys():
-        #     error.pop("url", None)
+        if "url" in error.keys():
+            error.pop("url", None)
 
         # "input" field generated from GET query model_validator is ArgsKwargs instance.
         # This cannot be serialized to json as it is, so nested field should be picked.

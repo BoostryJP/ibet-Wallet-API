@@ -326,7 +326,6 @@ class TestTokenTokenHoldersCollection:
                     "loc": ["body", "list_id"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -376,7 +375,6 @@ class TestTokenTokenHoldersCollection:
                     "expected an optional prefix of `urn:uuid:` followed "
                     "by [0-9a-fA-F-], found `s` at 1",
                     "type": "uuid_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/uuid_parsing",
                 }
             ],
             "message": "Invalid Parameter",

@@ -159,7 +159,6 @@ class TestNotificationCount:
                     "loc": ["query", "address"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -182,7 +181,6 @@ class TestNotificationCount:
                     "loc": ["address"],
                     "msg": "Value error, address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

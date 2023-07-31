@@ -576,7 +576,6 @@ class TestDEXOrderList:
                     "msg": "Value error, account_address_list has not a valid "
                     "address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1184,7 +1183,6 @@ class TestDEXOrderListMembership:
                     "msg": "Value error, account_address_list has not a valid "
                     "address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1213,7 +1211,6 @@ class TestDEXOrderListMembership:
                     "msg": "Input should be a valid boolean, unable to interpret "
                     "input",
                     "type": "bool_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/bool_parsing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1866,7 +1863,6 @@ class TestDEXOrderListCoupon:
                     "msg": "Value error, account_address_list has not a valid "
                     "address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1895,7 +1891,6 @@ class TestDEXOrderListCoupon:
                     "msg": "Input should be a valid boolean, unable to interpret "
                     "input",
                     "type": "bool_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/bool_parsing",
                 }
             ],
             "message": "Invalid Parameter",

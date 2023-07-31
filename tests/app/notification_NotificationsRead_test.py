@@ -229,7 +229,6 @@ class TestNotificationsRead:
                     "loc": ["body", "address"],
                     "msg": "Input should be a valid string",
                     "type": "string_type",
-                    "url": "https://errors.pydantic.dev/2.1/v/string_type",
                 },
                 {
                     "input": "invalid_value",
@@ -237,7 +236,6 @@ class TestNotificationsRead:
                     "msg": "Input should be a valid boolean, unable to interpret "
                     "input",
                     "type": "bool_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/bool_parsing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -266,14 +264,12 @@ class TestNotificationsRead:
                     "loc": ["body", "address"],
                     "msg": "Value error, address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 },
                 {
                     "input": None,
                     "loc": ["body", "is_read"],
                     "msg": "Input should be a valid boolean",
                     "type": "bool_type",
-                    "url": "https://errors.pydantic.dev/2.1/v/bool_type",
                 },
             ],
             "message": "Invalid Parameter",
@@ -302,7 +298,6 @@ class TestNotificationsRead:
                     "loc": ["body", "address"],
                     "msg": "Value error, address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

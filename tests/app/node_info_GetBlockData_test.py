@@ -185,7 +185,6 @@ class TestGetBlockData:
                     "loc": ["path", "block_number"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 }
             ],
         }

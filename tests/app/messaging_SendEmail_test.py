@@ -162,14 +162,12 @@ class TestSendEmail:
                         "loc": ["body", "to_emails"],
                         "msg": "Field required",
                         "type": "missing",
-                        "url": "https://errors.pydantic.dev/2.1/v/missing",
                     },
                     {
                         "input": {},
                         "loc": ["body", "subject"],
                         "msg": "Field required",
                         "type": "missing",
-                        "url": "https://errors.pydantic.dev/2.1/v/missing",
                     },
                 ],
             }
@@ -211,7 +209,6 @@ class TestSendEmail:
                         "loc": ["body", "subject"],
                         "msg": "String should have at most 100 characters",
                         "type": "string_too_long",
-                        "url": "https://errors.pydantic.dev/2.1/v/string_too_long",
                     },
                     {
                         "ctx": {"error": {}},
@@ -219,7 +216,6 @@ class TestSendEmail:
                         "loc": ["body", "file_name"],
                         "msg": "Value error, File name has invalid " "character.",
                         "type": "value_error",
-                        "url": "https://errors.pydantic.dev/2.1/v/value_error",
                     },
                 ],
             }
@@ -252,7 +248,6 @@ class TestSendEmail:
                         "msg": "Value error, File content should be posted "
                         "with name.",
                         "type": "value_error",
-                        "url": "https://errors.pydantic.dev/2.1/v/value_error",
                     }
                 ],
                 "message": "Invalid Parameter",

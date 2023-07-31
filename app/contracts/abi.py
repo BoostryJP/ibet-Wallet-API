@@ -67,7 +67,7 @@ class ABIDescriptionFunctionInput(BaseModel):
     components: Optional[List["ABIDescriptionFunctionInput"]] = None
 
 
-ABIDescriptionFunctionInput.update_forward_refs()
+ABIDescriptionFunctionInput.model_rebuild()
 
 
 class ABIDescriptionEventInput(BaseModel):

@@ -384,7 +384,6 @@ class TestListBlockData:
                     "loc": ["query", "offset"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -392,7 +391,6 @@ class TestListBlockData:
                     "loc": ["query", "limit"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -400,7 +398,6 @@ class TestListBlockData:
                     "loc": ["query", "from_block_number"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -408,7 +405,6 @@ class TestListBlockData:
                     "loc": ["query", "to_block_number"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
             ],
         }

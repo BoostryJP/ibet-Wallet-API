@@ -110,14 +110,12 @@ class TestEthereumJsonRpc:
                     "loc": ["body", "method"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
                     "input": {},
                     "loc": ["body", "params"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
             ],
         }
@@ -141,7 +139,6 @@ class TestEthereumJsonRpc:
                     "loc": ["body", "method"],
                     "msg": "Value error, The method invalid_method is not " "available",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
         }

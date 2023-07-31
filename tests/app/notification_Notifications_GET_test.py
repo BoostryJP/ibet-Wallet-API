@@ -519,7 +519,6 @@ class TestNotificationsGet:
                     "loc": ["query", "offset"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -527,7 +526,6 @@ class TestNotificationsGet:
                     "loc": ["query", "limit"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {
@@ -547,7 +545,6 @@ class TestNotificationsGet:
                     "loc": ["query", "priority"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {
@@ -596,7 +593,6 @@ class TestNotificationsGet:
                     "loc": ["query", "priority"],
                     "msg": "Input should be less than or equal to 2",
                     "type": "less_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/less_than_equal",
                 },
                 {
                     "ctx": {"expected": "0 or 1"},
@@ -626,7 +622,6 @@ class TestNotificationsGet:
                     "loc": ["address"],
                     "msg": "Value error, address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

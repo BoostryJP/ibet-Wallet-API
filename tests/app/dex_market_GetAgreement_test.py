@@ -294,21 +294,18 @@ class TestDEXMarketGetAgreement:
                     "loc": ["query", "order_id"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
                     "input": None,
                     "loc": ["query", "agreement_id"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
                     "input": None,
                     "loc": ["query", "exchange_address"],
                     "msg": "Field required",
                     "type": "missing",
-                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -334,7 +331,6 @@ class TestDEXMarketGetAgreement:
                     "loc": ["exchange_address"],
                     "msg": "Value error, owner_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -360,7 +356,6 @@ class TestDEXMarketGetAgreement:
                     "msg": "Input should be a valid integer, unable to parse "
                     "string as an integer",
                     "type": "int_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 },
                 {
                     "input": "bb",
@@ -368,7 +363,6 @@ class TestDEXMarketGetAgreement:
                     "msg": "Input should be a valid integer, unable to parse "
                     "string as an integer",
                     "type": "int_parsing",
-                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 },
             ],
             "message": "Invalid Parameter",

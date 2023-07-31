@@ -307,7 +307,6 @@ class TestListTxData:
                     "loc": ["query", "offset"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -315,7 +314,6 @@ class TestListTxData:
                     "loc": ["query", "limit"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
                 {
                     "ctx": {"ge": 0},
@@ -323,7 +321,6 @@ class TestListTxData:
                     "loc": ["query", "block_number"],
                     "msg": "Input should be greater than or equal to 0",
                     "type": "greater_than_equal",
-                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 },
             ],
         }
@@ -349,7 +346,6 @@ class TestListTxData:
                     "loc": ["from_address"],
                     "msg": "Value error, from_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 },
                 {
                     "ctx": {"error": {}},
@@ -357,7 +353,6 @@ class TestListTxData:
                     "loc": ["to_address"],
                     "msg": "Value error, to_address is not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 },
             ],
         }

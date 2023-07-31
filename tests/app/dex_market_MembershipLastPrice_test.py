@@ -166,7 +166,6 @@ class TestDEXMarketMembershipLastPrice:
                     "loc": ["address_list"],
                     "msg": "Value error, address_list has not a valid address",
                     "type": "value_error",
-                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
