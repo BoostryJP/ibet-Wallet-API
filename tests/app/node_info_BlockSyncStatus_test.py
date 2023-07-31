@@ -17,7 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from unittest import mock
+from unittest.mock import MagicMock
 
+import requests
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -98,3 +100,35 @@ class TestNodeInfoBlockSyncStatus:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {"is_synced": False, "latest_block_number": None}
+
+    ##################################################
+    # Error
+    ##################################################
+
+    # Error_1
+    @mock.patch(
+        "web3.providers.rpc.HTTPProvider.make_request",
+        MagicMock(side_effect=requests.exceptions.ReadTimeout()),
+    )
+    def test_error_1(self, client: TestClient, session: Session):
+        # prepare test data
+        self.insert_node_data(
+            session, is_synced=False, endpoint_uri="http://localhost:8546"
+        )
+        self.insert_node_data(
+            session,
+            is_synced=True,
+            endpoint_uri=config.WEB3_HTTP_PROVIDER,
+            priority=1,
+        )
+
+        # request target api
+        resp = client.get(self.apiurl)
+
+        # assertion
+        assert resp.status_code == 503
+        assert resp.json()["meta"] == {
+            "code": 503,
+            "message": "Service Unavailable",
+            "description": "Temporarily unable to connect to web3 provider",
+        }

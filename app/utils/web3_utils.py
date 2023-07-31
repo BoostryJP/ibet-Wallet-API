@@ -39,32 +39,37 @@ thread_local = threading.local()
 
 
 class Web3Wrapper:
-    def __init__(self):
+    DEFAULT_TIMEOUT = 5
+
+    def __init__(self, request_timeout: int | None = DEFAULT_TIMEOUT):
         if not config.UNIT_TEST_MODE:
             FailOverHTTPProvider.set_fail_over_mode(True)
+        self.request_timeout = request_timeout
 
     @property
     def eth(self):
-        web3 = self._get_web3()
+        web3 = self._get_web3(self.request_timeout)
         return web3.eth
 
     @property
     def geth(self):
-        web3 = self._get_web3()
+        web3 = self._get_web3(self.request_timeout)
         return web3.geth
 
     @property
     def net(self):
-        web3 = self._get_web3()
+        web3 = self._get_web3(self.request_timeout)
         return web3.net
 
     @staticmethod
-    def _get_web3() -> Web3:
-        # Get web3 for each threads because make to FailOverHTTPProvider thread-safe
+    def _get_web3(request_timeout: int) -> Web3:
+        # Get web3 for each thread because make to FailOverHTTPProvider thread-safe
         try:
             web3 = thread_local.web3
         except AttributeError:
-            web3 = Web3(FailOverHTTPProvider())
+            web3 = Web3(
+                FailOverHTTPProvider(request_kwargs={"timeout": request_timeout})
+            )
             web3.middleware_onion.inject(geth_poa_middleware, layer=0)
             thread_local.web3 = web3
 

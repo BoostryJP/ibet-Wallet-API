@@ -47,10 +47,8 @@ from app.model.schema import (
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
-from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
-web3 = Web3Wrapper()
 BLOCK_RESPONSE_LIMIT = 1000
 TX_RESPONSE_LIMIT = 10000
 
