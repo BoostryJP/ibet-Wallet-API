@@ -17,10 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, RootModel, field_validator
 from pydantic.dataclasses import dataclass
 from web3 import Web3
 
@@ -41,32 +41,41 @@ class OrderType(str, Enum):
 
 @dataclass
 class ListAllOrderBookQuery:
-    account_address: Optional[str] = Query(
-        default=None,
-        description="Orderer's account address. Orders from the given address will not be included in the response.",
-    )
-    token_address: str = Query(description="Token address")
-    exchange_agent_address: str = Query(
-        description="Settlement agent address on ibet exchange"
-    )
-    order_type: OrderType = Query(
-        description="Order type to be executed by the Orderer. "
-        'If "buy" is selected, the sell order book will be returned.'
-    )
+    token_address: Annotated[str, Query(default=..., description="Token address")]
+    exchange_agent_address: Annotated[
+        str, Query(default=..., description="Settlement agent address on ibet exchange")
+    ]
+    order_type: Annotated[
+        OrderType,
+        Query(
+            default=...,
+            description="Order type to be executed by the Orderer. "
+            'If "buy" is selected, the sell order book will be returned.',
+        ),
+    ]
+    account_address: Annotated[
+        Optional[str],
+        Query(
+            description="Orderer's account address. Orders from the given address will not be included in the response.",
+        ),
+    ] = None
 
-    @validator("token_address")
+    @field_validator("token_address")
+    @classmethod
     def token_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("token_address is not a valid address")
         return v
 
-    @validator("exchange_agent_address")
+    @field_validator("exchange_agent_address")
+    @classmethod
     def exchange_agent_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("exchange_agent_address is not a valid address")
         return v
 
-    @validator("account_address")
+    @field_validator("account_address")
+    @classmethod
     def account_address_is_valid_address(cls, v):
         if v is not None:
             if not Web3.is_address(v):
@@ -76,9 +85,12 @@ class ListAllOrderBookQuery:
 
 @dataclass
 class ListAllLastPriceQuery:
-    address_list: list[str] = Query(description="Token address list")
+    address_list: Annotated[
+        list[str], Query(default_factory=list, description="Token address list")
+    ]
 
-    @validator("address_list")
+    @field_validator("address_list")
+    @classmethod
     def address_list_is_valid_address(cls, v):
         for address in v:
             if address is not None:
@@ -89,9 +101,12 @@ class ListAllLastPriceQuery:
 
 @dataclass
 class ListAllTickQuery:
-    address_list: list[str] = Query(description="Token address list")
+    address_list: Annotated[
+        list[str], Query(default_factory=list, description="Token address list")
+    ]
 
-    @validator("address_list")
+    @field_validator("address_list")
+    @classmethod
     def address_list_is_valid_address(cls, v):
         for address in v:
             if address is not None:
@@ -102,11 +117,12 @@ class ListAllTickQuery:
 
 @dataclass
 class RetrieveAgreementQuery:
-    order_id: int = Query(description="order id")
-    agreement_id: int = Query(description="agreement id")
-    exchange_address: str = Query(description="exchange_address")
+    order_id: Annotated[int, Query(default=..., description="order id")]
+    agreement_id: Annotated[int, Query(default=..., description="agreement id")]
+    exchange_address: Annotated[str, Query(default=..., description="exchange_address")]
 
-    @validator("exchange_address")
+    @field_validator("exchange_address")
+    @classmethod
     def exchange_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("owner_address is not a valid address")
@@ -126,8 +142,8 @@ class OrderBookItem(BaseModel):
     account_address: str = Field(description="An orderrer of each order book")
 
 
-class ListAllOrderBookItemResponse(BaseModel):
-    __root__: list[OrderBookItem]
+class ListAllOrderBookItemResponse(RootModel[list[OrderBookItem]]):
+    pass
 
 
 class LastPrice(BaseModel):
@@ -135,8 +151,8 @@ class LastPrice(BaseModel):
     last_price: int
 
 
-class ListAllLastPriceResponse(BaseModel):
-    __root__: list[LastPrice]
+class ListAllLastPriceResponse(RootModel[list[LastPrice]]):
+    pass
 
 
 class Tick(BaseModel):
@@ -154,8 +170,8 @@ class Ticks(BaseModel):
     tick: list[Tick]
 
 
-class ListAllTicksResponse(BaseModel):
-    __root__: list[Ticks]
+class ListAllTicksResponse(RootModel[list[Ticks]]):
+    pass
 
 
 class RetrieveAgreementDetailResponse(BaseModel):
@@ -167,4 +183,4 @@ class RetrieveAgreementDetailResponse(BaseModel):
     price: int = Field(description="agreement price")
     canceled: bool = Field(description="agreement canceled status")
     paid: bool = Field(description="agreement payment status")
-    expiry: str = Field(description="expiry (unixtime)")
+    expiry: int = Field(description="expiry (unixtime)")

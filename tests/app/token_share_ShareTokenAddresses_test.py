@@ -707,9 +707,12 @@ class TestTokenShareTokenAddresses:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value could not be parsed to a boolean",
-                        "type": "type_error.bool",
+                        "msg": "Input should be a valid boolean, unable to interpret "
+                        "input",
+                        "type": "bool_parsing",
+                        "url": "https://errors.pydantic.dev/2.1/v/bool_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -724,9 +727,12 @@ class TestTokenShareTokenAddresses:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value is not a valid integer",
-                        "type": "type_error.integer",
+                        "msg": "Input should be a valid integer, unable to parse "
+                        "string as an integer",
+                        "type": "int_parsing",
+                        "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",

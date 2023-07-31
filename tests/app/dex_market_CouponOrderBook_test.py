@@ -1533,19 +1533,25 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "token_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "exchange_agent_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "order_type"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1577,9 +1583,12 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0xe883a6f441ad5682d37df31d34fc012bcb07a74",
                     "loc": ["token_address"],
-                    "msg": "token_address is not a valid address",
+                    "msg": "Value error, token_address is not a valid address",
                     "type": "value_error",
+                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1611,9 +1620,13 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": agent_address,
                     "loc": ["exchange_agent_address"],
-                    "msg": "exchange_agent_address is not a valid address",
+                    "msg": "Value error, exchange_agent_address is not a valid "
+                    "address",
                     "type": "value_error",
+                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1645,9 +1658,12 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
                     "loc": ["account_address"],
-                    "msg": "account_address is not a valid address",
+                    "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
+                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1679,10 +1695,11 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"enum_values": ["buy", "sell"]},
+                    "ctx": {"expected": "'buy' or 'sell'"},
+                    "input": "buyyyyy",
                     "loc": ["query", "order_type"],
-                    "msg": "value is not a valid enumeration member; permitted: 'buy', 'sell'",
-                    "type": "type_error.enum",
+                    "msg": "Input should be 'buy' or 'sell'",
+                    "type": "enum",
                 }
             ],
             "message": "Invalid Parameter",

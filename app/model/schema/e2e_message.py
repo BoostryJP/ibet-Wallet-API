@@ -35,4 +35,4 @@ from pydantic import BaseModel, Field
 
 class E2EMessageEncryptionKeyResponse(BaseModel):
     key: str = Field(description="Message encryption key")
-    key_type: str = Field(description="key type", example="RSA4096")
+    key_type: str = Field(description="key type", examples=["RSA4096"])

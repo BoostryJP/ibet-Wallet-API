@@ -322,9 +322,11 @@ class TestTokenTokenHoldersCollection:
             "code": 88,
             "description": [
                 {
+                    "input": {"block_number": block_number},
                     "loc": ["body", "list_id"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -363,9 +365,18 @@ class TestTokenTokenHoldersCollection:
             "code": 88,
             "description": [
                 {
+                    "ctx": {
+                        "error": "invalid character: expected an optional "
+                        "prefix of `urn:uuid:` followed by "
+                        "[0-9a-fA-F-], found `s` at 1"
+                    },
+                    "input": "some_id",
                     "loc": ["body", "list_id"],
-                    "msg": "value is not a valid uuid",
-                    "type": "type_error.uuid",
+                    "msg": "Input should be a valid UUID, invalid character: "
+                    "expected an optional prefix of `urn:uuid:` followed "
+                    "by [0-9a-fA-F-], found `s` at 1",
+                    "type": "uuid_parsing",
+                    "url": "https://errors.pydantic.dev/2.1/v/uuid_parsing",
                 }
             ],
             "message": "Invalid Parameter",

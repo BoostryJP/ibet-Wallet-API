@@ -122,7 +122,7 @@ class TestSendEmail:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
-        mail_list = session.scalars(select(Mail)).all()
+        mail_list = session.scalars(select(Mail).order_by(Mail.to_email)).all()
         assert len(mail_list) == 2
 
         mail = mail_list[0]
@@ -158,14 +158,18 @@ class TestSendEmail:
                 "message": "Invalid Parameter",
                 "description": [
                     {
+                        "input": {},
                         "loc": ["body", "to_emails"],
-                        "msg": "field required",
-                        "type": "value_error.missing",
+                        "msg": "Field required",
+                        "type": "missing",
+                        "url": "https://errors.pydantic.dev/2.1/v/missing",
                     },
                     {
+                        "input": {},
                         "loc": ["body", "subject"],
-                        "msg": "field required",
-                        "type": "value_error.missing",
+                        "msg": "Field required",
+                        "type": "missing",
+                        "url": "https://errors.pydantic.dev/2.1/v/missing",
                     },
                 ],
             }
@@ -189,20 +193,33 @@ class TestSendEmail:
                 "message": "Invalid Parameter",
                 "description": [
                     {
+                        "ctx": {
+                            "reason": "The email address is not valid. "
+                            "It must have exactly one "
+                            "@-sign."
+                        },
+                        "input": "invalid_email",
                         "loc": ["body", "to_emails", 0],
-                        "msg": "value is not a valid email address",
-                        "type": "value_error.email",
-                    },
-                    {
-                        "loc": ["body", "subject"],
-                        "msg": "ensure this value has at most 100 characters",
-                        "type": "value_error.any_str.max_length",
-                        "ctx": {"limit_value": 100},
-                    },
-                    {
-                        "loc": ["body", "file_name"],
-                        "msg": "File name has invalid character.",
+                        "msg": "value is not a valid email address: The "
+                        "email address is not valid. It must have "
+                        "exactly one @-sign.",
                         "type": "value_error",
+                    },
+                    {
+                        "ctx": {"max_length": 100},
+                        "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "loc": ["body", "subject"],
+                        "msg": "String should have at most 100 characters",
+                        "type": "string_too_long",
+                        "url": "https://errors.pydantic.dev/2.1/v/string_too_long",
+                    },
+                    {
+                        "ctx": {"error": {}},
+                        "input": "test_data:*?.txt",
+                        "loc": ["body", "file_name"],
+                        "msg": "Value error, File name has invalid " "character.",
+                        "type": "value_error",
+                        "url": "https://errors.pydantic.dev/2.1/v/value_error",
                     },
                 ],
             }
@@ -225,9 +242,17 @@ class TestSendEmail:
                 "code": 88,
                 "description": [
                     {
-                        "loc": ["body", "__root__"],
-                        "msg": "File content should be posted with name.",
+                        "ctx": {"error": {}},
+                        "input": {
+                            "file_name": "test_data.txt",
+                            "subject": "Test email",
+                            "to_emails": ["test@example.com"],
+                        },
+                        "loc": ["body"],
+                        "msg": "Value error, File content should be posted "
+                        "with name.",
                         "type": "value_error",
+                        "url": "https://errors.pydantic.dev/2.1/v/value_error",
                     }
                 ],
                 "message": "Invalid Parameter",

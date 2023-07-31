@@ -307,9 +307,11 @@ class TestEthSendRawTransactionNoWait:
             "code": 88,
             "description": [
                 {
+                    "input": "some_raw_tx_1",
                     "loc": ["body", "raw_tx_hex_list"],
-                    "msg": "value is not a valid list",
-                    "type": "type_error.list",
+                    "msg": "Input should be a valid list",
+                    "type": "list_type",
+                    "url": "https://errors.pydantic.dev/2.1/v/list_type",
                 }
             ],
             "message": "Invalid Parameter",
@@ -331,10 +333,13 @@ class TestEthSendRawTransactionNoWait:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 1},
+                    "ctx": {"actual_length": 0, "field_type": "List", "min_length": 1},
+                    "input": [],
                     "loc": ["body", "raw_tx_hex_list"],
-                    "msg": "ensure this value has at least 1 items",
-                    "type": "value_error.list.min_items",
+                    "msg": "List should have at least 1 item after validation, "
+                    "not 0",
+                    "type": "too_short",
+                    "url": "https://errors.pydantic.dev/2.1/v/too_short",
                 }
             ],
             "message": "Invalid Parameter",
@@ -354,9 +359,11 @@ class TestEthSendRawTransactionNoWait:
             "code": 88,
             "description": [
                 {
+                    "input": {},
                     "loc": ["body", "raw_tx_hex_list"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -377,9 +384,11 @@ class TestEthSendRawTransactionNoWait:
             "code": 88,
             "description": [
                 {
+                    "input": "some_raw_tx_1",
                     "loc": ["body", "raw_tx_hex_list"],
-                    "msg": "value is not a valid list",
-                    "type": "type_error.list",
+                    "msg": "Input should be a valid list",
+                    "type": "list_type",
+                    "url": "https://errors.pydantic.dev/2.1/v/list_type",
                 }
             ],
             "message": "Invalid Parameter",
@@ -400,9 +409,11 @@ class TestEthSendRawTransactionNoWait:
             "code": 88,
             "description": [
                 {
+                    "input": 1234,
                     "loc": ["body", "raw_tx_hex_list", 0],
-                    "msg": "str type expected",
-                    "type": "type_error.str",
+                    "msg": "Input should be a valid string",
+                    "type": "string_type",
+                    "url": "https://errors.pydantic.dev/2.1/v/string_type",
                 }
             ],
             "message": "Invalid Parameter",

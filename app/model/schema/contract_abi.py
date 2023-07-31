@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from pydantic import BaseModel
+from pydantic import RootModel
 
 ############################
 # COMMON
@@ -33,5 +33,5 @@ from pydantic import BaseModel
 ############################
 
 
-class ABI(BaseModel):
-    __root__: list[object]
+class ABI(RootModel[list[object]]):
+    pass

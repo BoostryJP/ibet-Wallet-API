@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Query
 from pydantic import BaseModel, StrictStr
@@ -51,28 +51,37 @@ class ListAllLockSortItem(str, Enum):
 
 @dataclass
 class ListAllTokenLockQuery:
-    lock_address: Optional[str] = Query(default=None, description="lock address")
-    account_address: Optional[str] = Query(default=None, description="account address")
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
-    sort_item: ListAllLockSortItem = Query(
-        default=ListAllLockSortItem.token_address, description="sort item"
-    )
-    sort_order: SortOrder = Query(
-        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
-    )
-    token_address_list: list[StrictStr] = Query(
-        default=[], description="list of token address (**this affects total number**)"
-    )
+    token_address_list: Annotated[
+        list[StrictStr],
+        Query(
+            default_factory=list,
+            description="list of token address (**this affects total number**)",
+        ),
+    ]
+    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
+    account_address: Annotated[
+        Optional[str], Query(description="account address")
+    ] = None
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    sort_item: Annotated[
+        ListAllLockSortItem, Query(description="sort item")
+    ] = ListAllLockSortItem.token_address
+    sort_order: Annotated[
+        SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
+    ] = SortOrder.ASC
 
 
 @dataclass
 class RetrieveTokenLockCountQuery:
-    lock_address: Optional[str] = Query(default=None, description="lock address")
-    account_address: Optional[str] = Query(default=None, description="account address")
-    token_address_list: list[StrictStr] = Query(
-        default=[], description="list of token address"
-    )
+    token_address_list: Annotated[
+        list[StrictStr],
+        Query(default_factory=list, description="list of token address"),
+    ]
+    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
+    account_address: Annotated[
+        Optional[str], Query(description="account address")
+    ] = None
 
 
 ############################

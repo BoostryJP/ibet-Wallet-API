@@ -290,19 +290,25 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "order_id"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "agreement_id"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "exchange_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -323,9 +329,12 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B",
                     "loc": ["exchange_address"],
-                    "msg": "owner_address is not a valid address",
+                    "msg": "Value error, owner_address is not a valid address",
                     "type": "value_error",
+                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -346,14 +355,20 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
+                    "input": "aa",
                     "loc": ["query", "order_id"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
+                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 },
                 {
+                    "input": "bb",
                     "loc": ["query", "agreement_id"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
+                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 },
             ],
             "message": "Invalid Parameter",

@@ -72,9 +72,9 @@ def list_all_e2e_messaging_event_logs(
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = E2EMessagingEventArguments.parse_raw(
+            argument_filters_dict = E2EMessagingEventArguments.model_validate_json(
                 request_query.argument_filters
-            ).dict(exclude_none=True)
+            ).model_dump(exclude_none=True)
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
@@ -137,9 +137,9 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = EscrowEventArguments.parse_raw(
+            argument_filters_dict = EscrowEventArguments.model_validate_json(
                 request_query.argument_filters
-            ).dict(exclude_none=True)
+            ).model_dump(exclude_none=True)
         except:
             raise InvalidParameterError("invalid argument_filters")
 
@@ -215,9 +215,9 @@ def list_all_ibet_security_token_escrow_event_logs(
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = EscrowEventArguments.parse_raw(
+            argument_filters_dict = EscrowEventArguments.model_validate_json(
                 request_query.argument_filters
-            ).dict(exclude_none=True)
+            ).model_dump(exclude_none=True)
         except:
             raise InvalidParameterError("invalid argument_filters")
 
@@ -304,9 +304,9 @@ def list_all_ibet_security_token_interface_event_logs(
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = SecurityTokenEventArguments.parse_raw(
-                request_query.argument_filters
-            ).__root__.dict(exclude_none=True)
+            argument_filters_dict = SecurityTokenEventArguments.model_validate_json(
+                request_query.argument_filters, strict=True
+            ).root.model_dump(exclude_none=True)
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
     try:

@@ -252,10 +252,12 @@ class TestEthWaitForTransactionReceipt:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 1},
+                    "ctx": {"ge": 1},
+                    "input": "0",
                     "loc": ["query", "timeout"],
-                    "msg": "ensure this value is greater than or equal to 1",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 1",
+                    "type": "greater_than_equal",
+                    "url": "https://errors.pydantic.dev/2.1/v/greater_than_equal",
                 }
             ],
             "message": "Invalid Parameter",
@@ -278,10 +280,12 @@ class TestEthWaitForTransactionReceipt:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 30},
+                    "ctx": {"le": 30},
+                    "input": "31",
                     "loc": ["query", "timeout"],
-                    "msg": "ensure this value is less than or equal to 30",
-                    "type": "value_error.number.not_le",
+                    "msg": "Input should be less than or equal to 30",
+                    "type": "less_than_equal",
+                    "url": "https://errors.pydantic.dev/2.1/v/less_than_equal",
                 }
             ],
             "message": "Invalid Parameter",
@@ -302,9 +306,12 @@ class TestEthWaitForTransactionReceipt:
             "code": 88,
             "description": [
                 {
+                    "input": "aaaa",
                     "loc": ["query", "timeout"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
+                    "url": "https://errors.pydantic.dev/2.1/v/int_parsing",
                 }
             ],
             "message": "Invalid Parameter",

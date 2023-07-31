@@ -126,9 +126,11 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "account_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -153,9 +155,12 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
                     "loc": ["account_address"],
-                    "msg": "account_address is not a valid address",
+                    "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
+                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",
@@ -177,9 +182,11 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "agent_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
+                    "url": "https://errors.pydantic.dev/2.1/v/missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -201,9 +208,12 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
                     "loc": ["agent_address"],
-                    "msg": "agent_address is not a valid address",
+                    "msg": "Value error, agent_address is not a valid address",
                     "type": "value_error",
+                    "url": "https://errors.pydantic.dev/2.1/v/value_error",
                 }
             ],
             "message": "Invalid Parameter",

@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Generic, Optional, TypeVar
+from typing import Annotated, Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic.dataclasses import dataclass
-from pydantic.generics import GenericModel
 from web3 import Web3
 
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
@@ -39,13 +38,18 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
 @dataclass
 class ListAllOrderListQuery:
-    account_address_list: list[str] = Query(description="Account address list")
-    include_canceled_items: Optional[bool] = Query(
-        default=None,
-        description="Whether to include canceled orders or canceled agreements.",
-    )
+    account_address_list: Annotated[
+        list[str], Query(default_factory=list, description="Account address list")
+    ]
+    include_canceled_items: Annotated[
+        Optional[bool],
+        Query(
+            description="Whether to include canceled orders or canceled agreements.",
+        ),
+    ] = None
 
-    @validator("account_address_list")
+    @field_validator("account_address_list")
+    @classmethod
     def account_address_list_is_valid_address(cls, v):
         for address in v:
             if address is not None:
@@ -81,7 +85,7 @@ TokenModel = TypeVar(
 )
 
 
-class OrderSet(GenericModel, Generic[TokenModel]):
+class OrderSet(BaseModel, Generic[TokenModel]):
     token: TokenModel
     order: Order
     sort_id: int
@@ -99,7 +103,7 @@ class Agreement(BaseModel):
     agreement_timestamp: str
 
 
-class AgreementSet(GenericModel, Generic[TokenModel]):
+class AgreementSet(BaseModel, Generic[TokenModel]):
     token: TokenModel
     agreement: Agreement
     sort_id: int
