@@ -51,7 +51,7 @@ async def health_check(url: str, session: ClientSession) -> None:
 async def get_node_info(session: ClientSession, url: str) -> GetBlockSyncStatusResponse:
     async with session.get(url=f"{url}/NodeInfo/BlockSyncStatus") as resp:
         data = await resp.json()
-        return GetBlockSyncStatusResponse.parse_obj(data.get("data"))
+        return GetBlockSyncStatusResponse.model_validate(data.get("data"))
 
 
 def dict_factory(x: list[tuple[str, Any]]):
@@ -68,7 +68,7 @@ async def list_block_data(
         data = await resp.json()
         if resp.status == 404:
             raise ApiNotEnabledException(data)
-        return BlockDataListResponse.parse_obj(data.get("data"))
+        return BlockDataListResponse.model_validate(data.get("data"))
 
 
 @AsyncTTL(time_to_live=3600, skip_args=1)
@@ -77,7 +77,7 @@ async def get_block_data(
 ) -> BlockDataDetail:
     async with session.get(url=f"{url}/NodeInfo/BlockData/{block_number}") as resp:
         data = await resp.json()
-        return BlockDataDetail.parse_obj(data.get("data"))
+        return BlockDataDetail.model_validate(data.get("data"))
 
 
 @AsyncTTL(time_to_live=3600, skip_args=1)
@@ -88,11 +88,11 @@ async def list_tx_data(
         url=f"{url}/NodeInfo/TxData", params=asdict(query, dict_factory=dict_factory)
     ) as resp:
         data = await resp.json()
-        return TxDataListResponse.parse_obj(data.get("data"))
+        return TxDataListResponse.model_validate(data.get("data"))
 
 
 @AsyncTTL(time_to_live=3600, skip_args=1)
 async def get_tx_data(session: ClientSession, url: str, tx_hash: str) -> TxDataDetail:
     async with session.get(url=f"{url}/NodeInfo/TxData/{tx_hash}") as resp:
         data = await resp.json()
-        return TxDataDetail.parse_obj(data.get("data"))
+        return TxDataDetail.model_validate(data.get("data"))

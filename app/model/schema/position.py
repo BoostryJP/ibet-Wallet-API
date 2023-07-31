@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
 from enum import Enum
-from typing import Generic, Optional, TypeVar, Union
+from typing import Annotated, Generic, Optional, TypeVar, Union
 
 from fastapi import Query
 from pydantic import BaseModel, Field, StrictStr
@@ -168,30 +168,30 @@ class LockEventWithTokenDetail(LockEvent, Generic[SecurityTokenResponseT]):
 
 @dataclass
 class ListAllTokenPositionQuery:
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
-    token_type_list: Optional[list[TokenType]] = Query(
-        default=None, description="type of token"
-    )
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    token_type_list: Annotated[
+        Optional[list[TokenType]], Query(description="type of token")
+    ] = None
 
 
 @dataclass
 class ListAllPositionQuery:
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
-    include_token_details: Optional[bool] = Query(
-        default=False, description="include token details"
-    )
-    enable_index: Optional[bool] = Query(
-        default=False, description="enable using indexed position data"
-    )
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    include_token_details: Annotated[
+        Optional[bool], Query(description="include token details")
+    ] = False
+    enable_index: Annotated[
+        Optional[bool], Query(description="enable using indexed position data")
+    ] = None
 
 
 @dataclass
 class GetPositionQuery:
-    enable_index: Optional[bool] = Query(
-        default=False, description="enable using indexed position data"
-    )
+    enable_index: Annotated[
+        Optional[bool], Query(description="enable using indexed position data")
+    ] = None
 
 
 class ListAllLockedSortItem(str, Enum):
@@ -203,21 +203,26 @@ class ListAllLockedSortItem(str, Enum):
 
 @dataclass
 class ListAllLockedPositionQuery:
-    lock_address: Optional[str] = Query(default=None, description="lock address")
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
-    sort_item: ListAllLockedSortItem = Query(
-        default=ListAllLockedSortItem.token_address, description="sort item"
-    )
-    sort_order: SortOrder = Query(
-        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
-    )
-    token_address_list: list[StrictStr] = Query(
-        default=[], description="list of token address (**this affects total number**)"
-    )
-    include_token_details: Optional[bool] = Query(
-        default=False, description="include token details"
-    )
+    token_address_list: Annotated[
+        list[StrictStr],
+        Query(
+            default_factory=list,
+            description="list of token address (**this affects total number**)",
+        ),
+    ]
+
+    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    sort_item: Annotated[
+        ListAllLockedSortItem, Query(description="sort item")
+    ] = ListAllLockedSortItem.token_address
+    sort_order: Annotated[
+        SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
+    ] = SortOrder.ASC
+    include_token_details: Annotated[
+        Optional[bool], Query(description="include token details")
+    ] = False
 
 
 class LockEventSortItem(str, Enum):
@@ -230,31 +235,36 @@ class LockEventSortItem(str, Enum):
 
 @dataclass
 class ListAllLockEventQuery:
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    token_address_list: Annotated[
+        list[StrictStr],
+        Query(
+            default_factory=list,
+            description="list of token address (**this affects total number**)",
+        ),
+    ]
 
-    token_address_list: list[StrictStr] = Query(
-        default=[], description="list of token address (**this affects total number**)"
-    )
-    msg_sender: Optional[str] = Query(default=None, description="message sender")
-    lock_address: Optional[str] = Query(default=None, description="lock address")
-    recipient_address: Optional[str] = Query(
-        default=None, description="recipient address"
-    )
-    data: Optional[str] = Query(default=None, description="data")
-    category: Optional[LockEventCategory] = Query(
-        default=None, description="history item category"
-    )
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
 
-    sort_item: LockEventSortItem = Query(
-        default=LockEventSortItem.block_timestamp, description="sort item"
-    )
-    sort_order: SortOrder = Query(
-        default=SortOrder.DESC, description="sort order(0: ASC, 1: DESC)"
-    )
-    include_token_details: Optional[bool] = Query(
-        default=False, description="include token details"
-    )
+    msg_sender: Annotated[Optional[str], Query(description="message sender")] = None
+    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
+    recipient_address: Annotated[
+        Optional[str], Query(description="recipient address")
+    ] = None
+    data: Annotated[Optional[str], Query(description="data")] = None
+    category: Annotated[
+        Optional[LockEventCategory], Query(description="history item category")
+    ] = None
+
+    sort_item: Annotated[
+        LockEventSortItem, Query(description="sort item")
+    ] = LockEventSortItem.block_timestamp
+    sort_order: Annotated[
+        SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
+    ] = SortOrder.DESC
+    include_token_details: Annotated[
+        Optional[bool], Query(description="include token details")
+    ] = False
 
 
 ############################

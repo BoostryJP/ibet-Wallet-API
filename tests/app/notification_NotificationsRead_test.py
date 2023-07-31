@@ -225,14 +225,17 @@ class TestNotificationsRead:
             "code": 88,
             "description": [
                 {
+                    "input": 721457446580647751014191829380889690493307935711,
                     "loc": ["body", "address"],
-                    "msg": "address is not a valid address",
-                    "type": "value_error",
+                    "msg": "Input should be a valid string",
+                    "type": "string_type",
                 },
                 {
+                    "input": "invalid_value",
                     "loc": ["body", "is_read"],
-                    "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool",
+                    "msg": "Input should be a valid boolean, unable to interpret "
+                    "input",
+                    "type": "bool_parsing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -256,14 +259,17 @@ class TestNotificationsRead:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "",
                     "loc": ["body", "address"],
-                    "msg": "address is not a valid address",
+                    "msg": "Value error, address is not a valid address",
                     "type": "value_error",
                 },
                 {
+                    "input": None,
                     "loc": ["body", "is_read"],
-                    "msg": "none is not an allowed value",
-                    "type": "type_error.none.not_allowed",
+                    "msg": "Input should be a valid boolean",
+                    "type": "bool_type",
                 },
             ],
             "message": "Invalid Parameter",
@@ -287,8 +293,10 @@ class TestNotificationsRead:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0x123",
                     "loc": ["body", "address"],
-                    "msg": "address is not a valid address",
+                    "msg": "Value error, address is not a valid address",
                     "type": "value_error",
                 }
             ],

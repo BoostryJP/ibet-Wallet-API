@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, RootModel, field_validator
 from web3 import Web3
 
 ############################
@@ -41,7 +41,8 @@ class RegisterAdminTokenRequest(BaseModel):
         None, ge=0, description="Maximum sell amount limit"
     )
 
-    @validator("contract_address")
+    @field_validator("contract_address")
+    @classmethod
     def contract_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("token_address is not a valid address")
@@ -49,12 +50,13 @@ class RegisterAdminTokenRequest(BaseModel):
 
 
 class UpdateAdminTokenRequest(BaseModel):
-    is_public: bool | None
+    is_public: bool | None = None
     max_holding_quantity: int | None = Field(None, ge=0)
     max_sell_amount: int | None = Field(None, ge=0)
     owner_address: str | None = Field(None)
 
-    @validator("owner_address")
+    @field_validator("owner_address")
+    @classmethod
     def owner_address_is_valid_address(cls, v):
         if v is not None:
             if not Web3.is_address(v):
@@ -77,8 +79,8 @@ class RetrieveAdminTokenResponse(BaseModel):
     created: str = Field(..., description="Create Datetime (local timezone)")
 
 
-class ListAllAdminTokensResponse(BaseModel):
-    __root__: list[RetrieveAdminTokenResponse]
+class ListAllAdminTokensResponse(RootModel[list[RetrieveAdminTokenResponse]]):
+    pass
 
 
 class GetAdminTokenTypeResponse(BaseModel):

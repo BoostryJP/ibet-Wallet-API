@@ -568,9 +568,11 @@ class TestTokenTransferHistory:
             "code": 88,
             "description": [
                 {
+                    "input": "string",
                     "loc": ["query", "offset"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -589,10 +591,11 @@ class TestTokenTransferHistory:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "offset"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 }
             ],
             "message": "Invalid Parameter",
@@ -611,9 +614,11 @@ class TestTokenTransferHistory:
             "code": 88,
             "description": [
                 {
+                    "input": "1.5",
                     "loc": ["query", "offset"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -632,9 +637,11 @@ class TestTokenTransferHistory:
             "code": 88,
             "description": [
                 {
+                    "input": "string",
                     "loc": ["query", "limit"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -653,10 +660,11 @@ class TestTokenTransferHistory:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "limit"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 }
             ],
             "message": "Invalid Parameter",
@@ -675,9 +683,11 @@ class TestTokenTransferHistory:
             "code": 88,
             "description": [
                 {
+                    "input": "1.5",
                     "loc": ["query", "limit"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 }
             ],
             "message": "Invalid Parameter",

@@ -153,14 +153,16 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "account_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "owner_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -182,8 +184,10 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": trader,
                     "loc": ["account_address"],
-                    "msg": "account_address is not a valid address",
+                    "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
                 }
             ],
@@ -206,8 +210,10 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": issuer,
                     "loc": ["owner_address"],
-                    "msg": "owner_address is not a valid address",
+                    "msg": "Value error, owner_address is not a valid address",
                     "type": "value_error",
                 }
             ],

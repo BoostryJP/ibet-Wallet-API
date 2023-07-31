@@ -52,7 +52,7 @@ from app.model.schema import (
 )
 from app.utils.contract_error_code import error_code_msg
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()

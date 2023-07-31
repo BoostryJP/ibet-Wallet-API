@@ -782,9 +782,11 @@ class TestCompanyInfoCompanyInfoList:
             "code": 88,
             "description": [
                 {
+                    "input": "test",
                     "loc": ["query", "include_private_listing"],
-                    "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool",
+                    "msg": "Input should be a valid boolean, unable to interpret "
+                    "input",
+                    "type": "bool_parsing",
                 }
             ],
             "message": "Invalid Parameter",

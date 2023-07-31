@@ -111,9 +111,15 @@ class TestAdminTokenPOST:
                 "code": 88,
                 "description": [
                     {
+                        "input": '{"is_public": false, '
+                        '"max_holding_quantity": 200, '
+                        '"max_sell_amount": 25000, '
+                        '"owner_address": '
+                        '"0x34C987DDe783EfbFe1E573727165E6c15D660590"}',
                         "loc": ["body"],
-                        "msg": "value is not a valid dict",
-                        "type": "type_error.dict",
+                        "msg": "Input should be a valid dictionary or "
+                        "object to extract fields from",
+                        "type": "model_attributes_type",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -141,8 +147,10 @@ class TestAdminTokenPOST:
                 "code": 88,
                 "description": [
                     {
+                        "ctx": {"error": {}},
+                        "input": "0x34C987DDe783EfbFe1E573727165E6c15D66059",
                         "loc": ["body", "owner_address"],
-                        "msg": "owner_address is not a valid address",
+                        "msg": "Value error, owner_address is not a valid " "address",
                         "type": "value_error",
                     }
                 ],
@@ -171,9 +179,10 @@ class TestAdminTokenPOST:
                 "code": 88,
                 "description": [
                     {
+                        "input": 1234,
                         "loc": ["body", "owner_address"],
-                        "msg": "owner_address is not a valid address",
-                        "type": "value_error",
+                        "msg": "Input should be a valid string",
+                        "type": "string_type",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -201,16 +210,18 @@ class TestAdminTokenPOST:
                 "code": 88,
                 "description": [
                     {
-                        "ctx": {"limit_value": 0},
+                        "ctx": {"ge": 0},
+                        "input": -1,
                         "loc": ["body", "max_holding_quantity"],
-                        "msg": "ensure this value is greater than or equal to 0",
-                        "type": "value_error.number.not_ge",
+                        "msg": "Input should be greater than or equal to 0",
+                        "type": "greater_than_equal",
                     },
                     {
-                        "ctx": {"limit_value": 0},
+                        "ctx": {"ge": 0},
+                        "input": -1,
                         "loc": ["body", "max_sell_amount"],
-                        "msg": "ensure this value is greater than or equal to 0",
-                        "type": "value_error.number.not_ge",
+                        "msg": "Input should be greater than or equal to 0",
+                        "type": "greater_than_equal",
                     },
                 ],
                 "message": "Invalid Parameter",

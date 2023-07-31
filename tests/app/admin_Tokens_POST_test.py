@@ -317,14 +317,16 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
+                    "input": {},
                     "loc": ["body", "contract_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": {},
                     "loc": ["body", "is_public"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -349,8 +351,10 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7",
                     "loc": ["body", "contract_address"],
-                    "msg": "token_address is not a valid address",
+                    "msg": "Value error, token_address is not a valid address",
                     "type": "value_error",
                 }
             ],
@@ -376,9 +380,10 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
+                    "input": 1234,
                     "loc": ["body", "contract_address"],
-                    "msg": "token_address is not a valid address",
-                    "type": "value_error",
+                    "msg": "Input should be a valid string",
+                    "type": "string_type",
                 }
             ],
             "message": "Invalid Parameter",
@@ -403,16 +408,18 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": -1,
                     "loc": ["body", "max_holding_quantity"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": -1,
                     "loc": ["body", "max_sell_amount"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",

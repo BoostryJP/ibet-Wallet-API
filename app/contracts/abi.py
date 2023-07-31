@@ -24,7 +24,7 @@ from typing import Any, List, Literal, Optional, Type, Union
 
 import eth_utils.abi
 from hexbytes import HexBytes
-from pydantic import BaseModel, Extra, create_model, parse_obj_as
+from pydantic import BaseModel, ConfigDict, RootModel, create_model
 from web3 import Web3
 
 
@@ -64,10 +64,10 @@ GENERIC_DESCRIPTION_TYPES = Union[
 class ABIDescriptionFunctionInput(BaseModel):
     name: str
     type: str
-    components: Optional[List["ABIDescriptionFunctionInput"]]
+    components: Optional[List["ABIDescriptionFunctionInput"]] = None
 
 
-ABIDescriptionFunctionInput.update_forward_refs()
+ABIDescriptionFunctionInput.model_rebuild()
 
 
 class ABIDescriptionEventInput(BaseModel):
@@ -93,7 +93,7 @@ class ABIFunctionDescription(BaseModel):
         joined_input_types = ",".join(
             input.type
             if input.type != "tuple"
-            else eth_utils.abi.collapse_if_tuple(input.dict())
+            else eth_utils.abi.collapse_if_tuple(input.model_dump())
             for input in self.inputs
         )
         return f"{self.name}({joined_input_types})"
@@ -109,21 +109,24 @@ class ABIEventDescription(BaseModel):
 ABIDescription = Union[
     ABIEventDescription, ABIFunctionDescription, ABIGenericDescription
 ]
-ABI = List[ABIDescription]
+
+
+class ABI(RootModel[List[ABIDescription]]):
+    pass
 
 
 @lru_cache(None)
-def create_abi_event_argument_models(contract_name: str) -> list[Type[BaseModel]]:
+def create_abi_event_argument_models(contract_name: str) -> tuple[Type[BaseModel]]:
     contract_file = (
         f"{os.path.dirname(os.path.abspath(__file__))}/json/{contract_name}.json"
     )
 
     with open(contract_file, "r") as file:
         contract_json = json.load(file)
-        abi_list = parse_obj_as(ABI, contract_json.get("abi"))
+        abi_list = ABI.model_validate(contract_json.get("abi"))
 
         models = []
-        for abi in abi_list:
+        for abi in abi_list.root:
             if abi.type != ABIDescriptionType.event:
                 continue
 
@@ -135,13 +138,10 @@ def create_abi_event_argument_models(contract_name: str) -> list[Type[BaseModel]
             if len(fields.values()) == 0:
                 continue
 
-            class Config(BaseModel.Config):
-                extra = Extra.forbid
-
             model = create_model(
                 f"{abi.name.capitalize()}{abi.type.capitalize()}Argument",
                 **fields,
-                __config__=Config,
+                __config__=ConfigDict(extra="forbid"),
             )
 
             models.append(model)

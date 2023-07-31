@@ -1284,14 +1284,16 @@ class TestEventsIbetSecurityTokenInterface:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "from_block"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "to_block"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1316,16 +1318,18 @@ class TestEventsIbetSecurityTokenInterface:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 1},
+                    "ctx": {"ge": 1},
+                    "input": "0",
                     "loc": ["query", "from_block"],
-                    "msg": "ensure this value is greater than or equal to 1",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 1",
+                    "type": "greater_than_equal",
                 },
                 {
-                    "ctx": {"limit_value": 1},
+                    "ctx": {"ge": 1},
+                    "input": "0",
                     "loc": ["query", "to_block"],
-                    "msg": "ensure this value is greater than or equal to 1",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 1",
+                    "type": "greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1355,30 +1359,15 @@ class TestEventsIbetSecurityTokenInterface:
             "description": [
                 {
                     "ctx": {
-                        "enum_values": [
-                            "Allot",
-                            "ApplyForOffering",
-                            "ApplyForTransfer",
-                            "ApproveTransfer",
-                            "CancelTransfer",
-                            "ChangeOfferingStatus",
-                            "ChangeStatus",
-                            "ChangeTransferApprovalRequired",
-                            "Issue",
-                            "Lock",
-                            "Redeem",
-                            "Transfer",
-                            "Unlock",
-                        ]
+                        "expected": "'Allot','ApplyForOffering','ApplyForTransfer','ApproveTransfer','CancelTransfer','ChangeOfferingStatus','ChangeStatus','ChangeTransferApprovalRequired','Issue','Lock','Redeem','Transfer' "
+                        "or 'Unlock'"
                     },
+                    "input": "invalid",
                     "loc": ["query", "event"],
-                    "msg": "value is not a valid enumeration member; permitted: "
-                    "'Allot', 'ApplyForOffering', 'ApplyForTransfer', "
-                    "'ApproveTransfer', 'CancelTransfer', "
-                    "'ChangeOfferingStatus', 'ChangeStatus', "
-                    "'ChangeTransferApprovalRequired', 'Issue', 'Lock', "
-                    "'Redeem', 'Transfer', 'Unlock'",
-                    "type": "type_error.enum",
+                    "msg": "Input should be "
+                    "'Allot','ApplyForOffering','ApplyForTransfer','ApproveTransfer','CancelTransfer','ChangeOfferingStatus','ChangeStatus','ChangeTransferApprovalRequired','Issue','Lock','Redeem','Transfer' "
+                    "or 'Unlock'",
+                    "type": "enum",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1406,8 +1395,16 @@ class TestEventsIbetSecurityTokenInterface:
             "code": 88,
             "description": [
                 {
-                    "loc": ["__root__"],
-                    "msg": "to_block must be greater than or equal to the from_block",
+                    "ctx": {"error": {}},
+                    "input": {
+                        "argument_filters": None,
+                        "event": None,
+                        "from_block": self.latest_block_number,
+                        "to_block": self.latest_block_number - 1,
+                    },
+                    "loc": [],
+                    "msg": "Value error, to_block must be greater than or equal "
+                    "to the from_block",
                     "type": "value_error",
                 }
             ],

@@ -17,12 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import IntEnum
-from typing import Generic, Optional, TypeVar
+from typing import Annotated, Generic, Optional, TypeVar
 
 from fastapi import Query
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
-from pydantic.generics import GenericModel
 
 ############################
 # REQUEST
@@ -36,8 +35,8 @@ class SortOrder(IntEnum):
 
 @dataclass
 class ResultSetQuery:
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
 
 
 ############################
@@ -48,15 +47,15 @@ class ResultSetQuery:
 class ResultSet(BaseModel):
     """result set for pagination"""
 
-    count: Optional[int]
+    count: Optional[int] = None
     offset: Optional[int] = Field(..., description="start position")
     limit: Optional[int] = Field(..., description="number of set")
-    total: Optional[int]
+    total: Optional[int] = None
 
 
 class Success200MetaModel(BaseModel):
-    code: int = Field(..., example=200)
-    message: str = Field(..., example="OK")
+    code: int = Field(..., examples=[200])
+    message: str = Field(..., examples=["OK"])
 
 
 Data = TypeVar("Data")
@@ -64,17 +63,19 @@ Data = TypeVar("Data")
 
 class SuccessResponse(BaseModel):
     meta: Success200MetaModel = Field(
-        ..., example=Success200MetaModel(code=200, message="OK")
+        ..., examples=[Success200MetaModel(code=200, message="OK").model_dump()]
     )
     data: dict = {}
 
     @staticmethod
     def default():
-        return SuccessResponse(meta=Success200MetaModel(code=200, message="OK")).dict()
+        return SuccessResponse(
+            meta=Success200MetaModel(code=200, message="OK")
+        ).model_dump()
 
 
-class GenericSuccessResponse(GenericModel, Generic[Data]):
+class GenericSuccessResponse(BaseModel, Generic[Data]):
     meta: Success200MetaModel = Field(
-        ..., example=Success200MetaModel(code=200, message="OK")
+        ..., examples=[Success200MetaModel(code=200, message="OK").model_dump()]
     )
     data: Data

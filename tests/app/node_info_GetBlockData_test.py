@@ -180,10 +180,11 @@ class TestGetBlockData:
             "message": "Invalid Parameter",
             "description": [
                 {
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["path", "block_number"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
-                    "ctx": {"limit_value": 0},
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 }
             ],
         }

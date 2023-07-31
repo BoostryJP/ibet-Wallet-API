@@ -7,22 +7,22 @@ license = "Apache License, Version 2.0"
 
 [tool.poetry.dependencies]
 python = "3.11.2"
-boto3 = "~1.26.81"
+boto3 = "~1.28.14"
 coincurve = "~18.0.0"
 eth-keyfile = "0.6.1"
 eth-utils = "~2.1.0"
-fastapi = "~0.96.0"
-gunicorn = "~20.1.0"
-gevent = "~22.10.2"
+fastapi = "~0.100.1"
+gunicorn = "~21.2.0"
+gevent = "~23.7.0"
 hexbytes = "~0.3.0"
-orjson = "~3.8.7"
-PyMySQL = {extras = ["rsa"], version = "~1.0.2"}
+orjson = "~3.9.2"
+PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
 psycopg = {extras = ["binary"], version = "^3.1.8"}
-pydantic = {extras = ["email"], version = "~1.10.5"}
+pydantic = {extras = ["email"], version = "~2.1.1"}
 sqlalchemy = "~2.0.8"
-uvicorn = "~0.20.0"
+uvicorn = "~0.23.1"
 web3 = "~6.5.0"
-tzdata = "^2022.7"
+tzdata = "^2023.3"
 
 ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = true}
 textual = {version = "~0.10.1", optional = true}
@@ -36,7 +36,7 @@ pytest = "7.2.1"
 pytest-cov = "4.0.0"
 locustio = "0.9.0"
 httpx = "0.23.3"
-black = "^23.3.0"
+black = "^23.7.0"
 flake8 = "^6.0.0"
 mypy = "^1.0.0"
 isort = "^5.12.0"

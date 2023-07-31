@@ -21,6 +21,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from pydantic_core import ArgsKwargs, ErrorDetails
 from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -293,10 +294,33 @@ async def data_not_exists_error_handler(request: Request, exc: DataNotExistsErro
     )
 
 
+def convert_errors(
+    e: ValidationError | RequestValidationError,
+) -> list[ErrorDetails]:
+    new_errors: list[ErrorDetails] = []
+    for error in e.errors():
+        # "url" field which Pydantic V2 adds when validation error occurs is not needed for API response.
+        # https://docs.pydantic.dev/2.1/errors/errors/
+        if "url" in error.keys():
+            error.pop("url", None)
+
+        # "input" field generated from GET query model_validator is ArgsKwargs instance.
+        # This cannot be serialized to json as it is, so nested field should be picked.
+        # https://docs.pydantic.dev/2.1/errors/errors/
+        if "input" in error.keys() and isinstance(error["input"], ArgsKwargs):
+            error["input"] = error["input"].kwargs
+        new_errors.append(error)
+    return new_errors
+
+
 # 400:RequestValidationError
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    meta = {"code": 88, "message": "Invalid Parameter", "description": exc.errors()}
+    meta = {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": convert_errors(exc),
+    }
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),
@@ -307,7 +331,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # NOTE: for exceptions raised directly from Pydantic validation
 @app.exception_handler(ValidationError)
 async def query_validation_exception_handler(request: Request, exc: ValidationError):
-    meta = {"code": 88, "message": "Invalid Parameter", "description": exc.errors()}
+    meta = {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": convert_errors(exc),
+    }
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),

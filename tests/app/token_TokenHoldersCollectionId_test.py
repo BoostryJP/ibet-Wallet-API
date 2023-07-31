@@ -300,9 +300,17 @@ class TestTokenTokenHoldersCollectionId:
             "code": 88,
             "description": [
                 {
+                    "ctx": {
+                        "error": "invalid character: expected an optional "
+                        "prefix of `urn:uuid:` followed by "
+                        "[0-9a-fA-F-], found `s` at 1"
+                    },
+                    "input": "some_id",
                     "loc": ["path", "list_id"],
-                    "msg": "value is not a valid uuid",
-                    "type": "type_error.uuid",
+                    "msg": "Input should be a valid UUID, invalid character: "
+                    "expected an optional prefix of `urn:uuid:` followed "
+                    "by [0-9a-fA-F-], found `s` at 1",
+                    "type": "uuid_parsing",
                 }
             ],
             "message": "Invalid Parameter",

@@ -17,10 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic.dataclasses import dataclass
 from web3 import Web3
 
@@ -36,16 +36,18 @@ from web3 import Web3
 
 @dataclass
 class RetrievePaymentAccountQuery:
-    account_address: str = Query(..., description="Account Address")
-    agent_address: str = Query(..., description="Agent Address")
+    account_address: Annotated[str, Query(..., description="Account Address")]
+    agent_address: Annotated[str, Query(..., description="Agent Address")]
 
-    @validator("account_address")
+    @field_validator("account_address")
+    @classmethod
     def account_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("account_address is not a valid address")
         return v
 
-    @validator("agent_address")
+    @field_validator("agent_address")
+    @classmethod
     def agent_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("agent_address is not a valid address")
@@ -54,26 +56,29 @@ class RetrievePaymentAccountQuery:
 
 @dataclass
 class RetrievePersonalInfoQuery:
-    personal_info_address: Optional[str] = Query(
-        default=None, description="PersonalInfo contract address"
-    )
-    account_address: str = Query(..., description="account address")
-    owner_address: str = Query(..., description="owner(issuer) address")
+    account_address: Annotated[str, Query(..., description="Account Address")]
+    owner_address: Annotated[str, Query(..., description="owner(issuer) address")]
+    personal_info_address: Annotated[
+        Optional[str], Query(description="PersonalInfo contract address")
+    ] = None
 
-    @validator("personal_info_address")
+    @field_validator("personal_info_address")
+    @classmethod
     def personal_info_address_is_valid_address(cls, v):
         if v is not None:
             if not Web3.is_address(v):
                 raise ValueError("personal_info_address is not a valid address")
         return v
 
-    @validator("account_address")
+    @field_validator("account_address")
+    @classmethod
     def account_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("account_address is not a valid address")
         return v
 
-    @validator("owner_address")
+    @field_validator("owner_address")
+    @classmethod
     def owner_address_is_valid_address(cls, v):
         if not Web3.is_address(v):
             raise ValueError("owner_address is not a valid address")

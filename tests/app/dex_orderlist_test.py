@@ -543,31 +543,9 @@ class TestDEXOrderList:
     ###########################################################################
 
     # Error_1
-    # field required
-    # Invalid Parameter
-    def test_error_1(self, client: TestClient, session: Session):
-        # request target API
-        request_body = json.dumps({})
-        resp = client.get(self.base_url + "invalid_token_address", params=request_body)
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "description": [
-                {
-                    "loc": ["query", "account_address_list"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
-                }
-            ],
-            "message": "Invalid Parameter",
-        }
-
-    # Error_2
     # account_address_list has not a valid address
     # Invalid Parameter
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -592,8 +570,11 @@ class TestDEXOrderList:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": [account["account_address"][:-1]],
                     "loc": ["account_address_list"],
-                    "msg": "account_address_list has not a valid address",
+                    "msg": "Value error, account_address_list has not a valid "
+                    "address",
                     "type": "value_error",
                 }
             ],
@@ -1182,30 +1163,9 @@ class TestDEXOrderListMembership:
     ###########################################################################
 
     # Error_1
-    # field required: account_address_list
-    # Invalid Parameter
-    def test_error_1(self, client: TestClient, session: Session):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
-        resp = client.get(self.apiurl, params={})
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "description": [
-                {
-                    "loc": ["query", "account_address_list"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
-                }
-            ],
-            "message": "Invalid Parameter",
-        }
-
-    # Error_2
     # account_address_list has not a valid address
     # Invalid Parameter
-    def test_error_2(self, client: TestClient, session: Session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
@@ -1217,18 +1177,21 @@ class TestDEXOrderListMembership:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": ["0xeb6e99675595fb052cc68da0eeecb2d5a382637"],
                     "loc": ["account_address_list"],
-                    "msg": "account_address_list has not a valid address",
+                    "msg": "Value error, account_address_list has not a valid "
+                    "address",
                     "type": "value_error",
                 }
             ],
             "message": "Invalid Parameter",
         }
 
-    # Error_3
+    # Error_2
     # Validation error: include_canceled_items must be boolean
     # Invalid Parameter
-    def test_error_3(self, client: TestClient, session: Session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -1243,17 +1206,19 @@ class TestDEXOrderListMembership:
             "code": 88,
             "description": [
                 {
+                    "input": "test",
                     "loc": ["query", "include_canceled_items"],
-                    "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool",
+                    "msg": "Input should be a valid boolean, unable to interpret "
+                    "input",
+                    "type": "bool_parsing",
                 }
             ],
             "message": "Invalid Parameter",
         }
 
-    # Error_4
+    # Error_3
     # Not supported HTTP method
-    def test_error_4(self, client: TestClient, session: Session):
+    def test_error_3(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         resp = client.post(self.apiurl)
 
@@ -1264,9 +1229,9 @@ class TestDEXOrderListMembership:
             "description": "method: POST, url: /DEX/OrderList/Membership",
         }
 
-    # Error_5
+    # Error_4
     # Membership token is not enabled
-    def test_error_5(self, client: TestClient, session: Session):
+    def test_error_4(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
         config.MEMBERSHIP_TOKEN_ENABLED = False
@@ -1279,9 +1244,9 @@ class TestDEXOrderListMembership:
             "description": "method: GET, url: /DEX/OrderList/Membership",
         }
 
-    # Error_6
+    # Error_5
     # Exchange address is not set
-    def test_error_6(self, client: TestClient, session: Session):
+    def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
         config.MEMBERSHIP_TOKEN_ENABLED = True
@@ -1877,30 +1842,9 @@ class TestDEXOrderListCoupon:
     ###########################################################################
 
     # Error_1
-    # field required: account_address_list
-    # Invalid Parameter
-    def test_error_1(self, client: TestClient, session: Session):
-        config.COUPON_TOKEN_ENABLED = True
-        resp = client.get(self.apiurl, params={})
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "description": [
-                {
-                    "loc": ["query", "account_address_list"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
-                }
-            ],
-            "message": "Invalid Parameter",
-        }
-
-    # Error_2
     # account_address_list has not a valid address
     # Invalid Parameter
-    def test_error_2(self, client: TestClient, session: Session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
 
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
@@ -1913,18 +1857,21 @@ class TestDEXOrderListCoupon:
             "code": 88,
             "description": [
                 {
+                    "ctx": {"error": {}},
+                    "input": ["0xeb6e99675595fb052cc68da0eeecb2d5a382637"],
                     "loc": ["account_address_list"],
-                    "msg": "account_address_list has not a valid address",
+                    "msg": "Value error, account_address_list has not a valid "
+                    "address",
                     "type": "value_error",
                 }
             ],
             "message": "Invalid Parameter",
         }
 
-    # Error_3
+    # Error_2
     # Validation error: include_canceled_items must be boolean
     # Invalid Parameter
-    def test_error_3(self, client: TestClient, session: Session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -1939,17 +1886,19 @@ class TestDEXOrderListCoupon:
             "code": 88,
             "description": [
                 {
+                    "input": "test",
                     "loc": ["query", "include_canceled_items"],
-                    "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool",
+                    "msg": "Input should be a valid boolean, unable to interpret "
+                    "input",
+                    "type": "bool_parsing",
                 }
             ],
             "message": "Invalid Parameter",
         }
 
-    # Error_4
+    # Error_3
     # Not supported HTTP method
-    def test_error_4(self, client: TestClient, session: Session):
+    def test_error_3(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         resp = client.post(self.apiurl)
 
@@ -1961,9 +1910,9 @@ class TestDEXOrderListCoupon:
             "description": "method: POST, url: /DEX/OrderList/Coupon",
         }
 
-    # Error_5
+    # Error_4
     # Coupon token is not enabled
-    def test_error_5(self, client: TestClient, session: Session):
+    def test_error_4(self, client: TestClient, session: Session):
         account = eth_account["trader"]
 
         request_params = {"account_address_list": [account["account_address"]]}
@@ -1978,9 +1927,9 @@ class TestDEXOrderListCoupon:
             "description": "method: GET, url: /DEX/OrderList/Coupon",
         }
 
-    # Error_6
+    # Error_5
     # Exchange address is not set
-    def test_error_6(self, client: TestClient, session: Session):
+    def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
 

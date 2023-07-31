@@ -20,7 +20,6 @@ from typing import Any, Dict, Sequence, Tuple
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
-from pydantic import NonNegativeInt
 from sqlalchemy import and_, desc, func, select
 from starlette.requests import Request
 from web3.contract.contract import ContractFunction
@@ -46,7 +45,7 @@ from app.model.schema import (
     TxDataResponse,
 )
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 BLOCK_RESPONSE_LIMIT = 1000
@@ -184,7 +183,7 @@ def list_block_data(
 def get_block_data(
     session: DBSession,
     req: Request,
-    block_number: NonNegativeInt = Path(description="Block number"),
+    block_number: int = Path(description="Block number", ge=0),
 ):
     """
     Returns block data in the specified block number.
