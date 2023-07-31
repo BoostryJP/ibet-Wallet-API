@@ -26,6 +26,7 @@ from pydantic import (
     Field,
     Json,
     StringConstraints,
+    conlist,
     field_validator,
     model_validator,
 )
@@ -61,7 +62,7 @@ RE_INVALID_WIN_FILENAME = re.compile(
 
 
 class SendMailRequest(BaseModel):
-    to_emails: Set[EmailStr] = Field(min_length=1, max_length=100)
+    to_emails: list[EmailStr] = Field(min_length=1, max_length=100)
     subject: str = Field(..., description="Mail subject", max_length=100)
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
@@ -71,6 +72,13 @@ class SendMailRequest(BaseModel):
     file_content: Optional[bytes] = Field(
         default=None, description="File content(Base64 encoded)", min_length=1
     )
+
+    @field_validator("to_emails")
+    @classmethod
+    def is_valid_to_emails(cls, v):
+        if len(v) != len(set(v)):
+            raise ValueError("Each to_emails should be unique value")
+        return v
 
     @field_validator("file_name")
     @classmethod

@@ -253,3 +253,32 @@ class TestSendEmail:
                 "message": "Invalid Parameter",
             }
         }
+
+    # Error_4
+    # To email list has same values
+    def test_error_4(self, client: TestClient, session: Session):
+        params = {
+            "to_emails": ["test1@example.com", "test1@example.com"],
+            "subject": "Test email",
+            "text_content": "text content",
+            "html_content": "<p>html content</p>",
+        }
+        resp = client.post(self.api_url, json=params)
+
+        # Assertion
+        assert resp.status_code == 400
+        assert resp.json() == {
+            "meta": {
+                "code": 88,
+                "description": [
+                    {
+                        "ctx": {"error": {}},
+                        "input": ["test1@example.com", "test1@example.com"],
+                        "loc": ["body", "to_emails"],
+                        "msg": "Value error, Each to_emails should be " "unique value",
+                        "type": "value_error",
+                    }
+                ],
+                "message": "Invalid Parameter",
+            }
+        }
