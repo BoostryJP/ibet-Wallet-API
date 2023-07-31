@@ -388,7 +388,7 @@ def get_token_holders_collection(
     list_id: UUID = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
-        example="cfd83622-34dc-4efe-a68b-2cc275d3d824",
+        examples=["cfd83622-34dc-4efe-a68b-2cc275d3d824"],
     ),
 ):
     """
