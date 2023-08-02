@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from sqlalchemy import BigInteger, LargeBinary, String, Text
+from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
@@ -42,7 +43,9 @@ class Mail(Base):
     # file name
     file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # file content
-    file_content: Mapped[str | None] = mapped_column(LargeBinary, nullable=True)
+    file_content: Mapped[str | None] = mapped_column(
+        LargeBinary().with_variant(LONGBLOB, "mysql"), nullable=True
+    )
 
     FIELDS = {
         "id": int,
