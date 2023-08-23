@@ -52,7 +52,6 @@ function start () {
 
 function stop () {
   ps -ef | grep gunicorn | awk '{print $2}' | xargs kill -9
-  ps -ef | grep "batch/processor_Block_Sync_Status.py" | awk '{print $2}' | xargs kill -9
 }
 
 
