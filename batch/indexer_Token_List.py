@@ -26,8 +26,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
 
-from app.model.schema.base import TokenType
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -37,6 +35,7 @@ from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
+from app.model.schema.base import TokenType
 from app.utils.web3_utils import Web3Wrapper
 
 process_name = "INDEXER-TOKEN-LIST"

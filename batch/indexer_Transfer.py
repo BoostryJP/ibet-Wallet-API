@@ -29,8 +29,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
 
-from app.model.schema.base import TokenType
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -45,6 +43,7 @@ from app.model.db import (
     IDXTransferSourceEventType,
     Listing,
 )
+from app.model.schema.base import TokenType
 from app.utils.web3_utils import Web3Wrapper
 
 UTC = timezone(timedelta(hours=0), "UTC")

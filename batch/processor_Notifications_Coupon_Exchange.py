@@ -26,8 +26,6 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.model.schema.base import TokenType
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -43,6 +41,7 @@ from app.config import (
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import Notification, NotificationBlockNumber, NotificationType
+from app.model.schema.base import TokenType
 from app.utils.company_list import CompanyList
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.misc import wait_all_futures

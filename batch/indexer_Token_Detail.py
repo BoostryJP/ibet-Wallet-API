@@ -29,8 +29,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from app.model.schema.base import TokenType
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -41,6 +39,7 @@ from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
 from app.model.db import IDXTokenListItem, Listing
+from app.model.schema.base import TokenType
 
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)

@@ -27,8 +27,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from app.model.schema.base import TokenType
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -51,6 +49,7 @@ from app.model.db import (
     IDXTokenInstance,
     Listing,
 )
+from app.model.schema.base import TokenType
 
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)
