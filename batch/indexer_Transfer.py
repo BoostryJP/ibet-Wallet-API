@@ -29,6 +29,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -263,30 +265,30 @@ class Processor:
             skip_timestamp, skip_block_number = self.__get_latest_synchronized(
                 db_session, listed_token.token_address
             )
-            if token_info[1] == "IbetCoupon":
+            if token_info[1] == TokenType.IbetCoupon:
                 token_contract = Contract.get_contract(
-                    "IbetCoupon", listed_token.token_address
+                    TokenType.IbetCoupon, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
-            elif token_info[1] == "IbetMembership":
+            elif token_info[1] == TokenType.IbetMembership:
                 token_contract = Contract.get_contract(
-                    "IbetMembership", listed_token.token_address
+                    TokenType.IbetMembership, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
-            elif token_info[1] == "IbetStraightBond":
+            elif token_info[1] == TokenType.IbetStraightBond:
                 token_contract = Contract.get_contract(
-                    "IbetStraightBond", listed_token.token_address
+                    TokenType.IbetStraightBond, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
-            elif token_info[1] == "IbetShare":
+            elif token_info[1] == TokenType.IbetShare:
                 token_contract = Contract.get_contract(
-                    "IbetShare", listed_token.token_address
+                    TokenType.IbetShare, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number

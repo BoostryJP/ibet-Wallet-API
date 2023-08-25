@@ -23,25 +23,22 @@ from fastapi import Query
 from pydantic import BaseModel, StrictStr
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder
+from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+
 
 ############################
 # COMMON
 ############################
-
-
 class Locked(BaseModel):
-    token_address: str
-    lock_address: str
-    account_address: str
+    token_address: ValidatedEthereumAddress
+    lock_address: ValidatedEthereumAddress
+    account_address: ValidatedEthereumAddress
     value: int
 
 
 ############################
 # REQUEST
 ############################
-
-
 class ListAllLockSortItem(str, Enum):
     token_address = "token_address"
     lock_address = "lock_address"
@@ -52,15 +49,17 @@ class ListAllLockSortItem(str, Enum):
 @dataclass
 class ListAllTokenLockQuery:
     token_address_list: Annotated[
-        list[StrictStr],
+        list[ValidatedEthereumAddress],
         Query(
             default_factory=list,
             description="list of token address (**this affects total number**)",
         ),
     ]
-    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
+    lock_address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="lock address")
+    ] = None
     account_address: Annotated[
-        Optional[str], Query(description="account address")
+        Optional[ValidatedEthereumAddress], Query(description="account address")
     ] = None
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
@@ -75,20 +74,20 @@ class ListAllTokenLockQuery:
 @dataclass
 class RetrieveTokenLockCountQuery:
     token_address_list: Annotated[
-        list[StrictStr],
+        list[ValidatedEthereumAddress],
         Query(default_factory=list, description="list of token address"),
     ]
-    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
+    lock_address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="lock address")
+    ] = None
     account_address: Annotated[
-        Optional[str], Query(description="account address")
+        Optional[ValidatedEthereumAddress], Query(description="account address")
     ] = None
 
 
 ############################
 # RESPONSE
 ############################
-
-
 class ListAllTokenLockResponse(BaseModel):
     result_set: ResultSet
     locked_list: list[Locked]

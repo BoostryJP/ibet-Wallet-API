@@ -675,7 +675,15 @@ class TestCompanyInfoCompanyTokenList:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid eth_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "eth_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xe883a6f441ad5682d37df31d34fc012bcb07a74",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # Error_2

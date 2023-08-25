@@ -349,16 +349,16 @@ class TestAdminTokensPOST:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7",
-                    "loc": ["body", "contract_address"],
-                    "msg": "Value error, token_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["body", "contract_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜Error_3_2＞
@@ -366,10 +366,10 @@ class TestAdminTokensPOST:
     # 400（InvalidParameterError）
     def test_error_3_2(self, client: TestClient, session: Session):
         request_params = {
-            "contract_address": 1234,
-            "is_public": "True",
-            "max_holding_quantity": "100",
-            "max_sell_amount": "50000",
+            "contract_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
+            "is_public": "Trueee",
+            "max_holding_quantity": "aaaa",
+            "max_sell_amount": "bbbb",
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -378,15 +378,27 @@ class TestAdminTokensPOST:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "input": 1234,
-                    "loc": ["body", "contract_address"],
-                    "msg": "Input should be a valid string",
-                    "type": "string_type",
-                }
+                    "type": "bool_parsing",
+                    "loc": ["body", "is_public"],
+                    "msg": "Input should be a valid boolean, unable to interpret input",
+                    "input": "Trueee",
+                },
+                {
+                    "type": "int_parsing",
+                    "loc": ["body", "max_holding_quantity"],
+                    "msg": "Input should be a valid integer, unable to parse string as an integer",
+                    "input": "aaaa",
+                },
+                {
+                    "type": "int_parsing",
+                    "loc": ["body", "max_sell_amount"],
+                    "msg": "Input should be a valid integer, unable to parse string as an integer",
+                    "input": "bbbb",
+                },
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜Error_3_3＞

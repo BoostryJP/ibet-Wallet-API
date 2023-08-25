@@ -20,13 +20,16 @@ from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
-from web3 import Web3
 
 from app.model.db import NotificationType
-from app.model.schema.base import ResultSet, SortOrder
-from app.model.schema.token import TokenType
+from app.model.schema.base import (
+    ResultSet,
+    SortOrder,
+    TokenType,
+    ValidatedEthereumAddress,
+)
 
 ############################
 # COMMON
@@ -36,8 +39,6 @@ from app.model.schema.token import TokenType
 ############################
 # REQUEST
 ############################
-
-
 class NotificationsSortItem(str, Enum):
     notification_type = "notification_type"
     priority = "priority"
@@ -49,10 +50,11 @@ class NotificationsSortItem(str, Enum):
 class NotificationsQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    address: Annotated[Optional[str], Query()] = None
+    address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="account address")
+    ] = None
     notification_type: Annotated[Optional[NotificationType], Query()] = None
     priority: Annotated[Optional[int], Query(ge=0, le=2)] = None
-
     sort_item: Annotated[
         Optional[NotificationsSortItem], Query(description="sort item")
     ] = NotificationsSortItem.created
@@ -60,37 +62,15 @@ class NotificationsQuery:
         Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
     ] = SortOrder.ASC
 
-    @field_validator("address")
-    @classmethod
-    def address_is_valid_address(cls, v):
-        if v is not None:
-            if not Web3.is_address(v):
-                raise ValueError("address is not a valid address")
-        return v
-
 
 class NotificationReadRequest(BaseModel):
-    address: str
+    address: ValidatedEthereumAddress
     is_read: bool
-
-    @field_validator("address")
-    @classmethod
-    def address_is_valid_address(cls, v):
-        if not Web3.is_address(v):
-            raise ValueError("address is not a valid address")
-        return v
 
 
 @dataclass
 class NotificationsCountQuery:
-    address: Annotated[str, Query(default=...)]
-
-    @field_validator("address")
-    @classmethod
-    def address_is_valid_address(cls, v):
-        if not Web3.is_address(v):
-            raise ValueError("address is not a valid address")
-        return v
+    address: Annotated[ValidatedEthereumAddress, Query(default=...)]
 
 
 class UpdateNotificationRequest(BaseModel):
@@ -102,13 +82,11 @@ class UpdateNotificationRequest(BaseModel):
 ############################
 # RESPONSE
 ############################
-
-
 class NotificationMetainfo(BaseModel):
     company_name: str
-    token_address: str
+    token_address: ValidatedEthereumAddress
     token_name: str
-    exchange_address: str
+    exchange_address: ValidatedEthereumAddress
     token_type: TokenType
 
 
@@ -123,7 +101,7 @@ class Notification(BaseModel):
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
     metainfo: NotificationMetainfo | dict
-    account_address: str
+    account_address: ValidatedEthereumAddress
     sort_id: int
     created: str = Field(description="datetime of create")
 
@@ -148,4 +126,4 @@ class NotificationUpdateResponse(BaseModel):
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
     metainfo: NotificationMetainfo | dict
-    account_address: str
+    account_address: ValidatedEthereumAddress

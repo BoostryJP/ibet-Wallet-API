@@ -134,6 +134,8 @@ class TestPositionMembershipContractAddress:
     # <Normal_1>
     # balance: 1000000
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -245,6 +247,8 @@ class TestPositionMembershipContractAddress:
     # <Normal_2>
     # balance: 999900, exchange_balance: 100
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -356,6 +360,8 @@ class TestPositionMembershipContractAddress:
     # <Normal_3>
     # balance: 0, exchange_balance: 1000000
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -471,6 +477,8 @@ class TestPositionMembershipContractAddress:
     # <Error_1>
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
+        config.MEMBERSHIP_TOKEN_ENABLED = False
+
         account_address = self.account_1["account_address"]
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
@@ -493,6 +501,8 @@ class TestPositionMembershipContractAddress:
     # <Error_2>
     # ParameterError: invalid account_address
     def test_error_2(self, client: TestClient, session: Session):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -507,12 +517,22 @@ class TestPositionMembershipContractAddress:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_3>
     # ParameterError: invalid contract_address
     def test_error_3(self, client: TestClient, session: Session):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         # Request target API
         resp = client.get(
             self.apiurl.format(
@@ -526,12 +546,22 @@ class TestPositionMembershipContractAddress:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_4>
     # DataNotExistsError: not listing
     def test_error_4(self, client: TestClient, session: Session):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -553,6 +583,8 @@ class TestPositionMembershipContractAddress:
     # <Error_5>
     # DataNotExistsError: not position
     def test_error_5(self, client: TestClient, session: Session, shared_contract):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data

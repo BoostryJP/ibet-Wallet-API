@@ -26,6 +26,8 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -67,7 +69,7 @@ membership_exchange_contract = Contract.get_contract(
 list_contract = Contract.get_contract(
     contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
-token_list = TokenList(list_contract, "IbetMembership")
+token_list = TokenList(list_contract, TokenType.IbetMembership)
 
 
 # Watcher
@@ -223,7 +225,7 @@ class WatchMembershipNewOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -266,7 +268,7 @@ class WatchMembershipCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -309,7 +311,7 @@ class WatchMembershipForceCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -349,7 +351,7 @@ class WatchMembershipBuyAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -389,7 +391,7 @@ class WatchMembershipSellAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -432,7 +434,7 @@ class WatchMembershipBuySettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -475,7 +477,7 @@ class WatchMembershipSellSettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -518,7 +520,7 @@ class WatchMembershipBuySettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()
@@ -561,7 +563,7 @@ class WatchMembershipSellSettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership",
+                "token_type": TokenType.IbetMembership,
             }
 
             notification = Notification()

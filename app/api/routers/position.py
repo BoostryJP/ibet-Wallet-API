@@ -16,31 +16,15 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from datetime import timedelta, timezone
 from decimal import Decimal
-from typing import Sequence, Type, Union
-from zoneinfo import ZoneInfo
+from typing import Annotated, Sequence, Type, Union
 
-from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
-from sqlalchemy import (
-    String,
-    and_,
-    cast,
-    column,
-    desc,
-    func,
-    literal,
-    null,
-    or_,
-    select,
-)
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
-from web3 import Web3
 
 from app import config, log
-from app.config import TZ
 from app.contracts import Contract
 from app.database import DBSession
 from app.errors import (
@@ -60,7 +44,6 @@ from app.model.db import (
     IDXBondToken,
     IDXConsumeCoupon,
     IDXCouponToken,
-    IDXLock,
     IDXLockedPosition,
     IDXMembershipToken,
     IDXPosition,
@@ -69,7 +52,6 @@ from app.model.db import (
     IDXTokenListItem,
     IDXTokenModel,
     IDXTransfer,
-    IDXUnlock,
     Listing,
 )
 from app.model.schema import (
@@ -77,16 +59,10 @@ from app.model.schema import (
     CouponPositionWithAddress,
     CouponPositionWithDetail,
     GenericSecurityTokenPositionsResponse,
-    GenericSuccessResponse,
     GetPositionQuery,
-    ListAllLockedPositionQuery,
-    ListAllLockedPositionResponse,
-    ListAllLockEventQuery,
-    ListAllLockEventsResponse,
+    ListAllCouponConsumptionsResponse,
     ListAllPositionQuery,
     ListAllTokenPositionQuery,
-    LockEventCategory,
-    LockEventSortItem,
     MembershipPositionsResponse,
     MembershipPositionWithAddress,
     MembershipPositionWithDetail,
@@ -94,359 +70,21 @@ from app.model.schema import (
     RetrieveStraightBondTokenResponse,
     SecurityTokenPositionWithAddress,
     SecurityTokenPositionWithDetail,
-    SuccessResponse,
     TokenPositionsResponse,
 )
-from app.model.schema.token import TokenType
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    SuccessResponse,
+    TokenType,
+    ValidatedEthereumAddress,
+)
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
-UTC = timezone(timedelta(hours=0), "UTC")
-local_tz = ZoneInfo(TZ)
 
 router = APIRouter(prefix="/Position", tags=["user_position"])
-
-
-class ListAllLock:
-    token_type: str
-    token_model: BlockChainTokenModel
-    idx_token_model: IDXTokenModel
-
-    def __init__(
-        self,
-        token_type: str,
-        token_model: BlockChainTokenModel,
-        idx_token_model: IDXTokenModel,
-    ):
-        self.token_type = token_type
-        self.token_model = token_model
-        self.idx_token_model = idx_token_model
-
-    def __call__(
-        self,
-        session: DBSession,
-        req: Request,
-        request_query: ListAllLockedPositionQuery = Depends(),
-        account_address: str = Path(),
-    ):
-        if self.token_type == "IbetShare":
-            token_enabled = config.SHARE_TOKEN_ENABLED
-        else:  # IbetStraightBond
-            token_enabled = config.BOND_TOKEN_ENABLED
-        if token_enabled is False:
-            raise NotSupportedError(method="GET", url=req.url.path)
-
-        # Validation
-        try:
-            account_address = to_checksum_address(account_address)
-            if not Web3.is_address(account_address):
-                raise InvalidParameterError(description="invalid account_address")
-        except:
-            raise InvalidParameterError(description="invalid account_address")
-
-        token_address_list = request_query.token_address_list
-        lock_address = request_query.lock_address
-        limit = request_query.limit
-        offset = request_query.offset
-
-        sort_item = request_query.sort_item
-        sort_order = request_query.sort_order  # default: asc
-
-        stmt = select(IDXLockedPosition, self.idx_token_model).join(
-            self.idx_token_model,
-            IDXLockedPosition.token_address == self.idx_token_model.token_address,
-        )
-        if len(token_address_list) > 0:
-            stmt = stmt.where(IDXLockedPosition.token_address.in_(token_address_list))
-        stmt = stmt.where(IDXLockedPosition.account_address == account_address).where(
-            IDXLockedPosition.value > 0
-        )
-
-        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
-
-        if lock_address is not None:
-            stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
-
-        count = session.scalar(select(func.count()).select_from(stmt.subquery()))
-
-        sort_attr = getattr(IDXLockedPosition, sort_item, None)
-
-        if sort_order == 0:  # ASC
-            stmt = stmt.order_by(sort_attr)
-        else:  # DESC
-            stmt = stmt.order_by(desc(sort_attr))
-
-        # NOTE: Set secondary sort for consistent results
-        if sort_item != "token_address":
-            stmt = stmt.order_by(IDXLockedPosition.token_address)
-        else:
-            stmt = stmt.order_by(IDXLockedPosition.created)
-
-        if limit is not None:
-            stmt = stmt.limit(limit)
-        if offset is not None:
-            stmt = stmt.offset(offset)
-
-        _locked_list: Sequence[
-            tuple[IDXLockedPosition, IDXTokenInstance]
-        ] = session.execute(stmt).all()
-        locked_list = []
-
-        for _locked in _locked_list:
-            _locked_data = _locked[0].json()
-            if request_query.include_token_details is True:
-                _locked_data["token"] = self.token_model.from_model(_locked[1]).__dict__
-            locked_list.append(_locked_data)
-
-        data = {
-            "result_set": {
-                "count": count,
-                "offset": offset,
-                "limit": limit,
-                "total": total,
-            },
-            "locked_positions": locked_list,
-        }
-
-        return data
-
-
-class ListAllLockEvent:
-    token_type: str
-    token_model: BlockChainTokenModel
-    idx_token_model: IDXTokenModel
-
-    def __init__(
-        self,
-        token_type: str,
-        token_model: BlockChainTokenModel,
-        idx_token_model: IDXTokenModel,
-    ):
-        self.token_type = token_type
-        self.token_model = token_model
-        self.idx_token_model = idx_token_model
-
-    def __call__(
-        self,
-        session: DBSession,
-        req: Request,
-        request_query: ListAllLockEventQuery = Depends(),
-        account_address: str = Path(),
-    ):
-        if self.token_type == "IbetShare":
-            token_enabled = config.SHARE_TOKEN_ENABLED
-        else:  # IbetStraightBond
-            token_enabled = config.BOND_TOKEN_ENABLED
-        if token_enabled is False:
-            raise NotSupportedError(method="GET", url=req.url.path)
-
-        # Validation
-        try:
-            account_address = to_checksum_address(account_address)
-            if not Web3.is_address(account_address):
-                raise InvalidParameterError(description="invalid account_address")
-        except:
-            raise InvalidParameterError(description="invalid account_address")
-
-        token_address_list = request_query.token_address_list
-        category = request_query.category
-
-        stmt_lock = select(
-            literal(value=LockEventCategory.Lock.value, type_=String).label(
-                "history_category"
-            ),
-            IDXLock.transaction_hash.label("transaction_hash"),
-            IDXLock.msg_sender.label("msg_sender"),
-            IDXLock.token_address.label("token_address_alias"),
-            IDXLock.lock_address.label("lock_address"),
-            IDXLock.account_address.label("account_address"),
-            null().label("recipient_address"),
-            IDXLock.value.label("value"),
-            IDXLock.data.label("data"),
-            IDXLock.block_timestamp.label("block_timestamp"),
-        )
-        stmt_unlock = select(
-            literal(value=LockEventCategory.Unlock.value, type_=String).label(
-                "history_category"
-            ),
-            IDXUnlock.transaction_hash.label("transaction_hash"),
-            IDXUnlock.msg_sender.label("msg_sender"),
-            IDXUnlock.token_address.label("token_address_alias"),
-            IDXUnlock.lock_address.label("lock_address"),
-            IDXUnlock.account_address.label("account_address"),
-            IDXUnlock.recipient_address.label("recipient_address"),
-            IDXUnlock.value.label("value"),
-            IDXUnlock.data.label("data"),
-            IDXUnlock.block_timestamp.label("block_timestamp"),
-        )
-
-        if len(token_address_list) > 0:
-            stmt_lock = stmt_lock.where(
-                IDXLock.token_address.label("token_address").in_(token_address_list)
-            )
-            stmt_unlock = stmt_unlock.where(
-                IDXUnlock.token_address.label("token_address").in_(token_address_list)
-            )
-
-        total = session.scalar(
-            select(func.count()).select_from(stmt_lock.subquery())
-        ) + session.scalar(select(func.count()).select_from(stmt_unlock.subquery()))
-
-        match category:
-            case LockEventCategory.Lock:
-                stmt = stmt_lock.subquery()
-            case LockEventCategory.Unlock:
-                stmt = stmt_unlock.subquery()
-            case _:
-                stmt = stmt_lock.union_all(stmt_unlock).subquery()
-
-        stmt = (
-            select(stmt)
-            .join(
-                self.idx_token_model,
-                column("token_address_alias") == self.idx_token_model.token_address,
-            )
-            .add_columns(self.idx_token_model)
-        )
-        stmt = stmt.where(column("account_address") == account_address)
-
-        if request_query.msg_sender is not None:
-            stmt = stmt.where(column("msg_sender") == request_query.msg_sender)
-        if request_query.lock_address is not None:
-            stmt = stmt.where(column("lock_address") == request_query.lock_address)
-        if request_query.recipient_address is not None:
-            stmt = stmt.where(
-                column("recipient_address") == request_query.recipient_address
-            )
-        if request_query.data is not None:
-            stmt = stmt.where(
-                cast(column("data"), String).like("%" + request_query.data + "%")
-            )
-        count = session.scalar(select(func.count()).select_from(stmt.subquery()))
-
-        # Sort
-        sort_attr = column(request_query.sort_item)
-        if request_query.sort_order == 0:  # ASC
-            stmt = stmt.order_by(sort_attr.is_(None), sort_attr)
-        else:  # DESC
-            stmt = stmt.order_by(sort_attr.is_(None), desc(sort_attr))
-        if request_query.sort_item != LockEventSortItem.block_timestamp:
-            # NOTE: Set secondary sort for consistent results
-            stmt = stmt.order_by(desc(column(LockEventSortItem.block_timestamp)))
-
-        # Pagination
-        if request_query.offset is not None:
-            stmt = stmt.offset(request_query.offset)
-        if request_query.limit is not None:
-            stmt = stmt.limit(request_query.limit)
-        lock_events = session.execute(stmt).all()
-
-        resp_data = []
-        for lock_event in lock_events:
-            event_data = {
-                "category": lock_event[0],
-                "transaction_hash": lock_event[1],
-                "msg_sender": lock_event[2],
-                "token_address": lock_event[3],
-                "lock_address": lock_event[4],
-                "account_address": lock_event[5],
-                "recipient_address": lock_event[6],
-                "value": lock_event[7],
-                "data": lock_event[8],
-                "block_timestamp": lock_event[9]
-                .replace(tzinfo=UTC)
-                .astimezone(local_tz),
-            }
-            if request_query.include_token_details is True:
-                event_data["token"] = self.token_model.from_model(
-                    lock_event[10]
-                ).__dict__
-            resp_data.append(event_data)
-
-        data = {
-            "result_set": {
-                "count": count,
-                "offset": request_query.offset,
-                "limit": request_query.limit,
-                "total": total,
-            },
-            "events": resp_data,
-        }
-        return data
-
-
-# ------------------------------
-# Get Lock(Share)
-# ------------------------------
-@router.get(
-    "/{account_address}/Share/Lock",
-    summary="Share Token Locked Position",
-    operation_id="GetShareTokenLockedPosition",
-    response_model=GenericSuccessResponse[
-        ListAllLockedPositionResponse[RetrieveShareTokenResponse]
-    ],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
-)
-def list_all_share_locked_position(
-    data: dict = Depends(ListAllLock("IbetShare", ShareToken, IDXShareToken))
-):
-    return json_response({**SuccessResponse.default(), "data": data})
-
-
-# ------------------------------
-# Get Lock Event(Share)
-# ------------------------------
-@router.get(
-    "/{account_address}/Share/Lock/Event",
-    summary="Share Token Lock Events",
-    operation_id="GetShareTokenLockEvent",
-    response_model=GenericSuccessResponse[
-        ListAllLockEventsResponse[RetrieveShareTokenResponse]
-    ],
-    responses=get_routers_responses(),
-)
-def list_all_share_lock_events(
-    data: dict = Depends(ListAllLockEvent("IbetShare", ShareToken, IDXShareToken))
-):
-    return json_response({**SuccessResponse.default(), "data": data})
-
-
-# ------------------------------
-# Get Lock(StraightBond)
-# ------------------------------
-@router.get(
-    "/{account_address}/StraightBond/Lock",
-    summary="StraightBond Token Locked Position",
-    operation_id="GetStraightBondTokenLockedPosition",
-    response_model=GenericSuccessResponse[
-        ListAllLockedPositionResponse[RetrieveStraightBondTokenResponse]
-    ],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
-)
-def list_all_straight_bond_locked_position(
-    data: dict = Depends(ListAllLock("IbetStraightBond", BondToken, IDXBondToken)),
-):
-    return json_response({**SuccessResponse.default(), "data": data})
-
-
-# ------------------------------
-# Get Lock Event(StraightBond)
-# ------------------------------
-@router.get(
-    "/{account_address}/StraightBond/Lock/Event",
-    summary="StraightBond Token Lock Events",
-    operation_id="GetStraightBondTokenLockEvent",
-    response_model=GenericSuccessResponse[
-        ListAllLockEventsResponse[RetrieveStraightBondTokenResponse]
-    ],
-    responses=get_routers_responses(),
-)
-def list_all_straight_bond_lock_events(
-    data: dict = Depends(ListAllLockEvent("IbetStraightBond", BondToken, IDXBondToken)),
-):
-    return json_response({**SuccessResponse.default(), "data": data})
 
 
 class BasePosition:
@@ -479,13 +117,6 @@ class BasePosition:
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
 
-        # Validation
-        try:
-            account_address = to_checksum_address(account_address)
-            if not Web3.is_address(account_address):
-                raise InvalidParameterError(description="invalid account_address")
-        except:
-            raise InvalidParameterError(description="invalid account_address")
         enable_index = request_query.enable_index
 
         if enable_index:
@@ -677,19 +308,6 @@ class BasePosition:
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
 
-        # Validation
-        try:
-            account_address = to_checksum_address(account_address)
-            if not Web3.is_address(account_address):
-                raise InvalidParameterError(description="invalid account_address")
-        except:
-            raise InvalidParameterError(description="invalid account_address")
-        try:
-            token_address = to_checksum_address(token_address)
-            if not Web3.is_address(token_address):
-                raise InvalidParameterError(description="invalid contract_address")
-        except:
-            raise InvalidParameterError(description="invalid contract_address")
         enable_index = request_query.enable_index
 
         if enable_index:
@@ -902,7 +520,7 @@ class BasePosition:
 class BasePositionShare(BasePosition):
     def __init__(self):
         super().__init__(
-            config.SHARE_TOKEN_ENABLED, "IbetShare", ShareToken, IDXShareToken
+            config.SHARE_TOKEN_ENABLED, TokenType.IbetShare, ShareToken, IDXShareToken
         )
 
     def _get_position(
@@ -986,7 +604,10 @@ class BasePositionShare(BasePosition):
 class BasePositionStraightBond(BasePosition):
     def __init__(self):
         super().__init__(
-            config.BOND_TOKEN_ENABLED, "IbetStraightBond", BondToken, IDXBondToken
+            config.BOND_TOKEN_ENABLED,
+            TokenType.IbetStraightBond,
+            BondToken,
+            IDXBondToken,
         )
 
     def _get_position(
@@ -1071,7 +692,7 @@ class BasePositionMembership(BasePosition):
     def __init__(self):
         super().__init__(
             config.MEMBERSHIP_TOKEN_ENABLED,
-            "IbetMembership",
+            TokenType.IbetMembership,
             MembershipToken,
             IDXMembershipToken,
         )
@@ -1144,7 +765,10 @@ class BasePositionMembership(BasePosition):
 class BasePositionCoupon(BasePosition):
     def __init__(self):
         super().__init__(
-            config.COUPON_TOKEN_ENABLED, "IbetCoupon", CouponToken, IDXCouponToken
+            config.COUPON_TOKEN_ENABLED,
+            TokenType.IbetCoupon,
+            CouponToken,
+            IDXCouponToken,
         )
 
     def get_list_from_index(
@@ -1352,7 +976,9 @@ class GetPositionList:
         self,
         session: DBSession,
         req: Request,
-        account_address: str = Path(),
+        account_address: Annotated[
+            ValidatedEthereumAddress, Path(description="account address")
+        ],
         request_query: ListAllPositionQuery = Depends(),
     ):
         return self.base_position().get_list(
@@ -1370,18 +996,20 @@ class GetPosition:
         self,
         session: DBSession,
         req: Request,
+        account_address: Annotated[
+            ValidatedEthereumAddress, Path(description="account address")
+        ],
+        token_address: Annotated[
+            ValidatedEthereumAddress, Path(description="token address")
+        ],
         request_query: GetPositionQuery = Depends(),
-        account_address: str = Path(),
-        token_address: str = Path(),
     ):
         return self.base_position().get_one(
             req, request_query, session, account_address, token_address
         )
 
 
-# ------------------------------
-# Position List(Share)
-# ------------------------------
+# /Position/{account_address}/Share
 @router.get(
     "/{account_address}/Share",
     summary="Share Token Position",
@@ -1399,14 +1027,12 @@ def list_all_share_positions(
     ] = Depends(GetPositionList(BasePositionShare))
 ):
     """
-    Endpoint: /Position/{account_address}/Share
+    List all share position
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
-# ------------------------------
-# Position List(StraightBond)
-# ------------------------------
+# /Position/{account_address}/StraightBond
 @router.get(
     "/{account_address}/StraightBond",
     summary="StraightBond Token Position",
@@ -1424,14 +1050,12 @@ def list_all_straight_bond_positions(
     ] = Depends(GetPositionList(BasePositionStraightBond))
 ):
     """
-    Endpoint: /Position/{account_address}/StraightBond
+    List all bond position
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
-# ------------------------------
-# Position List(Membership)
-# ------------------------------
+# /Position/{account_address}/Membership
 @router.get(
     "/{account_address}/Membership",
     summary="Membership Token Position",
@@ -1447,14 +1071,12 @@ def list_all_membership_positions(
     ] = Depends(GetPositionList(BasePositionMembership))
 ):
     """
-    Endpoint: /Position/{account_address}/Membership
+    List all membership position
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
-# ------------------------------
-# Position List(Coupon)
-# ------------------------------
+# /Position/{account_address}/Coupon
 @router.get(
     "/{account_address}/Coupon",
     summary="Coupon Token Position",
@@ -1470,14 +1092,12 @@ def list_all_coupon_positions(
     ] = Depends(GetPositionList(BasePositionCoupon))
 ):
     """
-    Endpoint: /Position/{account_address}/Coupon
+    List all coupon position
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
-# ------------------------------
-# Get Position(Share)
-# ------------------------------
+# /Position/{account_address}/Share/{token_address}
 @router.get(
     "/{account_address}/Share/{token_address}",
     summary="Share Token Position By Token Address",
@@ -1493,14 +1113,12 @@ def retrieve_share_position_by_token_address(
     position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare)),
 ):
     """
-    Endpoint: /Position/{account_address}/Share/{contract_address}
+    Retrieve share position detail
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
 
-# ------------------------------
-# Get Position(StraightBond)
-# ------------------------------
+# /Position/{account_address}/StraightBond/{token_address}
 @router.get(
     "/{account_address}/StraightBond/{token_address}",
     summary="StraightBond Token Position By Token Address",
@@ -1518,14 +1136,12 @@ def retrieve_straight_bond_position_by_token_address(
     ),
 ):
     """
-    Endpoint: /Position/{account_address}/StraightBond/{contract_address}
+    Retrieve bond position detail
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
 
-# ------------------------------
-# Get Position(Membership)
-# ------------------------------
+# /Position/{account_address}/Membership/{token_address}
 @router.get(
     "/{account_address}/Membership/{token_address}",
     summary="Membership Token Position By Token Address",
@@ -1541,14 +1157,12 @@ def retrieve_membership_position_by_token_address(
     ),
 ):
     """
-    Endpoint: /Position/{account_address}/Membership/{contract_address}
+    Retrieve membership position detail
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
 
-# ------------------------------
-# Get Position(Coupon)
-# ------------------------------
+# /Position/{account_address}/Coupon/{token_address}
 @router.get(
     "/{account_address}/Coupon/{token_address}",
     summary="Coupon Token Position By Token Address",
@@ -1562,14 +1176,62 @@ def retrieve_coupon_position_by_token_address(
     position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon)),
 ):
     """
-    Endpoint: /Position/{account_address}/Coupon/{contract_address}
+    Retrieve coupon position detail
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
 
-# ------------------------------
-# Get Position
-# ------------------------------
+# /Position/{account_address}/Coupon/{token_address}/Consumptions
+@router.get(
+    "/{account_address}/Coupon/{token_address}/Consumptions",
+    summary="List All Coupon Consumptions",
+    operation_id="ListAllCouponConsumptions",
+    response_model=GenericSuccessResponse[ListAllCouponConsumptionsResponse],
+    responses=get_routers_responses(NotSupportedError),
+)
+def list_all_coupon_consumptions(
+    session: DBSession,
+    req: Request,
+    account_address: Annotated[
+        ValidatedEthereumAddress, Path(description="account address")
+    ],
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="token_address")
+    ],
+):
+    """
+    List all coupon consumptions
+    """
+    if config.COUPON_TOKEN_ENABLED is False:
+        raise NotSupportedError(method="GET", url=req.url.path)
+
+    consumptions: Sequence[IDXConsumeCoupon] = session.scalars(
+        select(IDXConsumeCoupon)
+        .where(
+            and_(
+                IDXConsumeCoupon.token_address == token_address,
+                IDXConsumeCoupon.account_address == account_address,
+            )
+        )
+        .order_by(IDXConsumeCoupon.block_timestamp)
+    ).all()
+
+    res_data = []
+    for consumption in consumptions:
+        res_data.append(
+            {
+                "account_address": account_address,
+                "block_timestamp": consumption.block_timestamp.strftime(
+                    "%Y/%m/%d %H:%M:%S"
+                ),
+                "value": consumption.amount,
+            }
+        )
+
+    return json_response({**SuccessResponse.default(), "data": res_data})
+
+
+# /Position/{account_address}
 @router.get(
     "/{account_address}",
     summary="Token Position",
@@ -1579,9 +1241,14 @@ def retrieve_coupon_position_by_token_address(
 )
 def list_all_token_position(
     session: DBSession,
+    account_address: Annotated[
+        ValidatedEthereumAddress, Path(description="account address")
+    ],
     request_query: ListAllTokenPositionQuery = Depends(),
-    account_address: str = Path(),
 ):
+    """
+    List all positions
+    """
     offset = request_query.offset
     limit = request_query.limit
     token_type_list = request_query.token_type_list

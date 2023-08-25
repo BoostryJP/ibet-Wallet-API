@@ -568,17 +568,16 @@ class TestDEXOrderList:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": [account["account_address"][:-1]],
-                    "loc": ["account_address_list"],
-                    "msg": "Value error, account_address_list has not a valid "
-                    "address",
                     "type": "value_error",
+                    "loc": ["query", "account_address_list", 0],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": account["account_address"][:-1],
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
 
@@ -1175,17 +1174,16 @@ class TestDEXOrderListMembership:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": ["0xeb6e99675595fb052cc68da0eeecb2d5a382637"],
-                    "loc": ["account_address_list"],
-                    "msg": "Value error, account_address_list has not a valid "
-                    "address",
                     "type": "value_error",
+                    "loc": ["query", "account_address_list", 0],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -1855,17 +1853,16 @@ class TestDEXOrderListCoupon:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": ["0xeb6e99675595fb052cc68da0eeecb2d5a382637"],
-                    "loc": ["account_address_list"],
-                    "msg": "Value error, account_address_list has not a valid "
-                    "address",
                     "type": "value_error",
+                    "loc": ["query", "account_address_list", 0],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2

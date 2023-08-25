@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
 import uuid
 from unittest import mock
 
@@ -311,7 +310,7 @@ class TestTokenTokenHoldersCollection:
     # 400: Invalid Parameter Error
     # List id is empty.
     def test_error_1(self, client: TestClient, session: Session):
-        apiurl = self.apiurl_base.format(contract_address="0xabcd")
+        apiurl = self.apiurl_base.format(contract_address=config.ZERO_ADDRESS)
         block_number = web3.eth.block_number
         request_params = {"block_number": block_number}
         headers = {"Content-Type": "application/json"}
@@ -346,7 +345,15 @@ class TestTokenTokenHoldersCollection:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "Invalid contract address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xabcd",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # Error_3
@@ -453,5 +460,5 @@ class TestTokenTokenHoldersCollection:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + self.token_address,
+            "description": "token_address: " + self.token_address,
         }

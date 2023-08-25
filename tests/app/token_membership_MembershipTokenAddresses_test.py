@@ -481,13 +481,13 @@ class TestTokenMembershipTokenAddresses:
 
         not_matched_key_value = {
             "name": "not_matched_value",
-            "owner_address": "not_matched_value",
+            "owner_address": "0x0000000000000000000000000000000000000000",
             "company_name": "not_matched_value",
             "symbol": "not_matched_value",
             "transferable": False,
             "status": False,
             "initial_offering_status": True,
-            "tradable_exchange": "not_matched_value",
+            "tradable_exchange": "0x0000000000000000000000000000000000000000",
         }
 
         for key, value in not_matched_key_value.items():

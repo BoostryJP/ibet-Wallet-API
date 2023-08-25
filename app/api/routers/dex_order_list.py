@@ -16,10 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Annotated
+
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import or_, select
-from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
@@ -28,13 +29,16 @@ from app.errors import InvalidParameterError, NotSupportedError
 from app.model.blockchain import CouponToken, MembershipToken
 from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllOrderListQuery,
     ListAllOrderListResponse,
     RetrieveCouponTokenResponse,
     RetrieveMembershipTokenResponse,
-    SuccessResponse,
     TokenAddress,
+)
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    SuccessResponse,
+    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -672,19 +676,11 @@ class OrderList(BaseOrderList):
         self,
         session: DBSession,
         req: Request,
+        token_address: Annotated[
+            ValidatedEthereumAddress, Path(description="Token address")
+        ],
         request_query: ListAllOrderListQuery = Depends(),
-        token_address: str = Path(),
     ):
-        # path validation
-        try:
-            token_address = to_checksum_address(token_address)
-            if not Web3.is_address(token_address):
-                description = "invalid token_address"
-                raise InvalidParameterError(description=description)
-        except:
-            description = "invalid token_address"
-            raise InvalidParameterError(description=description)
-
         order_list = []
         settlement_list = []
         complete_list = []

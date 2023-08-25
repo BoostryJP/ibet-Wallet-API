@@ -152,16 +152,16 @@ class TestUserInfoPaymentAccount:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
-                    "loc": ["account_address"],
-                    "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜エラー系3-1＞
@@ -203,14 +203,14 @@ class TestUserInfoPaymentAccount:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
-                    "loc": ["agent_address"],
-                    "msg": "Value error, agent_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "agent_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }

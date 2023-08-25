@@ -21,23 +21,26 @@ from enum import Enum
 from typing import Annotated, Generic, Optional, TypeVar, Union
 
 from fastapi import Query
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, Field, RootModel, StrictStr
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder
-from app.model.schema.token import TokenType
+from app.model.schema.base import (
+    ResultSet,
+    SortOrder,
+    TokenType,
+    ValidatedEthereumAddress,
+)
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 from app.model.schema.token_share import RetrieveShareTokenResponse
 
+
 ############################
 # COMMON
 ############################
-
-
 class TokenAddress(BaseModel):
-    token_address: str
+    token_address: ValidatedEthereumAddress
 
 
 class SecurityTokenPosition(BaseModel):
@@ -64,7 +67,9 @@ class StraightBondPositionWithDetail(SecurityTokenPosition):
 
 
 class StraightBondPositionWithAddress(SecurityTokenPosition):
-    token_address: str = Field(description="set when include_token_details=false")
+    token_address: ValidatedEthereumAddress = Field(
+        description="set when include_token_details=false"
+    )
 
 
 class SharePositionWithDetail(SecurityTokenPosition):
@@ -74,7 +79,9 @@ class SharePositionWithDetail(SecurityTokenPosition):
 
 
 class SharePositionWithAddress(SecurityTokenPosition):
-    token_address: str = Field(description="set when include_token_details=false")
+    token_address: ValidatedEthereumAddress = Field(
+        description="set when include_token_details=false"
+    )
 
 
 class SecurityTokenPositionWithDetail(
@@ -86,7 +93,7 @@ class SecurityTokenPositionWithDetail(
 
 
 class SecurityTokenPositionWithAddress(SecurityTokenPosition):
-    token_address: str = Field(
+    token_address: ValidatedEthereumAddress = Field(
         description="set when include_token_details=false or null"
     )
 
@@ -104,7 +111,9 @@ class MembershipPositionWithDetail(MembershipPosition):
 
 
 class MembershipPositionWithAddress(MembershipPosition):
-    token_address: str = Field(description="set when include_token_details=false")
+    token_address: ValidatedEthereumAddress = Field(
+        description="set when include_token_details=false"
+    )
 
 
 class CouponPosition(BaseModel):
@@ -121,7 +130,9 @@ class CouponPositionWithDetail(CouponPosition):
 
 
 class CouponPositionWithAddress(CouponPosition):
-    token_address: str = Field(description="set when include_token_details=true")
+    token_address: ValidatedEthereumAddress = Field(
+        description="set when include_token_details=true"
+    )
 
 
 class LockEventCategory(str, Enum):
@@ -130,9 +141,9 @@ class LockEventCategory(str, Enum):
 
 
 class Locked(BaseModel):
-    token_address: str
-    lock_address: str
-    account_address: str
+    token_address: ValidatedEthereumAddress
+    lock_address: ValidatedEthereumAddress
+    account_address: ValidatedEthereumAddress
     value: int
 
 
@@ -143,10 +154,12 @@ class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
 class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
-    msg_sender: Optional[str] = Field(description="Message sender", nullable=True)
-    token_address: str = Field(description="Token address")
-    lock_address: str = Field(description="Lock address")
-    account_address: str = Field(description="Account address")
+    msg_sender: Optional[ValidatedEthereumAddress] = Field(
+        description="Message sender", nullable=True
+    )
+    token_address: ValidatedEthereumAddress = Field(description="Token address")
+    lock_address: ValidatedEthereumAddress = Field(description="Lock address")
+    account_address: ValidatedEthereumAddress = Field(description="Account address")
     recipient_address: Optional[str] = Field(
         default=None, description="Recipient address"
     )
@@ -161,11 +174,15 @@ class LockEventWithTokenDetail(LockEvent, Generic[SecurityTokenResponseT]):
     token: SecurityTokenResponseT = Field(..., description="Token information")
 
 
+class CouponConsumption(BaseModel):
+    account_address: str = Field(description="account address")
+    block_timestamp: str = Field(description="consumption datetime")
+    value: int = Field(description="consumption quantity")
+
+
 ############################
 # REQUEST
 ############################
-
-
 @dataclass
 class ListAllTokenPositionQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
@@ -270,8 +287,6 @@ class ListAllLockEventQuery:
 ############################
 # RESPONSE
 ############################
-
-
 class TokenPositionsResponse(BaseModel):
     result_set: ResultSet
     positions: Union[
@@ -318,3 +333,7 @@ class ListAllLockEventsResponse(BaseModel, Generic[SecurityTokenResponseT]):
     events: Union[
         list[LockEventWithTokenDetail[SecurityTokenResponseT]], list[LockEvent]
     ] = Field(description="Lock/Unlock event list")
+
+
+class ListAllCouponConsumptionsResponse(RootModel[list[CouponConsumption]]):
+    pass

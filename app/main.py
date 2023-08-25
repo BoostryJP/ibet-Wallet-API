@@ -42,6 +42,7 @@ from app.api.routers import (
     node_info as routers_node_info,
     notification as routers_notification,
     position as routers_position,
+    position_lock as routers_position_lock,
     token as routers_token,
     token_bond as routers_token_bond,
     token_coupon as routers_token_coupon,
@@ -123,6 +124,7 @@ app.include_router(routers_token_membership.router)
 app.include_router(routers_token_coupon.router)
 app.include_router(routers_token.router)
 app.include_router(routers_token_lock.router)
+app.include_router(routers_position_lock.router)
 app.include_router(routers_position.router)
 app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)

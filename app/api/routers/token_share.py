@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional, Sequence
+from typing import Annotated, Optional, Sequence
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
-from web3 import Web3
 
 from app import config, log
 from app.database import DBSession
@@ -34,12 +33,15 @@ from app.errors import (
 from app.model.blockchain import ShareToken
 from app.model.db import IDXShareToken, Listing
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllShareTokenAddressesResponse,
     ListAllShareTokensQuery,
     ListAllShareTokensResponse,
     RetrieveShareTokenResponse,
+)
+from app.model.schema.base import (
+    GenericSuccessResponse,
     SuccessResponse,
+    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -59,21 +61,20 @@ router = APIRouter(prefix="/Token/Share", tags=["token_info"])
 def list_all_share_tokens(
     session: DBSession,
     req: Request,
-    address_list: list[str] = Query(
-        default=[], description="list of token address (**this affects total number**)"
-    ),
+    address_list: Annotated[
+        list[ValidatedEthereumAddress],
+        Query(
+            default_factory=list,
+            description="list of token address (**this affects total number**)",
+        ),
+    ],
     request_query: ListAllShareTokensQuery = Depends(),
 ):
     """
-    Endpoint: /Token/Share
+    Get a list of share tokens.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
-
-    for address in address_list:
-        if address is not None:
-            if not Web3.is_address(address):
-                raise InvalidParameterError(f"invalid token_address: {address}")
 
     owner_address: Optional[str] = request_query.owner_address
     name: Optional[str] = request_query.name
@@ -183,7 +184,7 @@ def list_all_share_token_addresses(
     request_query: ListAllShareTokensQuery = Depends(),
 ):
     """
-    Endpoint: /Token/Share/Addresses
+    Get a list of share token addresses.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -284,40 +285,36 @@ def list_all_share_token_addresses(
     response_model=GenericSuccessResponse[RetrieveShareTokenResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def retrieve_share_token(session: DBSession, req: Request, token_address: str):
+def retrieve_share_token(
+    session: DBSession,
+    req: Request,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
+):
     """
-    Endpoint: /Token/Share/{contract_address}
+    Get the details of the bond token.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    # 入力アドレスフォーマットチェック
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
     # 取扱トークン情報を取得
     # NOTE:非公開トークンも取扱対象とする
     listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == contract_address).limit(1)
+        select(Listing).where(Listing.token_address == token_address).limit(1)
     ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
-    token_address = to_checksum_address(contract_address)
+    token_address = to_checksum_address(token_address)
 
     try:
         token_detail = ShareToken.get(session=session, token_address=token_address)
     except ServiceUnavailable as e:
         LOG.warning(e)
-        raise DataNotExistsError("contract_address: %s" % contract_address) from None
+        raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
-        raise DataNotExistsError("contract_address: %s" % contract_address) from None
+        raise DataNotExistsError("token_address: %s" % token_address) from None
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

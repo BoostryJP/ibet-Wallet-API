@@ -20,6 +20,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.model.schema.base import ValidatedEthereumAddress
+
 ############################
 # COMMON
 ############################
@@ -36,19 +38,19 @@ from pydantic import BaseModel, Field
 
 
 class GetNodeInfoResponse(BaseModel):
-    payment_gateway_address: Optional[str]
+    payment_gateway_address: Optional[ValidatedEthereumAddress]
     payment_gateway_abi: Optional[object]
-    personal_info_address: Optional[str]
+    personal_info_address: Optional[ValidatedEthereumAddress]
     personal_info_abi: Optional[object]
-    ibet_membership_exchange_address: Optional[str]
+    ibet_membership_exchange_address: Optional[ValidatedEthereumAddress]
     ibet_membership_exchange_abi: Optional[object]
-    ibet_coupon_exchange_address: Optional[str]
+    ibet_coupon_exchange_address: Optional[ValidatedEthereumAddress]
     ibet_coupon_exchange_abi: Optional[object]
-    ibet_escrow_address: Optional[str]
+    ibet_escrow_address: Optional[ValidatedEthereumAddress]
     ibet_escrow_abi: Optional[object]
-    ibet_security_token_escrow_address: Optional[str]
+    ibet_security_token_escrow_address: Optional[ValidatedEthereumAddress]
     ibet_security_token_escrow_abi: Optional[object]
-    e2e_messaging_address: Optional[str]
+    e2e_messaging_address: Optional[ValidatedEthereumAddress]
     e2e_messaging_abi: Optional[object]
 
 

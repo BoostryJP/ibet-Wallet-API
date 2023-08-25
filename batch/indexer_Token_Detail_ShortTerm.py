@@ -27,6 +27,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -73,7 +75,7 @@ class Processor:
         if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetStraightBond",
+                    template=TokenType.IbetStraightBond,
                     token_class=BondToken,
                     token_model=BondTokenModel,
                 )
@@ -81,7 +83,7 @@ class Processor:
         if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetShare",
+                    template=TokenType.IbetShare,
                     token_class=ShareToken,
                     token_model=ShareTokenModel,
                 )
@@ -89,7 +91,7 @@ class Processor:
         if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetMembership",
+                    template=TokenType.IbetMembership,
                     token_class=MembershipToken,
                     token_model=MembershipTokenModel,
                 )
@@ -97,7 +99,7 @@ class Processor:
         if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetCoupon",
+                    template=TokenType.IbetCoupon,
                     token_class=CouponToken,
                     token_model=CouponTokenModel,
                 )

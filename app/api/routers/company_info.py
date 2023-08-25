@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Callable, Optional, Sequence
+from typing import Annotated, Callable, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Path, Query
 from sqlalchemy import desc, select
-from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
@@ -36,11 +35,15 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllCompanyInfoResponse,
     ListAllCompanyTokensResponse,
     RetrieveCompanyInfoResponse,
+)
+from app.model.schema.base import (
+    GenericSuccessResponse,
     SuccessResponse,
+    TokenType,
+    ValidatedEthereumAddress,
 )
 from app.utils.company_list import CompanyList
 from app.utils.docs_utils import get_routers_responses
@@ -169,14 +172,12 @@ def list_all_companies(
     response_model=GenericSuccessResponse[RetrieveCompanyInfoResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def retrieve_company(eth_address: str = Path(..., description="address")):
+def retrieve_company(
+    eth_address: Annotated[ValidatedEthereumAddress, Path(description="Issuer address")]
+):
     """
     Endpoint: /Companies/{eth_address}
     """
-    if not Web3.is_address(eth_address):
-        description = "invalid eth_address"
-        raise InvalidParameterError(description=description)
-
     company = CompanyList.get_find(to_checksum_address(eth_address))
     if company.address == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
@@ -196,7 +197,9 @@ def retrieve_company(eth_address: str = Path(..., description="address")):
 )
 def retrieve_company_tokens(
     session: DBSession,
-    eth_address: str = Path(..., description="address"),
+    eth_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Issuer address")
+    ],
     include_private_listing: Optional[bool] = Query(
         default=False, description="include private listing token issuers"
     ),
@@ -204,11 +207,6 @@ def retrieve_company_tokens(
     """
     Endpoint: /Companies/{eth_address}/Tokens
     """
-    # Validation
-    if not Web3.is_address(eth_address):
-        description = "invalid eth_address"
-        raise InvalidParameterError(description=description)
-
     # TokenList contract
     list_contract = Contract.get_contract(
         contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
@@ -259,13 +257,13 @@ def available_token_template(token_template: str) -> bool:
     :param token_template: Token type
     :return: available (True) or not available (False)
     """
-    if token_template == "IbetShare":
+    if token_template == TokenType.IbetShare:
         return config.SHARE_TOKEN_ENABLED
-    elif token_template == "IbetStraightBond":
+    elif token_template == TokenType.IbetStraightBond:
         return config.BOND_TOKEN_ENABLED
-    elif token_template == "IbetMembership":
+    elif token_template == TokenType.IbetMembership:
         return config.MEMBERSHIP_TOKEN_ENABLED
-    elif token_template == "IbetCoupon":
+    elif token_template == TokenType.IbetCoupon:
         return config.COUPON_TOKEN_ENABLED
     else:
         return False
@@ -277,13 +275,13 @@ def get_token_model(token_template: str):
     :param token_template: Token type
     :return: Token model
     """
-    if token_template == "IbetShare":
+    if token_template == TokenType.IbetShare:
         return ShareToken
-    elif token_template == "IbetStraightBond":
+    elif token_template == TokenType.IbetStraightBond:
         return BondToken
-    elif token_template == "IbetMembership":
+    elif token_template == TokenType.IbetMembership:
         return MembershipToken
-    elif token_template == "IbetCoupon":
+    elif token_template == TokenType.IbetCoupon:
         return CouponToken
     else:
         return False

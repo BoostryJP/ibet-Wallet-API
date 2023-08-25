@@ -287,6 +287,8 @@ class TestPositionStraightBondContractAddress:
     # <Normal_1>
     # balance: 1000000
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -435,6 +437,8 @@ class TestPositionStraightBondContractAddress:
     # <Normal_2>
     # balance: 999900, exchange_balance: 100
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -583,6 +587,8 @@ class TestPositionStraightBondContractAddress:
     # <Normal_3>
     # balance: 0, exchange_balance: 1000000
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -732,6 +738,8 @@ class TestPositionStraightBondContractAddress:
     # balance: 1000000
     # Indexed: <Normal_1>
     def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1012,6 +1020,8 @@ class TestPositionStraightBondContractAddress:
     # balance: 999900, exchange_balance: 100
     # Indexed: <Normal_2>
     def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1292,6 +1302,8 @@ class TestPositionStraightBondContractAddress:
     # balance: 0, exchange_balance: 1000000
     # Indexed: <Normal_3>
     def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1571,6 +1583,8 @@ class TestPositionStraightBondContractAddress:
     # <Normal_7>
     # locked amount
     def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1709,6 +1723,8 @@ class TestPositionStraightBondContractAddress:
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
         account_address = self.account_1["account_address"]
+        config.BOND_TOKEN_ENABLED = False
+
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -1730,6 +1746,8 @@ class TestPositionStraightBondContractAddress:
     # <Error_2>
     # ParameterError: invalid account_address
     def test_error_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -1744,12 +1762,22 @@ class TestPositionStraightBondContractAddress:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_3>
     # ParameterError: invalid contract_address
     def test_error_3(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         # Request target API
         resp = client.get(
             self.apiurl.format(
@@ -1763,12 +1791,22 @@ class TestPositionStraightBondContractAddress:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_4_1>
     # DataNotExistsError: not listing
     def test_error_4_1(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -1791,6 +1829,8 @@ class TestPositionStraightBondContractAddress:
     # DataNotExistsError: not listing
     # enable_index: True
     def test_error_4_2(self, client: TestClient, session: Session):
+        config.BOND_TOKEN_ENABLED = True
+
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
@@ -1813,6 +1853,8 @@ class TestPositionStraightBondContractAddress:
     # <Error_5_1>
     # DataNotExistsError: not position
     def test_error_5_1(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1850,6 +1892,8 @@ class TestPositionStraightBondContractAddress:
     # DataNotExistsError: not position
     # enable_index: True
     def test_error_5_2(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 

@@ -29,13 +29,12 @@ from app.database import DBSession
 from app.errors import InvalidParameterError
 from app.model.db import IDXLockedPosition
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllTokenLockQuery,
     ListAllTokenLockResponse,
     RetrieveTokenLockCountQuery,
     RetrieveTokenLockCountResponse,
-    SuccessResponse,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 

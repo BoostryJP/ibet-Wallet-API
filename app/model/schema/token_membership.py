@@ -23,7 +23,7 @@ from fastapi import Query
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder
+from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
 
 ############################
 # COMMON
@@ -33,8 +33,6 @@ from app.model.schema.base import ResultSet, SortOrder
 ############################
 # REQUEST
 ############################
-
-
 class MembershipTokensSortItem(str, Enum):
     token_address = "token_address"
     owner_address = "owner_address"
@@ -53,12 +51,14 @@ class MembershipTokensSortItem(str, Enum):
 class ListAllMembershipTokensQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    owner_address: Annotated[Optional[str], Query(description="issuer address")] = None
+    owner_address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="issuer address")
+    ] = None
     name: Annotated[Optional[str], Query(description="token name")] = None
     symbol: Annotated[Optional[str], Query(description="token symbol")] = None
     company_name: Annotated[Optional[str], Query(description="company name")] = None
     tradable_exchange: Annotated[
-        Optional[str], Query(description="tradable exchange")
+        Optional[ValidatedEthereumAddress], Query(description="tradable exchange")
     ] = None
     status: Annotated[Optional[bool], Query(description="token status")] = None
     transferable: Annotated[
@@ -79,23 +79,21 @@ class ListAllMembershipTokensQuery:
 ############################
 # RESPONSE
 ############################
-
-
 class MembershipImage(BaseModel):
     id: int
     url: str
 
 
 class RetrieveMembershipTokenResponse(BaseModel):
-    token_address: str
+    token_address: ValidatedEthereumAddress
     token_template: str = Field(examples=["IbetMembership"])
-    owner_address: str = Field(description="issuer address")
+    owner_address: ValidatedEthereumAddress = Field(description="issuer address")
     company_name: str
     rsa_publickey: str
     name: str = Field(description="token name")
     symbol: str = Field(description="token symbol")
     total_supply: int
-    tradable_exchange: str
+    tradable_exchange: ValidatedEthereumAddress
     contact_information: str
     privacy_policy: str
     status: bool
@@ -117,4 +115,4 @@ class ListAllMembershipTokensResponse(BaseModel):
 
 class ListAllMembershipTokenAddressesResponse(BaseModel):
     result_set: ResultSet
-    address_list: list[str]
+    address_list: list[ValidatedEthereumAddress]

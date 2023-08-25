@@ -937,10 +937,6 @@ class TestPosition:
         )
 
     def setup_data(self, session: Session, shared_contract, index=0):
-        config.BOND_TOKEN_ENABLED = False
-        config.SHARE_TOKEN_ENABLED = False
-        config.COUPON_TOKEN_ENABLED = False
-        config.MEMBERSHIP_TOKEN_ENABLED = False
         # StraightBond
         self.setup_bond(session=session, shared_contract=shared_contract, index=index)
         # Share
@@ -959,18 +955,15 @@ class TestPosition:
     # <Normal_1>
     # List all positions
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
-        with mock.patch(
-            "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-        ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-            "app.config.SHARE_TOKEN_ENABLED", True
-        ), mock.patch(
-            "app.config.COUPON_TOKEN_ENABLED", True
-        ), mock.patch(
-            "app.config.MEMBERSHIP_TOKEN_ENABLED", True
-        ):
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract):
             # Request target API
             resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
@@ -1263,14 +1256,13 @@ class TestPosition:
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
         if query_filter:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = True
+            config.MEMBERSHIP_TOKEN_ENABLED = True
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", True
             ):
                 # Request target API
                 resp = client.get(
@@ -1280,14 +1272,13 @@ class TestPosition:
                     params={"token_type_list": ["IbetStraightBond"]},
                 )
         else:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = False
+            config.COUPON_TOKEN_ENABLED = False
+            config.MEMBERSHIP_TOKEN_ENABLED = False
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", False
             ):
                 # Request target API
                 resp = client.get(
@@ -1389,14 +1380,13 @@ class TestPosition:
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
         if query_filter:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = True
+            config.MEMBERSHIP_TOKEN_ENABLED = True
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", True
             ):
                 # Request target API
                 resp = client.get(
@@ -1406,14 +1396,13 @@ class TestPosition:
                     params={"token_type_list": ["IbetShare"]},
                 )
         else:
+            config.BOND_TOKEN_ENABLED = False
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = False
+            config.MEMBERSHIP_TOKEN_ENABLED = False
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", False), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", False
             ):
                 # Request target API
                 resp = client.get(
@@ -1543,14 +1532,13 @@ class TestPosition:
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
         if query_filter:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = True
+            config.MEMBERSHIP_TOKEN_ENABLED = True
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", True
             ):
                 # Request target API
                 resp = client.get(
@@ -1560,14 +1548,13 @@ class TestPosition:
                     params={"token_type_list": ["IbetCoupon"]},
                 )
         else:
+            config.BOND_TOKEN_ENABLED = False
+            config.SHARE_TOKEN_ENABLED = False
+            config.COUPON_TOKEN_ENABLED = True
+            config.MEMBERSHIP_TOKEN_ENABLED = False
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", False), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", False
             ):
                 # Request target API
                 resp = client.get(
@@ -1659,14 +1646,13 @@ class TestPosition:
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
         if query_filter:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = True
+            config.MEMBERSHIP_TOKEN_ENABLED = True
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", True
             ):
                 # Request target API
                 resp = client.get(
@@ -1676,14 +1662,13 @@ class TestPosition:
                     params={"token_type_list": ["IbetMembership"]},
                 )
         else:
+            config.BOND_TOKEN_ENABLED = False
+            config.SHARE_TOKEN_ENABLED = False
+            config.COUPON_TOKEN_ENABLED = False
+            config.MEMBERSHIP_TOKEN_ENABLED = True
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", False), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", True
             ):
                 # Request target API
                 resp = client.get(
@@ -1751,6 +1736,11 @@ class TestPosition:
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
         if query_filter:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = False
+            config.MEMBERSHIP_TOKEN_ENABLED = False
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
             ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
@@ -1764,14 +1754,13 @@ class TestPosition:
                     params={},
                 )
         else:
+            config.BOND_TOKEN_ENABLED = True
+            config.SHARE_TOKEN_ENABLED = True
+            config.COUPON_TOKEN_ENABLED = True
+            config.MEMBERSHIP_TOKEN_ENABLED = True
+
             with mock.patch(
                 "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
-            ), mock.patch(
-                "app.config.COUPON_TOKEN_ENABLED", False
-            ), mock.patch(
-                "app.config.MEMBERSHIP_TOKEN_ENABLED", False
             ):
                 # Request target API
                 resp = client.get(
@@ -1967,15 +1956,12 @@ class TestPosition:
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
-        with mock.patch(
-            "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-        ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-            "app.config.SHARE_TOKEN_ENABLED", True
-        ), mock.patch(
-            "app.config.COUPON_TOKEN_ENABLED", True
-        ), mock.patch(
-            "app.config.MEMBERSHIP_TOKEN_ENABLED", True
-        ):
+        config.BOND_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract):
             # Request target API
             resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
@@ -2070,15 +2056,12 @@ class TestPosition:
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
-        with mock.patch(
-            "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-        ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-            "app.config.SHARE_TOKEN_ENABLED", True
-        ), mock.patch(
-            "app.config.COUPON_TOKEN_ENABLED", True
-        ), mock.patch(
-            "app.config.MEMBERSHIP_TOKEN_ENABLED", True
-        ):
+        config.BOND_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract):
             # Request target API
             resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),

@@ -174,14 +174,14 @@ class TestNotificationCount:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0x123",
-                    "loc": ["address"],
-                    "msg": "Value error, address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x123",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }

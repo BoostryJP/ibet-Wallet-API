@@ -16,18 +16,32 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from typing import Annotated, Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, WrapValidator
 from pydantic.dataclasses import dataclass
+
+from app.validator import ethereum_address_validator
+
+
+############################
+# COMMON
+############################
+class TokenType(StrEnum):
+    IbetStraightBond = "IbetStraightBond"
+    IbetShare = "IbetShare"
+    IbetMembership = "IbetMembership"
+    IbetCoupon = "IbetCoupon"
+
+
+ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
+
 
 ############################
 # REQUEST
 ############################
-
-
 class SortOrder(IntEnum):
     ASC = 0
     DESC = 1
@@ -42,8 +56,6 @@ class ResultSetQuery:
 ############################
 # RESPONSE
 ############################
-
-
 class ResultSet(BaseModel):
     """result set for pagination"""
 

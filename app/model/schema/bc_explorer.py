@@ -19,17 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, NonNegativeInt, RootModel, field_validator
+from pydantic import BaseModel, Field, NonNegativeInt, RootModel
 from pydantic.dataclasses import dataclass
-from web3 import Web3
 
-from app.model.schema.base import ResultSet, SortOrder
+from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+
 
 ############################
 # COMMON
 ############################
-
-
 class BlockData(BaseModel):
     number: NonNegativeInt = Field(description="Block number")
     hash: str = Field(description="Block hash")
@@ -66,8 +64,8 @@ class TxData(BaseModel):
     block_hash: str
     block_number: NonNegativeInt
     transaction_index: NonNegativeInt
-    from_address: str
-    to_address: Optional[str]
+    from_address: ValidatedEthereumAddress
+    to_address: Optional[ValidatedEthereumAddress]
 
 
 class TxDataDetail(BaseModel):
@@ -75,8 +73,8 @@ class TxDataDetail(BaseModel):
     block_hash: str
     block_number: NonNegativeInt
     transaction_index: NonNegativeInt
-    from_address: str
-    to_address: Optional[str]
+    from_address: ValidatedEthereumAddress
+    to_address: Optional[ValidatedEthereumAddress]
     contract_name: Optional[str]
     contract_function: Optional[str]
     contract_parameters: Optional[dict]
@@ -89,8 +87,6 @@ class TxDataDetail(BaseModel):
 ############################
 # REQUEST
 ############################
-
-
 @dataclass
 class ListBlockDataQuery:
     offset: Annotated[
@@ -117,31 +113,17 @@ class ListTxDataQuery:
     block_number: Annotated[
         Optional[NonNegativeInt], Query(description="block number")
     ] = None
-    from_address: Annotated[Optional[str], Query(description="tx from")] = None
-    to_address: Annotated[Optional[str], Query(description="tx to")] = None
-
-    @field_validator("from_address")
-    @classmethod
-    def from_address_is_valid_address(cls, v):
-        if v is not None:
-            if not Web3.is_address(v):
-                raise ValueError("from_address is not a valid address")
-        return v
-
-    @field_validator("to_address")
-    @classmethod
-    def to_address_is_valid_address(cls, v):
-        if v is not None:
-            if not Web3.is_address(v):
-                raise ValueError("to_address is not a valid address")
-        return v
+    from_address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="tx from")
+    ] = None
+    to_address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="tx to")
+    ] = None
 
 
 ############################
 # RESPONSE
 ############################
-
-
 class BlockDataResponse(RootModel[BlockDataDetail]):
     pass
 
