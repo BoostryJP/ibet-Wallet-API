@@ -93,7 +93,7 @@ class TestE2EMessageEncryptionKey:
                     "type": "value_error",
                     "loc": ["path", "account_address"],
                     "msg": "Value error, Invalid ethereum address",
-                    "input": "0x24F5A454912E39fC8F57454fDa4901c081d3186",
+                    "input": user1[:-1],
                     "ctx": {"error": {}},
                 }
             ],
