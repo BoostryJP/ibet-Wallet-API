@@ -41,14 +41,13 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema import (
-    GenericSuccessResponse,
     GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
     RegisterAdminTokenRequest,
     RetrieveAdminTokenResponse,
-    SuccessResponse,
     UpdateAdminTokenRequest,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse, TokenType
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -153,16 +152,16 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
 
     token_type = token[1]
     # Fetch token detail data to store cache
-    if token_type == "IbetCoupon":
+    if token_type == TokenType.IbetCoupon:
         token_obj = CouponToken.get(session, contract_address)
         session.merge(token_obj.to_model())
-    elif token_type == "IbetMembership":
+    elif token_type == TokenType.IbetMembership:
         token_obj = MembershipToken.get(session, contract_address)
         session.merge(token_obj.to_model())
-    elif token_type == "IbetStraightBond":
+    elif token_type == TokenType.IbetStraightBond:
         token_obj = BondToken.get(session, contract_address)
         session.merge(token_obj.to_model())
-    elif token_type == "IbetShare":
+    elif token_type == TokenType.IbetShare:
         token_obj = ShareToken.get(session, contract_address)
         session.merge(token_obj.to_model())
 
@@ -347,13 +346,13 @@ def available_token_template():
     """
     available_token_template_list = []
     if config.BOND_TOKEN_ENABLED:
-        available_token_template_list.append("IbetStraightBond")
+        available_token_template_list.append(TokenType.IbetStraightBond)
     if config.SHARE_TOKEN_ENABLED:
-        available_token_template_list.append("IbetShare")
+        available_token_template_list.append(TokenType.IbetShare)
     if config.MEMBERSHIP_TOKEN_ENABLED:
-        available_token_template_list.append("IbetMembership")
+        available_token_template_list.append(TokenType.IbetMembership)
     if config.COUPON_TOKEN_ENABLED:
-        available_token_template_list.append("IbetCoupon")
+        available_token_template_list.append(TokenType.IbetCoupon)
     return available_token_template_list
 
 
@@ -371,7 +370,7 @@ def get_account_balance_all(
         default_returns=0,
     )
     pending_transfer = 0
-    if token_template in ["IbetStraightBond", "IbetShare"]:
+    if token_template in [TokenType.IbetStraightBond, TokenType.IbetShare]:
         # if security token, amount of pending transfer is needed
         pending_transfer = Contract.call_function(
             contract=token_contract,

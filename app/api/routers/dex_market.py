@@ -28,7 +28,6 @@ from app.database import DBSession
 from app.errors import InvalidParameterError, NotSupportedError
 from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllLastPriceQuery,
     ListAllLastPriceResponse,
     ListAllOrderBookItemResponse,
@@ -37,8 +36,8 @@ from app.model.schema import (
     ListAllTicksResponse,
     RetrieveAgreementDetailResponse,
     RetrieveAgreementQuery,
-    SuccessResponse,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 

@@ -26,6 +26,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -53,13 +55,13 @@ class Processor:
         )
         self.available_token_template_list = []
         if config.BOND_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetStraightBond")
+            self.available_token_template_list.append(TokenType.IbetStraightBond)
         if config.SHARE_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetShare")
+            self.available_token_template_list.append(TokenType.IbetShare)
         if config.MEMBERSHIP_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetMembership")
+            self.available_token_template_list.append(TokenType.IbetMembership)
         if config.COUPON_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetCoupon")
+            self.available_token_template_list.append(TokenType.IbetCoupon)
 
     @staticmethod
     def __get_db_session():

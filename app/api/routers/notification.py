@@ -28,16 +28,15 @@ from app.database import DBSession
 from app.errors import DataNotExistsError
 from app.model.db import Notification
 from app.model.schema import (
-    GenericSuccessResponse,
     NotificationReadRequest,
     NotificationsCountQuery,
     NotificationsCountResponse,
     NotificationsQuery,
     NotificationsResponse,
     NotificationUpdateResponse,
-    SuccessResponse,
     UpdateNotificationRequest,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 

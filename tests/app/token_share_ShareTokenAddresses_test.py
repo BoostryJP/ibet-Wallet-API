@@ -498,7 +498,7 @@ class TestTokenShareTokenAddresses:
 
         not_matched_key_value = {
             "name": "not_matched_value",
-            "owner_address": "not_matched_value",
+            "owner_address": "0x0000000000000000000000000000000000000000",
             "company_name": "not_matched_value",
             "symbol": "not_matched_value",
             "is_offering": True,
@@ -506,8 +506,8 @@ class TestTokenShareTokenAddresses:
             "status": False,
             "transfer_approval_required": True,
             "is_canceled": True,
-            "tradable_exchange": "not_matched_value",
-            "personal_info_address": "not_matched_value",
+            "tradable_exchange": "0x0000000000000000000000000000000000000000",
+            "personal_info_address": "0x0000000000000000000000000000000000000000",
         }
 
         for key, value in not_matched_key_value.items():

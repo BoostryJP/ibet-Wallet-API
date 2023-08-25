@@ -20,6 +20,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, RootModel
 
+from app.model.schema.base import ValidatedEthereumAddress
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
@@ -38,10 +39,8 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 ############################
 # RESPONSE
 ############################
-
-
 class RetrieveCompanyInfoResponse(BaseModel):
-    address: str
+    address: ValidatedEthereumAddress
     corporate_name: str
     rsa_publickey: str
     homepage: str
@@ -67,9 +66,9 @@ class ListAllCompanyTokensResponse(
 
 
 class CompanyToken(BaseModel):
-    token_address: str
+    token_address: ValidatedEthereumAddress
     token_template: str
-    owner_address: str
+    owner_address: ValidatedEthereumAddress
     rsa_publickey: str
     name: str
     symbol: str

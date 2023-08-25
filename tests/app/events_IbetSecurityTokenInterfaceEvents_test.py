@@ -1275,28 +1275,25 @@ class TestEventsIbetSecurityTokenInterface:
             self.apiurl.format(token_address=self.token_address), params={}
         )
 
-        # request target API
-        resp = client.get(self.apiurl, params={})
-
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "input": None,
+                    "type": "missing",
                     "loc": ["query", "from_block"],
                     "msg": "Field required",
-                    "type": "missing",
+                    "input": None,
                 },
                 {
-                    "input": None,
+                    "type": "missing",
                     "loc": ["query", "to_block"],
                     "msg": "Field required",
-                    "type": "missing",
+                    "input": None,
                 },
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2

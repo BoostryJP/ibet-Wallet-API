@@ -88,7 +88,15 @@ class TestE2EMessageEncryptionKey:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": user1[:-1],
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # Error_2

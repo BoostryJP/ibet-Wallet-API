@@ -1688,7 +1688,15 @@ class TestPositionShareLockEvent:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_2>
@@ -1772,7 +1780,7 @@ class TestPositionShareLockEvent:
 
         # Request target API
         resp = client.get(
-            self.apiurl_base.format(account_address="some_address"),
+            self.apiurl_base.format(account_address=self.account_1),
         )
 
         # Assertion
@@ -1780,5 +1788,5 @@ class TestPositionShareLockEvent:
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: GET, url: /Position/some_address/Share/Lock/Event",
+            "description": "method: GET, url: /Position/0x15d34aaf54267dB7d7c367839aAf71A00A2C6A61/Share/Lock/Event",
         }

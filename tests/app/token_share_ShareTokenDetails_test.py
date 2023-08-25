@@ -234,7 +234,15 @@ class TestTokenShareTokenDetails:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xabcd",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # Error_2
@@ -267,7 +275,7 @@ class TestTokenShareTokenDetails:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + token["address"],
+            "description": "token_address: " + token["address"],
         }
 
     # Error_3

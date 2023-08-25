@@ -19,10 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Annotated, Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
-from web3 import Web3
 
+from app.model.schema.base import ValidatedEthereumAddress
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
@@ -34,37 +34,23 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 ############################
 # REQUEST
 ############################
-
-
 @dataclass
 class ListAllOrderListQuery:
     account_address_list: Annotated[
-        list[str], Query(default_factory=list, description="Account address list")
+        list[ValidatedEthereumAddress],
+        Query(default_factory=list, description="Account address list"),
     ]
     include_canceled_items: Annotated[
         Optional[bool],
-        Query(
-            description="Whether to include canceled orders or canceled agreements.",
-        ),
+        Query(description="Whether to include canceled orders or canceled agreements."),
     ] = None
-
-    @field_validator("account_address_list")
-    @classmethod
-    def account_address_list_is_valid_address(cls, v):
-        for address in v:
-            if address is not None:
-                if not Web3.is_address(address):
-                    raise ValueError("account_address_list has not a valid address")
-        return v
 
 
 ############################
 # RESPONSE
 ############################
-
-
 class TokenAddress(BaseModel):
-    token_address: str
+    token_address: ValidatedEthereumAddress
 
 
 class Order(BaseModel):
@@ -92,8 +78,7 @@ class OrderSet(BaseModel, Generic[TokenModel]):
 
 
 class Agreement(BaseModel):
-    # id: int
-    exchange_address: str = Field(description="exchange address")
+    exchange_address: ValidatedEthereumAddress = Field(description="exchange address")
     order_id: int
     agreement_id: int
     amount: int

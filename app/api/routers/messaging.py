@@ -24,7 +24,8 @@ from app import log
 from app.database import DBSession
 from app.errors import InvalidParameterError
 from app.model.db import ChatWebhook, Mail
-from app.model.schema import SendChatWebhookRequest, SendMailRequest, SuccessResponse
+from app.model.schema import SendChatWebhookRequest, SendMailRequest
+from app.model.schema.base import SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 

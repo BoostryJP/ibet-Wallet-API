@@ -26,6 +26,8 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -67,7 +69,7 @@ cp_exchange_contract = Contract.get_contract(
 list_contract = Contract.get_contract(
     contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
-token_list = TokenList(list_contract, "IbetCoupon")
+token_list = TokenList(list_contract, TokenType.IbetCoupon)
 
 
 # Watcher
@@ -223,7 +225,7 @@ class WatchCouponNewOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -263,7 +265,7 @@ class WatchCouponCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -306,7 +308,7 @@ class WatchCouponForceCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -346,7 +348,7 @@ class WatchCouponBuyAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -386,7 +388,7 @@ class WatchCouponSellAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -426,7 +428,7 @@ class WatchCouponBuySettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -469,7 +471,7 @@ class WatchCouponSellSettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -509,7 +511,7 @@ class WatchCouponBuySettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -552,7 +554,7 @@ class WatchCouponSellSettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()

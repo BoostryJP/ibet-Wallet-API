@@ -27,6 +27,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -183,7 +185,10 @@ class Processor:
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
             token_type = token_info[1]
-            if token_type == "IbetShare" or token_type == "IbetStraightBond":
+            if (
+                token_type == TokenType.IbetShare
+                or token_type == TokenType.IbetStraightBond
+            ):
                 token_contract = Contract.get_contract(
                     contract_name="IbetSecurityTokenInterface",
                     address=listed_token.token_address,

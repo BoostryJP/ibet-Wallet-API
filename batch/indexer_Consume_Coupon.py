@@ -29,6 +29,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -138,9 +140,10 @@ class Processor:
                 args=(listed_token.token_address,),
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
-            if token_info[1] == "IbetCoupon":
+            if token_info[1] == TokenType.IbetCoupon:
                 coupon_token_contract = Contract.get_contract(
-                    contract_name="IbetCoupon", address=listed_token.token_address
+                    contract_name=TokenType.IbetCoupon,
+                    address=listed_token.token_address,
                 )
                 self.token_list.append(coupon_token_contract)
 

@@ -37,13 +37,12 @@ from app.model.db import (
 from app.model.schema import (
     BlockDataListResponse,
     BlockDataResponse,
-    GenericSuccessResponse,
     ListBlockDataQuery,
     ListTxDataQuery,
-    SuccessResponse,
     TxDataListResponse,
     TxDataResponse,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 

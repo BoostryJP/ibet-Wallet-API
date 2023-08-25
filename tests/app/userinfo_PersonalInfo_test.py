@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -182,16 +180,16 @@ class TestUserInfoPersonalInfo:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": trader,
-                    "loc": ["account_address"],
-                    "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": trader,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2_3
@@ -208,14 +206,14 @@ class TestUserInfoPersonalInfo:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": issuer,
-                    "loc": ["owner_address"],
-                    "msg": "Value error, owner_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "owner_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": issuer,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }

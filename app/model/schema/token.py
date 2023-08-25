@@ -19,25 +19,16 @@ SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Optional
-from uuid import UUID
 
 from fastapi import Query
-from pydantic import BaseModel, Field, RootModel
+from pydantic import UUID4, BaseModel, Field, RootModel
 
-from app.model.schema.base import ResultSet
+from app.model.schema.base import ResultSet, TokenType, ValidatedEthereumAddress
+
 
 ############################
 # COMMON
 ############################
-
-
-class TokenType(str, Enum):
-    IbetStraightBond = "IbetStraightBond"
-    IbetShare = "IbetShare"
-    IbetMembership = "IbetMembership"
-    IbetCoupon = "IbetCoupon"
-
-
 class TransferSourceEvent(str, Enum):
     Transfer = "Transfer"
     Unlock = "Unlock"
@@ -46,10 +37,8 @@ class TransferSourceEvent(str, Enum):
 ############################
 # REQUEST
 ############################
-
-
 class CreateTokenHoldersCollectionRequest(BaseModel):
-    list_id: UUID = Field(
+    list_id: UUID4 = Field(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
         examples=["cfd83622-34dc-4efe-a68b-2cc275d3d824"],
@@ -80,17 +69,15 @@ class ListAllTransferHistoryQuery:
 ############################
 # RESPONSE
 ############################
-
-
 class TokenStatusResponse(BaseModel):
-    token_template: str = Field(examples=["IbetStraightBond"])
+    token_template: TokenType = Field(examples=["IbetStraightBond"])
     status: bool
     transferable: bool
 
 
 class TokenHolder(BaseModel):
-    token_address: str
-    account_address: str
+    token_address: ValidatedEthereumAddress
+    account_address: ValidatedEthereumAddress
     amount: Optional[int] = Field(default=0)
     pending_transfer: Optional[int] = Field(default=0)
     exchange_balance: Optional[int] = Field(default=0)
@@ -113,7 +100,7 @@ class TokenHoldersCollectionBatchStatus(str, Enum):
 
 
 class CreateTokenHoldersCollectionResponse(BaseModel):
-    list_id: UUID = Field(
+    list_id: UUID4 = Field(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
         examples=["cfd83622-34dc-4efe-a68b-2cc275d3d824"],
@@ -124,7 +111,9 @@ class CreateTokenHoldersCollectionResponse(BaseModel):
 
 
 class TokenHoldersCollectionHolder(BaseModel):
-    account_address: str = Field(description="Account address of token holder.")
+    account_address: ValidatedEthereumAddress = Field(
+        description="Account address of token holder."
+    )
     hold_balance: int = Field(
         description="Amount of balance."
         "This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked."
@@ -141,9 +130,13 @@ class TokenHoldersCollectionResponse(BaseModel):
 
 class TransferHistory(BaseModel):
     transaction_hash: str = Field(description="Transaction hash")
-    token_address: str = Field(description="Token address")
-    from_address: str = Field(description="Account address of transfer source")
-    to_address: str = Field(description="Account address of transfer destination")
+    token_address: ValidatedEthereumAddress = Field(description="Token address")
+    from_address: ValidatedEthereumAddress = Field(
+        description="Account address of transfer source"
+    )
+    to_address: ValidatedEthereumAddress = Field(
+        description="Account address of transfer destination"
+    )
     value: int = Field(description="Transfer quantity")
     source_event: TransferSourceEvent = Field(description="Source Event")
     data: dict | None = Field(description="Event data")
@@ -158,11 +151,17 @@ class TransferHistoriesResponse(BaseModel):
 
 
 class TransferApprovalHistory(BaseModel):
-    token_address: str = Field(description="Token address")
-    exchange_address: Optional[str] = Field(description="Exchange address")
+    token_address: ValidatedEthereumAddress = Field(description="Token address")
+    exchange_address: Optional[ValidatedEthereumAddress] = Field(
+        description="Exchange address"
+    )
     application_id: int = Field(description="Application id")
-    from_address: str = Field(description="Account address of transfer source")
-    to_address: str = Field(description="Account address of transfer destination")
+    from_address: ValidatedEthereumAddress = Field(
+        description="Account address of transfer source"
+    )
+    to_address: ValidatedEthereumAddress = Field(
+        description="Account address of transfer destination"
+    )
     value: int = Field(description="Transfer quantity")
     application_datetime: str = Field(
         description="application datetime (local timezone)"

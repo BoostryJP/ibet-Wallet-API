@@ -324,16 +324,16 @@ class TestDEXMarketGetAgreement:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B",
-                    "loc": ["exchange_address"],
-                    "msg": "Value error, owner_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "exchange_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": exchange_address,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_3

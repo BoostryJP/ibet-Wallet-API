@@ -44,6 +44,7 @@ from app.model.db import (
     Listing,
 )
 from app.model.db.idx_token import IDXTokenInstance, IDXTokenModel
+from app.model.schema.base import TokenType
 from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
@@ -199,7 +200,9 @@ class BondToken(TokenBase):
 
         :return: None
         """
-        token_contract = Contract.get_contract("IbetStraightBond", self.token_address)
+        token_contract = Contract.get_contract(
+            TokenType.IbetStraightBond, self.token_address
+        )
 
         # Fetch
         owner_address = Contract.call_function(
@@ -242,7 +245,9 @@ class BondToken(TokenBase):
         """
 
         # IbetStraightBond コントラクトへの接続
-        token_contract = Contract.get_contract("IbetStraightBond", token_address)
+        token_contract = Contract.get_contract(
+            TokenType.IbetStraightBond, token_address
+        )
 
         # Contractから情報を取得する
         owner_address = Contract.call_function(
@@ -370,7 +375,7 @@ class BondToken(TokenBase):
 
         bondtoken = BondToken()
         bondtoken.token_address = token_address
-        bondtoken.token_template = "IbetStraightBond"
+        bondtoken.token_template = TokenType.IbetStraightBond
         bondtoken.owner_address = owner_address
         bondtoken.company_name = company_name
         bondtoken.rsa_publickey = rsa_publickey
@@ -458,7 +463,7 @@ class ShareToken(TokenBase):
 
         :return: ShareToken
         """
-        token_contract = Contract.get_contract("IbetShare", self.token_address)
+        token_contract = Contract.get_contract(TokenType.IbetShare, self.token_address)
 
         # Fetch
         owner_address = Contract.call_function(
@@ -515,7 +520,7 @@ class ShareToken(TokenBase):
         """
 
         # IbetShare コントラクトへの接続
-        token_contract = Contract.get_contract("IbetShare", token_address)
+        token_contract = Contract.get_contract(TokenType.IbetShare, token_address)
         owner_address = Contract.call_function(
             token_contract, "owner", (), ZERO_ADDRESS
         )
@@ -563,7 +568,7 @@ class ShareToken(TokenBase):
 
         sharetoken = ShareToken()
         sharetoken.token_address = token_address
-        sharetoken.token_template = "IbetShare"
+        sharetoken.token_template = TokenType.IbetShare
         sharetoken.owner_address = owner_address
         sharetoken.company_name = company_name
         sharetoken.rsa_publickey = rsa_publickey
@@ -639,7 +644,9 @@ class MembershipToken(TokenBase):
 
         :return: None
         """
-        token_contract = Contract.get_contract("IbetMembership", self.token_address)
+        token_contract = Contract.get_contract(
+            TokenType.IbetMembership, self.token_address
+        )
 
         # Fetch
         owner_address = Contract.call_function(
@@ -678,7 +685,7 @@ class MembershipToken(TokenBase):
         """
 
         # Token-Contractへの接続
-        token_contract = Contract.get_contract("IbetMembership", token_address)
+        token_contract = Contract.get_contract(TokenType.IbetMembership, token_address)
 
         # Token-Contractから情報を取得する
         owner_address = Contract.call_function(
@@ -721,7 +728,7 @@ class MembershipToken(TokenBase):
 
         membershiptoken = MembershipToken()
         membershiptoken.token_address = token_address
-        membershiptoken.token_template = "IbetMembership"
+        membershiptoken.token_template = TokenType.IbetMembership
         membershiptoken.owner_address = owner_address
         membershiptoken.company_name = company_name
         membershiptoken.rsa_publickey = rsa_publickey
@@ -792,7 +799,7 @@ class CouponToken(TokenBase):
 
         :return: None
         """
-        token_contract = Contract.get_contract("IbetCoupon", self.token_address)
+        token_contract = Contract.get_contract(TokenType.IbetCoupon, self.token_address)
 
         # Fetch
         owner_address = Contract.call_function(
@@ -831,7 +838,7 @@ class CouponToken(TokenBase):
         """
 
         # Token-Contractへの接続
-        token_contract = Contract.get_contract("IbetCoupon", token_address)
+        token_contract = Contract.get_contract(TokenType.IbetCoupon, token_address)
 
         # Token-Contractから情報を取得する
         owner_address = Contract.call_function(
@@ -874,7 +881,7 @@ class CouponToken(TokenBase):
 
         coupontoken = CouponToken()
         coupontoken.token_address = token_address
-        coupontoken.token_template = "IbetCoupon"
+        coupontoken.token_template = TokenType.IbetCoupon
         coupontoken.owner_address = owner_address
         coupontoken.company_name = company_name
         coupontoken.rsa_publickey = rsa_publickey

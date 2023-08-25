@@ -28,6 +28,8 @@ from sqlalchemy.orm import Session
 from web3.contract import Contract
 from web3.exceptions import ABIEventFunctionNotFound
 
+from app.model.schema.base import TokenType
+
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -103,21 +105,21 @@ class Processor:
         token_info = TokenList(list_contract).get_token(self.target.token_address)
         self.token_owner_address = token_info[2]
         # Store token contract.
-        if token_info[1] == "IbetCoupon":
+        if token_info[1] == TokenType.IbetCoupon:
             self.token_contract = ContractOperator.get_contract(
-                "IbetCoupon", self.target.token_address
+                TokenType.IbetCoupon, self.target.token_address
             )
-        elif token_info[1] == "IbetMembership":
+        elif token_info[1] == TokenType.IbetMembership:
             self.token_contract = ContractOperator.get_contract(
-                "IbetMembership", self.target.token_address
+                TokenType.IbetMembership, self.target.token_address
             )
-        elif token_info[1] == "IbetStraightBond":
+        elif token_info[1] == TokenType.IbetStraightBond:
             self.token_contract = ContractOperator.get_contract(
-                "IbetStraightBond", self.target.token_address
+                TokenType.IbetStraightBond, self.target.token_address
             )
-        elif token_info[1] == "IbetShare":
+        elif token_info[1] == TokenType.IbetShare:
             self.token_contract = ContractOperator.get_contract(
-                "IbetShare", self.target.token_address
+                TokenType.IbetShare, self.target.token_address
             )
         else:
             return False
@@ -244,10 +246,10 @@ class Processor:
         self.__process_transfer(block_from, block_to)
         self.__process_issue(block_from, block_to)
         self.__process_redeem(block_from, block_to)
-        if self.token_template in ["IbetStraightBond", "IbetShare"]:
+        if self.token_template in [TokenType.IbetStraightBond, TokenType.IbetShare]:
             self.__process_lock(block_from, block_to)
             self.__process_unlock(block_from, block_to)
-        if self.token_template == "IbetCoupon":
+        if self.token_template == TokenType.IbetCoupon:
             self.__process_consume(block_from, block_to)
 
         self.__save_holders(

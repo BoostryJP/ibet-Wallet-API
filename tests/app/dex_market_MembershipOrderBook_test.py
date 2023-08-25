@@ -1578,16 +1578,16 @@ class TestDEXMarketMembershipOrderBook:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0xe883a6f441ad5682d37df31d34fc012bcb07a74",
-                    "loc": ["token_address"],
-                    "msg": "Value error, token_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": token_address,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2_2
@@ -1614,17 +1614,16 @@ class TestDEXMarketMembershipOrderBook:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": agent_address,
-                    "loc": ["exchange_agent_address"],
-                    "msg": "Value error, exchange_agent_address is not a valid "
-                    "address",
                     "type": "value_error",
+                    "loc": ["query", "exchange_agent_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": agent_address,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2_3
@@ -1651,16 +1650,16 @@ class TestDEXMarketMembershipOrderBook:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
-                    "loc": ["account_address"],
-                    "msg": "Value error, account_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": account_address,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_3

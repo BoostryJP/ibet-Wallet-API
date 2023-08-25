@@ -26,12 +26,8 @@ from app import config, log
 from app.database import DBSession
 from app.errors import ServiceUnavailable
 from app.model.db import Node
-from app.model.schema import (
-    GenericSuccessResponse,
-    GetBlockSyncStatusResponse,
-    GetNodeInfoResponse,
-    SuccessResponse,
-)
+from app.model.schema import GetBlockSyncStatusResponse, GetNodeInfoResponse
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 from app.utils.web3_utils import Web3Wrapper

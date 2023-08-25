@@ -663,7 +663,15 @@ class TestTokenTokenStatus:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xabcd",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # ＜エラー系2＞
@@ -699,7 +707,7 @@ class TestTokenTokenStatus:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + token["address"],
+            "description": "token_address: " + token["address"],
         }
 
     # ＜エラー系3＞
@@ -722,5 +730,5 @@ class TestTokenTokenStatus:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "contract_address: " + share_exchange["address"],
+            "description": "token_address: " + share_exchange["address"],
         }
