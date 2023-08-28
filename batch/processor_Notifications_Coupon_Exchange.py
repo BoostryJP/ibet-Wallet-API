@@ -25,6 +25,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -128,10 +129,13 @@ class Watcher:
                 to_block_number = latest_block_number
 
             # Get event logs
-            _event = getattr(self.contract.events, self.filter_name)
-            entries = _event.get_logs(
-                fromBlock=from_block_number, toBlock=to_block_number
-            )
+            try:
+                _event = getattr(self.contract.events, self.filter_name)
+                entries = _event.get_logs(
+                    fromBlock=from_block_number, toBlock=to_block_number
+                )
+            except ABIEventFunctionNotFound:
+                entries = []
 
             # Register notifications
             if len(entries) > 0:

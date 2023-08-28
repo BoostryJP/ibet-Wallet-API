@@ -27,6 +27,7 @@ from sqlalchemy import and_, create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.contract import Contract as Web3Contract
+from web3.exceptions import ABIEventFunctionNotFound
 from web3.types import EventData
 
 path = os.path.join(os.path.dirname(__file__), "../")
@@ -170,6 +171,8 @@ class Watcher:
                     entries = _event.get_logs(
                         fromBlock=from_block_number, toBlock=to_block_number
                     )
+                except ABIEventFunctionNotFound:  # Backward compatibility
+                    entries = []
                 except FileNotFoundError:
                     continue
                 except Exception as err:  # If an Exception occurs, processing continues
