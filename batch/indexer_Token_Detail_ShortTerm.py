@@ -126,12 +126,10 @@ class Processor:
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
             available_tokens = local_session.scalars(
-                select(token_type.token_model)
-                .join(
+                select(token_type.token_model).join(
                     Listing,
                     token_type.token_model.token_address == Listing.token_address,
                 )
-                .where(Listing.is_public == True)
             ).all()
 
             for available_token in available_tokens:

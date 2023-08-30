@@ -112,7 +112,6 @@ class Processor:
                     IDXTokenListItem,
                     IDXTokenListItem.token_address == Listing.token_address,
                 )
-                .where(Listing.is_public == True)
                 .where(IDXTokenListItem.token_template == token_type.template)
                 .order_by(Listing.id)
             ).all()
