@@ -17,7 +17,7 @@ gevent = "~23.7.0"
 hexbytes = "~0.3.0"
 orjson = "~3.9.2"
 PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
-psycopg = {extras = ["binary"], version = "^3.1.8"}
+psycopg = {extras = ["c"], version = "^3.1.10"}
 pydantic = {extras = ["email"], version = "~2.1.1"}
 sqlalchemy = "~2.0.8"
 uvicorn = "~0.23.1"
