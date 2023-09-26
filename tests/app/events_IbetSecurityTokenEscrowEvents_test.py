@@ -1234,14 +1234,18 @@ class TestEventsIbetSecurityTokenEscrow:
             "description": [
                 {
                     "ctx": {
-                        "expected": "'Deposited','Withdrawn','EscrowCreated','EscrowCanceled','EscrowFinished','ApplyForTransfer','CancelTransfer','ApproveTransfer' "
-                        "or 'FinishTransfer'"
+                        "expected": "'Deposited', 'Withdrawn', "
+                        "'EscrowCreated', 'EscrowCanceled', "
+                        "'EscrowFinished', 'ApplyForTransfer', "
+                        "'CancelTransfer', 'ApproveTransfer' or "
+                        "'FinishTransfer'"
                     },
                     "input": "some_event",
                     "loc": ["query", "event"],
-                    "msg": "Input should be "
-                    "'Deposited','Withdrawn','EscrowCreated','EscrowCanceled','EscrowFinished','ApplyForTransfer','CancelTransfer','ApproveTransfer' "
-                    "or 'FinishTransfer'",
+                    "msg": "Input should be 'Deposited', 'Withdrawn', "
+                    "'EscrowCreated', 'EscrowCanceled', 'EscrowFinished', "
+                    "'ApplyForTransfer', 'CancelTransfer', "
+                    "'ApproveTransfer' or 'FinishTransfer'",
                     "type": "enum",
                 }
             ],

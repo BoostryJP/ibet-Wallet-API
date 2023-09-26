@@ -550,13 +550,13 @@ class TestEventsIbetEscrow:
             "description": [
                 {
                     "ctx": {
-                        "expected": "'Deposited','Withdrawn','EscrowCreated','EscrowCanceled' "
+                        "expected": "'Deposited', 'Withdrawn', 'EscrowCreated', 'EscrowCanceled' "
                         "or 'EscrowFinished'"
                     },
                     "input": "some_event",
                     "loc": ["query", "event"],
                     "msg": "Input should be "
-                    "'Deposited','Withdrawn','EscrowCreated','EscrowCanceled' "
+                    "'Deposited', 'Withdrawn', 'EscrowCreated', 'EscrowCanceled' "
                     "or 'EscrowFinished'",
                     "type": "enum",
                 }

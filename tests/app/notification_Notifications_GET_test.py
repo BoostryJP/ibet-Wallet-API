@@ -529,14 +529,25 @@ class TestNotificationsGet:
                 },
                 {
                     "ctx": {
-                        "expected": "'NewOrder','NewOrderCounterpart','CancelOrder','CancelOrderCounterpart','ForceCancelOrder','BuyAgreement','BuySettlementOK','BuySettlementNG','SellAgreement','SellSettlementOK','SellSettlementNG','Transfer','ApplyForTransfer','ApproveTransfer' "
+                        "expected": "'NewOrder', 'NewOrderCounterpart', "
+                        "'CancelOrder', "
+                        "'CancelOrderCounterpart', "
+                        "'ForceCancelOrder', 'BuyAgreement', "
+                        "'BuySettlementOK', 'BuySettlementNG', "
+                        "'SellAgreement', 'SellSettlementOK', "
+                        "'SellSettlementNG', 'Transfer', "
+                        "'ApplyForTransfer', 'ApproveTransfer' "
                         "or 'CancelTransfer'"
                     },
                     "input": "hoge",
                     "loc": ["query", "notification_type"],
-                    "msg": "Input should be "
-                    "'NewOrder','NewOrderCounterpart','CancelOrder','CancelOrderCounterpart','ForceCancelOrder','BuyAgreement','BuySettlementOK','BuySettlementNG','SellAgreement','SellSettlementOK','SellSettlementNG','Transfer','ApplyForTransfer','ApproveTransfer' "
-                    "or 'CancelTransfer'",
+                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', "
+                    "'CancelOrder', 'CancelOrderCounterpart', "
+                    "'ForceCancelOrder', 'BuyAgreement', "
+                    "'BuySettlementOK', 'BuySettlementNG', "
+                    "'SellAgreement', 'SellSettlementOK', "
+                    "'SellSettlementNG', 'Transfer', 'ApplyForTransfer', "
+                    "'ApproveTransfer' or 'CancelTransfer'",
                     "type": "enum",
                 },
                 {
@@ -548,14 +559,13 @@ class TestNotificationsGet:
                 },
                 {
                     "ctx": {
-                        "expected": "'notification_type','priority','block_timestamp' "
-                        "or 'created'"
+                        "expected": "'notification_type', 'priority', "
+                        "'block_timestamp' or 'created'"
                     },
                     "input": "fuga",
                     "loc": ["query", "sort_item"],
-                    "msg": "Input should be "
-                    "'notification_type','priority','block_timestamp' or "
-                    "'created'",
+                    "msg": "Input should be 'notification_type', 'priority', "
+                    "'block_timestamp' or 'created'",
                     "type": "enum",
                 },
                 {
