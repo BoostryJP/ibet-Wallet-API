@@ -1356,14 +1356,21 @@ class TestEventsIbetSecurityTokenInterface:
             "description": [
                 {
                     "ctx": {
-                        "expected": "'Allot','ApplyForOffering','ApplyForTransfer','ApproveTransfer','CancelTransfer','ChangeOfferingStatus','ChangeStatus','ChangeTransferApprovalRequired','Issue','Lock','Redeem','Transfer' "
+                        "expected": "'Allot', 'ApplyForOffering', "
+                        "'ApplyForTransfer', 'ApproveTransfer', "
+                        "'CancelTransfer', "
+                        "'ChangeOfferingStatus', 'ChangeStatus', "
+                        "'ChangeTransferApprovalRequired', "
+                        "'Issue', 'Lock', 'Redeem', 'Transfer' "
                         "or 'Unlock'"
                     },
                     "input": "invalid",
                     "loc": ["query", "event"],
-                    "msg": "Input should be "
-                    "'Allot','ApplyForOffering','ApplyForTransfer','ApproveTransfer','CancelTransfer','ChangeOfferingStatus','ChangeStatus','ChangeTransferApprovalRequired','Issue','Lock','Redeem','Transfer' "
-                    "or 'Unlock'",
+                    "msg": "Input should be 'Allot', 'ApplyForOffering', "
+                    "'ApplyForTransfer', 'ApproveTransfer', "
+                    "'CancelTransfer', 'ChangeOfferingStatus', "
+                    "'ChangeStatus', 'ChangeTransferApprovalRequired', "
+                    "'Issue', 'Lock', 'Redeem', 'Transfer' or 'Unlock'",
                     "type": "enum",
                 }
             ],

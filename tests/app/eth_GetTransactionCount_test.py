@@ -141,10 +141,10 @@ class TestEthGetTransactionCount:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"expected": "'latest','earliest' or 'pending'"},
+                    "ctx": {"expected": "'latest', 'earliest' or 'pending'"},
                     "input": "hoge",
                     "loc": ["query", "block_identifier"],
-                    "msg": "Input should be 'latest','earliest' or 'pending'",
+                    "msg": "Input should be 'latest', 'earliest' or 'pending'",
                     "type": "enum",
                 }
             ],
