@@ -18,17 +18,15 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Annotated
 
+from eth_utils import to_checksum_address
 from fastapi import APIRouter, Path
+from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
 from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.schema import E2EMessageEncryptionKeyResponse
-from app.model.schema.base import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -46,12 +44,20 @@ router = APIRouter(prefix="/E2EMessage", tags=["messaging"])
 )
 def retrieve_encryption_key(
     account_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Account address (message receiver)")
+        str, Path(description="Account address (message receiver)")
     ]
 ):
     """
     Endpoint: /E2EMessage/EncryptionKey/{account_address}
     """
+    # Validation
+    try:
+        account_address = to_checksum_address(account_address)
+        if not Web3.is_address(account_address):
+            raise InvalidParameterError(description="invalid account_address")
+    except:
+        raise InvalidParameterError(description="invalid account_address")
+
     # Get public key
     messaging_contract = Contract.get_contract(
         contract_name="E2EMessaging", address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)

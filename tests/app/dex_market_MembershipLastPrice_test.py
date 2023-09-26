@@ -159,16 +159,14 @@ class TestDEXMarketMembershipLastPrice:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["address_list"],
+                    "msg": "address_list has not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "address_list", 0],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": token_address,
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_2

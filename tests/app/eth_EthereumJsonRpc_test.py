@@ -103,21 +103,19 @@ class TestEthereumJsonRpc:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "input": {},
                     "loc": ["body", "method"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
                 {
-                    "input": {},
                     "loc": ["body", "params"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -131,16 +129,14 @@ class TestEthereumJsonRpc:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": "invalid_method",
                     "loc": ["body", "method"],
-                    "msg": "Value error, The method invalid_method is not " "available",
+                    "msg": "The method invalid_method is not available",
                     "type": "value_error",
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_3_1

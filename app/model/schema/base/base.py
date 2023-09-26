@@ -17,13 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import IntEnum, StrEnum
-from typing import Annotated, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel, Field, WrapValidator
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
-
-from app.validator import ethereum_address_validator
 
 
 ############################
@@ -36,9 +34,6 @@ class TokenType(StrEnum):
     IbetCoupon = "IbetCoupon"
 
 
-ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
-
-
 ############################
 # REQUEST
 ############################
@@ -49,8 +44,8 @@ class SortOrder(IntEnum):
 
 @dataclass
 class ResultSetQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
 
 
 ############################
@@ -75,19 +70,17 @@ Data = TypeVar("Data")
 
 class SuccessResponse(BaseModel):
     meta: Success200MetaModel = Field(
-        ..., examples=[Success200MetaModel(code=200, message="OK").model_dump()]
+        ..., examples=[Success200MetaModel(code=200, message="OK").dict()]
     )
     data: dict = {}
 
     @staticmethod
     def default():
-        return SuccessResponse(
-            meta=Success200MetaModel(code=200, message="OK")
-        ).model_dump()
+        return SuccessResponse(meta=Success200MetaModel(code=200, message="OK")).dict()
 
 
 class GenericSuccessResponse(BaseModel, Generic[Data]):
     meta: Success200MetaModel = Field(
-        ..., examples=[Success200MetaModel(code=200, message="OK").model_dump()]
+        ..., examples=[Success200MetaModel(code=200, message="OK").dict()]
     )
     data: Data

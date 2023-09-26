@@ -523,16 +523,8 @@ class TestTokenTransferApprovalHistory:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid token_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "token_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xabcd",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # Error_2
@@ -563,11 +555,9 @@ class TestTokenTransferApprovalHistory:
             "code": 88,
             "description": [
                 {
-                    "input": "string",
                     "loc": ["query", "offset"],
-                    "msg": "Input should be a valid integer, unable to parse "
-                    "string as an integer",
-                    "type": "int_parsing",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
             "message": "Invalid Parameter",
@@ -586,11 +576,10 @@ class TestTokenTransferApprovalHistory:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "offset"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
             "message": "Invalid Parameter",
@@ -609,11 +598,9 @@ class TestTokenTransferApprovalHistory:
             "code": 88,
             "description": [
                 {
-                    "input": "1.5",
                     "loc": ["query", "offset"],
-                    "msg": "Input should be a valid integer, unable to parse "
-                    "string as an integer",
-                    "type": "int_parsing",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
             "message": "Invalid Parameter",
@@ -632,11 +619,9 @@ class TestTokenTransferApprovalHistory:
             "code": 88,
             "description": [
                 {
-                    "input": "string",
                     "loc": ["query", "limit"],
-                    "msg": "Input should be a valid integer, unable to parse "
-                    "string as an integer",
-                    "type": "int_parsing",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
             "message": "Invalid Parameter",
@@ -655,11 +640,10 @@ class TestTokenTransferApprovalHistory:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "limit"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
             "message": "Invalid Parameter",
@@ -678,11 +662,9 @@ class TestTokenTransferApprovalHistory:
             "code": 88,
             "description": [
                 {
-                    "input": "1.5",
                     "loc": ["query", "limit"],
-                    "msg": "Input should be a valid integer, unable to parse "
-                    "string as an integer",
-                    "type": "int_parsing",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
             "message": "Invalid Parameter",

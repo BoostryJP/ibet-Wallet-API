@@ -220,16 +220,8 @@ class TestTokenMembershipTokenDetails:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid token_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "token_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xabcd",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # Error_2

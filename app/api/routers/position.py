@@ -19,10 +19,12 @@ SPDX-License-Identifier: Apache-2.0
 from decimal import Decimal
 from typing import Annotated, Sequence, Type, Union
 
+from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
+from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
@@ -72,12 +74,7 @@ from app.model.schema import (
     SecurityTokenPositionWithDetail,
     TokenPositionsResponse,
 )
-from app.model.schema.base import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    TokenType,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse, TokenType
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -116,6 +113,14 @@ class BasePosition:
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
+
+        # Validation
+        try:
+            account_address = to_checksum_address(account_address)
+            if not Web3.is_address(account_address):
+                raise InvalidParameterError(description="invalid account_address")
+        except:
+            raise InvalidParameterError(description="invalid account_address")
 
         enable_index = request_query.enable_index
 
@@ -307,6 +312,20 @@ class BasePosition:
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
+
+        # Validation
+        try:
+            account_address = to_checksum_address(account_address)
+            if not Web3.is_address(account_address):
+                raise InvalidParameterError(description="invalid account_address")
+        except:
+            raise InvalidParameterError(description="invalid account_address")
+        try:
+            token_address = to_checksum_address(token_address)
+            if not Web3.is_address(token_address):
+                raise InvalidParameterError(description="invalid token_address")
+        except:
+            raise InvalidParameterError(description="invalid token_address")
 
         enable_index = request_query.enable_index
 
@@ -976,9 +995,7 @@ class GetPositionList:
         self,
         session: DBSession,
         req: Request,
-        account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
-        ],
+        account_address: Annotated[str, Path(description="account address")],
         request_query: ListAllPositionQuery = Depends(),
     ):
         return self.base_position().get_list(
@@ -996,12 +1013,8 @@ class GetPosition:
         self,
         session: DBSession,
         req: Request,
-        account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
-        ],
-        token_address: Annotated[
-            ValidatedEthereumAddress, Path(description="token address")
-        ],
+        account_address: Annotated[str, Path(description="account address")],
+        token_address: Annotated[str, Path(description="token address")],
         request_query: GetPositionQuery = Depends(),
     ):
         return self.base_position().get_one(
@@ -1192,18 +1205,30 @@ def retrieve_coupon_position_by_token_address(
 def list_all_coupon_consumptions(
     session: DBSession,
     req: Request,
-    account_address: Annotated[
-        ValidatedEthereumAddress, Path(description="account address")
-    ],
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="token_address")
-    ],
+    account_address: Annotated[str, Path(description="account address")],
+    token_address: Annotated[str, Path(description="token_address")],
 ):
     """
     List all coupon consumptions
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
+
+    # 入力アドレスフォーマットチェック
+    try:
+        account_address = to_checksum_address(account_address)
+        if not Web3.is_address(account_address):
+            raise InvalidParameterError(description="invalid account_address")
+    except:
+        raise InvalidParameterError(description="invalid account_address")
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
 
     consumptions: Sequence[IDXConsumeCoupon] = session.scalars(
         select(IDXConsumeCoupon)
@@ -1241,9 +1266,7 @@ def list_all_coupon_consumptions(
 )
 def list_all_token_position(
     session: DBSession,
-    account_address: Annotated[
-        ValidatedEthereumAddress, Path(description="account address")
-    ],
+    account_address: Annotated[str, Path(description="account address")],
     request_query: ListAllTokenPositionQuery = Depends(),
 ):
     """

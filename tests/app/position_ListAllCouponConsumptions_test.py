@@ -113,16 +113,8 @@ class TestListAllCouponConsumptions:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid token_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "token_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # Error_1_2
@@ -140,16 +132,8 @@ class TestListAllCouponConsumptions:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid account_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "account_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # Error_2

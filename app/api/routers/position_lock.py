@@ -20,8 +20,10 @@ from datetime import timedelta, timezone
 from typing import Annotated, Sequence
 from zoneinfo import ZoneInfo
 
+from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import String, cast, column, desc, func, literal, null, select
+from web3 import Web3
 
 from app import config, log
 from app.config import TZ
@@ -51,12 +53,7 @@ from app.model.schema import (
     RetrieveShareTokenResponse,
     RetrieveStraightBondTokenResponse,
 )
-from app.model.schema.base import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    TokenType,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse, TokenType
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -87,9 +84,7 @@ class ListAllLock:
         self,
         session: DBSession,
         req: Request,
-        account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
-        ],
+        account_address: Annotated[str, Path(description="account address")],
         request_query: ListAllLockedPositionQuery = Depends(),
     ):
         if self.token_type == TokenType.IbetShare:
@@ -98,6 +93,14 @@ class ListAllLock:
             token_enabled = config.BOND_TOKEN_ENABLED
         if token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
+
+        # Validation
+        try:
+            account_address = to_checksum_address(account_address)
+            if not Web3.is_address(account_address):
+                raise InvalidParameterError(description="invalid account_address")
+        except:
+            raise InvalidParameterError(description="invalid account_address")
 
         token_address_list = request_query.token_address_list
         lock_address = request_query.lock_address
@@ -185,9 +188,7 @@ class ListAllLockEvent:
         self,
         session: DBSession,
         req: Request,
-        account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
-        ],
+        account_address: Annotated[str, Path(description="account address")],
         request_query: ListAllLockEventQuery = Depends(),
     ):
         if self.token_type == TokenType.IbetShare:
@@ -196,6 +197,14 @@ class ListAllLockEvent:
             token_enabled = config.BOND_TOKEN_ENABLED
         if token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
+
+        # Validation
+        try:
+            account_address = to_checksum_address(account_address)
+            if not Web3.is_address(account_address):
+                raise InvalidParameterError(description="invalid account_address")
+        except:
+            raise InvalidParameterError(description="invalid account_address")
 
         token_address_list = request_query.token_address_list
         category = request_query.category

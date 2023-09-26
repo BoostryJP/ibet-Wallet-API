@@ -18,7 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Annotated
 
+from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
+from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
@@ -34,11 +36,7 @@ from app.model.schema import (
     ListAllEventsResponse,
     SecurityTokenEventArguments,
 )
-from app.model.schema.base import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 from app.utils.web3_utils import Web3Wrapper
@@ -75,9 +73,9 @@ def list_all_e2e_messaging_event_logs(
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = E2EMessagingEventArguments.model_validate_json(
+            argument_filters_dict = E2EMessagingEventArguments.parse_raw(
                 request_query.argument_filters
-            ).model_dump(exclude_none=True)
+            ).dict(exclude_none=True)
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
@@ -140,9 +138,9 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = EscrowEventArguments.model_validate_json(
+            argument_filters_dict = EscrowEventArguments.parse_raw(
                 request_query.argument_filters
-            ).model_dump(exclude_none=True)
+            ).dict(exclude_none=True)
         except:
             raise InvalidParameterError("invalid argument_filters")
 
@@ -218,9 +216,9 @@ def list_all_ibet_security_token_escrow_event_logs(
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = EscrowEventArguments.model_validate_json(
+            argument_filters_dict = EscrowEventArguments.parse_raw(
                 request_query.argument_filters
-            ).model_dump(exclude_none=True)
+            ).dict(exclude_none=True)
         except:
             raise InvalidParameterError("invalid argument_filters")
 
@@ -294,9 +292,7 @@ def list_all_ibet_security_token_escrow_event_logs(
     ),
 )
 def list_all_ibet_security_token_interface_event_logs(
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
     request_query: IbetSecurityTokenInterfaceEventsQuery = Depends(),
 ):
     """List all IbetSecurityTokenInterface event logs"""
@@ -309,11 +305,20 @@ def list_all_ibet_security_token_interface_event_logs(
     argument_filters_dict = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = SecurityTokenEventArguments.model_validate_json(
-                request_query.argument_filters, strict=True
-            ).root.model_dump(exclude_none=True)
+            argument_filters_dict = SecurityTokenEventArguments.parse_raw(
+                request_query.argument_filters,
+            ).__root__.dict(exclude_none=True)
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
+
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
 
     contract = Contract.get_contract(
         contract_name="IbetSecurityTokenInterface", address=str(token_address)

@@ -1161,16 +1161,14 @@ class TestEventsIbetSecurityTokenEscrow:
             "code": 88,
             "description": [
                 {
-                    "input": None,
                     "loc": ["query", "from_block"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
                 {
-                    "input": None,
                     "loc": ["query", "to_block"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1192,18 +1190,16 @@ class TestEventsIbetSecurityTokenEscrow:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"ge": 1},
-                    "input": "0",
+                    "ctx": {"limit_value": 1},
                     "loc": ["query", "from_block"],
-                    "msg": "Input should be greater than or equal to 1",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge",
                 },
                 {
-                    "ctx": {"ge": 1},
-                    "input": "0",
+                    "ctx": {"limit_value": 1},
                     "loc": ["query", "to_block"],
-                    "msg": "Input should be greater than or equal to 1",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1234,15 +1230,25 @@ class TestEventsIbetSecurityTokenEscrow:
             "description": [
                 {
                     "ctx": {
-                        "expected": "'Deposited','Withdrawn','EscrowCreated','EscrowCanceled','EscrowFinished','ApplyForTransfer','CancelTransfer','ApproveTransfer' "
-                        "or 'FinishTransfer'"
+                        "enum_values": [
+                            "Deposited",
+                            "Withdrawn",
+                            "EscrowCreated",
+                            "EscrowCanceled",
+                            "EscrowFinished",
+                            "ApplyForTransfer",
+                            "CancelTransfer",
+                            "ApproveTransfer",
+                            "FinishTransfer",
+                        ]
                     },
-                    "input": "some_event",
                     "loc": ["query", "event"],
-                    "msg": "Input should be "
-                    "'Deposited','Withdrawn','EscrowCreated','EscrowCanceled','EscrowFinished','ApplyForTransfer','CancelTransfer','ApproveTransfer' "
-                    "or 'FinishTransfer'",
-                    "type": "enum",
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "'Deposited', 'Withdrawn', 'EscrowCreated', "
+                    "'EscrowCanceled', 'EscrowFinished', "
+                    "'ApplyForTransfer', 'CancelTransfer', "
+                    "'ApproveTransfer', 'FinishTransfer'",
+                    "type": "type_error.enum",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1271,16 +1277,9 @@ class TestEventsIbetSecurityTokenEscrow:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"error": {}},
-                    "input": {
-                        "argument_filters": None,
-                        "event": None,
-                        "from_block": latest_block_number,
-                        "to_block": latest_block_number - 1,
-                    },
-                    "loc": [],
-                    "msg": "Value error, to_block must be greater than or equal "
-                    "to the from_block",
+                    "loc": ["__root__"],
+                    "msg": "to_block must be greater than or equal to the "
+                    "from_block",
                     "type": "value_error",
                 }
             ],

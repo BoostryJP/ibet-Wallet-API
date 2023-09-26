@@ -720,11 +720,9 @@ class TestTokenStraightBondTokenAddresses:
                 "code": 88,
                 "description": [
                     {
-                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "Input should be a valid boolean, unable to interpret "
-                        "input",
-                        "type": "bool_parsing",
+                        "msg": "value could not be parsed to a boolean",
+                        "type": "type_error.bool",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -739,11 +737,9 @@ class TestTokenStraightBondTokenAddresses:
                 "code": 88,
                 "description": [
                     {
-                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "Input should be a valid integer, unable to parse "
-                        "string as an integer",
-                        "type": "int_parsing",
+                        "msg": "value is not a valid integer",
+                        "type": "type_error.integer",
                     }
                 ],
                 "message": "Invalid Parameter",

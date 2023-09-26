@@ -900,11 +900,9 @@ class TestTokenMembershipTokens:
                 "code": 88,
                 "description": [
                     {
-                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "Input should be a valid boolean, unable to interpret "
-                        "input",
-                        "type": "bool_parsing",
+                        "msg": "value could not be parsed to a boolean",
+                        "type": "type_error.bool",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -919,11 +917,9 @@ class TestTokenMembershipTokens:
                 "code": 88,
                 "description": [
                     {
-                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "Input should be a valid integer, unable to parse "
-                        "string as an integer",
-                        "type": "int_parsing",
+                        "msg": "value is not a valid integer",
+                        "type": "type_error.integer",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -940,21 +936,6 @@ class TestTokenMembershipTokens:
                 assert resp.status_code == 400
                 assert resp.json()["meta"] == {
                     "code": 88,
+                    "description": f"invalid token_address: {invalid_key_value[key][0]}",
                     "message": "Invalid Parameter",
-                    "description": [
-                        {
-                            "type": "value_error",
-                            "loc": ["query", "address_list", 0],
-                            "msg": "Value error, Invalid ethereum address",
-                            "input": invalid_key_value[key][0],
-                            "ctx": {"error": {}},
-                        },
-                        {
-                            "type": "value_error",
-                            "loc": ["query", "address_list", 1],
-                            "msg": "Value error, Invalid ethereum address",
-                            "input": invalid_key_value[key][1],
-                            "ctx": {"error": {}},
-                        },
-                    ],
                 }

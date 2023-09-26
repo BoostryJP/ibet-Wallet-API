@@ -321,10 +321,9 @@ class TestTokenTokenHoldersCollection:
             "code": 88,
             "description": [
                 {
-                    "input": {"block_number": block_number},
                     "loc": ["body", "list_id"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -344,16 +343,8 @@ class TestTokenTokenHoldersCollection:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid token_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "token_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xabcd",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # Error_3
@@ -371,17 +362,9 @@ class TestTokenTokenHoldersCollection:
             "code": 88,
             "description": [
                 {
-                    "ctx": {
-                        "error": "invalid character: expected an optional "
-                        "prefix of `urn:uuid:` followed by "
-                        "[0-9a-fA-F-], found `s` at 1"
-                    },
-                    "input": "some_id",
                     "loc": ["body", "list_id"],
-                    "msg": "Input should be a valid UUID, invalid character: "
-                    "expected an optional prefix of `urn:uuid:` followed "
-                    "by [0-9a-fA-F-], found `s` at 1",
-                    "type": "uuid_parsing",
+                    "msg": "value is not a valid uuid",
+                    "type": "type_error.uuid",
                 }
             ],
             "message": "Invalid Parameter",

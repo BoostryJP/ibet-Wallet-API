@@ -141,11 +141,11 @@ class TestEthGetTransactionCount:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"expected": "'latest','earliest' or 'pending'"},
-                    "input": "hoge",
+                    "ctx": {"enum_values": ["latest", "earliest", "pending"]},
                     "loc": ["query", "block_identifier"],
-                    "msg": "Input should be 'latest','earliest' or 'pending'",
-                    "type": "enum",
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "'latest', 'earliest', 'pending'",
+                    "type": "type_error.enum",
                 }
             ],
             "message": "Invalid Parameter",

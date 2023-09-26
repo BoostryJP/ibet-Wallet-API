@@ -514,56 +514,75 @@ class TestNotificationsGet:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "offset"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "limit"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {
-                        "expected": "'NewOrder','NewOrderCounterpart','CancelOrder','CancelOrderCounterpart','ForceCancelOrder','BuyAgreement','BuySettlementOK','BuySettlementNG','SellAgreement','SellSettlementOK','SellSettlementNG','Transfer','ApplyForTransfer','ApproveTransfer' "
-                        "or 'CancelTransfer'"
+                        "enum_values": [
+                            "NewOrder",
+                            "NewOrderCounterpart",
+                            "CancelOrder",
+                            "CancelOrderCounterpart",
+                            "ForceCancelOrder",
+                            "BuyAgreement",
+                            "BuySettlementOK",
+                            "BuySettlementNG",
+                            "SellAgreement",
+                            "SellSettlementOK",
+                            "SellSettlementNG",
+                            "Transfer",
+                            "ApplyForTransfer",
+                            "ApproveTransfer",
+                            "CancelTransfer",
+                        ]
                     },
-                    "input": "hoge",
                     "loc": ["query", "notification_type"],
-                    "msg": "Input should be "
-                    "'NewOrder','NewOrderCounterpart','CancelOrder','CancelOrderCounterpart','ForceCancelOrder','BuyAgreement','BuySettlementOK','BuySettlementNG','SellAgreement','SellSettlementOK','SellSettlementNG','Transfer','ApplyForTransfer','ApproveTransfer' "
-                    "or 'CancelTransfer'",
-                    "type": "enum",
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', "
+                    "'CancelOrderCounterpart', 'ForceCancelOrder', "
+                    "'BuyAgreement', 'BuySettlementOK', "
+                    "'BuySettlementNG', 'SellAgreement', "
+                    "'SellSettlementOK', 'SellSettlementNG', 'Transfer', "
+                    "'ApplyForTransfer', 'ApproveTransfer', "
+                    "'CancelTransfer'",
+                    "type": "type_error.enum",
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "priority"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
                     "ctx": {
-                        "expected": "'notification_type','priority','block_timestamp' "
-                        "or 'created'"
+                        "enum_values": [
+                            "notification_type",
+                            "priority",
+                            "block_timestamp",
+                            "created",
+                        ]
                     },
-                    "input": "fuga",
                     "loc": ["query", "sort_item"],
-                    "msg": "Input should be "
-                    "'notification_type','priority','block_timestamp' or "
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "'notification_type', 'priority', 'block_timestamp', "
                     "'created'",
-                    "type": "enum",
+                    "type": "type_error.enum",
                 },
                 {
-                    "ctx": {"expected": "0 or 1"},
-                    "input": -1,
+                    "ctx": {"enum_values": [0, 1]},
                     "loc": ["query", "sort_order"],
-                    "msg": "Input should be 0 or 1",
-                    "type": "enum",
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "0, 1",
+                    "type": "type_error.enum",
                 },
             ],
             "message": "Invalid Parameter",
@@ -588,18 +607,17 @@ class TestNotificationsGet:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"le": 2},
-                    "input": "3",
+                    "ctx": {"limit_value": 2},
                     "loc": ["query", "priority"],
-                    "msg": "Input should be less than or equal to 2",
-                    "type": "less_than_equal",
+                    "msg": "ensure this value is less than or equal to 2",
+                    "type": "value_error.number.not_le",
                 },
                 {
-                    "ctx": {"expected": "0 or 1"},
-                    "input": 2,
+                    "ctx": {"enum_values": [0, 1]},
                     "loc": ["query", "sort_order"],
-                    "msg": "Input should be 0 or 1",
-                    "type": "enum",
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "0, 1",
+                    "type": "type_error.enum",
                 },
             ],
             "message": "Invalid Parameter",
@@ -615,14 +633,12 @@ class TestNotificationsGet:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["address"],
+                    "msg": "address is not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x11",
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }

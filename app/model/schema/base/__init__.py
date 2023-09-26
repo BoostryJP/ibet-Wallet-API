@@ -23,5 +23,4 @@ from .base import (
     SortOrder,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )

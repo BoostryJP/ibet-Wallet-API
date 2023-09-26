@@ -66,15 +66,14 @@ class TestChatWebhook:
         assert resp.json() == {
             "meta": {
                 "code": 88,
-                "message": "Invalid Parameter",
                 "description": [
                     {
-                        "input": {},
                         "loc": ["body", "message"],
-                        "msg": "Field required",
-                        "type": "missing",
+                        "msg": "field required",
+                        "type": "value_error.missing",
                     }
                 ],
+                "message": "Invalid Parameter",
             }
         }
 
@@ -90,15 +89,13 @@ class TestChatWebhook:
         assert resp.json() == {
             "meta": {
                 "code": 88,
-                "message": "Invalid Parameter",
                 "description": [
                     {
-                        "ctx": {"error": "expected ident at line 1 column " "2"},
-                        "input": "text",
                         "loc": ["body", "message"],
-                        "msg": "Invalid JSON: expected ident at line 1 " "column 2",
-                        "type": "json_invalid",
+                        "msg": "Invalid JSON",
+                        "type": "value_error.json",
                     }
                 ],
+                "message": "Invalid Parameter",
             }
         }

@@ -20,16 +20,7 @@ import re
 import string
 from typing import Optional, Self, Set
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    Json,
-    StringConstraints,
-    conlist,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, EmailStr, Field, Json, root_validator, validator
 from typing_extensions import Annotated
 
 ############################
@@ -62,7 +53,7 @@ RE_INVALID_WIN_FILENAME = re.compile(
 
 
 class SendMailRequest(BaseModel):
-    to_emails: list[EmailStr] = Field(min_length=1, max_length=100)
+    to_emails: list[EmailStr] = Field(min_items=1, max_items=100)
     subject: str = Field(..., description="Mail subject", max_length=100)
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
@@ -73,14 +64,14 @@ class SendMailRequest(BaseModel):
         default=None, description="File content(Base64 encoded)", min_length=1
     )
 
-    @field_validator("to_emails")
+    @validator("to_emails")
     @classmethod
     def is_valid_to_emails(cls, v):
         if len(v) != len(set(v)):
             raise ValueError("Each to_emails should be unique value")
         return v
 
-    @field_validator("file_name")
+    @validator("file_name")
     @classmethod
     def is_valid_file_name(cls, v):
         if v:
@@ -89,11 +80,11 @@ class SendMailRequest(BaseModel):
                 raise ValueError("File name has invalid character.")
         return v
 
-    @model_validator(mode="after")
+    @root_validator
     @classmethod
     def validate_file(cls, values: Self):
-        if (values.file_content and not values.file_name) or (
-            not values.file_content and values.file_name
+        if (values.get("file_content") and not values.get("file_name")) or (
+            not values.get("file_content") and values.get("file_name")
         ):
             raise ValueError("File content should be posted with name.")
         return values

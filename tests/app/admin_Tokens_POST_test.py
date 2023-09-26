@@ -317,16 +317,14 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
-                    "input": {},
                     "loc": ["body", "contract_address"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
                 {
-                    "input": {},
                     "loc": ["body", "is_public"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -349,16 +347,14 @@ class TestAdminTokensPOST:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "type": "value_error",
                     "loc": ["body", "contract_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7",
-                    "ctx": {"error": {}},
+                    "msg": "token_address is not a valid address",
+                    "type": "value_error",
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # ＜Error_3_2＞
@@ -378,27 +374,24 @@ class TestAdminTokensPOST:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "type": "bool_parsing",
                     "loc": ["body", "is_public"],
-                    "msg": "Input should be a valid boolean, unable to interpret input",
-                    "input": "Trueee",
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 },
                 {
-                    "type": "int_parsing",
                     "loc": ["body", "max_holding_quantity"],
-                    "msg": "Input should be a valid integer, unable to parse string as an integer",
-                    "input": "aaaa",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 },
                 {
-                    "type": "int_parsing",
                     "loc": ["body", "max_sell_amount"],
-                    "msg": "Input should be a valid integer, unable to parse string as an integer",
-                    "input": "bbbb",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 },
             ],
+            "message": "Invalid Parameter",
         }
 
     # ＜Error_3_3＞
@@ -420,18 +413,16 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": -1,
+                    "ctx": {"limit_value": 0},
                     "loc": ["body", "max_holding_quantity"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": -1,
+                    "ctx": {"limit_value": 0},
                     "loc": ["body", "max_sell_amount"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
             ],
             "message": "Invalid Parameter",

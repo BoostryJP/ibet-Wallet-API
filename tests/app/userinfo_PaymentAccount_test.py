@@ -126,10 +126,9 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
-                    "input": None,
                     "loc": ["query", "account_address"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -152,16 +151,14 @@ class TestUserInfoPaymentAccount:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["account_address"],
+                    "msg": "account_address is not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "account_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # ＜エラー系3-1＞
@@ -180,10 +177,9 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
-                    "input": None,
                     "loc": ["query", "agent_address"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -203,14 +199,12 @@ class TestUserInfoPaymentAccount:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["agent_address"],
+                    "msg": "agent_address is not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "agent_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }

@@ -16,13 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Annotated, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
+from eth_utils import is_address
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ValidatedEthereumAddress
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
@@ -36,21 +36,26 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 ############################
 @dataclass
 class ListAllOrderListQuery:
-    account_address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(default_factory=list, description="Account address list"),
-    ]
-    include_canceled_items: Annotated[
-        Optional[bool],
-        Query(description="Whether to include canceled orders or canceled agreements."),
-    ] = None
+    account_address_list: list[str] = Query(description="Account address list")
+    include_canceled_items: Optional[bool] = Query(
+        default=None,
+        description="Whether to include canceled orders or canceled agreements.",
+    )
+
+    @validator("account_address_list")
+    def account_address_list_is_valid_address(cls, v):
+        for address in v:
+            if address is not None:
+                if not is_address(address):
+                    raise ValueError("account_address_list has not a valid address")
+        return v
 
 
 ############################
 # RESPONSE
 ############################
 class TokenAddress(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: str
 
 
 class Order(BaseModel):
@@ -78,7 +83,7 @@ class OrderSet(BaseModel, Generic[TokenModel]):
 
 
 class Agreement(BaseModel):
-    exchange_address: ValidatedEthereumAddress = Field(description="exchange address")
+    exchange_address: str = Field(description="exchange address")
     order_id: int
     agreement_id: int
     amount: int

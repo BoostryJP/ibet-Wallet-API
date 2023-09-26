@@ -155,21 +155,19 @@ class TestSendEmail:
         assert resp.json() == {
             "meta": {
                 "code": 88,
-                "message": "Invalid Parameter",
                 "description": [
                     {
-                        "input": {},
                         "loc": ["body", "to_emails"],
-                        "msg": "Field required",
-                        "type": "missing",
+                        "msg": "field required",
+                        "type": "value_error.missing",
                     },
                     {
-                        "input": {},
                         "loc": ["body", "subject"],
-                        "msg": "Field required",
-                        "type": "missing",
+                        "msg": "field required",
+                        "type": "value_error.missing",
                     },
                 ],
+                "message": "Invalid Parameter",
             }
         }
 
@@ -188,36 +186,25 @@ class TestSendEmail:
         assert resp.json() == {
             "meta": {
                 "code": 88,
-                "message": "Invalid Parameter",
                 "description": [
                     {
-                        "ctx": {
-                            "reason": "The email address is not valid. "
-                            "It must have exactly one "
-                            "@-sign."
-                        },
-                        "input": "invalid_email",
                         "loc": ["body", "to_emails", 0],
-                        "msg": "value is not a valid email address: The "
-                        "email address is not valid. It must have "
-                        "exactly one @-sign.",
-                        "type": "value_error",
+                        "msg": "value is not a valid email address",
+                        "type": "value_error.email",
                     },
                     {
-                        "ctx": {"max_length": 100},
-                        "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "ctx": {"limit_value": 100},
                         "loc": ["body", "subject"],
-                        "msg": "String should have at most 100 characters",
-                        "type": "string_too_long",
+                        "msg": "ensure this value has at most 100 " "characters",
+                        "type": "value_error.any_str.max_length",
                     },
                     {
-                        "ctx": {"error": {}},
-                        "input": "test_data:*?.txt",
                         "loc": ["body", "file_name"],
-                        "msg": "Value error, File name has invalid " "character.",
+                        "msg": "File name has invalid character.",
                         "type": "value_error",
                     },
                 ],
+                "message": "Invalid Parameter",
             }
         }
 
@@ -238,15 +225,8 @@ class TestSendEmail:
                 "code": 88,
                 "description": [
                     {
-                        "ctx": {"error": {}},
-                        "input": {
-                            "file_name": "test_data.txt",
-                            "subject": "Test email",
-                            "to_emails": ["test@example.com"],
-                        },
-                        "loc": ["body"],
-                        "msg": "Value error, File content should be posted "
-                        "with name.",
+                        "loc": ["body", "__root__"],
+                        "msg": "File content should be posted with name.",
                         "type": "value_error",
                     }
                 ],
@@ -272,10 +252,8 @@ class TestSendEmail:
                 "code": 88,
                 "description": [
                     {
-                        "ctx": {"error": {}},
-                        "input": ["test1@example.com", "test1@example.com"],
                         "loc": ["body", "to_emails"],
-                        "msg": "Value error, Each to_emails should be " "unique value",
+                        "msg": "Each to_emails should be unique value",
                         "type": "value_error",
                     }
                 ],

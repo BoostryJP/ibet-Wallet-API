@@ -223,22 +223,19 @@ class TestNotificationsRead:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "type": "value_error",
                     "loc": ["body", "address"],
-                    "msg": "Value error, Value must be of string",
-                    "input": 721457446580647751014191829380889690493307935711,
-                    "ctx": {"error": {}},
+                    "msg": "address is not a valid address",
+                    "type": "value_error",
                 },
                 {
-                    "type": "bool_parsing",
                     "loc": ["body", "is_read"],
-                    "msg": "Input should be a valid boolean, unable to interpret input",
-                    "input": "invalid_value",
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 },
             ],
+            "message": "Invalid Parameter",
         }
 
     # ＜エラー系2＞
@@ -257,22 +254,19 @@ class TestNotificationsRead:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "type": "value_error",
                     "loc": ["body", "address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "",
-                    "ctx": {"error": {}},
+                    "msg": "address is not a valid address",
+                    "type": "value_error",
                 },
                 {
-                    "type": "bool_type",
                     "loc": ["body", "is_read"],
-                    "msg": "Input should be a valid boolean",
-                    "input": None,
+                    "msg": "none is not an allowed value",
+                    "type": "type_error.none.not_allowed",
                 },
             ],
+            "message": "Invalid Parameter",
         }
 
     # ＜エラー系3＞
@@ -291,14 +285,12 @@ class TestNotificationsRead:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "type": "value_error",
                     "loc": ["body", "address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x123",
-                    "ctx": {"error": {}},
+                    "msg": "address is not a valid address",
+                    "type": "value_error",
                 }
             ],
+            "message": "Invalid Parameter",
         }

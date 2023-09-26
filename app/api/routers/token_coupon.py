@@ -18,8 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Annotated, Optional, Sequence
 
+from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
+from web3 import Web3
 
 from app import config, log
 from app.database import DBSession
@@ -37,11 +39,7 @@ from app.model.schema import (
     ListAllCouponTokensResponse,
     RetrieveCouponTokenResponse,
 )
-from app.model.schema.base import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -60,13 +58,9 @@ router = APIRouter(prefix="/Token/Coupon", tags=["token_info"])
 def list_all_coupon_tokens(
     session: DBSession,
     req: Request,
-    address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ],
+    address_list: list[str] = Query(
+        default=[], description="list of token address (**this affects total number**)"
+    ),
     request_query: ListAllCouponTokensQuery = Depends(),
 ):
     """
@@ -74,6 +68,11 @@ def list_all_coupon_tokens(
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
+
+    for address in address_list:
+        if address is not None:
+            if not Web3.is_address(address):
+                raise InvalidParameterError(f"invalid token_address: {address}")
 
     owner_address: Optional[str] = request_query.owner_address
     name: Optional[str] = request_query.name
@@ -267,15 +266,23 @@ def list_all_coupon_token_addresses(
 def retrieve_coupon_token(
     session: DBSession,
     req: Request,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
 ):
     """
     Get the details of the membership token.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
+
+    # 入力アドレスフォーマットチェック
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする

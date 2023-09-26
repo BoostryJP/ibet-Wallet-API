@@ -17,13 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Optional
 
+from eth_utils import is_address
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from pydantic.dataclasses import dataclass
-
-from app.model.schema.base import ValidatedEthereumAddress
 
 ############################
 # COMMON
@@ -35,26 +34,48 @@ from app.model.schema.base import ValidatedEthereumAddress
 ############################
 @dataclass
 class RetrievePaymentAccountQuery:
-    account_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="Account Address")
-    ]
-    agent_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="Agent Address")
-    ]
+    account_address: str = Query(..., description="Account Address")
+    agent_address: str = Query(..., description="Agent Address")
+
+    @validator("account_address")
+    def account_address_is_valid_address(cls, v):
+        if not is_address(v):
+            raise ValueError("account_address is not a valid address")
+        return v
+
+    @validator("agent_address")
+    def agent_address_is_valid_address(cls, v):
+        if not is_address(v):
+            raise ValueError("agent_address is not a valid address")
+        return v
 
 
 @dataclass
 class RetrievePersonalInfoQuery:
-    account_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="Account Address")
-    ]
-    owner_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="owner(issuer) address")
-    ]
-    personal_info_address: Annotated[
-        Optional[ValidatedEthereumAddress],
-        Query(description="PersonalInfo contract address"),
-    ] = None
+    personal_info_address: Optional[str] = Query(
+        default=None, description="PersonalInfo contract address"
+    )
+    account_address: str = Query(..., description="account address")
+    owner_address: str = Query(..., description="owner(issuer) address")
+
+    @validator("personal_info_address")
+    def personal_info_address_is_valid_address(cls, v):
+        if v is not None:
+            if not is_address(v):
+                raise ValueError("personal_info_address is not a valid address")
+        return v
+
+    @validator("account_address")
+    def account_address_is_valid_address(cls, v):
+        if not is_address(v):
+            raise ValueError("account_address is not a valid address")
+        return v
+
+    @validator("owner_address")
+    def owner_address_is_valid_address(cls, v):
+        if not is_address(v):
+            raise ValueError("owner_address is not a valid address")
+        return v
 
 
 ############################
@@ -69,14 +90,14 @@ class ApprovalStatus(int, Enum):
 
 
 class RetrievePaymentAccountRegistrationStatusResponse(BaseModel):
-    account_address: ValidatedEthereumAddress
-    agent_address: ValidatedEthereumAddress
+    account_address: str
+    agent_address: str
     approval_status: ApprovalStatus = Field(
         description="approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))"
     )
 
 
 class RetrievePersonalInfoRegistrationStatusResponse(BaseModel):
-    account_address: ValidatedEthereumAddress
-    owner_address: ValidatedEthereumAddress = Field(description="link address")
+    account_address: str
+    owner_address: str = Field(description="link address")
     registered: bool

@@ -674,16 +674,8 @@ class TestCompanyInfoCompanyTokenList:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid eth_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "eth_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xe883a6f441ad5682d37df31d34fc012bcb07a74",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # Error_2
@@ -702,11 +694,9 @@ class TestCompanyInfoCompanyTokenList:
             "code": 88,
             "description": [
                 {
-                    "input": "test",
                     "loc": ["query", "include_private_listing"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
-                    "type": "bool_parsing",
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 }
             ],
             "message": "Invalid Parameter",

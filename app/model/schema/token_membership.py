@@ -17,13 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Optional
 
 from fastapi import Query
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+from app.model.schema.base import ResultSet, SortOrder
 
 ############################
 # COMMON
@@ -49,31 +49,29 @@ class MembershipTokensSortItem(str, Enum):
 
 @dataclass
 class ListAllMembershipTokensQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    owner_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="issuer address")
-    ] = None
-    name: Annotated[Optional[str], Query(description="token name")] = None
-    symbol: Annotated[Optional[str], Query(description="token symbol")] = None
-    company_name: Annotated[Optional[str], Query(description="company name")] = None
-    tradable_exchange: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="tradable exchange")
-    ] = None
-    status: Annotated[Optional[bool], Query(description="token status")] = None
-    transferable: Annotated[
-        Optional[bool], Query(description="transferable status")
-    ] = None
-    initial_offering_status: Annotated[
-        Optional[bool], Query(description="offering status")
-    ] = None
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    owner_address: Optional[str] = Query(default=None, description="issuer address")
+    name: Optional[str] = Query(default=None, description="token name")
+    symbol: Optional[str] = Query(default=None, description="token symbol")
+    company_name: Optional[str] = Query(default=None, description="company name")
+    tradable_exchange: Optional[str] = Query(
+        default=None, description="tradable exchange address"
+    )
+    status: Optional[bool] = Query(default=None, description="token status")
+    transferable: Optional[bool] = Query(
+        default=None, description="transferable status"
+    )
+    initial_offering_status: Optional[bool] = Query(
+        default=None, description="offering status"
+    )
 
-    sort_item: Annotated[
-        Optional[MembershipTokensSortItem], Query(description="sort item")
-    ] = MembershipTokensSortItem.created
-    sort_order: Annotated[
-        Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
+    sort_item: Optional[MembershipTokensSortItem] = Query(
+        default=MembershipTokensSortItem.created, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Query(
+        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
+    )
 
 
 ############################
@@ -85,15 +83,15 @@ class MembershipImage(BaseModel):
 
 
 class RetrieveMembershipTokenResponse(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: str
     token_template: str = Field(examples=["IbetMembership"])
-    owner_address: ValidatedEthereumAddress = Field(description="issuer address")
+    owner_address: str = Field(description="issuer address")
     company_name: str
     rsa_publickey: str
     name: str = Field(description="token name")
     symbol: str = Field(description="token symbol")
     total_supply: int
-    tradable_exchange: ValidatedEthereumAddress
+    tradable_exchange: str
     contact_information: str
     privacy_policy: str
     status: bool
@@ -115,4 +113,4 @@ class ListAllMembershipTokensResponse(BaseModel):
 
 class ListAllMembershipTokenAddressesResponse(BaseModel):
     result_set: ResultSet
-    address_list: list[ValidatedEthereumAddress]
+    address_list: list[str]

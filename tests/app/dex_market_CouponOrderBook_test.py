@@ -1533,22 +1533,19 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
-                    "input": None,
                     "loc": ["query", "token_address"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
                 {
-                    "input": None,
                     "loc": ["query", "exchange_agent_address"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
                 {
-                    "input": None,
                     "loc": ["query", "order_type"],
-                    "msg": "Field required",
-                    "type": "missing",
+                    "msg": "field required",
+                    "type": "value_error.missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1578,16 +1575,14 @@ class TestDEXMarketCouponOrderBook:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["token_address"],
+                    "msg": "token_address is not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "token_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": token_address,
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_2_2
@@ -1614,16 +1609,14 @@ class TestDEXMarketCouponOrderBook:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["exchange_agent_address"],
+                    "msg": "exchange_agent_address is not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "exchange_agent_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": agent_address,
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_2_3
@@ -1650,16 +1643,14 @@ class TestDEXMarketCouponOrderBook:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["account_address"],
+                    "msg": "account_address is not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "account_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": account_address,
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_3
@@ -1688,11 +1679,11 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"expected": "'buy' or 'sell'"},
-                    "input": "buyyyyy",
+                    "ctx": {"enum_values": ["buy", "sell"]},
                     "loc": ["query", "order_type"],
-                    "msg": "Input should be 'buy' or 'sell'",
-                    "type": "enum",
+                    "msg": "value is not a valid enumeration member; permitted: "
+                    "'buy', 'sell'",
+                    "type": "type_error.enum",
                 }
             ],
             "message": "Invalid Parameter",

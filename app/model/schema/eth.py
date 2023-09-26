@@ -17,10 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, RootModel, StrictStr, field_validator
+from pydantic import BaseModel, Field, StrictStr, validator
 from pydantic.dataclasses import dataclass
 
 ############################
@@ -37,7 +37,7 @@ class JsonRPCRequest(BaseModel):
     method: str = Field(description="method: eth_xxx")
     params: list = Field(description="parameters")
 
-    @field_validator("method")
+    @validator("method")
     @classmethod
     def method_is_available(cls, v):
         if v[: v.index("_")] not in ["eth"]:
@@ -53,23 +53,19 @@ class BlockIdentifier(str, Enum):
 
 @dataclass
 class GetTransactionCountQuery:
-    block_identifier: Annotated[Optional[BlockIdentifier], Query()] = None
+    block_identifier: Optional[BlockIdentifier] = Query(default=None)
 
 
 class SendRawTransactionRequest(BaseModel):
     raw_tx_hex_list: list[StrictStr] = Field(
-        description="Signed transaction list", min_length=1
+        description="Signed transaction list", min_items=1
     )
 
 
 @dataclass
 class WaitForTransactionReceiptQuery:
-    transaction_hash: Annotated[
-        StrictStr, Query(default=..., description="transaction hash")
-    ]
-    timeout: Annotated[
-        Optional[int], Query(description="Timeout value", ge=1, le=30)
-    ] = 5
+    transaction_hash: StrictStr = Query(description="transaction hash")
+    timeout: Optional[int] = Query(default=5, description="Timeout value", ge=1, le=30)
 
 
 ############################
@@ -104,8 +100,8 @@ class SendRawTransactionResponse(BaseModel):
     )
 
 
-class SendRawTransactionsResponse(RootModel[list[SendRawTransactionResponse]]):
-    pass
+class SendRawTransactionsResponse(BaseModel):
+    __root__: list[SendRawTransactionResponse]
 
 
 class SendRawTransactionNoWaitResponse(BaseModel):
@@ -118,10 +114,8 @@ class SendRawTransactionNoWaitResponse(BaseModel):
     )
 
 
-class SendRawTransactionsNoWaitResponse(
-    RootModel[list[SendRawTransactionNoWaitResponse]]
-):
-    pass
+class SendRawTransactionsNoWaitResponse(BaseModel):
+    __root__: list[SendRawTransactionNoWaitResponse]
 
 
 class WaitForTransactionReceiptResponse(BaseModel):

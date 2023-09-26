@@ -18,9 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Optional
 
-from pydantic import BaseModel, Field, RootModel
-
-from app.model.schema.base import ValidatedEthereumAddress
+from eth_utils import is_address
+from pydantic import BaseModel, Field, validator
 
 ############################
 # COMMON
@@ -31,7 +30,7 @@ from app.model.schema.base import ValidatedEthereumAddress
 # REQUEST
 ############################
 class RegisterAdminTokenRequest(BaseModel):
-    contract_address: ValidatedEthereumAddress = Field(..., description="Token Address")
+    contract_address: str = Field(..., description="Token Address")
     is_public: bool = Field(..., description="Public and private listings")
     max_holding_quantity: int | None = Field(
         None, ge=0, description="Maximum holding quantity limit"
@@ -40,12 +39,25 @@ class RegisterAdminTokenRequest(BaseModel):
         None, ge=0, description="Maximum sell amount limit"
     )
 
+    @validator("contract_address")
+    def contract_address_is_valid_address(cls, v):
+        if not is_address(v):
+            raise ValueError("token_address is not a valid address")
+        return v
+
 
 class UpdateAdminTokenRequest(BaseModel):
     is_public: bool | None = None
     max_holding_quantity: int | None = Field(None, ge=0)
     max_sell_amount: int | None = Field(None, ge=0)
-    owner_address: ValidatedEthereumAddress | None = Field(None)
+    owner_address: str | None = Field(None)
+
+    @validator("owner_address")
+    def owner_address_is_valid_address(cls, v):
+        if v is not None:
+            if not is_address(v):
+                raise ValueError("owner_address is not a valid address")
+        return v
 
 
 ############################
@@ -53,16 +65,16 @@ class UpdateAdminTokenRequest(BaseModel):
 ############################
 class RetrieveAdminTokenResponse(BaseModel):
     id: int = Field(...)
-    token_address: ValidatedEthereumAddress = Field(..., description="Token address")
+    token_address: str = Field(..., description="Token address")
     is_public: bool = Field(...)
     max_holding_quantity: Optional[int]
     max_sell_amount: Optional[int]
-    owner_address: ValidatedEthereumAddress = Field(..., description="Issuer address")
+    owner_address: str = Field(..., description="Issuer address")
     created: str = Field(..., description="Create Datetime (local timezone)")
 
 
-class ListAllAdminTokensResponse(RootModel[list[RetrieveAdminTokenResponse]]):
-    pass
+class ListAllAdminTokensResponse(BaseModel):
+    __root__: list[RetrieveAdminTokenResponse]
 
 
 class GetAdminTokenTypeResponse(BaseModel):

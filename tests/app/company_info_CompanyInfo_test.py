@@ -124,14 +124,6 @@ class TestCompanyInfoCompanyInfo:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid eth_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "eth_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf",
-                    "ctx": {"error": {}},
-                }
-            ],
         }

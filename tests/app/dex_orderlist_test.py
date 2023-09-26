@@ -568,16 +568,14 @@ class TestDEXOrderList:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["account_address_list"],
+                    "msg": "account_address_list has not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "account_address_list", 0],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": account["account_address"][:-1],
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
 
@@ -1174,16 +1172,14 @@ class TestDEXOrderListMembership:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["account_address_list"],
+                    "msg": "account_address_list has not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "account_address_list", 0],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -1204,11 +1200,9 @@ class TestDEXOrderListMembership:
             "code": 88,
             "description": [
                 {
-                    "input": "test",
                     "loc": ["query", "include_canceled_items"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
-                    "type": "bool_parsing",
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 }
             ],
             "message": "Invalid Parameter",
@@ -1853,16 +1847,14 @@ class TestDEXOrderListCoupon:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
+                    "loc": ["account_address_list"],
+                    "msg": "account_address_list has not a valid address",
                     "type": "value_error",
-                    "loc": ["query", "account_address_list", 0],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "0xeb6e99675595fb052cc68da0eeecb2d5a382637",
-                    "ctx": {"error": {}},
                 }
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_2
@@ -1883,11 +1875,9 @@ class TestDEXOrderListCoupon:
             "code": 88,
             "description": [
                 {
-                    "input": "test",
                     "loc": ["query", "include_canceled_items"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
-                    "type": "bool_parsing",
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool",
                 }
             ],
             "message": "Invalid Parameter",

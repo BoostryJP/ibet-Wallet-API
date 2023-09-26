@@ -376,37 +376,33 @@ class TestListBlockData:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "offset"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "limit"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "from_block_number"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "to_block_number"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 },
             ],
+            "message": "Invalid Parameter",
         }
 
     # Error_3

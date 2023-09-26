@@ -35,11 +35,7 @@ from app.model.schema import (
     RetrieveMembershipTokenResponse,
     TokenAddress,
 )
-from app.model.schema.base import (
-    GenericSuccessResponse,
-    SuccessResponse,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -676,9 +672,7 @@ class OrderList(BaseOrderList):
         self,
         session: DBSession,
         req: Request,
-        token_address: Annotated[
-            ValidatedEthereumAddress, Path(description="Token address")
-        ],
+        token_address: Annotated[str, Path(description="Token address")],
         request_query: ListAllOrderListQuery = Depends(),
     ):
         order_list = []

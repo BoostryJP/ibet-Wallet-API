@@ -18,9 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Optional, Union
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel
 
-from app.model.schema.base import ValidatedEthereumAddress
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
@@ -40,35 +39,31 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 # RESPONSE
 ############################
 class RetrieveCompanyInfoResponse(BaseModel):
-    address: ValidatedEthereumAddress
+    address: str
     corporate_name: str
     rsa_publickey: str
     homepage: str
 
 
-class ListAllCompanyInfoResponse(RootModel[list[RetrieveCompanyInfoResponse]]):
-    pass
+class ListAllCompanyInfoResponse(BaseModel):
+    __root__: list[RetrieveCompanyInfoResponse]
 
 
-class ListAllCompanyTokensResponse(
-    RootModel[
-        list[
-            Union[
-                RetrieveStraightBondTokenResponse,
-                RetrieveShareTokenResponse,
-                RetrieveMembershipTokenResponse,
-                RetrieveCouponTokenResponse,
-            ]
+class ListAllCompanyTokensResponse(BaseModel):
+    __root__: list[
+        Union[
+            RetrieveStraightBondTokenResponse,
+            RetrieveShareTokenResponse,
+            RetrieveMembershipTokenResponse,
+            RetrieveCouponTokenResponse,
         ]
     ]
-):
-    pass
 
 
 class CompanyToken(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: str
     token_template: str
-    owner_address: ValidatedEthereumAddress
+    owner_address: str
     rsa_publickey: str
     name: str
     symbol: str

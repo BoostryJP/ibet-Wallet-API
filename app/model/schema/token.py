@@ -18,12 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Optional
 
 from fastapi import Query
-from pydantic import UUID4, BaseModel, Field, RootModel
+from pydantic import UUID4, BaseModel, Field
 
-from app.model.schema.base import ResultSet, TokenType, ValidatedEthereumAddress
+from app.model.schema.base import ResultSet, TokenType
 
 
 ############################
@@ -48,22 +48,22 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
 
 @dataclass
 class ListAllTokenHoldersQuery:
-    exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
+    exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
 
 
 @dataclass
 class RetrieveTokenHoldersCountQuery:
-    exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
+    exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
 
 
 @dataclass
 class ListAllTransferHistoryQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    source_event: Annotated[
-        Optional[TransferSourceEvent], Query(description="source event of transfer")
-    ] = None
-    data: Annotated[Optional[str], Query(description="source event data")] = None
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    source_event: Optional[TransferSourceEvent] = Query(
+        default=None, description="source event of transfer"
+    )
+    data: Optional[str] = Query(default=None, description="source event data")
 
 
 ############################
@@ -76,8 +76,8 @@ class TokenStatusResponse(BaseModel):
 
 
 class TokenHolder(BaseModel):
-    token_address: ValidatedEthereumAddress
-    account_address: ValidatedEthereumAddress
+    token_address: str
+    account_address: str
     amount: Optional[int] = Field(default=0)
     pending_transfer: Optional[int] = Field(default=0)
     exchange_balance: Optional[int] = Field(default=0)
@@ -85,8 +85,8 @@ class TokenHolder(BaseModel):
     locked: Optional[int] = Field(default=0)
 
 
-class TokenHoldersResponse(RootModel[list[TokenHolder]]):
-    pass
+class TokenHoldersResponse(BaseModel):
+    __root__: list[TokenHolder]
 
 
 class TokenHoldersCountResponse(BaseModel):
@@ -111,9 +111,7 @@ class CreateTokenHoldersCollectionResponse(BaseModel):
 
 
 class TokenHoldersCollectionHolder(BaseModel):
-    account_address: ValidatedEthereumAddress = Field(
-        description="Account address of token holder."
-    )
+    account_address: str = Field(description="Account address of token holder.")
     hold_balance: int = Field(
         description="Amount of balance."
         "This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked."
@@ -130,13 +128,9 @@ class TokenHoldersCollectionResponse(BaseModel):
 
 class TransferHistory(BaseModel):
     transaction_hash: str = Field(description="Transaction hash")
-    token_address: ValidatedEthereumAddress = Field(description="Token address")
-    from_address: ValidatedEthereumAddress = Field(
-        description="Account address of transfer source"
-    )
-    to_address: ValidatedEthereumAddress = Field(
-        description="Account address of transfer destination"
-    )
+    token_address: str = Field(description="Token address")
+    from_address: str = Field(description="Account address of transfer source")
+    to_address: str = Field(description="Account address of transfer destination")
     value: int = Field(description="Transfer quantity")
     source_event: TransferSourceEvent = Field(description="Source Event")
     data: dict | None = Field(description="Event data")
@@ -151,17 +145,11 @@ class TransferHistoriesResponse(BaseModel):
 
 
 class TransferApprovalHistory(BaseModel):
-    token_address: ValidatedEthereumAddress = Field(description="Token address")
-    exchange_address: Optional[ValidatedEthereumAddress] = Field(
-        description="Exchange address"
-    )
+    token_address: str = Field(description="Token address")
+    exchange_address: Optional[str] = Field(description="Exchange address")
     application_id: int = Field(description="Application id")
-    from_address: ValidatedEthereumAddress = Field(
-        description="Account address of transfer source"
-    )
-    to_address: ValidatedEthereumAddress = Field(
-        description="Account address of transfer destination"
-    )
+    from_address: str = Field(description="Account address of transfer source")
+    to_address: str = Field(description="Account address of transfer destination")
     value: int = Field(description="Transfer quantity")
     application_datetime: str = Field(
         description="application datetime (local timezone)"

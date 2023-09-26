@@ -1138,16 +1138,8 @@ class TestPositionCouponContractAddress:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid account_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "account_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "invalid",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # <Error_3>
@@ -1167,16 +1159,8 @@ class TestPositionCouponContractAddress:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "description": "invalid token_address",
             "message": "Invalid Parameter",
-            "description": [
-                {
-                    "type": "value_error",
-                    "loc": ["path", "token_address"],
-                    "msg": "Value error, Invalid ethereum address",
-                    "input": "invalid",
-                    "ctx": {"error": {}},
-                }
-            ],
         }
 
     # <Error_4>

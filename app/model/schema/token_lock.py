@@ -17,22 +17,22 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Optional
 
 from fastapi import Query
 from pydantic import BaseModel, StrictStr
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+from app.model.schema.base import ResultSet, SortOrder
 
 
 ############################
 # COMMON
 ############################
 class Locked(BaseModel):
-    token_address: ValidatedEthereumAddress
-    lock_address: ValidatedEthereumAddress
-    account_address: ValidatedEthereumAddress
+    token_address: str
+    lock_address: str
+    account_address: str
     value: int
 
 
@@ -48,41 +48,28 @@ class ListAllLockSortItem(str, Enum):
 
 @dataclass
 class ListAllTokenLockQuery:
-    token_address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ]
-    lock_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="lock address")
-    ] = None
-    account_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="account address")
-    ] = None
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    sort_item: Annotated[
-        ListAllLockSortItem, Query(description="sort item")
-    ] = ListAllLockSortItem.token_address
-    sort_order: Annotated[
-        SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
+    lock_address: Optional[str] = Query(default=None, description="lock address")
+    account_address: Optional[str] = Query(default=None, description="account address")
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    sort_item: ListAllLockSortItem = Query(
+        default=ListAllLockSortItem.token_address, description="sort item"
+    )
+    sort_order: SortOrder = Query(
+        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
+    )
+    token_address_list: list[StrictStr] = Query(
+        default=[], description="list of token address (**this affects total number**)"
+    )
 
 
 @dataclass
 class RetrieveTokenLockCountQuery:
-    token_address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(default_factory=list, description="list of token address"),
-    ]
-    lock_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="lock address")
-    ] = None
-    account_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="account address")
-    ] = None
+    lock_address: Optional[str] = Query(default=None, description="lock address")
+    account_address: Optional[str] = Query(default=None, description="account address")
+    token_address_list: list[StrictStr] = Query(
+        default=[], description="list of token address"
+    )
 
 
 ############################

@@ -18,9 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Annotated, Optional, Sequence
 
+from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
 from pydantic import UUID4
 from sqlalchemy import String, and_, asc, cast, desc, func, or_, select
+from web3 import Web3
 
 from app import config, log
 from app.contracts import Contract
@@ -53,7 +55,6 @@ from app.model.schema.base import (
     GenericSuccessResponse,
     ResultSetQuery,
     SuccessResponse,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -74,13 +75,21 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
 )
 def get_token_status(
     session: DBSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
 ):
     """
     Endpoint: /Token/{contract_address}/Status
     """
+    # 入力アドレスフォーマットチェック
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
+
     # 取扱トークンチェック
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
@@ -135,14 +144,21 @@ def get_token_status(
 )
 def get_token_holders(
     session: DBSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
     request_query: ListAllTokenHoldersQuery = Depends(),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders
     """
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
+
     # Check if the token exists in the list
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
@@ -210,14 +226,22 @@ def get_token_holders(
 )
 def get_token_holders_count(
     session: DBSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
     request_query: RetrieveTokenHoldersCountQuery = Depends(),
 ):
     """
     Endpoint: /Token/{token_address}/Holders/Count
     """
+    # Validation
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
+
     # Check if the token exists in the list
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
@@ -272,9 +296,7 @@ def get_token_holders_count(
 def create_token_holders_collection(
     session: DBSession,
     data: CreateTokenHoldersCollectionRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
 ):
     """
     Endpoint: /Token/{token_address}/Holders/Collection
@@ -283,6 +305,15 @@ def create_token_holders_collection(
 
     list_id = str(data.list_id)
     block_number = data.block_number
+    # Validation
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
 
     # ブロックナンバーのチェック
     if block_number > web3.eth.block_number or block_number < 1:
@@ -353,9 +384,7 @@ def create_token_holders_collection(
 )
 def get_token_holders_collection(
     session: DBSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
     list_id: UUID4 = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
@@ -365,6 +394,16 @@ def get_token_holders_collection(
     """
     Endpoint: /Token/{token_address}/Holders/Collection/{list_id}
     """
+    # 入力アドレスフォーマットチェック
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
+
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
     listed_token = session.scalars(
@@ -416,14 +455,22 @@ def get_token_holders_collection(
 )
 def list_all_transfer_histories(
     session: DBSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
     request_query: ListAllTransferHistoryQuery = Depends(),
 ):
     """
     Endpoint: /Token/{token_address}/TransferHistory
     """
+    # 入力アドレスフォーマットチェック
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
+
     # 取扱トークンチェック
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
@@ -480,14 +527,22 @@ def list_all_transfer_histories(
 )
 def list_all_transfer_approval_histories(
     session: DBSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[str, Path(description="Token address")],
     request_query: ResultSetQuery = Depends(),
 ):
     """
     Endpoint: /Token/{token_address}/TransferApprovalHistory
     """
+    # 入力アドレスフォーマットチェック
+    try:
+        token_address = to_checksum_address(token_address)
+        if not Web3.is_address(token_address):
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+    except:
+        description = "invalid token_address"
+        raise InvalidParameterError(description=description)
+
     # Check that it is a listed token
     _listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)

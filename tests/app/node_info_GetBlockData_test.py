@@ -177,14 +177,13 @@ class TestGetBlockData:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "ctx": {"limit_value": 0},
                     "loc": ["path", "block_number"],
-                    "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge",
                 }
             ],
+            "message": "Invalid Parameter",
         }

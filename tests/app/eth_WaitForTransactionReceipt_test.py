@@ -252,11 +252,10 @@ class TestEthWaitForTransactionReceipt:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"ge": 1},
-                    "input": "0",
+                    "ctx": {"limit_value": 1},
                     "loc": ["query", "timeout"],
-                    "msg": "Input should be greater than or equal to 1",
-                    "type": "greater_than_equal",
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge",
                 }
             ],
             "message": "Invalid Parameter",
@@ -279,11 +278,10 @@ class TestEthWaitForTransactionReceipt:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"le": 30},
-                    "input": "31",
+                    "ctx": {"limit_value": 30},
                     "loc": ["query", "timeout"],
-                    "msg": "Input should be less than or equal to 30",
-                    "type": "less_than_equal",
+                    "msg": "ensure this value is less than or equal to 30",
+                    "type": "value_error.number.not_le",
                 }
             ],
             "message": "Invalid Parameter",
@@ -304,11 +302,9 @@ class TestEthWaitForTransactionReceipt:
             "code": 88,
             "description": [
                 {
-                    "input": "aaaa",
                     "loc": ["query", "timeout"],
-                    "msg": "Input should be a valid integer, unable to parse "
-                    "string as an integer",
-                    "type": "int_parsing",
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer",
                 }
             ],
             "message": "Invalid Parameter",
