@@ -16,19 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Sequence
+
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import and_, desc, func
+from sqlalchemy import and_, desc, func, select
 
 from app import config, log
 from app.contracts import Contract
 from app.database import DBSession
 from app.errors import InvalidParameterError, NotSupportedError
-from app.model.db import AgreementStatus
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
+from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllLastPriceQuery,
     ListAllLastPriceResponse,
     ListAllOrderBookItemResponse,
@@ -37,10 +36,10 @@ from app.model.schema import (
     ListAllTicksResponse,
     RetrieveAgreementDetailResponse,
     RetrieveAgreementQuery,
-    SuccessResponse,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
@@ -151,8 +150,8 @@ def list_all_membership_order_book(
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
     )
 
-    query = (
-        session.query(
+    stmt = (
+        select(
             Order.order_id,
             Order.amount,
             Order.price,
@@ -174,24 +173,26 @@ def list_all_membership_order_book(
             Order.exchange_address,
             Order.account_address,
         )
-        .filter(Order.exchange_address == exchange_address)
-        .filter(Order.token_address == token_address)
-        .filter(Order.agent_address == request_query.exchange_agent_address)
-        .filter(Order.is_cancelled == False)  # 未キャンセル
+        .where(Order.exchange_address == exchange_address)
+        .where(Order.token_address == token_address)
+        .where(Order.agent_address == request_query.exchange_agent_address)
+        .where(Order.is_cancelled == False)  # 未キャンセル
     )
 
     if is_buy:  # 買注文
-        query = query.filter(Order.is_buy == False)
+        stmt = stmt.where(Order.is_buy == False)
     else:  # 売注文
-        query = query.filter(Order.is_buy == True)
+        stmt = stmt.where(Order.is_buy == True)
 
     # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-        orders = query.filter(Order.account_address != account_address).all()
+        orders = session.execute(
+            stmt.where(Order.account_address != account_address)
+        ).all()
     else:
-        orders = query.all()
+        orders = session.execute(stmt).all()
 
     # レスポンス用の注文一覧を構築
     order_list_tmp = []
@@ -291,28 +292,33 @@ def list_all_membership_tick(
         token = to_checksum_address(token_address)
         tick = []
         try:
-            entries = (
-                session.query(Agreement, Order)
-                .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                .filter(Order.token_address == token)
-                .filter(Agreement.status == AgreementStatus.DONE.value)
-                .order_by(desc(Agreement.settlement_timestamp))
+            entries: Sequence[tuple[Agreement, Order]] = (
+                session.execute(
+                    select(Agreement, Order)
+                    .join(Order, Agreement.unique_order_id == Order.unique_order_id)
+                    .where(Order.token_address == token)
+                    .where(Agreement.status == AgreementStatus.DONE.value)
+                    .order_by(desc(Agreement.settlement_timestamp))
+                )
+                .tuples()
                 .all()
             )
 
             for entry in entries:
-                block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
+                agreement = entry[0]
+                order = entry[1]
+                block_timestamp_utc = agreement.settlement_timestamp
                 tick.append(
                     {
                         "block_timestamp": block_timestamp_utc.strftime(
                             "%Y/%m/%d %H:%M:%S"
                         ),
-                        "buy_address": entry.IDXAgreement.buyer_address,
-                        "sell_address": entry.IDXAgreement.seller_address,
-                        "order_id": entry.IDXAgreement.order_id,
-                        "agreement_id": entry.IDXAgreement.agreement_id,
-                        "price": entry.IDXOrder.price,
-                        "amount": entry.IDXAgreement.amount,
+                        "buy_address": agreement.buyer_address,
+                        "sell_address": agreement.seller_address,
+                        "order_id": agreement.order_id,
+                        "agreement_id": agreement.agreement_id,
+                        "price": order.price,
+                        "amount": agreement.amount,
                     }
                 )
             tick_list.append({"token_address": token_address, "tick": tick})
@@ -350,8 +356,8 @@ def list_all_coupon_order_book(
     is_buy = request_query.order_type == "buy"  # 相対注文が買い注文かどうか
     exchange_address = to_checksum_address(config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS)
 
-    query = (
-        session.query(
+    stmt = (
+        select(
             Order.order_id,
             Order.amount,
             Order.price,
@@ -373,24 +379,26 @@ def list_all_coupon_order_book(
             Order.exchange_address,
             Order.account_address,
         )
-        .filter(Order.exchange_address == exchange_address)
-        .filter(Order.token_address == token_address)
-        .filter(Order.agent_address == request_query.exchange_agent_address)
-        .filter(Order.is_cancelled == False)  # 未キャンセル
+        .where(Order.exchange_address == exchange_address)
+        .where(Order.token_address == token_address)
+        .where(Order.agent_address == request_query.exchange_agent_address)
+        .where(Order.is_cancelled == False)  # 未キャンセル
     )
 
     if is_buy:  # 買注文
-        query = query.filter(Order.is_buy == False)
+        stmt = stmt.where(Order.is_buy == False)
     else:  # 売注文
-        query = query.filter(Order.is_buy == True)
+        stmt = stmt.where(Order.is_buy == True)
 
     # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-        orders = query.filter(Order.account_address != account_address).all()
+        orders = session.execute(
+            stmt.where(Order.account_address != account_address)
+        ).all()
     else:
-        orders = query.all()
+        orders = session.execute(stmt).all()
 
     # レスポンス用の注文一覧を構築
     order_list_tmp = []
@@ -489,28 +497,33 @@ def list_all_coupon_tick(
         token = to_checksum_address(token_address)
         tick = []
         try:
-            entries = (
-                session.query(Agreement, Order)
-                .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                .filter(Order.token_address == token)
-                .filter(Agreement.status == AgreementStatus.DONE.value)
-                .order_by(desc(Agreement.settlement_timestamp))
+            entries: Sequence[tuple[Agreement, Order]] = (
+                session.execute(
+                    select(Agreement, Order)
+                    .join(Order, Agreement.unique_order_id == Order.unique_order_id)
+                    .where(Order.token_address == token)
+                    .where(Agreement.status == AgreementStatus.DONE.value)
+                    .order_by(desc(Agreement.settlement_timestamp))
+                )
+                .tuples()
                 .all()
             )
 
             for entry in entries:
-                block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
+                agreement = entry[0]
+                order = entry[1]
+                block_timestamp_utc = agreement.settlement_timestamp
                 tick.append(
                     {
                         "block_timestamp": block_timestamp_utc.strftime(
                             "%Y/%m/%d %H:%M:%S"
                         ),
-                        "buy_address": entry.IDXAgreement.buyer_address,
-                        "sell_address": entry.IDXAgreement.seller_address,
-                        "order_id": entry.IDXAgreement.order_id,
-                        "agreement_id": entry.IDXAgreement.agreement_id,
-                        "price": entry.IDXOrder.price,
-                        "amount": entry.IDXAgreement.amount,
+                        "buy_address": agreement.buyer_address,
+                        "sell_address": agreement.seller_address,
+                        "order_id": agreement.order_id,
+                        "agreement_id": agreement.agreement_id,
+                        "price": order.price,
+                        "amount": agreement.amount,
                     }
                 )
             tick_list.append({"token_address": token_address, "tick": tick})

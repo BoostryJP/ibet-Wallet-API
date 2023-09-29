@@ -18,10 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -130,9 +132,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 1
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
@@ -165,9 +167,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 2
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
@@ -217,9 +219,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 4
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
@@ -269,9 +271,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
 
     # <Normal_5>
@@ -290,9 +292,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
 
     ###########################################################################
@@ -325,9 +327,9 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "initial_sync" process.
         assert processor.latest_block == block_number_current
@@ -344,9 +346,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_current
@@ -371,9 +373,9 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -389,9 +391,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -416,9 +418,9 @@ class TestProcessor:
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -435,9 +437,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
@@ -461,9 +463,9 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         assert processor.latest_block == block_number_bf
 
@@ -479,9 +481,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _consume_coupon_list = (
-            session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
-        )
+        _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
+            select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
+        ).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf

@@ -22,7 +22,7 @@ import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
@@ -40,10 +40,12 @@ from app.config import (
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.db import AgreementStatus
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
-from app.model.db import Listing
+from app.model.db import (
+    AgreementStatus,
+    IDXAgreement as Agreement,
+    IDXOrder as Order,
+    Listing,
+)
 from app.utils.web3_utils import Web3Wrapper
 
 local_tz = ZoneInfo(TZ)
@@ -161,11 +163,11 @@ class Processor:
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
                         pass
                     else:
-                        available_token = (
-                            db_session.query(Listing)
-                            .filter(Listing.token_address == args["tokenAddress"])
-                            .first()
-                        )
+                        available_token = db_session.scalars(
+                            select(Listing)
+                            .where(Listing.token_address == args["tokenAddress"])
+                            .limit(1)
+                        ).first()
                         transaction_hash = event["transactionHash"].hex()
                         order_timestamp = datetime.utcfromtimestamp(
                             web3.eth.get_block(event["blockNumber"])["timestamp"]
@@ -457,24 +459,24 @@ class Processor:
 
     @staticmethod
     def __get_order(db_session: Session, exchange_address: str, order_id: int):
-        return (
-            db_session.query(Order)
-            .filter(Order.exchange_address == exchange_address)
-            .filter(Order.order_id == order_id)
-            .first()
-        )
+        return db_session.scalars(
+            select(Order)
+            .where(Order.exchange_address == exchange_address)
+            .where(Order.order_id == order_id)
+            .limit(1)
+        ).first()
 
     @staticmethod
     def __get_agreement(
         db_session: Session, exchange_address: str, order_id: int, agreement_id: int
     ):
-        return (
-            db_session.query(Agreement)
-            .filter(Agreement.exchange_address == exchange_address)
-            .filter(Agreement.order_id == order_id)
-            .filter(Agreement.agreement_id == agreement_id)
-            .first()
-        )
+        return db_session.scalars(
+            select(Agreement)
+            .where(Agreement.exchange_address == exchange_address)
+            .where(Agreement.order_id == order_id)
+            .where(Agreement.agreement_id == agreement_id)
+            .limit(1)
+        ).first()
 
 
 def main():

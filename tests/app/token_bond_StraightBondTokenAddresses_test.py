@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from unittest import mock
-
 import pytest
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
@@ -513,15 +511,15 @@ class TestTokenStraightBondTokenAddresses:
 
         not_matched_key_value = {
             "name": "not_matched_value",
-            "owner_address": "not_matched_value",
+            "owner_address": "0x0000000000000000000000000000000000000000",
             "company_name": "not_matched_value",
             "symbol": "not_matched_value",
             "is_redeemed": True,
             "is_offering": True,
             "transferable": False,
-            "tradable_exchange": "not_matched_value",
+            "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "status": False,
-            "personal_info_address": "not_matched_value",
+            "personal_info_address": "0x0000000000000000000000000000000000000000",
             "transfer_approval_required": True,
         }
 
@@ -722,9 +720,11 @@ class TestTokenStraightBondTokenAddresses:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value could not be parsed to a boolean",
-                        "type": "type_error.bool",
+                        "msg": "Input should be a valid boolean, unable to interpret "
+                        "input",
+                        "type": "bool_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -739,9 +739,11 @@ class TestTokenStraightBondTokenAddresses:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value is not a valid integer",
-                        "type": "type_error.integer",
+                        "msg": "Input should be a valid integer, unable to parse "
+                        "string as an integer",
+                        "type": "int_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",

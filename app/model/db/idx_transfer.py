@@ -21,6 +21,7 @@ from enum import Enum
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import JSON, BigInteger, Column, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
 from app.model.db.base import Base
@@ -42,21 +43,21 @@ class IDXTransfer(Base):
     __tablename__ = "transfer"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
-    transaction_hash = Column(String(66), index=True)
+    transaction_hash: Mapped[str | None] = mapped_column(String(66), index=True)
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer From
-    from_address = Column(String(42))
+    from_address: Mapped[str | None] = mapped_column(String(42))
     # Transfer To
-    to_address = Column(String(42))
+    to_address: Mapped[str | None] = mapped_column(String(42))
     # Transfer Amount
-    value = Column(BigInteger)
+    value: Mapped[int | None] = mapped_column(BigInteger)
     # Source Event (IDXTransferSourceEventType)
-    source_event = Column(String(50), nullable=False)
+    source_event: Mapped[str] = mapped_column(String(50), nullable=False)
     # Data
-    data = Column(JSON)
+    data: Mapped[dict | None] = mapped_column(JSON)
 
     @staticmethod
     def format_timestamp(_datetime: datetime) -> str:
@@ -100,9 +101,9 @@ class IDXTransferBlockNumber(Base):
     __tablename__ = "idx_transfer_block_number"
 
     # target address
-    contract_address = Column(String(42), primary_key=True)
+    contract_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "contract_address": str,

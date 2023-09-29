@@ -21,7 +21,7 @@ import sys
 import time
 from typing import Optional
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
@@ -35,6 +35,7 @@ from app import config
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
+from app.model.schema.base import TokenType
 from app.utils.web3_utils import Web3Wrapper
 
 process_name = "INDEXER-TOKEN-LIST"
@@ -53,13 +54,13 @@ class Processor:
         )
         self.available_token_template_list = []
         if config.BOND_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetStraightBond")
+            self.available_token_template_list.append(TokenType.IbetStraightBond)
         if config.SHARE_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetShare")
+            self.available_token_template_list.append(TokenType.IbetShare)
         if config.MEMBERSHIP_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetMembership")
+            self.available_token_template_list.append(TokenType.IbetMembership)
         if config.COUPON_TOKEN_ENABLED:
-            self.available_token_template_list.append("IbetCoupon")
+            self.available_token_template_list.append(TokenType.IbetCoupon)
 
     @staticmethod
     def __get_db_session():
@@ -161,11 +162,11 @@ class Processor:
         if token_template not in self.available_token_template_list:
             return
 
-        idx_token_list: Optional[IDXTokenListItem] = (
-            db_session.query(IDXTokenListItem)
-            .filter(IDXTokenListItem.token_address == token_address)
-            .first()
-        )
+        idx_token_list: Optional[IDXTokenListItem] = db_session.scalars(
+            select(IDXTokenListItem)
+            .where(IDXTokenListItem.token_address == token_address)
+            .limit(1)
+        ).first()
         if idx_token_list is not None:
             idx_token_list.token_template = token_template
             idx_token_list.owner_address = owner_address
@@ -180,11 +181,11 @@ class Processor:
     @staticmethod
     def __get_idx_token_list_block_number(db_session: Session, contract_address: str):
         """Get token list index for Share"""
-        _idx_token_list_block_number = (
-            db_session.query(IDXTokenListBlockNumber)
-            .filter(IDXTokenListBlockNumber.contract_address == contract_address)
-            .first()
-        )
+        _idx_token_list_block_number = db_session.scalars(
+            select(IDXTokenListBlockNumber)
+            .where(IDXTokenListBlockNumber.contract_address == contract_address)
+            .limit(1)
+        ).first()
         if _idx_token_list_block_number is None:
             return -1
         else:
@@ -195,11 +196,11 @@ class Processor:
         db_session: Session, contract_address: str, block_number: int
     ):
         """Get token list index for Share"""
-        _idx_token_list_block_number = (
-            db_session.query(IDXTokenListBlockNumber)
-            .filter(IDXTokenListBlockNumber.contract_address == contract_address)
-            .first()
-        )
+        _idx_token_list_block_number = db_session.scalars(
+            select(IDXTokenListBlockNumber)
+            .where(IDXTokenListBlockNumber.contract_address == contract_address)
+            .limit(1)
+        ).first()
         if _idx_token_list_block_number is None:
             _idx_token_list_block_number = IDXTokenListBlockNumber()
         _idx_token_list_block_number.latest_block_number = block_number

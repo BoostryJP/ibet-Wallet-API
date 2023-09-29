@@ -20,7 +20,8 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import JSON, BigInteger, Column, DateTime, String
+from sqlalchemy import JSON, BigInteger, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
 from app.model.db.base import Base
@@ -35,25 +36,29 @@ class IDXLock(Base):
     __tablename__ = "lock"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
-    transaction_hash = Column(String(66), index=True, nullable=False)
+    transaction_hash: Mapped[str] = mapped_column(
+        String(66), index=True, nullable=False
+    )
     # Message Sender of Transaction
-    msg_sender = Column(String(42), index=True, nullable=True)
+    msg_sender: Mapped[str | None] = mapped_column(
+        String(42), index=True, nullable=True
+    )
     # Block Number
-    block_number = Column(BigInteger, nullable=False)
+    block_number: Mapped[int] = mapped_column(BigInteger, nullable=False)
     # Token Address
-    token_address = Column(String(42), index=True, nullable=False)
+    token_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Lock Address
-    lock_address = Column(String(42), index=True, nullable=False)
+    lock_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Account Address
-    account_address = Column(String(42), index=True, nullable=False)
+    account_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Locked Amount
-    value = Column(BigInteger, nullable=False)
+    value: Mapped[int] = mapped_column(BigInteger, nullable=False)
     # Data
-    data = Column(JSON, nullable=False)
+    data: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Lock Datetime
-    block_timestamp = Column(DateTime, nullable=False)
+    block_timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     FIELDS = {
         "id": int,
@@ -101,27 +106,33 @@ class IDXUnlock(Base):
     __tablename__ = "unlock"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
-    transaction_hash = Column(String(66), index=True, nullable=False)
+    transaction_hash: Mapped[str] = mapped_column(
+        String(66), index=True, nullable=False
+    )
     # Message Sender of Transaction
-    msg_sender = Column(String(42), index=True, nullable=True)
+    msg_sender: Mapped[str | None] = mapped_column(
+        String(42), index=True, nullable=True
+    )
     # Block Number
-    block_number = Column(BigInteger, nullable=False)
+    block_number: Mapped[int] = mapped_column(BigInteger, nullable=False)
     # Token Address
-    token_address = Column(String(42), index=True, nullable=False)
+    token_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Lock Address
-    lock_address = Column(String(42), index=True, nullable=False)
+    lock_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Account Address
-    account_address = Column(String(42), index=True, nullable=False)
+    account_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Recipient Address
-    recipient_address = Column(String(42), index=True, nullable=False)
+    recipient_address: Mapped[str] = mapped_column(
+        String(42), index=True, nullable=False
+    )
     # Locked Amount
-    value = Column(BigInteger, nullable=False)
+    value: Mapped[int] = mapped_column(BigInteger, nullable=False)
     # Data
-    data = Column(JSON, nullable=False)
+    data: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Lock Datetime
-    block_timestamp = Column(DateTime, nullable=False)
+    block_timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     FIELDS = {
         "id": int,

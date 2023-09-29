@@ -155,9 +155,10 @@ class TestNotificationCount:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 }
             ],
             "message": "Invalid Parameter",
@@ -173,12 +174,14 @@ class TestNotificationCount:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["address"],
-                    "msg": "address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x123",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }

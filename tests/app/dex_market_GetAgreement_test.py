@@ -290,19 +290,22 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "order_id"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "agreement_id"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "exchange_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -321,14 +324,16 @@ class TestDEXMarketGetAgreement:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["exchange_address"],
-                    "msg": "owner_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "exchange_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": exchange_address,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_3
@@ -346,14 +351,18 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
+                    "input": "aa",
                     "loc": ["query", "order_id"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 },
                 {
+                    "input": "bb",
                     "loc": ["query", "agreement_id"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 },
             ],
             "message": "Invalid Parameter",

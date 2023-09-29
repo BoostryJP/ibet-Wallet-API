@@ -227,6 +227,8 @@ class TestPositionCoupon:
     # <Normal_1>
     # List all positions
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -406,6 +408,8 @@ class TestPositionCoupon:
     # <Normal_2>
     # Pagination
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -556,6 +560,8 @@ class TestPositionCoupon:
     # <Normal_3>
     # token details
     def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -624,6 +630,8 @@ class TestPositionCoupon:
     # List all positions
     # Indexed: <Normal_1>
     def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -940,6 +948,8 @@ class TestPositionCoupon:
     # Pagination
     # Indexed: <Normal_2>
     def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -1227,6 +1237,8 @@ class TestPositionCoupon:
     # token details
     # Indexed: <Normal_3>
     def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -1303,13 +1315,14 @@ class TestPositionCoupon:
     # <Error_1>
     # NotSupportedError
     def test_error_1(self, client: TestClient, session: Session):
+        config.COUPON_TOKEN_ENABLED = False
+
         account_address = self.account_1["account_address"]
 
         # Request target API
-        with mock.patch("app.config.COUPON_TOKEN_ENABLED", False):
-            resp = client.get(
-                self.apiurl.format(account_address=account_address),
-            )
+        resp = client.get(
+            self.apiurl.format(account_address=account_address),
+        )
 
         # Assertion
         assert resp.status_code == 404
@@ -1322,6 +1335,8 @@ class TestPositionCoupon:
     # <Error_2>
     # ParameterError: invalid account_address
     def test_error_2(self, client: TestClient, session: Session):
+        config.COUPON_TOKEN_ENABLED = True
+
         # Request target API
         resp = client.get(
             self.apiurl.format(account_address="invalid"),
@@ -1332,12 +1347,22 @@ class TestPositionCoupon:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_3>
     # ParameterError: offset/limit(minus value)
     def test_error_3(self, client: TestClient, session: Session):
+        config.COUPON_TOKEN_ENABLED = True
+
         # Request target API
         resp = client.get(
             self.apiurl.format(account_address=self.account_1["account_address"]),
@@ -1353,16 +1378,18 @@ class TestPositionCoupon:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "offset"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "limit"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1371,6 +1398,8 @@ class TestPositionCoupon:
     # <Error_4>
     # ParameterError: offset/limit(not int), include_token_details(not bool)
     def test_error_4(self, client: TestClient, session: Session):
+        config.COUPON_TOKEN_ENABLED = True
+
         # Request target API
         resp = client.get(
             self.apiurl.format(account_address=self.account_1["account_address"]),
@@ -1387,19 +1416,25 @@ class TestPositionCoupon:
             "code": 88,
             "description": [
                 {
+                    "input": "test",
                     "loc": ["query", "offset"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 },
                 {
+                    "input": "test",
                     "loc": ["query", "limit"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 },
                 {
+                    "input": "test",
                     "loc": ["query", "include_token_details"],
-                    "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool",
+                    "msg": "Input should be a valid boolean, unable to interpret "
+                    "input",
+                    "type": "bool_parsing",
                 },
             ],
             "message": "Invalid Parameter",

@@ -707,7 +707,7 @@ class TestTokenShareTokens:
 
         not_matched_key_value = {
             "name": "not_matched_value",
-            "owner_address": "not_matched_value",
+            "owner_address": "0x0000000000000000000000000000000000000000",
             "company_name": "not_matched_value",
             "symbol": "not_matched_value",
             "is_offering": True,
@@ -715,8 +715,8 @@ class TestTokenShareTokens:
             "status": False,
             "transfer_approval_required": True,
             "is_canceled": True,
-            "tradable_exchange": "not_matched_value",
-            "personal_info_address": "not_matched_value",
+            "tradable_exchange": "0x0000000000000000000000000000000000000000",
+            "personal_info_address": "0x0000000000000000000000000000000000000000",
         }
 
         for key, value in not_matched_key_value.items():
@@ -945,9 +945,11 @@ class TestTokenShareTokens:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value could not be parsed to a boolean",
-                        "type": "type_error.bool",
+                        "msg": "Input should be a valid boolean, unable to interpret "
+                        "input",
+                        "type": "bool_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -962,9 +964,11 @@ class TestTokenShareTokens:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value is not a valid integer",
-                        "type": "type_error.integer",
+                        "msg": "Input should be a valid integer, unable to parse "
+                        "string as an integer",
+                        "type": "int_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -982,5 +986,20 @@ class TestTokenShareTokens:
                 assert resp.json()["meta"] == {
                     "code": 88,
                     "message": "Invalid Parameter",
-                    "description": f"invalid token_address: {invalid_key_value[key][0]}",
+                    "description": [
+                        {
+                            "type": "value_error",
+                            "loc": ["query", "address_list", 0],
+                            "msg": "Value error, Invalid ethereum address",
+                            "input": invalid_key_value[key][0],
+                            "ctx": {"error": {}},
+                        },
+                        {
+                            "type": "value_error",
+                            "loc": ["query", "address_list", 1],
+                            "msg": "Value error, Invalid ethereum address",
+                            "input": invalid_key_value[key][1],
+                            "ctx": {"error": {}},
+                        },
+                    ],
                 }

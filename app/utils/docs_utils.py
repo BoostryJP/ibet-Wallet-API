@@ -28,12 +28,12 @@ from app.errors import AppError
 class ErrorInfo(BaseModel):
     code: int = Field(...)
     message: str = Field(...)
-    description: str | dict | None
+    description: str | dict | None = None
 
 
 class ErrorResponse(BaseModel):
     meta: ErrorInfo
-    details: dict | None
+    details: dict | None = None
 
 
 class RequestValidationErrorDict(BaseModel):
@@ -41,24 +41,16 @@ class RequestValidationErrorDict(BaseModel):
     msg: str
     type: str
 
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any], _) -> None:
-            properties = schema["properties"]
-            properties["loc"]["example"] = ["body", "contract_address"]
-            properties["msg"]["example"] = "field required"
-            properties["type"]["example"] = "value_error.missing"
-
 
 class RequestValidationErrorInfo(ErrorInfo):
-    code: int = Field(..., example=88)
-    message: str = Field(..., example="Invalid Parameter")
+    code: int = Field(..., examples=[88])
+    message: str = Field(..., examples=["Invalid Parameter"])
     description: list[RequestValidationErrorDict]
 
 
 class RequestValidationErrorResponse(BaseModel):
     meta: RequestValidationErrorInfo
-    details: dict | None
+    details: dict | None = None
 
 
 AppErrorType = TypeVar("AppErrorType", bound=AppError)
@@ -77,8 +69,8 @@ def create_error_model(app_error: Type[AppError]):
 
     metainfo_model = create_model(
         f"{app_error.error_type.strip()}Metainfo",
-        code=(int, Field(..., example=app_error.error_code)),
-        message=(str, Field(..., example=app_error.message)),
+        code=(int, Field(..., examples=[app_error.error_code])),
+        message=(str, Field(..., examples=[app_error.message])),
     )
     error_model = create_model(
         f"{app_error.error_type.strip()}Response",
@@ -88,7 +80,7 @@ def create_error_model(app_error: Type[AppError]):
                 ...,
             ),
         ),
-        details=(dict | None, Field(default=None, example=None)),
+        details=(dict | None, Field(default=None, examples=[None])),
     )
     return error_model
 

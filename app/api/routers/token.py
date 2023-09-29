@@ -16,13 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
-from uuid import UUID
+from typing import Annotated, Optional, Sequence
 
-from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
-from sqlalchemy import String, and_, asc, cast, desc, func, or_
-from web3 import Web3
+from pydantic import UUID4
+from sqlalchemy import String, and_, asc, cast, desc, func, or_, select
 
 from app import config, log
 from app.contracts import Contract
@@ -38,15 +36,12 @@ from app.model.db import (
     TokenHolderBatchStatus,
     TokenHoldersList,
 )
-from app.model.schema import (  # Request; Response
+from app.model.schema import (
     CreateTokenHoldersCollectionRequest,
     CreateTokenHoldersCollectionResponse,
-    GenericSuccessResponse,
     ListAllTokenHoldersQuery,
     ListAllTransferHistoryQuery,
-    ResultSetQuery,
     RetrieveTokenHoldersCountQuery,
-    SuccessResponse,
     TokenHoldersCollectionResponse,
     TokenHoldersCountResponse,
     TokenHoldersResponse,
@@ -54,8 +49,14 @@ from app.model.schema import (  # Request; Response
     TransferApprovalHistoriesResponse,
     TransferHistoriesResponse,
 )
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    ResultSetQuery,
+    SuccessResponse,
+    ValidatedEthereumAddress,
+)
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -73,28 +74,19 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
 )
 def get_token_status(
     session: DBSession,
-    token_address: str = Path(description="token address"),
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
 ):
     """
     Endpoint: /Token/{contract_address}/Status
     """
-
-    # 入力アドレスフォーマットチェック
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
     # 取扱トークンチェック
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     # TokenList-Contractへの接続
     list_contract = Contract.get_contract(
@@ -102,7 +94,6 @@ def get_token_status(
     )
 
     # TokenList-Contractからトークンの情報を取得する
-    token_address = to_checksum_address(contract_address)
     token = Contract.call_function(
         contract=list_contract,
         function_name="getTokenByAddress",
@@ -122,10 +113,10 @@ def get_token_status(
         )
     except ServiceUnavailable as e:
         LOG.warning(e)
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
     except Exception as e:
         LOG.error(e)
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     response_json = {
         "token_template": token_template,
@@ -144,32 +135,25 @@ def get_token_status(
 )
 def get_token_holders(
     session: DBSession,
-    token_address: str = Path(description="token address"),
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
     request_query: ListAllTokenHoldersQuery = Depends(),
 ):
     """
     Endpoint: /Token/{contract_address}/Holders
     """
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
     # Check if the token exists in the list
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    query = (
-        session.query(IDXPosition, func.sum(IDXLockedPosition.value))
+    stmt = (
+        select(IDXPosition, func.sum(IDXLockedPosition.value))
         .outerjoin(
             IDXLockedPosition,
             and_(
@@ -177,8 +161,8 @@ def get_token_holders(
                 IDXLockedPosition.account_address == IDXPosition.account_address,
             ),
         )
-        .filter(IDXPosition.token_address == token_address)
-        .filter(
+        .where(IDXPosition.token_address == token_address)
+        .where(
             or_(
                 IDXPosition.balance > 0,
                 IDXPosition.pending_transfer > 0,
@@ -194,10 +178,10 @@ def get_token_holders(
         )
     )
     if request_query.exclude_owner is True:
-        query = query.filter(IDXPosition.account_address != listed_token.owner_address)
+        stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
-    holders: list[tuple[IDXPosition, int | None]] = query.order_by(
-        desc(IDXPosition.created)
+    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
+        stmt.order_by(desc(IDXPosition.created))
     ).all()
 
     resp_body = []
@@ -226,33 +210,25 @@ def get_token_holders(
 )
 def get_token_holders_count(
     session: DBSession,
-    token_address: str = Path(description="token address"),
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
     request_query: RetrieveTokenHoldersCountQuery = Depends(),
 ):
     """
-    Endpoint: /Token/{contract_address}/Holders/Count
+    Endpoint: /Token/{token_address}/Holders/Count
     """
-    # Validation
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
     # Check if the token exists in the list
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    query = (
-        session.query(IDXPosition, func.sum(IDXLockedPosition.value))
+    stmt = (
+        select(IDXPosition, func.sum(IDXLockedPosition.value))
         .outerjoin(
             IDXLockedPosition,
             and_(
@@ -260,8 +236,8 @@ def get_token_holders_count(
                 IDXLockedPosition.account_address == IDXPosition.account_address,
             ),
         )
-        .filter(IDXPosition.token_address == token_address)
-        .filter(
+        .where(IDXPosition.token_address == token_address)
+        .where(
             or_(
                 IDXPosition.balance > 0,
                 IDXPosition.pending_transfer > 0,
@@ -277,9 +253,9 @@ def get_token_holders_count(
         )
     )
     if request_query.exclude_owner is True:
-        query = query.filter(IDXPosition.account_address != listed_token.owner_address)
+        stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
-    _count = query.count()
+    _count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     resp_body = {"count": _count}
 
@@ -296,24 +272,17 @@ def get_token_holders_count(
 def create_token_holders_collection(
     session: DBSession,
     data: CreateTokenHoldersCollectionRequest,
-    token_address: str = Path(description="token address"),
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
 ):
     """
-    Endpoint: /Token/{contract_address}/Holders/Collection
+    Endpoint: /Token/{token_address}/Holders/Collection
     """
     web3 = Web3Wrapper()
 
     list_id = str(data.list_id)
     block_number = data.block_number
-
-    # contract_addressのフォーマットチェック
-    contract_address = token_address
-    try:
-        if not Web3.is_address(contract_address):
-            raise InvalidParameterError("Invalid contract address")
-    except Exception as err:
-        LOG.debug(f"invalid contract address: {err}")
-        raise InvalidParameterError("Invalid contract address")
 
     # ブロックナンバーのチェック
     if block_number > web3.eth.block_number or block_number < 1:
@@ -321,28 +290,26 @@ def create_token_holders_collection(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     # list_idの衝突チェック
-    _same_list_id_record = (
-        session.query(TokenHoldersList)
-        .filter(TokenHoldersList.list_id == list_id)
-        .first()
-    )
+    _same_list_id_record = session.scalars(
+        select(TokenHoldersList).where(TokenHoldersList.list_id == list_id).limit(1)
+    ).first()
     if _same_list_id_record is not None:
         raise InvalidParameterError("list_id must be unique.")
 
-    _same_combi_record = (
-        session.query(TokenHoldersList)
-        .filter(TokenHoldersList.token_address == contract_address)
-        .filter(TokenHoldersList.block_number == block_number)
-        .filter(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED)
-        .first()
-    )
+    _same_combi_record = session.scalars(
+        select(TokenHoldersList)
+        .where(TokenHoldersList.token_address == token_address)
+        .where(TokenHoldersList.block_number == block_number)
+        .where(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED)
+        .limit(1)
+    ).first()
 
     if _same_combi_record is not None:
         # 同じブロックナンバー・トークンアドレスのコレクションが、PENDINGかDONEで既に存在する場合、
@@ -357,11 +324,12 @@ def create_token_holders_collection(
             }
         )
     else:
-        token_holder_list = TokenHoldersList()
-        token_holder_list.list_id = list_id
-        token_holder_list.batch_status = TokenHolderBatchStatus.PENDING.value
-        token_holder_list.block_number = block_number
-        token_holder_list.token_address = contract_address
+        token_holder_list = TokenHoldersList(
+            list_id=list_id,
+            batch_status=TokenHolderBatchStatus.PENDING.value,
+            block_number=block_number,
+            token_address=token_address,
+        )
         session.add(token_holder_list)
         session.commit()
 
@@ -385,67 +353,47 @@ def create_token_holders_collection(
 )
 def get_token_holders_collection(
     session: DBSession,
-    token_address: str = Path(description="token address"),
-    list_id: UUID = Path(
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
+    list_id: UUID4 = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
-        example="cfd83622-34dc-4efe-a68b-2cc275d3d824",
+        examples=["cfd83622-34dc-4efe-a68b-2cc275d3d824"],
     ),
 ):
     """
-    Endpoint: /Token/{contract_address}/Holders/Collection/{list_id}
+    Endpoint: /Token/{token_address}/Holders/Collection/{list_id}
     """
-    contract_address = token_address
-
-    # 入力アドレスフォーマットチェック
-    try:
-        contract_address = to_checksum_address(contract_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
-    # 入力IDフォーマットチェック
-    try:
-        if not list_id.version == 4:
-            description = "list_id must be UUIDv4."
-            raise InvalidParameterError(description=description)
-    except:
-        description = "list_id must be UUIDv4."
-        raise InvalidParameterError(description=description)
-
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     # 既存レコードの存在チェック
-    _same_list_id_record: Optional[TokenHoldersList] = (
-        session.query(TokenHoldersList)
-        .filter(TokenHoldersList.list_id == str(list_id))
-        .first()
-    )
+    _same_list_id_record: Optional[TokenHoldersList] = session.scalars(
+        select(TokenHoldersList)
+        .where(TokenHoldersList.list_id == str(list_id))
+        .limit(1)
+    ).first()
 
     if not _same_list_id_record:
         raise DataNotExistsError("list_id: %s" % str(list_id))
-    if _same_list_id_record.token_address != contract_address:
-        description = "list_id: %s is not collection for contract_address: %s" % (
+    if _same_list_id_record.token_address != token_address:
+        description = "list_id: %s is not collection for token_address: %s" % (
             str(list_id),
-            contract_address,
+            token_address,
         )
         raise InvalidParameterError(description=description)
 
-    _token_holders = (
-        session.query(TokenHolder)
-        .filter(TokenHolder.holder_list == _same_list_id_record.id)
+    _token_holders: Sequence[TokenHolder] = session.scalars(
+        select(TokenHolder)
+        .where(TokenHolder.holder_list == _same_list_id_record.id)
         .order_by(asc(TokenHolder.account_address))
-        .all()
-    )
+    ).all()
     token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
     return json_response(
@@ -468,53 +416,43 @@ def get_token_holders_collection(
 )
 def list_all_transfer_histories(
     session: DBSession,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
     request_query: ListAllTransferHistoryQuery = Depends(),
-    token_address: str = Path(description="token address"),
 ):
     """
-    Endpoint: /Token/{contract_address}/TransferHistory
+    Endpoint: /Token/{token_address}/TransferHistory
     """
-    # 入力値チェック
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
     # 取扱トークンチェック
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     # 移転履歴取得
-    query = (
-        session.query(IDXTransfer)
-        .filter(IDXTransfer.token_address == contract_address)
+    stmt = (
+        select(IDXTransfer)
+        .where(IDXTransfer.token_address == token_address)
         .order_by(IDXTransfer.id)
     )
-    total = query.count()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     if request_query.source_event is not None:
-        query = query.filter(
-            IDXTransfer.source_event == request_query.source_event.value
-        )
+        stmt = stmt.where(IDXTransfer.source_event == request_query.source_event.value)
     if request_query.data is not None:
-        query = query.filter(
+        stmt = stmt.where(
             cast(IDXTransfer.data, String).like("%" + request_query.data + "%")
         )
 
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     if request_query.offset is not None:
-        query = query.offset(request_query.offset)
+        stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
-        query = query.limit(request_query.limit)
-    transfer_history = query.all()
+        stmt = stmt.limit(request_query.limit)
+    transfer_history: Sequence[IDXTransfer] = session.scalars(stmt).all()
 
     resp_data = []
     for transfer_event in transfer_history:
@@ -542,43 +480,39 @@ def list_all_transfer_histories(
 )
 def list_all_transfer_approval_histories(
     session: DBSession,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
     request_query: ResultSetQuery = Depends(),
-    token_address: str = Path(description="token address"),
 ):
     """
-    Endpoint: /Token/{contract_address}/TransferApprovalHistory
+    Endpoint: /Token/{token_address}/TransferApprovalHistory
     """
-    # Validation
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            raise InvalidParameterError("invalid contract_address")
-    except:
-        raise InvalidParameterError("invalid contract_address")
-
     # Check that it is a listed token
-    _listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    _listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if _listed_token is None:
-        raise DataNotExistsError(f"contract_address: {contract_address}")
+        raise DataNotExistsError(f"token_address: {token_address}")
 
     # Get transfer approval data
-    query = (
-        session.query(IDXTransferApproval)
-        .filter(IDXTransferApproval.token_address == contract_address)
+    stmt = (
+        select(IDXTransferApproval)
+        .where(IDXTransferApproval.token_address == token_address)
         .order_by(
             IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
         )
     )
-    list_length = query.count()
+    list_length = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # パラメータを設定
     if request_query.offset is not None:
-        query = query.offset(request_query.offset)
+        stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
-        query = query.limit(request_query.limit)
-    transfer_approval_history = query.all()
+        stmt = stmt.limit(request_query.limit)
+    transfer_approval_history: Sequence[IDXTransferApproval] = session.scalars(
+        stmt
+    ).all()
 
     resp_data = []
     for transfer_approval_event in transfer_approval_history:

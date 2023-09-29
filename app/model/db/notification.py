@@ -25,7 +25,6 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
-    Column,
     DateTime,
     Index,
     Integer,
@@ -33,6 +32,7 @@ from sqlalchemy import (
     String,
     create_engine,
 )
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app import config
 from app.model.db.base import Base
@@ -49,7 +49,7 @@ class Notification(Base):
     # レコードID
     if engine.name == "mysql":
         # NOTE:MySQLの場合はSEQ機能が利用できない
-        id = Column(BigInteger, autoincrement=True)
+        id: Mapped[int | None] = mapped_column(BigInteger, autoincrement=True)
     else:
         # レコードIDのシーケンス
         notification_id_seq = Sequence(
@@ -60,7 +60,7 @@ class Notification(Base):
             maxvalue=sys.maxsize,
             cache=1,
         )
-        id = Column(
+        id: Mapped[int | None] = mapped_column(
             BigInteger,
             server_default=Sequence("notification_id_seq").next_value(),
             autoincrement=True,
@@ -73,40 +73,40 @@ class Notification(Base):
     #   <transactionIndex>: transactionIndex（block内でのトランザクションの採番）をhexstringで表現したもの。6桁
     #   <logIndex>: logIndex（transaction内でのログの採番）をhexstringで表現したもの。6桁
     #   <optionType>: blockNumber, transactionIndex, logIndexが等しいが、通知としては複数にしたい場合に使用する識別子。2桁(デフォルトは00)
-    notification_id = Column(String(256), primary_key=True)
+    notification_id: Mapped[str] = mapped_column(String(256), primary_key=True)
 
     # 通知タイプ(例：BuySettlementOK, BuyAgreementなど)
-    notification_type = Column(String(256))
+    notification_type: Mapped[str | None] = mapped_column(String(256), index=True)
 
     # 通知の重要度
     #   0: Low
     #   1: Medium
     #   2: High
-    priority = Column(Integer)
+    priority: Mapped[int | None] = mapped_column(Integer, index=True)
 
     # 通知対象のユーザーのアドレス
-    address = Column(String(256))
+    address: Mapped[str | None] = mapped_column(String(256), index=True)
 
     # 既読フラグ
-    is_read = Column(Boolean, default=False)
+    is_read: Mapped[bool | None] = mapped_column(Boolean, default=False)
     # 重要フラグ
-    is_flagged = Column(Boolean, default=False)
+    is_flagged: Mapped[bool | None] = mapped_column(Boolean, default=False)
     # 削除フラグ
-    is_deleted = Column(Boolean, default=False)
+    is_deleted: Mapped[bool | None] = mapped_column(Boolean, default=False)
     # 削除日付
-    deleted_at = Column(DateTime, default=None)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     # 通知が発生した日付（blockTime）
     # NOTE:
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    block_timestamp = Column(DateTime)
+    block_timestamp: Mapped[datetime | None] = mapped_column(DateTime)
 
     # 通知イベントの内容
-    args = Column(JSON)
+    args: Mapped[dict | None] = mapped_column(JSON)
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
-    metainfo = Column(JSON)
+    metainfo: Mapped[dict | None] = mapped_column(JSON)
 
     def __repr__(self):
         return "<Notification(notification_id='{}', notification_type='{}')>".format(
@@ -183,11 +183,11 @@ class NotificationBlockNumber(Base):
     __tablename__ = "notification_block_number"
 
     # notification type: NotificationType
-    notification_type = Column(String(256), primary_key=True)
+    notification_type = mapped_column(String(256), primary_key=True)
     # contract address
-    contract_address = Column(String(42), primary_key=True)
+    contract_address = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number = mapped_column(BigInteger)
 
     FIELDS = {
         "notification_type": str,

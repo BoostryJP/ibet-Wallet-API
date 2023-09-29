@@ -20,10 +20,11 @@ import os
 import sys
 import time
 from datetime import datetime
+from typing import Sequence
 from zoneinfo import ZoneInfo
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
@@ -37,6 +38,7 @@ from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, TZ, ZERO_ADDRE
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import IDXConsumeCoupon, Listing
+from app.model.schema.base import TokenType
 from app.utils.web3_utils import Web3Wrapper
 
 local_tz = ZoneInfo(TZ)
@@ -129,7 +131,7 @@ class Processor:
         list_contract = Contract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        listed_tokens = db_session.query(Listing).all()
+        listed_tokens: Sequence[Listing] = db_session.scalars(select(Listing)).all()
         for listed_token in listed_tokens:
             token_info = Contract.call_function(
                 contract=list_contract,
@@ -137,9 +139,10 @@ class Processor:
                 args=(listed_token.token_address,),
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
-            if token_info[1] == "IbetCoupon":
+            if token_info[1] == TokenType.IbetCoupon:
                 coupon_token_contract = Contract.get_contract(
-                    contract_name="IbetCoupon", address=listed_token.token_address
+                    contract_name=TokenType.IbetCoupon,
+                    address=listed_token.token_address,
                 )
                 self.token_list.append(coupon_token_contract)
 
@@ -188,13 +191,13 @@ class Processor:
         amount: int,
         block_timestamp: datetime,
     ):
-        consume_coupon = (
-            db_session.query(IDXConsumeCoupon)
-            .filter(IDXConsumeCoupon.transaction_hash == transaction_hash)
-            .filter(IDXConsumeCoupon.token_address == token_address)
-            .filter(IDXConsumeCoupon.account_address == account_address)
-            .first()
-        )
+        consume_coupon = db_session.scalars(
+            select(IDXConsumeCoupon)
+            .where(IDXConsumeCoupon.transaction_hash == transaction_hash)
+            .where(IDXConsumeCoupon.token_address == token_address)
+            .where(IDXConsumeCoupon.account_address == account_address)
+            .limit(1)
+        ).first()
         if consume_coupon is None:
             LOG.debug(f"Consume: transaction_hash={transaction_hash}")
             consume_coupon = IDXConsumeCoupon()

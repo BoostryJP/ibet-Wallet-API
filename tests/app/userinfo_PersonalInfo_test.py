@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -153,14 +151,16 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
+                    "input": None,
                     "loc": ["query", "account_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": None,
                     "loc": ["query", "owner_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -180,14 +180,16 @@ class TestUserInfoPersonalInfo:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["account_address"],
-                    "msg": "account_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": trader,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_2_3
@@ -204,12 +206,14 @@ class TestUserInfoPersonalInfo:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["owner_address"],
-                    "msg": "owner_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "owner_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": issuer,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }

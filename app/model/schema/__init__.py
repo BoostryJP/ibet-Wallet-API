@@ -23,7 +23,6 @@ from .admin import (
     RetrieveAdminTokenResponse,
     UpdateAdminTokenRequest,
 )
-from .base import GenericSuccessResponse, ResultSetQuery, SuccessResponse
 from .bc_explorer import (
     BlockDataDetail,
     BlockDataListResponse,
@@ -94,6 +93,7 @@ from .position import (
     CouponPositionWithDetail,
     GenericSecurityTokenPositionsResponse,
     GetPositionQuery,
+    ListAllCouponConsumptionsResponse,
     ListAllLockedPositionQuery,
     ListAllLockedPositionResponse,
     ListAllLockEventQuery,

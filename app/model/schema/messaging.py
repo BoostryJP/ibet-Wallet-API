@@ -16,9 +16,45 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
+import re
+import string
+from typing import Optional, Self, Set
 
-from pydantic import BaseModel, EmailStr, Field, Json, conlist, constr
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+    Json,
+    StringConstraints,
+    conlist,
+    field_validator,
+    model_validator,
+)
+from typing_extensions import Annotated
+
+############################
+# COMMON
+############################
+
+
+def _get_unprintable_ascii_chars() -> list[str]:
+    return [chr(c) for c in range(128) if chr(c) not in string.printable]
+
+
+# ASCII control characters
+UNPRINTABLE_ASCII_CHARS = tuple(_get_unprintable_ascii_chars())
+# Not allowed characters for path
+INVALID_PATH_CHARS = "".join(UNPRINTABLE_ASCII_CHARS)
+# Not allowed characters for file name
+INVALID_FILENAME_CHARS = INVALID_PATH_CHARS + "/"
+# Not allowed characters for path on Windows OS
+INVALID_WIN_PATH_CHARS = INVALID_PATH_CHARS + ':*?"<>|\t\n\r\x0b\x0c'
+# Not allowed characters for file name on Windows OS
+INVALID_WIN_FILENAME_CHARS = INVALID_FILENAME_CHARS + INVALID_WIN_PATH_CHARS + "\\"
+# Regex object for file name validation
+RE_INVALID_WIN_FILENAME = re.compile(
+    f"[{re.escape(INVALID_WIN_FILENAME_CHARS):s}]", re.UNICODE
+)
 
 ############################
 # REQUEST
@@ -26,10 +62,41 @@ from pydantic import BaseModel, EmailStr, Field, Json, conlist, constr
 
 
 class SendMailRequest(BaseModel):
-    to_emails: conlist(EmailStr, min_items=1, max_items=100, unique_items=True)
-    subject: constr(max_length=100) = Field(..., description="Mail subject")
+    to_emails: list[EmailStr] = Field(min_length=1, max_length=100)
+    subject: str = Field(..., description="Mail subject", max_length=100)
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")
+    file_name: Optional[str] = Field(
+        default=None, description="File name", min_length=1, max_length=255
+    )
+    file_content: Optional[bytes] = Field(
+        default=None, description="File content(Base64 encoded)", min_length=1
+    )
+
+    @field_validator("to_emails")
+    @classmethod
+    def is_valid_to_emails(cls, v):
+        if len(v) != len(set(v)):
+            raise ValueError("Each to_emails should be unique value")
+        return v
+
+    @field_validator("file_name")
+    @classmethod
+    def is_valid_file_name(cls, v):
+        if v:
+            match = RE_INVALID_WIN_FILENAME.search(v)
+            if match:
+                raise ValueError("File name has invalid character.")
+        return v
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_file(cls, values: Self):
+        if (values.file_content and not values.file_name) or (
+            not values.file_content and values.file_name
+        ):
+            raise ValueError("File content should be posted with name.")
+        return values
 
 
 class SendChatWebhookRequest(BaseModel):

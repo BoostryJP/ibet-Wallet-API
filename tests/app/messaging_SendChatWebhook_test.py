@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import ChatWebhook
@@ -42,7 +43,7 @@ class TestChatWebhook:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
-        hook_list = session.query(ChatWebhook).all()
+        hook_list = session.scalars(select(ChatWebhook)).all()
         assert len(hook_list) == 1
 
         hook = hook_list[0]
@@ -68,9 +69,10 @@ class TestChatWebhook:
                 "message": "Invalid Parameter",
                 "description": [
                     {
+                        "input": {},
                         "loc": ["body", "message"],
-                        "msg": "field required",
-                        "type": "value_error.missing",
+                        "msg": "Field required",
+                        "type": "missing",
                     }
                 ],
             }
@@ -91,9 +93,11 @@ class TestChatWebhook:
                 "message": "Invalid Parameter",
                 "description": [
                     {
+                        "ctx": {"error": "expected ident at line 1 column " "2"},
+                        "input": "text",
                         "loc": ["body", "message"],
-                        "msg": "Invalid JSON",
-                        "type": "value_error.json",
+                        "msg": "Invalid JSON: expected ident at line 1 " "column 2",
+                        "type": "json_invalid",
                     }
                 ],
             }

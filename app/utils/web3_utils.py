@@ -23,6 +23,7 @@ from typing import Any
 
 from eth_typing import URI
 from requests.exceptions import ConnectionError, HTTPError
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -38,32 +39,37 @@ thread_local = threading.local()
 
 
 class Web3Wrapper:
-    def __init__(self):
+    DEFAULT_TIMEOUT = 5
+
+    def __init__(self, request_timeout: int | None = DEFAULT_TIMEOUT):
         if not config.UNIT_TEST_MODE:
             FailOverHTTPProvider.set_fail_over_mode(True)
+        self.request_timeout = request_timeout
 
     @property
     def eth(self):
-        web3 = self._get_web3()
+        web3 = self._get_web3(self.request_timeout)
         return web3.eth
 
     @property
     def geth(self):
-        web3 = self._get_web3()
+        web3 = self._get_web3(self.request_timeout)
         return web3.geth
 
     @property
     def net(self):
-        web3 = self._get_web3()
+        web3 = self._get_web3(self.request_timeout)
         return web3.net
 
     @staticmethod
-    def _get_web3() -> Web3:
-        # Get web3 for each threads because make to FailOverHTTPProvider thread-safe
+    def _get_web3(request_timeout: int) -> Web3:
+        # Get web3 for each thread because make to FailOverHTTPProvider thread-safe
         try:
             web3 = thread_local.web3
         except AttributeError:
-            web3 = Web3(FailOverHTTPProvider())
+            web3 = Web3(
+                FailOverHTTPProvider(request_kwargs={"timeout": request_timeout})
+            )
             web3.middleware_onion.inject(geth_poa_middleware, layer=0)
             thread_local.web3 = web3
 
@@ -83,20 +89,20 @@ class FailOverHTTPProvider(Web3.HTTPProvider):
             if FailOverHTTPProvider.fail_over_mode is True:
                 # If never running the block monitoring processor,
                 # use default(primary) node.
-                if db_session.query(Node).first() is None:
+                if db_session.scalars(select(Node).limit(1)).first() is None:
                     self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
                     return super().make_request(method, params)
                 else:
                     counter = 0
                     while counter <= config.WEB3_REQUEST_RETRY_COUNT:
                         # Switch alive node
-                        _node = (
-                            db_session.query(Node)
-                            .filter(Node.is_synced == True)
+                        _node = db_session.scalars(
+                            select(Node)
+                            .where(Node.is_synced == True)
                             .order_by(Node.priority)
                             .order_by(Node.id)
-                            .first()
-                        )
+                            .limit(1)
+                        ).first()
                         if _node is None:
                             counter += 1
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:

@@ -25,6 +25,7 @@ from decimal import Decimal
 from typing import Callable, Optional, Type, Union
 
 from eth_utils import to_checksum_address
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import log
@@ -35,12 +36,15 @@ from app.config import (
     ZERO_ADDRESS,
 )
 from app.contracts import Contract
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    Listing,
+)
 from app.model.db.idx_token import IDXTokenInstance, IDXTokenModel
+from app.model.schema.base import TokenType
 from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
@@ -80,11 +84,11 @@ def token_db_cache(TargetModel: IDXTokenModel):
                 return func(cls, session, token_address)
 
             # Get data from cache
-            cached_token: Optional[IDXTokenInstance] = (
-                session.query(TargetModel)
-                .filter(TargetModel.token_address == token_address)
-                .first()
-            )
+            cached_token: Optional[IDXTokenInstance] = session.scalars(
+                select(TargetModel)
+                .where(TargetModel.token_address == token_address)
+                .limit(1)
+            ).first()
             if (
                 cached_token
                 and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL)
@@ -196,7 +200,9 @@ class BondToken(TokenBase):
 
         :return: None
         """
-        token_contract = Contract.get_contract("IbetStraightBond", self.token_address)
+        token_contract = Contract.get_contract(
+            TokenType.IbetStraightBond, self.token_address
+        )
 
         # Fetch
         owner_address = Contract.call_function(
@@ -239,7 +245,9 @@ class BondToken(TokenBase):
         """
 
         # IbetStraightBond コントラクトへの接続
-        token_contract = Contract.get_contract("IbetStraightBond", token_address)
+        token_contract = Contract.get_contract(
+            TokenType.IbetStraightBond, token_address
+        )
 
         # Contractから情報を取得する
         owner_address = Contract.call_function(
@@ -361,15 +369,13 @@ class BondToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         bondtoken = BondToken()
         bondtoken.token_address = token_address
-        bondtoken.token_template = "IbetStraightBond"
+        bondtoken.token_template = TokenType.IbetStraightBond
         bondtoken.owner_address = owner_address
         bondtoken.company_name = company_name
         bondtoken.rsa_publickey = rsa_publickey
@@ -457,7 +463,7 @@ class ShareToken(TokenBase):
 
         :return: ShareToken
         """
-        token_contract = Contract.get_contract("IbetShare", self.token_address)
+        token_contract = Contract.get_contract(TokenType.IbetShare, self.token_address)
 
         # Fetch
         owner_address = Contract.call_function(
@@ -514,7 +520,7 @@ class ShareToken(TokenBase):
         """
 
         # IbetShare コントラクトへの接続
-        token_contract = Contract.get_contract("IbetShare", token_address)
+        token_contract = Contract.get_contract(TokenType.IbetShare, token_address)
         owner_address = Contract.call_function(
             token_contract, "owner", (), ZERO_ADDRESS
         )
@@ -556,15 +562,13 @@ class ShareToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         sharetoken = ShareToken()
         sharetoken.token_address = token_address
-        sharetoken.token_template = "IbetShare"
+        sharetoken.token_template = TokenType.IbetShare
         sharetoken.owner_address = owner_address
         sharetoken.company_name = company_name
         sharetoken.rsa_publickey = rsa_publickey
@@ -640,7 +644,9 @@ class MembershipToken(TokenBase):
 
         :return: None
         """
-        token_contract = Contract.get_contract("IbetMembership", self.token_address)
+        token_contract = Contract.get_contract(
+            TokenType.IbetMembership, self.token_address
+        )
 
         # Fetch
         owner_address = Contract.call_function(
@@ -679,7 +685,7 @@ class MembershipToken(TokenBase):
         """
 
         # Token-Contractへの接続
-        token_contract = Contract.get_contract("IbetMembership", token_address)
+        token_contract = Contract.get_contract(TokenType.IbetMembership, token_address)
 
         # Token-Contractから情報を取得する
         owner_address = Contract.call_function(
@@ -716,15 +722,13 @@ class MembershipToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         membershiptoken = MembershipToken()
         membershiptoken.token_address = token_address
-        membershiptoken.token_template = "IbetMembership"
+        membershiptoken.token_template = TokenType.IbetMembership
         membershiptoken.owner_address = owner_address
         membershiptoken.company_name = company_name
         membershiptoken.rsa_publickey = rsa_publickey
@@ -795,7 +799,7 @@ class CouponToken(TokenBase):
 
         :return: None
         """
-        token_contract = Contract.get_contract("IbetCoupon", self.token_address)
+        token_contract = Contract.get_contract(TokenType.IbetCoupon, self.token_address)
 
         # Fetch
         owner_address = Contract.call_function(
@@ -834,7 +838,7 @@ class CouponToken(TokenBase):
         """
 
         # Token-Contractへの接続
-        token_contract = Contract.get_contract("IbetCoupon", token_address)
+        token_contract = Contract.get_contract(TokenType.IbetCoupon, token_address)
 
         # Token-Contractから情報を取得する
         owner_address = Contract.call_function(
@@ -871,15 +875,13 @@ class CouponToken(TokenBase):
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = (
-            session.query(Listing)
-            .filter(Listing.token_address == token_address)
-            .first()
-        )
+        listed_token = session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        ).first()
 
         coupontoken = CouponToken()
         coupontoken.token_address = token_address
-        coupontoken.token_template = "IbetCoupon"
+        coupontoken.token_template = TokenType.IbetCoupon
         coupontoken.owner_address = owner_address
         coupontoken.company_name = company_name
         coupontoken.rsa_publickey = rsa_publickey

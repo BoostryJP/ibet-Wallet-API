@@ -17,13 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Query
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder
+from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
 
 ############################
 # COMMON
@@ -33,8 +33,6 @@ from app.model.schema.base import ResultSet, SortOrder
 ############################
 # REQUEST
 ############################
-
-
 class CouponTokensSortItem(str, Enum):
     token_address = "token_address"
     owner_address = "owner_address"
@@ -51,51 +49,51 @@ class CouponTokensSortItem(str, Enum):
 
 @dataclass
 class ListAllCouponTokensQuery:
-    offset: Optional[int] = Query(default=None, description="start position", ge=0)
-    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
-    owner_address: Optional[str] = Query(default=None, description="issuer address")
-    name: Optional[str] = Query(default=None, description="token name")
-    symbol: Optional[str] = Query(default=None, description="token symbol")
-    company_name: Optional[str] = Query(default=None, description="company name")
-    tradable_exchange: Optional[str] = Query(
-        default=None, description="tradable exchange address"
-    )
-    status: Optional[bool] = Query(default=None, description="token status")
-    transferable: Optional[bool] = Query(
-        default=None, description="transferable status"
-    )
-    initial_offering_status: Optional[bool] = Query(
-        default=None, description="offering status"
-    )
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    owner_address: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="issuer address")
+    ] = None
+    name: Annotated[Optional[str], Query(description="token name")] = None
+    symbol: Annotated[Optional[str], Query(description="token symbol")] = None
+    company_name: Annotated[Optional[str], Query(description="company name")] = None
+    tradable_exchange: Annotated[
+        Optional[ValidatedEthereumAddress], Query(description="tradable exchange")
+    ] = None
+    status: Annotated[Optional[bool], Query(description="token status")] = None
+    transferable: Annotated[
+        Optional[bool], Query(description="transferable status")
+    ] = None
+    initial_offering_status: Annotated[
+        Optional[bool], Query(description="offering status")
+    ] = None
 
-    sort_item: Optional[CouponTokensSortItem] = Query(
-        default=CouponTokensSortItem.created, description="sort item"
-    )
-    sort_order: Optional[SortOrder] = Query(
-        default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)"
-    )
+    sort_item: Annotated[
+        Optional[CouponTokensSortItem], Query(description="sort item")
+    ] = CouponTokensSortItem.created
+    sort_order: Annotated[
+        Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
+    ] = SortOrder.ASC
 
 
 ############################
 # RESPONSE
 ############################
-
-
 class CouponImage(BaseModel):
     id: int
     url: str
 
 
 class RetrieveCouponTokenResponse(BaseModel):
-    token_address: str
-    token_template: str = Field(example="IbetCoupon")
-    owner_address: str = Field(description="issuer address")
+    token_address: ValidatedEthereumAddress
+    token_template: str = Field(examples=["IbetCoupon"])
+    owner_address: ValidatedEthereumAddress = Field(description="issuer address")
     company_name: str
     rsa_publickey: str
     name: str = Field(description="token name")
     symbol: str = Field(description="token symbol")
     total_supply: int
-    tradable_exchange: str
+    tradable_exchange: ValidatedEthereumAddress
     contact_information: str
     privacy_policy: str
     status: bool
@@ -117,4 +115,4 @@ class ListAllCouponTokensResponse(BaseModel):
 
 class ListAllCouponTokenAddressesResponse(BaseModel):
     result_set: ResultSet
-    address_list: list[str]
+    address_list: list[ValidatedEthereumAddress]

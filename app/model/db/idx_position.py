@@ -18,7 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Optional
 
-from sqlalchemy import BigInteger, Column, String
+from sqlalchemy import BigInteger, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
@@ -29,17 +30,17 @@ class IDXPosition(Base):
     __tablename__ = "position"
 
     # Token Address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Account Address
-    account_address = Column(String(42), primary_key=True)
+    account_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Balance
-    balance = Column(BigInteger)
+    balance: Mapped[int | None] = mapped_column(BigInteger)
     # Exchange Balance
-    exchange_balance = Column(BigInteger)
+    exchange_balance: Mapped[int | None] = mapped_column(BigInteger)
     # Commitment Volume on Exchange
-    exchange_commitment = Column(BigInteger)
+    exchange_commitment: Mapped[int | None] = mapped_column(BigInteger)
     # Pending Transfer
-    pending_transfer = Column(BigInteger)
+    pending_transfer: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "token_address": str,
@@ -112,11 +113,11 @@ class IDXPositionBondBlockNumber(Base):
     __tablename__ = "idx_position_bond_block_number"
 
     # target token address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # target exchange address
-    exchange_address = Column(String(42), primary_key=True)
+    exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "token_address": str,
@@ -133,11 +134,11 @@ class IDXPositionShareBlockNumber(Base):
     __tablename__ = "idx_position_share_block_number"
 
     # target token address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # target exchange address
-    exchange_address = Column(String(42), primary_key=True)
+    exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "token_address": str,
@@ -154,11 +155,11 @@ class IDXPositionCouponBlockNumber(Base):
     __tablename__ = "idx_position_coupon_block_number"
 
     # target token address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # target exchange address
-    exchange_address = Column(String(42), primary_key=True)
+    exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "token_address": str,
@@ -175,11 +176,11 @@ class IDXPositionMembershipBlockNumber(Base):
     __tablename__ = "idx_position_membership_block_number"
 
     # target token address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # target exchange address
-    exchange_address = Column(String(42), primary_key=True)
+    exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
-    latest_block_number = Column(BigInteger)
+    latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
     FIELDS = {
         "token_address": str,
@@ -196,13 +197,13 @@ class IDXLockedPosition(Base):
     __tablename__ = "locked_position"
 
     # Token Address
-    token_address = Column(String(42), primary_key=True)
+    token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Lock Address
-    lock_address = Column(String(42), primary_key=True)
+    lock_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Account Address
-    account_address = Column(String(42), primary_key=True)
+    account_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Locked Amount
-    value = Column(BigInteger, nullable=False)
+    value: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     FIELDS = {
         "token_address": str,

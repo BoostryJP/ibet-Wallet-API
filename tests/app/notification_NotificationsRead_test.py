@@ -20,6 +20,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import TZ
@@ -134,6 +135,7 @@ class TestNotificationsRead:
     ):
         self._insert_test_data(session)
 
+        # Request target API
         resp = client.post(
             self.apiurl,
             json={
@@ -142,19 +144,21 @@ class TestNotificationsRead:
             },
         )
 
-        notification_1_list = (
-            session.query(Notification)
-            .filter(Notification.address == TestNotificationsRead.address_1)
-            .all()
-        )
-
-        notification_2_list = (
-            session.query(Notification)
-            .filter(Notification.address == TestNotificationsRead.address_2)
-            .all()
-        )
-
+        # Assertion
         assert resp.status_code == 200
+
+        notification_1_list = session.scalars(
+            select(Notification).where(
+                Notification.address == TestNotificationsRead.address_1
+            )
+        ).all()
+
+        notification_2_list = session.scalars(
+            select(Notification).where(
+                Notification.address == TestNotificationsRead.address_2
+            )
+        ).all()
+
         assert len(notification_1_list) == 4
         assert len(notification_2_list) == 1
 
@@ -179,8 +183,7 @@ class TestNotificationsRead:
             },
         )
 
-        notification_list = session.query(Notification).all()
-
+        notification_list = session.scalars(select(Notification)).all()
         assert resp.status_code == 200
         assert len(notification_list) == 5
 
@@ -220,19 +223,22 @@ class TestNotificationsRead:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["body", "address"],
-                    "msg": "address is not a valid address",
                     "type": "value_error",
+                    "loc": ["body", "address"],
+                    "msg": "Value error, Value must be of string",
+                    "input": 721457446580647751014191829380889690493307935711,
+                    "ctx": {"error": {}},
                 },
                 {
+                    "type": "bool_parsing",
                     "loc": ["body", "is_read"],
-                    "msg": "value could not be parsed to a boolean",
-                    "type": "type_error.bool",
+                    "msg": "Input should be a valid boolean, unable to interpret input",
+                    "input": "invalid_value",
                 },
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜エラー系2＞
@@ -251,19 +257,22 @@ class TestNotificationsRead:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["body", "address"],
-                    "msg": "address is not a valid address",
                     "type": "value_error",
+                    "loc": ["body", "address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "",
+                    "ctx": {"error": {}},
                 },
                 {
+                    "type": "bool_type",
                     "loc": ["body", "is_read"],
-                    "msg": "none is not an allowed value",
-                    "type": "type_error.none.not_allowed",
+                    "msg": "Input should be a valid boolean",
+                    "input": None,
                 },
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜エラー系3＞
@@ -282,12 +291,14 @@ class TestNotificationsRead:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["body", "address"],
-                    "msg": "address is not a valid address",
                     "type": "value_error",
+                    "loc": ["body", "address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x123",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }

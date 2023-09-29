@@ -19,11 +19,11 @@ SPDX-License-Identifier: Apache-2.0
 import logging
 import time
 from datetime import datetime
-from typing import Optional
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -192,11 +192,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -270,11 +268,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -350,11 +346,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -449,11 +443,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 2
 
         _transfer_approval = _transfer_approval_list[0]
@@ -536,11 +528,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
 
     # <Normal_1_6>
@@ -589,11 +579,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
 
     # <Normal_2_1>
@@ -658,11 +646,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -755,11 +741,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -849,11 +833,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -948,11 +930,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 1
 
         _transfer_approval = _transfer_approval_list[0]
@@ -1032,17 +1012,17 @@ class TestProcessor:
         processor.initial_sync()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert (
             idx_transfer_approval_block_number.latest_block_number
@@ -1063,17 +1043,17 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert (
             idx_transfer_approval_block_number.latest_block_number
@@ -1127,16 +1107,16 @@ class TestProcessor:
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert idx_transfer_approval_block_number is None
 
@@ -1153,17 +1133,17 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert idx_transfer_approval_block_number is None
 
@@ -1214,16 +1194,16 @@ class TestProcessor:
         ), pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert idx_transfer_approval_block_number is None
 
@@ -1241,17 +1221,17 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert idx_transfer_approval_block_number is None
 
@@ -1302,16 +1282,16 @@ class TestProcessor:
             processor.initial_sync()
 
         # Assertion
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert idx_transfer_approval_block_number is None
 
@@ -1328,17 +1308,17 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_approval_list = (
-            session.query(IDXTransferApproval)
-            .order_by(IDXTransferApproval.created)
-            .all()
-        )
+        _transfer_approval_list = session.scalars(
+            select(IDXTransferApproval).order_by(IDXTransferApproval.created)
+        ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_approval_block_number: Optional[IDXTransferApprovalBlockNumber] = (
-            session.query(IDXTransferApprovalBlockNumber)
-            .filter(IDXTransferApprovalBlockNumber.token_address == token.address)
-            .first()
+        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+            session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token.address)
+                .limit(1)
+            ).first()
         )
         assert idx_transfer_approval_block_number is None
 

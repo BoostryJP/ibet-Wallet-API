@@ -1712,7 +1712,15 @@ class TestPositionStraightBondLockEvent:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid account_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "account_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "invalid",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # <Error_2>
@@ -1735,16 +1743,18 @@ class TestPositionStraightBondLockEvent:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "offset"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "limit"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1770,14 +1780,18 @@ class TestPositionStraightBondLockEvent:
             "code": 88,
             "description": [
                 {
+                    "input": "test",
                     "loc": ["query", "offset"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 },
                 {
+                    "input": "test",
                     "loc": ["query", "limit"],
-                    "msg": "value is not a valid integer",
-                    "type": "type_error.integer",
+                    "msg": "Input should be a valid integer, unable to parse "
+                    "string as an integer",
+                    "type": "int_parsing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -1790,7 +1804,7 @@ class TestPositionStraightBondLockEvent:
 
         # Request target API
         resp = client.get(
-            self.apiurl_base.format(account_address="some_address"),
+            self.apiurl_base.format(account_address=self.account_1),
         )
 
         # Assertion
@@ -1798,5 +1812,5 @@ class TestPositionStraightBondLockEvent:
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: GET, url: /Position/some_address/StraightBond/Lock/Event",
+            "description": "method: GET, url: /Position/0x15d34aaf54267dB7d7c367839aAf71A00A2C6A61/StraightBond/Lock/Event",
         }

@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass
 from typing import List, Type
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -41,11 +41,15 @@ from app.model.blockchain import (
     ShareToken,
     TokenClassTypes,
 )
-from app.model.db import IDXBondToken as BondTokenModel
-from app.model.db import IDXCouponToken as CouponTokenModel
-from app.model.db import IDXMembershipToken as MembershipTokenModel
-from app.model.db import IDXShareToken as ShareTokenModel
-from app.model.db import IDXTokenInstance, Listing
+from app.model.db import (
+    IDXBondToken as BondTokenModel,
+    IDXCouponToken as CouponTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXShareToken as ShareTokenModel,
+    IDXTokenInstance,
+    Listing,
+)
+from app.model.schema.base import TokenType
 
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)
@@ -70,7 +74,7 @@ class Processor:
         if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetStraightBond",
+                    template=TokenType.IbetStraightBond,
                     token_class=BondToken,
                     token_model=BondTokenModel,
                 )
@@ -78,7 +82,7 @@ class Processor:
         if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetShare",
+                    template=TokenType.IbetShare,
                     token_class=ShareToken,
                     token_model=ShareTokenModel,
                 )
@@ -86,7 +90,7 @@ class Processor:
         if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetMembership",
+                    template=TokenType.IbetMembership,
                     token_class=MembershipToken,
                     token_model=MembershipTokenModel,
                 )
@@ -94,7 +98,7 @@ class Processor:
         if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetCoupon",
+                    template=TokenType.IbetCoupon,
                     token_class=CouponToken,
                     token_model=CouponTokenModel,
                 )
@@ -121,15 +125,12 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens = (
-                local_session.query(token_type.token_model)
-                .join(
+            available_tokens = local_session.scalars(
+                select(token_type.token_model).join(
                     Listing,
                     token_type.token_model.token_address == Listing.token_address,
                 )
-                .filter(Listing.is_public == True)
-                .all()
-            )
+            ).all()
 
             for available_token in available_tokens:
                 try:

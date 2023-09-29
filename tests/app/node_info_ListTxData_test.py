@@ -302,22 +302,25 @@ class TestListTxData:
             "message": "Invalid Parameter",
             "description": [
                 {
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "offset"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
-                    "ctx": {"limit_value": 0},
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
                 {
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "limit"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
-                    "ctx": {"limit_value": 0},
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
                 {
+                    "ctx": {"ge": 0},
+                    "input": "-1",
                     "loc": ["query", "block_number"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
-                    "ctx": {"limit_value": 0},
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
             ],
         }
@@ -338,14 +341,18 @@ class TestListTxData:
             "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["from_address"],
-                    "msg": "from_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "from_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "abcd",
+                    "ctx": {"error": {}},
                 },
                 {
-                    "loc": ["to_address"],
-                    "msg": "to_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "to_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "abcd",
+                    "ctx": {"error": {}},
                 },
             ],
         }

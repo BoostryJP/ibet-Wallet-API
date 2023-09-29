@@ -17,29 +17,28 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path
-from sqlalchemy import desc
+from sqlalchemy import desc, func, select, update
 
 from app import log
 from app.database import DBSession
 from app.errors import DataNotExistsError
 from app.model.db import Notification
 from app.model.schema import (
-    GenericSuccessResponse,
     NotificationReadRequest,
     NotificationsCountQuery,
     NotificationsCountResponse,
     NotificationsQuery,
     NotificationsResponse,
     NotificationUpdateResponse,
-    SuccessResponse,
     UpdateNotificationRequest,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
@@ -69,37 +68,37 @@ def list_all_notifications(
     offset = request_query.offset
     limit = request_query.limit
 
-    query = session.query(Notification)
-    total = query.count()
+    stmt = select(Notification)
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if address is not None:
-        query = query.filter(Notification.address == to_checksum_address(address))
+        stmt = stmt.where(Notification.address == to_checksum_address(address))
     if notification_type is not None:
-        query = query.filter(Notification.notification_type == notification_type)
+        stmt = stmt.where(Notification.notification_type == notification_type)
     if priority is not None:
-        query = query.filter(Notification.priority == priority)
-    count = query.count()
+        stmt = stmt.where(Notification.priority == priority)
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Sort
     sort_attr = getattr(Notification, sort_item, None)
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(Notification.created)
+        stmt = stmt.order_by(Notification.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     sort_id = 0
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
         sort_id = offset
 
-    _notification_list = query.all()
+    _notification_list: Sequence[Notification] = session.scalars(stmt).all()
 
     notifications = []
     for _notification in _notification_list:
@@ -139,8 +138,10 @@ def read_all_notifications(
     address = to_checksum_address(data.address)
 
     # Update Data
-    session.query(Notification).filter(Notification.address == address).update(
-        {"is_read": data.is_read}
+    session.execute(
+        update(Notification)
+        .where(Notification.address == address)
+        .values(is_read=data.is_read)
     )
     session.commit()
 
@@ -165,12 +166,11 @@ def count_notifications(
     address = to_checksum_address(request_query.address)
 
     # 未読数を取得
-    count = (
-        session.query(Notification)
-        .filter(Notification.address == address)
-        .filter(Notification.is_read == False)
-        .filter(Notification.is_deleted == False)
-        .count()
+    count = session.scalar(
+        select(func.count())
+        .where(Notification.address == address)
+        .where(Notification.is_read == False)
+        .where(Notification.is_deleted == False)
     )
 
     return json_response(
@@ -199,11 +199,11 @@ def update_notification(
     Endpoint: /Notifications/{id}
     """
     # Update Notification
-    notification: Optional[Notification] = (
-        session.query(Notification)
-        .filter(Notification.notification_id == notification_id)
-        .first()
-    )
+    notification: Optional[Notification] = session.scalars(
+        select(Notification)
+        .where(Notification.notification_id == notification_id)
+        .limit(1)
+    ).first()
     if notification is None:
         raise DataNotExistsError("notification not found")
 
@@ -235,11 +235,11 @@ def delete_notification(
     notification_id: str = Path(description="Notification id"),
 ):
     # Get Notification
-    _notification = (
-        session.query(Notification)
-        .filter(Notification.notification_id == notification_id)
-        .first()
-    )
+    _notification = session.scalars(
+        select(Notification)
+        .where(Notification.notification_id == notification_id)
+        .limit(1)
+    ).first()
     if _notification is None:
         raise DataNotExistsError("id: %s" % notification_id)
 

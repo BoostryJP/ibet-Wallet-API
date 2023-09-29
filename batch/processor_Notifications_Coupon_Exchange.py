@@ -22,9 +22,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -41,6 +42,7 @@ from app.config import (
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import Notification, NotificationBlockNumber, NotificationType
+from app.model.schema.base import TokenType
 from app.utils.company_list import CompanyList
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.misc import wait_all_futures
@@ -67,7 +69,7 @@ cp_exchange_contract = Contract.get_contract(
 list_contract = Contract.get_contract(
     contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
-token_list = TokenList(list_contract, "IbetCoupon")
+token_list = TokenList(list_contract, TokenType.IbetCoupon)
 
 
 # Watcher
@@ -127,10 +129,13 @@ class Watcher:
                 to_block_number = latest_block_number
 
             # Get event logs
-            _event = getattr(self.contract.events, self.filter_name)
-            entries = _event.get_logs(
-                fromBlock=from_block_number, toBlock=to_block_number
-            )
+            try:
+                _event = getattr(self.contract.events, self.filter_name)
+                entries = _event.get_logs(
+                    fromBlock=from_block_number, toBlock=to_block_number
+                )
+            except ABIEventFunctionNotFound:
+                entries = []
 
             # Register notifications
             if len(entries) > 0:
@@ -164,12 +169,12 @@ class Watcher:
         db_session: Session, contract_address: str, notification_type: str
     ):
         """Get latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = (
-            db_session.query(NotificationBlockNumber)
-            .filter(NotificationBlockNumber.notification_type == notification_type)
-            .filter(NotificationBlockNumber.contract_address == contract_address)
-            .first()
-        )
+        notification_block_number: NotificationBlockNumber | None = db_session.scalars(
+            select(NotificationBlockNumber)
+            .where(NotificationBlockNumber.notification_type == notification_type)
+            .where(NotificationBlockNumber.contract_address == contract_address)
+            .limit(1)
+        ).first()
         if notification_block_number is None:
             return -1
         else:
@@ -183,12 +188,12 @@ class Watcher:
         block_number: int,
     ):
         """Set latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = (
-            db_session.query(NotificationBlockNumber)
-            .filter(NotificationBlockNumber.notification_type == notification_type)
-            .filter(NotificationBlockNumber.contract_address == contract_address)
-            .first()
-        )
+        notification_block_number: NotificationBlockNumber | None = db_session.scalars(
+            select(NotificationBlockNumber)
+            .where(NotificationBlockNumber.notification_type == notification_type)
+            .where(NotificationBlockNumber.contract_address == contract_address)
+            .limit(1)
+        ).first()
         if notification_block_number is None:
             notification_block_number = NotificationBlockNumber()
         notification_block_number.notification_type = notification_type
@@ -223,7 +228,7 @@ class WatchCouponNewOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -263,7 +268,7 @@ class WatchCouponCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -306,7 +311,7 @@ class WatchCouponForceCancelOrder(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -346,7 +351,7 @@ class WatchCouponBuyAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -386,7 +391,7 @@ class WatchCouponSellAgreement(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -426,7 +431,7 @@ class WatchCouponBuySettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -469,7 +474,7 @@ class WatchCouponSellSettlementOK(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -509,7 +514,7 @@ class WatchCouponBuySettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()
@@ -552,7 +557,7 @@ class WatchCouponSellSettlementNG(Watcher):
                 "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon",
+                "token_type": TokenType.IbetCoupon,
             }
 
             notification = Notification()

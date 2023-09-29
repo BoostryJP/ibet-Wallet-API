@@ -23,6 +23,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -265,9 +266,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 2
 
         block1 = web3.eth.get_block(block_number_1)
@@ -296,11 +297,11 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_2
 
     # <Normal_1_2>
@@ -339,16 +340,16 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 0
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -423,9 +424,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 4
 
         block = web3.eth.get_block(block_number_1)
@@ -480,11 +481,11 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_4
 
     # <Normal_3>
@@ -537,9 +538,9 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 3
 
         block = web3.eth.get_block(bond_block_number)
@@ -581,27 +582,27 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == bond_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == bond_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == latest_block_number
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(
                 IDXTransferBlockNumber.contract_address == membership_token["address"]
             )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == latest_block_number
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == coupon_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == coupon_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == latest_block_number
 
     # <Normal_4_1>
@@ -639,7 +640,9 @@ class TestProcessor:
         # Execute batch processing
         processor.sync_new_logs()
 
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
         block = web3.eth.get_block(block_number_1)
@@ -655,11 +658,11 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_1
 
         """
@@ -671,14 +674,16 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_1
 
         assert 2 == caplog.record_tuples.count(
@@ -726,7 +731,9 @@ class TestProcessor:
         # Execute batch processing
         processor.sync_new_logs()
 
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
         block = web3.eth.get_block(block_number_1)
@@ -742,11 +749,11 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_1
 
         """
@@ -761,14 +768,16 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_2
 
         assert 2 == caplog.record_tuples.count(
@@ -816,7 +825,9 @@ class TestProcessor:
         # Execute batch processing
         processor.sync_new_logs()
 
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
         block = web3.eth.get_block(block_number_1)
@@ -832,11 +843,11 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_1
 
         idx_block_number.latest_block_number += 999999
@@ -857,14 +868,16 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_2
 
         assert 2 == caplog.record_tuples.count(
@@ -926,14 +939,16 @@ class TestProcessor:
         # Assertion
         session.rollback()
 
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number_1
 
         assert 1 == caplog.record_tuples.count(
@@ -972,16 +987,16 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 0
 
-        idx_block_number: IDXTransferBlockNumber = (
-            session.query(IDXTransferBlockNumber)
-            .filter(IDXTransferBlockNumber.contract_address == share_token["address"])
-            .first()
-        )
+        idx_block_number: IDXTransferBlockNumber = session.scalars(
+            select(IDXTransferBlockNumber)
+            .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .limit(1)
+        ).first()
         assert idx_block_number.latest_block_number == block_number
 
         assert 2 == caplog.record_tuples.count(
@@ -1019,13 +1034,14 @@ class TestProcessor:
             share_token,
             100000,
         )
-        block_number = web3.eth.block_number
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 0
 
     ###########################################################################
@@ -1072,9 +1088,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 0
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
@@ -1111,9 +1127,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 0
 
     # <Error_2_1>: ServiceUnavailable occurs
@@ -1150,9 +1166,9 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
-        idx_transfer_list = (
-            session.query(IDXTransfer).order_by(IDXTransfer.created).all()
-        )
+        idx_transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(idx_transfer_list) == 0
 
     # <Error_2_2>: SQLAlchemyError occurs
@@ -1188,5 +1204,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
-        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        _transfer_list = session.scalars(
+            select(IDXTransfer).order_by(IDXTransfer.created)
+        ).all()
         assert len(_transfer_list) == 0

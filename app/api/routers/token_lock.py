@@ -17,10 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import timedelta, timezone
+from typing import Sequence
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import desc
+from sqlalchemy import desc, func, select
 
 from app import log
 from app.config import TZ
@@ -28,15 +29,14 @@ from app.database import DBSession
 from app.errors import InvalidParameterError
 from app.model.db import IDXLockedPosition
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllTokenLockQuery,
     ListAllTokenLockResponse,
     RetrieveTokenLockCountQuery,
     RetrieveTokenLockCountResponse,
-    SuccessResponse,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
@@ -63,37 +63,37 @@ def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Dep
     sort_item = request_query.sort_item
     sort_order = request_query.sort_order  # default: asc
 
-    query = session.query(IDXLockedPosition).filter(IDXLockedPosition.value > 0)
+    stmt = select(IDXLockedPosition).where(IDXLockedPosition.value > 0)
     if len(token_address_list) > 0:
-        query = query.filter(IDXLockedPosition.token_address.in_(token_address_list))
-    total = query.count()
+        stmt = stmt.where(IDXLockedPosition.token_address.in_(token_address_list))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     if account_address is not None:
-        query = query.filter(IDXLockedPosition.account_address == account_address)
+        stmt = stmt.where(IDXLockedPosition.account_address == account_address)
     if lock_address is not None:
-        query = query.filter(IDXLockedPosition.lock_address == lock_address)
+        stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     sort_attr = getattr(IDXLockedPosition, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
 
     # NOTE: Set secondary sort for consistent results
     if sort_item != "token_address":
-        query = query.order_by(IDXLockedPosition.token_address)
+        stmt = stmt.order_by(IDXLockedPosition.token_address)
     else:
-        query = query.order_by(IDXLockedPosition.created)
+        stmt = stmt.order_by(IDXLockedPosition.created)
 
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _locked_list: list[IDXLockedPosition] = query.all()
+    _locked_list: Sequence[IDXLockedPosition] = session.scalars(stmt).all()
 
     data = {
         "result_set": {
@@ -121,16 +121,16 @@ def retrieve_lock_count(
     lock_address = request_query.lock_address
     account_address = request_query.account_address
 
-    query = session.query(IDXLockedPosition).filter(IDXLockedPosition.value > 0)
+    stmt = select(IDXLockedPosition).where(IDXLockedPosition.value > 0)
     if len(token_address_list) > 0:
-        query = query.filter(IDXLockedPosition.token_address.in_(token_address_list))
+        stmt = stmt.where(IDXLockedPosition.token_address.in_(token_address_list))
 
     if account_address is not None:
-        query = query.filter(IDXLockedPosition.account_address == account_address)
+        stmt = stmt.where(IDXLockedPosition.account_address == account_address)
     if lock_address is not None:
-        query = query.filter(IDXLockedPosition.lock_address == lock_address)
+        stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-    _count = query.count()
+    _count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     data = {"count": _count}
     return json_response({**SuccessResponse.default(), "data": data})

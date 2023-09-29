@@ -18,11 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
-from typing import List, Optional
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -151,7 +151,7 @@ class TestProcessor:
         processor.process()
 
         # assertion
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
         assert len(_token_list) == 0
 
     # <Normal_2>
@@ -312,11 +312,11 @@ class TestProcessor:
 
         # assertion
         for _expect_dict in _token_expected_list:
-            token_list_item: IDXTokenListItem = (
-                session.query(IDXTokenListItem)
-                .filter(IDXTokenListItem.token_address == _expect_dict["token_address"])
-                .first()
-            )
+            token_list_item: IDXTokenListItem = session.scalars(
+                select(IDXTokenListItem)
+                .where(IDXTokenListItem.token_address == _expect_dict["token_address"])
+                .limit(1)
+            ).first()
 
             assert token_list_item.token_template == _expect_dict["token_template"]
             assert token_list_item.owner_address == _expect_dict["owner_address"]
@@ -368,9 +368,9 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list_block_number: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber)
         ).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
@@ -391,9 +391,9 @@ class TestProcessor:
         # Assertion
         session.rollback()
         # Assertion
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list_block_number: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
@@ -429,8 +429,8 @@ class TestProcessor:
         )
         self.listing_token(token["address"], session)
 
-        _token_list_block_number_bf: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list_block_number_bf: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
@@ -441,9 +441,9 @@ class TestProcessor:
 
         session.rollback()
         # Assertion
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -457,8 +457,8 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         session.rollback()
-        _token_list_block_number_bf: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list_block_number_bf: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
 
         # Expect that process() raises ServiceUnavailable.
@@ -470,9 +470,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -517,9 +517,9 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -542,9 +542,9 @@ class TestProcessor:
 
         # Assertion
         session.rollback()
-        _token_list: List[IDXTokenListItem] = session.query(IDXTokenListItem).all()
-        _token_list_block_number_af: Optional[IDXTokenListBlockNumber] = session.query(
-            IDXTokenListBlockNumber
+        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
+            select(IDXTokenListBlockNumber).limit(1)
         ).first()
         assert len(_token_list) == 0
         assert (

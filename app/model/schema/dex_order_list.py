@@ -16,14 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Generic, Optional, TypeVar
+from typing import Annotated, Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
-from pydantic.generics import GenericModel
-from web3 import Web3
 
+from app.model.schema.base import ValidatedEthereumAddress
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
@@ -35,32 +34,23 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 ############################
 # REQUEST
 ############################
-
-
 @dataclass
 class ListAllOrderListQuery:
-    account_address_list: list[str] = Query(description="Account address list")
-    include_canceled_items: Optional[bool] = Query(
-        default=None,
-        description="Whether to include canceled orders or canceled agreements.",
-    )
-
-    @validator("account_address_list")
-    def account_address_list_is_valid_address(cls, v):
-        for address in v:
-            if address is not None:
-                if not Web3.is_address(address):
-                    raise ValueError("account_address_list has not a valid address")
-        return v
+    account_address_list: Annotated[
+        list[ValidatedEthereumAddress],
+        Query(default_factory=list, description="Account address list"),
+    ]
+    include_canceled_items: Annotated[
+        Optional[bool],
+        Query(description="Whether to include canceled orders or canceled agreements."),
+    ] = None
 
 
 ############################
 # RESPONSE
 ############################
-
-
 class TokenAddress(BaseModel):
-    token_address: str
+    token_address: ValidatedEthereumAddress
 
 
 class Order(BaseModel):
@@ -81,15 +71,14 @@ TokenModel = TypeVar(
 )
 
 
-class OrderSet(GenericModel, Generic[TokenModel]):
+class OrderSet(BaseModel, Generic[TokenModel]):
     token: TokenModel
     order: Order
     sort_id: int
 
 
 class Agreement(BaseModel):
-    # id: int
-    exchange_address: str = Field(description="exchange address")
+    exchange_address: ValidatedEthereumAddress = Field(description="exchange address")
     order_id: int
     agreement_id: int
     amount: int
@@ -99,7 +88,7 @@ class Agreement(BaseModel):
     agreement_timestamp: str
 
 
-class AgreementSet(GenericModel, Generic[TokenModel]):
+class AgreementSet(BaseModel, Generic[TokenModel]):
     token: TokenModel
     agreement: Agreement
     sort_id: int

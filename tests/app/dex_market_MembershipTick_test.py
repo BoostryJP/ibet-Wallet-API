@@ -20,8 +20,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import IDXAgreement as Agreement
-from app.model.db import IDXOrder as Order
+from app.model.db import IDXAgreement as Agreement, IDXOrder as Order
 
 
 class TestDEXMarketMembershipTick:
@@ -166,33 +165,9 @@ class TestDEXMarketMembershipTick:
     ###########################################################################
 
     # Error_1
-    # field required
-    # Invalid Parameter
-    def test_error_1(self, client: TestClient, session: Session):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
-            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        )
-
-        resp = client.get(self.apiurl, params={})
-
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "description": [
-                {
-                    "loc": ["query", "address_list"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
-                }
-            ],
-            "message": "Invalid Parameter",
-        }
-
-    # Error_2
     # token_address is not a valid address
     # Invalid Parameter
-    def test_error_2(self, client: TestClient, session: Session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -205,19 +180,21 @@ class TestDEXMarketMembershipTick:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["address_list"],
-                    "msg": "address_list has not a valid address",
                     "type": "value_error",
+                    "loc": ["query", "address_list", 0],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": token_address,
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
-    # Error_3
+    # Error_2
     # Method Not Allowed
-    def test_error_4(self, client: TestClient, session: Session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -234,9 +211,9 @@ class TestDEXMarketMembershipTick:
             "description": "method: POST, url: /DEX/Market/Tick/Membership",
         }
 
-    # Error_4_1
+    # Error_3_1
     # Membership token is not enabled
-    def test_error_5(self, client: TestClient, session: Session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = False
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -253,9 +230,9 @@ class TestDEXMarketMembershipTick:
             "description": "method: GET, url: /DEX/Market/Tick/Membership",
         }
 
-    # Error_4_2
+    # Error_3_2
     # Exchange address is not set
-    def test_error_6(self, client: TestClient, session: Session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
 

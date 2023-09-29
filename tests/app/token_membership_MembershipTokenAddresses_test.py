@@ -481,13 +481,13 @@ class TestTokenMembershipTokenAddresses:
 
         not_matched_key_value = {
             "name": "not_matched_value",
-            "owner_address": "not_matched_value",
+            "owner_address": "0x0000000000000000000000000000000000000000",
             "company_name": "not_matched_value",
             "symbol": "not_matched_value",
             "transferable": False,
             "status": False,
             "initial_offering_status": True,
-            "tradable_exchange": "not_matched_value",
+            "tradable_exchange": "0x0000000000000000000000000000000000000000",
         }
 
         for key, value in not_matched_key_value.items():
@@ -681,9 +681,11 @@ class TestTokenMembershipTokenAddresses:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value could not be parsed to a boolean",
-                        "type": "type_error.bool",
+                        "msg": "Input should be a valid boolean, unable to interpret "
+                        "input",
+                        "type": "bool_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",
@@ -698,9 +700,11 @@ class TestTokenMembershipTokenAddresses:
                 "code": 88,
                 "description": [
                     {
+                        "input": "invalid_param",
                         "loc": ["query", key],
-                        "msg": "value is not a valid integer",
-                        "type": "type_error.integer",
+                        "msg": "Input should be a valid integer, unable to parse "
+                        "string as an integer",
+                        "type": "int_parsing",
                     }
                 ],
                 "message": "Invalid Parameter",

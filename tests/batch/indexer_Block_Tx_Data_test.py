@@ -17,10 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
+from typing import Sequence
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -84,17 +86,21 @@ class TestProcessor:
         processor.process()
 
         # Assertion
-        indexed_block = (
-            session.query(IDXBlockDataBlockNumber)
-            .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-            .first()
-        )
+        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+            select(IDXBlockDataBlockNumber)
+            .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+            .limit(1)
+        ).first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
+        block_data: Sequence[IDXBlockData] = session.scalars(
+            select(IDXBlockData).order_by(IDXBlockData.number)
+        ).all()
         assert len(block_data) == 0
 
-        tx_data = session.query(IDXTxData).order_by(IDXTxData.block_number).all()
+        tx_data: Sequence[IDXTxData] = session.scalars(
+            select(IDXTxData).order_by(IDXTxData.block_number)
+        ).all()
         assert len(tx_data) == 0
 
         assert 1 == caplog.record_tuples.count(
@@ -115,20 +121,22 @@ class TestProcessor:
         after_block_number = web3.eth.block_number
 
         # Assertion: Data
-        indexed_block = (
-            session.query(IDXBlockDataBlockNumber)
-            .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-            .first()
-        )
+        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+            select(IDXBlockDataBlockNumber)
+            .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+            .limit(1)
+        ).first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = (
-            session.query(IDXBlockData).order_by(IDXBlockData.number).all()
-        )
+        block_data: Sequence[IDXBlockData] = session.scalars(
+            select(IDXBlockData).order_by(IDXBlockData.number)
+        ).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
 
-        tx_data = session.query(IDXTxData).order_by(IDXTxData.block_number).all()
+        tx_data: Sequence[IDXTxData] = session.scalars(
+            select(IDXTxData).order_by(IDXTxData.block_number)
+        ).all()
         assert len(tx_data) == 0
 
         # Assertion: Log
@@ -169,23 +177,23 @@ class TestProcessor:
         after_block_number = web3.eth.block_number
 
         # Assertion
-        indexed_block = (
-            session.query(IDXBlockDataBlockNumber)
-            .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-            .first()
-        )
+        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+            select(IDXBlockDataBlockNumber)
+            .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+            .limit(1)
+        ).first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = (
-            session.query(IDXBlockData).order_by(IDXBlockData.number).all()
-        )
+        block_data: Sequence[IDXBlockData] = session.scalars(
+            select(IDXBlockData).order_by(IDXBlockData.number)
+        ).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
         assert len(block_data[0].transactions) == 1
 
-        tx_data: list[IDXTxData] = (
-            session.query(IDXTxData).order_by(IDXTxData.block_number).all()
-        )
+        tx_data: Sequence[IDXTxData] = session.scalars(
+            select(IDXTxData).order_by(IDXTxData.block_number)
+        ).all()
         assert len(tx_data) == 1
         assert tx_data[0].block_hash == block_data[0].hash
         assert tx_data[0].block_number == before_block_number + 1
@@ -223,16 +231,16 @@ class TestProcessor:
         after_block_number = web3.eth.block_number
 
         # Assertion
-        indexed_block = (
-            session.query(IDXBlockDataBlockNumber)
-            .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-            .first()
-        )
+        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+            select(IDXBlockDataBlockNumber)
+            .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+            .limit(1)
+        ).first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = (
-            session.query(IDXBlockData).order_by(IDXBlockData.number).all()
-        )
+        block_data: Sequence[IDXBlockData] = session.scalars(
+            select(IDXBlockData).order_by(IDXBlockData.number)
+        ).all()
         assert len(block_data) == 2
 
         assert block_data[0].number == before_block_number + 1
@@ -241,9 +249,9 @@ class TestProcessor:
         assert block_data[1].number == before_block_number + 2
         assert len(block_data[1].transactions) == 1
 
-        tx_data: list[IDXTxData] = (
-            session.query(IDXTxData).order_by(IDXTxData.block_number).all()
-        )
+        tx_data: Sequence[IDXTxData] = session.scalars(
+            select(IDXTxData).order_by(IDXTxData.block_number)
+        ).all()
         assert len(tx_data) == 2
 
         assert tx_data[0].block_hash == block_data[0].hash
@@ -276,17 +284,21 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        indexed_block = (
-            session.query(IDXBlockDataBlockNumber)
-            .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-            .first()
-        )
+        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+            select(IDXBlockDataBlockNumber)
+            .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+            .limit(1)
+        ).first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data = session.query(IDXBlockData).all()
+        block_data: Sequence[IDXBlockData] = session.scalars(
+            select(IDXBlockData).order_by(IDXBlockData.number)
+        ).all()
         assert len(block_data) == 0
 
-        tx_data = session.query(IDXTxData).all()
+        tx_data: Sequence[IDXTxData] = session.scalars(
+            select(IDXTxData).order_by(IDXTxData.block_number)
+        ).all()
         assert len(tx_data) == 0
 
     # Error_2: SQLAlchemyError
@@ -304,15 +316,19 @@ class TestProcessor:
             processor.process()
 
         # Assertion
-        indexed_block = (
-            session.query(IDXBlockDataBlockNumber)
-            .filter(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
-            .first()
-        )
+        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+            select(IDXBlockDataBlockNumber)
+            .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
+            .limit(1)
+        ).first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data = session.query(IDXBlockData).all()
+        block_data: Sequence[IDXBlockData] = session.scalars(
+            select(IDXBlockData).order_by(IDXBlockData.number)
+        ).all()
         assert len(block_data) == 0
 
-        tx_data = session.query(IDXTxData).all()
+        tx_data: Sequence[IDXTxData] = session.scalars(
+            select(IDXTxData).order_by(IDXTxData.block_number)
+        ).all()
         assert len(tx_data) == 0

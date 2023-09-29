@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
+from typing import Annotated, Optional, Sequence
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Query, Request
-from sqlalchemy import desc
-from web3 import Web3
+from fastapi import APIRouter, Depends, Path, Query, Request
+from sqlalchemy import desc, func, select
 
 from app import config, log
 from app.database import DBSession
@@ -34,15 +33,18 @@ from app.errors import (
 from app.model.blockchain import MembershipToken
 from app.model.db import IDXMembershipToken, Listing
 from app.model.schema import (
-    GenericSuccessResponse,
     ListAllMembershipTokenAddressesResponse,
     ListAllMembershipTokensQuery,
     ListAllMembershipTokensResponse,
     RetrieveMembershipTokenResponse,
+)
+from app.model.schema.base import (
+    GenericSuccessResponse,
     SuccessResponse,
+    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
@@ -59,21 +61,20 @@ router = APIRouter(prefix="/Token/Membership", tags=["token_info"])
 def list_all_membership_tokens(
     session: DBSession,
     req: Request,
-    address_list: list[str] = Query(
-        default=[], description="list of token address (**this affects total number**)"
-    ),
+    address_list: Annotated[
+        list[ValidatedEthereumAddress],
+        Query(
+            default_factory=list,
+            description="list of token address (**this affects total number**)",
+        ),
+    ],
     request_query: ListAllMembershipTokensQuery = Depends(),
 ):
     """
-    Endpoint: /Token/Membership
+    Get a list of membership tokens.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
-
-    for address in address_list:
-        if address is not None:
-            if not Web3.is_address(address):
-                raise InvalidParameterError(f"invalid token_address: {address}")
 
     owner_address: Optional[str] = request_query.owner_address
     name: Optional[str] = request_query.name
@@ -91,53 +92,56 @@ def list_all_membership_tokens(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXMembershipToken)
+    stmt = (
+        select(IDXMembershipToken)
         .join(Listing, Listing.token_address == IDXMembershipToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
     if len(address_list):
-        query = query.filter(IDXMembershipToken.token_address.in_(address_list))
-    total = query.count()
+        stmt = stmt.where(IDXMembershipToken.token_address.in_(address_list))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXMembershipToken.owner_address == owner_address)
+        stmt = stmt.where(IDXMembershipToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXMembershipToken.name.contains(name))
+        stmt = stmt.where(IDXMembershipToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXMembershipToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXMembershipToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXMembershipToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXMembershipToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXMembershipToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXMembershipToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXMembershipToken.status == status)
+        stmt = stmt.where(IDXMembershipToken.status == status)
     if transferable is not None:
-        query = query.filter(IDXMembershipToken.transferable == transferable)
+        stmt = stmt.where(IDXMembershipToken.transferable == transferable)
     if initial_offering_status is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXMembershipToken.initial_offering_status == initial_offering_status
         )
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
-    sort_attr = getattr(IDXMembershipToken, sort_item, None)
+    if sort_item == "created":
+        sort_attr = getattr(Listing, sort_item, None)
+    else:
+        sort_attr = getattr(IDXMembershipToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXMembershipToken.created)
+        stmt = stmt.order_by(Listing.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXMembershipToken] = query.all()
+    _token_list: Sequence[IDXMembershipToken] = session.scalars(stmt).all()
     tokens = []
 
     for _token in _token_list:
@@ -169,7 +173,7 @@ def list_all_membership_token_addresses(
     request_query: ListAllMembershipTokensQuery = Depends(),
 ):
     """
-    Endpoint: /Token/Membership/Addresses
+    Get a list of membership token addresses.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -190,51 +194,54 @@ def list_all_membership_token_addresses(
 
     # 取扱トークンリストを取得
     # 公開属性によるフィルタリングを行うためJOIN
-    query = (
-        session.query(IDXMembershipToken)
+    stmt = (
+        select(IDXMembershipToken)
         .join(Listing, Listing.token_address == IDXMembershipToken.token_address)
-        .filter(Listing.is_public == True)
+        .where(Listing.is_public == True)
     )
-    total = query.count()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Search Filter
     if owner_address is not None:
-        query = query.filter(IDXMembershipToken.owner_address == owner_address)
+        stmt = stmt.where(IDXMembershipToken.owner_address == owner_address)
     if name is not None:
-        query = query.filter(IDXMembershipToken.name.contains(name))
+        stmt = stmt.where(IDXMembershipToken.name.contains(name))
     if symbol is not None:
-        query = query.filter(IDXMembershipToken.symbol.contains(symbol))
+        stmt = stmt.where(IDXMembershipToken.symbol.contains(symbol))
     if company_name is not None:
-        query = query.filter(IDXMembershipToken.company_name.contains(company_name))
+        stmt = stmt.where(IDXMembershipToken.company_name.contains(company_name))
     if tradable_exchange is not None:
-        query = query.filter(IDXMembershipToken.tradable_exchange == tradable_exchange)
+        stmt = stmt.where(IDXMembershipToken.tradable_exchange == tradable_exchange)
     if status is not None:
-        query = query.filter(IDXMembershipToken.status == status)
+        stmt = stmt.where(IDXMembershipToken.status == status)
     if transferable is not None:
-        query = query.filter(IDXMembershipToken.transferable == transferable)
+        stmt = stmt.where(IDXMembershipToken.transferable == transferable)
     if initial_offering_status is not None:
-        query = query.filter(
+        stmt = stmt.where(
             IDXMembershipToken.initial_offering_status == initial_offering_status
         )
-    count = query.count()
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
-    sort_attr = getattr(IDXMembershipToken, sort_item, None)
+    if sort_item == "created":
+        sort_attr = getattr(Listing, sort_item, None)
+    else:
+        sort_attr = getattr(IDXMembershipToken, sort_item, None)
 
     if sort_order == 0:  # ASC
-        query = query.order_by(sort_attr)
+        stmt = stmt.order_by(sort_attr)
     else:  # DESC
-        query = query.order_by(desc(sort_attr))
+        stmt = stmt.order_by(desc(sort_attr))
     if sort_item != "created":
         # NOTE: Set secondary sort for consistent results
-        query = query.order_by(IDXMembershipToken.created)
+        stmt = stmt.order_by(Listing.created)
 
     # Pagination
     if limit is not None:
-        query = query.limit(limit)
+        stmt = stmt.limit(limit)
     if offset is not None:
-        query = query.offset(offset)
+        stmt = stmt.offset(offset)
 
-    _token_list: list[IDXMembershipToken] = query.all()
+    _token_list: Sequence[IDXMembershipToken] = session.scalars(stmt).all()
 
     data = {
         "result_set": {
@@ -256,40 +263,36 @@ def list_all_membership_token_addresses(
     response_model=GenericSuccessResponse[RetrieveMembershipTokenResponse],
     responses=get_routers_responses(NotSupportedError, DataNotExistsError),
 )
-def retrieve_membership_token(session: DBSession, req: Request, token_address: str):
+def retrieve_membership_token(
+    session: DBSession,
+    req: Request,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
+):
     """
-    Endpoint: /Token/Membership/{contract_address}
+    Get the details of the membership token.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    # 入力アドレスフォーマットチェック
-    try:
-        contract_address = to_checksum_address(token_address)
-        if not Web3.is_address(contract_address):
-            description = "invalid contract_address"
-            raise InvalidParameterError(description=description)
-    except:
-        description = "invalid contract_address"
-        raise InvalidParameterError(description=description)
-
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if listed_token is None:
-        raise DataNotExistsError("contract_address: %s" % contract_address)
+        raise DataNotExistsError("token_address: %s" % token_address)
 
-    token_address = to_checksum_address(contract_address)
+    token_address = to_checksum_address(token_address)
 
     try:
         token_detail = MembershipToken.get(session=session, token_address=token_address)
     except ServiceUnavailable as e:
         LOG.warning(e)
-        raise DataNotExistsError("contract_address: %s" % contract_address) from None
+        raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
-        raise DataNotExistsError("contract_address: %s" % contract_address) from None
+        raise DataNotExistsError("token_address: %s" % token_address) from None
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

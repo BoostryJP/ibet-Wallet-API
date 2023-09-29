@@ -19,9 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
+from typing import Sequence
 
 import requests
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -42,7 +43,9 @@ class Processor:
     def process(self):
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            hook_list: list[ChatWebhook] = db_session.query(ChatWebhook).all()
+            hook_list: Sequence[ChatWebhook] = db_session.scalars(
+                select(ChatWebhook)
+            ).all()
             if len(hook_list) > 0:
                 LOG.info("Process start")
 

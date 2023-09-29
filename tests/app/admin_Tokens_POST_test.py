@@ -20,6 +20,7 @@ import json
 
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -140,11 +141,11 @@ class TestAdminTokensPOST:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == self.token_param_1["contract_address"])
-            .first()
-        )
+        listing: Listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == self.token_param_1["contract_address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == self.token_param_1["contract_address"]
         assert listing.is_public == self.token_param_1["is_public"]
         assert (
@@ -153,24 +154,24 @@ class TestAdminTokensPOST:
         assert listing.max_sell_amount == self.token_param_1["max_sell_amount"]
         assert listing.owner_address == issuer["account_address"]
 
-        executable_contract: ExecutableContract = (
-            session.query(ExecutableContract)
-            .filter(
+        executable_contract: ExecutableContract = session.scalars(
+            select(ExecutableContract)
+            .where(
                 ExecutableContract.contract_address
                 == self.token_param_1["contract_address"]
             )
-            .first()
-        )
+            .limit(1)
+        ).first()
         assert (
             executable_contract.contract_address
             == self.token_param_1["contract_address"]
         )
 
-        bond: IDXBondToken = session.query(IDXBondToken).first()
+        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond.token_address == self.token_param_1["contract_address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.query(IDXPosition).first()
+        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
         assert position.token_address == self.token_param_1["contract_address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
@@ -205,22 +206,22 @@ class TestAdminTokensPOST:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == bond_token["address"])
-            .first()
-        )
+        listing: Listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == bond_token["address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == bond_token["address"]
         assert listing.is_public == self.token_param_2["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond: IDXBondToken = session.query(IDXBondToken).first()
+        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond.token_address == bond_token["address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.query(IDXPosition).first()
+        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
         assert position.token_address == bond_token["address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
@@ -262,22 +263,22 @@ class TestAdminTokensPOST:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        listing: Listing = (
-            session.query(Listing)
-            .filter(Listing.token_address == bond_token["address"])
-            .first()
-        )
+        listing: Listing = session.scalars(
+            select(Listing)
+            .where(Listing.token_address == bond_token["address"])
+            .limit(1)
+        ).first()
         assert listing.token_address == bond_token["address"]
         assert listing.is_public == self.token_param_2["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond: IDXBondToken = session.query(IDXBondToken).first()
+        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond.token_address == bond_token["address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.query(IDXPosition).first()
+        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
         assert position.token_address == bond_token["address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
@@ -316,14 +317,16 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
+                    "input": {},
                     "loc": ["body", "contract_address"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
                 {
+                    "input": {},
                     "loc": ["body", "is_public"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "type": "missing",
                 },
             ],
             "message": "Invalid Parameter",
@@ -346,14 +349,16 @@ class TestAdminTokensPOST:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["body", "contract_address"],
-                    "msg": "token_address is not a valid address",
                     "type": "value_error",
+                    "loc": ["body", "contract_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7",
+                    "ctx": {"error": {}},
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜Error_3_2＞
@@ -361,10 +366,10 @@ class TestAdminTokensPOST:
     # 400（InvalidParameterError）
     def test_error_3_2(self, client: TestClient, session: Session):
         request_params = {
-            "contract_address": 1234,
-            "is_public": "True",
-            "max_holding_quantity": "100",
-            "max_sell_amount": "50000",
+            "contract_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
+            "is_public": "Trueee",
+            "max_holding_quantity": "aaaa",
+            "max_sell_amount": "bbbb",
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -373,14 +378,27 @@ class TestAdminTokensPOST:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "loc": ["body", "contract_address"],
-                    "msg": "token_address is not a valid address",
-                    "type": "value_error",
-                }
+                    "type": "bool_parsing",
+                    "loc": ["body", "is_public"],
+                    "msg": "Input should be a valid boolean, unable to interpret input",
+                    "input": "Trueee",
+                },
+                {
+                    "type": "int_parsing",
+                    "loc": ["body", "max_holding_quantity"],
+                    "msg": "Input should be a valid integer, unable to parse string as an integer",
+                    "input": "aaaa",
+                },
+                {
+                    "type": "int_parsing",
+                    "loc": ["body", "max_sell_amount"],
+                    "msg": "Input should be a valid integer, unable to parse string as an integer",
+                    "input": "bbbb",
+                },
             ],
-            "message": "Invalid Parameter",
         }
 
     # ＜Error_3_3＞
@@ -402,16 +420,18 @@ class TestAdminTokensPOST:
             "code": 88,
             "description": [
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": -1,
                     "loc": ["body", "max_holding_quantity"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
                 {
-                    "ctx": {"limit_value": 0},
+                    "ctx": {"ge": 0},
+                    "input": -1,
                     "loc": ["body", "max_sell_amount"],
-                    "msg": "ensure this value is greater than or equal to 0",
-                    "type": "value_error.number.not_ge",
+                    "msg": "Input should be greater than or equal to 0",
+                    "type": "greater_than_equal",
                 },
             ],
             "message": "Invalid Parameter",

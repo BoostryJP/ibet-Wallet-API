@@ -16,7 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
+from datetime import datetime
+
+from sqlalchemy import BigInteger, Boolean, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 from app.utils import alchemy
@@ -28,37 +31,37 @@ class IDXOrder(Base):
     __tablename__ = "order"
 
     # Sequence Id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
-    transaction_hash = Column(String(66))
+    transaction_hash: Mapped[str | None] = mapped_column(String(66))
     # Token Address
-    token_address = Column(String(42), index=True)
+    token_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Exchange(DEX) Address
-    exchange_address = Column(String(42), index=True)
+    exchange_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Order Id
-    order_id = Column(BigInteger, index=True)
+    order_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
     # Unique Order Id: exchange_address + "_" + str(order_id)
-    unique_order_id = Column(String(256), index=True)
+    unique_order_id: Mapped[str | None] = mapped_column(String(256), index=True)
     # Account Address
-    account_address = Column(String(42))
+    account_address: Mapped[str | None] = mapped_column(String(42))
     # Counterpart Address
-    counterpart_address = Column(String(42))
+    counterpart_address: Mapped[str | None] = mapped_column(String(42))
     # Buy/Sell
-    is_buy = Column(Boolean)
+    is_buy: Mapped[bool | None] = mapped_column(Boolean)
     # Order Price
-    price = Column(BigInteger)
+    price: Mapped[int | None] = mapped_column(BigInteger)
     # Order Amount (quantity)
-    amount = Column(BigInteger)
+    amount: Mapped[int | None] = mapped_column(BigInteger)
     # Paying Agent Address
-    agent_address = Column(String(42))
+    agent_address: Mapped[str | None] = mapped_column(String(42))
     # Cancellation Status
-    is_cancelled = Column(Boolean)
+    is_cancelled: Mapped[bool | None] = mapped_column(Boolean)
     # Order Timestamp (datetime)
     # NOTE:
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    order_timestamp = Column(DateTime, default=None)
+    order_timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     FIELDS = {
         "id": int,

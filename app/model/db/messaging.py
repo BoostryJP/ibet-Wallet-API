@@ -16,7 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import BigInteger, Column, String, Text
+from sqlalchemy import BigInteger, LargeBinary, String, Text
+from sqlalchemy.dialects.mysql import LONGBLOB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
 
@@ -29,15 +31,21 @@ class Mail(Base):
     __tablename__ = "mail"
 
     # unique id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # to email address
-    to_email = Column(String(256), nullable=False)
+    to_email: Mapped[str] = mapped_column(String(256), nullable=False)
     # subject
-    subject = Column(String(100), nullable=False)
+    subject: Mapped[str] = mapped_column(String(100), nullable=False)
     # plain text mail content
-    text_content = Column(Text, nullable=False)
+    text_content: Mapped[str] = mapped_column(Text, nullable=False)
     # html mail content
-    html_content = Column(Text, nullable=False)
+    html_content: Mapped[str] = mapped_column(Text, nullable=False)
+    # file name
+    file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # file content
+    file_content: Mapped[str | None] = mapped_column(
+        LargeBinary().with_variant(LONGBLOB, "mysql"), nullable=True
+    )
 
     FIELDS = {
         "id": int,
@@ -45,6 +53,8 @@ class Mail(Base):
         "subject": str,
         "text_content": str,
         "html_content": str,
+        "file_name": str,
+        "file_content": bytes,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -57,9 +67,9 @@ class ChatWebhook(Base):
     __tablename__ = "chat_webhook"
 
     # unique id
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # html mail content
-    message = Column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
 
     FIELDS = {
         "id": int,

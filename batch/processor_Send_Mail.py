@@ -20,9 +20,10 @@ import os
 import sys
 import time
 from smtplib import SMTPException
+from typing import Sequence
 
 from botocore.exceptions import ClientError as SESException
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -33,7 +34,7 @@ import log
 
 from app.config import DATABASE_URL
 from app.model.db import Mail
-from app.model.mail import Mail as SMTPMail
+from app.model.mail import File, Mail as SMTPMail
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
 
@@ -44,16 +45,20 @@ class Processor:
     def process(self):
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            mail_list: list[Mail] = db_session.query(Mail).all()
+            mail_list: Sequence[Mail] = db_session.scalars(select(Mail)).all()
             if len(mail_list) > 0:
                 LOG.info("Process start")
                 for mail in mail_list:
                     try:
+                        file = None
+                        if mail.file_name and mail.file_content:
+                            file = File(name=mail.file_name, content=mail.file_content)
                         smtp_mail = SMTPMail(
                             to_email=mail.to_email,
                             subject=mail.subject,
                             text_content=mail.text_content,
                             html_content=mail.html_content,
+                            file=file,
                         )
                         smtp_mail.send_mail()
                     except (SMTPException, SESException) as err:

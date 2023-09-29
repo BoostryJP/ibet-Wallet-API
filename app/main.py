@@ -21,32 +21,36 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from pydantic_core import ArgsKwargs, ErrorDetails
 from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app import log
-from app.api.routers import admin as routers_admin
-from app.api.routers import bc_explorer as routers_bc_explorer
-from app.api.routers import company_info as routers_company_info
-from app.api.routers import contract_abi as routers_contract_abi
-from app.api.routers import dex_market as routers_dex_market
-from app.api.routers import dex_order_list as routers_dex_order_list
-from app.api.routers import e2e_message as routers_e2e_message
-from app.api.routers import eth as routers_eth
-from app.api.routers import events as routers_events
-from app.api.routers import messaging as routers_mail
-from app.api.routers import node_info as routers_node_info
-from app.api.routers import notification as routers_notification
-from app.api.routers import position as routers_position
-from app.api.routers import token as routers_token
-from app.api.routers import token_bond as routers_token_bond
-from app.api.routers import token_coupon as routers_token_coupon
-from app.api.routers import token_lock as routers_token_lock
-from app.api.routers import token_membership as routers_token_membership
-from app.api.routers import token_share as routers_token_share
-from app.api.routers import user_info as routers_user_info
+from app.api.routers import (
+    admin as routers_admin,
+    bc_explorer as routers_bc_explorer,
+    company_info as routers_company_info,
+    contract_abi as routers_contract_abi,
+    dex_market as routers_dex_market,
+    dex_order_list as routers_dex_order_list,
+    e2e_message as routers_e2e_message,
+    eth as routers_eth,
+    events as routers_events,
+    messaging as routers_mail,
+    node_info as routers_node_info,
+    notification as routers_notification,
+    position as routers_position,
+    position_lock as routers_position_lock,
+    token as routers_token,
+    token_bond as routers_token_bond,
+    token_coupon as routers_token_coupon,
+    token_lock as routers_token_lock,
+    token_membership as routers_token_membership,
+    token_share as routers_token_share,
+    user_info as routers_user_info,
+)
 from app.config import BRAND_NAME
 from app.errors import (
     AppError,
@@ -85,7 +89,7 @@ app = FastAPI(
     title="ibet Wallet API",
     description="RPC services that provides utility tools for building a wallet system on ibet network",
     terms_of_service="",
-    version="23.6.0",
+    version="23.9.0",
     contact={"email": "dev@boostry.co.jp"},
     license_info={
         "name": "Apache 2.0",
@@ -120,6 +124,7 @@ app.include_router(routers_token_membership.router)
 app.include_router(routers_token_coupon.router)
 app.include_router(routers_token.router)
 app.include_router(routers_token_lock.router)
+app.include_router(routers_position_lock.router)
 app.include_router(routers_position.router)
 app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)
@@ -291,10 +296,33 @@ async def data_not_exists_error_handler(request: Request, exc: DataNotExistsErro
     )
 
 
+def convert_errors(
+    e: ValidationError | RequestValidationError,
+) -> list[ErrorDetails]:
+    new_errors: list[ErrorDetails] = []
+    for error in e.errors():
+        # "url" field which Pydantic V2 adds when validation error occurs is not needed for API response.
+        # https://docs.pydantic.dev/2.1/errors/errors/
+        if "url" in error.keys():
+            error.pop("url", None)
+
+        # "input" field generated from GET query model_validator is ArgsKwargs instance.
+        # This cannot be serialized to json as it is, so nested field should be picked.
+        # https://docs.pydantic.dev/2.1/errors/errors/
+        if "input" in error.keys() and isinstance(error["input"], ArgsKwargs):
+            error["input"] = error["input"].kwargs
+        new_errors.append(error)
+    return new_errors
+
+
 # 400:RequestValidationError
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    meta = {"code": 88, "message": "Invalid Parameter", "description": exc.errors()}
+    meta = {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": convert_errors(exc),
+    }
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),
@@ -305,7 +333,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # NOTE: for exceptions raised directly from Pydantic validation
 @app.exception_handler(ValidationError)
 async def query_validation_exception_handler(request: Request, exc: ValidationError):
-    meta = {"code": 88, "message": "Invalid Parameter", "description": exc.errors()}
+    meta = {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": convert_errors(exc),
+    }
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),

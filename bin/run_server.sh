@@ -33,9 +33,9 @@ function start () {
 
   # gunicorn parameters
   WORKER_COUNT=${WORKER_COUNT:-2}
-  WORKER_TIMEOUT=${WORKER_TIMEOUT:-30}
-  WORKER_MAX_REQUESTS=${WORKER_MAX_REQUESTS:-500}
-  WORKER_MAX_REQUESTS_JITTER=${WORKER_MAX_REQUESTS_JITTER:-200}
+  WORKER_TIMEOUT=${WORKER_TIMEOUT:-60}
+  WORKER_MAX_REQUESTS=${WORKER_MAX_REQUESTS:-2500}
+  WORKER_MAX_REQUESTS_JITTER=${WORKER_MAX_REQUESTS_JITTER:-1000}
   KEEP_ALIVE=${KEEP_ALIVE:-2}
 
   # start
@@ -52,7 +52,6 @@ function start () {
 
 function stop () {
   ps -ef | grep gunicorn | awk '{print $2}' | xargs kill -9
-  ps -ef | grep "batch/processor_Block_Sync_Status.py" | awk '{print $2}' | xargs kill -9
 }
 
 

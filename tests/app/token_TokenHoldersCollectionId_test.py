@@ -256,13 +256,25 @@ class TestTokenTokenHoldersCollectionId:
             },
         ]
 
-        sorted_holders = sorted(holders, key=lambda x: x["account_address"])
-
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"]["status"] == TokenHolderBatchStatus.DONE.value
+
         assert len(resp.json()["data"]["holders"]) == 2
-        assert resp.json()["data"]["holders"] == sorted_holders
+
+        for holder in resp.json()["data"]["holders"]:
+            if holder["account_address"] == self.trader["account_address"]:
+                assert holder == {
+                    "account_address": self.trader["account_address"],
+                    "hold_balance": 27000,
+                    "locked_balance": 2000,
+                }
+            elif holder["account_address"] == self.user1["account_address"]:
+                assert holder == {
+                    "account_address": self.user1["account_address"],
+                    "hold_balance": 51000,
+                    "locked_balance": 0,
+                }
 
     ####################################################################
     # Error
@@ -282,7 +294,15 @@ class TestTokenTokenHoldersCollectionId:
         assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": "invalid contract_address",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "token_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0xabcd",
+                    "ctx": {"error": {}},
+                }
+            ],
         }
 
     # Error_2
@@ -300,9 +320,17 @@ class TestTokenTokenHoldersCollectionId:
             "code": 88,
             "description": [
                 {
+                    "ctx": {
+                        "error": "invalid character: expected an optional "
+                        "prefix of `urn:uuid:` followed by "
+                        "[0-9a-fA-F-], found `s` at 1"
+                    },
+                    "input": "some_id",
                     "loc": ["path", "list_id"],
-                    "msg": "value is not a valid uuid",
-                    "type": "type_error.uuid",
+                    "msg": "Input should be a valid UUID, invalid character: "
+                    "expected an optional prefix of `urn:uuid:` followed "
+                    "by [0-9a-fA-F-], found `s` at 1",
+                    "type": "uuid_parsing",
                 }
             ],
             "message": "Invalid Parameter",

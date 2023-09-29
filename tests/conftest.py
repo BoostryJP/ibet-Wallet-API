@@ -16,24 +16,24 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
 import os
 import sys
 from typing import TypedDict
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-path = os.path.join(os.path.dirname(__file__), "../batch/")
-sys.path.append(path)
-
-import json
-
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.eth import Contract as Web3Contract
 from web3.middleware import geth_poa_middleware
 from web3.types import ChecksumAddress, RPCEndpoint
+
+path = os.path.join(os.path.dirname(__file__), "../")
+sys.path.append(path)
+path = os.path.join(os.path.dirname(__file__), "../batch/")
+sys.path.append(path)
 
 from app import config
 from app.contracts import Contract
@@ -242,7 +242,28 @@ def db(request):
 
     # Remove DB tables
     db.rollback()
-    Base.metadata.drop_all(engine)
+    if engine.name == "mysql":
+        db.begin()
+        db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        for table in Base.metadata.sorted_tables:
+            db.execute(text(f"TRUNCATE TABLE `{table.name}`;"))
+            if table.autoincrement_column is not None:
+                db.execute(text(f"ALTER TABLE `{table.name}` auto_increment = 1;"))
+        db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+        db.commit()
+    else:
+        db.begin()
+        for table in Base.metadata.sorted_tables:
+            db.execute(text(f'ALTER TABLE "{table.name}" DISABLE TRIGGER ALL;'))
+            db.execute(text(f'TRUNCATE TABLE "{table.name}";'))
+            if table.autoincrement_column is not None:
+                db.execute(
+                    text(
+                        f"ALTER SEQUENCE {table.name}_{table.autoincrement_column.name}_seq RESTART WITH 1;"
+                    )
+                )
+            db.execute(text(f'ALTER TABLE "{table.name}" ENABLE TRIGGER ALL;'))
+        db.commit()
     db.close()
 
     app.dependency_overrides[db_session] = db_session

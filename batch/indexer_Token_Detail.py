@@ -21,10 +21,10 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Type
+from typing import List, Sequence, Type
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -39,6 +39,7 @@ from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
 from app.model.db import IDXTokenListItem, Listing
+from app.model.schema.base import TokenType
 
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
@@ -61,21 +62,27 @@ class Processor:
         self.target_token_types = []
         if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetStraightBond", token_class=BondToken)
+                self.TargetTokenType(
+                    template=TokenType.IbetStraightBond, token_class=BondToken
+                )
             )
         if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetShare", token_class=ShareToken)
+                self.TargetTokenType(
+                    template=TokenType.IbetShare, token_class=ShareToken
+                )
             )
         if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template="IbetMembership", token_class=MembershipToken
+                    template=TokenType.IbetMembership, token_class=MembershipToken
                 )
             )
         if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
-                self.TargetTokenType(template="IbetCoupon", token_class=CouponToken)
+                self.TargetTokenType(
+                    template=TokenType.IbetCoupon, token_class=CouponToken
+                )
             )
 
     @staticmethod
@@ -99,17 +106,15 @@ class Processor:
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
-            available_tokens: List[Listing] = (
-                local_session.query(Listing)
+            available_tokens: Sequence[Listing] = local_session.scalars(
+                select(Listing)
                 .join(
                     IDXTokenListItem,
                     IDXTokenListItem.token_address == Listing.token_address,
                 )
-                .filter(Listing.is_public == True)
-                .filter(IDXTokenListItem.token_template == token_type.template)
+                .where(IDXTokenListItem.token_template == token_type.template)
                 .order_by(Listing.id)
-                .all()
-            )
+            ).all()
 
             for available_token in available_tokens:
                 try:
@@ -121,7 +126,6 @@ class Processor:
                     token_detail = token_detail_obj.to_model()
                     token_detail.created = datetime.utcnow()
                     local_session.merge(token_detail)
-                    local_session.commit()
 
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time
@@ -130,6 +134,8 @@ class Processor:
                     LOG.warning(
                         "The record may have been deleted in another session during the update"
                     )
+
+            local_session.commit()
 
 
 def main():

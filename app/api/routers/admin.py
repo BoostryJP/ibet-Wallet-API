@@ -16,7 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Sequence
+
 from fastapi import APIRouter, Path
+from sqlalchemy import delete, select
 
 from app import config, log
 from app.contracts import Contract
@@ -38,16 +41,15 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema import (
-    GenericSuccessResponse,
     GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
     RegisterAdminTokenRequest,
     RetrieveAdminTokenResponse,
-    SuccessResponse,
     UpdateAdminTokenRequest,
 )
+from app.model.schema.base import GenericSuccessResponse, SuccessResponse, TokenType
 from app.utils.docs_utils import get_routers_responses
-from app.utils.fastapi import json_response
+from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
@@ -71,7 +73,7 @@ def list_all_admin_tokens(session: DBSession):
     """
     res_body = []
 
-    listed_tokens: list[Listing] = session.query(Listing).all()
+    listed_tokens: Sequence[Listing] = session.scalars(select(Listing)).all()
     for token in listed_tokens:
         item = token.json()
         res_body.append(item)
@@ -97,17 +99,18 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     contract_address = data.contract_address
 
     # 既存レコードの存在チェック
-    _listing = (
-        session.query(Listing).filter(Listing.token_address == contract_address).first()
-    )
+    _listing = session.scalars(
+        select(Listing).where(Listing.token_address == contract_address).limit(1)
+    ).first()
+
     if _listing is not None:
         raise DataConflictError(description="contract_address already exist")
 
-    _executable_contract = (
-        session.query(ExecutableContract)
-        .filter(ExecutableContract.contract_address == contract_address)
-        .first()
-    )
+    _executable_contract = session.scalars(
+        select(ExecutableContract)
+        .where(ExecutableContract.contract_address == contract_address)
+        .limit(1)
+    ).first()
     if _executable_contract is not None:
         raise DataConflictError(description="contract_address already exist")
 
@@ -135,30 +138,30 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     max_holding_quantity = data.max_holding_quantity
     max_sell_amount = data.max_sell_amount
 
-    listing = Listing()
-    listing.token_address = contract_address
-    listing.is_public = is_public
-    listing.max_holding_quantity = max_holding_quantity
-    listing.max_sell_amount = max_sell_amount
-    listing.owner_address = owner_address
+    listing = Listing(
+        token_address=contract_address,
+        is_public=is_public,
+        max_holding_quantity=max_holding_quantity,
+        max_sell_amount=max_sell_amount,
+        owner_address=owner_address,
+    )
     session.add(listing)
 
-    executable_contract = ExecutableContract()
-    executable_contract.contract_address = contract_address
+    executable_contract = ExecutableContract(contract_address=contract_address)
     session.add(executable_contract)
 
     token_type = token[1]
     # Fetch token detail data to store cache
-    if token_type == "IbetCoupon":
+    if token_type == TokenType.IbetCoupon:
         token_obj = CouponToken.get(session, contract_address)
         session.merge(token_obj.to_model())
-    elif token_type == "IbetMembership":
+    elif token_type == TokenType.IbetMembership:
         token_obj = MembershipToken.get(session, contract_address)
         session.merge(token_obj.to_model())
-    elif token_type == "IbetStraightBond":
+    elif token_type == TokenType.IbetStraightBond:
         token_obj = BondToken.get(session, contract_address)
         session.merge(token_obj.to_model())
-    elif token_type == "IbetShare":
+    elif token_type == TokenType.IbetShare:
         token_obj = ShareToken.get(session, contract_address)
         session.merge(token_obj.to_model())
 
@@ -172,13 +175,14 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
         token_address=contract_address,
         account_address=owner_address,
     )
-    position = IDXPosition()
-    position.token_address = contract_address
-    position.account_address = owner_address
-    position.balance = balance or 0
-    position.pending_transfer = pending_transfer or 0
-    position.exchange_balance = exchange_balance or 0
-    position.exchange_commitment = exchange_commitment or 0
+    position = IDXPosition(
+        token_address=contract_address,
+        account_address=owner_address,
+        balance=balance or 0,
+        pending_transfer=pending_transfer or 0,
+        exchange_balance=exchange_balance or 0,
+        exchange_commitment=exchange_commitment or 0,
+    )
     session.merge(position)
     session.commit()
 
@@ -232,9 +236,9 @@ def retrieve_admin_token(
     Endpoint: /Admin/Tokens/{token_address}
       - GET: 取扱トークン情報取得（個別）
     """
-    token = (
-        session.query(Listing).filter(Listing.token_address == token_address).first()
-    )
+    token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
 
     if token is not None:
         return json_response({**SuccessResponse.default(), "data": token.json()})
@@ -260,9 +264,9 @@ def update_token(
     """
     # 更新対象レコードを取得
     # 更新対象のレコードが存在しない場合は404エラーを返す
-    token = (
-        session.query(Listing).filter(Listing.token_address == token_address).first()
-    )
+    token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
     if token is None:
         raise DataNotExistsError()
 
@@ -307,22 +311,26 @@ def delete_token(
       - DELETE: 取扱トークン情報削除（個別）
     """
     try:
-        session.query(Listing).filter(Listing.token_address == token_address).delete()
-        session.query(ExecutableContract).filter(
-            ExecutableContract.contract_address == token_address
-        ).delete()
-        session.query(IDXBondToken).filter(
-            IDXBondToken.token_address == token_address
-        ).delete()
-        session.query(IDXShareToken).filter(
-            IDXShareToken.token_address == token_address
-        ).delete()
-        session.query(IDXMembershipToken).filter(
-            IDXMembershipToken.token_address == token_address
-        ).delete()
-        session.query(IDXCouponToken).filter(
-            IDXCouponToken.token_address == token_address
-        ).delete()
+        session.execute(delete(Listing).where(Listing.token_address == token_address))
+        session.execute(
+            delete(ExecutableContract).where(
+                ExecutableContract.contract_address == token_address
+            )
+        )
+        session.execute(
+            delete(IDXBondToken).where(IDXBondToken.token_address == token_address)
+        )
+        session.execute(
+            delete(IDXShareToken).where(IDXShareToken.token_address == token_address)
+        )
+        session.execute(
+            delete(IDXMembershipToken).where(
+                IDXMembershipToken.token_address == token_address
+            )
+        )
+        session.execute(
+            delete(IDXCouponToken).where(IDXCouponToken.token_address == token_address)
+        )
     except Exception as err:
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()
@@ -338,13 +346,13 @@ def available_token_template():
     """
     available_token_template_list = []
     if config.BOND_TOKEN_ENABLED:
-        available_token_template_list.append("IbetStraightBond")
+        available_token_template_list.append(TokenType.IbetStraightBond)
     if config.SHARE_TOKEN_ENABLED:
-        available_token_template_list.append("IbetShare")
+        available_token_template_list.append(TokenType.IbetShare)
     if config.MEMBERSHIP_TOKEN_ENABLED:
-        available_token_template_list.append("IbetMembership")
+        available_token_template_list.append(TokenType.IbetMembership)
     if config.COUPON_TOKEN_ENABLED:
-        available_token_template_list.append("IbetCoupon")
+        available_token_template_list.append(TokenType.IbetCoupon)
     return available_token_template_list
 
 
@@ -362,7 +370,7 @@ def get_account_balance_all(
         default_returns=0,
     )
     pending_transfer = 0
-    if token_template in ["IbetStraightBond", "IbetShare"]:
+    if token_template in [TokenType.IbetStraightBond, TokenType.IbetShare]:
         # if security token, amount of pending transfer is needed
         pending_transfer = Contract.call_function(
             contract=token_contract,
