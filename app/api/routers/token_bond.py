@@ -152,11 +152,8 @@ def list_all_straight_bond_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXBondToken] = session.scalars(stmt).all()
-    tokens = []
 
-    for _token in _token_list:
-        tokens.append(BondToken.from_model(_token).__dict__)
-
+    tokens = [BondToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
         "result_set": {
             "count": count,

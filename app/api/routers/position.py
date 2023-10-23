@@ -1216,18 +1216,16 @@ def list_all_coupon_consumptions(
         .order_by(IDXConsumeCoupon.block_timestamp)
     ).all()
 
-    res_data = []
-    for consumption in consumptions:
-        res_data.append(
-            {
-                "account_address": account_address,
-                "block_timestamp": consumption.block_timestamp.strftime(
-                    "%Y/%m/%d %H:%M:%S"
-                ),
-                "value": consumption.amount,
-            }
-        )
-
+    res_data = [
+        {
+            "account_address": account_address,
+            "block_timestamp": consumption.block_timestamp.strftime(
+                "%Y/%m/%d %H:%M:%S"
+            ),
+            "value": consumption.amount,
+        }
+        for consumption in consumptions
+    ]
     return json_response({**SuccessResponse.default(), "data": res_data})
 
 

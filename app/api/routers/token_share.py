@@ -153,11 +153,8 @@ def list_all_share_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXShareToken] = session.scalars(stmt).all()
-    tokens = []
 
-    for _token in _token_list:
-        tokens.append(ShareToken.from_model(_token).__dict__)
-
+    tokens = [ShareToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
         "result_set": {
             "count": count,

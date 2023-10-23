@@ -71,12 +71,9 @@ def list_all_admin_tokens(session: DBSession):
     Endpoint: /Admin/Tokens
       - GET: 取扱トークン一覧取得
     """
-    res_body = []
-
     listed_tokens: Sequence[Listing] = session.scalars(select(Listing)).all()
-    for token in listed_tokens:
-        item = token.json()
-        res_body.append(item)
+
+    res_body = [token.json() for token in listed_tokens]
 
     # idの降順にソート
     res_body.sort(key=lambda x: x["id"], reverse=True)  # type: ignore
