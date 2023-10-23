@@ -44,7 +44,8 @@ USER apl
 RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~apl/.bash_profile \
  && echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~apl/.bash_profile \
  && echo 'eval "$(pyenv init --path)"' >> ~apl/.bash_profile \
- && echo 'export LANG=ja_JP.utf8' >> ~apl/.bash_profile
+ && echo 'export LANG=ja_JP.utf8' >> ~apl/.bash_profile \
+ && echo 'export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring' >> ~apl/.bash_profile
 
 # install python
 RUN . ~/.bash_profile \
@@ -67,7 +68,6 @@ RUN chown -R apl:apl /app/ibet-Wallet-API \
  && chmod 755 /app/ibet-Wallet-API
 
 USER apl
-ENV PYTHON_KEYRING_BACKEND keyring.backends.null.Keyring
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
  && poetry install --only main --no-root -E ibet-explorer \
