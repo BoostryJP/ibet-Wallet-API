@@ -67,6 +67,7 @@ RUN chown -R apl:apl /app/ibet-Wallet-API \
  && chmod 755 /app/ibet-Wallet-API
 
 USER apl
+ENV PYTHON_KEYRING_BACKEND keyring.backends.null.Keyring
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
  && poetry install --only main --no-root -E ibet-explorer \
