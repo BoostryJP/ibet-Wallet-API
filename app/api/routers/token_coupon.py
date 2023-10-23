@@ -141,11 +141,8 @@ def list_all_coupon_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXCouponToken] = session.scalars(stmt).all()
-    tokens = []
 
-    for _token in _token_list:
-        tokens.append(CouponToken.from_model(_token).__dict__)
-
+    tokens = [CouponToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
         "result_set": {
             "count": count,

@@ -184,19 +184,18 @@ def get_token_holders(
         stmt.order_by(desc(IDXPosition.created))
     ).all()
 
-    resp_body = []
-    for holder in holders:
-        resp_body.append(
-            {
-                "token_address": holder[0].token_address,
-                "account_address": holder[0].account_address,
-                "amount": holder[0].balance,
-                "pending_transfer": holder[0].pending_transfer,
-                "exchange_balance": holder[0].exchange_balance,
-                "exchange_commitment": holder[0].exchange_commitment,
-                "locked": holder[1] if holder[1] else 0,
-            }
-        )
+    resp_body = [
+        {
+            "token_address": holder[0].token_address,
+            "account_address": holder[0].account_address,
+            "amount": holder[0].balance,
+            "pending_transfer": holder[0].pending_transfer,
+            "exchange_balance": holder[0].exchange_balance,
+            "exchange_commitment": holder[0].exchange_commitment,
+            "locked": holder[1] if holder[1] else 0,
+        }
+        for holder in holders
+    ]
 
     return json_response({**SuccessResponse.default(), "data": resp_body})
 
@@ -454,10 +453,7 @@ def list_all_transfer_histories(
         stmt = stmt.limit(request_query.limit)
     transfer_history: Sequence[IDXTransfer] = session.scalars(stmt).all()
 
-    resp_data = []
-    for transfer_event in transfer_history:
-        resp_data.append(transfer_event.json())
-
+    resp_data = [transfer_event.json() for transfer_event in transfer_history]
     data = {
         "result_set": {
             "count": count,
@@ -514,9 +510,10 @@ def list_all_transfer_approval_histories(
         stmt
     ).all()
 
-    resp_data = []
-    for transfer_approval_event in transfer_approval_history:
-        resp_data.append(transfer_approval_event.json())
+    resp_data = [
+        transfer_approval_event.json()
+        for transfer_approval_event in transfer_approval_history
+    ]
     data = {
         "result_set": {
             "count": list_length,

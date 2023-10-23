@@ -142,20 +142,19 @@ def list_block_data(
         raise ResponseLimitExceededError("Search results exceed the limit")
 
     block_data_tmp: Sequence[IDXBlockData] = session.scalars(stmt).all()
-    block_data = []
-    for bd in block_data_tmp:
-        block_data.append(
-            {
-                "number": bd.number,
-                "hash": bd.hash,
-                "transactions": bd.transactions,
-                "timestamp": bd.timestamp,
-                "gas_limit": bd.gas_limit,
-                "gas_used": bd.gas_used,
-                "size": bd.size,
-            }
-        )
 
+    block_data = [
+        {
+            "number": bd.number,
+            "hash": bd.hash,
+            "transactions": bd.transactions,
+            "timestamp": bd.timestamp,
+            "gas_limit": bd.gas_limit,
+            "gas_used": bd.gas_used,
+            "size": bd.size,
+        }
+        for bd in block_data_tmp
+    ]
     data = {
         "result_set": {
             "count": count,
@@ -280,19 +279,18 @@ def list_tx_data(
         raise ResponseLimitExceededError("Search results exceed the limit")
 
     tx_data_tmp: Sequence[IDXTxData] = session.scalars(stmt).all()
-    tx_data = []
-    for txd in tx_data_tmp:
-        tx_data.append(
-            {
-                "hash": txd.hash,
-                "block_hash": txd.block_hash,
-                "block_number": txd.block_number,
-                "transaction_index": txd.transaction_index,
-                "from_address": txd.from_address,
-                "to_address": txd.to_address,
-            }
-        )
 
+    tx_data = [
+        {
+            "hash": txd.hash,
+            "block_hash": txd.block_hash,
+            "block_number": txd.block_number,
+            "transaction_index": txd.transaction_index,
+            "from_address": txd.from_address,
+            "to_address": txd.to_address,
+        }
+        for txd in tx_data_tmp
+    ]
     data = {
         "result_set": {
             "count": count,

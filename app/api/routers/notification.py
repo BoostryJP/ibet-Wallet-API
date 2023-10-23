@@ -100,14 +100,14 @@ def list_all_notifications(
 
     _notification_list: Sequence[Notification] = session.scalars(stmt).all()
 
-    notifications = []
-    for _notification in _notification_list:
-        sort_id += 1
-        notification = _notification.json()
-        notification["sort_id"] = sort_id
-        notification["created"] = _notification.created.strftime("%Y/%m/%d %H:%M:%S")
-        notifications.append(notification)
-
+    notifications = [
+        {
+            **_notification.json(),
+            "sort_id": sort_id + i + 1,
+            "created": _notification.created.strftime("%Y/%m/%d %H:%M:%S"),
+        }
+        for i, _notification in enumerate(_notification_list)
+    ]
     data = {
         "result_set": {
             "count": count,
