@@ -88,6 +88,10 @@ class TestTokenStraightBondTokens:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
             "personalInfoAddress": personal_info_address,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         return attribute
 
@@ -197,6 +201,10 @@ class TestTokenStraightBondTokens:
                 "memo": "メモ",
                 "personal_info_address": personal_info,
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             }
         ]
 
@@ -326,6 +334,10 @@ class TestTokenStraightBondTokens:
                 "memo": "メモ",
                 "personal_info_address": personal_info,
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             }
             for i in range(1, 4)
         ]
@@ -457,6 +469,10 @@ class TestTokenStraightBondTokens:
                 "memo": "メモ",
                 "personal_info_address": personal_info,
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             }
             for i in range(1, 3)
         ]
@@ -679,6 +695,10 @@ class TestTokenStraightBondTokens:
                 "memo": "メモ",
                 "personal_info_address": personal_info,
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             }
             for i in range(0, 5)
         ]
@@ -908,6 +928,10 @@ class TestTokenStraightBondTokens:
                 "memo": "メモ",
                 "personal_info_address": personal_info,
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             }
             for i in range(0, 5)
         ]

@@ -84,6 +84,10 @@ class TestCompanyInfoCompanyInfoList:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
             "personalInfoAddress": personal_info_address,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         return attribute
 
@@ -165,6 +169,10 @@ class TestCompanyInfoCompanyInfoList:
         idx = IDXBondToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
+        idx.face_value_currency = ""
+        idx.interest_payment_currency = ""
+        idx.redemption_value_currency = ""
+        idx.base_fx_rate = 0.0
         session.add(idx)
 
     @staticmethod

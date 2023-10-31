@@ -1,4 +1,4 @@
-"""v23.9.0_feature_1416
+"""v23_9_0_feature_1416
 
 Revision ID: 1f0ac8015f2f
 Revises: ae65533fdc41
