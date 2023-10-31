@@ -69,7 +69,7 @@ RUN chown -R apl:apl /app/ibet-Wallet-API \
 USER apl
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
- && poetry install --no-root \
+ && poetry install --no-root -E ibet-explorer \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/poetry.lock
 
