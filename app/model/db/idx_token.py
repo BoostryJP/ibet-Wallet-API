@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import datetime
 from typing import Type, Union
 
-from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, String, Text
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import engine
@@ -67,7 +67,6 @@ class TokenBase(Base):
     short_term_cache_created: Mapped[datetime.datetime | None] = mapped_column(DateTime)
 
     FIELDS = {
-        "id": int,
         "token_address": str,
         "token_template": str,
         "owner_address": str,
@@ -123,14 +122,22 @@ class IDXBondToken(TokenBase):
     transfer_approval_required: Mapped[bool | None] = mapped_column(Boolean)
     # Face Value
     face_value: Mapped[int | None] = mapped_column(BigInteger)
+    # Face Value Currency
+    face_value_currency: Mapped[str] = mapped_column(String(3), nullable=False)
     # Interest Rate
     interest_rate: Mapped[float | None] = mapped_column(Float)
     # Interest Payment Date(JSON)
     interest_payment_date: Mapped[dict | None] = mapped_column(JSON)
+    # Interest Payment Currency
+    interest_payment_currency: Mapped[str] = mapped_column(String(3), nullable=False)
     # Redemption Date
     redemption_date: Mapped[str | None] = mapped_column(String(8))
     # Redemption Value
     redemption_value: Mapped[int | None] = mapped_column(BigInteger)
+    # Redemption Value Currency
+    redemption_value_currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    # Base FX Rate
+    base_fx_rate: Mapped[float] = mapped_column(Numeric(16, 6), nullable=False)
     # Return Date
     return_date: Mapped[str | None] = mapped_column(String(8))
     # Return Amount
@@ -152,10 +159,14 @@ class IDXBondToken(TokenBase):
         "is_offering": bool,
         "transfer_approval_required": bool,
         "face_value": int,
+        "face_value_currency": str,
         "interest_rate": float,
         "interest_payment_date": list,
+        "interest_payment_currency": str,
         "redemption_date": str,
         "redemption_value": int,
+        "redemption_value_currency": str,
+        "base_fx_rate": float,
         "return_date": str,
         "return_amount": str,
         "purpose": str,
@@ -173,10 +184,14 @@ class IDXBondToken(TokenBase):
             "is_offering": self.is_offering,
             "transfer_approval_required": self.transfer_approval_required,
             "face_value": self.face_value,
+            "face_value_currency": self.face_value_currency,
             "interest_rate": self.interest_rate,
             "interest_payment_date": self.interest_payment_date,
+            "interest_payment_currency": self.interest_payment_currency,
             "redemption_date": self.redemption_date,
             "redemption_value": self.redemption_value,
+            "redemption_value_currency": self.redemption_value_currency,
+            "base_fx_rate": float(self.base_fx_rate),
             "return_date": self.return_date,
             "return_amount": self.return_amount,
             "purpose": self.purpose,

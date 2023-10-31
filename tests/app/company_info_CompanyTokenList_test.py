@@ -73,6 +73,10 @@ class TestCompanyInfoCompanyTokenList:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
             "personalInfoAddress": personal_info_address,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         return attribute
 
@@ -225,6 +229,10 @@ class TestCompanyInfoCompanyTokenList:
                 "memo": "メモ",
                 "personal_info_address": personal_info["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             }
         ]
 

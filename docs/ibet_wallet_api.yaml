@@ -4,7 +4,7 @@ info:
   description: >-
     RPC services that provides utility tools for building a wallet system on
     ibet network
-  version: 23.9.0
+  version: 23.12.0
 paths:
   /:
     get:
@@ -643,9 +643,9 @@ paths:
           required: true
           schema:
             type: string
-            description: address
+            description: Issuer address
             title: Eth Address
-          description: address
+          description: Issuer address
       responses:
         '200':
           description: Successful Response
@@ -682,9 +682,9 @@ paths:
           required: true
           schema:
             type: string
-            description: address
+            description: Issuer address
             title: Eth Address
-          description: address
+          description: Issuer address
         - name: include_private_listing
           in: query
           required: false
@@ -984,7 +984,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of StraightBond tokens
-      description: 'Endpoint: /Token/StraightBond'
+      description: Get a list of bond tokens.
       operationId: StraightBondTokens
       parameters:
         - name: address_list
@@ -995,7 +995,6 @@ paths:
             items:
               type: string
             description: list of token address (**this affects total number**)
-            default: []
             title: Address List
           description: list of token address (**this affects total number**)
         - name: offset
@@ -1180,7 +1179,7 @@ paths:
       tags:
         - token_info
       summary: List of StraightBond token address
-      description: 'Endpoint: /Token/StraightBond/Addresses'
+      description: Get a list of bond token addresses.
       operationId: StraightBondTokenAddresses
       parameters:
         - name: offset
@@ -1362,7 +1361,7 @@ paths:
       tags:
         - token_info
       summary: StraightBond token details
-      description: 'Endpoint: /Token/StraightBond/{contract_address}'
+      description: Get the details of the bond token.
       operationId: StraightBondTokenDetails
       parameters:
         - name: token_address
@@ -1370,7 +1369,9 @@ paths:
           required: true
           schema:
             type: string
+            description: Token address
             title: Token Address
+          description: Token address
       responses:
         '200':
           description: Successful Response
@@ -1402,7 +1403,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of Share tokens
-      description: 'Endpoint: /Token/Share'
+      description: Get a list of share tokens.
       operationId: ShareTokens
       parameters:
         - name: address_list
@@ -1413,7 +1414,6 @@ paths:
             items:
               type: string
             description: list of token address (**this affects total number**)
-            default: []
             title: Address List
           description: list of token address (**this affects total number**)
         - name: offset
@@ -1598,7 +1598,7 @@ paths:
       tags:
         - token_info
       summary: List of Share token address
-      description: 'Endpoint: /Token/Share/Addresses'
+      description: Get a list of share token addresses.
       operationId: ShareTokenAddresses
       parameters:
         - name: offset
@@ -1780,7 +1780,7 @@ paths:
       tags:
         - token_info
       summary: Share token details
-      description: 'Endpoint: /Token/Share/{contract_address}'
+      description: Get the details of the bond token.
       operationId: ShareTokenDetails
       parameters:
         - name: token_address
@@ -1788,7 +1788,9 @@ paths:
           required: true
           schema:
             type: string
+            description: Token address
             title: Token Address
+          description: Token address
       responses:
         '200':
           description: Successful Response
@@ -1817,7 +1819,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of Membership tokens
-      description: 'Endpoint: /Token/Membership'
+      description: Get a list of membership tokens.
       operationId: MembershipTokens
       parameters:
         - name: address_list
@@ -1828,7 +1830,6 @@ paths:
             items:
               type: string
             description: list of token address (**this affects total number**)
-            default: []
             title: Address List
           description: list of token address (**this affects total number**)
         - name: offset
@@ -1983,7 +1984,7 @@ paths:
       tags:
         - token_info
       summary: List of Membership token address
-      description: 'Endpoint: /Token/Membership/Addresses'
+      description: Get a list of membership token addresses.
       operationId: MembershipTokenAddresses
       parameters:
         - name: offset
@@ -2135,7 +2136,7 @@ paths:
       tags:
         - token_info
       summary: Membership token details
-      description: 'Endpoint: /Token/Membership/{contract_address}'
+      description: Get the details of the membership token.
       operationId: MembershipTokenDetails
       parameters:
         - name: token_address
@@ -2143,7 +2144,9 @@ paths:
           required: true
           schema:
             type: string
+            description: Token address
             title: Token Address
+          description: Token address
       responses:
         '200':
           description: Successful Response
@@ -2172,7 +2175,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of Coupon tokens
-      description: 'Endpoint: /Token/Coupon'
+      description: Get a list of coupon tokens.
       operationId: CouponTokens
       parameters:
         - name: address_list
@@ -2183,7 +2186,6 @@ paths:
             items:
               type: string
             description: list of token address (**this affects total number**)
-            default: []
             title: Address List
           description: list of token address (**this affects total number**)
         - name: offset
@@ -2338,7 +2340,7 @@ paths:
       tags:
         - token_info
       summary: List of Coupon token address
-      description: 'Endpoint: /Token/Coupon/Addresses'
+      description: Get a list of coupon token addresses.
       operationId: CouponTokenAddresses
       parameters:
         - name: offset
@@ -2490,7 +2492,7 @@ paths:
       tags:
         - token_info
       summary: Coupon token details
-      description: 'Endpoint: /Token/Coupon/{contract_address}'
+      description: Get the details of the membership token.
       operationId: CouponTokenDetails
       parameters:
         - name: token_address
@@ -2498,7 +2500,9 @@ paths:
           required: true
           schema:
             type: string
+            description: Token address
             title: Token Address
+          description: Token address
       responses:
         '200':
           description: Successful Response
@@ -2538,9 +2542,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
       responses:
         '200':
           description: Successful Response
@@ -2577,9 +2581,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
         - name: exclude_owner
           in: query
           required: false
@@ -2619,7 +2623,7 @@ paths:
       tags:
         - token_info
       summary: Token holders count
-      description: 'Endpoint: /Token/{contract_address}/Holders/Count'
+      description: 'Endpoint: /Token/{token_address}/Holders/Count'
       operationId: TokenHoldersCount
       parameters:
         - name: token_address
@@ -2627,9 +2631,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
         - name: exclude_owner
           in: query
           required: false
@@ -2669,7 +2673,7 @@ paths:
       tags:
         - token_info
       summary: Execute Batch Getting Token Holders At Specific BlockNumber
-      description: 'Endpoint: /Token/{contract_address}/Holders/Collection'
+      description: 'Endpoint: /Token/{token_address}/Holders/Collection'
       operationId: TokenHoldersCollection
       parameters:
         - name: token_address
@@ -2677,9 +2681,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
       requestBody:
         required: true
         content:
@@ -2714,7 +2718,7 @@ paths:
       tags:
         - token_info
       summary: Token Holder At Specific BlockNumber
-      description: 'Endpoint: /Token/{contract_address}/Holders/Collection/{list_id}'
+      description: 'Endpoint: /Token/{token_address}/Holders/Collection/{list_id}'
       operationId: TokenHoldersList
       parameters:
         - name: token_address
@@ -2722,9 +2726,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
         - name: list_id
           in: path
           required: true
@@ -2734,11 +2738,12 @@ paths:
             description: >-
               Unique id to be assigned to each token holder list.This must be
               Version4 UUID.
+            examples:
+              - cfd83622-34dc-4efe-a68b-2cc275d3d824
             title: List Id
           description: >-
             Unique id to be assigned to each token holder list.This must be
             Version4 UUID.
-          example: cfd83622-34dc-4efe-a68b-2cc275d3d824
       responses:
         '200':
           description: Successful Response
@@ -2767,7 +2772,7 @@ paths:
       tags:
         - token_info
       summary: Token Transfer History
-      description: 'Endpoint: /Token/{contract_address}/TransferHistory'
+      description: 'Endpoint: /Token/{token_address}/TransferHistory'
       operationId: TransferHistory
       parameters:
         - name: token_address
@@ -2775,9 +2780,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
         - name: offset
           in: query
           required: false
@@ -2848,7 +2853,7 @@ paths:
       tags:
         - token_info
       summary: Token Transfer Approval History
-      description: 'Endpoint: /Token/{contract_address}/TransferApprovalHistory'
+      description: 'Endpoint: /Token/{token_address}/TransferApprovalHistory'
       operationId: TransferApprovalHistory
       parameters:
         - name: token_address
@@ -2856,9 +2861,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
         - name: offset
           in: query
           required: false
@@ -3059,6 +3064,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Locked Position
+      description: List all share locked position
       operationId: GetShareTokenLockedPosition
       parameters:
         - name: account_address
@@ -3066,7 +3072,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address_list
           in: query
           required: false
@@ -3168,6 +3176,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Lock Events
+      description: List all share lock events
       operationId: GetShareTokenLockEvent
       parameters:
         - name: account_address
@@ -3175,7 +3184,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address_list
           in: query
           required: false
@@ -3308,6 +3319,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Locked Position
+      description: List all bond locked position
       operationId: GetStraightBondTokenLockedPosition
       parameters:
         - name: account_address
@@ -3315,7 +3327,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address_list
           in: query
           required: false
@@ -3417,6 +3431,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Lock Events
+      description: List all bond lock events
       operationId: GetStraightBondTokenLockEvent
       parameters:
         - name: account_address
@@ -3424,7 +3439,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address_list
           in: query
           required: false
@@ -3557,7 +3574,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Position
-      description: 'Endpoint: /Position/{account_address}/Share'
+      description: List all share position
       operationId: GetShareTokenPosition
       parameters:
         - name: account_address
@@ -3565,7 +3582,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: offset
           in: query
           required: false
@@ -3640,7 +3659,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Position
-      description: 'Endpoint: /Position/{account_address}/StraightBond'
+      description: List all bond position
       operationId: GetStraightBondTokenPosition
       parameters:
         - name: account_address
@@ -3648,7 +3667,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: offset
           in: query
           required: false
@@ -3723,7 +3744,7 @@ paths:
       tags:
         - user_position
       summary: Membership Token Position
-      description: 'Endpoint: /Position/{account_address}/Membership'
+      description: List all membership position
       operationId: GetMembershipTokenPosition
       parameters:
         - name: account_address
@@ -3731,7 +3752,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: offset
           in: query
           required: false
@@ -3806,7 +3829,7 @@ paths:
       tags:
         - user_position
       summary: Coupon Token Position
-      description: 'Endpoint: /Position/{account_address}/Coupon'
+      description: List all coupon position
       operationId: GetCouponTokenPosition
       parameters:
         - name: account_address
@@ -3814,7 +3837,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: offset
           in: query
           required: false
@@ -3889,7 +3914,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Position By Token Address
-      description: 'Endpoint: /Position/{account_address}/Share/{contract_address}'
+      description: Retrieve share position detail
       operationId: GetShareTokenPositionByAddress
       parameters:
         - name: account_address
@@ -3897,13 +3922,17 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address
           in: path
           required: true
           schema:
             type: string
+            description: token address
             title: Token Address
+          description: token address
         - name: enable_index
           in: query
           required: false
@@ -3945,7 +3974,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Position By Token Address
-      description: 'Endpoint: /Position/{account_address}/StraightBond/{contract_address}'
+      description: Retrieve bond position detail
       operationId: GetStraightBondTokenPositionByAddress
       parameters:
         - name: account_address
@@ -3953,13 +3982,17 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address
           in: path
           required: true
           schema:
             type: string
+            description: token address
             title: Token Address
+          description: token address
         - name: enable_index
           in: query
           required: false
@@ -4001,7 +4034,7 @@ paths:
       tags:
         - user_position
       summary: Membership Token Position By Token Address
-      description: 'Endpoint: /Position/{account_address}/Membership/{contract_address}'
+      description: Retrieve membership position detail
       operationId: GetMembershipTokenPositionByAddress
       parameters:
         - name: account_address
@@ -4009,13 +4042,17 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address
           in: path
           required: true
           schema:
             type: string
+            description: token address
             title: Token Address
+          description: token address
         - name: enable_index
           in: query
           required: false
@@ -4057,7 +4094,7 @@ paths:
       tags:
         - user_position
       summary: Coupon Token Position By Token Address
-      description: 'Endpoint: /Position/{account_address}/Coupon/{contract_address}'
+      description: Retrieve coupon position detail
       operationId: GetCouponTokenPositionByAddress
       parameters:
         - name: account_address
@@ -4065,13 +4102,17 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: token_address
           in: path
           required: true
           schema:
             type: string
+            description: token address
             title: Token Address
+          description: token address
         - name: enable_index
           in: query
           required: false
@@ -4108,11 +4149,56 @@ paths:
                   - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Getcoupontokenpositionbyaddress
           description: Not Found
+  /Position/{account_address}/Coupon/{token_address}/Consumptions:
+    get:
+      tags:
+        - user_position
+      summary: List All Coupon Consumptions
+      description: List all coupon consumptions
+      operationId: ListAllCouponConsumptions
+      parameters:
+        - name: account_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: account address
+            title: Account Address
+          description: account address
+        - name: token_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: token_address
+            title: Token Address
+          description: token_address
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/GenericSuccessResponse_ListAllCouponConsumptionsResponse_
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotSupportedErrorResponse'
+          description: Not Found
   /Position/{account_address}:
     get:
       tags:
         - user_position
       summary: Token Position
+      description: List all positions
       operationId: GetTokenPosition
       parameters:
         - name: account_address
@@ -4120,7 +4206,9 @@ paths:
           required: true
           schema:
             type: string
+            description: account address
             title: Account Address
+          description: account address
         - name: offset
           in: query
           required: false
@@ -4209,7 +4297,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
+            description: account address
             title: Address
+          description: account address
         - name: notification_type
           in: query
           required: false
@@ -4716,9 +4806,9 @@ paths:
           required: true
           schema:
             type: string
-            description: token address
+            description: Token address
             title: Token Address
-          description: token address
+          description: Token address
         - name: from_block
           in: query
           required: true
@@ -5242,7 +5332,9 @@ paths:
           required: true
           schema:
             type: string
+            description: Token address
             title: Token Address
+          description: Token address
         - name: account_address_list
           in: query
           required: false
@@ -5625,6 +5717,26 @@ components:
         - sort_id
         - settlement_timestamp
       title: CompleteAgreementSet[TokenAddress]
+    CouponConsumption:
+      properties:
+        account_address:
+          type: string
+          title: Account Address
+          description: account address
+        block_timestamp:
+          type: string
+          title: Block Timestamp
+          description: consumption datetime
+        value:
+          type: integer
+          title: Value
+          description: consumption quantity
+      type: object
+      required:
+        - account_address
+        - block_timestamp
+        - value
+      title: CouponConsumption
     CouponImage:
       properties:
         id:
@@ -5727,7 +5839,7 @@ components:
       properties:
         list_id:
           type: string
-          format: uuid
+          format: uuid4
           title: List Id
           description: >-
             Unique id to be assigned to each token holder list.This must be
@@ -5747,7 +5859,7 @@ components:
       properties:
         list_id:
           type: string
-          format: uuid
+          format: uuid4
           title: List Id
           description: >-
             Unique id to be assigned to each token holder list.This must be
@@ -6189,6 +6301,21 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllCompanyTokensResponse]
+    GenericSuccessResponse_ListAllCouponConsumptionsResponse_:
+      properties:
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListAllCouponConsumptionsResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListAllCouponConsumptionsResponse]
     GenericSuccessResponse_ListAllCouponTokenAddressesResponse_:
       properties:
         meta:
@@ -7211,6 +7338,11 @@ components:
           - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
       type: array
       title: ListAllCompanyTokensResponse
+    ListAllCouponConsumptionsResponse:
+      items:
+        $ref: '#/components/schemas/CouponConsumption'
+      type: array
+      title: ListAllCouponConsumptionsResponse
     ListAllCouponTokenAddressesResponse:
       properties:
         result_set:
@@ -8434,6 +8566,7 @@ components:
         token_address:
           type: string
           title: Token Address
+          description: Token address
         is_public:
           type: boolean
           title: Is Public
@@ -8450,6 +8583,7 @@ components:
         owner_address:
           type: string
           title: Owner Address
+          description: Issuer address
         created:
           type: string
           title: Created
@@ -8948,6 +9082,9 @@ components:
         face_value:
           type: integer
           title: Face Value
+        face_value_currency:
+          type: string
+          title: Face Value Currency
         interest_rate:
           type: number
           title: Interest Rate
@@ -9011,12 +9148,21 @@ components:
             - type: string
             - type: 'null'
           title: Interest Payment Date12
+        interest_payment_currency:
+          type: string
+          title: Interest Payment Currency
         redemption_date:
           type: string
           title: Redemption Date
         redemption_value:
           type: integer
           title: Redemption Value
+        redemption_value_currency:
+          type: string
+          title: Redemption Value Currency
+        base_fx_rate:
+          type: number
+          title: Base Fx Rate
         return_date:
           type: string
           title: Return Date
@@ -9053,6 +9199,7 @@ components:
         - is_offering
         - transfer_approval_required
         - face_value
+        - face_value_currency
         - interest_rate
         - interest_payment_date1
         - interest_payment_date2
@@ -9066,8 +9213,11 @@ components:
         - interest_payment_date10
         - interest_payment_date11
         - interest_payment_date12
+        - interest_payment_currency
         - redemption_date
         - redemption_value
+        - redemption_value_currency
+        - base_fx_rate
         - return_date
         - return_amount
         - purpose
@@ -9717,8 +9867,8 @@ components:
     TokenStatusResponse:
       properties:
         token_template:
-          type: string
-          title: Token Template
+          allOf:
+            - $ref: '#/components/schemas/TokenType'
           examples:
             - IbetStraightBond
         status:

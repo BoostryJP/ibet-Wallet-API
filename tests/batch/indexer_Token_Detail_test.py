@@ -192,6 +192,10 @@ class TestProcessor:
                 "personalInfoAddress": personal_info_contract["address"],
                 "transferable": True,
                 "isRedeemed": False,
+                "faceValueCurrency": "JPY",
+                "interestPaymentCurrency": "JPY",
+                "redemptionValueCurrency": "JPY",
+                "baseFxRate": 0.0,
             }
             token = self.issue_token_bond_with_args(
                 self.issuer, token_list_contract, args

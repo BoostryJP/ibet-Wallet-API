@@ -22,7 +22,7 @@ import functools
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Callable, Optional, Type, Union
+from typing import Callable, Optional, Self, Type, Union
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
@@ -144,6 +144,7 @@ class BondToken(TokenBase):
     is_offering: bool
     transfer_approval_required: bool
     face_value: int
+    face_value_currency: str
     interest_rate: float
     interest_payment_date1: str
     interest_payment_date2: str
@@ -157,8 +158,11 @@ class BondToken(TokenBase):
     interest_payment_date10: str
     interest_payment_date11: str
     interest_payment_date12: str
+    interest_payment_currency: str
     redemption_date: str
     redemption_value: int
+    redemption_value_currency: str
+    base_fx_rate: float
     return_date: str
     return_amount: str
     purpose: str
@@ -257,6 +261,9 @@ class BondToken(TokenBase):
         symbol = Contract.call_function(token_contract, "symbol", (), "")
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
         face_value = Contract.call_function(token_contract, "faceValue", (), 0)
+        face_value_currency = Contract.call_function(
+            token_contract, "faceValueCurrency", (), ""
+        )
         interest_rate = Contract.call_function(token_contract, "interestRate", (), 0)
 
         interest_payment_date1 = ""
@@ -333,6 +340,9 @@ class BondToken(TokenBase):
                 )
         except Exception:
             LOG.warning("Failed to load interestPaymentDate")
+        interest_payment_currency = Contract.call_function(
+            token_contract, "interestPaymentCurrency", (), ""
+        )
 
         redemption_date = Contract.call_function(
             token_contract, "redemptionDate", (), ""
@@ -340,7 +350,20 @@ class BondToken(TokenBase):
         redemption_value = Contract.call_function(
             token_contract, "redemptionValue", (), 0
         )
+        redemption_value_currency = Contract.call_function(
+            token_contract, "redemptionValueCurrency", (), ""
+        )
 
+        try:
+            _raw_base_fx_rate = Contract.call_function(
+                token_contract, "baseFXRate", (), ""
+            )
+            if _raw_base_fx_rate is not None and _raw_base_fx_rate != "":
+                base_fx_rate = float(_raw_base_fx_rate)
+            else:
+                base_fx_rate = 0.0
+        except ValueError:
+            base_fx_rate = 0.0
         return_date = Contract.call_function(token_contract, "returnDate", (), "")
         return_amount = Contract.call_function(token_contract, "returnAmount", (), "")
         purpose = Contract.call_function(token_contract, "purpose", (), "")
@@ -401,6 +424,7 @@ class BondToken(TokenBase):
         bondtoken.is_offering = is_offering
         bondtoken.transfer_approval_required = transfer_approval_required
         bondtoken.face_value = face_value
+        bondtoken.face_value_currency = face_value_currency
         bondtoken.interest_rate = float(Decimal(str(interest_rate)) * Decimal("0.0001"))
         bondtoken.interest_payment_date1 = interest_payment_date1
         bondtoken.interest_payment_date2 = interest_payment_date2
@@ -414,8 +438,11 @@ class BondToken(TokenBase):
         bondtoken.interest_payment_date10 = interest_payment_date10
         bondtoken.interest_payment_date11 = interest_payment_date11
         bondtoken.interest_payment_date12 = interest_payment_date12
+        bondtoken.interest_payment_currency = interest_payment_currency
         bondtoken.redemption_date = redemption_date
         bondtoken.redemption_value = redemption_value
+        bondtoken.redemption_value_currency = redemption_value_currency
+        bondtoken.base_fx_rate = base_fx_rate
         bondtoken.return_date = return_date
         bondtoken.return_amount = return_amount
         bondtoken.purpose = purpose

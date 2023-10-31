@@ -152,6 +152,18 @@ def issue_bond_token(invoker, attribute):
     TokenContract.functions.setTransferable(True).transact(
         {"from": invoker["account_address"], "gas": 4000000}
     )
+    TokenContract.functions.setFaceValueCurrency(
+        attribute["faceValueCurrency"]
+    ).transact({"from": invoker["account_address"], "gas": 4000000})
+    TokenContract.functions.setInterestPaymentCurrency(
+        attribute["interestPaymentCurrency"]
+    ).transact({"from": invoker["account_address"], "gas": 4000000})
+    TokenContract.functions.setRedemptionValueCurrency(
+        attribute["redemptionValueCurrency"]
+    ).transact({"from": invoker["account_address"], "gas": 4000000})
+    TokenContract.functions.setBaseFXRate(str(attribute["baseFxRate"])).transact(
+        {"from": invoker["account_address"], "gas": 4000000}
+    )
 
     return {"address": contract_address, "abi": abi}
 
