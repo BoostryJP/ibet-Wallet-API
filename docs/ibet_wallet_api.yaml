@@ -2595,6 +2595,28 @@ paths:
             default: false
             title: Exclude Owner
           description: exclude owner
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: start position
+            title: Offset
+          description: start position
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: number of set
+            title: Limit
+          description: number of set
       responses:
         '200':
           description: Successful Response
@@ -2611,6 +2633,50 @@ paths:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Tokenholders
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
+    post:
+      tags:
+        - token_info
+      summary: Search Token holders
+      description: 'Endpoint: /Token/{contract_address}/Holders'
+      operationId: SearchTokenHolders
+      parameters:
+        - name: token_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Token address
+            title: Token Address
+          description: Token address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchTokenHoldersRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/GenericSuccessResponse_TokenHoldersResponse_
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Searchtokenholders
           description: Bad Request
         '404':
           content:
@@ -2841,6 +2907,50 @@ paths:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Transferhistory
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
+    post:
+      tags:
+        - token_info
+      summary: Search Token Transfer History
+      description: 'Endpoint: /Token/{token_address}/TransferHistory'
+      operationId: SearchTransferHistory
+      parameters:
+        - name: token_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Token address
+            title: Token Address
+          description: Token address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchTransferHistoryRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Searchtransferhistory
           description: Bad Request
         '404':
           content:
@@ -9233,6 +9343,74 @@ components:
       required:
         - count
       title: RetrieveTokenLockCountResponse
+    SearchTokenHoldersRequest:
+      properties:
+        account_address_list:
+          items:
+            type: string
+          type: array
+          title: Account Address List
+          description: list of token address (**this affects total number**)
+          default: []
+        exclude_owner:
+          anyOf:
+            - type: boolean
+            - type: 'null'
+          title: Exclude Owner
+          description: exclude owner
+          default: false
+        offset:
+          anyOf:
+            - type: integer
+              minimum: 0
+            - type: 'null'
+          title: Offset
+          description: start position
+        limit:
+          anyOf:
+            - type: integer
+              minimum: 0
+            - type: 'null'
+          title: Limit
+          description: number of set
+      type: object
+      title: SearchTokenHoldersRequest
+    SearchTransferHistoryRequest:
+      properties:
+        account_address_list:
+          items:
+            type: string
+          type: array
+          title: Account Address List
+          description: list of token address (**this affects total number**)
+          default: []
+        offset:
+          anyOf:
+            - type: integer
+              minimum: 0
+            - type: 'null'
+          title: Offset
+          description: start position
+        limit:
+          anyOf:
+            - type: integer
+              minimum: 0
+            - type: 'null'
+          title: Limit
+          description: number of set
+        source_event:
+          anyOf:
+            - $ref: '#/components/schemas/TransferSourceEvent'
+            - type: 'null'
+          description: source event of transfer
+        data:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Data
+          description: source event data
+      type: object
+      title: SearchTransferHistoryRequest
     SecurityTokenPositionWithAddress:
       properties:
         balance:
@@ -9754,33 +9932,23 @@ components:
           type: string
           title: Account Address
         amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
+          type: integer
           title: Amount
           default: 0
         pending_transfer:
-          anyOf:
-            - type: integer
-            - type: 'null'
+          type: integer
           title: Pending Transfer
           default: 0
         exchange_balance:
-          anyOf:
-            - type: integer
-            - type: 'null'
+          type: integer
           title: Exchange Balance
           default: 0
         exchange_commitment:
-          anyOf:
-            - type: integer
-            - type: 'null'
+          type: integer
           title: Exchange Commitment
           default: 0
         locked:
-          anyOf:
-            - type: integer
-            - type: 'null'
+          type: integer
           title: Locked
           default: 0
       type: object
@@ -9842,9 +10010,18 @@ components:
         - count
       title: TokenHoldersCountResponse
     TokenHoldersResponse:
-      items:
-        $ref: '#/components/schemas/TokenHolder'
-      type: array
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        token_holder_list:
+          items:
+            $ref: '#/components/schemas/TokenHolder'
+          type: array
+          title: Token Holder List
+      type: object
+      required:
+        - result_set
+        - token_holder_list
       title: TokenHoldersResponse
     TokenPositionsResponse:
       properties:

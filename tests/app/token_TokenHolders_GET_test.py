@@ -25,9 +25,9 @@ from app.model.db import IDXLockedPosition, IDXPosition, Listing
 from tests.account_config import eth_account
 
 
-class TestTokenTokenHolders:
+class TestTokenTokenHoldersGET:
     """
-    Test Case for token.TokenHolders
+    Test Case for token.TokenHolders.POST
     """
 
     # Target API endpoint
@@ -48,7 +48,7 @@ class TestTokenTokenHolders:
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
-        _listing.owner_address = TestTokenTokenHolders.issuer_address
+        _listing.owner_address = TestTokenTokenHoldersGET.issuer_address
         session.add(_listing)
         session.commit()
 
@@ -95,7 +95,10 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = []
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 0, "count": 0},
+            "token_holder_list": [],
+        }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -165,26 +168,29 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = [
-            {
-                "token_address": self.token_address,
-                "account_address": self.account_address_2,
-                "amount": 20,
-                "pending_transfer": 10,
-                "exchange_balance": 20,
-                "exchange_commitment": 10,
-                "locked": 0,
-            },
-            {
-                "token_address": self.token_address,
-                "account_address": self.account_address_1,
-                "amount": 10,
-                "pending_transfer": 5,
-                "exchange_balance": 10,
-                "exchange_commitment": 5,
-                "locked": 0,
-            },
-        ]
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 2, "count": 2},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_2,
+                    "amount": 20,
+                    "pending_transfer": 10,
+                    "exchange_balance": 20,
+                    "exchange_commitment": 10,
+                    "locked": 0,
+                },
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 10,
+                    "pending_transfer": 5,
+                    "exchange_balance": 10,
+                    "exchange_commitment": 5,
+                    "locked": 0,
+                },
+            ],
+        }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -270,26 +276,29 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = [
-            {
-                "token_address": self.token_address,
-                "account_address": self.account_address_2,
-                "amount": 20,
-                "pending_transfer": 10,
-                "exchange_balance": 20,
-                "exchange_commitment": 10,
-                "locked": 0,
-            },
-            {
-                "token_address": self.token_address,
-                "account_address": self.account_address_1,
-                "amount": 0,
-                "pending_transfer": 0,
-                "exchange_balance": 0,
-                "exchange_commitment": 0,
-                "locked": 2,
-            },
-        ]
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 2, "count": 2},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_2,
+                    "amount": 20,
+                    "pending_transfer": 10,
+                    "exchange_balance": 20,
+                    "exchange_commitment": 10,
+                    "locked": 0,
+                },
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 0,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                    "locked": 2,
+                },
+            ],
+        }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -366,7 +375,10 @@ class TestTokenTokenHolders:
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = []
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 0, "count": 0},
+            "token_holder_list": [],
+        }
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -430,17 +442,188 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query)
 
         # Assertion
-        assumed_body = [
-            {
-                "token_address": self.token_address,
-                "account_address": self.account_address_1,
-                "amount": 10,
-                "pending_transfer": None,
-                "exchange_balance": 10,
-                "exchange_commitment": None,
-                "locked": 0,
-            }
-        ]
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 10,
+                    "pending_transfer": 0,
+                    "exchange_balance": 10,
+                    "exchange_commitment": 0,
+                    "locked": 0,
+                }
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_5_1
+    # Pagination: offset
+    def test_normal_5_1(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # Prepare data (balance > 0)
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 10,
+            "exchange_balance": 10,
+        }
+        self.insert_position(session, position=position_1)
+
+        # Prepare data (pending_transfer > 0 and account_address=issuer)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.issuer_address,
+            "pending_transfer": 5,
+        }
+        self.insert_position(session, position=position_2)
+
+        # Prepare data (pending_transfer > 0 and account_address=issuer)
+        position_3 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_2,
+            "balance": 5,
+        }
+        self.insert_position(session, position=position_3)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_1,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0,
+        }
+        self.insert_position(session, other_position_1)
+        other_position_2 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 10,
+            "exchange_commitment": 10,
+        }
+        self.insert_position(session, other_position_2)
+
+        # Request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query = {"exclude_owner": True, "offset": 1}
+        resp = client.get(apiurl, params=query)
+
+        # Assertion
+        assumed_body = {
+            "result_set": {"offset": 1, "limit": None, "total": 3, "count": 2},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 10,
+                    "pending_transfer": 0,
+                    "exchange_balance": 10,
+                    "exchange_commitment": 0,
+                    "locked": 0,
+                }
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_5_2
+    # Pagination: limit
+    def test_normal_5_2(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # Prepare data (balance > 0)
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 10,
+            "exchange_balance": 10,
+        }
+        self.insert_position(session, position=position_1)
+
+        # Prepare data (pending_transfer > 0 and account_address=issuer)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.issuer_address,
+            "pending_transfer": 5,
+        }
+        self.insert_position(session, position=position_2)
+
+        # Prepare data (pending_transfer > 0 and account_address=issuer)
+        position_3 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_2,
+            "balance": 5,
+        }
+        self.insert_position(session, position=position_3)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_1,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0,
+        }
+        self.insert_position(session, other_position_1)
+        other_position_2 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 10,
+            "exchange_commitment": 10,
+        }
+        self.insert_position(session, other_position_2)
+
+        # Request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query = {"exclude_owner": True, "limit": 1}
+        resp = client.get(apiurl, params=query)
+
+        # Assertion
+        assumed_body = {
+            "result_set": {"offset": None, "limit": 1, "total": 3, "count": 2},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_2,
+                    "amount": 5,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                    "locked": 0,
+                }
+            ],
+        }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body

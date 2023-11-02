@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import UUID4, BaseModel, Field, RootModel
+from pydantic import UUID4, BaseModel, Field, RootModel, StrictStr
 
 from app.model.schema.base import ResultSet, TokenType, ValidatedEthereumAddress
 
@@ -49,6 +49,18 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
 @dataclass
 class ListAllTokenHoldersQuery:
     exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+
+
+class SearchTokenHoldersRequest(BaseModel):
+    account_address_list: list[StrictStr] = Field(
+        [],
+        description="list of token address (**this affects total number**)",
+    )
+    exclude_owner: Optional[bool] = Field(default=False, description="exclude owner")
+    offset: Optional[int] = Field(default=None, description="start position", ge=0)
+    limit: Optional[int] = Field(default=None, description="number of set", ge=0)
 
 
 @dataclass
@@ -66,6 +78,19 @@ class ListAllTransferHistoryQuery:
     data: Annotated[Optional[str], Query(description="source event data")] = None
 
 
+class SearchTransferHistoryRequest(BaseModel):
+    account_address_list: list[StrictStr] = Field(
+        [],
+        description="list of token address (**this affects total number**)",
+    )
+    offset: Optional[int] = Field(default=None, description="start position", ge=0)
+    limit: Optional[int] = Field(default=None, description="number of set", ge=0)
+    source_event: Optional[TransferSourceEvent] = Field(
+        default=None, description="source event of transfer"
+    )
+    data: Optional[str] = Field(default=None, description="source event data")
+
+
 ############################
 # RESPONSE
 ############################
@@ -78,15 +103,16 @@ class TokenStatusResponse(BaseModel):
 class TokenHolder(BaseModel):
     token_address: ValidatedEthereumAddress
     account_address: ValidatedEthereumAddress
-    amount: Optional[int] = Field(default=0)
-    pending_transfer: Optional[int] = Field(default=0)
-    exchange_balance: Optional[int] = Field(default=0)
-    exchange_commitment: Optional[int] = Field(default=0)
-    locked: Optional[int] = Field(default=0)
+    amount: int = Field(default=0)
+    pending_transfer: int = Field(default=0)
+    exchange_balance: int = Field(default=0)
+    exchange_commitment: int = Field(default=0)
+    locked: int = Field(default=0)
 
 
-class TokenHoldersResponse(RootModel[list[TokenHolder]]):
-    pass
+class TokenHoldersResponse(BaseModel):
+    result_set: ResultSet
+    token_holder_list: list[TokenHolder]
 
 
 class TokenHoldersCountResponse(BaseModel):

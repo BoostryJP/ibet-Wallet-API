@@ -42,6 +42,8 @@ from app.model.schema import (
     ListAllTokenHoldersQuery,
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
+    SearchTokenHoldersRequest,
+    SearchTransferHistoryRequest,
     TokenHoldersCollectionResponse,
     TokenHoldersCountResponse,
     TokenHoldersResponse,
@@ -150,6 +152,8 @@ def get_token_holders(
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
+    limit = request_query.limit
+    offset = request_query.offset
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
     stmt = (
@@ -177,25 +181,155 @@ def get_token_holders(
             IDXLockedPosition.account_address,
         )
     )
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    # Pagination
+    if limit is not None:
+        stmt = stmt.limit(limit)
+    if offset is not None:
+        stmt = stmt.offset(offset)
 
     holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
         stmt.order_by(desc(IDXPosition.created))
     ).all()
 
-    resp_body = [
-        {
-            "token_address": holder[0].token_address,
-            "account_address": holder[0].account_address,
-            "amount": holder[0].balance,
-            "pending_transfer": holder[0].pending_transfer,
-            "exchange_balance": holder[0].exchange_balance,
-            "exchange_commitment": holder[0].exchange_commitment,
-            "locked": holder[1] if holder[1] else 0,
-        }
-        for holder in holders
-    ]
+    resp_body = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+        },
+        "token_holder_list": [
+            {
+                "token_address": holder[0].token_address,
+                "account_address": holder[0].account_address,
+                "amount": holder[0].balance if holder[0].balance else 0,
+                "pending_transfer": holder[0].pending_transfer
+                if holder[0].pending_transfer
+                else 0,
+                "exchange_balance": holder[0].exchange_balance
+                if holder[0].exchange_balance
+                else 0,
+                "exchange_commitment": holder[0].exchange_commitment
+                if holder[0].exchange_commitment
+                else 0,
+                "locked": holder[1] if holder[1] else 0,
+            }
+            for holder in holders
+        ],
+    }
+
+    return json_response({**SuccessResponse.default(), "data": resp_body})
+
+
+@router.post(
+    "/{token_address}/Holders",
+    summary="Search Token holders",
+    operation_id="SearchTokenHolders",
+    response_model=GenericSuccessResponse[TokenHoldersResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+)
+def search_token_holders(
+    session: DBSession,
+    data: SearchTokenHoldersRequest,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
+):
+    """
+    Endpoint: /Token/{contract_address}/Holders
+    """
+    # Check if the token exists in the list
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
+    if listed_token is None:
+        raise DataNotExistsError("token_address: %s" % token_address)
+
+    limit = data.limit
+    offset = data.offset
+    # Get token holders
+    # add order_by id to bridge the difference between postgres and mysql
+    stmt = (
+        select(IDXPosition, func.sum(IDXLockedPosition.value))
+        .outerjoin(
+            IDXLockedPosition,
+            and_(
+                IDXLockedPosition.token_address == token_address,
+                IDXLockedPosition.account_address == IDXPosition.account_address,
+            ),
+        )
+        .where(IDXPosition.token_address == token_address)
+        .where(
+            or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0,
+                IDXLockedPosition.value > 0,
+            )
+        )
+        .group_by(
+            IDXPosition.token_address,
+            IDXPosition.account_address,
+            IDXLockedPosition.account_address,
+        )
+    )
+    if len(data.account_address_list) > 0:
+        stmt = stmt.where(
+            or_(
+                IDXPosition.account_address.in_(data.account_address_list),
+                IDXLockedPosition.account_address.in_(data.account_address_list),
+            )
+        )
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    if data.exclude_owner is True:
+        stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
+
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    # Pagination
+    if limit is not None:
+        stmt = stmt.limit(limit)
+    if offset is not None:
+        stmt = stmt.offset(offset)
+
+    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
+        stmt.order_by(desc(IDXPosition.created))
+    ).all()
+
+    resp_body = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+        },
+        "token_holder_list": [
+            {
+                "token_address": holder[0].token_address,
+                "account_address": holder[0].account_address,
+                "amount": holder[0].balance if holder[0].balance else 0,
+                "pending_transfer": holder[0].pending_transfer
+                if holder[0].pending_transfer
+                else 0,
+                "exchange_balance": holder[0].exchange_balance
+                if holder[0].exchange_balance
+                else 0,
+                "exchange_commitment": holder[0].exchange_commitment
+                if holder[0].exchange_commitment
+                else 0,
+                "locked": holder[1] if holder[1] else 0,
+            }
+            for holder in holders
+        ],
+    }
 
     return json_response({**SuccessResponse.default(), "data": resp_body})
 
@@ -459,6 +593,72 @@ def list_all_transfer_histories(
             "count": count,
             "offset": request_query.offset,
             "limit": request_query.limit,
+            "total": total,
+        },
+        "transfer_history": resp_data,
+    }
+
+    return json_response({**SuccessResponse.default(), "data": data})
+
+
+@router.post(
+    "/{token_address}/TransferHistory",
+    summary="Search Token Transfer History",
+    operation_id="SearchTransferHistory",
+    response_model=GenericSuccessResponse[TransferHistoriesResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+)
+def search_transfer_histories(
+    session: DBSession,
+    data: SearchTransferHistoryRequest,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
+):
+    """
+    Endpoint: /Token/{token_address}/TransferHistory
+    """
+    # 取扱トークンチェック
+    listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
+    if listed_token is None:
+        raise DataNotExistsError("token_address: %s" % token_address)
+
+    # 移転履歴取得
+    stmt = (
+        select(IDXTransfer)
+        .where(IDXTransfer.token_address == token_address)
+        .order_by(IDXTransfer.id)
+    )
+    if len(data.account_address_list) > 0:
+        stmt = stmt.where(
+            or_(
+                IDXTransfer.from_address.in_(data.account_address_list),
+                IDXTransfer.to_address.in_(data.account_address_list),
+            )
+        )
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    if data.source_event is not None:
+        stmt = stmt.where(IDXTransfer.source_event == data.source_event.value)
+    if data.data is not None:
+        stmt = stmt.where(cast(IDXTransfer.data, String).like("%" + data.data + "%"))
+
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    if data.offset is not None:
+        stmt = stmt.offset(data.offset)
+    if data.limit is not None:
+        stmt = stmt.limit(data.limit)
+    transfer_history: Sequence[IDXTransfer] = session.scalars(stmt).all()
+
+    resp_data = [transfer_event.json() for transfer_event in transfer_history]
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": data.offset,
+            "limit": data.limit,
             "total": total,
         },
         "transfer_history": resp_data,
