@@ -43,6 +43,7 @@ from app.model.schema import (
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
+    SearchTransferApprovalHistoryRequest,
     SearchTransferHistoryRequest,
     TokenHoldersCollectionResponse,
     TokenHoldersCountResponse,
@@ -228,7 +229,7 @@ def get_token_holders(
 
 
 @router.post(
-    "/{token_address}/Holders",
+    "/{token_address}/Holders/Search",
     summary="Search Token holders",
     operation_id="SearchTokenHolders",
     response_model=GenericSuccessResponse[TokenHoldersResponse],
@@ -242,7 +243,7 @@ def search_token_holders(
     ],
 ):
     """
-    Endpoint: /Token/{contract_address}/Holders
+    Endpoint: /Token/{contract_address}/Holders/Search
     """
     # Check if the token exists in the list
     listed_token = session.scalars(
@@ -602,7 +603,7 @@ def list_all_transfer_histories(
 
 
 @router.post(
-    "/{token_address}/TransferHistory",
+    "/{token_address}/TransferHistory/Search",
     summary="Search Token Transfer History",
     operation_id="SearchTransferHistory",
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
@@ -616,7 +617,7 @@ def search_transfer_histories(
     ],
 ):
     """
-    Endpoint: /Token/{token_address}/TransferHistory
+    Endpoint: /Token/{token_address}/TransferHistory/Search
     """
     # 取扱トークンチェック
     listed_token = session.scalars(
@@ -719,6 +720,73 @@ def list_all_transfer_approval_histories(
             "count": list_length,
             "offset": request_query.offset,
             "limit": request_query.limit,
+            "total": list_length,
+        },
+        "transfer_approval_history": resp_data,
+    }
+
+    return json_response({**SuccessResponse.default(), "data": data})
+
+
+@router.post(
+    "/{token_address}/TransferApprovalHistory/Search",
+    summary="Search Token Transfer Approval History",
+    operation_id="SearchTransferApprovalHistory",
+    response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+)
+def search_transfer_approval_histories(
+    session: DBSession,
+    data: SearchTransferApprovalHistoryRequest,
+    token_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Token address")
+    ],
+):
+    """
+    Endpoint: /Token/{token_address}/TransferApprovalHistory/Search
+    """
+    # Check that it is a listed token
+    _listed_token = session.scalars(
+        select(Listing).where(Listing.token_address == token_address).limit(1)
+    ).first()
+    if _listed_token is None:
+        raise DataNotExistsError(f"token_address: {token_address}")
+
+    # Get transfer approval data
+    stmt = (
+        select(IDXTransferApproval)
+        .where(IDXTransferApproval.token_address == token_address)
+        .order_by(
+            IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
+        )
+    )
+    if len(data.account_address_list) > 0:
+        stmt = stmt.where(
+            or_(
+                IDXTransferApproval.from_address.in_(data.account_address_list),
+                IDXTransferApproval.to_address.in_(data.account_address_list),
+            )
+        )
+    list_length = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    # パラメータを設定
+    if data.offset is not None:
+        stmt = stmt.offset(data.offset)
+    if data.limit is not None:
+        stmt = stmt.limit(data.limit)
+    transfer_approval_history: Sequence[IDXTransferApproval] = session.scalars(
+        stmt
+    ).all()
+
+    resp_data = [
+        transfer_approval_event.json()
+        for transfer_approval_event in transfer_approval_history
+    ]
+    data = {
+        "result_set": {
+            "count": list_length,
+            "offset": data.offset,
+            "limit": data.limit,
             "total": list_length,
         },
         "transfer_approval_history": resp_data,

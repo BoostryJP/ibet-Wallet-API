@@ -117,6 +117,7 @@ from .token import (
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
+    SearchTransferApprovalHistoryRequest,
     SearchTransferHistoryRequest,
     TokenHoldersCollectionResponse,
     TokenHoldersCountResponse,

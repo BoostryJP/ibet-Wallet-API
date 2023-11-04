@@ -91,6 +91,15 @@ class SearchTransferHistoryRequest(BaseModel):
     data: Optional[str] = Field(default=None, description="source event data")
 
 
+class SearchTransferApprovalHistoryRequest(BaseModel):
+    account_address_list: list[StrictStr] = Field(
+        [],
+        description="list of token address (**this affects total number**)",
+    )
+    offset: Optional[int] = Field(default=None, description="start position", ge=0)
+    limit: Optional[int] = Field(default=None, description="number of set", ge=0)
+
+
 ############################
 # RESPONSE
 ############################

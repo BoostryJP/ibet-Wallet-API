@@ -22,9 +22,9 @@ from sqlalchemy.orm import Session
 from app.model.db import IDXTransfer, IDXTransferSourceEventType, Listing
 
 
-class TestTokenTransferHistoryGET:
+class TestTokenTransferHistory:
     """
-    Test Case for token.TransferHistory.GET
+    Test Case for token.TransferHistory
     """
 
     # テスト対象API

@@ -22,13 +22,13 @@ from sqlalchemy.orm import Session
 from app.model.db import IDXTransfer, IDXTransferSourceEventType, Listing
 
 
-class TestTokenTransferHistoryPOST:
+class TestTokenTransferHistorySearch:
     """
-    Test Case for token.TransferHistory.POST
+    Test Case for token.TransferHistory.Search
     """
 
     # テスト対象API
-    apiurl_base = "/Token/{contract_address}/TransferHistory"
+    apiurl_base = "/Token/{contract_address}/TransferHistory/Search"
 
     transaction_hash = (
         "0xc99116e27f0c40201a9e907ad5334f4477863269b90a94444d11a1bc9b9315e6"
@@ -320,6 +320,68 @@ class TestTokenTransferHistoryPOST:
         assert data[0]["value"] == transfer_event_2["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
         assert data[0]["data"] == {"message": "unlock"}
+
+    # Normal_3_4
+    # Transferイベントあり：2件
+    # Filter(account_address_list)
+    def test_normal_3_4(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": "other_address",
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"account_address_list": [self.from_address]})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 1,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
 
     # Normal_4
     # offset=1, limit=設定なし
