@@ -17,7 +17,7 @@ English | <a href='./README_JA.md'>日本語</a>
 - [python3](https://www.python.org/)
   - Version 3.11
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - Version 13
+  - [PostgreSQL](https://www.postgresql.org/) - Version 15
   - [MySQL](https://www.mysql.com/) - Version 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
