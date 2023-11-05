@@ -48,7 +48,7 @@ class TestTokenTokenHolders:
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
-        _listing.owner_address = TestTokenTokenHoldersGET.issuer_address
+        _listing.owner_address = TestTokenTokenHolders.issuer_address
         session.add(_listing)
         session.commit()
 
