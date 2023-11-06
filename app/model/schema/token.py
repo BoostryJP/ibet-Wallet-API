@@ -17,13 +17,19 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import UUID4, BaseModel, Field, RootModel, StrictStr
+from pydantic import UUID4, BaseModel, Field, StrictStr
 
-from app.model.schema.base import ResultSet, TokenType, ValidatedEthereumAddress
+from app.model.schema.base import (
+    ResultSet,
+    TokenType,
+    ValidatedEthereumAddress,
+    ValueOperator,
+)
 
 
 ############################
@@ -76,6 +82,13 @@ class ListAllTransferHistoryQuery:
         Optional[TransferSourceEvent], Query(description="source event of transfer")
     ] = None
     data: Annotated[Optional[str], Query(description="source event data")] = None
+    value: Annotated[Optional[int], Query(description="value")] = None
+    value_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)"
+        ),
+    ] = ValueOperator.EQUAL
 
 
 class SearchTransferHistoryRequest(BaseModel):
@@ -89,6 +102,30 @@ class SearchTransferHistoryRequest(BaseModel):
         default=None, description="source event of transfer"
     )
     data: Optional[str] = Field(default=None, description="source event data")
+    created_from: Optional[datetime] = Field(
+        default=None, description="created from datetime"
+    )
+    created_to: Optional[datetime] = Field(
+        default=None, description="created to datetime"
+    )
+    value: Optional[int] = Field(default=None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+
+
+@dataclass
+class ListAllTransferApprovalHistoryQuery:
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    value: Annotated[Optional[int], Query(description="value")] = None
+    value_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)"
+        ),
+    ] = ValueOperator.EQUAL
 
 
 class SearchTransferApprovalHistoryRequest(BaseModel):
@@ -98,6 +135,35 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
     )
     offset: Optional[int] = Field(default=None, description="start position", ge=0)
     limit: Optional[int] = Field(default=None, description="number of set", ge=0)
+    application_datetime_from: Optional[datetime] = Field(
+        default=None, description="application from datetime"
+    )
+    application_datetime_to: Optional[datetime] = Field(
+        default=None, description="application to datetime"
+    )
+    application_blocktimestamp_from: Optional[datetime] = Field(
+        default=None, description="application from block timestamp"
+    )
+    application_blocktimestamp_to: Optional[datetime] = Field(
+        default=None, description="application to block timestamp"
+    )
+    approval_datetime_from: Optional[datetime] = Field(
+        default=None, description="approval from datetime"
+    )
+    approval_datetime_to: Optional[datetime] = Field(
+        default=None, description="approval to datetime"
+    )
+    approval_blocktimestamp_from: Optional[datetime] = Field(
+        default=None, description="approval from block timestamp"
+    )
+    approval_blocktimestamp_to: Optional[datetime] = Field(
+        default=None, description="approval to block timestamp"
+    )
+    value: Optional[int] = Field(default=None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
 
 
 ############################

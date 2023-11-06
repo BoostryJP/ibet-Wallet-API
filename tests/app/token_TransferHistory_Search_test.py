@@ -16,6 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime, timedelta, timezone
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -50,6 +53,7 @@ class TestTokenTransferHistorySearch:
         transfer_event: dict,
         transfer_source_event: IDXTransferSourceEventType = IDXTransferSourceEventType.TRANSFER,
         transfer_event_data: dict | None = None,
+        created: datetime | None = None,
     ):
         _transfer = IDXTransfer()
         _transfer.transaction_hash = transfer_event["transaction_hash"]
@@ -59,6 +63,8 @@ class TestTokenTransferHistorySearch:
         _transfer.value = transfer_event["value"]
         _transfer.source_event = transfer_source_event.value
         _transfer.data = transfer_event_data
+        if created is not None:
+            _transfer.created = created
         session.add(_transfer)
 
     ####################################################################
@@ -371,6 +377,341 @@ class TestTokenTransferHistorySearch:
             "offset": None,
             "limit": None,
             "total": 1,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+    # Normal_3_5_1
+    # Transferイベントあり：2件
+    # Filter(created_from)
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "created_from", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
+    )
+    def test_normal_3_5_1(
+        self, created_from: str, client: TestClient, session: Session
+    ):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime.utcnow(),
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=datetime.utcnow() - timedelta(seconds=1),
+        )
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"created_from": created_from})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+    # Normal_3_5_2
+    # Transferイベントあり：2件
+    # Filter(created_to)
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "created_to", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
+    )
+    def test_normal_3_5_2(self, created_to: str, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime.utcnow(),
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=datetime.utcnow() + timedelta(seconds=1),
+        )
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"created_to": created_to})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+    # Normal_3_6_1
+    # Transferイベントあり：2件
+    # Filter(value_operator: =)
+    def test_normal_3_6_1(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime.utcnow(),
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=datetime.utcnow() + timedelta(seconds=1),
+        )
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"value_operator": 0, "value": 10})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+    # Normal_3_6_2
+    # Transferイベントあり：2件
+    # Filter(value_operator: >=)
+    def test_normal_3_6_2(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime.utcnow(),
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=datetime.utcnow() + timedelta(seconds=1),
+        )
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"value_operator": 1, "value": 15})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_2["token_address"]
+        assert data[0]["from_address"] == transfer_event_2["from_address"]
+        assert data[0]["to_address"] == transfer_event_2["to_address"]
+        assert data[0]["value"] == transfer_event_2["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[0]["data"] == {"message": "unlock"}
+
+    # Normal_3_6_3
+    # Transferイベントあり：2件
+    # Filter(value_operator: <=)
+    def test_normal_3_6_3(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime.utcnow(),
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=datetime.utcnow() + timedelta(seconds=1),
+        )
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"value_operator": 2, "value": 10})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
         }
         data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1

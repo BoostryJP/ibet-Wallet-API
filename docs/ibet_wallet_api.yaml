@@ -2885,6 +2885,27 @@ paths:
             description: source event data
             title: Data
           description: source event data
+        - name: value
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: value
+            title: Value
+          description: value
+        - name: value_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Value Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
       responses:
         '200':
           description: Successful Response
@@ -2993,6 +3014,27 @@ paths:
             description: number of set
             title: Limit
           description: number of set
+        - name: value
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: value
+            title: Value
+          description: value
+        - name: value_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Value Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
       responses:
         '200':
           description: Successful Response
@@ -9447,6 +9489,74 @@ components:
             - type: 'null'
           title: Limit
           description: number of set
+        application_datetime_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Datetime From
+          description: application from datetime
+        application_datetime_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Datetime To
+          description: application to datetime
+        application_blocktimestamp_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Blocktimestamp From
+          description: application from block timestamp
+        application_blocktimestamp_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Blocktimestamp To
+          description: application to block timestamp
+        approval_datetime_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Datetime From
+          description: approval from datetime
+        approval_datetime_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Datetime To
+          description: approval to datetime
+        approval_blocktimestamp_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Blocktimestamp From
+          description: approval from block timestamp
+        approval_blocktimestamp_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Blocktimestamp To
+          description: approval to block timestamp
+        value:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Value
+          description: value
+        value_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
       type: object
       title: SearchTransferApprovalHistoryRequest
     SearchTransferHistoryRequest:
@@ -9483,6 +9593,32 @@ components:
             - type: 'null'
           title: Data
           description: source event data
+        created_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Created From
+          description: created from datetime
+        created_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Created To
+          description: created to datetime
+        value:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Value
+          description: value
+        value_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
       type: object
       title: SearchTransferHistoryRequest
     SecurityTokenPositionWithAddress:
@@ -10516,6 +10652,13 @@ components:
         - msg
         - type
       title: ValidationError
+    ValueOperator:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+      title: ValueOperator
     WaitForTransactionReceiptResponse:
       properties:
         status:
