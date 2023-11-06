@@ -52,7 +52,7 @@ def get_payment_account_registration_status(
     query: RetrievePaymentAccountQuery = Depends(),
 ):
     """
-    Endpoint: /User/PaymentAccount
+    Returns payment registration status of given account.
     """
     pg_contract = Contract.get_contract(
         contract_name="PaymentGateway",
@@ -98,7 +98,7 @@ def get_payment_account_registration_status(
 )
 def get_personal_info_registration_status(query: RetrievePersonalInfoQuery = Depends()):
     """
-    Endpoint: /User/PersonalInfo
+    Returns personal information about given address.
     """
     # Get PersonalInfo contract
     if query.personal_info_address is not None:

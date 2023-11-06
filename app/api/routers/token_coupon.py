@@ -70,7 +70,7 @@ def list_all_coupon_tokens(
     request_query: ListAllCouponTokensQuery = Depends(),
 ):
     """
-    Get a list of coupon tokens.
+    [Coupon]Returns a detail list of tokens.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -169,7 +169,7 @@ def list_all_coupon_token_addresses(
     request_query: ListAllCouponTokensQuery = Depends(),
 ):
     """
-    Get a list of coupon token addresses.
+    [Coupon]Returns a list of token addresses.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -269,7 +269,7 @@ def retrieve_coupon_token(
     ],
 ):
     """
-    Get the details of the membership token.
+    [Coupon]Returns the details of the token.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)

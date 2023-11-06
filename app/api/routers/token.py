@@ -82,7 +82,7 @@ def get_token_status(
     ],
 ):
     """
-    Endpoint: /Token/{contract_address}/Status
+    Returns status of given token.
     """
     # 取扱トークンチェック
     listed_token = session.scalars(
@@ -144,7 +144,7 @@ def get_token_holders(
     request_query: ListAllTokenHoldersQuery = Depends(),
 ):
     """
-    Endpoint: /Token/{contract_address}/Holders
+    Returns a list of token holders for a given token.
     """
     # Check if the token exists in the list
     listed_token = session.scalars(
@@ -243,7 +243,7 @@ def search_token_holders(
     ],
 ):
     """
-    Endpoint: /Token/{contract_address}/Holders/Search
+    Returns a list of token holders for a given token using detailed search query.
     """
     # Check if the token exists in the list
     listed_token = session.scalars(
@@ -350,7 +350,7 @@ def get_token_holders_count(
     request_query: RetrieveTokenHoldersCountQuery = Depends(),
 ):
     """
-    Endpoint: /Token/{token_address}/Holders/Count
+    Returns count of token holders for a given token.
     """
     # Check if the token exists in the list
     listed_token = session.scalars(
@@ -411,7 +411,7 @@ def create_token_holders_collection(
     ],
 ):
     """
-    Endpoint: /Token/{token_address}/Holders/Collection
+    Enqueues task of collecting token holders for a given block number.
     """
     web3 = Web3Wrapper()
 
@@ -497,7 +497,7 @@ def get_token_holders_collection(
     ),
 ):
     """
-    Endpoint: /Token/{token_address}/Holders/Collection/{list_id}
+    Returns a list of token holders at specific block number.
     """
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
@@ -556,7 +556,7 @@ def list_all_transfer_histories(
     request_query: ListAllTransferHistoryQuery = Depends(),
 ):
     """
-    Endpoint: /Token/{token_address}/TransferHistory
+    Returns a list of transfer histories for a given token.
     """
     # 取扱トークンチェック
     listed_token = session.scalars(
@@ -617,7 +617,7 @@ def search_transfer_histories(
     ],
 ):
     """
-    Endpoint: /Token/{token_address}/TransferHistory/Search
+    Returns a list of transfer histories for a given token using detailed search query.
     """
     # 取扱トークンチェック
     listed_token = session.scalars(
@@ -683,7 +683,7 @@ def list_all_transfer_approval_histories(
     request_query: ResultSetQuery = Depends(),
 ):
     """
-    Endpoint: /Token/{token_address}/TransferApprovalHistory
+    Returns a list of transfer approval histories for a given token.
     """
     # Check that it is a listed token
     _listed_token = session.scalars(
@@ -743,7 +743,7 @@ def search_transfer_approval_histories(
     ],
 ):
     """
-    Endpoint: /Token/{token_address}/TransferApprovalHistory/Search
+    Returns a list of transfer approval histories for a given token using detailed search query.
     """
     # Check that it is a listed token
     _listed_token = session.scalars(

@@ -71,7 +71,7 @@ def list_all_membership_tokens(
     request_query: ListAllMembershipTokensQuery = Depends(),
 ):
     """
-    Get a list of membership tokens.
+    [Membership]Returns a detail list of tokens.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -170,7 +170,7 @@ def list_all_membership_token_addresses(
     request_query: ListAllMembershipTokensQuery = Depends(),
 ):
     """
-    Get a list of membership token addresses.
+    [Membership]Returns a list of token addresses.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -268,7 +268,7 @@ def retrieve_membership_token(
     ],
 ):
     """
-    Get the details of the membership token.
+    [Membership]Returns the details of the token.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)

@@ -20,9 +20,7 @@ paths:
       tags:
         - admin
       summary: List All Listed Tokens
-      description: |-
-        Endpoint: /Admin/Tokens
-          - GET: 取扱トークン一覧取得
+      description: Returns a list of registered token.
       operationId: TokensGET
       responses:
         '200':
@@ -36,9 +34,7 @@ paths:
       tags:
         - admin
       summary: List a Token
-      description: |-
-        Endpoint: /Admin/Tokens
-          - POST: 取扱トークン登録
+      description: Registers given token to listing.
       operationId: TokensPOST
       requestBody:
         content:
@@ -73,9 +69,7 @@ paths:
       tags:
         - admin
       summary: Available status by token type
-      description: |-
-        Endpoint: /Admin/Tokens/Type
-          - GET: 取扱トークン種別
+      description: Returns available token type.
       operationId: TokenType
       responses:
         '200':
@@ -90,9 +84,7 @@ paths:
       tags:
         - admin
       summary: Retrieve a Listed Token
-      description: |-
-        Endpoint: /Admin/Tokens/{token_address}
-          - GET: 取扱トークン情報取得（個別）
+      description: Returns a listed token information.
       operationId: TokenGET
       parameters:
         - name: token_address
@@ -128,8 +120,9 @@ paths:
         - admin
       summary: Update a Listed Token
       description: |-
-        Endpoint: /Admin/Tokens/{contract_address}
-          - POST: 取扱トークン情報更新（個別）
+        取扱トークン情報更新（個別）
+
+        指定したトークンの取扱情報を更新します。
       operationId: TokenPOST
       parameters:
         - name: token_address
@@ -172,9 +165,7 @@ paths:
       tags:
         - admin
       summary: Delete a Listed Token
-      description: |-
-        Endpoint: /Admin/Tokens/{contract_address}
-          - DELETE: 取扱トークン情報削除（個別）
+      description: Deletes given token from listing.
       operationId: TokenDELETE
       parameters:
         - name: token_address
@@ -209,7 +200,7 @@ paths:
       tags:
         - node_info
       summary: Blockchain node information
-      description: 'Endpoint: /NodeInfo'
+      description: Returns node information.
       operationId: NodeInfo
       responses:
         '200':
@@ -224,7 +215,7 @@ paths:
       tags:
         - node_info
       summary: Block synchronization status of the connected blockchain node
-      description: 'Endpoint: /NodeInfo/BlockSyncStatus'
+      description: Returns block sync status of node.
       operationId: NodeInfoBlockSyncStatus
       responses:
         '200':
@@ -498,7 +489,7 @@ paths:
       tags:
         - abi
       summary: StraightBond ABI
-      description: 'Endpoint: /ABI/StraightBond'
+      description: Returns ABI of IbetStraightBond.
       operationId: StraightBondABI
       responses:
         '200':
@@ -524,7 +515,7 @@ paths:
       tags:
         - abi
       summary: Share ABI
-      description: 'Endpoint: /ABI/Share'
+      description: Returns ABI of IbetShare.
       operationId: ShareABI
       responses:
         '200':
@@ -550,7 +541,7 @@ paths:
       tags:
         - abi
       summary: Membership ABI
-      description: 'Endpoint: /ABI/Membership'
+      description: Returns ABI of IbetMembership.
       operationId: MembershipABI
       responses:
         '200':
@@ -576,7 +567,7 @@ paths:
       tags:
         - abi
       summary: Coupon ABI
-      description: 'Endpoint: /ABI/Coupon'
+      description: Returns ABI of IbetCoupon.
       operationId: CouponABI
       responses:
         '200':
@@ -602,7 +593,7 @@ paths:
       tags:
         - company_info
       summary: Issuer Information List
-      description: 'Endpoint: /Companies'
+      description: Returns a list of issuer information.
       operationId: Companies
       parameters:
         - name: include_private_listing
@@ -635,7 +626,7 @@ paths:
       tags:
         - company_info
       summary: Issuer Information
-      description: 'Endpoint: /Companies/{eth_address}'
+      description: Returns given issuer information.
       operationId: Company
       parameters:
         - name: eth_address
@@ -674,7 +665,7 @@ paths:
       tags:
         - company_info
       summary: List of tokens issued by issuer
-      description: 'Endpoint: /Companies/{eth_address}/Tokens'
+      description: Returns a list of tokens issued by given issuer.
       operationId: retrieve_company_tokens_Companies__eth_address__Tokens_get
       parameters:
         - name: eth_address
@@ -715,7 +706,7 @@ paths:
       tags:
         - user_info
       summary: Registration status to PaymentGateway Contract
-      description: 'Endpoint: /User/PaymentAccount'
+      description: Returns payment registration status of given account.
       operationId: PaymentAccount
       parameters:
         - name: account_address
@@ -753,7 +744,7 @@ paths:
       tags:
         - user_info
       summary: Registration status to PersonalInfo Contract
-      description: 'Endpoint: /User/PersonalInfo'
+      description: Returns personal information about given address.
       operationId: PersonalInfo
       parameters:
         - name: account_address
@@ -801,7 +792,7 @@ paths:
       tags:
         - eth_rpc
       summary: Raw JSON-RPC endpoint
-      description: 'Endpoint: /Eth/RPC'
+      description: Executes ethereum JSON-RPC with given request body.
       operationId: EthereumJsonRpc
       requestBody:
         content:
@@ -836,7 +827,7 @@ paths:
       tags:
         - eth_rpc
       summary: Transaction count for the specified eth_address
-      description: 'Endpoint: /Eth/TransactionCount/{eth_address}'
+      description: Returns nonce counts of given ethereum address.
       operationId: TransactionCount
       parameters:
         - name: eth_address
@@ -875,7 +866,7 @@ paths:
       tags:
         - eth_rpc
       summary: Send signed transaction
-      description: 'Endpoint: /Eth/SendRawTransaction'
+      description: Sends raw transaction.
       operationId: SendRawTransaction
       requestBody:
         content:
@@ -905,7 +896,7 @@ paths:
       tags:
         - eth_rpc
       summary: Send signed transaction
-      description: 'Endpoint: /Eth/SendRawTransactionNoWait'
+      description: Sends raw transaction without waiting for transaction receipt.
       operationId: SendRawTransactionNoWait
       requestBody:
         content:
@@ -935,7 +926,7 @@ paths:
       tags:
         - eth_rpc
       summary: Wait for Transaction Receipt
-      description: 'Endpoint: /Eth/WaitForTransactionReceipt'
+      description: Waits for transaction receipt returned.
       operationId: WaitForTransactionReceipt
       parameters:
         - name: transaction_hash
@@ -984,7 +975,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of StraightBond tokens
-      description: Get a list of bond tokens.
+      description: '[StraightBond]Returns a detail list of tokens.'
       operationId: StraightBondTokens
       parameters:
         - name: address_list
@@ -1179,7 +1170,7 @@ paths:
       tags:
         - token_info
       summary: List of StraightBond token address
-      description: Get a list of bond token addresses.
+      description: '[StraightBond]Returns a list of token addresses.'
       operationId: StraightBondTokenAddresses
       parameters:
         - name: offset
@@ -1361,7 +1352,7 @@ paths:
       tags:
         - token_info
       summary: StraightBond token details
-      description: Get the details of the bond token.
+      description: '[StraightBond]Returns the details of the token.'
       operationId: StraightBondTokenDetails
       parameters:
         - name: token_address
@@ -1403,7 +1394,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of Share tokens
-      description: Get a list of share tokens.
+      description: '[Share]Returns a detail list of tokens.'
       operationId: ShareTokens
       parameters:
         - name: address_list
@@ -1598,7 +1589,7 @@ paths:
       tags:
         - token_info
       summary: List of Share token address
-      description: Get a list of share token addresses.
+      description: '[Share]Returns a list of token addresses.'
       operationId: ShareTokenAddresses
       parameters:
         - name: offset
@@ -1780,7 +1771,7 @@ paths:
       tags:
         - token_info
       summary: Share token details
-      description: Get the details of the bond token.
+      description: '[Share]Returns the details of the token.'
       operationId: ShareTokenDetails
       parameters:
         - name: token_address
@@ -1819,7 +1810,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of Membership tokens
-      description: Get a list of membership tokens.
+      description: '[Membership]Returns a detail list of tokens.'
       operationId: MembershipTokens
       parameters:
         - name: address_list
@@ -1984,7 +1975,7 @@ paths:
       tags:
         - token_info
       summary: List of Membership token address
-      description: Get a list of membership token addresses.
+      description: '[Membership]Returns a list of token addresses.'
       operationId: MembershipTokenAddresses
       parameters:
         - name: offset
@@ -2136,7 +2127,7 @@ paths:
       tags:
         - token_info
       summary: Membership token details
-      description: Get the details of the membership token.
+      description: '[Membership]Returns the details of the token.'
       operationId: MembershipTokenDetails
       parameters:
         - name: token_address
@@ -2175,7 +2166,7 @@ paths:
       tags:
         - token_info
       summary: Token detail list of Coupon tokens
-      description: Get a list of coupon tokens.
+      description: '[Coupon]Returns a detail list of tokens.'
       operationId: CouponTokens
       parameters:
         - name: address_list
@@ -2340,7 +2331,7 @@ paths:
       tags:
         - token_info
       summary: List of Coupon token address
-      description: Get a list of coupon token addresses.
+      description: '[Coupon]Returns a list of token addresses.'
       operationId: CouponTokenAddresses
       parameters:
         - name: offset
@@ -2492,7 +2483,7 @@ paths:
       tags:
         - token_info
       summary: Coupon token details
-      description: Get the details of the membership token.
+      description: '[Coupon]Returns the details of the token.'
       operationId: CouponTokenDetails
       parameters:
         - name: token_address
@@ -2534,7 +2525,7 @@ paths:
       tags:
         - token_info
       summary: Token Status
-      description: 'Endpoint: /Token/{contract_address}/Status'
+      description: Returns status of given token.
       operationId: TokenStatus
       parameters:
         - name: token_address
@@ -2573,7 +2564,7 @@ paths:
       tags:
         - token_info
       summary: Token holders
-      description: 'Endpoint: /Token/{contract_address}/Holders'
+      description: Returns a list of token holders for a given token.
       operationId: TokenHolders
       parameters:
         - name: token_address
@@ -2645,7 +2636,9 @@ paths:
       tags:
         - token_info
       summary: Search Token holders
-      description: 'Endpoint: /Token/{contract_address}/Holders/Search'
+      description: >-
+        Returns a list of token holders for a given token using detailed search
+        query.
       operationId: SearchTokenHolders
       parameters:
         - name: token_address
@@ -2690,7 +2683,7 @@ paths:
       tags:
         - token_info
       summary: Token holders count
-      description: 'Endpoint: /Token/{token_address}/Holders/Count'
+      description: Returns count of token holders for a given token.
       operationId: TokenHoldersCount
       parameters:
         - name: token_address
@@ -2740,7 +2733,7 @@ paths:
       tags:
         - token_info
       summary: Execute Batch Getting Token Holders At Specific BlockNumber
-      description: 'Endpoint: /Token/{token_address}/Holders/Collection'
+      description: Enqueues task of collecting token holders for a given block number.
       operationId: TokenHoldersCollection
       parameters:
         - name: token_address
@@ -2785,7 +2778,7 @@ paths:
       tags:
         - token_info
       summary: Token Holder At Specific BlockNumber
-      description: 'Endpoint: /Token/{token_address}/Holders/Collection/{list_id}'
+      description: Returns a list of token holders at specific block number.
       operationId: TokenHoldersList
       parameters:
         - name: token_address
@@ -2839,7 +2832,7 @@ paths:
       tags:
         - token_info
       summary: Token Transfer History
-      description: 'Endpoint: /Token/{token_address}/TransferHistory'
+      description: Returns a list of transfer histories for a given token.
       operationId: TransferHistory
       parameters:
         - name: token_address
@@ -2920,7 +2913,9 @@ paths:
       tags:
         - token_info
       summary: Search Token Transfer History
-      description: 'Endpoint: /Token/{token_address}/TransferHistory/Search'
+      description: >-
+        Returns a list of transfer histories for a given token using detailed
+        search query.
       operationId: SearchTransferHistory
       parameters:
         - name: token_address
@@ -2965,7 +2960,7 @@ paths:
       tags:
         - token_info
       summary: Token Transfer Approval History
-      description: 'Endpoint: /Token/{token_address}/TransferApprovalHistory'
+      description: Returns a list of transfer approval histories for a given token.
       operationId: TransferApprovalHistory
       parameters:
         - name: token_address
@@ -3026,7 +3021,9 @@ paths:
       tags:
         - token_info
       summary: Search Token Transfer Approval History
-      description: 'Endpoint: /Token/{token_address}/TransferApprovalHistory/Search'
+      description: >-
+        Returns a list of transfer approval histories for a given token using
+        detailed search query.
       operationId: SearchTransferApprovalHistory
       parameters:
         - name: token_address
@@ -3071,6 +3068,7 @@ paths:
       tags:
         - token_info
       summary: Token Lock
+      description: Returns a list of locked positions.
       operationId: ListAllTokenLock
       parameters:
         - name: token_address_list
@@ -3167,6 +3165,7 @@ paths:
       tags:
         - token_info
       summary: Token Lock Count
+      description: Returns count of locked positions.
       operationId: RetrieveTokenLockCount
       parameters:
         - name: token_address_list
@@ -3221,7 +3220,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Locked Position
-      description: List all share locked position
+      description: '[Share]Returns a list of locked positions.'
       operationId: GetShareTokenLockedPosition
       parameters:
         - name: account_address
@@ -3333,7 +3332,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Lock Events
-      description: List all share lock events
+      description: '[Share]Returns a list of lock events.'
       operationId: GetShareTokenLockEvent
       parameters:
         - name: account_address
@@ -3476,7 +3475,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Locked Position
-      description: List all bond locked position
+      description: '[StraightBond]Returns a list of locked positions.'
       operationId: GetStraightBondTokenLockedPosition
       parameters:
         - name: account_address
@@ -3588,7 +3587,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Lock Events
-      description: List all bond lock events
+      description: '[StraightBond]Returns a list of lock events.'
       operationId: GetStraightBondTokenLockEvent
       parameters:
         - name: account_address
@@ -3731,7 +3730,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Position
-      description: List all share position
+      description: '[Share]Returns a list of positions for a given account.'
       operationId: GetShareTokenPosition
       parameters:
         - name: account_address
@@ -3816,7 +3815,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Position
-      description: List all bond position
+      description: '[StraightBond]Returns a list of positions for a given account.'
       operationId: GetStraightBondTokenPosition
       parameters:
         - name: account_address
@@ -3901,7 +3900,7 @@ paths:
       tags:
         - user_position
       summary: Membership Token Position
-      description: List all membership position
+      description: '[Membership]Returns a list of positions for a given account.'
       operationId: GetMembershipTokenPosition
       parameters:
         - name: account_address
@@ -3986,7 +3985,7 @@ paths:
       tags:
         - user_position
       summary: Coupon Token Position
-      description: List all coupon position
+      description: '[Coupon]Returns a list of positions for a given account.'
       operationId: GetCouponTokenPosition
       parameters:
         - name: account_address
@@ -4071,7 +4070,7 @@ paths:
       tags:
         - user_position
       summary: Share Token Position By Token Address
-      description: Retrieve share position detail
+      description: '[Share]Returns a position for a given account and token.'
       operationId: GetShareTokenPositionByAddress
       parameters:
         - name: account_address
@@ -4131,7 +4130,7 @@ paths:
       tags:
         - user_position
       summary: StraightBond Token Position By Token Address
-      description: Retrieve bond position detail
+      description: '[StraightBond]Returns a position for a given account and token.'
       operationId: GetStraightBondTokenPositionByAddress
       parameters:
         - name: account_address
@@ -4191,7 +4190,7 @@ paths:
       tags:
         - user_position
       summary: Membership Token Position By Token Address
-      description: Retrieve membership position detail
+      description: '[Membership]Returns a position for a given account and token.'
       operationId: GetMembershipTokenPositionByAddress
       parameters:
         - name: account_address
@@ -4251,7 +4250,7 @@ paths:
       tags:
         - user_position
       summary: Coupon Token Position By Token Address
-      description: Retrieve coupon position detail
+      description: '[Coupon]Returns a position for a given account and token.'
       operationId: GetCouponTokenPositionByAddress
       parameters:
         - name: account_address
@@ -4311,7 +4310,7 @@ paths:
       tags:
         - user_position
       summary: List All Coupon Consumptions
-      description: List all coupon consumptions
+      description: '[Coupon]Returns a list of consumption for a given account address.'
       operationId: ListAllCouponConsumptions
       parameters:
         - name: account_address
@@ -4355,7 +4354,7 @@ paths:
       tags:
         - user_position
       summary: Token Position
-      description: List all positions
+      description: Returns a list of token positions.
       operationId: GetTokenPosition
       parameters:
         - name: account_address
@@ -4422,7 +4421,7 @@ paths:
       tags:
         - user_notification
       summary: Notification List
-      description: 'Endpoint: /Notifications/'
+      description: Returns notifications filtered by given query.
       operationId: GetNotifications
       parameters:
         - name: offset
@@ -4516,7 +4515,7 @@ paths:
       tags:
         - user_notification
       summary: Mark all notifications as read
-      description: 'Endpoint: /Notifications/Read/'
+      description: Registers all notifications as read.
       operationId: NotificationsRead
       requestBody:
         content:
@@ -4542,7 +4541,7 @@ paths:
       tags:
         - user_notification
       summary: Get the number of unread notifications
-      description: 'Endpoint: /Notifications/Count/'
+      description: Returns count of notifications filtered by given query.
       operationId: NotificationsCount
       parameters:
         - name: address
@@ -4570,7 +4569,7 @@ paths:
       tags:
         - user_notification
       summary: Update Notification
-      description: 'Endpoint: /Notifications/{id}'
+      description: Registers given notification as read.
       operationId: PostNotifications
       parameters:
         - name: notification_id
@@ -4611,6 +4610,7 @@ paths:
       tags:
         - user_notification
       summary: Delete Notification
+      description: Deletes given notification.
       operationId: DeleteNotification
       parameters:
         - name: notification_id
@@ -4645,7 +4645,9 @@ paths:
       tags:
         - messaging
       summary: Retrieve message encryption key
-      description: 'Endpoint: /E2EMessage/EncryptionKey/{account_address}'
+      description: >-
+        Returns encryption key for use in e2e messaging for given account
+        address.
       operationId: EncryptionKey
       parameters:
         - name: account_address
@@ -4684,7 +4686,7 @@ paths:
       tags:
         - messaging
       summary: Send Email
-      description: Send Email
+      description: Sends Email.
       operationId: SendEmail
       requestBody:
         content:
@@ -4713,7 +4715,7 @@ paths:
       tags:
         - messaging
       summary: Send chat messages using incoming webhooks
-      description: Send Chat Webhook
+      description: Sends Chat Webhook.
       operationId: SendChatWebhook
       requestBody:
         content:
@@ -4742,7 +4744,7 @@ paths:
       tags:
         - contract_log
       summary: List all E2EMessaging event logs
-      description: List all E2EMessaging event logs
+      description: Returns a list of E2EMessaging event logs.
       operationId: E2EMessagingEvents
       parameters:
         - name: from_block
@@ -4813,7 +4815,7 @@ paths:
       tags:
         - contract_log
       summary: List all IbetEscrow event logs
-      description: List all IbetEscrow event logs
+      description: Returns a list of IbetEscrow event logs.
       operationId: IbetEscrowEvents
       parameters:
         - name: from_block
@@ -4884,7 +4886,7 @@ paths:
       tags:
         - contract_log
       summary: List all IbetSecurityTokenEscrow event logs
-      description: List all IbetSecurityTokenEscrow event logs
+      description: Returns a list of IbetSecurityTokenEscrow event logs.
       operationId: IbetSecurityTokenEscrowEvents
       parameters:
         - name: from_block
@@ -4955,7 +4957,7 @@ paths:
       tags:
         - contract_log
       summary: List all IbetSecurityTokenInterface event logs
-      description: List all IbetSecurityTokenInterface event logs
+      description: Returns a list of IbetSecurityTokenInterface event logs.
       operationId: IbetSecurityTokenInterfaceEvents
       parameters:
         - name: token_address
@@ -5036,7 +5038,7 @@ paths:
       tags:
         - dex
       summary: Agreement Details
-      description: 約定情報参照
+      description: Returns agreement information of given id.
       operationId: GetAgreement
       parameters:
         - name: order_id
@@ -5091,7 +5093,7 @@ paths:
       tags:
         - dex
       summary: Membership Token Order Book
-      description: '[会員権]板情報取得'
+      description: '[Membership]Returns orderbook of given token.'
       operationId: MembershipOrderBook
       parameters:
         - name: token_address
@@ -5162,7 +5164,7 @@ paths:
       tags:
         - dex
       summary: Membership Token Last Price (Bulk Get)
-      description: '[会員権]現在値取得'
+      description: '[Membership]Returns last price of given token.'
       operationId: MembershipLastPrice
       parameters:
         - name: address_list
@@ -5200,7 +5202,7 @@ paths:
       tags:
         - dex
       summary: Membership Token Tick (Bulk Get)
-      description: '[会員権]歩み値取得'
+      description: '[Membership]Returns ticks of given token.'
       operationId: MembershipTick
       parameters:
         - name: address_list
@@ -5238,7 +5240,7 @@ paths:
       tags:
         - dex
       summary: Coupon Token Order Book
-      description: '[クーポン]板情報取得'
+      description: '[Coupon]Returns orderbook of given token.'
       operationId: CouponOrderBook
       parameters:
         - name: token_address
@@ -5309,7 +5311,7 @@ paths:
       tags:
         - dex
       summary: Coupon Token Last Price (Bulk Get)
-      description: '[クーポン]現在値取得'
+      description: '[Coupon]Returns last price of given token.'
       operationId: CouponLastPrice
       parameters:
         - name: address_list
@@ -5347,7 +5349,7 @@ paths:
       tags:
         - dex
       summary: Coupon Token Tick (Bulk Get)
-      description: '[クーポン]歩み値取得'
+      description: '[Coupon]Returns ticks of given token.'
       operationId: CouponTick
       parameters:
         - name: address_list
@@ -5385,7 +5387,7 @@ paths:
       tags:
         - dex
       summary: Membership Order History (Bulk Get)
-      description: 'Endpoint: /DEX/OrderList/Membership'
+      description: '[Membership]Returns order history of given token.'
       operationId: MembershipOrderList
       parameters:
         - name: account_address_list
@@ -5433,7 +5435,7 @@ paths:
       tags:
         - dex
       summary: Coupon Order History (Bulk Get)
-      description: 'Endpoint: /DEX/OrderList/Coupon'
+      description: '[Coupon]Returns order history of given token.'
       operationId: CouponOrderList
       parameters:
         - name: account_address_list
@@ -5481,7 +5483,7 @@ paths:
       tags:
         - dex
       summary: Order History filtered by token (Bulk Get)
-      description: 'Endpoint: /DEX/OrderList/{token_address}'
+      description: Returns order history.
       operationId: IbetExchange
       parameters:
         - name: token_address

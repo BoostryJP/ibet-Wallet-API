@@ -49,7 +49,7 @@ router = APIRouter(prefix="/NodeInfo", tags=["node_info"])
 )
 def get_node_info():
     """
-    Endpoint: /NodeInfo
+    Returns node information.
     """
     payment_gateway_json = json.load(
         open("app/contracts/json/PaymentGateway.json", "r")
@@ -93,7 +93,7 @@ def get_node_info():
 )
 def get_block_sync_status(session: DBSession):
     """
-    Endpoint: /NodeInfo/BlockSyncStatus
+    Returns block sync status of node.
     """
     # Get block sync status
     node: Node = session.scalars(
