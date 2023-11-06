@@ -82,6 +82,9 @@ class ListAllTransferHistoryQuery:
         Optional[TransferSourceEvent], Query(description="source event of transfer")
     ] = None
     data: Annotated[Optional[str], Query(description="source event data")] = None
+    transaction_hash: Annotated[
+        Optional[str], Query(description="transaction hash")
+    ] = None
     value: Annotated[Optional[int], Query(description="value")] = None
     value_operator: Annotated[
         Optional[ValueOperator],
@@ -102,6 +105,9 @@ class SearchTransferHistoryRequest(BaseModel):
         default=None, description="source event of transfer"
     )
     data: Optional[str] = Field(default=None, description="source event data")
+    transaction_hash: Optional[str] = Field(
+        default=None, description="transaction hash"
+    )
     created_from: Optional[datetime] = Field(
         default=None, description="created from datetime"
     )

@@ -580,6 +580,12 @@ def list_all_transfer_histories(
         stmt = stmt.where(
             cast(IDXTransfer.data, String).like("%" + request_query.data + "%")
         )
+    if request_query.transaction_hash is not None:
+        stmt = stmt.where(
+            IDXTransfer.transaction_hash.like(
+                "%" + request_query.transaction_hash + "%"
+            )
+        )
     if request_query.value is not None and request_query.value_operator is not None:
         match request_query.value_operator:
             case ValueOperator.EQUAL:
@@ -654,6 +660,10 @@ def search_transfer_histories(
         stmt = stmt.where(IDXTransfer.source_event == data.source_event.value)
     if data.data is not None:
         stmt = stmt.where(cast(IDXTransfer.data, String).like("%" + data.data + "%"))
+    if data.transaction_hash is not None:
+        stmt = stmt.where(
+            IDXTransfer.transaction_hash.like("%" + data.transaction_hash + "%")
+        )
     if data.created_from is not None:
         stmt = stmt.where(IDXTransfer.created >= data.created_from)
     if data.created_to is not None:
