@@ -42,7 +42,9 @@ router = APIRouter(prefix="", tags=["messaging"])
     responses=get_routers_responses(InvalidParameterError),
 )
 def send_mail(session: DBSession, data: SendMailRequest):
-    """Send Email"""
+    """
+    Sends Email.
+    """
     for to_email in data.to_emails:
         mail = Mail()
         mail.to_email = to_email
@@ -68,7 +70,9 @@ def send_mail(session: DBSession, data: SendMailRequest):
     responses=get_routers_responses(InvalidParameterError),
 )
 def send_chat_webhook(session: DBSession, data: SendChatWebhookRequest):
-    """Send Chat Webhook"""
+    """
+    Sends Chat Webhook.
+    """
     hook = ChatWebhook()
     hook.message = json.dumps(data.message)
     session.add(hook)

@@ -50,7 +50,7 @@ def retrieve_encryption_key(
     ]
 ):
     """
-    Endpoint: /E2EMessage/EncryptionKey/{account_address}
+    Returns encryption key for use in e2e messaging for given account address.
     """
     # Get public key
     messaging_contract = Contract.get_contract(

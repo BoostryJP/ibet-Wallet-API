@@ -55,7 +55,9 @@ router = APIRouter(prefix="/DEX/Market", tags=["dex"])
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Depends()):
-    """約定情報参照"""
+    """
+    Returns agreement information of given id.
+    """
     if (
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
         and config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -134,7 +136,9 @@ def list_all_membership_order_book(
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
 ):
-    """[会員権]板情報取得"""
+    """
+    [Membership]Returns orderbook of given token.
+    """
     if (
         config.MEMBERSHIP_TOKEN_ENABLED is False
         or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
@@ -241,7 +245,9 @@ def list_all_membership_order_book(
 def list_all_membership_last_price(
     req: Request, request_query: ListAllLastPriceQuery = Depends()
 ):
-    """[会員権]現在値取得"""
+    """
+    [Membership]Returns last price of given token.
+    """
     if (
         config.MEMBERSHIP_TOKEN_ENABLED is False
         or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
@@ -280,7 +286,9 @@ def list_all_membership_tick(
     req: Request,
     request_query: ListAllTickQuery = Depends(),
 ):
-    """[会員権]歩み値取得"""
+    """
+    [Membership]Returns ticks of given token.
+    """
     if (
         config.MEMBERSHIP_TOKEN_ENABLED is False
         or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
@@ -342,7 +350,9 @@ def list_all_coupon_order_book(
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
 ):
-    """[クーポン]板情報取得"""
+    """
+    [Coupon]Returns orderbook of given token.
+    """
     if (
         config.COUPON_TOKEN_ENABLED is False
         or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -447,7 +457,9 @@ def list_all_coupon_order_book(
 def list_all_coupon_last_price(
     req: Request, request_query: ListAllLastPriceQuery = Depends()
 ):
-    """[クーポン]現在値取得"""
+    """
+    [Coupon]Returns last price of given token.
+    """
     if (
         config.COUPON_TOKEN_ENABLED is False
         or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -486,7 +498,9 @@ def list_all_coupon_tick(
     req: Request,
     request_query: ListAllTickQuery = Depends(),
 ):
-    """[クーポン]歩み値取得"""
+    """
+    [Coupon]Returns ticks of given token.
+    """
     if (
         config.COUPON_TOKEN_ENABLED is False
         or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None

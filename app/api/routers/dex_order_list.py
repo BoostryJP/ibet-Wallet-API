@@ -575,7 +575,7 @@ def list_all_membership_order_history(
     ),
 ):
     """
-    Endpoint: /DEX/OrderList/Membership
+    [Membership]Returns order history of given token.
     """
     return json_response({**SuccessResponse.default(), "data": order_list_res})
 
@@ -663,7 +663,7 @@ def list_all_coupon_order_history(
     ),
 ):
     """
-    Endpoint: /DEX/OrderList/Coupon
+    [Coupon]Returns order history of given token.
     """
     return json_response({**SuccessResponse.default(), "data": order_list_res})
 
@@ -740,6 +740,6 @@ def list_all_order_history_by_token_address(
     order_list_res: ListAllOrderListResponse[TokenAddress] = Depends(OrderList()),
 ):
     """
-    Endpoint: /DEX/OrderList/{token_address}
+    Returns order history.
     """
     return json_response({**SuccessResponse.default(), "data": order_list_res})

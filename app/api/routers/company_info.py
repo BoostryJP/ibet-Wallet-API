@@ -71,7 +71,7 @@ def list_all_companies(
     ),
 ):
     """
-    Endpoint: /Companies
+    Returns a list of issuer information.
     """
 
     # Get company list
@@ -176,7 +176,7 @@ def retrieve_company(
     eth_address: Annotated[ValidatedEthereumAddress, Path(description="Issuer address")]
 ):
     """
-    Endpoint: /Companies/{eth_address}
+    Returns given issuer information.
     """
     company = CompanyList.get_find(to_checksum_address(eth_address))
     if company.address == "":
@@ -205,7 +205,7 @@ def retrieve_company_tokens(
     ),
 ):
     """
-    Endpoint: /Companies/{eth_address}/Tokens
+    Returns a list of tokens issued by given issuer.
     """
     # TokenList contract
     list_contract = Contract.get_contract(

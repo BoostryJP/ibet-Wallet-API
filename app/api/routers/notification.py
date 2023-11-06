@@ -58,7 +58,7 @@ def list_all_notifications(
     request_query: NotificationsQuery = Depends(),
 ):
     """
-    Endpoint: /Notifications/
+    Returns notifications filtered by given query.
     """
     address = request_query.address
     notification_type = request_query.notification_type
@@ -133,7 +133,7 @@ def read_all_notifications(
     data: NotificationReadRequest,
 ):
     """
-    Endpoint: /Notifications/Read/
+    Registers all notifications as read.
     """
     address = to_checksum_address(data.address)
 
@@ -160,7 +160,7 @@ def count_notifications(
     request_query: NotificationsCountQuery = Depends(),
 ):
     """
-    Endpoint: /Notifications/Count/
+    Returns count of notifications filtered by given query.
     """
     # リクエストから情報を抽出
     address = to_checksum_address(request_query.address)
@@ -196,7 +196,7 @@ def update_notification(
     notification_id: str = Path(description="Notification id"),
 ):
     """
-    Endpoint: /Notifications/{id}
+    Registers given notification as read.
     """
     # Update Notification
     notification: Optional[Notification] = session.scalars(
@@ -234,6 +234,9 @@ def delete_notification(
     session: DBSession,
     notification_id: str = Path(description="Notification id"),
 ):
+    """
+    Deletes given notification.
+    """
     # Get Notification
     _notification = session.scalars(
         select(Notification)

@@ -65,7 +65,9 @@ router = APIRouter(prefix="/Events", tags=["contract_log"])
 def list_all_e2e_messaging_event_logs(
     request_query: E2EMessagingEventsQuery = Depends(),
 ):
-    """List all E2EMessaging event logs"""
+    """
+    Returns a list of E2EMessaging event logs.
+    """
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
             "Search request range is over the limit"
@@ -130,7 +132,9 @@ def list_all_e2e_messaging_event_logs(
     ),
 )
 def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depends()):
-    """List all IbetEscrow event logs"""
+    """
+    Returns a list of IbetEscrow event logs.
+    """
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
             "Search request range is over the limit"
@@ -208,7 +212,9 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
 def list_all_ibet_security_token_escrow_event_logs(
     request_query: IbetSecurityTokenEscrowEventsQuery = Depends(),
 ):
-    """List all IbetSecurityTokenEscrow event logs"""
+    """
+    Returns a list of IbetSecurityTokenEscrow event logs.
+    """
     # Validate
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
@@ -299,7 +305,9 @@ def list_all_ibet_security_token_interface_event_logs(
     ],
     request_query: IbetSecurityTokenInterfaceEventsQuery = Depends(),
 ):
-    """List all IbetSecurityTokenInterface event logs"""
+    """
+    Returns a list of IbetSecurityTokenInterface event logs.
+    """
     # Validate
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
