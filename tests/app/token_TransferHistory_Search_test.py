@@ -788,10 +788,710 @@ class TestTokenTransferHistorySearch:
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
 
-    # Normal_4
+    # Normal_4_1_1
+    # Transferイベントあり：2件
+    # sort_order=from_account_address_list(asc)
+    def test_normal_4_1_1(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000000",
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000001",
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000002",
+            "to_address": self.to_address,
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000001",
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                ],
+                "sort_item": "from_account_address_list",
+            },
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_2["token_address"]
+        assert data[0]["from_address"] == transfer_event_2["from_address"]
+        assert data[0]["to_address"] == transfer_event_2["to_address"]
+        assert data[0]["value"] == transfer_event_2["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[0]["data"] == {"message": "unlock"}
+
+        assert data[1]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_1["token_address"]
+        assert data[1]["from_address"] == transfer_event_1["from_address"]
+        assert data[1]["to_address"] == transfer_event_1["to_address"]
+        assert data[1]["value"] == transfer_event_1["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[1]["data"] is None
+
+        assert data[2]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_3["token_address"]
+        assert data[2]["from_address"] == transfer_event_3["from_address"]
+        assert data[2]["to_address"] == transfer_event_3["to_address"]
+        assert data[2]["value"] == transfer_event_3["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[2]["data"] is None
+
+    # Normal_4_1_2
+    # Transferイベントあり：2件
+    # sort_order=from_account_address_list(desc)
+    def test_normal_4_1_2(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000000",
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000001",
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000002",
+            "to_address": self.to_address,
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000001",
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                ],
+                "sort_item": "from_account_address_list",
+                "sort_order": 1,
+            },
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_3["token_address"]
+        assert data[0]["from_address"] == transfer_event_3["from_address"]
+        assert data[0]["to_address"] == transfer_event_3["to_address"]
+        assert data[0]["value"] == transfer_event_3["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+        assert data[1]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_1["token_address"]
+        assert data[1]["from_address"] == transfer_event_1["from_address"]
+        assert data[1]["to_address"] == transfer_event_1["to_address"]
+        assert data[1]["value"] == transfer_event_1["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[1]["data"] is None
+
+        assert data[2]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_2["token_address"]
+        assert data[2]["from_address"] == transfer_event_2["from_address"]
+        assert data[2]["to_address"] == transfer_event_2["to_address"]
+        assert data[2]["value"] == transfer_event_2["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[2]["data"] == {"message": "unlock"}
+
+    # Normal_4_2_1
+    # Transferイベントあり：2件
+    # sort_order=to_account_address_list(asc)
+    def test_normal_4_2_1(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000000",
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000001",
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                ],
+                "sort_item": "to_account_address_list",
+            },
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_2["token_address"]
+        assert data[0]["from_address"] == transfer_event_2["from_address"]
+        assert data[0]["to_address"] == transfer_event_2["to_address"]
+        assert data[0]["value"] == transfer_event_2["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[0]["data"] == {"message": "unlock"}
+
+        assert data[1]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_1["token_address"]
+        assert data[1]["from_address"] == transfer_event_1["from_address"]
+        assert data[1]["to_address"] == transfer_event_1["to_address"]
+        assert data[1]["value"] == transfer_event_1["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[1]["data"] is None
+
+        assert data[2]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_3["token_address"]
+        assert data[2]["from_address"] == transfer_event_3["from_address"]
+        assert data[2]["to_address"] == transfer_event_3["to_address"]
+        assert data[2]["value"] == transfer_event_3["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[2]["data"] is None
+
+    # Normal_4_2_2
+    # Transferイベントあり：2件
+    # sort_order=to_account_address_list(desc)
+    def test_normal_4_2_2(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000000",
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000001",
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                ],
+                "sort_item": "to_account_address_list",
+                "sort_order": 1,
+            },
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_3["token_address"]
+        assert data[0]["from_address"] == transfer_event_3["from_address"]
+        assert data[0]["to_address"] == transfer_event_3["to_address"]
+        assert data[0]["value"] == transfer_event_3["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+        assert data[1]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_1["token_address"]
+        assert data[1]["from_address"] == transfer_event_1["from_address"]
+        assert data[1]["to_address"] == transfer_event_1["to_address"]
+        assert data[1]["value"] == transfer_event_1["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[1]["data"] is None
+
+        assert data[2]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_2["token_address"]
+        assert data[2]["from_address"] == transfer_event_2["from_address"]
+        assert data[2]["to_address"] == transfer_event_2["to_address"]
+        assert data[2]["value"] == transfer_event_2["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[2]["data"] == {"message": "unlock"}
+
+    # Normal_4_3
+    # Transferイベントあり：2件
+    # sort_order=from_address
+    def test_normal_4_3(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": "0x0000000000000000000000000000000000000000",
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"sort_item": "to_address", "sort_order": 1})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_3["token_address"]
+        assert data[0]["from_address"] == transfer_event_3["from_address"]
+        assert data[0]["to_address"] == transfer_event_3["to_address"]
+        assert data[0]["value"] == transfer_event_3["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+        assert data[1]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_1["token_address"]
+        assert data[1]["from_address"] == transfer_event_1["from_address"]
+        assert data[1]["to_address"] == transfer_event_1["to_address"]
+        assert data[1]["value"] == transfer_event_1["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[1]["data"] is None
+
+        assert data[2]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_2["token_address"]
+        assert data[2]["from_address"] == transfer_event_2["from_address"]
+        assert data[2]["to_address"] == transfer_event_2["to_address"]
+        assert data[2]["value"] == transfer_event_2["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[2]["data"] == {"message": "unlock"}
+
+    # Normal_4_4
+    # Transferイベントあり：2件
+    # sort_order=from_address
+    def test_normal_4_4(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000001",
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000000",
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": "0x0000000000000000000000000000000000000002",
+            "to_address": self.to_address,
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"sort_item": "from_address", "sort_order": 1})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_3["token_address"]
+        assert data[0]["from_address"] == transfer_event_3["from_address"]
+        assert data[0]["to_address"] == transfer_event_3["to_address"]
+        assert data[0]["value"] == transfer_event_3["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+        assert data[1]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_1["token_address"]
+        assert data[1]["from_address"] == transfer_event_1["from_address"]
+        assert data[1]["to_address"] == transfer_event_1["to_address"]
+        assert data[1]["value"] == transfer_event_1["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[1]["data"] is None
+
+        assert data[2]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_2["token_address"]
+        assert data[2]["from_address"] == transfer_event_2["from_address"]
+        assert data[2]["to_address"] == transfer_event_2["to_address"]
+        assert data[2]["value"] == transfer_event_2["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[2]["data"] == {"message": "unlock"}
+
+    # Normal_4_5
+    # Transferイベントあり：2件
+    # sort_order=created
+    def test_normal_4_5(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime(2023, 11, 6, 20, 0, 0),
+        )
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=datetime(2023, 11, 6, 20, 0, 1),
+        )
+
+        # ３件目
+        transfer_event_3 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 30,
+        }
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_3,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=datetime(2023, 11, 6, 20, 0, 2),
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(apiurl, json={"sort_item": "created", "sort_order": 1})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 3
+
+        assert data[0]["transaction_hash"] == transfer_event_3["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_3["token_address"]
+        assert data[0]["from_address"] == transfer_event_3["from_address"]
+        assert data[0]["to_address"] == transfer_event_3["to_address"]
+        assert data[0]["value"] == transfer_event_3["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+        assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_2["token_address"]
+        assert data[1]["from_address"] == transfer_event_2["from_address"]
+        assert data[1]["to_address"] == transfer_event_2["to_address"]
+        assert data[1]["value"] == transfer_event_2["value"]
+        assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
+        assert data[1]["data"] == {"message": "unlock"}
+
+        assert data[2]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[2]["token_address"] == transfer_event_1["token_address"]
+        assert data[2]["from_address"] == transfer_event_1["from_address"]
+        assert data[2]["to_address"] == transfer_event_1["to_address"]
+        assert data[2]["value"] == transfer_event_1["value"]
+        assert data[2]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[2]["data"] is None
+
+    # Normal_5_1
     # offset=1, limit=設定なし
     # Transferイベントあり：2件
-    def test_normal_4(self, client: TestClient, session: Session):
+    def test_normal_5_1(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -850,10 +1550,10 @@ class TestTokenTransferHistorySearch:
         assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
         assert data[0]["data"] == {"message": "unlock"}
 
-    # Normal_5
+    # Normal_5_2
     # offset=0, limit=設定なし
     # Transferイベントあり：2件
-    def test_normal_5(self, client: TestClient, session: Session):
+    def test_normal_5_2(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -920,10 +1620,10 @@ class TestTokenTransferHistorySearch:
         assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
         assert data[1]["data"] == {"message": "unlock"}
 
-    # Normal_6
+    # Normal_5_3
     # offset =設定なし, limit=1
     # Transferイベントあり：2件
-    def test_normal_6(self, client: TestClient, session: Session):
+    def test_normal_5_3(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,

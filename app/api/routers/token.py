@@ -20,7 +20,7 @@ from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Path
 from pydantic import UUID4
-from sqlalchemy import String, and_, asc, cast, desc, func, or_, select
+from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
 
 from app import config, log
 from app.contracts import Contract
@@ -642,11 +642,7 @@ def search_transfer_histories(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # 移転履歴取得
-    stmt = (
-        select(IDXTransfer)
-        .where(IDXTransfer.token_address == token_address)
-        .order_by(IDXTransfer.id)
-    )
+    stmt = select(IDXTransfer).where(IDXTransfer.token_address == token_address)
     if len(data.account_address_list) > 0:
         stmt = stmt.where(
             or_(
@@ -678,6 +674,50 @@ def search_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= data.value)
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    def _order(_order):
+        if _order == 0:
+            return asc
+        else:
+            return desc
+
+    if (
+        data.sort_item == "from_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransfer.from_address,
+                )
+            )
+        )
+    elif (
+        data.sort_item == "to_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransfer.to_address,
+                )
+            )
+        )
+    else:
+        sort_attr = getattr(IDXTransfer, data.sort_item, None)
+        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+
+    # NOTE: Set secondary sort for consistent results
+    if data.sort_item != "id":
+        stmt = stmt.order_by(IDXTransfer.id)
 
     if data.offset is not None:
         stmt = stmt.offset(data.offset)
@@ -857,6 +897,50 @@ def search_transfer_approval_histories(
                 stmt = stmt.where(IDXTransferApproval.value <= data.value)
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    def _order(_order):
+        if _order == 0:
+            return asc
+        else:
+            return desc
+
+    if (
+        data.sort_item == "from_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransferApproval.from_address,
+                )
+            )
+        )
+    elif (
+        data.sort_item == "to_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransferApproval.to_address,
+                )
+            )
+        )
+    else:
+        sort_attr = getattr(IDXTransferApproval, data.sort_item, None)
+        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+
+    # NOTE: Set secondary sort for consistent results
+    if data.sort_item != "application_id":
+        stmt = stmt.order_by(IDXTransferApproval.application_id)
 
     # パラメータを設定
     if data.offset is not None:

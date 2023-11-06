@@ -26,6 +26,7 @@ from pydantic import UUID4, BaseModel, Field, StrictStr
 
 from app.model.schema.base import (
     ResultSet,
+    SortOrder,
     TokenType,
     ValidatedEthereumAddress,
     ValueOperator,
@@ -94,6 +95,17 @@ class ListAllTransferHistoryQuery:
     ] = ValueOperator.EQUAL
 
 
+class SearchTransferHistorySortItem(str, Enum):
+    from_account_address_list = "from_account_address_list"
+    to_account_address_list = "to_account_address_list"
+    id = "id"
+    created = "created"
+    transaction_hash = "transaction_hash"
+    from_address = "from_address"
+    to_address = "to_address"
+    value = "value"
+
+
 class SearchTransferHistoryRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
         [],
@@ -119,6 +131,12 @@ class SearchTransferHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
+    sort_item: Optional[SearchTransferHistorySortItem] = Field(
+        default=SearchTransferHistorySortItem.id, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        default=SortOrder.ASC, description="sort order"
+    )
 
 
 @dataclass
@@ -132,6 +150,21 @@ class ListAllTransferApprovalHistoryQuery:
             description="value filter condition(0: equal, 1: greater than, 2: less than)"
         ),
     ] = ValueOperator.EQUAL
+
+
+class SearchTransferApprovalHistorySortItem(str, Enum):
+    from_account_address_list = "from_account_address_list"
+    to_account_address_list = "to_account_address_list"
+    application_id = "application_id"
+    created = "created"
+    from_address = "from_address"
+    to_address = "to_address"
+    value = "value"
+    application_datetime = "application_datetime"
+    application_blocktimestamp = "application_blocktimestamp"
+    approval_datetime = "approval_datetime"
+    approval_blocktimestamp = "approval_blocktimestamp"
+    cancelled = "cancelled"
 
 
 class SearchTransferApprovalHistoryRequest(BaseModel):
@@ -169,6 +202,13 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
     value_operator: Optional[ValueOperator] = Field(
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    sort_item: Optional[SearchTransferApprovalHistorySortItem] = Field(
+        default=SearchTransferApprovalHistorySortItem.application_id,
+        description="sort item",
+    )
+    sort_order: Optional[SortOrder] = Field(
+        default=SortOrder.ASC, description="sort order"
     )
 
 

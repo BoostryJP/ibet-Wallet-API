@@ -2885,6 +2885,16 @@ paths:
             description: source event data
             title: Data
           description: source event data
+        - name: transaction_hash
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: transaction hash
+            title: Transaction Hash
+          description: transaction hash
         - name: value
           in: query
           required: false
@@ -9557,8 +9567,36 @@ components:
             - type: 'null'
           description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
           default: 0
+        sort_item:
+          anyOf:
+            - $ref: '#/components/schemas/SearchTransferApprovalHistorySortItem'
+            - type: 'null'
+          description: sort item
+          default: application_id
+        sort_order:
+          anyOf:
+            - $ref: '#/components/schemas/SortOrder'
+            - type: 'null'
+          description: sort order
+          default: 0
       type: object
       title: SearchTransferApprovalHistoryRequest
+    SearchTransferApprovalHistorySortItem:
+      type: string
+      enum:
+        - from_account_address_list
+        - to_account_address_list
+        - application_id
+        - created
+        - from_address
+        - to_address
+        - value
+        - application_datetime
+        - application_blocktimestamp
+        - approval_datetime
+        - approval_blocktimestamp
+        - cancelled
+      title: SearchTransferApprovalHistorySortItem
     SearchTransferHistoryRequest:
       properties:
         account_address_list:
@@ -9593,6 +9631,12 @@ components:
             - type: 'null'
           title: Data
           description: source event data
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Transaction Hash
+          description: transaction hash
         created_from:
           anyOf:
             - type: string
@@ -9619,8 +9663,32 @@ components:
             - type: 'null'
           description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
           default: 0
+        sort_item:
+          anyOf:
+            - $ref: '#/components/schemas/SearchTransferHistorySortItem'
+            - type: 'null'
+          description: sort item
+          default: id
+        sort_order:
+          anyOf:
+            - $ref: '#/components/schemas/SortOrder'
+            - type: 'null'
+          description: sort order
+          default: 0
       type: object
       title: SearchTransferHistoryRequest
+    SearchTransferHistorySortItem:
+      type: string
+      enum:
+        - from_account_address_list
+        - to_account_address_list
+        - id
+        - created
+        - transaction_hash
+        - from_address
+        - to_address
+        - value
+      title: SearchTransferHistorySortItem
     SecurityTokenPositionWithAddress:
       properties:
         balance:
