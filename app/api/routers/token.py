@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import timezone
 from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Path
@@ -661,9 +662,13 @@ def search_transfer_histories(
             IDXTransfer.transaction_hash.like("%" + data.transaction_hash + "%")
         )
     if data.created_from is not None:
-        stmt = stmt.where(IDXTransfer.created >= data.created_from)
+        stmt = stmt.where(
+            IDXTransfer.created >= data.created_from.astimezone(timezone.utc)
+        )
     if data.created_to is not None:
-        stmt = stmt.where(IDXTransfer.created <= data.created_to)
+        stmt = stmt.where(
+            IDXTransfer.created <= data.created_to.astimezone(timezone.utc)
+        )
     if data.value is not None and data.value_operator is not None:
         match data.value_operator:
             case ValueOperator.EQUAL:
@@ -853,39 +858,43 @@ def search_transfer_approval_histories(
 
     if data.application_datetime_from is not None:
         stmt = stmt.where(
-            IDXTransferApproval.application_datetime >= data.application_datetime_from
+            IDXTransferApproval.application_datetime
+            >= data.application_datetime_from.astimezone(timezone.utc)
         )
     if data.application_datetime_to is not None:
         stmt = stmt.where(
-            IDXTransferApproval.application_datetime <= data.application_datetime_to
+            IDXTransferApproval.application_datetime
+            <= data.application_datetime_to.astimezone(timezone.utc)
         )
     if data.application_blocktimestamp_from is not None:
         stmt = stmt.where(
             IDXTransferApproval.application_blocktimestamp
-            >= data.application_blocktimestamp_from
+            >= data.application_blocktimestamp_from.astimezone(timezone.utc)
         )
     if data.application_blocktimestamp_to is not None:
         stmt = stmt.where(
             IDXTransferApproval.application_blocktimestamp
-            <= data.application_blocktimestamp_to
+            <= data.application_blocktimestamp_to.astimezone(timezone.utc)
         )
     if data.approval_datetime_from is not None:
         stmt = stmt.where(
-            IDXTransferApproval.approval_datetime >= data.approval_datetime_from
+            IDXTransferApproval.approval_datetime
+            >= data.approval_datetime_from.astimezone(timezone.utc)
         )
     if data.approval_datetime_to is not None:
         stmt = stmt.where(
-            IDXTransferApproval.approval_datetime <= data.approval_datetime_to
+            IDXTransferApproval.approval_datetime
+            <= data.approval_datetime_to.astimezone(timezone.utc)
         )
     if data.approval_blocktimestamp_from is not None:
         stmt = stmt.where(
             IDXTransferApproval.approval_blocktimestamp
-            >= data.approval_blocktimestamp_from
+            >= data.approval_blocktimestamp_from.astimezone(timezone.utc)
         )
     if data.approval_blocktimestamp_to is not None:
         stmt = stmt.where(
             IDXTransferApproval.approval_blocktimestamp
-            <= data.approval_blocktimestamp_to
+            <= data.approval_blocktimestamp_to.astimezone(timezone.utc)
         )
     if data.value is not None and data.value_operator is not None:
         match data.value_operator:
