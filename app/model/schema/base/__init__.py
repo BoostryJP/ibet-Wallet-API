@@ -24,4 +24,5 @@ from .base import (
     SuccessResponse,
     TokenType,
     ValidatedEthereumAddress,
+    ValueOperator,
 )

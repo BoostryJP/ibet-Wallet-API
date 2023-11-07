@@ -20,6 +20,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -326,10 +327,1695 @@ class TestTokenTransferApprovalHistorySearch:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_3
+    # Normal_2_4_1
+    # Data exists (application datetime from)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "application_datetime_from",
+        ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"],
+    )
+    def test_normal_2_4_1(
+        self, application_datetime_from: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"application_datetime_from": application_datetime_from},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_4_2
+    # Data exists (application datetime to)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "application_datetime_from",
+        ["2023-11-06T22:59:59+09:00", "2023-11-06T13:59:59+00:00"],
+    )
+    def test_normal_2_4_2(
+        self, application_datetime_from: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"application_datetime_to": application_datetime_from},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_5_1
+    # Data exists (application block timestamp from)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "application_blocktimestamp_from",
+        ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"],
+    )
+    def test_normal_2_5_1(
+        self, application_blocktimestamp_from: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"application_blocktimestamp_from": application_blocktimestamp_from},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_5_2
+    # Data exists (application block timestamp to)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "application_blocktimestamp_to",
+        ["2023-11-06T22:59:59+09:00", "2023-11-06T13:59:59+00:00"],
+    )
+    def test_normal_2_5_2(
+        self, application_blocktimestamp_to: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"application_blocktimestamp_to": application_blocktimestamp_to},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_6_1
+    # Data exists (application datetime from)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "approval_datetime_from",
+        ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"],
+    )
+    def test_normal_2_6_1(
+        self, approval_datetime_from: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"approval_datetime_from": approval_datetime_from},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_6_2
+    # Data exists (application datetime to)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "approval_datetime_from",
+        ["2023-11-06T22:59:59+09:00", "2023-11-06T13:59:59+00:00"],
+    )
+    def test_normal_2_6_2(
+        self, approval_datetime_from: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"approval_datetime_to": approval_datetime_from},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_7_1
+    # Data exists (application block timestamp from)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "approval_blocktimestamp_from",
+        ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"],
+    )
+    def test_normal_2_7_1(
+        self, approval_blocktimestamp_from: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"approval_blocktimestamp_from": approval_blocktimestamp_from},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_7_2
+    # Data exists (application block timestamp to)
+    # offset=設定なし、 limit=設定なし
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "approval_blocktimestamp_to",
+        ["2023-11-06T22:59:59+09:00", "2023-11-06T13:59:59+00:00"],
+    )
+    def test_normal_2_7_2(
+        self, approval_blocktimestamp_to: str, client: TestClient, session: Session
+    ):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"approval_blocktimestamp_to": approval_blocktimestamp_to},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_8_1
+    # Data exists (value_operator: =)
+    # offset=設定なし、 limit=設定なし
+    def test_normal_2_8_1(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"value": 10, "value_operator": 0},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_8_2
+    # Data exists (value_operator: >=)
+    # offset=設定なし、 limit=設定なし
+    def test_normal_2_8_2(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"value": 20, "value_operator": 1},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_2_8_3
+    # Data exists (value_operator: <=)
+    # offset=設定なし、 limit=設定なし
+    def test_normal_2_8_3(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"value": 10, "value_operator": 2},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+    # Normal_3_1_1
+    # sort_order=from_account_address_list(asc)
+    def test_normal_3_1_1(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": "0x0000000000000000000000000000000000000001",
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": "0x0000000000000000000000000000000000000002",
+            "to_address": self.to_address,
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": "0x0000000000000000000000000000000000000003",
+            "to_address": self.to_address,
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000001",
+                    "0x0000000000000000000000000000000000000002",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000003",
+                ],
+                "sort_item": "from_account_address_list",
+                "sort_order": 1,
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["to_address"] == self.to_address
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["to_address"] == self.to_address
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_1_2
+    # sort_order=from_account_address_list(desc)
+    def test_normal_3_1_2(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": "0x0000000000000000000000000000000000000001",
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": "0x0000000000000000000000000000000000000002",
+            "to_address": self.to_address,
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": "0x0000000000000000000000000000000000000003",
+            "to_address": self.to_address,
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000003",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                    "0x0000000000000000000000000000000000000001",
+                ],
+                "sort_item": "from_account_address_list",
+                "sort_order": 0,
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["to_address"] == self.to_address
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["to_address"] == self.to_address
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_2_1
+    # sort_order=to_account_address_list(asc)
+    def test_normal_3_2_1(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000003",
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000003",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                    "0x0000000000000000000000000000000000000001",
+                ],
+                "sort_item": "to_account_address_list",
+                "sort_order": 0,
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == self.from_address
+        assert data[1]["to_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == self.from_address
+        assert data[2]["to_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_2_2
+    # sort_order=to_account_address_list(asc)
+    def test_normal_3_2_2(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000003",
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "account_address_list": [
+                    "0x0000000000000000000000000000000000000001",
+                    "0x0000000000000000000000000000000000000004",
+                    "0x0000000000000000000000000000000000000002",
+                    "0x0000000000000000000000000000000000000003",
+                ],
+                "sort_item": "to_account_address_list",
+                "sort_order": 1,
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == self.from_address
+        assert data[1]["to_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == self.from_address
+        assert data[2]["to_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_3
+    # sort_order=from_address
+    def test_normal_3_3(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": "0x0000000000000000000000000000000000000001",
+            "to_address": self.to_address,
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": "0x0000000000000000000000000000000000000002",
+            "to_address": self.to_address,
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": "0x0000000000000000000000000000000000000003",
+            "to_address": self.to_address,
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={"sort_item": "from_address", "sort_order": 0},
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["to_address"] == self.to_address
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["to_address"] == self.to_address
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["to_address"] == self.to_address
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_4
+    # sort_order=to_address
+    def test_normal_3_4(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000003",
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "sort_item": "to_address",
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == self.from_address
+        assert data[1]["to_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == self.from_address
+        assert data[2]["to_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_5
+    # sort_order=datetime
+    @pytest.mark.parametrize(
+        "sort_item",
+        [
+            "application_datetime",
+            "application_blocktimestamp",
+            "approval_datetime",
+            "approval_blocktimestamp",
+        ],
+    )
+    def test_normal_3_5(self, sort_item: str, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000003",
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": False,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "sort_item": sort_item,
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == self.from_address
+        assert data[1]["to_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["cancelled"] is False
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == self.from_address
+        assert data[2]["to_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["cancelled"] is False
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_3_6
+    # sort_order=cancelled
+    def test_normal_3_6(self, client: TestClient, session: Session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        transfer_approval_1 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 1,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000001",
+            "value": 10,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": None,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_1)
+
+        transfer_approval_2 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 2,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000002",
+            "value": 20,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": None,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        transfer_approval_3 = {
+            "token_address": self.token_address,
+            "exchange_address": self.exchange_address,
+            "application_id": 3,
+            "from_address": self.from_address,
+            "to_address": "0x0000000000000000000000000000000000000003",
+            "value": 30,
+            "application_datetime": datetime.utcnow(),
+            "application_blocktimestamp": datetime.utcnow(),
+            "approval_datetime": datetime.utcnow(),
+            "approval_blocktimestamp": datetime.utcnow(),
+            "cancelled": True,
+            "transfer_approved": True,
+        }
+        self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.post(
+            apiurl,
+            json={
+                "sort_item": "cancelled",
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["exchange_address"] == self.exchange_address
+        assert data[0]["application_id"] == 1
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == "0x0000000000000000000000000000000000000001"
+        assert data[0]["cancelled"] is None
+        assert data[0]["transfer_approved"] is True
+
+        assert data[1]["token_address"] == self.token_address
+        assert data[1]["exchange_address"] == self.exchange_address
+        assert data[1]["application_id"] == 2
+        assert data[1]["from_address"] == self.from_address
+        assert data[1]["to_address"] == "0x0000000000000000000000000000000000000002"
+        assert data[1]["cancelled"] is None
+        assert data[1]["transfer_approved"] is True
+
+        assert data[2]["token_address"] == self.token_address
+        assert data[2]["exchange_address"] == self.exchange_address
+        assert data[2]["application_id"] == 3
+        assert data[2]["from_address"] == self.from_address
+        assert data[2]["to_address"] == "0x0000000000000000000000000000000000000003"
+        assert data[2]["cancelled"] is True
+        assert data[2]["transfer_approved"] is True
+
+    # Normal_4_1
     # Data exists
     # offset=1、 limit=設定なし
-    def test_normal_3(self, client: TestClient, session: Session):
+    def test_normal_4_1(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -396,10 +2082,10 @@ class TestTokenTransferApprovalHistorySearch:
             assert item["cancelled"] is False
             assert item["transfer_approved"] is True
 
-    # Normal_4
+    # Normal_4_2
     # Data exists
     # offset=2、 limit=2
-    def test_normal_4(self, client: TestClient, session: Session):
+    def test_normal_4_2(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -465,10 +2151,10 @@ class TestTokenTransferApprovalHistorySearch:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_5
+    # Normal_4_3
     # Data exists
     # offset=設定なし、 limit=2
-    def test_normal_5(self, client: TestClient, session: Session):
+    def test_normal_4_3(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -534,10 +2220,10 @@ class TestTokenTransferApprovalHistorySearch:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_6
+    # Normal_4_3
     # Data exists
     # offset=設定なし、 limit=0
-    def test_normal_6(self, client: TestClient, session: Session):
+    def test_normal_4_4(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,

@@ -1225,6 +1225,20 @@ async = ["asgiref (>=3.2)"]
 dotenv = ["python-dotenv"]
 
 [[package]]
+name = "freezegun"
+version = "1.2.2"
+description = "Let your Python tests travel through time"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "freezegun-1.2.2-py3-none-any.whl", hash = "sha256:ea1b963b993cb9ea195adbd893a48d573fda951b0da64f60883d7e988b606c9f"},
+    {file = "freezegun-1.2.2.tar.gz", hash = "sha256:cd22d1ba06941384410cd967d8a99d5ae2442f57dfafeff2fda5de8dc5c05446"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.7"
+
+[[package]]
 name = "frozenlist"
 version = "1.4.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -2641,6 +2655,21 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-freezer"
+version = "0.4.8"
+description = "Pytest plugin providing a fixture interface for spulec/freezegun"
+optional = false
+python-versions = ">= 3.6"
+files = [
+    {file = "pytest_freezer-0.4.8-py3-none-any.whl", hash = "sha256:644ce7ddb8ba52b92a1df0a80a699bad2b93514c55cf92e9f2517b68ebe74814"},
+    {file = "pytest_freezer-0.4.8.tar.gz", hash = "sha256:8ee2f724b3ff3540523fa355958a22e6f4c1c819928b78a7a183ae4248ce6ee6"},
+]
+
+[package.dependencies]
+freezegun = ">=1.0"
+pytest = ">=3.6"
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -3735,4 +3764,4 @@ ibet-explorer = ["aiohttp", "async-cache", "ibet-wallet-api-explorer", "textual"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.2"
-content-hash = "dd42c079d8a9ffa1710eab2eeb54f65069f175e0ffc3dc5c78c22a71e2607bd4"
+content-hash = "d2fc1b19df9717cbd78b69e9ab37fb0ac617da5a1a4a6b4bda8423536871494c"

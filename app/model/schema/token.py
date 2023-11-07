@@ -17,13 +17,20 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import UUID4, BaseModel, Field, RootModel, StrictStr
+from pydantic import UUID4, BaseModel, Field, StrictStr
 
-from app.model.schema.base import ResultSet, TokenType, ValidatedEthereumAddress
+from app.model.schema.base import (
+    ResultSet,
+    SortOrder,
+    TokenType,
+    ValidatedEthereumAddress,
+    ValueOperator,
+)
 
 
 ############################
@@ -76,6 +83,27 @@ class ListAllTransferHistoryQuery:
         Optional[TransferSourceEvent], Query(description="source event of transfer")
     ] = None
     data: Annotated[Optional[str], Query(description="source event data")] = None
+    transaction_hash: Annotated[
+        Optional[str], Query(description="transaction hash")
+    ] = None
+    value: Annotated[Optional[int], Query(description="value")] = None
+    value_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)"
+        ),
+    ] = ValueOperator.EQUAL
+
+
+class SearchTransferHistorySortItem(str, Enum):
+    from_account_address_list = "from_account_address_list"
+    to_account_address_list = "to_account_address_list"
+    id = "id"
+    created = "created"
+    transaction_hash = "transaction_hash"
+    from_address = "from_address"
+    to_address = "to_address"
+    value = "value"
 
 
 class SearchTransferHistoryRequest(BaseModel):
@@ -89,6 +117,54 @@ class SearchTransferHistoryRequest(BaseModel):
         default=None, description="source event of transfer"
     )
     data: Optional[str] = Field(default=None, description="source event data")
+    transaction_hash: Optional[str] = Field(
+        default=None, description="transaction hash"
+    )
+    created_from: Optional[datetime] = Field(
+        default=None, description="created from datetime"
+    )
+    created_to: Optional[datetime] = Field(
+        default=None, description="created to datetime"
+    )
+    value: Optional[int] = Field(default=None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    sort_item: Optional[SearchTransferHistorySortItem] = Field(
+        default=SearchTransferHistorySortItem.id, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        default=SortOrder.ASC, description="sort order"
+    )
+
+
+@dataclass
+class ListAllTransferApprovalHistoryQuery:
+    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
+    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    value: Annotated[Optional[int], Query(description="value")] = None
+    value_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)"
+        ),
+    ] = ValueOperator.EQUAL
+
+
+class SearchTransferApprovalHistorySortItem(str, Enum):
+    from_account_address_list = "from_account_address_list"
+    to_account_address_list = "to_account_address_list"
+    application_id = "application_id"
+    created = "created"
+    from_address = "from_address"
+    to_address = "to_address"
+    value = "value"
+    application_datetime = "application_datetime"
+    application_blocktimestamp = "application_blocktimestamp"
+    approval_datetime = "approval_datetime"
+    approval_blocktimestamp = "approval_blocktimestamp"
+    cancelled = "cancelled"
 
 
 class SearchTransferApprovalHistoryRequest(BaseModel):
@@ -98,6 +174,42 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
     )
     offset: Optional[int] = Field(default=None, description="start position", ge=0)
     limit: Optional[int] = Field(default=None, description="number of set", ge=0)
+    application_datetime_from: Optional[datetime] = Field(
+        default=None, description="application from datetime"
+    )
+    application_datetime_to: Optional[datetime] = Field(
+        default=None, description="application to datetime"
+    )
+    application_blocktimestamp_from: Optional[datetime] = Field(
+        default=None, description="application from block timestamp"
+    )
+    application_blocktimestamp_to: Optional[datetime] = Field(
+        default=None, description="application to block timestamp"
+    )
+    approval_datetime_from: Optional[datetime] = Field(
+        default=None, description="approval from datetime"
+    )
+    approval_datetime_to: Optional[datetime] = Field(
+        default=None, description="approval to datetime"
+    )
+    approval_blocktimestamp_from: Optional[datetime] = Field(
+        default=None, description="approval from block timestamp"
+    )
+    approval_blocktimestamp_to: Optional[datetime] = Field(
+        default=None, description="approval to block timestamp"
+    )
+    value: Optional[int] = Field(default=None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    sort_item: Optional[SearchTransferApprovalHistorySortItem] = Field(
+        default=SearchTransferApprovalHistorySortItem.application_id,
+        description="sort item",
+    )
+    sort_order: Optional[SortOrder] = Field(
+        default=SortOrder.ASC, description="sort order"
+    )
 
 
 ############################

@@ -16,11 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import timezone
 from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Path
 from pydantic import UUID4
-from sqlalchemy import String, and_, asc, cast, desc, func, or_, select
+from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
 
 from app import config, log
 from app.contracts import Contract
@@ -40,6 +41,7 @@ from app.model.schema import (
     CreateTokenHoldersCollectionRequest,
     CreateTokenHoldersCollectionResponse,
     ListAllTokenHoldersQuery,
+    ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
@@ -54,9 +56,9 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
-    ResultSetQuery,
     SuccessResponse,
     ValidatedEthereumAddress,
+    ValueOperator,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -579,6 +581,20 @@ def list_all_transfer_histories(
         stmt = stmt.where(
             cast(IDXTransfer.data, String).like("%" + request_query.data + "%")
         )
+    if request_query.transaction_hash is not None:
+        stmt = stmt.where(
+            IDXTransfer.transaction_hash.like(
+                "%" + request_query.transaction_hash + "%"
+            )
+        )
+    if request_query.value is not None and request_query.value_operator is not None:
+        match request_query.value_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXTransfer.value == request_query.value)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXTransfer.value >= request_query.value)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXTransfer.value <= request_query.value)
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
@@ -627,11 +643,7 @@ def search_transfer_histories(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # 移転履歴取得
-    stmt = (
-        select(IDXTransfer)
-        .where(IDXTransfer.token_address == token_address)
-        .order_by(IDXTransfer.id)
-    )
+    stmt = select(IDXTransfer).where(IDXTransfer.token_address == token_address)
     if len(data.account_address_list) > 0:
         stmt = stmt.where(
             or_(
@@ -645,8 +657,72 @@ def search_transfer_histories(
         stmt = stmt.where(IDXTransfer.source_event == data.source_event.value)
     if data.data is not None:
         stmt = stmt.where(cast(IDXTransfer.data, String).like("%" + data.data + "%"))
+    if data.transaction_hash is not None:
+        stmt = stmt.where(
+            IDXTransfer.transaction_hash.like("%" + data.transaction_hash + "%")
+        )
+    if data.created_from is not None:
+        stmt = stmt.where(
+            IDXTransfer.created >= data.created_from.astimezone(timezone.utc)
+        )
+    if data.created_to is not None:
+        stmt = stmt.where(
+            IDXTransfer.created <= data.created_to.astimezone(timezone.utc)
+        )
+    if data.value is not None and data.value_operator is not None:
+        match data.value_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXTransfer.value == data.value)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXTransfer.value >= data.value)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXTransfer.value <= data.value)
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    def _order(_order):
+        if _order == 0:
+            return asc
+        else:
+            return desc
+
+    if (
+        data.sort_item == "from_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransfer.from_address,
+                )
+            )
+        )
+    elif (
+        data.sort_item == "to_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransfer.to_address,
+                )
+            )
+        )
+    else:
+        sort_attr = getattr(IDXTransfer, data.sort_item, None)
+        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+
+    # NOTE: Set secondary sort for consistent results
+    if data.sort_item != "id":
+        stmt = stmt.order_by(IDXTransfer.id)
 
     if data.offset is not None:
         stmt = stmt.offset(data.offset)
@@ -680,7 +756,7 @@ def list_all_transfer_approval_histories(
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
-    request_query: ResultSetQuery = Depends(),
+    request_query: ListAllTransferApprovalHistoryQuery = Depends(),
 ):
     """
     Returns a list of transfer approval histories for a given token.
@@ -700,7 +776,18 @@ def list_all_transfer_approval_histories(
             IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
         )
     )
-    list_length = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    if request_query.value is not None and request_query.value_operator is not None:
+        match request_query.value_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXTransferApproval.value == request_query.value)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXTransferApproval.value >= request_query.value)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXTransferApproval.value <= request_query.value)
+
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # パラメータを設定
     if request_query.offset is not None:
@@ -717,10 +804,10 @@ def list_all_transfer_approval_histories(
     ]
     data = {
         "result_set": {
-            "count": list_length,
+            "count": count,
             "offset": request_query.offset,
             "limit": request_query.limit,
-            "total": list_length,
+            "total": total,
         },
         "transfer_approval_history": resp_data,
     }
@@ -767,7 +854,102 @@ def search_transfer_approval_histories(
                 IDXTransferApproval.to_address.in_(data.account_address_list),
             )
         )
-    list_length = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    if data.application_datetime_from is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.application_datetime
+            >= data.application_datetime_from.astimezone(timezone.utc)
+        )
+    if data.application_datetime_to is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.application_datetime
+            <= data.application_datetime_to.astimezone(timezone.utc)
+        )
+    if data.application_blocktimestamp_from is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.application_blocktimestamp
+            >= data.application_blocktimestamp_from.astimezone(timezone.utc)
+        )
+    if data.application_blocktimestamp_to is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.application_blocktimestamp
+            <= data.application_blocktimestamp_to.astimezone(timezone.utc)
+        )
+    if data.approval_datetime_from is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.approval_datetime
+            >= data.approval_datetime_from.astimezone(timezone.utc)
+        )
+    if data.approval_datetime_to is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.approval_datetime
+            <= data.approval_datetime_to.astimezone(timezone.utc)
+        )
+    if data.approval_blocktimestamp_from is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.approval_blocktimestamp
+            >= data.approval_blocktimestamp_from.astimezone(timezone.utc)
+        )
+    if data.approval_blocktimestamp_to is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.approval_blocktimestamp
+            <= data.approval_blocktimestamp_to.astimezone(timezone.utc)
+        )
+    if data.value is not None and data.value_operator is not None:
+        match data.value_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXTransferApproval.value == data.value)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXTransferApproval.value >= data.value)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXTransferApproval.value <= data.value)
+
+    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    def _order(_order):
+        if _order == 0:
+            return asc
+        else:
+            return desc
+
+    if (
+        data.sort_item == "from_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransferApproval.from_address,
+                )
+            )
+        )
+    elif (
+        data.sort_item == "to_account_address_list"
+        and len(data.account_address_list) > 0
+    ):
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXTransferApproval.to_address,
+                )
+            )
+        )
+    else:
+        sort_attr = getattr(IDXTransferApproval, data.sort_item, None)
+        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+
+    # NOTE: Set secondary sort for consistent results
+    if data.sort_item != "application_id":
+        stmt = stmt.order_by(IDXTransferApproval.application_id)
 
     # パラメータを設定
     if data.offset is not None:
@@ -784,10 +966,10 @@ def search_transfer_approval_histories(
     ]
     data = {
         "result_set": {
-            "count": list_length,
+            "count": count,
             "offset": data.offset,
             "limit": data.limit,
-            "total": list_length,
+            "total": total,
         },
         "transfer_approval_history": resp_data,
     }

@@ -2885,6 +2885,37 @@ paths:
             description: source event data
             title: Data
           description: source event data
+        - name: transaction_hash
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: transaction hash
+            title: Transaction Hash
+          description: transaction hash
+        - name: value
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: value
+            title: Value
+          description: value
+        - name: value_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Value Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
       responses:
         '200':
           description: Successful Response
@@ -2993,6 +3024,27 @@ paths:
             description: number of set
             title: Limit
           description: number of set
+        - name: value
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: value
+            title: Value
+          description: value
+        - name: value_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Value Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
       responses:
         '200':
           description: Successful Response
@@ -9447,8 +9499,104 @@ components:
             - type: 'null'
           title: Limit
           description: number of set
+        application_datetime_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Datetime From
+          description: application from datetime
+        application_datetime_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Datetime To
+          description: application to datetime
+        application_blocktimestamp_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Blocktimestamp From
+          description: application from block timestamp
+        application_blocktimestamp_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Application Blocktimestamp To
+          description: application to block timestamp
+        approval_datetime_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Datetime From
+          description: approval from datetime
+        approval_datetime_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Datetime To
+          description: approval to datetime
+        approval_blocktimestamp_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Blocktimestamp From
+          description: approval from block timestamp
+        approval_blocktimestamp_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Approval Blocktimestamp To
+          description: approval to block timestamp
+        value:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Value
+          description: value
+        value_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        sort_item:
+          anyOf:
+            - $ref: '#/components/schemas/SearchTransferApprovalHistorySortItem'
+            - type: 'null'
+          description: sort item
+          default: application_id
+        sort_order:
+          anyOf:
+            - $ref: '#/components/schemas/SortOrder'
+            - type: 'null'
+          description: sort order
+          default: 0
       type: object
       title: SearchTransferApprovalHistoryRequest
+    SearchTransferApprovalHistorySortItem:
+      type: string
+      enum:
+        - from_account_address_list
+        - to_account_address_list
+        - application_id
+        - created
+        - from_address
+        - to_address
+        - value
+        - application_datetime
+        - application_blocktimestamp
+        - approval_datetime
+        - approval_blocktimestamp
+        - cancelled
+      title: SearchTransferApprovalHistorySortItem
     SearchTransferHistoryRequest:
       properties:
         account_address_list:
@@ -9483,8 +9631,64 @@ components:
             - type: 'null'
           title: Data
           description: source event data
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Transaction Hash
+          description: transaction hash
+        created_from:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Created From
+          description: created from datetime
+        created_to:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Created To
+          description: created to datetime
+        value:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Value
+          description: value
+        value_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        sort_item:
+          anyOf:
+            - $ref: '#/components/schemas/SearchTransferHistorySortItem'
+            - type: 'null'
+          description: sort item
+          default: id
+        sort_order:
+          anyOf:
+            - $ref: '#/components/schemas/SortOrder'
+            - type: 'null'
+          description: sort order
+          default: 0
       type: object
       title: SearchTransferHistoryRequest
+    SearchTransferHistorySortItem:
+      type: string
+      enum:
+        - from_account_address_list
+        - to_account_address_list
+        - id
+        - created
+        - transaction_hash
+        - from_address
+        - to_address
+        - value
+      title: SearchTransferHistorySortItem
     SecurityTokenPositionWithAddress:
       properties:
         balance:
@@ -10516,6 +10720,13 @@ components:
         - msg
         - type
       title: ValidationError
+    ValueOperator:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+      title: ValueOperator
     WaitForTransactionReceiptResponse:
       properties:
         status:
