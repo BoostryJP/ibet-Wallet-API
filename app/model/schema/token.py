@@ -86,6 +86,8 @@ class ListAllTransferHistoryQuery:
     transaction_hash: Annotated[
         Optional[str], Query(description="transaction hash")
     ] = None
+    from_address: Annotated[Optional[str], Query(description="from address")] = None
+    to_address: Annotated[Optional[str], Query(description="to address")] = None
     value: Annotated[Optional[int], Query(description="value")] = None
     value_operator: Annotated[
         Optional[ValueOperator],
@@ -109,7 +111,7 @@ class SearchTransferHistorySortItem(str, Enum):
 class SearchTransferHistoryRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
         [],
-        description="list of token address (**this affects total number**)",
+        description="list of account address (**this affects total number**)",
     )
     offset: Optional[int] = Field(default=None, description="start position", ge=0)
     limit: Optional[int] = Field(default=None, description="number of set", ge=0)
@@ -120,6 +122,8 @@ class SearchTransferHistoryRequest(BaseModel):
     transaction_hash: Optional[str] = Field(
         default=None, description="transaction hash"
     )
+    from_address: Optional[str] = Field(default=None, description="from address")
+    to_address: Optional[str] = Field(default=None, description="to address")
     created_from: Optional[datetime] = Field(
         default=None, description="created from datetime"
     )
@@ -143,6 +147,8 @@ class SearchTransferHistoryRequest(BaseModel):
 class ListAllTransferApprovalHistoryQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+    from_address: Annotated[Optional[str], Query(description="from address")] = None
+    to_address: Annotated[Optional[str], Query(description="to address")] = None
     value: Annotated[Optional[int], Query(description="value")] = None
     value_operator: Annotated[
         Optional[ValueOperator],
@@ -170,7 +176,7 @@ class SearchTransferApprovalHistorySortItem(str, Enum):
 class SearchTransferApprovalHistoryRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
         [],
-        description="list of token address (**this affects total number**)",
+        description="list of account address (**this affects total number**)",
     )
     offset: Optional[int] = Field(default=None, description="start position", ge=0)
     limit: Optional[int] = Field(default=None, description="number of set", ge=0)
@@ -198,6 +204,8 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
     approval_blocktimestamp_to: Optional[datetime] = Field(
         default=None, description="approval to block timestamp"
     )
+    from_address: Optional[str] = Field(default=None, description="from address")
+    to_address: Optional[str] = Field(default=None, description="to address")
     value: Optional[int] = Field(default=None, description="value")
     value_operator: Optional[ValueOperator] = Field(
         default=ValueOperator.EQUAL,

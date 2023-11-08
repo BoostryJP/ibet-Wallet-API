@@ -587,6 +587,14 @@ def list_all_transfer_histories(
                 "%" + request_query.transaction_hash + "%"
             )
         )
+    if request_query.from_address is not None:
+        stmt = stmt.where(
+            IDXTransfer.from_address.like("%" + request_query.from_address + "%")
+        )
+    if request_query.to_address is not None:
+        stmt = stmt.where(
+            IDXTransfer.to_address.like("%" + request_query.to_address + "%")
+        )
     if request_query.value is not None and request_query.value_operator is not None:
         match request_query.value_operator:
             case ValueOperator.EQUAL:
@@ -661,6 +669,10 @@ def search_transfer_histories(
         stmt = stmt.where(
             IDXTransfer.transaction_hash.like("%" + data.transaction_hash + "%")
         )
+    if data.from_address is not None:
+        stmt = stmt.where(IDXTransfer.from_address.like("%" + data.from_address + "%"))
+    if data.to_address is not None:
+        stmt = stmt.where(IDXTransfer.to_address.like("%" + data.to_address + "%"))
     if data.created_from is not None:
         stmt = stmt.where(
             IDXTransfer.created >= data.created_from.astimezone(timezone.utc)
@@ -778,6 +790,16 @@ def list_all_transfer_approval_histories(
     )
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
+    if request_query.from_address is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.from_address.like(
+                "%" + request_query.from_address + "%"
+            )
+        )
+    if request_query.to_address is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.to_address.like("%" + request_query.to_address + "%")
+        )
     if request_query.value is not None and request_query.value_operator is not None:
         match request_query.value_operator:
             case ValueOperator.EQUAL:
@@ -895,6 +917,14 @@ def search_transfer_approval_histories(
         stmt = stmt.where(
             IDXTransferApproval.approval_blocktimestamp
             <= data.approval_blocktimestamp_to.astimezone(timezone.utc)
+        )
+    if data.from_address is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.from_address.like("%" + data.from_address + "%")
+        )
+    if data.to_address is not None:
+        stmt = stmt.where(
+            IDXTransferApproval.to_address.like("%" + data.to_address + "%")
         )
     if data.value is not None and data.value_operator is not None:
         match data.value_operator:

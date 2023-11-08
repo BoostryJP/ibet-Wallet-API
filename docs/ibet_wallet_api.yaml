@@ -2895,6 +2895,26 @@ paths:
             description: transaction hash
             title: Transaction Hash
           description: transaction hash
+        - name: from_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: from address
+            title: From Address
+          description: from address
+        - name: to_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: to address
+            title: To Address
+          description: to address
         - name: value
           in: query
           required: false
@@ -3024,6 +3044,26 @@ paths:
             description: number of set
             title: Limit
           description: number of set
+        - name: from_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: from address
+            title: From Address
+          description: from address
+        - name: to_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: to address
+            title: To Address
+          description: to address
         - name: value
           in: query
           required: false
@@ -9483,7 +9523,7 @@ components:
             type: string
           type: array
           title: Account Address List
-          description: list of token address (**this affects total number**)
+          description: list of account address (**this affects total number**)
           default: []
         offset:
           anyOf:
@@ -9555,6 +9595,18 @@ components:
             - type: 'null'
           title: Approval Blocktimestamp To
           description: approval to block timestamp
+        from_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: From Address
+          description: from address
+        to_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: To Address
+          description: to address
         value:
           anyOf:
             - type: integer
@@ -9604,7 +9656,7 @@ components:
             type: string
           type: array
           title: Account Address List
-          description: list of token address (**this affects total number**)
+          description: list of account address (**this affects total number**)
           default: []
         offset:
           anyOf:
@@ -9637,6 +9689,18 @@ components:
             - type: 'null'
           title: Transaction Hash
           description: transaction hash
+        from_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: From Address
+          description: from address
+        to_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: To Address
+          description: to address
         created_from:
           anyOf:
             - type: string
