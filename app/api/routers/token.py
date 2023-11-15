@@ -452,9 +452,7 @@ def search_token_holders(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
-        stmt.order_by(desc(IDXPosition.created))
-    ).all()
+    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(stmt).all()
 
     resp_body = {
         "result_set": {
