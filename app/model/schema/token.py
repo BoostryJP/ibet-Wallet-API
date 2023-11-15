@@ -59,6 +59,58 @@ class ListAllTokenHoldersQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
 
+    amount: Annotated[Optional[int], Query(description="amount")] = None
+    amount_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)",
+        ),
+    ] = ValueOperator.EQUAL
+    pending_transfer: Annotated[
+        Optional[int], Query(description="pending transfer")
+    ] = None
+    pending_transfer_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)",
+        ),
+    ] = ValueOperator.EQUAL
+    exchange_balance: Annotated[
+        Optional[int], Query(description="exchange balance")
+    ] = None
+    exchange_balance_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)",
+        ),
+    ] = ValueOperator.EQUAL
+    exchange_commitment: Annotated[
+        Optional[int], Query(description="exchange commitment")
+    ] = None
+    exchange_commitment_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)",
+        ),
+    ] = ValueOperator.EQUAL
+    locked: Annotated[Optional[int], Query(description="locked")] = None
+    locked_operator: Annotated[
+        Optional[ValueOperator],
+        Query(
+            description="value filter condition(0: equal, 1: greater than, 2: less than)",
+        ),
+    ] = ValueOperator.EQUAL
+
+
+class SearchTokenHoldersSortItem(str, Enum):
+    created = "created"
+    account_address_list = "account_address_list"
+    amount = "amount"
+    pending_transfer = "pending_transfer"
+    exchange_balance = "exchange_balance"
+    exchange_commitment = "exchange_commitment"
+    locked = "locked"
+
 
 class SearchTokenHoldersRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
@@ -68,6 +120,44 @@ class SearchTokenHoldersRequest(BaseModel):
     exclude_owner: Optional[bool] = Field(default=False, description="exclude owner")
     offset: Optional[int] = Field(default=None, description="start position", ge=0)
     limit: Optional[int] = Field(default=None, description="number of set", ge=0)
+
+    amount: Optional[int] = Field(default=None, description="amount")
+    amount_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    pending_transfer: Optional[int] = Field(
+        default=None, description="pending transfer"
+    )
+    pending_transfer_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    exchange_balance: Optional[int] = Field(
+        default=None, description="exchange balance"
+    )
+    exchange_balance_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    exchange_commitment: Optional[int] = Field(
+        default=None, description="exchange commitment"
+    )
+    exchange_commitment_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    locked: Optional[int] = Field(default=None, description="locked")
+    locked_operator: Optional[ValueOperator] = Field(
+        default=ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    sort_item: Optional[SearchTokenHoldersSortItem] = Field(
+        default=SearchTokenHoldersSortItem.created, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        default=SortOrder.DESC, description="sort order"
+    )
 
 
 @dataclass

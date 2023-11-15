@@ -188,6 +188,74 @@ def get_token_holders(
 
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
+    if request_query.amount is not None and request_query.amount_operator is not None:
+        match request_query.amount_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXPosition.balance == request_query.amount)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXPosition.balance >= request_query.amount)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXPosition.balance <= request_query.amount)
+    if (
+        request_query.pending_transfer is not None
+        and request_query.pending_transfer_operator is not None
+    ):
+        match request_query.pending_transfer_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(
+                    IDXPosition.pending_transfer == request_query.pending_transfer
+                )
+            case ValueOperator.GTE:
+                stmt = stmt.where(
+                    IDXPosition.pending_transfer >= request_query.pending_transfer
+                )
+            case ValueOperator.LTE:
+                stmt = stmt.where(
+                    IDXPosition.pending_transfer <= request_query.pending_transfer
+                )
+    if (
+        request_query.exchange_balance is not None
+        and request_query.exchange_balance_operator is not None
+    ):
+        match request_query.exchange_balance_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(
+                    IDXPosition.exchange_balance == request_query.exchange_balance
+                )
+            case ValueOperator.GTE:
+                stmt = stmt.where(
+                    IDXPosition.exchange_balance >= request_query.exchange_balance
+                )
+            case ValueOperator.LTE:
+                stmt = stmt.where(
+                    IDXPosition.exchange_balance <= request_query.exchange_balance
+                )
+    if (
+        request_query.exchange_commitment is not None
+        and request_query.exchange_commitment_operator is not None
+    ):
+        match request_query.exchange_commitment_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(
+                    IDXPosition.exchange_commitment == request_query.exchange_commitment
+                )
+            case ValueOperator.GTE:
+                stmt = stmt.where(
+                    IDXPosition.exchange_commitment >= request_query.exchange_commitment
+                )
+            case ValueOperator.LTE:
+                stmt = stmt.where(
+                    IDXPosition.exchange_commitment <= request_query.exchange_commitment
+                )
+    if request_query.locked is not None and request_query.locked_operator is not None:
+        match request_query.locked_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXLockedPosition.value == request_query.locked)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXLockedPosition.value >= request_query.locked)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXLockedPosition.value <= request_query.locked)
+
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     # Pagination
@@ -294,8 +362,89 @@ def search_token_holders(
 
     if data.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
+    if data.amount is not None and data.amount_operator is not None:
+        match data.amount_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXPosition.balance == data.amount)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXPosition.balance >= data.amount)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXPosition.balance <= data.amount)
+    if data.pending_transfer is not None and data.pending_transfer_operator is not None:
+        match data.pending_transfer_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXPosition.pending_transfer == data.pending_transfer)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXPosition.pending_transfer >= data.pending_transfer)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXPosition.pending_transfer <= data.pending_transfer)
+    if data.exchange_balance is not None and data.exchange_balance_operator is not None:
+        match data.exchange_balance_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXPosition.exchange_balance == data.exchange_balance)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXPosition.exchange_balance >= data.exchange_balance)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXPosition.exchange_balance <= data.exchange_balance)
+    if (
+        data.exchange_commitment is not None
+        and data.exchange_commitment_operator is not None
+    ):
+        match data.exchange_commitment_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(
+                    IDXPosition.exchange_commitment == data.exchange_commitment
+                )
+            case ValueOperator.GTE:
+                stmt = stmt.where(
+                    IDXPosition.exchange_commitment >= data.exchange_commitment
+                )
+            case ValueOperator.LTE:
+                stmt = stmt.where(
+                    IDXPosition.exchange_commitment <= data.exchange_commitment
+                )
+    if data.locked is not None and data.locked_operator is not None:
+        match data.locked_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXLockedPosition.value == data.locked)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXLockedPosition.value >= data.locked)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXLockedPosition.value <= data.locked)
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    # Sort
+    def _order(_order):
+        if _order == 0:
+            return asc
+        else:
+            return desc
+
+    if data.sort_item == "account_address_list" and len(data.account_address_list) > 0:
+        stmt = stmt.order_by(
+            _order(data.sort_order)(
+                case(
+                    {
+                        account_address: i
+                        for i, account_address in enumerate(data.account_address_list)
+                    },
+                    value=IDXPosition.account_address,
+                )
+            )
+        )
+    elif data.sort_item == "locked":
+        stmt = stmt.order_by(_order(data.sort_order)(func.sum(IDXLockedPosition.value)))
+    elif data.sort_item == "amount":
+        sort_attr = getattr(IDXPosition, "balance", None)
+        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+    else:
+        sort_attr = getattr(IDXPosition, data.sort_item, None)
+        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+
+    # NOTE: Set secondary sort for consistent results
+    if data.sort_item != "created":
+        stmt = stmt.order_by(desc(IDXPosition.created))
 
     # Pagination
     if limit is not None:
@@ -303,9 +452,7 @@ def search_token_holders(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
-        stmt.order_by(desc(IDXPosition.created))
-    ).all()
+    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(stmt).all()
 
     resp_body = {
         "result_set": {

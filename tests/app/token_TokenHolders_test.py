@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -384,9 +385,9 @@ class TestTokenTokenHolders:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # Normal_4
+    # Normal_4_1
     # Filter with exclude_issuer
-    def test_normal_4(self, client: TestClient, session: Session):
+    def test_normal_4_1(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -454,6 +455,336 @@ class TestTokenTokenHolders:
                     "exchange_commitment": 0,
                     "locked": 0,
                 }
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_4_2
+    # Filter with equal filter
+    @pytest.mark.parametrize(
+        "query_filter",
+        [
+            "amount",
+            "pending_transfer",
+            "exchange_balance",
+            "exchange_commitment",
+            "locked",
+        ],
+    )
+    def test_normal_4_2(self, query_filter: str, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # Prepare data (position)
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 1,
+            "exchange_balance": 1,
+            "pending_transfer": 1,
+            "exchange_commitment": 1,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
+        }
+        self.insert_position(session, position_1)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 20,
+            "exchange_commitment": 20,
+            "created": datetime(2023, 4, 14, 0, 0, 0),
+        }
+        self.insert_position(session, position_2)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_1,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0,
+            "created": datetime(2023, 4, 15, 0, 0, 0),
+        }
+        self.insert_position(session, other_position_1)
+        other_position_2 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 10,
+            "exchange_commitment": 10,
+            "created": datetime(2023, 4, 16, 0, 0, 0),
+        }
+        self.insert_position(session, other_position_2)
+
+        # Prepare data (locked position)
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address_1,
+            "value": 1,
+        }
+        self.insert_locked_position(session, locked_position_1)
+        locked_position_2 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_2,
+            "account_address": self.account_address_2,
+            "value": 20,
+        }
+        self.insert_locked_position(session, locked_position_2)
+
+        # Request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(
+            apiurl, params={query_filter: 20, query_filter + "_operator": 0}
+        )
+
+        # Assertion
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_2,
+                    "amount": 20,
+                    "pending_transfer": 20,
+                    "exchange_balance": 20,
+                    "exchange_commitment": 20,
+                    "locked": 20,
+                },
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_4_3
+    # Filter with greater than equal filter
+    @pytest.mark.parametrize(
+        "query_filter",
+        [
+            "amount",
+            "pending_transfer",
+            "exchange_balance",
+            "exchange_commitment",
+            "locked",
+        ],
+    )
+    def test_normal_4_3(self, query_filter: str, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # Prepare data (position)
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 1,
+            "exchange_balance": 1,
+            "pending_transfer": 1,
+            "exchange_commitment": 1,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
+        }
+        self.insert_position(session, position_1)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 20,
+            "exchange_commitment": 20,
+            "created": datetime(2023, 4, 14, 0, 0, 0),
+        }
+        self.insert_position(session, position_2)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_1,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0,
+            "created": datetime(2023, 4, 15, 0, 0, 0),
+        }
+        self.insert_position(session, other_position_1)
+        other_position_2 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 10,
+            "exchange_commitment": 10,
+            "created": datetime(2023, 4, 16, 0, 0, 0),
+        }
+        self.insert_position(session, other_position_2)
+
+        # Prepare data (locked position)
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address_1,
+            "value": 1,
+        }
+        self.insert_locked_position(session, locked_position_1)
+        locked_position_2 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_2,
+            "account_address": self.account_address_2,
+            "value": 20,
+        }
+        self.insert_locked_position(session, locked_position_2)
+
+        # Request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(
+            apiurl, params={query_filter: 20, query_filter + "_operator": 1}
+        )
+
+        # Assertion
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_2,
+                    "amount": 20,
+                    "pending_transfer": 20,
+                    "exchange_balance": 20,
+                    "exchange_commitment": 20,
+                    "locked": 20,
+                },
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_4_4
+    # Filter with less than equal filter
+    @pytest.mark.parametrize(
+        "query_filter",
+        [
+            "amount",
+            "pending_transfer",
+            "exchange_balance",
+            "exchange_commitment",
+            "locked",
+        ],
+    )
+    def test_normal_4_4(self, query_filter: str, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # Prepare data (position)
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 1,
+            "exchange_balance": 1,
+            "pending_transfer": 1,
+            "exchange_commitment": 1,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
+        }
+        self.insert_position(session, position_1)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 20,
+            "exchange_commitment": 20,
+            "created": datetime(2023, 4, 14, 0, 0, 0),
+        }
+        self.insert_position(session, position_2)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_1,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0,
+            "created": datetime(2023, 4, 15, 0, 0, 0),
+        }
+        self.insert_position(session, other_position_1)
+        other_position_2 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 20,
+            "pending_transfer": 10,
+            "exchange_commitment": 10,
+            "created": datetime(2023, 4, 16, 0, 0, 0),
+        }
+        self.insert_position(session, other_position_2)
+
+        # Prepare data (locked position)
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address_1,
+            "value": 1,
+        }
+        self.insert_locked_position(session, locked_position_1)
+        locked_position_2 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_2,
+            "account_address": self.account_address_2,
+            "value": 20,
+        }
+        self.insert_locked_position(session, locked_position_2)
+
+        # Request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(
+            apiurl, params={query_filter: 19, query_filter + "_operator": 2}
+        )
+
+        # Assertion
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 1,
+                    "pending_transfer": 1,
+                    "exchange_balance": 1,
+                    "exchange_commitment": 1,
+                    "locked": 1,
+                },
             ],
         }
         assert resp.status_code == 200
