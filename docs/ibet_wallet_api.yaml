@@ -2608,6 +2608,111 @@ paths:
             description: number of set
             title: Limit
           description: number of set
+        - name: amount
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: amount
+            title: Amount
+          description: amount
+        - name: amount_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Amount Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+        - name: pending_transfer
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: pending transfer
+            title: Pending Transfer
+          description: pending transfer
+        - name: pending_transfer_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Pending Transfer Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+        - name: exchange_balance
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: exchange balance
+            title: Exchange Balance
+          description: exchange balance
+        - name: exchange_balance_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Exchange Balance Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+        - name: exchange_commitment
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: exchange commitment
+            title: Exchange Commitment
+          description: exchange commitment
+        - name: exchange_commitment_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Exchange Commitment Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+        - name: locked
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: locked
+            title: Locked
+          description: locked
+        - name: locked_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            default: 0
+            title: Locked Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
       responses:
         '200':
           description: Successful Response
@@ -9514,8 +9619,91 @@ components:
             - type: 'null'
           title: Limit
           description: number of set
+        amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Amount
+          description: amount
+        amount_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        pending_transfer:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Pending Transfer
+          description: pending transfer
+        pending_transfer_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        exchange_balance:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Exchange Balance
+          description: exchange balance
+        exchange_balance_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        exchange_commitment:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Exchange Commitment
+          description: exchange commitment
+        exchange_commitment_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        locked:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Locked
+          description: locked
+        locked_operator:
+          anyOf:
+            - $ref: '#/components/schemas/ValueOperator'
+            - type: 'null'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          default: 0
+        sort_item:
+          anyOf:
+            - $ref: '#/components/schemas/SearchTokenHoldersSortItem'
+            - type: 'null'
+          description: sort item
+          default: created
+        sort_order:
+          anyOf:
+            - $ref: '#/components/schemas/SortOrder'
+            - type: 'null'
+          description: sort order
+          default: 1
       type: object
       title: SearchTokenHoldersRequest
+    SearchTokenHoldersSortItem:
+      type: string
+      enum:
+        - created
+        - account_address_list
+        - amount
+        - pending_transfer
+        - exchange_balance
+        - exchange_commitment
+        - locked
+      title: SearchTokenHoldersSortItem
     SearchTransferApprovalHistoryRequest:
       properties:
         account_address_list:
