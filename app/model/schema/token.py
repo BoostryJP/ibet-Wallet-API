@@ -55,10 +55,14 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
 
 @dataclass
 class ListAllTokenHoldersQuery:
-    exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
 
+    account_tag: Annotated[
+        Optional[str], Query(description="account tag (**this affects total number**)")
+    ] = None
+
+    exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
     amount: Annotated[Optional[int], Query(description="amount")] = None
     amount_operator: Annotated[
         Optional[ValueOperator],
@@ -162,6 +166,9 @@ class SearchTokenHoldersRequest(BaseModel):
 
 @dataclass
 class RetrieveTokenHoldersCountQuery:
+    account_tag: Annotated[
+        Optional[str], Query(description="account tag (**this affects total number**)")
+    ] = None
     exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
 
 
@@ -169,6 +176,11 @@ class RetrieveTokenHoldersCountQuery:
 class ListAllTransferHistoryQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+
+    account_tag: Annotated[
+        Optional[str], Query(description="account tag (**this affects total number**)")
+    ] = None
+
     source_event: Annotated[
         Optional[TransferSourceEvent], Query(description="source event of transfer")
     ] = None
@@ -237,6 +249,11 @@ class SearchTransferHistoryRequest(BaseModel):
 class ListAllTransferApprovalHistoryQuery:
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+
+    account_tag: Annotated[
+        Optional[str], Query(description="account tag (**this affects total number**)")
+    ] = None
+
     from_address: Annotated[Optional[str], Query(description="from address")] = None
     to_address: Annotated[Optional[str], Query(description="to address")] = None
     value: Annotated[Optional[int], Query(description="value")] = None

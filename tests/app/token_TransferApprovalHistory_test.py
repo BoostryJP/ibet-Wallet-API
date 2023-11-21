@@ -24,7 +24,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.config import TZ
-from app.model.db import IDXTransferApproval, Listing
+from app.model.db import AccountTag, IDXTransferApproval, Listing
 
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
@@ -254,9 +254,209 @@ class TestTokenTransferApprovalHistory:
             assert item["transfer_approved"] is True
 
     # Normal_2_3_1
+    # Filter (account_tag: from_address)
+    def test_normal_2_3_1(self, client: TestClient, session: Session):
+        # データ準備：Listing
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # データ準備：AccountTag
+        account_tag = AccountTag()
+        account_tag.account_address = self.from_address
+        account_tag.account_tag = "test_tag"
+        session.add(account_tag)
+        session.commit()
+
+        # データ準備；IDXTransferApproval
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
+        time.sleep(1)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False,
+                "transfer_approved": True,
+            }
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
+
+        time.sleep(1)
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"account_tag": "test_tag"})
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+        for i, item in enumerate(data):
+            assert item["token_address"] == self.token_address
+            assert item["exchange_address"] is None
+            assert item["application_id"] == i
+            assert item["from_address"] == self.from_address
+            assert item["to_address"] == self.to_address
+            assert before_datetime < item["application_datetime"] < after_datetime
+            assert before_datetime < item["application_blocktimestamp"] < after_datetime
+            assert before_datetime < item["approval_datetime"] < after_datetime
+            assert before_datetime < item["approval_blocktimestamp"] < after_datetime
+            assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
+
+    # Normal_2_3_2
+    # Filter (account_tag: to_address)
+    def test_normal_2_3_2(self, client: TestClient, session: Session):
+        # データ準備：Listing
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # データ準備：AccountTag
+        account_tag = AccountTag()
+        account_tag.account_address = self.to_address
+        account_tag.account_tag = "test_tag"
+        session.add(account_tag)
+        session.commit()
+
+        # データ準備；IDXTransferApproval
+        before_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
+        time.sleep(1)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False,
+                "transfer_approved": True,
+            }
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
+
+        time.sleep(1)
+        after_datetime = (
+            datetime.utcnow()
+            .replace(tzinfo=UTC)
+            .astimezone(local_tz)
+            .strftime("%Y/%m/%d %H:%M:%S.%f")
+        )
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"account_tag": "test_tag"})
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": None,
+            "total": 3,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+        for i, item in enumerate(data):
+            assert item["token_address"] == self.token_address
+            assert item["exchange_address"] is None
+            assert item["application_id"] == i
+            assert item["from_address"] == self.from_address
+            assert item["to_address"] == self.to_address
+            assert before_datetime < item["application_datetime"] < after_datetime
+            assert before_datetime < item["application_blocktimestamp"] < after_datetime
+            assert before_datetime < item["approval_datetime"] < after_datetime
+            assert before_datetime < item["approval_blocktimestamp"] < after_datetime
+            assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
+
+    # Normal_2_3_3
+    # Filter (account_tag: ヒットしない)
+    def test_normal_2_3_3(self, client: TestClient, session: Session):
+        # データ準備：Listing
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # データ準備；IDXTransferApproval
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False,
+                "transfer_approved": True,
+            }
+            self.insert_transfer_approval(session, transfer_approval=transfer_approval)
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"account_tag": "test_tag"})
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json()["data"]["result_set"] == {
+            "count": 0,
+            "offset": None,
+            "limit": None,
+            "total": 0,
+        }
+        data = resp.json()["data"]["transfer_approval_history"]
+        assert len(data) == 0
+
+    # Normal_3_1
     # Data exists (value_operator: =)
     # offset=設定なし、 limit=設定なし
-    def test_normal_2_3_1(self, client: TestClient, session: Session):
+    def test_normal_3_1(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -323,10 +523,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_2_3_2
+    # Normal_3_2
     # Data exists (value_operator: >=)
     # offset=設定なし、 limit=設定なし
-    def test_normal_2_3_2(self, client: TestClient, session: Session):
+    def test_normal_3_2(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -393,10 +593,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_2_3_3
+    # Normal_3_3
     # Data exists (value_operator: <=)
     # offset=設定なし、 limit=設定なし
-    def test_normal_2_3_3(self, client: TestClient, session: Session):
+    def test_normal_3_3(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -463,10 +663,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_2_4
+    # Normal_4_1
     # Data exists (from address)
     # offset=設定なし、 limit=設定なし
-    def test_normal_2_4(self, client: TestClient, session: Session):
+    def test_normal_4_1(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -529,10 +729,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_2_5
+    # Normal_4_2
     # Data exists (to address)
     # offset=設定なし、 limit=設定なし
-    def test_normal_2_5(self, client: TestClient, session: Session):
+    def test_normal_4_2(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -595,10 +795,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_3
+    # Normal_5_1
     # Data exists
     # offset=1、 limit=設定なし
-    def test_normal_3(self, client: TestClient, session: Session):
+    def test_normal_5_1(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -666,10 +866,10 @@ class TestTokenTransferApprovalHistory:
             assert item["cancelled"] is False
             assert item["transfer_approved"] is True
 
-    # Normal_4
+    # Normal_5_2
     # Data exists
     # offset=2、 limit=2
-    def test_normal_4(self, client: TestClient, session: Session):
+    def test_normal_5_2(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -736,10 +936,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_5
+    # Normal_5_3
     # Data exists
     # offset=設定なし、 limit=2
-    def test_normal_5(self, client: TestClient, session: Session):
+    def test_normal_5_3(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -806,10 +1006,10 @@ class TestTokenTransferApprovalHistory:
         assert data[0]["cancelled"] is False
         assert data[0]["transfer_approved"] is True
 
-    # Normal_6
+    # Normal_5_4
     # Data exists
     # offset=設定なし、 limit=0
-    def test_normal_6(self, client: TestClient, session: Session):
+    def test_normal_5_4(self, client: TestClient, session: Session):
         # prepare data
         listing = {
             "token_address": self.token_address,

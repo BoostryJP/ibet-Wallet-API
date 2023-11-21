@@ -22,12 +22,14 @@ from typing import Annotated, Optional, Sequence
 from fastapi import APIRouter, Depends, Path
 from pydantic import UUID4
 from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
+from sqlalchemy.orm import aliased
 
 from app import config, log
 from app.contracts import Contract
 from app.database import DBSession
 from app.errors import DataNotExistsError, InvalidParameterError, ServiceUnavailable
 from app.model.db import (
+    AccountTag,
     IDXLockedPosition,
     IDXPosition,
     IDXTransfer,
@@ -148,7 +150,7 @@ def get_token_holders(
     """
     Returns a list of token holders for a given token.
     """
-    # Check if the token exists in the list
+    # Check if it is a valid token
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
     ).first()
@@ -157,8 +159,10 @@ def get_token_holders(
 
     limit = request_query.limit
     offset = request_query.offset
-    # Get token holders
-    # add order_by id to bridge the difference between postgres and mysql
+
+    # Retrieve Token Holders List
+    position_account = aliased(AccountTag)
+    lock_position_account = aliased(AccountTag)
     stmt = (
         select(IDXPosition, func.sum(IDXLockedPosition.value))
         .outerjoin(
@@ -167,6 +171,14 @@ def get_token_holders(
                 IDXLockedPosition.token_address == token_address,
                 IDXLockedPosition.account_address == IDXPosition.account_address,
             ),
+        )
+        .outerjoin(
+            position_account,
+            IDXPosition.account_address == position_account.account_address,
+        )
+        .outerjoin(
+            lock_position_account,
+            IDXLockedPosition.account_address == lock_position_account.account_address,
         )
         .where(IDXPosition.token_address == token_address)
         .where(
@@ -184,6 +196,13 @@ def get_token_holders(
             IDXLockedPosition.account_address,
         )
     )
+    if request_query.account_tag is not None:
+        stmt = stmt.where(
+            or_(
+                position_account.account_tag == request_query.account_tag,
+                lock_position_account.account_tag == request_query.account_tag,
+            )
+        )
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     if request_query.exclude_owner is True:
@@ -501,15 +520,16 @@ def get_token_holders_count(
     """
     Returns count of token holders for a given token.
     """
-    # Check if the token exists in the list
+    # Check if it is a valid token
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
-    # Get token holders
-    # add order_by id to bridge the difference between postgres and mysql
+    # Retrieve Token Holders
+    position_account = aliased(AccountTag)
+    lock_position_account = aliased(AccountTag)
     stmt = (
         select(IDXPosition, func.sum(IDXLockedPosition.value))
         .outerjoin(
@@ -518,6 +538,14 @@ def get_token_holders_count(
                 IDXLockedPosition.token_address == token_address,
                 IDXLockedPosition.account_address == IDXPosition.account_address,
             ),
+        )
+        .outerjoin(
+            position_account,
+            IDXPosition.account_address == position_account.account_address,
+        )
+        .outerjoin(
+            lock_position_account,
+            IDXLockedPosition.account_address == lock_position_account.account_address,
         )
         .where(IDXPosition.token_address == token_address)
         .where(
@@ -535,6 +563,13 @@ def get_token_holders_count(
             IDXLockedPosition.account_address,
         )
     )
+    if request_query.account_tag is not None:
+        stmt = stmt.where(
+            or_(
+                position_account.account_tag == request_query.account_tag,
+                lock_position_account.account_tag == request_query.account_tag,
+            )
+        )
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
@@ -707,19 +742,35 @@ def list_all_transfer_histories(
     """
     Returns a list of transfer histories for a given token.
     """
-    # 取扱トークンチェック
+    # Check if it is a valid token
     listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
-    # 移転履歴取得
+    # Retrieve Transfer Histories
+    from_address_tag = aliased(AccountTag)
+    to_address_tag = aliased(AccountTag)
     stmt = (
         select(IDXTransfer)
         .where(IDXTransfer.token_address == token_address)
+        .outerjoin(
+            from_address_tag,
+            IDXTransfer.from_address == from_address_tag.account_address,
+        )
+        .outerjoin(
+            to_address_tag, IDXTransfer.to_address == to_address_tag.account_address
+        )
         .order_by(IDXTransfer.id)
     )
+    if request_query.account_tag is not None:
+        stmt = stmt.where(
+            or_(
+                from_address_tag.account_tag == request_query.account_tag,
+                to_address_tag.account_tag == request_query.account_tag,
+            )
+        )
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     if request_query.source_event is not None:
@@ -753,6 +804,7 @@ def list_all_transfer_histories(
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
+    # Pagination
     if request_query.offset is not None:
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
@@ -920,21 +972,38 @@ def list_all_transfer_approval_histories(
     """
     Returns a list of transfer approval histories for a given token.
     """
-    # Check that it is a listed token
+    # Check if it is a valid token
     _listed_token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
     ).first()
     if _listed_token is None:
         raise DataNotExistsError(f"token_address: {token_address}")
 
-    # Get transfer approval data
+    # Retrieve Transfer Approval Histories
+    from_address_tag = aliased(AccountTag)
+    to_address_tag = aliased(AccountTag)
     stmt = (
         select(IDXTransferApproval)
         .where(IDXTransferApproval.token_address == token_address)
+        .outerjoin(
+            from_address_tag,
+            IDXTransferApproval.from_address == from_address_tag.account_address,
+        )
+        .outerjoin(
+            to_address_tag,
+            IDXTransferApproval.to_address == to_address_tag.account_address,
+        )
         .order_by(
             IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
         )
     )
+    if request_query.account_tag is not None:
+        stmt = stmt.where(
+            or_(
+                from_address_tag.account_tag == request_query.account_tag,
+                to_address_tag.account_tag == request_query.account_tag,
+            )
+        )
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
     if request_query.from_address is not None:
@@ -958,7 +1027,7 @@ def list_all_transfer_approval_histories(
 
     count = session.scalar(select(func.count()).select_from(stmt.subquery()))
 
-    # パラメータを設定
+    # Pagination
     if request_query.offset is not None:
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
