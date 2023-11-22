@@ -22,7 +22,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.model.db import IDXLockedPosition, IDXPosition, Listing
+from app.model.db import AccountTag, IDXLockedPosition, IDXPosition, Listing
 from tests.account_config import eth_account
 
 
@@ -299,6 +299,200 @@ class TestTokenTokenHolders:
                     "locked": 2,
                 },
             ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_2_3_1
+    # Filter(account_tag: position_account)
+    def test_normal_2_3_1(self, client: TestClient, session: Session):
+        # データ準備：Listing
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # データ準備：AccountTag
+        account_tag = AccountTag()
+        account_tag.account_address = self.account_address_1
+        account_tag.account_tag = "test_tag"
+        session.add(account_tag)
+        session.commit()
+
+        # データ準備：IDXPosition
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 10,
+            "exchange_balance": 5,
+            "pending_transfer": 5,
+            "exchange_commitment": 5,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
+        }
+        self.insert_position(session, position_1)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_2,
+            "balance": 20,
+            "exchange_balance": 10,
+            "pending_transfer": 10,
+            "exchange_commitment": 10,
+            "created": datetime(2023, 4, 14, 0, 0, 0),
+        }
+        self.insert_position(session, position_2)
+
+        # データ準備：IDXLockedPosition
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address_2,
+            "value": 1,
+        }
+        self.insert_locked_position(session, locked_position_1)
+
+        # テスト対象API呼び出し
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"account_tag": "test_tag"})
+
+        # 検証
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 1, "count": 1},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 10,
+                    "pending_transfer": 5,
+                    "exchange_balance": 5,
+                    "exchange_commitment": 5,
+                    "locked": 0,
+                },
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_2_3_2
+    # Filter(account_tag: lock_position_account)
+    def test_normal_2_3_2(self, client: TestClient, session: Session):
+        # データ準備：Listing
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # データ準備：AccountTag
+        account_tag = AccountTag()
+        account_tag.account_address = self.account_address_1
+        account_tag.account_tag = "test_tag"
+        session.add(account_tag)
+        session.commit()
+
+        # データ準備：IDXPosition
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
+        }
+        self.insert_position(session, position_1)
+
+        # データ準備：IDXLockedPosition
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address_1,
+            "value": 1,
+        }
+        self.insert_locked_position(session, locked_position_1)
+
+        # テスト対象API呼び出し
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"account_tag": "test_tag"})
+
+        # 検証
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 1, "count": 1},
+            "token_holder_list": [
+                {
+                    "token_address": self.token_address,
+                    "account_address": self.account_address_1,
+                    "amount": 0,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                    "locked": 1,
+                },
+            ],
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_2_3_3
+    # Filter(account_tag: ヒットしない)
+    def test_normal_2_3_3(self, client: TestClient, session: Session):
+        # データ準備：Listing
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
+        # データ準備：IDXPosition
+        position_1 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address_1,
+            "balance": 10,
+            "exchange_balance": 5,
+            "pending_transfer": 5,
+            "exchange_commitment": 5,
+            "created": datetime(2023, 4, 13, 0, 0, 0),
+        }
+        self.insert_position(session, position_1)
+
+        # データ準備：IDXLockedPosition
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address_1,
+            "value": 1,
+        }
+        self.insert_locked_position(session, locked_position_1)
+
+        # テスト対象API呼び出し
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"account_tag": "test_tag"})
+
+        # 検証
+        assumed_body = {
+            "result_set": {"offset": None, "limit": None, "total": 0, "count": 0},
+            "token_holder_list": [],
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

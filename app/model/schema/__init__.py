@@ -162,4 +162,5 @@ from .user_info import (
     RetrievePaymentAccountRegistrationStatusResponse,
     RetrievePersonalInfoQuery,
     RetrievePersonalInfoRegistrationStatusResponse,
+    TaggingAccountAddressRequest,
 )

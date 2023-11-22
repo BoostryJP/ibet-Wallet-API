@@ -21,11 +21,14 @@ from fastapi import APIRouter, Depends
 
 from app import config, log
 from app.contracts import Contract
+from app.database import DBSession
+from app.model.db import AccountTag
 from app.model.schema import (
     RetrievePaymentAccountQuery,
     RetrievePaymentAccountRegistrationStatusResponse,
     RetrievePersonalInfoQuery,
     RetrievePersonalInfoRegistrationStatusResponse,
+    TaggingAccountAddressRequest,
 )
 from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
@@ -36,13 +39,30 @@ LOG = log.get_logger()
 router = APIRouter(prefix="/User", tags=["user_info"])
 
 
-# ------------------------------
-# 受領用銀行口座登録状況参照
-# ------------------------------
+@router.post(
+    "/Tag",
+    summary="Tagging account address",
+    operation_id="TaggingAccountAddress",
+    response_model=SuccessResponse,
+    responses=get_routers_responses(),
+)
+def tagging_account_address(session: DBSession, data: TaggingAccountAddressRequest):
+    """
+    Tag any account address
+    """
+    account_tag = AccountTag()
+    account_tag.account_address = data.account_address
+    account_tag.account_tag = data.account_tag
+    session.merge(account_tag)
+    session.commit()
+
+    return json_response(SuccessResponse.default())
+
+
 @router.get(
     "/PaymentAccount",
-    summary="Registration status to PaymentGateway Contract",
-    operation_id="PaymentAccount",
+    summary="Retrieve registration status for PersonalInfo contract",
+    operation_id="RetrievePaymentAccountRegistrationStatus",
     response_model=GenericSuccessResponse[
         RetrievePaymentAccountRegistrationStatusResponse
     ],
@@ -84,13 +104,10 @@ def get_payment_account_registration_status(
     return json_response({**SuccessResponse.default(), "data": response_json})
 
 
-# ------------------------------
-# 名簿用個人情報参照
-# ------------------------------
 @router.get(
     "/PersonalInfo",
-    summary="Registration status to PersonalInfo Contract",
-    operation_id="PersonalInfo",
+    summary="Retrieve registration status for PersonalInfo contract",
+    operation_id="RetrievePersonalInfoRegistrationStatus",
     response_model=GenericSuccessResponse[
         RetrievePersonalInfoRegistrationStatusResponse
     ],

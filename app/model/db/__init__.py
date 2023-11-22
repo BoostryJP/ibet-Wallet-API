@@ -52,3 +52,4 @@ from .messaging import ChatWebhook, Mail
 from .node import Node
 from .notification import Notification, NotificationBlockNumber, NotificationType
 from .tokenholders import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
+from .user_info import AccountTag
