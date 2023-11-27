@@ -855,12 +855,12 @@ class TestMigrationsUpgrade:
             )
             bond_tokens = list(bond_tokens)
 
-            assert bond_tokens[0].face_value_currency == ""
+            assert bond_tokens[0].face_value_currency == "JPY"
             assert bond_tokens[0].interest_payment_currency == ""
             assert bond_tokens[0].redemption_value_currency == ""
             assert bond_tokens[0].base_fx_rate == 0.0
 
-            assert bond_tokens[1].face_value_currency == ""
+            assert bond_tokens[1].face_value_currency == "JPY"
             assert bond_tokens[1].interest_payment_currency == ""
             assert bond_tokens[1].redemption_value_currency == ""
             assert bond_tokens[1].base_fx_rate == 0.0

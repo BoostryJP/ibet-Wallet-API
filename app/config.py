@@ -67,6 +67,9 @@ COMPANY_LIST_SLEEP_INTERVAL = (
 # System timezone for REST API
 TZ = os.environ.get("TZ") or "Asia/Tokyo"
 
+# Default currency code
+DEFAULT_CURRENCY = os.environ.get("DEFAULT_CURRENCY") or "JPY"
+
 ####################################################
 # Server settings
 ####################################################

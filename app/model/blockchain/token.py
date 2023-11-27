@@ -22,7 +22,7 @@ import functools
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Callable, Optional, Self, Type, Union
+from typing import Callable, Optional, Type, Union
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 
 from app import log
 from app.config import (
+    DEFAULT_CURRENCY,
     TOKEN_CACHE,
     TOKEN_CACHE_TTL,
     TOKEN_SHORT_TERM_CACHE_TTL,
@@ -262,7 +263,10 @@ class BondToken(TokenBase):
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
         face_value = Contract.call_function(token_contract, "faceValue", (), 0)
         face_value_currency = Contract.call_function(
-            token_contract, "faceValueCurrency", (), ""
+            token_contract,
+            "faceValueCurrency",
+            (),
+            DEFAULT_CURRENCY,
         )
         interest_rate = Contract.call_function(token_contract, "interestRate", (), 0)
 
