@@ -45,7 +45,7 @@ def upgrade():
     )
 
     stmt = update(IDXBondToken).values(
-        face_value_currency="",
+        face_value_currency="JPY",
         interest_payment_currency="",
         redemption_value_currency="",
         base_fx_rate=0.0,

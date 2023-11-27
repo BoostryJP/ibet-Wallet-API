@@ -16,6 +16,7 @@ The list of environment variables that can be set for this system is as follows.
 | APP_LOGFILE             | False    | Output location for application logs     | /some/directory                          | /dev/stdout (standard output)                             |
 | ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                          | /dev/stdout (standard output)                             |
 | TZ                      | False    | Time Zone                                | Europe/Berlin                            | Asia/Tokyo                                                |
+| DEFAULT_CURRENCY        | False    | Default currency code                    | EUR                                      | JPY                                                       | 
 
 
 ## API Server Settings
