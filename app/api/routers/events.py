@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path
+from web3.exceptions import Web3ValidationError
 
 from app import config, log
 from app.contracts import Contract
@@ -51,8 +52,6 @@ router = APIRouter(prefix="/Events", tags=["contract_log"])
 
 
 # /Events/E2EMessaging
-
-
 @router.get(
     "/E2EMessaging",
     summary="List all E2EMessaging event logs",
@@ -97,11 +96,14 @@ def list_all_e2e_messaging_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]
@@ -175,11 +177,14 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]
@@ -265,11 +270,14 @@ def list_all_ibet_security_token_escrow_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]
@@ -334,11 +342,14 @@ def list_all_ibet_security_token_interface_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]

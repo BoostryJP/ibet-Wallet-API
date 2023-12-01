@@ -1141,6 +1141,188 @@ class TestEventsIbetSecurityTokenEscrow:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == []
 
+    # Normal_9_1
+    # event = ALL
+    def test_normal_9_1(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]["account_address"]
+        user1 = eth_account["user1"]["account_address"]
+        agent = eth_account["agent"]["account_address"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        # Issue token
+        token_contract = IbetShareUtils.issue(
+            tx_from=issuer,
+            args={
+                "name": "test_token",
+                "symbol": "TEST",
+                "issuePrice": 100000,
+                "totalSupply": 1000,
+                "dividends": 100,
+                "dividendRecordDate": "20201231",
+                "dividendPaymentDate": "20210101",
+                "cancellationDate": "20251231",
+                "principalValue": 10000,
+                "tradableExchange": escrow_contract.address,
+                "transferable": True,
+                "transferApprovalRequired": True,
+            },
+        )
+
+        # Deposit token to escrow contract
+        tx_hash_1 = token_contract.functions.transfer(
+            escrow_contract.address, 1000
+        ).transact(
+            {"from": issuer}
+        )  # Deposited
+        block_number_1 = web3.eth.block_number
+        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+
+        # Create escrow
+        tx_hash_2 = escrow_contract.functions.createEscrow(
+            token_contract.address,
+            user1,
+            1000,
+            agent,
+            "test_application_data",
+            "test_data",
+        ).transact(
+            {"from": issuer}
+        )  # EscrowCreated
+        block_number_2 = web3.eth.block_number
+        block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
+
+        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+
+        # Request target API
+        resp = client.get(
+            self.apiurl,
+            params={"from_block": block_number_1, "to_block": block_number_2},
+        )
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == [
+            {
+                "event": "Deposited",
+                "args": {"token": token_contract.address, "account": issuer},
+                "transaction_hash": tx_hash_1.hex(),
+                "block_number": block_number_1,
+                "block_timestamp": block_timestamp_1,
+                "log_index": 0,
+            },
+            {
+                "event": "ApplyForTransfer",
+                "args": {
+                    "escrowId": latest_escrow_id,
+                    "token": token_contract.address,
+                    "from": issuer,
+                    "to": user1,
+                    "value": 1000,
+                    "data": "test_application_data",
+                },
+                "transaction_hash": tx_hash_2.hex(),
+                "block_number": block_number_2,
+                "block_timestamp": block_timestamp_2,
+                "log_index": 0,
+            },
+            {
+                "event": "EscrowCreated",
+                "args": {
+                    "escrowId": latest_escrow_id,
+                    "token": token_contract.address,
+                    "sender": issuer,
+                    "recipient": user1,
+                    "amount": 1000,
+                    "agent": agent,
+                    "data": "test_data",
+                },
+                "transaction_hash": tx_hash_2.hex(),
+                "block_number": block_number_2,
+                "block_timestamp": block_timestamp_2,
+                "log_index": 1,
+            },
+        ]
+
+    # Normal_9_2
+    # event = ALL
+    # query with filter argument {"token": token_contract.address, "account": issuer}
+    # - Events other than "Deposited" are not returned because the arguments do not match.
+    def test_normal_9_2(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]["account_address"]
+        user1 = eth_account["user1"]["account_address"]
+        agent = eth_account["agent"]["account_address"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        # Issue token
+        token_contract = IbetShareUtils.issue(
+            tx_from=issuer,
+            args={
+                "name": "test_token",
+                "symbol": "TEST",
+                "issuePrice": 100000,
+                "totalSupply": 1000,
+                "dividends": 100,
+                "dividendRecordDate": "20201231",
+                "dividendPaymentDate": "20210101",
+                "cancellationDate": "20251231",
+                "principalValue": 10000,
+                "tradableExchange": escrow_contract.address,
+                "transferable": True,
+                "transferApprovalRequired": True,
+            },
+        )
+
+        # Deposit token to escrow contract
+        tx_hash_1 = token_contract.functions.transfer(
+            escrow_contract.address, 1000
+        ).transact(
+            {"from": issuer}
+        )  # Deposited
+        block_number_1 = web3.eth.block_number
+        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+
+        # Create escrow
+        escrow_contract.functions.createEscrow(
+            token_contract.address,
+            user1,
+            1000,
+            agent,
+            "test_application_data",
+            "test_data",
+        ).transact(
+            {"from": issuer}
+        )  # EscrowCreated
+        block_number_2 = web3.eth.block_number
+
+        # Request target API
+        resp = client.get(
+            self.apiurl,
+            params={
+                "from_block": block_number_1,
+                "to_block": block_number_2,
+                "argument_filters": json.dumps(
+                    {"token": token_contract.address, "account": issuer}
+                ),
+            },
+        )
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == [
+            {
+                "event": "Deposited",
+                "args": {"token": token_contract.address, "account": issuer},
+                "transaction_hash": tx_hash_1.hex(),
+                "block_number": block_number_1,
+                "block_timestamp": block_timestamp_1,
+                "log_index": 0,
+            },
+        ]
+
     ###########################################################################
     # Error
     ###########################################################################
