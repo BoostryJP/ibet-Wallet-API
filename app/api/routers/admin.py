@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Sequence
 
 from fastapi import APIRouter, Path
-from sqlalchemy import delete, select
+from sqlalchemy import delete, desc, select
 
 from app import config, log
 from app.contracts import Contract
@@ -70,12 +70,11 @@ def list_all_admin_tokens(session: DBSession):
     """
     Returns a list of registered token.
     """
-    listed_tokens: Sequence[Listing] = session.scalars(select(Listing)).all()
+    listed_tokens: Sequence[Listing] = session.scalars(
+        select(Listing).order_by(desc(Listing.id))
+    ).all()
 
     res_body = [token.json() for token in listed_tokens]
-
-    # idの降順にソート
-    res_body.sort(key=lambda x: x["id"], reverse=True)  # type: ignore
 
     return json_response({**SuccessResponse.default(), "data": res_body})
 

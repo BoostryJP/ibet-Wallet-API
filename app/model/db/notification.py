@@ -30,15 +30,12 @@ from sqlalchemy import (
     Integer,
     Sequence,
     String,
-    create_engine,
 )
+from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app import config
+from app.database import engine
 from app.model.db.base import Base
-
-URI = config.DATABASE_URL
-engine = create_engine(URI, echo=False)
 
 
 # 通知データをキャッシュするためのテーブル
@@ -107,6 +104,16 @@ class Notification(Base):
     args: Mapped[dict | None] = mapped_column(JSON)
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
     metainfo: Mapped[dict | None] = mapped_column(JSON)
+
+    if engine.name == "mysql":
+        # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
+        created: Mapped[datetime | None] = mapped_column(
+            MySQLDATETIME(fsp=6), default=datetime.utcnow, index=True
+        )
+    else:
+        created: Mapped[datetime | None] = mapped_column(
+            DateTime, default=datetime.utcnow, index=True
+        )
 
     def __repr__(self):
         return "<Notification(notification_id='{}', notification_type='{}')>".format(
