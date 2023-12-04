@@ -16,9 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, String, Text
+from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.database import engine
 from app.model.db.base import Base
 
 
@@ -35,6 +39,16 @@ class Company(Base):
     rsa_publickey: Mapped[str | None] = mapped_column(String(2000))
     # Homepage URL
     homepage: Mapped[str | None] = mapped_column(Text)
+
+    if engine.name == "mysql":
+        # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
+        created: Mapped[datetime | None] = mapped_column(
+            MySQLDATETIME(fsp=6), default=datetime.utcnow, index=True
+        )
+    else:
+        created: Mapped[datetime | None] = mapped_column(
+            DateTime, default=datetime.utcnow, index=True
+        )
 
     def __repr__(self):
         return "<Company address='%s'>" % self.address

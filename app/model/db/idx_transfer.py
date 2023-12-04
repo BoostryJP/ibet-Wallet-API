@@ -49,11 +49,11 @@ class IDXTransfer(Base):
     # Token Address
     token_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer From
-    from_address: Mapped[str | None] = mapped_column(String(42))
+    from_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer To
-    to_address: Mapped[str | None] = mapped_column(String(42))
+    to_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer Amount
-    value: Mapped[int | None] = mapped_column(BigInteger)
+    value: Mapped[int | None] = mapped_column(BigInteger, index=True)
     # Source Event (IDXTransferSourceEventType)
     source_event: Mapped[str] = mapped_column(String(50), nullable=False)
     # Data
