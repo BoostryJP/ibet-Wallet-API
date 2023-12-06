@@ -59,6 +59,7 @@ class Company(Base):
             "rsa_publickey",
             "homepage",
             "modified",
+            mysql_length={"corporate_name": 100, "rsa_publickey": 255, "homepage": 255},
         ),
     )
 
