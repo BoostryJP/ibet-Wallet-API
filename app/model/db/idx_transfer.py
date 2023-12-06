@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import JSON, BigInteger, Column, String
+from sqlalchemy import JSON, BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
@@ -68,7 +68,14 @@ class IDXTransfer(Base):
         if _datetime is None:
             return ""
         datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            datetime_local.year,
+            datetime_local.month,
+            datetime_local.day,
+            datetime_local.hour,
+            datetime_local.minute,
+            datetime_local.second,
+        )
 
     def json(self):
         return {

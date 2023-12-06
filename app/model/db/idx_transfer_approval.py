@@ -73,7 +73,14 @@ class IDXTransferApproval(Base):
         if _datetime is None:
             return ""
         datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            datetime_local.year,
+            datetime_local.month,
+            datetime_local.day,
+            datetime_local.hour,
+            datetime_local.minute,
+            datetime_local.second,
+        )
 
     def json(self):
         return {

@@ -1219,8 +1219,13 @@ def list_all_coupon_consumptions(
     res_data = [
         {
             "account_address": account_address,
-            "block_timestamp": consumption.block_timestamp.strftime(
-                "%Y/%m/%d %H:%M:%S"
+            "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                consumption.block_timestamp.year,
+                consumption.block_timestamp.month,
+                consumption.block_timestamp.day,
+                consumption.block_timestamp.hour,
+                consumption.block_timestamp.minute,
+                consumption.block_timestamp.second,
             ),
             "value": consumption.amount,
         }
