@@ -104,7 +104,14 @@ def list_all_notifications(
         {
             **_notification.json(),
             "sort_id": sort_id + i + 1,
-            "created": _notification.created.strftime("%Y/%m/%d %H:%M:%S"),
+            "created": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                _notification.created.year,
+                _notification.created.month,
+                _notification.created.day,
+                _notification.created.hour,
+                _notification.created.minute,
+                _notification.created.second,
+            ),
         }
         for i, _notification in enumerate(_notification_list)
     ]

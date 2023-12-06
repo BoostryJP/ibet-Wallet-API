@@ -317,8 +317,13 @@ def list_all_membership_tick(
             )
             _tick = [
                 {
-                    "block_timestamp": entry[0].settlement_timestamp.strftime(
-                        "%Y/%m/%d %H:%M:%S"
+                    "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        entry[0].settlement_timestamp.year,
+                        entry[0].settlement_timestamp.month,
+                        entry[0].settlement_timestamp.day,
+                        entry[0].settlement_timestamp.hour,
+                        entry[0].settlement_timestamp.minute,
+                        entry[0].settlement_timestamp.second,
                     ),
                     "buy_address": entry[0].buyer_address,
                     "sell_address": entry[0].seller_address,
@@ -529,8 +534,13 @@ def list_all_coupon_tick(
             )
             _tick = [
                 {
-                    "block_timestamp": entry[0].settlement_timestamp.strftime(
-                        "%Y/%m/%d %H:%M:%S"
+                    "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        entry[0].settlement_timestamp.year,
+                        entry[0].settlement_timestamp.month,
+                        entry[0].settlement_timestamp.day,
+                        entry[0].settlement_timestamp.hour,
+                        entry[0].settlement_timestamp.minute,
+                        entry[0].settlement_timestamp.second,
                     ),
                     "buy_address": entry[0].buyer_address,
                     "sell_address": entry[0].seller_address,
