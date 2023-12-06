@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, Index, String, Text
 from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -49,6 +49,19 @@ class Company(Base):
         created: Mapped[datetime | None] = mapped_column(
             DateTime, default=datetime.utcnow, index=True
         )
+    __table_args__ = (
+        # Covering Index
+        Index(
+            "ix_company_covering",
+            "created",
+            "address",
+            "corporate_name",
+            "rsa_publickey",
+            "homepage",
+            "modified",
+            mysql_length={"corporate_name": 100, "rsa_publickey": 255, "homepage": 255},
+        ),
+    )
 
     def __repr__(self):
         return "<Company address='%s'>" % self.address
