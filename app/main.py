@@ -179,15 +179,6 @@ async def internal_server_error_handler(request: Request, exc: OperationalError)
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content=jsonable_encoder({"meta": meta}),
         )
-    elif exc.orig.args[0] == 1040:
-        # NOTE: If MySQL is used and has run out of connections, exception below would be thrown.
-        #       sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1040, 'Too many connections')
-        #       sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1040, 'ny connections')
-
-        return JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content=jsonable_encoder({"meta": meta}),
-        )
     raise exc from None
 
 

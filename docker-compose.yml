@@ -9,18 +9,6 @@ services:
       - POSTGRES_USER=apluser
       - POSTGRES_PASSWORD=apluserpass
       - POSTGRES_DB=apldb
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_USER=apluser
-      - MYSQL_PASSWORD=apluserpass
-      - MYSQL_DATABASE=apldb
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=password
-    ports:
-      - "3306:3306"
-    command:
-      mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
   ganache:
     image: "trufflesuite/ganache:latest"
     ports:
@@ -51,24 +39,4 @@ services:
       - ganache:quorum
     depends_on:
       - postgres
-      - ganache
-  ibet-wallet-api-mysql:
-    build:
-      context: ./
-      dockerfile: ./tests/Dockerfile
-    environment:
-      - WEB3_HTTP_PROVIDER=http://quorum:8545
-      - RSA_PASSWORD=password
-      - TEST_DATABASE_URL=mysql+pymysql://apluser:apluserpass@mysql:3306/apldb
-      - UNIT_TEST_MODE=1
-      - RESPONSE_VALIDATION_MODE=1
-      - BOND_TOKEN_ENABLED=1
-      - MEMBERSHIP_TOKEN_ENABLED=1
-      - COUPON_TOKEN_ENABLED=1
-      - SHARE_TOKEN_ENABLED=1
-    links:
-      - mysql:mysql
-      - ganache:quorum
-    depends_on:
-      - mysql
       - ganache
