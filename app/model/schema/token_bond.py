@@ -16,11 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PlainSerializer
 from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import (
@@ -113,6 +114,7 @@ class RetrieveStraightBondTokenResponse(BaseModel):
     is_offering: bool
     transfer_approval_required: bool
     face_value: int
+    face_value_currency: str
     interest_rate: float
     interest_payment_date1: Optional[str]
     interest_payment_date2: Optional[str]
@@ -126,8 +128,11 @@ class RetrieveStraightBondTokenResponse(BaseModel):
     interest_payment_date10: Optional[str]
     interest_payment_date11: Optional[str]
     interest_payment_date12: Optional[str]
+    interest_payment_currency: str
     redemption_date: str
     redemption_value: int
+    redemption_value_currency: str
+    base_fx_rate: float
     return_date: str
     return_amount: str
     purpose: str

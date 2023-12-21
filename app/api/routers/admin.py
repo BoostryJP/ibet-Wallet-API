@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Sequence
 
 from fastapi import APIRouter, Path
-from sqlalchemy import delete, select
+from sqlalchemy import delete, desc, select
 
 from app import config, log
 from app.contracts import Contract
@@ -68,18 +68,13 @@ router = APIRouter(prefix="/Admin", tags=["admin"])
 )
 def list_all_admin_tokens(session: DBSession):
     """
-    Endpoint: /Admin/Tokens
-      - GET: 取扱トークン一覧取得
+    Returns a list of registered token.
     """
-    res_body = []
+    listed_tokens: Sequence[Listing] = session.scalars(
+        select(Listing).order_by(desc(Listing.id))
+    ).all()
 
-    listed_tokens: Sequence[Listing] = session.scalars(select(Listing)).all()
-    for token in listed_tokens:
-        item = token.json()
-        res_body.append(item)
-
-    # idの降順にソート
-    res_body.sort(key=lambda x: x["id"], reverse=True)  # type: ignore
+    res_body = [token.json() for token in listed_tokens]
 
     return json_response({**SuccessResponse.default(), "data": res_body})
 
@@ -93,8 +88,7 @@ def list_all_admin_tokens(session: DBSession):
 )
 def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     """
-    Endpoint: /Admin/Tokens
-      - POST: 取扱トークン登録
+    Registers given token to listing.
     """
     contract_address = data.contract_address
 
@@ -203,8 +197,7 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
 )
 def get_admin_token_type():
     """
-    Endpoint: /Admin/Tokens/Type
-      - GET: 取扱トークン種別
+    Returns available token type.
     """
     res_body = {
         "IbetStraightBond": config.BOND_TOKEN_ENABLED,
@@ -233,8 +226,7 @@ def retrieve_admin_token(
     token_address: str = Path(description="Token Address"),
 ):
     """
-    Endpoint: /Admin/Tokens/{token_address}
-      - GET: 取扱トークン情報取得（個別）
+    Returns a listed token information.
     """
     token = session.scalars(
         select(Listing).where(Listing.token_address == token_address).limit(1)
@@ -259,8 +251,9 @@ def update_token(
     token_address: str = Path(description="Token Address"),
 ):
     """
-    Endpoint: /Admin/Tokens/{contract_address}
-      - POST: 取扱トークン情報更新（個別）
+    取扱トークン情報更新（個別）
+
+    指定したトークンの取扱情報を更新します。
     """
     # 更新対象レコードを取得
     # 更新対象のレコードが存在しない場合は404エラーを返す
@@ -307,8 +300,7 @@ def delete_token(
     token_address: str = Path(description="Token Address"),
 ):
     """
-    Endpoint: /Admin/Tokens/{contract_address}
-      - DELETE: 取扱トークン情報削除（個別）
+    Deletes given token from listing.
     """
     try:
         session.execute(delete(Listing).where(Listing.token_address == token_address))

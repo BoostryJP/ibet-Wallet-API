@@ -55,6 +55,10 @@ class TestAdminTokenDELETE:
         idx_token = IDXBondToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetStraightBond"
+        idx_token.face_value_currency = ""
+        idx_token.interest_payment_currency = ""
+        idx_token.redemption_value_currency = ""
+        idx_token.base_fx_rate = 0.0
         session.add(idx_token)
 
     @staticmethod

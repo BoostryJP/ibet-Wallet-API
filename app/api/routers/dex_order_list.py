@@ -93,8 +93,13 @@ class BaseOrderList(object):
                         "price": order_book[3],
                         "is_buy": order_book[4],
                         "canceled": order_book[6],
-                        "order_timestamp": order_timestamp.strftime(
-                            "%Y/%m/%d %H:%M:%S"
+                        "order_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                            order_timestamp.year,
+                            order_timestamp.month,
+                            order_timestamp.day,
+                            order_timestamp.hour,
+                            order_timestamp.minute,
+                            order_timestamp.second,
                         ),
                     },
                     "sort_id": id,
@@ -168,8 +173,13 @@ class BaseOrderList(object):
                     "price": agreement[2],
                     "is_buy": buyer_address == account_address,
                     "canceled": agreement[3],
-                    "agreement_timestamp": agreement_timestamp.strftime(
-                        "%Y/%m/%d %H:%M:%S"
+                    "agreement_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        agreement_timestamp.year,
+                        agreement_timestamp.month,
+                        agreement_timestamp.day,
+                        agreement_timestamp.hour,
+                        agreement_timestamp.minute,
+                        agreement_timestamp.second,
                     ),
                 },
                 "sort_id": id,
@@ -240,8 +250,15 @@ class BaseOrderList(object):
             buyer_address,
         ) in _agreement_events:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime(
-                    "%Y/%m/%d %H:%M:%S"
+                settlement_timestamp_jp = (
+                    "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        settlement_timestamp.year,
+                        settlement_timestamp.month,
+                        settlement_timestamp.day,
+                        settlement_timestamp.hour,
+                        settlement_timestamp.minute,
+                        settlement_timestamp.second,
+                    )
                 )
             else:
                 settlement_timestamp_jp = ""
@@ -267,8 +284,13 @@ class BaseOrderList(object):
                     "price": agreement[2],
                     "is_buy": buyer_address == account_address,
                     "canceled": agreement[3],
-                    "agreement_timestamp": agreement_timestamp.strftime(
-                        "%Y/%m/%d %H:%M:%S"
+                    "agreement_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        agreement_timestamp.year,
+                        agreement_timestamp.month,
+                        agreement_timestamp.day,
+                        agreement_timestamp.hour,
+                        agreement_timestamp.minute,
+                        agreement_timestamp.second,
                     ),
                 },
                 "settlement_timestamp": settlement_timestamp_jp,
@@ -327,8 +349,13 @@ class BaseOrderList(object):
                         "price": order_book[3],
                         "is_buy": order_book[4],
                         "canceled": order_book[6],
-                        "order_timestamp": order_timestamp.strftime(
-                            "%Y/%m/%d %H:%M:%S"
+                        "order_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                            order_timestamp.year,
+                            order_timestamp.month,
+                            order_timestamp.day,
+                            order_timestamp.hour,
+                            order_timestamp.minute,
+                            order_timestamp.second,
                         ),
                     },
                     "sort_id": id,
@@ -392,8 +419,13 @@ class BaseOrderList(object):
                     "price": agreement[2],
                     "is_buy": buyer_address == account_address,
                     "canceled": agreement[3],
-                    "agreement_timestamp": agreement_timestamp.strftime(
-                        "%Y/%m/%d %H:%M:%S"
+                    "agreement_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        agreement_timestamp.year,
+                        agreement_timestamp.month,
+                        agreement_timestamp.day,
+                        agreement_timestamp.hour,
+                        agreement_timestamp.minute,
+                        agreement_timestamp.second,
                     ),
                 },
                 "sort_id": id,
@@ -454,8 +486,15 @@ class BaseOrderList(object):
             buyer_address,
         ) in _agreement_events:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime(
-                    "%Y/%m/%d %H:%M:%S"
+                settlement_timestamp_jp = (
+                    "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        settlement_timestamp.year,
+                        settlement_timestamp.month,
+                        settlement_timestamp.day,
+                        settlement_timestamp.hour,
+                        settlement_timestamp.minute,
+                        settlement_timestamp.second,
+                    )
                 )
             else:
                 settlement_timestamp_jp = ""
@@ -480,8 +519,13 @@ class BaseOrderList(object):
                     "price": agreement[2],
                     "is_buy": buyer_address == account_address,
                     "canceled": agreement[3],
-                    "agreement_timestamp": agreement_timestamp.strftime(
-                        "%Y/%m/%d %H:%M:%S"
+                    "agreement_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        agreement_timestamp.year,
+                        agreement_timestamp.month,
+                        agreement_timestamp.day,
+                        agreement_timestamp.hour,
+                        agreement_timestamp.minute,
+                        agreement_timestamp.second,
                     ),
                 },
                 "settlement_timestamp": settlement_timestamp_jp,
@@ -575,7 +619,7 @@ def list_all_membership_order_history(
     ),
 ):
     """
-    Endpoint: /DEX/OrderList/Membership
+    [Membership]Returns order history of given token.
     """
     return json_response({**SuccessResponse.default(), "data": order_list_res})
 
@@ -663,7 +707,7 @@ def list_all_coupon_order_history(
     ),
 ):
     """
-    Endpoint: /DEX/OrderList/Coupon
+    [Coupon]Returns order history of given token.
     """
     return json_response({**SuccessResponse.default(), "data": order_list_res})
 
@@ -740,6 +784,6 @@ def list_all_order_history_by_token_address(
     order_list_res: ListAllOrderListResponse[TokenAddress] = Depends(OrderList()),
 ):
     """
-    Endpoint: /DEX/OrderList/{token_address}
+    Returns order history.
     """
     return json_response({**SuccessResponse.default(), "data": order_list_res})

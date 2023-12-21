@@ -58,7 +58,7 @@ def list_all_notifications(
     request_query: NotificationsQuery = Depends(),
 ):
     """
-    Endpoint: /Notifications/
+    Returns notifications filtered by given query.
     """
     address = request_query.address
     notification_type = request_query.notification_type
@@ -100,14 +100,21 @@ def list_all_notifications(
 
     _notification_list: Sequence[Notification] = session.scalars(stmt).all()
 
-    notifications = []
-    for _notification in _notification_list:
-        sort_id += 1
-        notification = _notification.json()
-        notification["sort_id"] = sort_id
-        notification["created"] = _notification.created.strftime("%Y/%m/%d %H:%M:%S")
-        notifications.append(notification)
-
+    notifications = [
+        {
+            **_notification.json(),
+            "sort_id": sort_id + i + 1,
+            "created": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                _notification.created.year,
+                _notification.created.month,
+                _notification.created.day,
+                _notification.created.hour,
+                _notification.created.minute,
+                _notification.created.second,
+            ),
+        }
+        for i, _notification in enumerate(_notification_list)
+    ]
     data = {
         "result_set": {
             "count": count,
@@ -133,7 +140,7 @@ def read_all_notifications(
     data: NotificationReadRequest,
 ):
     """
-    Endpoint: /Notifications/Read/
+    Registers all notifications as read.
     """
     address = to_checksum_address(data.address)
 
@@ -160,7 +167,7 @@ def count_notifications(
     request_query: NotificationsCountQuery = Depends(),
 ):
     """
-    Endpoint: /Notifications/Count/
+    Returns count of notifications filtered by given query.
     """
     # リクエストから情報を抽出
     address = to_checksum_address(request_query.address)
@@ -196,7 +203,7 @@ def update_notification(
     notification_id: str = Path(description="Notification id"),
 ):
     """
-    Endpoint: /Notifications/{id}
+    Registers given notification as read.
     """
     # Update Notification
     notification: Optional[Notification] = session.scalars(
@@ -234,6 +241,9 @@ def delete_notification(
     session: DBSession,
     notification_id: str = Path(description="Notification id"),
 ):
+    """
+    Deletes given notification.
+    """
     # Get Notification
     _notification = session.scalars(
         select(Notification)

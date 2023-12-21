@@ -70,7 +70,7 @@ def list_all_straight_bond_tokens(
     request_query: ListAllStraightBondTokensQuery = Depends(),
 ):
     """
-    Get a list of bond tokens.
+    [StraightBond]Returns a detail list of tokens.
     """
     if config.BOND_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -152,11 +152,8 @@ def list_all_straight_bond_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXBondToken] = session.scalars(stmt).all()
-    tokens = []
 
-    for _token in _token_list:
-        tokens.append(BondToken.from_model(_token).__dict__)
-
+    tokens = [BondToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
         "result_set": {
             "count": count,
@@ -183,7 +180,7 @@ def list_all_straight_bond_token_addresses(
     request_query: ListAllStraightBondTokensQuery = Depends(),
 ):
     """
-    Get a list of bond token addresses.
+    [StraightBond]Returns a list of token addresses.
     """
     if config.BOND_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -294,7 +291,7 @@ def retrieve_straight_bond_token(
     ],
 ):
     """
-    Get the details of the bond token.
+    [StraightBond]Returns the details of the token.
     """
     if config.BOND_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)

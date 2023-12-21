@@ -114,8 +114,12 @@ from .token import (
     CreateTokenHoldersCollectionRequest,
     CreateTokenHoldersCollectionResponse,
     ListAllTokenHoldersQuery,
+    ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
+    SearchTokenHoldersRequest,
+    SearchTransferApprovalHistoryRequest,
+    SearchTransferHistoryRequest,
     TokenHoldersCollectionResponse,
     TokenHoldersCountResponse,
     TokenHoldersResponse,
@@ -158,4 +162,5 @@ from .user_info import (
     RetrievePaymentAccountRegistrationStatusResponse,
     RetrievePersonalInfoQuery,
     RetrievePersonalInfoRegistrationStatusResponse,
+    TaggingAccountAddressRequest,
 )

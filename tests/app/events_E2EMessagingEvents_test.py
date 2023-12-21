@@ -188,9 +188,9 @@ class TestEventsE2EMessaging:
             }
         ]
 
-    # Normal_3
+    # Normal_3_1
     # Multiple events
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -331,6 +331,126 @@ class TestEventsE2EMessaging:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == []
+
+    # Normal_5_1
+    # event = ALL
+    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
+        user1 = eth_account["user1"]["account_address"]
+        user2 = eth_account["user2"]["account_address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+
+        # prepare data
+        e2e_messaging_contract = Contract.get_contract(
+            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+        )
+
+        tx_1 = e2e_messaging_contract.functions.sendMessage(
+            user2, "test_message"
+        ).transact(
+            {"from": user1}
+        )  # Message
+        block_number_1 = web3.eth.block_number
+        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+
+        tx_2 = e2e_messaging_contract.functions.setPublicKey(
+            "test_key", "test_key_type"
+        ).transact(
+            {"from": user1}
+        )  # PublicKeyUpdated
+        block_number_2 = web3.eth.block_number
+        block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
+
+        # request target API
+        resp = client.get(
+            self.apiurl,
+            params={
+                "from_block": block_number_1,
+                "to_block": block_number_2,
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == [
+            {
+                "event": "Message",
+                "args": {
+                    "sender": user1,
+                    "receiver": user2,
+                    "time": ANY,
+                    "text": "test_message",
+                },
+                "transaction_hash": tx_1.hex(),
+                "block_number": block_number_1,
+                "block_timestamp": block_timestamp_1,
+                "log_index": 0,
+            },
+            {
+                "event": "PublicKeyUpdated",
+                "args": {"who": user1, "key": "test_key", "key_type": "test_key_type"},
+                "transaction_hash": tx_2.hex(),
+                "block_number": block_number_2,
+                "block_timestamp": block_timestamp_2,
+                "log_index": 0,
+            },
+        ]
+
+    # Normal_5_2
+    # event = ALL
+    # query with filter argument {"who": user1}
+    # - Events other than "PublicKeyUpdated" are not returned because the arguments do not match.
+    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
+        user1 = eth_account["user1"]["account_address"]
+        user2 = eth_account["user2"]["account_address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+
+        # prepare data
+        e2e_messaging_contract = Contract.get_contract(
+            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+        )
+
+        tx_1 = e2e_messaging_contract.functions.sendMessage(
+            user2, "test_message"
+        ).transact(
+            {"from": user1}
+        )  # Message
+        block_number_1 = web3.eth.block_number
+        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+
+        tx_2 = e2e_messaging_contract.functions.setPublicKey(
+            "test_key", "test_key_type"
+        ).transact(
+            {"from": user1}
+        )  # PublicKeyUpdated
+        block_number_2 = web3.eth.block_number
+        block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
+
+        # request target API
+        resp = client.get(
+            self.apiurl,
+            params={
+                "from_block": block_number_1,
+                "to_block": block_number_2,
+                "argument_filters": json.dumps({"who": user1}),
+            },
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == [
+            {
+                "event": "PublicKeyUpdated",
+                "args": {"who": user1, "key": "test_key", "key_type": "test_key_type"},
+                "transaction_hash": tx_2.hex(),
+                "block_number": block_number_2,
+                "block_timestamp": block_timestamp_2,
+                "log_index": 0,
+            },
+        ]
 
     ###########################################################################
     # Error

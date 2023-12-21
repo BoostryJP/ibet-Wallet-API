@@ -99,6 +99,10 @@ class TestPositionStraightBondLockEvent:
             "memo": "メモ",
             "personal_info_address": TestPositionStraightBondLockEvent.personal_info_address,
             "transfer_approval_required": False,
+            "face_value_currency": "",
+            "interest_payment_currency": "",
+            "redemption_value_currency": "",
+            "base_fx_rate": 0.0,
         }
 
     @staticmethod
@@ -159,6 +163,10 @@ class TestPositionStraightBondLockEvent:
         idx_token.memo = "メモ"
         idx_token.personal_info_address = personal_info_address
         idx_token.transfer_approval_required = False
+        idx_token.face_value_currency = ""
+        idx_token.interest_payment_currency = ""
+        idx_token.redemption_value_currency = ""
+        idx_token.base_fx_rate = 0.0
         session.add(idx_token)
         session.commit()
 

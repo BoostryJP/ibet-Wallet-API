@@ -1,7 +1,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-23.9-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-23.12-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -17,7 +17,7 @@ English | <a href='./README_JA.md'>日本語</a>
 - [python3](https://www.python.org/)
   - Version 3.11
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - Version 13
+  - [PostgreSQL](https://www.postgresql.org/) - Version 15
   - [MySQL](https://www.mysql.com/) - Version 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).

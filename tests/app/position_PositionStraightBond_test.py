@@ -93,6 +93,10 @@ class TestPositionStraightBond:
             "personalInfoAddress": personal_info_contract["address"],
             "transferable": True,
             "isRedeemed": False,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         token = issue_bond_token(TestPositionStraightBond.issuer, args)
         register_bond_list(TestPositionStraightBond.issuer, token, token_list_contract)
@@ -256,6 +260,10 @@ class TestPositionStraightBond:
         idx_token_list_item.owner_address = TestPositionStraightBond.issuer[
             "account_address"
         ]
+        idx_token.face_value_currency = ""
+        idx_token.interest_payment_currency = ""
+        idx_token.redemption_value_currency = ""
+        idx_token.base_fx_rate = 0.0
         session.add(idx_token_list_item)
         session.commit()
 
@@ -639,6 +647,10 @@ class TestPositionStraightBond:
                         "memo": "メモ",
                         "personal_info_address": personal_info_contract["address"],
                         "transfer_approval_required": False,
+                        "face_value_currency": "JPY",
+                        "interest_payment_currency": "JPY",
+                        "redemption_value_currency": "JPY",
+                        "base_fx_rate": 0.0,
                     },
                     "balance": 1000000,
                     "pending_transfer": 0,
@@ -1274,6 +1286,10 @@ class TestPositionStraightBond:
                         "memo": "メモ",
                         "personal_info_address": personal_info_contract["address"],
                         "transfer_approval_required": False,
+                        "face_value_currency": "",
+                        "interest_payment_currency": "",
+                        "redemption_value_currency": "",
+                        "base_fx_rate": 0.0,
                     },
                     "balance": 1000000,
                     "pending_transfer": 0,

@@ -70,6 +70,10 @@ class TestTokenStraightBondTokenDetails:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
             "personalInfoAddress": personal_info_address,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         return attribute
 
@@ -163,6 +167,10 @@ class TestTokenStraightBondTokenDetails:
             "memo": "メモ",
             "personal_info_address": personal_info,
             "transfer_approval_required": False,
+            "face_value_currency": "JPY",
+            "interest_payment_currency": "JPY",
+            "redemption_value_currency": "JPY",
+            "base_fx_rate": 0.0,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -238,6 +246,10 @@ class TestTokenStraightBondTokenDetails:
             "memo": "メモ",
             "personal_info_address": personal_info,
             "transfer_approval_required": False,
+            "face_value_currency": "JPY",
+            "interest_payment_currency": "JPY",
+            "redemption_value_currency": "JPY",
+            "base_fx_rate": 0.0,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

@@ -33,6 +33,13 @@ from app.model.schema.base import ValidatedEthereumAddress
 ############################
 # REQUEST
 ############################
+class TaggingAccountAddressRequest(BaseModel):
+    account_address: ValidatedEthereumAddress = Field(
+        ..., description="Account address"
+    )
+    account_tag: str | None = Field(..., description="Account tag", max_length=50)
+
+
 @dataclass
 class RetrievePaymentAccountQuery:
     account_address: Annotated[

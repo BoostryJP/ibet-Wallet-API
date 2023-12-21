@@ -1,46 +1,48 @@
 [tool.poetry]
 name = "ibet-Wallet-API"
-version = "23.9.0"
+version = "23.12.0"
 description = "RPC services that provides utility functions for building a wallet system on ibet-Network."
 authors = ["BOOSTRY Co., Ltd. <dev@boostry.co.jp>"]
 license = "Apache License, Version 2.0"
 
 [tool.poetry.dependencies]
 python = "3.11.2"
-boto3 = "~1.28.14"
+boto3 = "~1.29.6"
 coincurve = "~18.0.0"
 eth-keyfile = "0.6.1"
-eth-utils = "~2.1.0"
-fastapi = "~0.100.1"
+eth-utils = "~2.3.1"
+fastapi = "~0.104.1"
 gunicorn = "~21.2.0"
-hexbytes = "~0.3.0"
-orjson = "~3.9.2"
+hexbytes = "~0.3.1"
+orjson = "~3.9.7"
 PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
-psycopg = {extras = ["c"], version = "^3.1.10"}
-pydantic = {extras = ["email"], version = "~2.4.0"}
-sqlalchemy = "~2.0.8"
-uvicorn = "~0.23.1"
-web3 = "~6.9.0"
+psycopg = {extras = ["c"], version = "^3.1.12"}
+pydantic = {extras = ["email"], version = "~2.5.2"}
+sqlalchemy = "~2.0.21"
+uvicorn = "~0.23.2"
+web3 = "~6.11.3"
 tzdata = "^2023.3"
+alembic = "^1.12.1"
 
 ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = true}
-textual = {version = "~0.10.1", optional = true}
+textual = {version = "~0.44.1", optional = true}
 async-cache = {version = "~1.1.1", optional = true}
 typer = {version = "~0.7.0", optional = true}
-aiohttp = {version = "~3.8.4", optional = true}
-alembic = "^1.10.2"
+aiohttp = {version = "~3.9.1", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-pytest = "7.2.1"
-pytest-cov = "4.0.0"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
 locustio = "0.9.0"
-httpx = "0.23.3"
-black = "^23.7.0"
-flake8 = "^6.0.0"
+httpx = "^0.25.2"
+black = "^23.11.0"
+flake8 = "^6.1.0"
 mypy = "^1.0.0"
 isort = "^5.12.0"
-pre-commit = "^3.1.1"
+pre-commit = "^3.5.0"
 pytest-alembic = "^0.10.0"
+pytest-freezer = "^0.4.8"
+textual-dev = "^1.2.1"
 
 [tool.poetry.extras]
 ibet-explorer = [

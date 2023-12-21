@@ -54,11 +54,13 @@ class IDXLock(Base):
     # Account Address
     account_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Locked Amount
-    value: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     # Data
     data: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Lock Datetime
-    block_timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    block_timestamp: Mapped[datetime] = mapped_column(
+        DateTime, index=True, nullable=False
+    )
 
     FIELDS = {
         "id": int,
@@ -128,11 +130,13 @@ class IDXUnlock(Base):
         String(42), index=True, nullable=False
     )
     # Locked Amount
-    value: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     # Data
     data: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Lock Datetime
-    block_timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    block_timestamp: Mapped[datetime] = mapped_column(
+        DateTime, index=True, nullable=False
+    )
 
     FIELDS = {
         "id": int,

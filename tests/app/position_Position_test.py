@@ -149,6 +149,10 @@ class TestPosition:
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "transfer_approval_required": False,
             "transferable": True,
+            "face_value_currency": "",
+            "interest_payment_currency": "",
+            "redemption_value_currency": "",
+            "base_fx_rate": 0.0,
         }
 
     @staticmethod

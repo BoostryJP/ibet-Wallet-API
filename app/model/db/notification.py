@@ -30,15 +30,12 @@ from sqlalchemy import (
     Integer,
     Sequence,
     String,
-    create_engine,
 )
+from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app import config
+from app.database import engine
 from app.model.db.base import Base
-
-URI = config.DATABASE_URL
-engine = create_engine(URI, echo=False)
 
 
 # 通知データをキャッシュするためのテーブル
@@ -108,6 +105,16 @@ class Notification(Base):
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
     metainfo: Mapped[dict | None] = mapped_column(JSON)
 
+    if engine.name == "mysql":
+        # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
+        created: Mapped[datetime | None] = mapped_column(
+            MySQLDATETIME(fsp=6), default=datetime.utcnow, index=True
+        )
+    else:
+        created: Mapped[datetime | None] = mapped_column(
+            DateTime, default=datetime.utcnow, index=True
+        )
+
     def __repr__(self):
         return "<Notification(notification_id='{}', notification_type='{}')>".format(
             self.notification_id, self.notification_type
@@ -118,13 +125,27 @@ class Notification(Base):
             "notification_type": self.notification_type,
             "id": self.notification_id,
             "priority": self.priority,
-            "block_timestamp": self.block_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+            "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                self.block_timestamp.year,
+                self.block_timestamp.month,
+                self.block_timestamp.day,
+                self.block_timestamp.hour,
+                self.block_timestamp.minute,
+                self.block_timestamp.second,
+            )
             if self.block_timestamp is not None
             else None,
             "is_read": self.is_read,
             "is_flagged": self.is_flagged,
             "is_deleted": self.is_deleted,
-            "deleted_at": self.deleted_at.strftime("%Y/%m/%d %H:%M:%S")
+            "deleted_at": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                self.deleted_at.year,
+                self.deleted_at.month,
+                self.deleted_at.day,
+                self.deleted_at.hour,
+                self.deleted_at.minute,
+                self.deleted_at.second,
+            )
             if self.deleted_at is not None
             else None,
             "args": self.args,

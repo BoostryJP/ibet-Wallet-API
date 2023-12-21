@@ -71,7 +71,7 @@ def list_all_share_tokens(
     request_query: ListAllShareTokensQuery = Depends(),
 ):
     """
-    Get a list of share tokens.
+    [Share]Returns a detail list of tokens.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -153,11 +153,8 @@ def list_all_share_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXShareToken] = session.scalars(stmt).all()
-    tokens = []
 
-    for _token in _token_list:
-        tokens.append(ShareToken.from_model(_token).__dict__)
-
+    tokens = [ShareToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
         "result_set": {
             "count": count,
@@ -184,7 +181,7 @@ def list_all_share_token_addresses(
     request_query: ListAllShareTokensQuery = Depends(),
 ):
     """
-    Get a list of share token addresses.
+    [Share]Returns a list of token addresses.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -293,7 +290,7 @@ def retrieve_share_token(
     ],
 ):
     """
-    Get the details of the bond token.
+    [Share]Returns the details of the token.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)

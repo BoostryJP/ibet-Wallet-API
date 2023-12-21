@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import JSON, BigInteger, Column, String
+from sqlalchemy import JSON, BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
@@ -49,11 +49,11 @@ class IDXTransfer(Base):
     # Token Address
     token_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer From
-    from_address: Mapped[str | None] = mapped_column(String(42))
+    from_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer To
-    to_address: Mapped[str | None] = mapped_column(String(42))
+    to_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer Amount
-    value: Mapped[int | None] = mapped_column(BigInteger)
+    value: Mapped[int | None] = mapped_column(BigInteger, index=True)
     # Source Event (IDXTransferSourceEventType)
     source_event: Mapped[str] = mapped_column(String(50), nullable=False)
     # Data
@@ -68,7 +68,14 @@ class IDXTransfer(Base):
         if _datetime is None:
             return ""
         datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            datetime_local.year,
+            datetime_local.month,
+            datetime_local.day,
+            datetime_local.hour,
+            datetime_local.minute,
+            datetime_local.second,
+        )
 
     def json(self):
         return {

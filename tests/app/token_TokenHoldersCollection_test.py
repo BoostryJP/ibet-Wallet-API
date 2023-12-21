@@ -106,6 +106,10 @@ class TestTokenTokenHoldersCollection:
             "personalInfoAddress": personal_info_contract_address,
             "transferable": True,
             "isRedeemed": False,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         token = issue_bond_token(issuer, args)
         register_bond_list(issuer, token, token_list)

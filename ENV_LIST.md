@@ -16,6 +16,7 @@ The list of environment variables that can be set for this system is as follows.
 | APP_LOGFILE             | False    | Output location for application logs     | /some/directory                          | /dev/stdout (standard output)                             |
 | ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                          | /dev/stdout (standard output)                             |
 | TZ                      | False    | Time Zone                                | Europe/Berlin                            | Asia/Tokyo                                                |
+| DEFAULT_CURRENCY        | False    | Default currency code                    | EUR                                      | JPY                                                       | 
 
 
 ## API Server Settings
@@ -28,8 +29,8 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 |----------------------------|----------|--------------------------------------------------------------------------|---------|
 | WORKER_COUNT               | False    | The number of worker processes.                                          | 2       | 
 | WORKER_TIMEOUT             | False    | Workers silent for more than this many seconds are killed and restarted. | 60      |
-| WORKER_MAX_REQUESTS        | False    | The maximum number of requests a worker will process before restarting.  | 500     |
-| WORKER_MAX_REQUESTS_JITTER | False    | The maximum jitter to add to the max_requests setting.                   | 200     |
+| WORKER_MAX_REQUESTS        | False    | The maximum number of requests a worker will process before restarting.  | 0       |
+| WORKER_MAX_REQUESTS_JITTER | False    | The maximum jitter to add to the max_requests setting.                   | 0       |
 | KEEP_ALIVE                 | False    | The number of seconds to wait for requests on a Keep-Alive connection.   | 2       |
 
 ## Settings for each use case

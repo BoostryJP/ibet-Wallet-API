@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path
+from web3.exceptions import Web3ValidationError
 
 from app import config, log
 from app.contracts import Contract
@@ -51,8 +52,6 @@ router = APIRouter(prefix="/Events", tags=["contract_log"])
 
 
 # /Events/E2EMessaging
-
-
 @router.get(
     "/E2EMessaging",
     summary="List all E2EMessaging event logs",
@@ -65,7 +64,9 @@ router = APIRouter(prefix="/Events", tags=["contract_log"])
 def list_all_e2e_messaging_event_logs(
     request_query: E2EMessagingEventsQuery = Depends(),
 ):
-    """List all E2EMessaging event logs"""
+    """
+    Returns a list of E2EMessaging event logs.
+    """
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
             "Search request range is over the limit"
@@ -95,11 +96,14 @@ def list_all_e2e_messaging_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]
@@ -130,7 +134,9 @@ def list_all_e2e_messaging_event_logs(
     ),
 )
 def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depends()):
-    """List all IbetEscrow event logs"""
+    """
+    Returns a list of IbetEscrow event logs.
+    """
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
             "Search request range is over the limit"
@@ -171,11 +177,14 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]
@@ -208,7 +217,9 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
 def list_all_ibet_security_token_escrow_event_logs(
     request_query: IbetSecurityTokenEscrowEventsQuery = Depends(),
 ):
-    """List all IbetSecurityTokenEscrow event logs"""
+    """
+    Returns a list of IbetSecurityTokenEscrow event logs.
+    """
     # Validate
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
@@ -259,11 +270,14 @@ def list_all_ibet_security_token_escrow_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]
@@ -299,7 +313,9 @@ def list_all_ibet_security_token_interface_event_logs(
     ],
     request_query: IbetSecurityTokenInterfaceEventsQuery = Depends(),
 ):
-    """List all IbetSecurityTokenInterface event logs"""
+    """
+    Returns a list of IbetSecurityTokenInterface event logs.
+    """
     # Validate
     if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
         raise RequestBlockRangeLimitExceededError(
@@ -326,11 +342,14 @@ def list_all_ibet_security_token_interface_event_logs(
     tmp_list = []
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
-        events = contract_event.get_logs(
-            fromBlock=request_query.from_block,
-            toBlock=request_query.to_block,
-            argument_filters=argument_filters_dict,
-        )
+        try:
+            events = contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
         for event in events:
             block_number = event["blockNumber"]
             block_timestamp = web3.eth.get_block(block_number)["timestamp"]

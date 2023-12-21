@@ -88,6 +88,10 @@ class TestTokenStraightBondTokenAddresses:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
             "personalInfoAddress": personal_info_address,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         return attribute
 

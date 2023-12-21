@@ -32,6 +32,7 @@ RUN apt-get update -q \
  language-pack-ja \
  git \
  libyaml-cpp-dev \
+ libc-bin \
  liblzma-dev
 
 # remove unnessesory package files
@@ -50,11 +51,11 @@ RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~apl/.bash_profile \
 RUN . ~/.bash_profile \
  && pyenv install 3.11.2 \
  && pyenv global 3.11.2 \
- && pip install --upgrade pip
+ && pip install --upgrade pip setuptools
 
 # install poetry
 RUN . ~/.bash_profile \
- && python -m pip install poetry==1.4.0
+ && python -m pip install poetry==1.6.1
 RUN . ~/.bash_profile \
  && poetry config virtualenvs.create false
 
@@ -69,7 +70,7 @@ RUN chown -R apl:apl /app/ibet-Wallet-API \
 USER apl
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
- && poetry install --no-root \
+ && poetry install --no-root -E ibet-explorer \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/poetry.lock
 

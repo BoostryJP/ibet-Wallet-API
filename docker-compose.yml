@@ -2,7 +2,7 @@ version: "3"
 
 services:
   postgres:
-    image: postgres:13.10
+    image: postgres:15
     ports:
       - "5432:5432"
     environment:
@@ -27,7 +27,7 @@ services:
       - "8545:8545"
     command:
       - -k
-      - 'byzantium'
+      - 'berlin'
       - -g
       - '0'
       - --chain.chainId

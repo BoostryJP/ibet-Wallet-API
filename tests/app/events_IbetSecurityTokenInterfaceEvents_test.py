@@ -112,6 +112,10 @@ class TestEventsIbetSecurityTokenInterface:
             "personalInfoAddress": personal_info_contract_address,
             "transferable": True,
             "isRedeemed": False,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         token = issue_bond_token(issuer, args)
         register_bond_list(issuer, token, token_list)
@@ -440,6 +444,7 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_1_3
     # event = All(argument_filter: lockAddress)
+    # - Events that do not have lockAddress in the event argument will not be returned.
     def test_normal_1_3(self, client: TestClient, session: Session, shared_contract):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
@@ -460,70 +465,6 @@ class TestEventsIbetSecurityTokenInterface:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == [
-            {
-                "event": "Transfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "Transfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "ChangeTransferApprovalRequired",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "ApplyForTransfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "ApplyForTransfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "CancelTransfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "ApproveTransfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "Transfer",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
             {
                 "event": "Lock",
                 "args": {
@@ -546,22 +487,6 @@ class TestEventsIbetSecurityTokenInterface:
                     "recipientAddress": ANY,
                     "value": ANY,
                 },
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "ChangeTransferApprovalRequired",
-                "args": ANY,
-                "transaction_hash": ANY,
-                "block_number": ANY,
-                "block_timestamp": ANY,
-                "log_index": ANY,
-            },
-            {
-                "event": "Transfer",
-                "args": ANY,
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
@@ -953,7 +878,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "to_block": self.latest_block_number,
                 "event": "Redeem",
                 "argument_filters": json.dumps(
-                    {"targetAddress": self.issuer["account_address"]}
+                    {"from": self.issuer["account_address"]}
                 ),
             },
         )
@@ -966,7 +891,20 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Redeem",
                 "args": {
                     "from": self.issuer["account_address"],
-                    "lockAddress": config.ZERO_ADDRESS,
+                    "lockAddress": ANY,
+                    "targetAddress": self.user1["account_address"],
+                    "amount": ANY,
+                },
+                "transaction_hash": ANY,
+                "block_number": ANY,
+                "block_timestamp": ANY,
+                "log_index": ANY,
+            },
+            {
+                "event": "Redeem",
+                "args": {
+                    "from": self.issuer["account_address"],
+                    "lockAddress": ANY,
                     "targetAddress": self.issuer["account_address"],
                     "amount": ANY,
                 },
@@ -974,7 +912,7 @@ class TestEventsIbetSecurityTokenInterface:
                 "block_number": ANY,
                 "block_timestamp": ANY,
                 "log_index": ANY,
-            }
+            },
         ]
 
     # Normal_4_3
@@ -1040,27 +978,27 @@ class TestEventsIbetSecurityTokenInterface:
                 "event": "Redeem",
                 "args": {
                     "from": self.issuer["account_address"],
-                    "lockAddress": config.ZERO_ADDRESS,
                     "targetAddress": ANY,
-                    "amount": ANY,
+                    "lockAddress": config.ZERO_ADDRESS,
+                    "amount": 10000,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY,
+                "log_index": 0,
             },
             {
                 "event": "Redeem",
                 "args": {
                     "from": self.issuer["account_address"],
+                    "targetAddress": self.issuer["account_address"],
                     "lockAddress": config.ZERO_ADDRESS,
-                    "targetAddress": ANY,
-                    "amount": ANY,
+                    "amount": 10000,
                 },
                 "transaction_hash": ANY,
                 "block_number": ANY,
                 "block_timestamp": ANY,
-                "log_index": ANY,
+                "log_index": 0,
             },
         ]
 

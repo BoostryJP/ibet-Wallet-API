@@ -1027,7 +1027,7 @@ def list_all_share_positions(
     ] = Depends(GetPositionList(BasePositionShare))
 ):
     """
-    List all share position
+    [Share]Returns a list of positions for a given account.
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
@@ -1050,7 +1050,7 @@ def list_all_straight_bond_positions(
     ] = Depends(GetPositionList(BasePositionStraightBond))
 ):
     """
-    List all bond position
+    [StraightBond]Returns a list of positions for a given account.
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
@@ -1071,7 +1071,7 @@ def list_all_membership_positions(
     ] = Depends(GetPositionList(BasePositionMembership))
 ):
     """
-    List all membership position
+    [Membership]Returns a list of positions for a given account.
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
@@ -1092,7 +1092,7 @@ def list_all_coupon_positions(
     ] = Depends(GetPositionList(BasePositionCoupon))
 ):
     """
-    List all coupon position
+    [Coupon]Returns a list of positions for a given account.
     """
     return json_response({**SuccessResponse.default(), "data": positions})
 
@@ -1113,7 +1113,7 @@ def retrieve_share_position_by_token_address(
     position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare)),
 ):
     """
-    Retrieve share position detail
+    [Share]Returns a position for a given account and token.
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
@@ -1136,7 +1136,7 @@ def retrieve_straight_bond_position_by_token_address(
     ),
 ):
     """
-    Retrieve bond position detail
+    [StraightBond]Returns a position for a given account and token.
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
@@ -1157,7 +1157,7 @@ def retrieve_membership_position_by_token_address(
     ),
 ):
     """
-    Retrieve membership position detail
+    [Membership]Returns a position for a given account and token.
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
@@ -1176,7 +1176,7 @@ def retrieve_coupon_position_by_token_address(
     position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon)),
 ):
     """
-    Retrieve coupon position detail
+    [Coupon]Returns a position for a given account and token.
     """
     return json_response({**SuccessResponse.default(), "data": position})
 
@@ -1200,7 +1200,7 @@ def list_all_coupon_consumptions(
     ],
 ):
     """
-    List all coupon consumptions
+    [Coupon]Returns a list of consumption for a given account address.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -1216,18 +1216,21 @@ def list_all_coupon_consumptions(
         .order_by(IDXConsumeCoupon.block_timestamp)
     ).all()
 
-    res_data = []
-    for consumption in consumptions:
-        res_data.append(
-            {
-                "account_address": account_address,
-                "block_timestamp": consumption.block_timestamp.strftime(
-                    "%Y/%m/%d %H:%M:%S"
-                ),
-                "value": consumption.amount,
-            }
-        )
-
+    res_data = [
+        {
+            "account_address": account_address,
+            "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                consumption.block_timestamp.year,
+                consumption.block_timestamp.month,
+                consumption.block_timestamp.day,
+                consumption.block_timestamp.hour,
+                consumption.block_timestamp.minute,
+                consumption.block_timestamp.second,
+            ),
+            "value": consumption.amount,
+        }
+        for consumption in consumptions
+    ]
     return json_response({**SuccessResponse.default(), "data": res_data})
 
 
@@ -1247,7 +1250,7 @@ def list_all_token_position(
     request_query: ListAllTokenPositionQuery = Depends(),
 ):
     """
-    List all positions
+    Returns a list of token positions.
     """
     offset = request_query.offset
     limit = request_query.limit

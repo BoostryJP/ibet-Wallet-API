@@ -54,6 +54,9 @@ router = APIRouter(prefix="/Token/Lock", tags=["token_info"])
     responses=get_routers_responses(InvalidParameterError),
 )
 def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Depends()):
+    """
+    Returns a list of locked positions.
+    """
     token_address_list = request_query.token_address_list
     lock_address = request_query.lock_address
     account_address = request_query.account_address
@@ -117,6 +120,9 @@ def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Dep
 def retrieve_lock_count(
     session: DBSession, request_query: RetrieveTokenLockCountQuery = Depends()
 ):
+    """
+    Returns count of locked positions.
+    """
     token_address_list = request_query.token_address_list
     lock_address = request_query.lock_address
     account_address = request_query.account_address

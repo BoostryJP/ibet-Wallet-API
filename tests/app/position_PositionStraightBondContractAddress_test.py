@@ -89,6 +89,10 @@ class TestPositionStraightBondContractAddress:
             "personalInfoAddress": personal_info_contract["address"],
             "transferable": True,
             "isRedeemed": False,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
         }
         token = issue_bond_token(TestPositionStraightBondContractAddress.issuer, args)
         register_bond_list(
@@ -251,6 +255,11 @@ class TestPositionStraightBondContractAddress:
         idx_token.memo = "メモ"
         idx_token.personal_info_address = personal_info_address
         idx_token.transfer_approval_required = False
+        idx_token.face_value_currency = ""
+        idx_token.interest_payment_currency = ""
+        idx_token.redemption_value_currency = ""
+        idx_token.base_fx_rate = 0.0
+
         session.add(idx_token)
         session.commit()
 
@@ -426,6 +435,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             },
             "balance": 1000000,
             "pending_transfer": 0,
@@ -576,6 +589,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             },
             "balance": 999900,
             "pending_transfer": 0,
@@ -726,6 +743,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "JPY",
+                "interest_payment_currency": "JPY",
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
             },
             "balance": 0,
             "pending_transfer": 0,
@@ -1008,6 +1029,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "",
+                "interest_payment_currency": "",
+                "redemption_value_currency": "",
+                "base_fx_rate": 0.0,
             },
             "balance": 1000000,
             "pending_transfer": 0,
@@ -1290,6 +1315,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "",
+                "interest_payment_currency": "",
+                "redemption_value_currency": "",
+                "base_fx_rate": 0.0,
             },
             "balance": 999900,
             "pending_transfer": 0,
@@ -1572,6 +1601,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "",
+                "interest_payment_currency": "",
+                "redemption_value_currency": "",
+                "base_fx_rate": 0.0,
             },
             "balance": 0,
             "pending_transfer": 0,
@@ -1707,6 +1740,10 @@ class TestPositionStraightBondContractAddress:
                 "memo": "メモ",
                 "personal_info_address": personal_info_contract["address"],
                 "transfer_approval_required": False,
+                "face_value_currency": "",
+                "interest_payment_currency": "",
+                "redemption_value_currency": "",
+                "base_fx_rate": 0.0,
             },
             "balance": 997000,
             "pending_transfer": 0,

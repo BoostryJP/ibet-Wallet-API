@@ -16,13 +16,21 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .base import (
-    GenericSuccessResponse,
-    ResultSet,
-    ResultSetQuery,
-    SortOrder,
-    SuccessResponse,
-    TokenType,
-    ValidatedEthereumAddress,
-    ValueOperator,
-)
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.model.db.base import Base
+
+
+class AccountTag(Base):
+    """Account tag"""
+
+    __tablename__ = "account_tag"
+
+    account_address: Mapped[str] = mapped_column(String(42), primary_key=True)
+    account_tag: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, index=True
+    )
+
+    FIELDS = {"account_address": str, "account_tag": str}
+    FIELDS.update(Base.FIELDS)

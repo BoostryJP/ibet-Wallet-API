@@ -55,7 +55,9 @@ router = APIRouter(prefix="/DEX/Market", tags=["dex"])
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Depends()):
-    """約定情報参照"""
+    """
+    Returns agreement information of given id.
+    """
     if (
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
         and config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -134,7 +136,9 @@ def list_all_membership_order_book(
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
 ):
-    """[会員権]板情報取得"""
+    """
+    [Membership]Returns orderbook of given token.
+    """
     if (
         config.MEMBERSHIP_TOKEN_ENABLED is False
         or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
@@ -241,7 +245,9 @@ def list_all_membership_order_book(
 def list_all_membership_last_price(
     req: Request, request_query: ListAllLastPriceQuery = Depends()
 ):
-    """[会員権]現在値取得"""
+    """
+    [Membership]Returns last price of given token.
+    """
     if (
         config.MEMBERSHIP_TOKEN_ENABLED is False
         or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
@@ -252,17 +258,18 @@ def list_all_membership_last_price(
         "IbetExchange", config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
     )
 
-    price_list = []
-    for token_address in request_query.address_list:
-        last_price = Contract.call_function(
-            contract=exchange_contract,
-            function_name="lastPrice",
-            args=(to_checksum_address(token_address),),
-            default_returns=0,
-        )
-
-        price_list.append({"token_address": token_address, "last_price": last_price})
-
+    price_list = [
+        {
+            "token_address": token_address,
+            "last_price": Contract.call_function(
+                contract=exchange_contract,
+                function_name="lastPrice",
+                args=(to_checksum_address(token_address),),
+                default_returns=0,
+            ),
+        }
+        for token_address in request_query.address_list
+    ]
     return json_response({**SuccessResponse.default(), "data": price_list})
 
 
@@ -279,7 +286,9 @@ def list_all_membership_tick(
     req: Request,
     request_query: ListAllTickQuery = Depends(),
 ):
-    """[会員権]歩み値取得"""
+    """
+    [Membership]Returns ticks of given token.
+    """
     if (
         config.MEMBERSHIP_TOKEN_ENABLED is False
         or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None
@@ -290,38 +299,42 @@ def list_all_membership_tick(
     # TokenごとにTickを取得
     for token_address in request_query.address_list:
         token = to_checksum_address(token_address)
-        tick = []
         try:
             entries: Sequence[tuple[Agreement, Order]] = (
                 session.execute(
                     select(Agreement, Order)
                     .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                    .where(Order.token_address == token)
-                    .where(Agreement.status == AgreementStatus.DONE.value)
+                    .where(
+                        and_(
+                            Order.token_address == token,
+                            Agreement.status == AgreementStatus.DONE.value,
+                        )
+                    )
                     .order_by(desc(Agreement.settlement_timestamp))
                 )
                 .tuples()
                 .all()
             )
-
-            for entry in entries:
-                agreement = entry[0]
-                order = entry[1]
-                block_timestamp_utc = agreement.settlement_timestamp
-                tick.append(
-                    {
-                        "block_timestamp": block_timestamp_utc.strftime(
-                            "%Y/%m/%d %H:%M:%S"
-                        ),
-                        "buy_address": agreement.buyer_address,
-                        "sell_address": agreement.seller_address,
-                        "order_id": agreement.order_id,
-                        "agreement_id": agreement.agreement_id,
-                        "price": order.price,
-                        "amount": agreement.amount,
-                    }
-                )
-            tick_list.append({"token_address": token_address, "tick": tick})
+            _tick = [
+                {
+                    "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        entry[0].settlement_timestamp.year,
+                        entry[0].settlement_timestamp.month,
+                        entry[0].settlement_timestamp.day,
+                        entry[0].settlement_timestamp.hour,
+                        entry[0].settlement_timestamp.minute,
+                        entry[0].settlement_timestamp.second,
+                    ),
+                    "buy_address": entry[0].buyer_address,
+                    "sell_address": entry[0].seller_address,
+                    "order_id": entry[0].order_id,
+                    "agreement_id": entry[0].agreement_id,
+                    "price": entry[1].price,
+                    "amount": entry[0].amount,
+                }
+                for entry in entries
+            ]
+            tick_list.append({"token_address": token_address, "tick": _tick})
         except Exception as e:
             LOG.error(e)
             tick_list = []
@@ -342,7 +355,9 @@ def list_all_coupon_order_book(
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
 ):
-    """[クーポン]板情報取得"""
+    """
+    [Coupon]Returns orderbook of given token.
+    """
     if (
         config.COUPON_TOKEN_ENABLED is False
         or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -447,7 +462,9 @@ def list_all_coupon_order_book(
 def list_all_coupon_last_price(
     req: Request, request_query: ListAllLastPriceQuery = Depends()
 ):
-    """[クーポン]現在値取得"""
+    """
+    [Coupon]Returns last price of given token.
+    """
     if (
         config.COUPON_TOKEN_ENABLED is False
         or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -458,16 +475,18 @@ def list_all_coupon_last_price(
         "IbetExchange", config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
     )
 
-    price_list = []
-    for token_address in request_query.address_list:
-        last_price = Contract.call_function(
-            contract=exchange_contract,
-            function_name="lastPrice",
-            args=(to_checksum_address(token_address),),
-            default_returns=0,
-        )
-        price_list.append({"token_address": token_address, "last_price": last_price})
-
+    price_list = [
+        {
+            "token_address": token_address,
+            "last_price": Contract.call_function(
+                contract=exchange_contract,
+                function_name="lastPrice",
+                args=(to_checksum_address(token_address),),
+                default_returns=0,
+            ),
+        }
+        for token_address in request_query.address_list
+    ]
     return json_response({**SuccessResponse.default(), "data": price_list})
 
 
@@ -484,7 +503,9 @@ def list_all_coupon_tick(
     req: Request,
     request_query: ListAllTickQuery = Depends(),
 ):
-    """[クーポン]歩み値取得"""
+    """
+    [Coupon]Returns ticks of given token.
+    """
     if (
         config.COUPON_TOKEN_ENABLED is False
         or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
@@ -495,38 +516,42 @@ def list_all_coupon_tick(
     # TokenごとにTickを取得
     for token_address in request_query.address_list:
         token = to_checksum_address(token_address)
-        tick = []
         try:
             entries: Sequence[tuple[Agreement, Order]] = (
                 session.execute(
                     select(Agreement, Order)
                     .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                    .where(Order.token_address == token)
-                    .where(Agreement.status == AgreementStatus.DONE.value)
+                    .where(
+                        and_(
+                            Order.token_address == token,
+                            Agreement.status == AgreementStatus.DONE.value,
+                        )
+                    )
                     .order_by(desc(Agreement.settlement_timestamp))
                 )
                 .tuples()
                 .all()
             )
-
-            for entry in entries:
-                agreement = entry[0]
-                order = entry[1]
-                block_timestamp_utc = agreement.settlement_timestamp
-                tick.append(
-                    {
-                        "block_timestamp": block_timestamp_utc.strftime(
-                            "%Y/%m/%d %H:%M:%S"
-                        ),
-                        "buy_address": agreement.buyer_address,
-                        "sell_address": agreement.seller_address,
-                        "order_id": agreement.order_id,
-                        "agreement_id": agreement.agreement_id,
-                        "price": order.price,
-                        "amount": agreement.amount,
-                    }
-                )
-            tick_list.append({"token_address": token_address, "tick": tick})
+            _tick = [
+                {
+                    "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                        entry[0].settlement_timestamp.year,
+                        entry[0].settlement_timestamp.month,
+                        entry[0].settlement_timestamp.day,
+                        entry[0].settlement_timestamp.hour,
+                        entry[0].settlement_timestamp.minute,
+                        entry[0].settlement_timestamp.second,
+                    ),
+                    "buy_address": entry[0].buyer_address,
+                    "sell_address": entry[0].seller_address,
+                    "order_id": entry[0].order_id,
+                    "agreement_id": entry[0].agreement_id,
+                    "price": entry[1].price,
+                    "amount": entry[0].amount,
+                }
+                for entry in entries
+            ]
+            tick_list.append({"token_address": token_address, "tick": _tick})
         except Exception as e:
             LOG.error(e)
             tick_list = []

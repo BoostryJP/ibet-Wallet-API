@@ -36,6 +36,12 @@ class TokenType(StrEnum):
     IbetCoupon = "IbetCoupon"
 
 
+class ValueOperator(IntEnum):
+    EQUAL = 0
+    GTE = 1
+    LTE = 2
+
+
 ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
 
 

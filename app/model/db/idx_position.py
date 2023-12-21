@@ -34,7 +34,7 @@ class IDXPosition(Base):
     # Account Address
     account_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Balance
-    balance: Mapped[int | None] = mapped_column(BigInteger)
+    balance: Mapped[int | None] = mapped_column(BigInteger, index=True)
     # Exchange Balance
     exchange_balance: Mapped[int | None] = mapped_column(BigInteger)
     # Commitment Volume on Exchange
@@ -203,7 +203,7 @@ class IDXLockedPosition(Base):
     # Account Address
     account_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Locked Amount
-    value: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    value: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
 
     FIELDS = {
         "token_address": str,

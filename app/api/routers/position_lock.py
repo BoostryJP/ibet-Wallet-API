@@ -338,7 +338,7 @@ def list_all_share_locked_position(
     data: dict = Depends(ListAllLock(TokenType.IbetShare, ShareToken, IDXShareToken))
 ):
     """
-    List all share locked position
+    [Share]Returns a list of locked positions.
     """
     return json_response({**SuccessResponse.default(), "data": data})
 
@@ -359,7 +359,7 @@ def list_all_share_lock_events(
     )
 ):
     """
-    List all share lock events
+    [Share]Returns a list of lock events.
     """
     return json_response({**SuccessResponse.default(), "data": data})
 
@@ -380,7 +380,7 @@ def list_all_straight_bond_locked_position(
     ),
 ):
     """
-    List all bond locked position
+    [StraightBond]Returns a list of locked positions.
     """
     return json_response({**SuccessResponse.default(), "data": data})
 
@@ -401,6 +401,6 @@ def list_all_straight_bond_lock_events(
     ),
 ):
     """
-    List all bond lock events
+    [StraightBond]Returns a list of lock events.
     """
     return json_response({**SuccessResponse.default(), "data": data})

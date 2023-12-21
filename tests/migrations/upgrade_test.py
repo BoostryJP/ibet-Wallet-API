@@ -23,7 +23,17 @@ from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
 from pytest_alembic import MigrationContext
-from sqlalchemy import Column, Integer, MetaData, String, Table, Text, insert, text
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    Text,
+    insert,
+    select,
+    text,
+)
 from sqlalchemy.engine import Engine
 
 from app.config import ZERO_ADDRESS
@@ -34,6 +44,8 @@ REVISION_22_6: Final = "e8d970fdd886"
 REVISION_22_9: Final = "55dee53de2ca"
 REVISION_22_12: Final = "446f913d1f41"
 REVISION_23_3: Final = "1055cb068506"
+REVISION_23_6: Final = "37cfcb200317"
+REVISION_23_9: Final = "1f0ac8015f2f"
 
 REVISION_UP_TO_1_8 = [REVISION_22_3]
 REVISION_UP_TO_22_6 = REVISION_UP_TO_1_8 + [REVISION_22_6]
@@ -331,7 +343,7 @@ class TestMigrationsUpgrade:
         if from_legacy_migration:
             assert self.get_migrate_version(engine) == 54
 
-    def test_upgrade_v23_6_to(
+    def test_upgrade_v23_6(
         self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
     ):
         # 1. Migrate to v23.6 initial
@@ -813,3 +825,42 @@ class TestMigrationsUpgrade:
                     text(f"""SELECT COUNT(*) FROM "unlock";""")
                 ).scalar()
             assert all_row_count == 2
+
+    def test_upgrade_v23_12(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        # 1. Migrate to v23.12 initial
+        alembic_runner.migrate_up_to(REVISION_23_9)
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # 2. Insert test record
+        # NOTE: idx bond token data
+        bond_token = meta.tables.get("bond_token")
+        stmt1 = insert(bond_token).values(token_address="test1")
+        stmt2 = insert(bond_token).values(token_address="test2")
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.commit()
+
+        # 3. Run to head
+        alembic_runner.migrate_up_to("head")
+
+        with engine.connect() as conn:
+            # NOTE: idx_bond_token
+            bond_tokens = conn.execute(
+                text("SELECT * FROM bond_token ORDER BY created ASC")
+            )
+            bond_tokens = list(bond_tokens)
+
+            assert bond_tokens[0].face_value_currency == "JPY"
+            assert bond_tokens[0].interest_payment_currency == ""
+            assert bond_tokens[0].redemption_value_currency == ""
+            assert bond_tokens[0].base_fx_rate == 0.0
+
+            assert bond_tokens[1].face_value_currency == "JPY"
+            assert bond_tokens[1].interest_payment_currency == ""
+            assert bond_tokens[1].redemption_value_currency == ""
+            assert bond_tokens[1].base_fx_rate == 0.0

@@ -20,10 +20,12 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import BigInteger, Boolean, String
+from sqlalchemy import BigInteger, Boolean, DateTime, String
+from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
+from app.database import engine
 from app.model.db.base import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
@@ -45,6 +47,16 @@ class Listing(Base):
     max_sell_amount: Mapped[int | None] = mapped_column(BigInteger)  # 売却価格上限
     owner_address: Mapped[str | None] = mapped_column(String(256))  # 発行体アドレス
 
+    if engine.name == "mysql":
+        # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
+        created: Mapped[datetime | None] = mapped_column(
+            MySQLDATETIME(fsp=6), default=datetime.utcnow, index=True
+        )
+    else:
+        created: Mapped[datetime | None] = mapped_column(
+            DateTime, default=datetime.utcnow, index=True
+        )
+
     def __repr__(self):
         return "<Listing id='%d'>" % self.id
 
@@ -57,7 +69,14 @@ class Listing(Base):
         if _datetime is None:
             return ""
         datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return datetime_local.strftime("%Y/%m/%d %H:%M:%S")
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            datetime_local.year,
+            datetime_local.month,
+            datetime_local.day,
+            datetime_local.hour,
+            datetime_local.minute,
+            datetime_local.second,
+        )
 
     def json(self):
         return {

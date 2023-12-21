@@ -70,7 +70,7 @@ def list_all_coupon_tokens(
     request_query: ListAllCouponTokensQuery = Depends(),
 ):
     """
-    Get a list of coupon tokens.
+    [Coupon]Returns a detail list of tokens.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -141,11 +141,8 @@ def list_all_coupon_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXCouponToken] = session.scalars(stmt).all()
-    tokens = []
 
-    for _token in _token_list:
-        tokens.append(CouponToken.from_model(_token).__dict__)
-
+    tokens = [CouponToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
         "result_set": {
             "count": count,
@@ -172,7 +169,7 @@ def list_all_coupon_token_addresses(
     request_query: ListAllCouponTokensQuery = Depends(),
 ):
     """
-    Get a list of coupon token addresses.
+    [Coupon]Returns a list of token addresses.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -272,7 +269,7 @@ def retrieve_coupon_token(
     ],
 ):
     """
-    Get the details of the membership token.
+    [Coupon]Returns the details of the token.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)

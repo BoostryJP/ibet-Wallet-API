@@ -44,7 +44,7 @@ router = APIRouter(prefix="/ABI", tags=["abi"])
 )
 def get_straight_bond_abi(req: Request):
     """
-    Endpoint: /ABI/StraightBond
+    Returns ABI of IbetStraightBond.
     """
     if config.BOND_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -68,7 +68,7 @@ def get_straight_bond_abi(req: Request):
 )
 def get_share_abi(req: Request):
     """
-    Endpoint: /ABI/Share
+    Returns ABI of IbetShare.
     """
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -90,7 +90,7 @@ def get_share_abi(req: Request):
 )
 def get_membership_abi(req: Request):
     """
-    Endpoint: /ABI/Membership
+    Returns ABI of IbetMembership.
     """
     if config.MEMBERSHIP_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
@@ -114,7 +114,7 @@ def get_membership_abi(req: Request):
 )
 def get_coupon_abi(req: Request):
     """
-    Endpoint: /ABI/Coupon
+    Returns ABI of IbetCoupon.
     """
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)

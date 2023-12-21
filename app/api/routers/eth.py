@@ -72,7 +72,7 @@ router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
 )
 def ethereum_json_rpc(session: DBSession, data: JsonRPCRequest):
     """
-    Endpoint: /Eth/RPC
+    Executes ethereum JSON-RPC with given request body.
     """
     node: Node | None = session.scalars(
         select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
@@ -107,7 +107,7 @@ def get_transaction_count(
     eth_address: str, query: GetTransactionCountQuery = Depends()
 ):
     """
-    Endpoint: /Eth/TransactionCount/{eth_address}
+    Returns nonce counts of given ethereum address.
     """
     try:
         eth_address = to_checksum_address(eth_address)
@@ -138,7 +138,7 @@ def get_transaction_count(
 )
 def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
     """
-    Endpoint: /Eth/SendRawTransaction
+    Sends raw transaction.
     """
     raw_tx_hex_list = data.raw_tx_hex_list
 
@@ -296,7 +296,7 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
 )
 def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionRequest):
     """
-    Endpoint: /Eth/SendRawTransactionNoWait
+    Sends raw transaction without waiting for transaction receipt.
     """
     raw_tx_hex_list = data.raw_tx_hex_list
 
@@ -402,7 +402,7 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
 )
 def wait_for_transaction_receipt(query: WaitForTransactionReceiptQuery = Depends()):
     """
-    Endpoint: /Eth/WaitForTransactionReceipt
+    Waits for transaction receipt returned.
     """
     transaction_hash = query.transaction_hash
     timeout = query.timeout
