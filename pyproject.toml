@@ -20,7 +20,7 @@ psycopg = {extras = ["c"], version = "^3.1.12"}
 pydantic = {extras = ["email"], version = "~2.5.2"}
 sqlalchemy = "~2.0.21"
 uvicorn = "~0.23.2"
-web3 = "~6.11.3"
+web3 = "~6.12.0"
 tzdata = "^2023.3"
 alembic = "^1.12.1"
 
@@ -43,6 +43,7 @@ pre-commit = "^3.5.0"
 pytest-alembic = "^0.10.0"
 pytest-freezer = "^0.4.8"
 textual-dev = "^1.2.1"
+pytest-asyncio = "0.23.3a0"
 
 [tool.poetry.extras]
 ibet-explorer = [

@@ -20,6 +20,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app import config, log
@@ -39,8 +40,28 @@ def get_engine(uri):
     return create_engine(uri, **options)
 
 
+def get_async_engine(uri):
+    options = {
+        "pool_recycle": 3600,
+        "pool_size": 10,
+        "pool_timeout": 30,
+        "pool_pre_ping": True,
+        "max_overflow": 30,
+        "echo": config.DB_ECHO,
+    }
+    return create_async_engine(uri, **options)
+
+
 engine = get_engine(config.DATABASE_URL)
+async_engine = get_async_engine(config.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
+AsyncSessionLocal = async_sessionmaker(
+    autocommit=False,
+    autoflush=True,
+    expire_on_commit=False,
+    bind=async_engine,
+    class_=AsyncSession,
+)
 
 
 def db_session():
@@ -51,7 +72,16 @@ def db_session():
         db.close()
 
 
+async def db_async_session():
+    db = AsyncSessionLocal()
+    try:
+        yield db
+    finally:
+        await db.close()
+
+
 DBSession = Annotated[Session, Depends(db_session)]
+DBAsyncSession = Annotated[AsyncSession, Depends(db_async_session)]
 
 
 def get_db_schema():
