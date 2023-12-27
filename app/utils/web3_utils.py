@@ -39,7 +39,13 @@ from app.errors import ServiceUnavailable
 from app.model.db import Node
 
 engine = get_engine(config.DATABASE_URL)
-async_engine = get_async_engine(config.DATABASE_URL)
+if engine.dialect.name == "mysql":
+    MYSQL_ASYNC_DATABASE_URL = config.DATABASE_URL.replace(
+        "mysql+pymysql://", "mysql+aiomysql://"
+    )
+    async_engine = get_async_engine(MYSQL_ASYNC_DATABASE_URL)
+else:
+    async_engine = get_async_engine(config.DATABASE_URL)
 thread_local = threading.local()
 
 

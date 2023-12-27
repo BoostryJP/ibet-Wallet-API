@@ -23,6 +23,7 @@ uvicorn = "~0.23.2"
 web3 = "~6.12.0"
 tzdata = "^2023.3"
 alembic = "^1.12.1"
+aiomysql = "0.2.0"
 
 ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = true}
 textual = {version = "~0.44.1", optional = true}

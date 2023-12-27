@@ -52,8 +52,17 @@ def get_async_engine(uri):
     return create_async_engine(uri, **options)
 
 
+# Create Engine
 engine = get_engine(config.DATABASE_URL)
-async_engine = get_async_engine(config.DATABASE_URL)
+if engine.dialect.name == "mysql":
+    MYSQL_ASYNC_DATABASE_URL = config.DATABASE_URL.replace(
+        "mysql+pymysql://", "mysql+aiomysql://"
+    )
+    async_engine = get_async_engine(MYSQL_ASYNC_DATABASE_URL)
+else:
+    async_engine = get_async_engine(config.DATABASE_URL)
+
+# Create Session Maker
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
