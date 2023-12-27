@@ -64,10 +64,8 @@ class Processor:
 
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            # Delete all company list from DB
-            db_session.execute(delete(Company))
-
-            # Insert company list
+            # Upsert company list
+            updated_company_dict: dict[str, True] = {}
             for i, company in enumerate(company_list_json):
                 address = company.get("address", "")
                 corporate_name = company.get("corporate_name", "")
@@ -94,6 +92,12 @@ class Processor:
                         )
                         continue
                     try:
+                        has_already_updated = updated_company_dict.get(address, False)
+                        if has_already_updated:
+                            LOG.warning(
+                                f"duplicate address error: index={i} address={address}"
+                            )
+                            continue
                         self.__sink_on_company(
                             db_session=db_session,
                             address=to_checksum_address(address),
@@ -109,6 +113,15 @@ class Processor:
                 else:
                     LOG.warning(f"required error: index={i}")
                     continue
+                updated_company_dict[address] = True
+
+            # Delete company list from DB
+            company_list_db = db_session.scalars(select(Company)).all()
+            for company in company_list_db:
+                is_updated = updated_company_dict.get(company.address, False)
+                if not is_updated:
+                    db_session.delete(company)
+
             db_session.commit()
             db_session.close()
         except Exception as e:
@@ -125,16 +138,12 @@ class Processor:
         rsa_publickey: str,
         homepage: str,
     ):
-        _company = db_session.scalars(
-            select(Company).where(Company.address == address).limit(1)
-        ).first()
-        if _company is None:
-            _company = Company()
-            _company.address = address
-            _company.corporate_name = corporate_name
-            _company.rsa_publickey = rsa_publickey
-            _company.homepage = homepage
-            db_session.add(_company)
+        _company = Company()
+        _company.address = address
+        _company.corporate_name = corporate_name
+        _company.rsa_publickey = rsa_publickey
+        _company.homepage = homepage
+        db_session.merge(_company)
 
 
 def main():
