@@ -19,11 +19,12 @@ PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
 psycopg = {extras = ["c"], version = "^3.1.12"}
 pydantic = {extras = ["email"], version = "~2.5.2"}
 sqlalchemy = "~2.0.21"
-uvicorn = "~0.23.2"
+uvicorn = {extras = ["standard"], version = "~0.23.2"}
 web3 = "~6.12.0"
 tzdata = "^2023.3"
 alembic = "^1.12.1"
 aiomysql = "0.2.0"
+httpx = "^0.26.0"
 
 ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = true}
 textual = {version = "~0.44.1", optional = true}
@@ -35,7 +36,7 @@ aiohttp = {version = "~3.9.1", optional = true}
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 locustio = "0.9.0"
-httpx = "^0.25.2"
+httpx = "^0.26.0"
 black = "^23.11.0"
 flake8 = "^6.1.0"
 mypy = "^1.0.0"

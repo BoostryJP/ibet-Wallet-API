@@ -72,6 +72,8 @@ class TestDEXMarketMembershipOrderBook:
         order.is_cancelled = False
         session.add(order)
 
+        session.commit()
+
         # リクエスト情報
         request_params = {
             "token_address": token_address,
@@ -127,6 +129,8 @@ class TestDEXMarketMembershipOrderBook:
         order.agent_address = agent_address
         order.is_cancelled = False
         session.add(order)
+
+        session.commit()
 
         # リクエスト情報
         request_params = {
@@ -323,6 +327,8 @@ class TestDEXMarketMembershipOrderBook:
         order.is_cancelled = False
         session.add(order)
 
+        session.commit()
+
         # リクエスト情報
         request_params = {
             "token_address": token_address,
@@ -428,6 +434,8 @@ class TestDEXMarketMembershipOrderBook:
         order.agent_address = agent_address
         order.is_cancelled = False
         session.add(order)
+
+        session.commit()
 
         # リクエスト情報
         request_params = {
@@ -625,6 +633,8 @@ class TestDEXMarketMembershipOrderBook:
         order.is_cancelled = False
         session.add(order)
 
+        session.commit()
+
         # リクエスト情報
         request_params = {
             "token_address": token_address,
@@ -740,6 +750,8 @@ class TestDEXMarketMembershipOrderBook:
         order.is_cancelled = False
         session.add(order)
 
+        session.commit()
+
         # リクエスト情報
         request_params = {
             "token_address": token_address,
@@ -811,6 +823,8 @@ class TestDEXMarketMembershipOrderBook:
         order.agent_address = agent_address
         order.is_cancelled = False
         session.add(order)
+
+        session.commit()
 
         # リクエスト情報
         request_params = {
@@ -967,6 +981,8 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
+        session.commit()
+
         request_params = {
             "token_address": token_address,
             "exchange_agent_address": agent_address,
@@ -1121,6 +1137,8 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
+        session.commit()
+
         request_params = {
             "token_address": token_address,
             "exchange_agent_address": agent_address,
@@ -1274,6 +1292,8 @@ class TestDEXMarketMembershipOrderBook:
         agreement.amount = 70
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
+
+        session.commit()
 
         request_params = {
             "token_address": token_address,
@@ -1435,6 +1455,8 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
+        session.commit()
+
         request_params = {
             "token_address": token_address,
             "exchange_agent_address": agent_address,
@@ -1497,6 +1519,8 @@ class TestDEXMarketMembershipOrderBook:
         order.agent_address = agent_address_1
         order.is_cancelled = False
         session.add(order)
+
+        session.commit()
 
         # リクエスト情報
         request_params = {

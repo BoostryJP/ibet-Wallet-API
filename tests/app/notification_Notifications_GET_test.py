@@ -130,6 +130,8 @@ class TestNotificationsGet:
         # Prepare data
         self._insert_test_data(session)
 
+        session.commit()
+
         # Request target API
         resp = client.get(self.apiurl)
 
@@ -234,6 +236,8 @@ class TestNotificationsGet:
         # Prepare data
         self._insert_test_data(session)
 
+        session.commit()
+
         # Request target API
         resp = client.get(
             self.apiurl,
@@ -293,6 +297,8 @@ class TestNotificationsGet:
         # Prepare data
         self._insert_test_data(session)
 
+        session.commit()
+
         # Request target API
         resp = client.get(
             self.apiurl,
@@ -315,6 +321,8 @@ class TestNotificationsGet:
     def test_normal_4(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
+
+        session.commit()
 
         # Request target API
         resp = client.get(
@@ -359,6 +367,8 @@ class TestNotificationsGet:
         # Prepare data
         self._insert_test_data(session)
 
+        session.commit()
+
         # Request target API
         resp = client.get(
             self.apiurl,
@@ -383,6 +393,8 @@ class TestNotificationsGet:
     def test_normal_6(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
+
+        session.commit()
 
         # Request target API
         resp = client.get(

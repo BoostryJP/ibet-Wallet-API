@@ -21,11 +21,12 @@ from typing import Annotated
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
-from app.errors import InvalidParameterError, NotSupportedError
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
+from app.errors import InvalidParameterError, NotSupportedError, ServiceUnavailable
 from app.model.blockchain import CouponToken, MembershipToken
 from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from app.model.schema import (
@@ -40,6 +41,7 @@ from app.model.schema.base import (
     SuccessResponse,
     ValidatedEthereumAddress,
 )
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -50,8 +52,8 @@ router = APIRouter(prefix="/DEX/OrderList", tags=["dex"])
 
 class BaseOrderList(object):
     @staticmethod
-    def get_order_list(
-        session,
+    async def get_order_list(
+        async_session: AsyncSession,
         token_model,
         exchange_contract_address,
         account_address,
@@ -60,7 +62,7 @@ class BaseOrderList(object):
         """List all orders from the account (DEX)"""
         # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
+        exchange_contract = AsyncContract.get_contract("IbetExchange", exchange_address)
 
         # Filter order events that are generated from account_address
         stmt = (
@@ -70,15 +72,15 @@ class BaseOrderList(object):
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _order_events = session.execute(stmt).all()
+            _order_events = (await async_session.execute(stmt)).all()
         else:  # default
-            _order_events = session.execute(
-                stmt.where(Order.is_cancelled == False)
+            _order_events = (
+                await async_session.execute(stmt.where(Order.is_cancelled == False))
             ).all()
 
         order_list = []
         for id, order_id, order_timestamp in _order_events:
-            order_book = Contract.call_function(
+            order_book = await AsyncContract.call_function(
                 contract=exchange_contract,
                 function_name="getOrder",
                 args=(order_id,),
@@ -105,8 +107,8 @@ class BaseOrderList(object):
                     "sort_id": id,
                 }
                 if token_model is not None:
-                    token_detail = token_model.get(
-                        session=session,
+                    token_detail = await token_model.get(
+                        async_session=async_session,
                         token_address=to_checksum_address(order_book[1]),
                     )
                     _order["token"] = token_detail.__dict__
@@ -116,31 +118,36 @@ class BaseOrderList(object):
         return order_list
 
     @staticmethod
-    def get_settlement_list(
-        session, token_model, exchange_contract_address, account_address
+    async def get_settlement_list(
+        async_session: AsyncSession,
+        token_model,
+        exchange_contract_address,
+        account_address,
     ):
         """List all orders in process of settlement (DEX)"""
         # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
+        exchange_contract = AsyncContract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement not completed) generated from account_address
-        _agreement_events = session.execute(
-            select(
-                Agreement.id,
-                Agreement.order_id,
-                Agreement.agreement_id,
-                Agreement.agreement_timestamp,
-                Agreement.buyer_address,
-            )
-            .where(Agreement.exchange_address == exchange_address)
-            .where(
-                or_(
-                    Agreement.buyer_address == account_address,
-                    Agreement.seller_address == account_address,
+        _agreement_events = (
+            await async_session.execute(
+                select(
+                    Agreement.id,
+                    Agreement.order_id,
+                    Agreement.agreement_id,
+                    Agreement.agreement_timestamp,
+                    Agreement.buyer_address,
                 )
+                .where(Agreement.exchange_address == exchange_address)
+                .where(
+                    or_(
+                        Agreement.buyer_address == account_address,
+                        Agreement.seller_address == account_address,
+                    )
+                )
+                .where(Agreement.status == AgreementStatus.PENDING.value)
             )
-            .where(Agreement.status == AgreementStatus.PENDING.value)
         ).all()
 
         settlement_list = []
@@ -151,19 +158,30 @@ class BaseOrderList(object):
             agreement_timestamp,
             buyer_address,
         ) in _agreement_events:
-            order_book = Contract.call_function(
-                contract=exchange_contract,
-                function_name="getOrder",
-                args=(order_id,),
-            )
-            agreement = Contract.call_function(
-                contract=exchange_contract,
-                function_name="getAgreement",
-                args=(
-                    order_id,
-                    agreement_id,
-                ),
-            )
+            try:
+                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                    tasks = [
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=exchange_contract,
+                                function_name="getOrder",
+                                args=(order_id,),
+                            )
+                        ),
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=exchange_contract,
+                                function_name="getAgreement",
+                                args=(
+                                    order_id,
+                                    agreement_id,
+                                ),
+                            )
+                        ),
+                    ]
+                order_book, agreement = [task.result() for task in tasks]
+            except ExceptionGroup:
+                raise ServiceUnavailable from None
             _settlement = {
                 "agreement": {
                     "exchange_address": exchange_contract_address,
@@ -185,8 +203,9 @@ class BaseOrderList(object):
                 "sort_id": id,
             }
             if token_model is not None:
-                token_detail = token_model.get(
-                    session=session, token_address=to_checksum_address(order_book[1])
+                token_detail = await token_model.get(
+                    async_session=async_session,
+                    token_address=to_checksum_address(order_book[1]),
                 )
                 _settlement["token"] = token_detail.__dict__
 
@@ -195,8 +214,8 @@ class BaseOrderList(object):
         return settlement_list
 
     @staticmethod
-    def get_complete_list(
-        session,
+    async def get_complete_list(
+        async_session: AsyncSession,
         token_model,
         exchange_contract_address,
         account_address,
@@ -205,7 +224,7 @@ class BaseOrderList(object):
         """List all orders that have been settled (DEX)"""
         # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
+        exchange_contract = AsyncContract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement completed) generated from account_address
         stmt = (
@@ -227,17 +246,21 @@ class BaseOrderList(object):
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _agreement_events = session.execute(
-                stmt.where(
-                    or_(
-                        Agreement.status == AgreementStatus.DONE.value,
-                        Agreement.status == AgreementStatus.CANCELED.value,
+            _agreement_events = (
+                await async_session.execute(
+                    stmt.where(
+                        or_(
+                            Agreement.status == AgreementStatus.DONE.value,
+                            Agreement.status == AgreementStatus.CANCELED.value,
+                        )
                     )
                 )
             ).all()
         else:  # default
-            _agreement_events = session.execute(
-                stmt.where(Agreement.status == AgreementStatus.DONE.value)
+            _agreement_events = (
+                await async_session.execute(
+                    stmt.where(Agreement.status == AgreementStatus.DONE.value)
+                )
             ).all()
 
         complete_list = []
@@ -262,19 +285,30 @@ class BaseOrderList(object):
                 )
             else:
                 settlement_timestamp_jp = ""
-            order_book = Contract.call_function(
-                contract=exchange_contract,
-                function_name="getOrder",
-                args=(order_id,),
-            )
-            agreement = Contract.call_function(
-                contract=exchange_contract,
-                function_name="getAgreement",
-                args=(
-                    order_id,
-                    agreement_id,
-                ),
-            )
+            try:
+                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                    tasks = [
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=exchange_contract,
+                                function_name="getOrder",
+                                args=(order_id,),
+                            )
+                        ),
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=exchange_contract,
+                                function_name="getAgreement",
+                                args=(
+                                    order_id,
+                                    agreement_id,
+                                ),
+                            )
+                        ),
+                    ]
+                order_book, agreement = [task.result() for task in tasks]
+            except ExceptionGroup:
+                raise ServiceUnavailable from None
             _complete = {
                 "agreement": {
                     "exchange_address": exchange_contract_address,
@@ -297,8 +331,9 @@ class BaseOrderList(object):
                 "sort_id": id,
             }
             if token_model is not None:
-                token_detail = token_model.get(
-                    session=session, token_address=to_checksum_address(order_book[1])
+                token_detail = await token_model.get(
+                    async_session=async_session,
+                    token_address=to_checksum_address(order_book[1]),
                 )
                 _complete["token"] = token_detail.__dict__
 
@@ -307,8 +342,11 @@ class BaseOrderList(object):
         return complete_list
 
     @staticmethod
-    def get_order_list_filtered_by_token(
-        session, token_address, account_address, include_canceled_items
+    async def get_order_list_filtered_by_token(
+        async_session: AsyncSession,
+        token_address,
+        account_address,
+        include_canceled_items,
     ):
         """List orders from accounts filtered by token address (DEX)"""
 
@@ -322,18 +360,18 @@ class BaseOrderList(object):
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _order_events = session.execute(stmt).all()
+            _order_events = (await async_session.execute(stmt)).all()
         else:  # default
-            _order_events = session.execute(
-                stmt.where(Order.is_cancelled == False)
+            _order_events = (
+                await async_session.execute(stmt.where(Order.is_cancelled == False))
             ).all()
 
         order_list = []
         for id, exchange_contract_address, order_id, order_timestamp in _order_events:
-            exchange_contract = Contract.get_contract(
+            exchange_contract = AsyncContract.get_contract(
                 contract_name="IbetExchange", address=exchange_contract_address
             )
-            order_book = Contract.call_function(
+            order_book = await AsyncContract.call_function(
                 contract=exchange_contract,
                 function_name="getOrder",
                 args=(order_id,),
@@ -365,28 +403,32 @@ class BaseOrderList(object):
         return order_list
 
     @staticmethod
-    def get_settlement_list_filtered_by_token(session, token_address, account_address):
+    async def get_settlement_list_filtered_by_token(
+        async_session: AsyncSession, token_address, account_address
+    ):
         """List all orders in process of settlement (DEX)"""
 
         # Filter agreement events (settlement not completed) generated from account_address
-        _agreement_events = session.execute(
-            select(
-                Agreement.id,
-                Agreement.exchange_address,
-                Agreement.order_id,
-                Agreement.agreement_id,
-                Agreement.agreement_timestamp,
-                Agreement.buyer_address,
-            )
-            .outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id)
-            .where(Order.token_address == token_address)
-            .where(
-                or_(
-                    Agreement.buyer_address == account_address,
-                    Agreement.seller_address == account_address,
+        _agreement_events = (
+            await async_session.execute(
+                select(
+                    Agreement.id,
+                    Agreement.exchange_address,
+                    Agreement.order_id,
+                    Agreement.agreement_id,
+                    Agreement.agreement_timestamp,
+                    Agreement.buyer_address,
                 )
+                .outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id)
+                .where(Order.token_address == token_address)
+                .where(
+                    or_(
+                        Agreement.buyer_address == account_address,
+                        Agreement.seller_address == account_address,
+                    )
+                )
+                .where(Agreement.status == AgreementStatus.PENDING.value)
             )
-            .where(Agreement.status == AgreementStatus.PENDING.value)
         ).all()
 
         settlement_list = []
@@ -398,10 +440,10 @@ class BaseOrderList(object):
             agreement_timestamp,
             buyer_address,
         ) in _agreement_events:
-            exchange_contract = Contract.get_contract(
+            exchange_contract = AsyncContract.get_contract(
                 contract_name="IbetExchange", address=exchange_contract_address
             )
-            agreement = Contract.call_function(
+            agreement = await AsyncContract.call_function(
                 contract=exchange_contract,
                 function_name="getAgreement",
                 args=(
@@ -435,8 +477,11 @@ class BaseOrderList(object):
         return settlement_list
 
     @staticmethod
-    def get_complete_list_filtered_by_token(
-        session, token_address, account_address, include_canceled_items
+    async def get_complete_list_filtered_by_token(
+        async_session: AsyncSession,
+        token_address,
+        account_address,
+        include_canceled_items,
     ):
         """List all orders that have been settled (DEX)"""
 
@@ -462,17 +507,21 @@ class BaseOrderList(object):
         )
 
         if include_canceled_items is not None and include_canceled_items is True:
-            _agreement_events = session.execute(
-                stmt.where(
-                    or_(
-                        Agreement.status == AgreementStatus.DONE.value,
-                        Agreement.status == AgreementStatus.CANCELED.value,
+            _agreement_events = (
+                await async_session.execute(
+                    stmt.where(
+                        or_(
+                            Agreement.status == AgreementStatus.DONE.value,
+                            Agreement.status == AgreementStatus.CANCELED.value,
+                        )
                     )
                 )
             ).all()
         else:  # default
-            _agreement_events = session.execute(
-                stmt.where(Agreement.status == AgreementStatus.DONE.value)
+            _agreement_events = (
+                await async_session.execute(
+                    stmt.where(Agreement.status == AgreementStatus.DONE.value)
+                )
             ).all()
 
         complete_list = []
@@ -498,10 +547,10 @@ class BaseOrderList(object):
                 )
             else:
                 settlement_timestamp_jp = ""
-            exchange_contract = Contract.get_contract(
+            exchange_contract = AsyncContract.get_contract(
                 contract_name="IbetExchange", address=exchange_contract_address
             )
-            agreement = Contract.call_function(
+            agreement = await AsyncContract.call_function(
                 contract=exchange_contract,
                 function_name="getAgreement",
                 args=(
@@ -540,9 +589,9 @@ class BaseOrderList(object):
 # 注文一覧・約定一覧（会員権）
 # ------------------------------
 class MembershipOrderList(BaseOrderList):
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         request_query: ListAllOrderListQuery = Depends(),
     ):
@@ -560,8 +609,8 @@ class MembershipOrderList(BaseOrderList):
             try:
                 # order_list
                 order_list.extend(
-                    self.get_order_list(
-                        session=session,
+                    await self.get_order_list(
+                        async_session=async_session,
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
@@ -572,8 +621,8 @@ class MembershipOrderList(BaseOrderList):
 
                 # settlement_list
                 settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
+                    await self.get_settlement_list(
+                        async_session=async_session,
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
@@ -583,8 +632,8 @@ class MembershipOrderList(BaseOrderList):
 
                 # complete_list
                 complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
+                    await self.get_complete_list(
+                        async_session=async_session,
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
@@ -613,7 +662,7 @@ class MembershipOrderList(BaseOrderList):
     ],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_membership_order_history(
+async def list_all_membership_order_history(
     order_list_res: ListAllOrderListResponse[RetrieveMembershipTokenResponse] = Depends(
         MembershipOrderList()
     ),
@@ -628,9 +677,9 @@ def list_all_membership_order_history(
 # 注文一覧・約定一覧（クーポン）
 # ------------------------------
 class CouponOrderList(BaseOrderList):
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         request_query: ListAllOrderListQuery = Depends(),
     ):
@@ -648,8 +697,8 @@ class CouponOrderList(BaseOrderList):
             try:
                 # order_list
                 order_list.extend(
-                    self.get_order_list(
-                        session=session,
+                    await self.get_order_list(
+                        async_session=async_session,
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
@@ -660,8 +709,8 @@ class CouponOrderList(BaseOrderList):
 
                 # settlement_list
                 settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
+                    await self.get_settlement_list(
+                        async_session=async_session,
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
@@ -671,8 +720,8 @@ class CouponOrderList(BaseOrderList):
 
                 # complete_list
                 complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
+                    await self.get_complete_list(
+                        async_session=async_session,
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
@@ -701,7 +750,7 @@ class CouponOrderList(BaseOrderList):
     ],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_coupon_order_history(
+async def list_all_coupon_order_history(
     order_list_res: ListAllOrderListResponse[RetrieveCouponTokenResponse] = Depends(
         CouponOrderList()
     ),
@@ -716,9 +765,9 @@ def list_all_coupon_order_history(
 # 注文一覧・約定一覧
 # ------------------------------
 class OrderList(BaseOrderList):
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         token_address: Annotated[
             ValidatedEthereumAddress, Path(description="Token address")
@@ -732,8 +781,8 @@ class OrderList(BaseOrderList):
             try:
                 # order_list
                 order_list.extend(
-                    self.get_order_list_filtered_by_token(
-                        session=session,
+                    await self.get_order_list_filtered_by_token(
+                        async_session=async_session,
                         token_address=token_address,
                         account_address=account_address,
                         include_canceled_items=request_query.include_canceled_items,
@@ -743,8 +792,8 @@ class OrderList(BaseOrderList):
 
                 # settlement_list
                 settlement_list.extend(
-                    self.get_settlement_list_filtered_by_token(
-                        session=session,
+                    await self.get_settlement_list_filtered_by_token(
+                        async_session=async_session,
                         token_address=token_address,
                         account_address=account_address,
                     )
@@ -753,8 +802,8 @@ class OrderList(BaseOrderList):
 
                 # complete_list
                 complete_list.extend(
-                    self.get_complete_list_filtered_by_token(
-                        session=session,
+                    await self.get_complete_list_filtered_by_token(
+                        async_session=async_session,
                         token_address=token_address,
                         account_address=account_address,
                         include_canceled_items=request_query.include_canceled_items,
@@ -780,7 +829,7 @@ class OrderList(BaseOrderList):
     response_model=GenericSuccessResponse[ListAllOrderListResponse[TokenAddress]],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def list_all_order_history_by_token_address(
+async def list_all_order_history_by_token_address(
     order_list_res: ListAllOrderListResponse[TokenAddress] = Depends(OrderList()),
 ):
     """

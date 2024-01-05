@@ -171,6 +171,8 @@ class TestEthSendRawTransaction:
             )
             signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+            session.commit()
+
             request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
             headers = {"Content-Type": "application/json"}
             resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -293,6 +295,8 @@ class TestEthSendRawTransaction:
         )
         signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.key)
 
+        session.commit()
+
         request_params = {
             "raw_tx_hex_list": [
                 signed_tx_1.rawTransaction.hex(),
@@ -371,38 +375,37 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
+        async def mock_inspect():
+            return AttributeDict(
+                {
+                    "pending": AttributeDict(
+                        {
+                            to_checksum_address(local_account_1.address): AttributeDict(
+                                {
+                                    str(
+                                        tx["nonce"]
+                                    ): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
+                                }
+                            )
+                        }
+                    ),
+                    "queued": AttributeDict({}),
+                }
+            )
+
         with mock.patch(
-            "web3.eth.Eth.wait_for_transaction_receipt",
+            "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
             MagicMock(side_effect=TimeExhausted()),
         ), mock.patch(
-            "web3.geth.GethTxPool.inspect",
-            MagicMock(
-                side_effect=[
-                    AttributeDict(
-                        {
-                            "pending": AttributeDict(
-                                {
-                                    to_checksum_address(
-                                        local_account_1.address
-                                    ): AttributeDict(
-                                        {
-                                            str(
-                                                tx["nonce"]
-                                            ): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
-                                        }
-                                    )
-                                }
-                            ),
-                            "queued": AttributeDict({}),
-                        }
-                    )
-                ]
-            ),
+            "web3.geth.AsyncGethTxPool.inspect",
+            MagicMock(side_effect=[mock_inspect()]),
         ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -708,6 +711,8 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
@@ -825,6 +830,8 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
@@ -895,6 +902,8 @@ class TestEthSendRawTransaction:
             to_checksum_address(local_account_1.address)
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+
+        session.commit()
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
@@ -978,6 +987,8 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
@@ -1057,10 +1068,12 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
-        with mock.patch.object(eth.web3.eth, "get_transaction", ConnectionError):
+        with mock.patch.object(eth.async_web3.eth, "get_transaction", ConnectionError):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
@@ -1130,12 +1143,14 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
         # waitForTransactionReceiptエラー
         with mock.patch(
-            "web3.eth.Eth.wait_for_transaction_receipt",
+            "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
             MagicMock(side_effect=Exception()),
         ) as m:
             resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -1300,39 +1315,38 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
         # queuedに滞留
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
+        async def mock_inspect():
+            return AttributeDict(
+                {
+                    "pending": AttributeDict({}),
+                    "queued": AttributeDict(
+                        {
+                            to_checksum_address(local_account_1.address): AttributeDict(
+                                {
+                                    str(
+                                        tx["nonce"]
+                                    ): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
+                                }
+                            )
+                        }
+                    ),
+                }
+            )
+
         with mock.patch(
-            "web3.eth.Eth.wait_for_transaction_receipt",
+            "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
             MagicMock(side_effect=TimeExhausted()),
         ) as m, mock.patch(
-            "web3.geth.GethTxPool.inspect",
-            MagicMock(
-                side_effect=[
-                    AttributeDict(
-                        {
-                            "pending": AttributeDict({}),
-                            "queued": AttributeDict(
-                                {
-                                    to_checksum_address(
-                                        local_account_1.address
-                                    ): AttributeDict(
-                                        {
-                                            str(
-                                                tx["nonce"]
-                                            ): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
-                                        }
-                                    )
-                                }
-                            ),
-                        }
-                    )
-                ]
-            ),
+            "web3.geth.AsyncGethTxPool.inspect",
+            MagicMock(side_effect=[mock_inspect()]),
         ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 

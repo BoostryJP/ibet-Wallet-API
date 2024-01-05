@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from typing import Any
 
-import requests
+import httpx
 from eth_account import Account
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends
@@ -29,8 +29,8 @@ from web3.exceptions import ContractLogicError, TimeExhausted
 from web3.types import TxReceipt
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -52,10 +52,10 @@ from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.contract_error_code import error_code_msg
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 LOG = log.get_logger()
-web3 = Web3Wrapper()
+async_web3 = AsyncWeb3Wrapper()
 
 router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
 
@@ -70,20 +70,27 @@ router = APIRouter(prefix="/Eth", tags=["eth_rpc"])
     response_model=GenericSuccessResponse[Any],
     responses=get_routers_responses(InvalidParameterError, ServiceUnavailable),
 )
-def ethereum_json_rpc(session: DBSession, data: JsonRPCRequest):
+async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest):
     """
     Executes ethereum JSON-RPC with given request body.
     """
-    node: Node | None = session.scalars(
-        select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
+    node: Node | None = (
+        await async_session.scalars(
+            select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
+        )
     ).first()
 
     if node is not None:
         try:
-            res_data = requests.post(
-                node.endpoint_uri,
-                json={"jsonrpc": "2.0", "method": data.method, "params": data.params},
-            )
+            async with httpx.AsyncClient() as client:
+                res_data = await client.post(
+                    node.endpoint_uri,
+                    json={
+                        "jsonrpc": "2.0",
+                        "method": data.method,
+                        "params": data.params,
+                    },
+                )
         except Exception:
             raise ServiceUnavailable("Unable to connect to web3 provider")
     else:
@@ -103,7 +110,7 @@ def ethereum_json_rpc(session: DBSession, data: JsonRPCRequest):
     response_model_exclude_unset=True,
     responses=get_routers_responses(InvalidParameterError),
 )
-def get_transaction_count(
+async def get_transaction_count(
     eth_address: str, query: GetTransactionCountQuery = Depends()
 ):
     """
@@ -114,10 +121,10 @@ def get_transaction_count(
     except ValueError:
         raise InvalidParameterError
 
-    nonce = web3.eth.get_transaction_count(
+    nonce = await async_web3.eth.get_transaction_count(
         to_checksum_address(eth_address), block_identifier=query.block_identifier
     )
-    gasprice = web3.eth.gas_price
+    gasprice = await async_web3.eth.gas_price
     chainid = config.WEB3_CHAINID
 
     eth_info = {"nonce": nonce, "gasprice": gasprice, "chainid": chainid}
@@ -136,14 +143,16 @@ def get_transaction_count(
     response_model_exclude_unset=True,
     responses=get_routers_responses(SuspendedTokenError),
 )
-def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
+async def send_raw_transaction(
+    async_session: DBAsyncSession, data: SendRawTransactionRequest
+):
     """
     Sends raw transaction.
     """
     raw_tx_hex_list = data.raw_tx_hex_list
 
     # Get TokenList Contract
-    list_contract = Contract.get_contract(
+    list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
     )
 
@@ -157,12 +166,16 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
             LOG.warning(f"RLP decoding failed: {err}")
             continue
 
-        listed_token = session.scalars(
-            select(Listing).where(Listing.token_address == to_contract_address).limit(1)
+        listed_token = (
+            await async_session.scalars(
+                select(Listing)
+                .where(Listing.token_address == to_contract_address)
+                .limit(1)
+            )
         ).first()
         if listed_token is not None:
             LOG.debug(f"Token Address: {to_contract_address}")
-            token_attribute = Contract.call_function(
+            token_attribute = await AsyncContract.call_function(
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(to_contract_address,),
@@ -170,13 +183,18 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
             )
             if token_attribute[1] != "":
                 try:
-                    token_contract = Contract.get_contract(
+                    token_contract = AsyncContract.get_contract(
                         contract_name=token_attribute[1], address=to_contract_address
                     )
                 except Exception as err:
                     LOG.warning(f"Could not get token status: {err}")
                     continue
-                if Contract.call_function(token_contract, "status", (), True) is False:
+                if (
+                    await AsyncContract.call_function(
+                        token_contract, "status", (), True
+                    )
+                    is False
+                ):
                     raise SuspendedTokenError("Token is currently suspended")
 
     # Send transaction
@@ -193,10 +211,12 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
             continue
 
         # Check that contract is executable
-        executable_contract = session.scalars(
-            select(ExecutableContract)
-            .where(to_contract_address == ExecutableContract.contract_address)
-            .limit(1)
+        executable_contract = (
+            await async_session.scalars(
+                select(ExecutableContract)
+                .where(to_contract_address == ExecutableContract.contract_address)
+                .limit(1)
+            )
         ).first()
         if executable_contract is None:
             # If it is not a default contract, return error status.
@@ -217,7 +237,7 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
 
         # Send raw transaction
         try:
-            tx_hash = web3.eth.send_raw_transaction(raw_tx_hex)
+            tx_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
         except Exception as err:
             result.append({"id": i + 1, "status": 0, "transaction_hash": None})
             LOG.error(f"Send transaction failed: {err}")
@@ -225,14 +245,14 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
 
         # Handling a transaction execution result
         try:
-            tx = web3.eth.wait_for_transaction_receipt(
+            tx = await async_web3.eth.wait_for_transaction_receipt(
                 tx_hash,
                 timeout=config.TRANSACTION_WAIT_TIMEOUT,
                 poll_latency=config.TRANSACTION_WAIT_POLL_LATENCY,
             )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
-                err_msg = inspect_tx_failure(tx_hash.hex())
+                err_msg = await inspect_tx_failure(tx_hash.hex())
                 code, message = error_code_msg(err_msg)
                 result.append(
                     {
@@ -261,7 +281,7 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
                 LOG.error(f"get sender address from signed transaction failed: {err}")
                 continue
             nonce = int("0x0" if raw_tx[0].hex() == "0x" else raw_tx[0].hex(), 16)
-            txpool_inspect = web3.geth.txpool.inspect()
+            txpool_inspect = await async_web3.geth.txpool.inspect()
             if from_address in txpool_inspect.queued:
                 if str(nonce) in txpool_inspect.queued[from_address]:
                     status = 0  # execution failure
@@ -294,14 +314,16 @@ def send_raw_transaction(session: DBSession, data: SendRawTransactionRequest):
     response_model_exclude_unset=True,
     responses=get_routers_responses(SuspendedTokenError),
 )
-def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionRequest):
+async def send_raw_transaction_no_wait(
+    async_session: DBAsyncSession, data: SendRawTransactionRequest
+):
     """
     Sends raw transaction without waiting for transaction receipt.
     """
     raw_tx_hex_list = data.raw_tx_hex_list
 
     # Get TokenList Contract
-    list_contract = Contract.get_contract(
+    list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
     )
 
@@ -315,13 +337,17 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
             LOG.warning(f"RLP decoding failed: {err}")
             continue
 
-        listed_token = session.scalars(
-            select(Listing).where(Listing.token_address == to_contract_address).limit(1)
+        listed_token = (
+            await async_session.scalars(
+                select(Listing)
+                .where(Listing.token_address == to_contract_address)
+                .limit(1)
+            )
         ).first()
 
         if listed_token is not None:
             LOG.debug(f"Token Address: {to_contract_address}")
-            token_attribute = Contract.call_function(
+            token_attribute = await AsyncContract.call_function(
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(to_contract_address,),
@@ -329,13 +355,18 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
             )
             if token_attribute[1] != "":
                 try:
-                    token_contract = Contract.get_contract(
+                    token_contract = AsyncContract.get_contract(
                         contract_name=token_attribute[1], address=to_contract_address
                     )
                 except Exception as err:
                     LOG.warning(f"Could not get token status: {err}")
                     continue
-                if Contract.call_function(token_contract, "status", (), True) is False:
+                if (
+                    await AsyncContract.call_function(
+                        token_contract, "status", (), True
+                    )
+                    is False
+                ):
                     raise SuspendedTokenError("Token is currently suspended")
 
     # Send transaction
@@ -352,10 +383,12 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
             continue
 
         # Check that contract is executable
-        executable_contract = session.scalars(
-            select(ExecutableContract)
-            .where(to_contract_address == ExecutableContract.contract_address)
-            .limit(1)
+        executable_contract = (
+            await async_session.scalars(
+                select(ExecutableContract)
+                .where(to_contract_address == ExecutableContract.contract_address)
+                .limit(1)
+            )
         ).first()
         if executable_contract is None:
             # If it is not a default contract, return error status.
@@ -376,7 +409,7 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
 
         # Send raw transaction
         try:
-            transaction_hash = web3.eth.send_raw_transaction(raw_tx_hex)
+            transaction_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
         except Exception as err:
             result.append({"id": i + 1, "status": 0, "transaction_hash": None})
             LOG.error(f"Send transaction failed: {err}")
@@ -400,7 +433,9 @@ def send_raw_transaction_no_wait(session: DBSession, data: SendRawTransactionReq
     response_model_exclude_unset=True,
     responses=get_routers_responses(DataNotExistsError),
 )
-def wait_for_transaction_receipt(query: WaitForTransactionReceiptQuery = Depends()):
+async def wait_for_transaction_receipt(
+    query: WaitForTransactionReceiptQuery = Depends(),
+):
     """
     Waits for transaction receipt returned.
     """
@@ -410,12 +445,12 @@ def wait_for_transaction_receipt(query: WaitForTransactionReceiptQuery = Depends
     result: dict[str, Any] = {}
     # Watch transaction receipt for given timeout duration.
     try:
-        tx: TxReceipt = web3.eth.wait_for_transaction_receipt(
+        tx: TxReceipt = await async_web3.eth.wait_for_transaction_receipt(
             transaction_hash=transaction_hash, timeout=timeout
         )
         if tx["status"] == 0:
             # Inspect reason of transaction fail.
-            err_msg = inspect_tx_failure(transaction_hash)
+            err_msg = await inspect_tx_failure(transaction_hash)
             code, message = error_code_msg(err_msg)
             result["status"] = 0
             result["error_code"] = code
@@ -428,8 +463,8 @@ def wait_for_transaction_receipt(query: WaitForTransactionReceiptQuery = Depends
     return json_response({**SuccessResponse.default(), "data": result})
 
 
-def inspect_tx_failure(tx_hash: str) -> str:
-    tx = web3.eth.get_transaction(tx_hash)
+async def inspect_tx_failure(tx_hash: str) -> str:
+    tx = await async_web3.eth.get_transaction(tx_hash)
 
     # build a new transaction to replay:
     replay_tx = {
@@ -441,7 +476,7 @@ def inspect_tx_failure(tx_hash: str) -> str:
 
     # replay the transaction locally:
     try:
-        web3.eth.call(replay_tx, tx.blockNumber - 1)
+        await async_web3.eth.call(replay_tx, tx.blockNumber - 1)
     except ContractLogicError as e:
         if len(e.args) == 0:
             raise e

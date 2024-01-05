@@ -80,6 +80,8 @@ class TestTokenTransferHistorySearch:
         }
         self.insert_listing(session, listing=listing)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={})
 
@@ -113,6 +115,8 @@ class TestTokenTransferHistorySearch:
             "value": 10,
         }
         self.insert_transfer_event(session, transfer_event=transfer_event)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={})
@@ -171,6 +175,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={})
@@ -241,6 +247,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
             apiurl, json={"source_event": IDXTransferSourceEventType.UNLOCK.value}
@@ -305,6 +313,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"data": "unlock"})
 
@@ -366,6 +376,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"account_address_list": [self.from_address]})
@@ -764,6 +776,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
             apiurl, json={"transaction_hash": self.transaction_hash[0:5]}
@@ -828,6 +842,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"from_address": self.from_address[0:5]})
 
@@ -889,6 +905,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"to_address": self.to_address[0:5]})
@@ -966,6 +984,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1070,6 +1090,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1176,6 +1198,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data=None,
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
             apiurl,
@@ -1279,6 +1303,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1385,6 +1411,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data=None,
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"sort_item": "to_address", "sort_order": 1})
 
@@ -1477,6 +1505,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"sort_item": "from_address", "sort_order": 1})
@@ -1574,6 +1604,8 @@ class TestTokenTransferHistorySearch:
             created=datetime(2023, 11, 6, 20, 0, 2),
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"sort_item": "created", "sort_order": 1})
 
@@ -1652,6 +1684,8 @@ class TestTokenTransferHistorySearch:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"offset": 1})
 
@@ -1713,6 +1747,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"offset": 0})
@@ -1783,6 +1819,8 @@ class TestTokenTransferHistorySearch:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"limit": 1})

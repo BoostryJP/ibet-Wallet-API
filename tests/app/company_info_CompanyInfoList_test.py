@@ -227,6 +227,7 @@ class TestCompanyInfoCompanyInfoList:
             coupon_register_list(issuerList[i], token, token_list)
             # 取扱トークンデータ挿入
             self.list_token(session, token)
+        session.commit()
 
         # テスト対象API呼び出し
         resp = client.get(self.apiurl)
@@ -298,6 +299,8 @@ class TestCompanyInfoCompanyInfoList:
             coupon_register_list(issuerList[i], token, token_list)
             # 取扱トークンデータ挿入
             self.list_token(session, token)
+
+        session.commit()
 
         # テスト対象API呼び出し
         resp = client.get(self.apiurl)
@@ -394,6 +397,8 @@ class TestCompanyInfoCompanyInfoList:
         coupon_register_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
 
+        session.commit()
+
         # テスト対象API呼び出し
         query_string = f"include_private_listing=true"
         resp = client.get(self.apiurl, params=query_string)
@@ -460,6 +465,8 @@ class TestCompanyInfoCompanyInfoList:
         token_2 = issue_coupon_token(issuerList[1], attribute_2)
         coupon_register_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
+
+        session.commit()
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
@@ -532,9 +539,11 @@ class TestCompanyInfoCompanyInfoList:
             session, token_2["address"], issuerList[1]["account_address"]
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        with mock.patch("app.api.routers.company_info.Contract") as m:
+        with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
         # 検証
@@ -607,9 +616,11 @@ class TestCompanyInfoCompanyInfoList:
             session, token_2["address"], issuerList[1]["account_address"]
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        with mock.patch("app.api.routers.company_info.Contract") as m:
+        with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
         # 検証
@@ -678,9 +689,11 @@ class TestCompanyInfoCompanyInfoList:
             session, token_2["address"], issuerList[1]["account_address"]
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        with mock.patch("app.api.routers.company_info.Contract") as m:
+        with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
         # 検証
@@ -749,9 +762,11 @@ class TestCompanyInfoCompanyInfoList:
             session, token_2["address"], issuerList[1]["account_address"]
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        with mock.patch("app.api.routers.company_info.Contract") as m:
+        with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
         # 検証

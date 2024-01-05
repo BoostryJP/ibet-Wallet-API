@@ -21,12 +21,12 @@ from typing import Annotated, Sequence, Type, Union
 
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import and_, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.functions import sum as sum_
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -78,6 +78,7 @@ from app.model.schema.base import (
     TokenType,
     ValidatedEthereumAddress,
 )
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -106,11 +107,11 @@ class BasePosition:
         self.token_model = token_model
         self.idx_token_model = idx_token_model
 
-    def get_list(
+    async def get_list(
         self,
         req: Request,
         request_query: ListAllPositionQuery,
-        session: Session,
+        async_session: AsyncSession,
         account_address=None,
     ):
         # API Enabled Check
@@ -121,25 +122,25 @@ class BasePosition:
 
         if enable_index:
             # If enable_index flag is set true, get position data from DB.
-            data = self.get_list_from_index(
+            data = await self.get_list_from_index(
                 request_query=request_query,
-                session=session,
+                async_session=async_session,
                 account_address=account_address,
             )
             return data
 
         # If enable_index flag is not set or set false, get position data from contract.
-        data = self.get_list_from_contract(
+        data = await self.get_list_from_contract(
             request_query=request_query,
-            session=session,
+            async_session=async_session,
             account_address=account_address,
         )
         return data
 
-    def get_list_from_index(
+    async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
-        session: Session,
+        async_session: AsyncSession,
         account_address: str,
     ):
         offset = request_query.offset
@@ -189,7 +190,9 @@ class BasePosition:
             .order_by(Listing.id)
         )
 
-        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+        total = await async_session.scalar(
+            select(func.count()).select_from(stmt.subquery())
+        )
         count = total
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -198,7 +201,7 @@ class BasePosition:
 
         _token_position_list: Sequence[
             tuple[str, IDXPosition, int | None, IDXTokenInstance]
-        ] = (session.execute(stmt).tuples().all())
+        ] = ((await async_session.execute(stmt)).tuples().all())
 
         position_list = []
         for item in _token_position_list:
@@ -230,30 +233,30 @@ class BasePosition:
             "positions": position_list,
         }
 
-    def get_list_from_contract(
+    async def get_list_from_contract(
         self,
         request_query: ListAllPositionQuery,
-        session: Session,
+        async_session: AsyncSession,
         account_address: str,
     ):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
         # Get TokenList Contract
-        _list_contract = Contract.get_contract(
+        _list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
         )
 
         # Get Listing Tokens
-        _token_list: Sequence[Listing] = session.scalars(
-            select(Listing).order_by(Listing.id)
+        _token_list: Sequence[Listing] = (
+            await async_session.scalars(select(Listing).order_by(Listing.id))
         ).all()
 
         position_list = []
         limit_count = 0
         count = 0
         for _token in _token_list:
-            token_info = Contract.call_function(
+            token_info = await AsyncContract.call_function(
                 contract=_list_contract,
                 function_name="getTokenByAddress",
                 args=(_token.token_address,),
@@ -263,10 +266,10 @@ class BasePosition:
             token_template = token_info[1]
             if token_template == self.token_type:
                 # Get Position
-                position = self._get_position(
+                position = await self._get_position(
                     account_address,
                     token_address,
-                    session,
+                    async_session,
                     is_detail=include_token_details,
                 )
 
@@ -296,11 +299,11 @@ class BasePosition:
             "positions": position_list,
         }
 
-    def get_one(
+    async def get_one(
         self,
         req: Request,
         request_query: GetPositionQuery,
-        session: Session,
+        async_session: AsyncSession,
         account_address: str,
         token_address: str,
     ):
@@ -312,22 +315,22 @@ class BasePosition:
 
         if enable_index:
             # If enable_index flag is set true, get position data from DB.
-            data = self.get_one_from_index(
-                session=session,
+            data = await self.get_one_from_index(
+                async_session=async_session,
                 account_address=account_address,
                 token_address=token_address,
             )
             return data
         # If enable_index flag is not set or set false, get position data from contract.
-        data = self.get_one_from_contract(
-            session=session,
+        data = await self.get_one_from_contract(
+            async_session=async_session,
             account_address=account_address,
             token_address=token_address,
         )
         return data
 
-    def get_one_from_index(
-        self, session: Session, account_address: str, token_address: str
+    async def get_one_from_index(
+        self, async_session: AsyncSession, account_address: str, token_address: str
     ):
         stmt = (
             select(
@@ -373,9 +376,9 @@ class BasePosition:
             )
             .limit(1)
         )
-        result: tuple[
-            str, IDXPosition | None, int | None, IDXTokenInstance
-        ] | None = session.execute(stmt).first()
+        result: tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None = (
+            await async_session.execute(stmt)
+        ).first()
         if result is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
         _position = result[1]
@@ -397,21 +400,23 @@ class BasePosition:
             "token": self.token_model.from_model(token).__dict__,
         }
 
-    def get_one_from_contract(
-        self, session: Session, account_address: str, token_address: str
+    async def get_one_from_contract(
+        self, async_session: AsyncSession, account_address: str, token_address: str
     ):
         # Get Listing Token
-        _token = session.scalars(
-            select(Listing).where(Listing.token_address == token_address).limit(1)
+        _token = (
+            await async_session.scalars(
+                select(Listing).where(Listing.token_address == token_address).limit(1)
+            )
         ).first()
         if _token is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         # Get TokenList Contract
-        _list_contract = Contract.get_contract(
+        _list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
         )
-        token_info = Contract.call_function(
+        token_info = await AsyncContract.call_function(
             contract=_list_contract,
             function_name="getTokenByAddress",
             args=(token_address,),
@@ -422,50 +427,63 @@ class BasePosition:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         # Get Position
-        position = self._get_position(
-            account_address, token_address, session, is_detail=True
+        position = await self._get_position(
+            account_address, token_address, async_session, is_detail=True
         )
         if position is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         return position
 
-    def _get_position(
+    async def _get_position(
         self,
         account_address: str,
         token_address: str,
-        session: Session,
+        async_session: AsyncSession,
         is_detail=False,
     ):
         # Get Contract
-        _token_contract, _exchange_contract = self._get_contract(token_address)
+        _token_contract, _exchange_contract = await self._get_contract(token_address)
 
         try:
-            balance = Contract.call_function(
+            balance = await AsyncContract.call_function(
                 contract=_token_contract,
                 function_name="balanceOf",
                 args=(account_address,),
                 default_returns=0,
             )
             if _exchange_contract is not None:
-                _exchange_balance = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="balanceOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
-                _exchange_commitment = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="commitmentOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
+                try:
+                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                        tasks = [
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="balanceOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                ),
+                            ),
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="commitmentOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                        ]
+                    _exchange_balance, _exchange_commitment = [
+                        task.result() for task in tasks
+                    ]
+                except ExceptionGroup:
+                    raise ServiceUnavailable from None
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
@@ -475,8 +493,8 @@ class BasePosition:
             if balance == 0 and _exchange_balance == 0 and _exchange_commitment == 0:
                 return None
             else:
-                token = self.token_model.get(
-                    session=session, token_address=token_address
+                token = await self.token_model.get(
+                    async_session=async_session, token_address=token_address
                 )
                 position = {
                     "balance": balance,
@@ -495,14 +513,14 @@ class BasePosition:
             LOG.error(e)
             return None
 
-    def _get_contract(self, token_address: str):
+    async def _get_contract(self, token_address: str):
         # Get Token Contract
-        _token_contract = Contract.get_contract(
+        _token_contract = AsyncContract.get_contract(
             contract_name=self.token_type, address=token_address
         )
 
         # Get Exchange Contract
-        exchange_address = Contract.call_function(
+        exchange_address = await AsyncContract.call_function(
             contract=_token_contract,
             function_name="tradableExchange",
             args=(),
@@ -510,7 +528,7 @@ class BasePosition:
         )
         _exchange_contract = None
         if exchange_address != config.ZERO_ADDRESS:
-            _exchange_contract = Contract.get_contract(
+            _exchange_contract = AsyncContract.get_contract(
                 contract_name="IbetExchangeInterface", address=exchange_address
             )
 
@@ -523,48 +541,72 @@ class BasePositionShare(BasePosition):
             config.SHARE_TOKEN_ENABLED, TokenType.IbetShare, ShareToken, IDXShareToken
         )
 
-    def _get_position(
+    async def _get_position(
         self,
         account_address: str,
         token_address: str,
-        session: Session,
+        async_session: AsyncSession,
         is_detail=False,
     ):
         # Get Contract
-        _token_contract, _exchange_contract = self._get_contract(token_address)
+        _token_contract, _exchange_contract = await self._get_contract(token_address)
 
         try:
-            balance = Contract.call_function(
-                contract=_token_contract,
-                function_name="balanceOf",
-                args=(account_address,),
-                default_returns=0,
-            )
-            pending_transfer = Contract.call_function(
-                contract=_token_contract,
-                function_name="pendingTransfer",
-                args=(account_address,),
-                default_returns=0,
-            )
+            try:
+                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                    tasks = [
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=_token_contract,
+                                function_name="balanceOf",
+                                args=(account_address,),
+                                default_returns=0,
+                            )
+                        ),
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=_token_contract,
+                                function_name="pendingTransfer",
+                                args=(account_address,),
+                                default_returns=0,
+                            ),
+                        ),
+                    ]
+                balance, pending_transfer = [task.result() for task in tasks]
+            except ExceptionGroup:
+                raise ServiceUnavailable from None
             if _exchange_contract is not None:
-                _exchange_balance = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="balanceOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
-                _exchange_commitment = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="commitmentOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
+                try:
+                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                        tasks = [
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="balanceOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="commitmentOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                        ]
+                    _exchange_balance, _exchange_commitment = [
+                        task.result() for task in tasks
+                    ]
+                except ExceptionGroup:
+                    raise ServiceUnavailable from None
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
@@ -580,7 +622,9 @@ class BasePositionShare(BasePosition):
             ):
                 return None
             else:
-                token = ShareToken.get(session=session, token_address=token_address)
+                token = await ShareToken.get(
+                    async_session=async_session, token_address=token_address
+                )
                 position = {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
@@ -610,48 +654,72 @@ class BasePositionStraightBond(BasePosition):
             IDXBondToken,
         )
 
-    def _get_position(
+    async def _get_position(
         self,
         account_address: str,
         token_address: str,
-        session: Session,
+        async_session: AsyncSession,
         is_detail=False,
     ):
         # Get Contract
-        _token_contract, _exchange_contract = self._get_contract(token_address)
+        _token_contract, _exchange_contract = await self._get_contract(token_address)
 
         try:
-            balance = Contract.call_function(
-                contract=_token_contract,
-                function_name="balanceOf",
-                args=(account_address,),
-                default_returns=0,
-            )
-            pending_transfer = Contract.call_function(
-                contract=_token_contract,
-                function_name="pendingTransfer",
-                args=(account_address,),
-                default_returns=0,
-            )
+            try:
+                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                    tasks = [
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=_token_contract,
+                                function_name="balanceOf",
+                                args=(account_address,),
+                                default_returns=0,
+                            )
+                        ),
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=_token_contract,
+                                function_name="pendingTransfer",
+                                args=(account_address,),
+                                default_returns=0,
+                            )
+                        ),
+                    ]
+                balance, pending_transfer = [task.result() for task in tasks]
+            except ExceptionGroup:
+                raise ServiceUnavailable from None
             if _exchange_contract is not None:
-                _exchange_balance = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="balanceOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
-                _exchange_commitment = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="commitmentOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
+                try:
+                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                        tasks = [
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="balanceOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="commitmentOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                        ]
+                    _exchange_balance, _exchange_commitment = [
+                        task.result() for task in tasks
+                    ]
+                except ExceptionGroup:
+                    raise ServiceUnavailable from None
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
@@ -667,7 +735,9 @@ class BasePositionStraightBond(BasePosition):
             ):
                 return None
             else:
-                token = BondToken.get(session=session, token_address=token_address)
+                token = await BondToken.get(
+                    async_session=async_session, token_address=token_address
+                )
                 position = {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
@@ -697,10 +767,10 @@ class BasePositionMembership(BasePosition):
             IDXMembershipToken,
         )
 
-    def get_list_from_index(
+    async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
-        session: Session,
+        async_session: AsyncSession,
         account_address: str,
     ):
         offset = request_query.offset
@@ -724,7 +794,9 @@ class BasePositionMembership(BasePosition):
             .order_by(Listing.id)
         )
 
-        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+        total = await async_session.scalar(
+            select(func.count()).select_from(stmt.subquery())
+        )
         count = total
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -732,7 +804,7 @@ class BasePositionMembership(BasePosition):
             stmt = stmt.offset(offset)
 
         _token_position_list: Sequence[tuple[str, IDXPosition, IDXTokenInstance]] = (
-            session.execute(stmt).tuples().all()
+            (await async_session.execute(stmt)).tuples().all()
         )
 
         position_list = []
@@ -771,10 +843,10 @@ class BasePositionCoupon(BasePosition):
             IDXCouponToken,
         )
 
-    def get_list_from_index(
+    async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
-        session: Session,
+        async_session: AsyncSession,
         account_address: str,
     ):
         offset = request_query.offset
@@ -836,7 +908,9 @@ class BasePositionCoupon(BasePosition):
             .order_by(Listing.id)
         )
 
-        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+        total = await async_session.scalar(
+            select(func.count()).select_from(stmt.subquery())
+        )
         count = total
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -845,7 +919,7 @@ class BasePositionCoupon(BasePosition):
 
         _token_position_list: Sequence[
             tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]
-        ] = (session.execute(stmt).tuples().all())
+        ] = ((await async_session.execute(stmt)).tuples().all())
 
         position_list = []
         for item in _token_position_list:
@@ -878,42 +952,68 @@ class BasePositionCoupon(BasePosition):
             "positions": position_list,
         }
 
-    def _get_position(self, account_address, token_address, session, is_detail=False):
+    async def _get_position(
+        self, account_address, token_address, async_session, is_detail=False
+    ):
         # Get Contract
-        _token_contract, _exchange_contract = self._get_contract(token_address)
+        _token_contract, _exchange_contract = await self._get_contract(token_address)
 
         try:
-            balance = Contract.call_function(
-                contract=_token_contract,
-                function_name="balanceOf",
-                args=(account_address,),
-                default_returns=0,
-            )
-            used = Contract.call_function(
-                contract=_token_contract,
-                function_name="usedOf",
-                args=(account_address,),
-                default_returns=0,
-            )
+            try:
+                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                    tasks = [
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=_token_contract,
+                                function_name="balanceOf",
+                                args=(account_address,),
+                                default_returns=0,
+                            )
+                        ),
+                        tg.create_task(
+                            AsyncContract.call_function(
+                                contract=_token_contract,
+                                function_name="usedOf",
+                                args=(account_address,),
+                                default_returns=0,
+                            )
+                        ),
+                    ]
+                balance, used = [task.result() for task in tasks]
+            except ExceptionGroup:
+                raise ServiceUnavailable from None
             if _exchange_contract is not None:
-                _exchange_balance = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="balanceOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
-                _exchange_commitment = Contract.call_function(
-                    contract=_exchange_contract,
-                    function_name="commitmentOf",
-                    args=(
-                        account_address,
-                        token_address,
-                    ),
-                    default_returns=0,
-                )
+                try:
+                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                        tasks = [
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="balanceOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                            tg.create_task(
+                                AsyncContract.call_function(
+                                    contract=_exchange_contract,
+                                    function_name="commitmentOf",
+                                    args=(
+                                        account_address,
+                                        token_address,
+                                    ),
+                                    default_returns=0,
+                                )
+                            ),
+                        ]
+                    _exchange_balance, _exchange_commitment = [
+                        task.result() for task in tasks
+                    ]
+                except ExceptionGroup:
+                    raise ServiceUnavailable from None
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
@@ -921,11 +1021,13 @@ class BasePositionCoupon(BasePosition):
 
             # Retrieving token receipt history from IDXTransfer
             # NOTE: Index data has a lag from the most recent transfer state.
-            received_history = session.scalars(
-                select(IDXTransfer)
-                .where(IDXTransfer.token_address == token_address)
-                .where(IDXTransfer.to_address == account_address)
-                .limit(1)
+            received_history = (
+                await async_session.scalars(
+                    select(IDXTransfer)
+                    .where(IDXTransfer.token_address == token_address)
+                    .where(IDXTransfer.to_address == account_address)
+                    .limit(1)
+                )
             ).first()
             # If balance, commitment, and used are non-zero, and exist received history,
             # get the token information from TokenContract.
@@ -938,7 +1040,9 @@ class BasePositionCoupon(BasePosition):
             ):
                 return None
             else:
-                token = CouponToken.get(session=session, token_address=token_address)
+                token = await CouponToken.get(
+                    async_session=async_session, token_address=token_address
+                )
                 position = {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
@@ -972,17 +1076,17 @@ class GetPositionList:
     def __init__(self, base_position: BasePositionType):
         self.base_position = base_position
 
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
             ValidatedEthereumAddress, Path(description="account address")
         ],
         request_query: ListAllPositionQuery = Depends(),
     ):
-        return self.base_position().get_list(
-            req, request_query, session, account_address
+        return await self.base_position().get_list(
+            req, request_query, async_session, account_address
         )
 
 
@@ -992,9 +1096,9 @@ class GetPosition:
     def __init__(self, base_position: BasePositionType):
         self.base_position = base_position
 
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
             ValidatedEthereumAddress, Path(description="account address")
@@ -1004,8 +1108,8 @@ class GetPosition:
         ],
         request_query: GetPositionQuery = Depends(),
     ):
-        return self.base_position().get_one(
-            req, request_query, session, account_address, token_address
+        return await self.base_position().get_one(
+            req, request_query, async_session, account_address, token_address
         )
 
 
@@ -1021,7 +1125,7 @@ class GetPosition:
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def list_all_share_positions(
+async def list_all_share_positions(
     positions: Union[
         list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionShare))
@@ -1044,7 +1148,7 @@ def list_all_share_positions(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def list_all_straight_bond_positions(
+async def list_all_straight_bond_positions(
     positions: Union[
         list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionStraightBond))
@@ -1065,7 +1169,7 @@ def list_all_straight_bond_positions(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def list_all_membership_positions(
+async def list_all_membership_positions(
     positions: Union[
         list[MembershipPositionWithDetail], list[MembershipPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionMembership))
@@ -1086,7 +1190,7 @@ def list_all_membership_positions(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def list_all_coupon_positions(
+async def list_all_coupon_positions(
     positions: Union[
         list[CouponPositionWithDetail], list[CouponPositionWithAddress]
     ] = Depends(GetPositionList(BasePositionCoupon))
@@ -1109,7 +1213,7 @@ def list_all_coupon_positions(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def retrieve_share_position_by_token_address(
+async def retrieve_share_position_by_token_address(
     position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare)),
 ):
     """
@@ -1130,7 +1234,7 @@ def retrieve_share_position_by_token_address(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def retrieve_straight_bond_position_by_token_address(
+async def retrieve_straight_bond_position_by_token_address(
     position: SecurityTokenPositionWithDetail = Depends(
         GetPosition(BasePositionStraightBond)
     ),
@@ -1151,7 +1255,7 @@ def retrieve_straight_bond_position_by_token_address(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def retrieve_membership_position_by_token_address(
+async def retrieve_membership_position_by_token_address(
     position: MembershipPositionWithDetail = Depends(
         GetPosition(BasePositionMembership)
     ),
@@ -1172,7 +1276,7 @@ def retrieve_membership_position_by_token_address(
         DataNotExistsError, NotSupportedError, InvalidParameterError
     ),
 )
-def retrieve_coupon_position_by_token_address(
+async def retrieve_coupon_position_by_token_address(
     position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon)),
 ):
     """
@@ -1189,8 +1293,8 @@ def retrieve_coupon_position_by_token_address(
     response_model=GenericSuccessResponse[ListAllCouponConsumptionsResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_coupon_consumptions(
-    session: DBSession,
+async def list_all_coupon_consumptions(
+    async_session: DBAsyncSession,
     req: Request,
     account_address: Annotated[
         ValidatedEthereumAddress, Path(description="account address")
@@ -1205,15 +1309,17 @@ def list_all_coupon_consumptions(
     if config.COUPON_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    consumptions: Sequence[IDXConsumeCoupon] = session.scalars(
-        select(IDXConsumeCoupon)
-        .where(
-            and_(
-                IDXConsumeCoupon.token_address == token_address,
-                IDXConsumeCoupon.account_address == account_address,
+    consumptions: Sequence[IDXConsumeCoupon] = (
+        await async_session.scalars(
+            select(IDXConsumeCoupon)
+            .where(
+                and_(
+                    IDXConsumeCoupon.token_address == token_address,
+                    IDXConsumeCoupon.account_address == account_address,
+                )
             )
+            .order_by(IDXConsumeCoupon.block_timestamp)
         )
-        .order_by(IDXConsumeCoupon.block_timestamp)
     ).all()
 
     res_data = [
@@ -1242,8 +1348,8 @@ def list_all_coupon_consumptions(
     response_model=GenericSuccessResponse[TokenPositionsResponse],
     responses=get_routers_responses(InvalidParameterError),
 )
-def list_all_token_position(
-    session: DBSession,
+async def list_all_token_position(
+    async_session: DBAsyncSession,
     account_address: Annotated[
         ValidatedEthereumAddress, Path(description="account address")
     ],
@@ -1391,7 +1497,9 @@ def list_all_token_position(
         .order_by(Listing.id)
     )
 
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
     count = total
 
     if limit is not None:
@@ -1399,7 +1507,7 @@ def list_all_token_position(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_position_list = session.execute(stmt).all()
+    _token_position_list = (await async_session.execute(stmt)).all()
 
     position_list = []
     for item in _token_position_list:

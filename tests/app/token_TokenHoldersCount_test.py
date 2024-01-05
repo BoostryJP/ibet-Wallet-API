@@ -83,6 +83,8 @@ class TestTokenTokenHoldersCount:
         }
         self.insert_listing(session, listing=listing)
 
+        session.commit()
+
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
@@ -136,6 +138,8 @@ class TestTokenTokenHoldersCount:
             "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -193,6 +197,8 @@ class TestTokenTokenHoldersCount:
             "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -263,6 +269,8 @@ class TestTokenTokenHoldersCount:
         }
         self.insert_position(session, other_position_1)
 
+        session.commit()
+
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
@@ -316,6 +324,8 @@ class TestTokenTokenHoldersCount:
             "exchange_commitment": 10,
         }
         self.insert_position(session, other_position_1)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)

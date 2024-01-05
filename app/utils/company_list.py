@@ -19,13 +19,12 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app import config, log
-from app.database import get_engine
+from app.database import async_engine, engine
 from app.model.db import Company as CompanyModel
-
-engine = get_engine(config.DATABASE_URL)
 
 LOG = log.get_logger()
 
@@ -52,6 +51,34 @@ class CompanyList:
                         company_list.append(Company(_company.json()))
                 finally:
                     db_session.close()
+        except Exception as err:
+            company_list = []
+            LOG.error(err)
+        return cls(company_list)
+
+    @classmethod
+    async def get_async(cls):
+        try:
+            if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
+                company_list = []
+                _company_list = json.load(open("data/company_list.json", "r"))
+                for _company in _company_list:
+                    company_list.append(Company(_company))
+            else:
+                db_session = AsyncSession(
+                    autocommit=False, autoflush=True, bind=async_engine
+                )
+                try:
+                    company_list = []
+                    _company_list = (
+                        await db_session.scalars(
+                            select(CompanyModel).order_by(CompanyModel.created)
+                        )
+                    ).all()
+                    for _company in _company_list:
+                        company_list.append(Company(_company.json()))
+                finally:
+                    await db_session.close()
         except Exception as err:
             company_list = []
             LOG.error(err)
@@ -90,6 +117,35 @@ class CompanyList:
                         return Company(_company.json())
                 finally:
                     db_session.close()
+        except Exception as err:
+            LOG.error(err)
+
+        return Company(CompanyList.DEFAULT)
+
+    @staticmethod
+    async def get_find_async(address):
+        try:
+            if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
+                company_list = json.load(open("data/company_list.json", "r"))
+                for _company in company_list:
+                    if address == _company["address"]:
+                        return Company(_company)
+            else:
+                db_session = AsyncSession(
+                    autocommit=False, autoflush=True, bind=async_engine
+                )
+                try:
+                    _company = (
+                        await db_session.scalars(
+                            select(CompanyModel)
+                            .where(CompanyModel.address == address)
+                            .limit(1)
+                        )
+                    ).first()
+                    if _company is not None:
+                        return Company(_company.json())
+                finally:
+                    await db_session.close()
         except Exception as err:
             LOG.error(err)
 

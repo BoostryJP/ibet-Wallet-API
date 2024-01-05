@@ -122,6 +122,8 @@ class TestDEXMarketMembershipTick:
     def test_normal_2(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
+        session.commit()
+
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"

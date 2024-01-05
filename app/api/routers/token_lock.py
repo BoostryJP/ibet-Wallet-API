@@ -25,7 +25,7 @@ from sqlalchemy import desc, func, select
 
 from app import log
 from app.config import TZ
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import InvalidParameterError
 from app.model.db import IDXLockedPosition
 from app.model.schema import (
@@ -53,7 +53,9 @@ router = APIRouter(prefix="/Token/Lock", tags=["token_info"])
     response_model=GenericSuccessResponse[ListAllTokenLockResponse],
     responses=get_routers_responses(InvalidParameterError),
 )
-def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Depends()):
+async def list_all_lock(
+    async_session: DBAsyncSession, request_query: ListAllTokenLockQuery = Depends()
+):
     """
     Returns a list of locked positions.
     """
@@ -69,14 +71,18 @@ def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Dep
     stmt = select(IDXLockedPosition).where(IDXLockedPosition.value > 0)
     if len(token_address_list) > 0:
         stmt = stmt.where(IDXLockedPosition.token_address.in_(token_address_list))
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if account_address is not None:
         stmt = stmt.where(IDXLockedPosition.account_address == account_address)
     if lock_address is not None:
         stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     sort_attr = getattr(IDXLockedPosition, sort_item, None)
 
@@ -96,7 +102,9 @@ def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Dep
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _locked_list: Sequence[IDXLockedPosition] = session.scalars(stmt).all()
+    _locked_list: Sequence[IDXLockedPosition] = (
+        await async_session.scalars(stmt)
+    ).all()
 
     data = {
         "result_set": {
@@ -117,8 +125,9 @@ def list_all_lock(session: DBSession, request_query: ListAllTokenLockQuery = Dep
     response_model=GenericSuccessResponse[RetrieveTokenLockCountResponse],
     responses=get_routers_responses(InvalidParameterError),
 )
-def retrieve_lock_count(
-    session: DBSession, request_query: RetrieveTokenLockCountQuery = Depends()
+async def retrieve_lock_count(
+    async_session: DBAsyncSession,
+    request_query: RetrieveTokenLockCountQuery = Depends(),
 ):
     """
     Returns count of locked positions.
@@ -136,7 +145,9 @@ def retrieve_lock_count(
     if lock_address is not None:
         stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-    _count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    _count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     data = {"count": _count}
     return json_response({**SuccessResponse.default(), "data": data})
