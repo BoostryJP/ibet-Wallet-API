@@ -285,6 +285,7 @@ async def async_db(async_db_engine):
                     )
             await db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
         else:
+            await db.begin()
             for table in Base.metadata.sorted_tables:
                 await db.execute(
                     text(f'ALTER TABLE "{table.name}" DISABLE TRIGGER ALL;')
@@ -301,6 +302,8 @@ async def async_db(async_db_engine):
                 await db.execute(
                     text(f'ALTER TABLE "{table.name}" ENABLE TRIGGER ALL;')
                 )
+            await db.commit()
+    await db.close()
 
     app.dependency_overrides[db_async_session] = db_async_session
 
@@ -341,6 +344,7 @@ def db(db_engine):
                 )
             db.execute(text(f'ALTER TABLE "{table.name}" ENABLE TRIGGER ALL;'))
         db.commit()
+    db.close()
 
     app.dependency_overrides[db_session] = db_session
 
