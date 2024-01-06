@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest import mock
+
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -84,8 +86,8 @@ class TestTokenMembershipTokenDetails:
     ###########################################################################
 
     # Normal_1
+    @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -102,6 +104,8 @@ class TestTokenMembershipTokenDetails:
 
         # Register tokens on the list
         self.list_token(session, token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -142,8 +146,8 @@ class TestTokenMembershipTokenDetails:
 
     # Normal_2
     # status = False
+    @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -163,6 +167,8 @@ class TestTokenMembershipTokenDetails:
 
         # Invalidate token
         membership_invalidate(issuer, token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -235,8 +241,8 @@ class TestTokenMembershipTokenDetails:
     # Error_2
     # Not registered on the list
     # -> 404
+    @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
     def test_error_2(self, client, shared_contract, session):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -250,6 +256,8 @@ class TestTokenMembershipTokenDetails:
         attribute = self.token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -267,9 +275,8 @@ class TestTokenMembershipTokenDetails:
     # Error_3
     # Not Supported
     # -> 404
+    @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", False)
     def test_error_3(self, client: TestClient, session: Session):
-        config.MEMBERSHIP_TOKEN_ENABLED = False
-
         # Request target API
         resp = client.get(
             self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765"

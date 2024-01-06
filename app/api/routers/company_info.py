@@ -23,8 +23,8 @@ from fastapi import APIRouter, Path, Query
 from sqlalchemy import desc, select
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
 from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.db import (
@@ -64,8 +64,8 @@ router = APIRouter(prefix="/Companies", tags=["company_info"])
     response_model=GenericSuccessResponse[ListAllCompanyInfoResponse],
     responses=get_routers_responses(),
 )
-def list_all_companies(
-    session: DBSession,
+async def list_all_companies(
+    async_session: DBAsyncSession,
     include_private_listing: Optional[bool] = Query(
         default=False, description="include private listing token issuers"
     ),
@@ -75,59 +75,61 @@ def list_all_companies(
     """
 
     # Get company list
-    _company_list = CompanyList.get()
+    _company_list = await CompanyList.get_async()
     company_list = [company.json() for company in _company_list.all()]
 
     # Get the token listed
     if include_private_listing:
-        available_tokens: Sequence[
-            tuple[Listing, str, str, str, str]
-        ] = session.execute(
-            select(
-                Listing,
-                IDXBondToken.owner_address,
-                IDXShareToken.owner_address,
-                IDXMembershipToken.owner_address,
-                IDXCouponToken.owner_address,
-            )
-            .outerjoin(
-                IDXBondToken, Listing.token_address == IDXBondToken.token_address
-            )
-            .outerjoin(
-                IDXShareToken, Listing.token_address == IDXShareToken.token_address
-            )
-            .outerjoin(
-                IDXMembershipToken,
-                Listing.token_address == IDXMembershipToken.token_address,
-            )
-            .outerjoin(
-                IDXCouponToken, Listing.token_address == IDXCouponToken.token_address
+        available_tokens: Sequence[tuple[Listing, str, str, str, str]] = (
+            await async_session.execute(
+                select(
+                    Listing,
+                    IDXBondToken.owner_address,
+                    IDXShareToken.owner_address,
+                    IDXMembershipToken.owner_address,
+                    IDXCouponToken.owner_address,
+                )
+                .outerjoin(
+                    IDXBondToken, Listing.token_address == IDXBondToken.token_address
+                )
+                .outerjoin(
+                    IDXShareToken, Listing.token_address == IDXShareToken.token_address
+                )
+                .outerjoin(
+                    IDXMembershipToken,
+                    Listing.token_address == IDXMembershipToken.token_address,
+                )
+                .outerjoin(
+                    IDXCouponToken,
+                    Listing.token_address == IDXCouponToken.token_address,
+                )
             )
         ).all()
     else:
-        available_tokens: Sequence[
-            tuple[Listing, str, str, str, str]
-        ] = session.execute(
-            select(
-                Listing,
-                IDXBondToken.owner_address,
-                IDXShareToken.owner_address,
-                IDXMembershipToken.owner_address,
-                IDXCouponToken.owner_address,
-            )
-            .where(Listing.is_public == True)
-            .outerjoin(
-                IDXBondToken, Listing.token_address == IDXBondToken.token_address
-            )
-            .outerjoin(
-                IDXShareToken, Listing.token_address == IDXShareToken.token_address
-            )
-            .outerjoin(
-                IDXMembershipToken,
-                Listing.token_address == IDXMembershipToken.token_address,
-            )
-            .outerjoin(
-                IDXCouponToken, Listing.token_address == IDXCouponToken.token_address
+        available_tokens: Sequence[tuple[Listing, str, str, str, str]] = (
+            await async_session.execute(
+                select(
+                    Listing,
+                    IDXBondToken.owner_address,
+                    IDXShareToken.owner_address,
+                    IDXMembershipToken.owner_address,
+                    IDXCouponToken.owner_address,
+                )
+                .where(Listing.is_public == True)
+                .outerjoin(
+                    IDXBondToken, Listing.token_address == IDXBondToken.token_address
+                )
+                .outerjoin(
+                    IDXShareToken, Listing.token_address == IDXShareToken.token_address
+                )
+                .outerjoin(
+                    IDXMembershipToken,
+                    Listing.token_address == IDXMembershipToken.token_address,
+                )
+                .outerjoin(
+                    IDXCouponToken,
+                    Listing.token_address == IDXCouponToken.token_address,
+                )
             )
         ).all()
 
@@ -141,10 +143,10 @@ def list_all_companies(
                 continue
 
             token_address = to_checksum_address(token[0].token_address)
-            token_contract = Contract.get_contract(
+            token_contract = AsyncContract.get_contract(
                 contract_name="Ownable", address=token_address
             )
-            owner_address = Contract.call_function(
+            owner_address = await AsyncContract.call_function(
                 contract=token_contract,
                 function_name="owner",
                 args=(),
@@ -172,13 +174,13 @@ def list_all_companies(
     response_model=GenericSuccessResponse[RetrieveCompanyInfoResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def retrieve_company(
+async def retrieve_company(
     eth_address: Annotated[ValidatedEthereumAddress, Path(description="Issuer address")]
 ):
     """
     Returns given issuer information.
     """
-    company = CompanyList.get_find(to_checksum_address(eth_address))
+    company = await CompanyList.get_find_async(to_checksum_address(eth_address))
     if company.address == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
 
@@ -195,8 +197,8 @@ def retrieve_company(
     response_model=GenericSuccessResponse[ListAllCompanyTokensResponse],
     responses=get_routers_responses(),
 )
-def retrieve_company_tokens(
-    session: DBSession,
+async def retrieve_company_tokens(
+    async_session: DBAsyncSession,
     eth_address: Annotated[
         ValidatedEthereumAddress, Path(description="Issuer address")
     ],
@@ -208,30 +210,34 @@ def retrieve_company_tokens(
     Returns a list of tokens issued by given issuer.
     """
     # TokenList contract
-    list_contract = Contract.get_contract(
+    list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
     )
 
     # Get the token listed
     if include_private_listing:
-        available_list: Sequence[Listing] = session.scalars(
-            select(Listing)
-            .where(Listing.owner_address == eth_address)
-            .order_by(desc(Listing.id))
+        available_list: Sequence[Listing] = (
+            await async_session.scalars(
+                select(Listing)
+                .where(Listing.owner_address == eth_address)
+                .order_by(desc(Listing.id))
+            )
         ).all()
     else:
-        available_list: Sequence[Listing] = session.scalars(
-            select(Listing)
-            .where(Listing.owner_address == eth_address)
-            .where(Listing.is_public == True)
-            .order_by(desc(Listing.id))
+        available_list: Sequence[Listing] = (
+            await async_session.scalars(
+                select(Listing)
+                .where(Listing.owner_address == eth_address)
+                .where(Listing.is_public == True)
+                .order_by(desc(Listing.id))
+            )
         ).all()
 
     # Get token attributes
     token_list = []
     for available_token in available_list:
         token_address = to_checksum_address(available_token.token_address)
-        token_info = Contract.call_function(
+        token_info = await AsyncContract.call_function(
             contract=list_contract,
             function_name="getTokenByAddress",
             args=(token_address,),
@@ -243,7 +249,9 @@ def retrieve_company_tokens(
             # Filter only the token types used in the system
             if available_token_template(token_template):
                 token_model = get_token_model(token_template)
-                token = token_model.get(session=session, token_address=token_address)
+                token = await token_model.get(
+                    async_session=async_session, token_address=token_address
+                )
                 token_list.append(token.__dict__)
             else:
                 continue

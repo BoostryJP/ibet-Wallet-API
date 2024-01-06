@@ -92,6 +92,8 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_listing(session, listing=listing)
 
+        session.commit()
+
         # request target API
         query_string = ""
         resp = client.get(
@@ -150,6 +152,8 @@ class TestTokenTransferApprovalHistory:
             .astimezone(local_tz)
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -223,6 +227,8 @@ class TestTokenTransferApprovalHistory:
             .astimezone(local_tz)
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -303,6 +309,8 @@ class TestTokenTransferApprovalHistory:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
@@ -381,6 +389,8 @@ class TestTokenTransferApprovalHistory:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
@@ -435,6 +445,8 @@ class TestTokenTransferApprovalHistory:
                 "transfer_approved": True,
             }
             self.insert_transfer_approval(session, transfer_approval=transfer_approval)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -495,6 +507,8 @@ class TestTokenTransferApprovalHistory:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -566,6 +580,8 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(
@@ -635,6 +651,8 @@ class TestTokenTransferApprovalHistory:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -706,6 +724,8 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"from_address": self.from_address[0:5]})
@@ -772,6 +792,8 @@ class TestTokenTransferApprovalHistory:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"to_address": self.to_address[0:5]})
@@ -837,6 +859,8 @@ class TestTokenTransferApprovalHistory:
             .astimezone(local_tz)
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -909,6 +933,8 @@ class TestTokenTransferApprovalHistory:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "offset=2&limit=2"
@@ -979,6 +1005,8 @@ class TestTokenTransferApprovalHistory:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "limit=1"
@@ -1032,6 +1060,8 @@ class TestTokenTransferApprovalHistory:
                 "transfer_approved": True,
             }
             self.insert_transfer_approval(session, transfer_approval=transfer_approval)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)

@@ -260,6 +260,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params},
@@ -350,6 +352,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params, "offset": 3, "limit": 1},
@@ -404,6 +408,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params, "offset": 4},
@@ -448,6 +454,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_2, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -685,6 +693,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_2, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={
@@ -830,6 +840,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params, "msg_sender": self.lock_1},
@@ -883,6 +895,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_1, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -950,6 +964,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params, "recipient_address": self.recipient_1},
@@ -1003,6 +1019,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_1, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -1062,6 +1080,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={
@@ -1119,6 +1139,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_1, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -1189,6 +1211,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_2, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -1328,6 +1352,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params, "sort_item": "lock_address", "sort_order": 0},
@@ -1417,6 +1443,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_1, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -1508,6 +1536,8 @@ class TestPositionShareLockEvent:
             session=session, token_address=self.token_1, base_time=base_time
         )
 
+        session.commit()
+
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={**get_params, "sort_item": "value", "sort_order": 0},
@@ -1597,6 +1627,8 @@ class TestPositionShareLockEvent:
         self.setup_data(
             session=session, token_address=self.token_1, base_time=base_time
         )
+
+        session.commit()
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),

@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
+
 import pytest
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
@@ -157,7 +159,7 @@ class TestTokenStraightBondTokenAddresses:
         # 事前準備
         processor.BOND_TOKEN_ENABLED = True
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         query_string = ""
         resp = client.get(self.apiurl, params=query_string)
@@ -241,7 +243,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         resp = client.get(
             self.apiurl,
@@ -330,7 +332,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         resp = client.get(self.apiurl, params={"offset": 7})
         tokens = []
@@ -413,7 +415,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         resp = client.get(
             self.apiurl,
@@ -511,7 +513,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         not_matched_key_value = {
             "name": "not_matched_value",
@@ -608,7 +610,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         resp = client.get(
             self.apiurl,
@@ -662,7 +664,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         query_string = ""
         resp = client.get(self.apiurl, params=query_string)
@@ -707,7 +709,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         invalid_key_value = {
             "is_redeemed": "invalid_param",

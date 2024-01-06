@@ -23,7 +23,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -58,8 +58,8 @@ router = APIRouter(prefix="/Token/Membership", tags=["token_info"])
     response_model=GenericSuccessResponse[ListAllMembershipTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def list_all_membership_tokens(
-    session: DBSession,
+async def list_all_membership_tokens(
+    async_session: DBAsyncSession,
     req: Request,
     address_list: Annotated[
         list[ValidatedEthereumAddress],
@@ -99,7 +99,9 @@ def list_all_membership_tokens(
     )
     if len(address_list):
         stmt = stmt.where(IDXMembershipToken.token_address.in_(address_list))
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -120,7 +122,9 @@ def list_all_membership_tokens(
         stmt = stmt.where(
             IDXMembershipToken.initial_offering_status == initial_offering_status
         )
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -141,7 +145,9 @@ def list_all_membership_tokens(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXMembershipToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXMembershipToken] = (
+        await async_session.scalars(stmt)
+    ).all()
 
     tokens = [MembershipToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
@@ -164,8 +170,8 @@ def list_all_membership_tokens(
     response_model=GenericSuccessResponse[ListAllMembershipTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_membership_token_addresses(
-    session: DBSession,
+async def list_all_membership_token_addresses(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllMembershipTokensQuery = Depends(),
 ):
@@ -196,7 +202,9 @@ def list_all_membership_token_addresses(
         .join(Listing, Listing.token_address == IDXMembershipToken.token_address)
         .where(Listing.is_public == True)
     )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -217,7 +225,9 @@ def list_all_membership_token_addresses(
         stmt = stmt.where(
             IDXMembershipToken.initial_offering_status == initial_offering_status
         )
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -238,7 +248,9 @@ def list_all_membership_token_addresses(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXMembershipToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXMembershipToken] = (
+        await async_session.scalars(stmt)
+    ).all()
 
     data = {
         "result_set": {
@@ -260,8 +272,8 @@ def list_all_membership_token_addresses(
     response_model=GenericSuccessResponse[RetrieveMembershipTokenResponse],
     responses=get_routers_responses(NotSupportedError, DataNotExistsError),
 )
-def retrieve_membership_token(
-    session: DBSession,
+async def retrieve_membership_token(
+    async_session: DBAsyncSession,
     req: Request,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -275,8 +287,10 @@ def retrieve_membership_token(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -284,7 +298,9 @@ def retrieve_membership_token(
     token_address = to_checksum_address(token_address)
 
     try:
-        token_detail = MembershipToken.get(session=session, token_address=token_address)
+        token_detail = await MembershipToken.get(
+            async_session=async_session, token_address=token_address
+        )
     except ServiceUnavailable as e:
         LOG.warning(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None

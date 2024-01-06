@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest import mock
+
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -89,8 +91,8 @@ class TestTokenShareTokenDetails:
     ###########################################################################
 
     # Normal_1
+    @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
-        config.SHARE_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -108,6 +110,8 @@ class TestTokenShareTokenDetails:
 
         # Register tokens on the list
         self.list_token(session, share_token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + share_token["address"]
@@ -151,8 +155,8 @@ class TestTokenShareTokenDetails:
 
     # Normal_2
     # status = False
+    @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        config.SHARE_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -173,6 +177,8 @@ class TestTokenShareTokenDetails:
 
         # Invalidate token
         invalidate_share_token(issuer, share_token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + share_token["address"]
@@ -222,7 +228,6 @@ class TestTokenShareTokenDetails:
     # Invalid Parameter: invalid contract_address
     # -> 400
     def test_error_1(self, client: TestClient, session: Session):
-        config.SHARE_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + "0xabcd"
 
         # Request target API
@@ -248,8 +253,8 @@ class TestTokenShareTokenDetails:
     # Error_2
     # Not registered on the list
     # -> 404
+    @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
     def test_error_2(self, client, shared_contract, session):
-        config.SHARE_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -264,6 +269,8 @@ class TestTokenShareTokenDetails:
         attribute = self.share_token_attribute(exchange_address, personal_info)
         token = issue_share_token(issuer, attribute)
         register_share_list(issuer, token, token_list)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -281,9 +288,8 @@ class TestTokenShareTokenDetails:
     # Error_3
     # Not Supported
     # -> 404
+    @mock.patch("app.config.SHARE_TOKEN_ENABLED", False)
     def test_error_3(self, client: TestClient, session: Session):
-        config.SHARE_TOKEN_ENABLED = False
-
         # Request target API
         resp = client.get(
             self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765"

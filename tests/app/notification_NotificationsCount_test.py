@@ -118,6 +118,8 @@ class TestNotificationCount:
     def test_notificationcount_normal_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
+        session.commit()
+
         resp = client.get(
             self.apiurl, params={"address": TestNotificationCount.address}
         )

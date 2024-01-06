@@ -20,8 +20,8 @@ from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
 from app.model.db import AccountTag
 from app.model.schema import (
     RetrievePaymentAccountQuery,
@@ -46,15 +46,17 @@ router = APIRouter(prefix="/User", tags=["user_info"])
     response_model=SuccessResponse,
     responses=get_routers_responses(),
 )
-def tagging_account_address(session: DBSession, data: TaggingAccountAddressRequest):
+async def tagging_account_address(
+    async_session: DBAsyncSession, data: TaggingAccountAddressRequest
+):
     """
     Tag any account address
     """
     account_tag = AccountTag()
     account_tag.account_address = data.account_address
     account_tag.account_tag = data.account_tag
-    session.merge(account_tag)
-    session.commit()
+    await async_session.merge(account_tag)
+    await async_session.commit()
 
     return json_response(SuccessResponse.default())
 
@@ -68,19 +70,19 @@ def tagging_account_address(session: DBSession, data: TaggingAccountAddressReque
     ],
     responses=get_routers_responses(),
 )
-def get_payment_account_registration_status(
+async def get_payment_account_registration_status(
     query: RetrievePaymentAccountQuery = Depends(),
 ):
     """
     Returns payment registration status of given account.
     """
-    pg_contract = Contract.get_contract(
+    pg_contract = AsyncContract.get_contract(
         contract_name="PaymentGateway",
         address=str(config.PAYMENT_GATEWAY_CONTRACT_ADDRESS),
     )
 
     # 口座登録・承認状況を参照
-    account_info = Contract.call_function(
+    account_info = await AsyncContract.call_function(
         contract=pg_contract,
         function_name="payment_accounts",
         args=(
@@ -113,7 +115,9 @@ def get_payment_account_registration_status(
     ],
     responses=get_routers_responses(),
 )
-def get_personal_info_registration_status(query: RetrievePersonalInfoQuery = Depends()):
+async def get_personal_info_registration_status(
+    query: RetrievePersonalInfoQuery = Depends(),
+):
     """
     Returns personal information about given address.
     """
@@ -122,12 +126,12 @@ def get_personal_info_registration_status(query: RetrievePersonalInfoQuery = Dep
         _personal_info_address = query.personal_info_address
     else:
         _personal_info_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
-    personal_info_contract = Contract.get_contract(
+    personal_info_contract = AsyncContract.get_contract(
         contract_name="PersonalInfo", address=_personal_info_address
     )
 
     # Get registration status of personal information
-    info = Contract.call_function(
+    info = await AsyncContract.call_function(
         contract=personal_info_contract,
         function_name="personal_info",
         args=(

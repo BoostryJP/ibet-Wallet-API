@@ -16,10 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Depends
-from sqlalchemy import create_engine
+from sqlalchemy import NullPool, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -28,7 +28,7 @@ from app import config, log
 LOG = log.get_logger()
 
 
-def get_engine(uri):
+def get_engine(uri: str):
     options = {
         "pool_recycle": 3600,
         "pool_size": 10,
@@ -40,27 +40,29 @@ def get_engine(uri):
     return create_engine(uri, **options)
 
 
-def get_async_engine(uri):
-    options = {
-        "pool_recycle": 3600,
-        "pool_size": 10,
-        "pool_timeout": 30,
-        "pool_pre_ping": True,
-        "max_overflow": 30,
-        "echo": config.DB_ECHO,
-    }
+def get_async_engine(uri: str):
+    if config.DATABASE_TYPE == "mysql":
+        # DB URI should be converted to use async DB driver.
+        uri = uri.replace("mysql+pymysql://", "mysql+aiomysql://")
+    if config.DATABASE_TYPE == "mysql" and config.UNIT_TEST_MODE:
+        # If MySQL used in UT, connection pool should be disabled.
+        options = {"pool_pre_ping": True, "echo": config.DB_ECHO, "poolclass": NullPool}
+    else:
+        # If Postgres used, connection pool is activated.
+        options = {
+            "pool_recycle": 3600,
+            "pool_size": 10,
+            "pool_timeout": 30,
+            "pool_pre_ping": True,
+            "max_overflow": 30,
+            "echo": config.DB_ECHO,
+        }
     return create_async_engine(uri, **options)
 
 
 # Create Engine
 engine = get_engine(config.DATABASE_URL)
-if engine.dialect.name == "mysql":
-    MYSQL_ASYNC_DATABASE_URL = config.DATABASE_URL.replace(
-        "mysql+pymysql://", "mysql+aiomysql://"
-    )
-    async_engine = get_async_engine(MYSQL_ASYNC_DATABASE_URL)
-else:
-    async_engine = get_async_engine(config.DATABASE_URL)
+async_engine = get_async_engine(config.DATABASE_URL)
 
 # Create Session Maker
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)

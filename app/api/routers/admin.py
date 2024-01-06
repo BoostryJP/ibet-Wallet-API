@@ -22,13 +22,14 @@ from fastapi import APIRouter, Path
 from sqlalchemy import delete, desc, select
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
 from app.errors import (
     AppError,
     DataConflictError,
     DataNotExistsError,
     InvalidParameterError,
+    ServiceUnavailable,
 )
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.db import (
@@ -48,6 +49,7 @@ from app.model.schema import (
     UpdateAdminTokenRequest,
 )
 from app.model.schema.base import GenericSuccessResponse, SuccessResponse, TokenType
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -66,12 +68,12 @@ router = APIRouter(prefix="/Admin", tags=["admin"])
     operation_id="TokensGET",
     response_model=GenericSuccessResponse[ListAllAdminTokensResponse],
 )
-def list_all_admin_tokens(session: DBSession):
+async def list_all_admin_tokens(async_session: DBAsyncSession):
     """
     Returns a list of registered token.
     """
-    listed_tokens: Sequence[Listing] = session.scalars(
-        select(Listing).order_by(desc(Listing.id))
+    listed_tokens: Sequence[Listing] = (
+        await async_session.scalars(select(Listing).order_by(desc(Listing.id)))
     ).all()
 
     res_body = [token.json() for token in listed_tokens]
@@ -86,33 +88,39 @@ def list_all_admin_tokens(session: DBSession):
     response_model=SuccessResponse,
     responses=get_routers_responses(DataConflictError, InvalidParameterError),
 )
-def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
+async def register_admin_token(
+    async_session: DBAsyncSession, data: RegisterAdminTokenRequest
+):
     """
     Registers given token to listing.
     """
     contract_address = data.contract_address
 
     # 既存レコードの存在チェック
-    _listing = session.scalars(
-        select(Listing).where(Listing.token_address == contract_address).limit(1)
+    _listing = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == contract_address).limit(1)
+        )
     ).first()
 
     if _listing is not None:
         raise DataConflictError(description="contract_address already exist")
 
-    _executable_contract = session.scalars(
-        select(ExecutableContract)
-        .where(ExecutableContract.contract_address == contract_address)
-        .limit(1)
+    _executable_contract = (
+        await async_session.scalars(
+            select(ExecutableContract)
+            .where(ExecutableContract.contract_address == contract_address)
+            .limit(1)
+        )
     ).first()
     if _executable_contract is not None:
         raise DataConflictError(description="contract_address already exist")
 
     # token情報をTokenListコントラクトから取得
-    list_contract = Contract.get_contract(
+    list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
     )
-    token = Contract.call_function(
+    token = await AsyncContract.call_function(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(contract_address,),
@@ -139,32 +147,32 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
         max_sell_amount=max_sell_amount,
         owner_address=owner_address,
     )
-    session.add(listing)
+    async_session.add(listing)
 
     executable_contract = ExecutableContract(contract_address=contract_address)
-    session.add(executable_contract)
+    async_session.add(executable_contract)
 
     token_type = token[1]
     # Fetch token detail data to store cache
     if token_type == TokenType.IbetCoupon:
-        token_obj = CouponToken.get(session, contract_address)
-        session.merge(token_obj.to_model())
+        token_obj = await CouponToken.get(async_session, contract_address)
+        await async_session.merge(token_obj.to_model())
     elif token_type == TokenType.IbetMembership:
-        token_obj = MembershipToken.get(session, contract_address)
-        session.merge(token_obj.to_model())
+        token_obj = await MembershipToken.get(async_session, contract_address)
+        await async_session.merge(token_obj.to_model())
     elif token_type == TokenType.IbetStraightBond:
-        token_obj = BondToken.get(session, contract_address)
-        session.merge(token_obj.to_model())
+        token_obj = await BondToken.get(async_session, contract_address)
+        await async_session.merge(token_obj.to_model())
     elif token_type == TokenType.IbetShare:
-        token_obj = ShareToken.get(session, contract_address)
-        session.merge(token_obj.to_model())
+        token_obj = await ShareToken.get(async_session, contract_address)
+        await async_session.merge(token_obj.to_model())
 
     (
         balance,
         pending_transfer,
         exchange_balance,
         exchange_commitment,
-    ) = get_account_balance_all(
+    ) = await get_account_balance_all(
         token_template=token_type,
         token_address=contract_address,
         account_address=owner_address,
@@ -177,8 +185,8 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
         exchange_balance=exchange_balance or 0,
         exchange_commitment=exchange_commitment or 0,
     )
-    session.merge(position)
-    session.commit()
+    await async_session.merge(position)
+    await async_session.commit()
 
     return json_response(SuccessResponse.default())
 
@@ -195,7 +203,7 @@ def register_admin_token(session: DBSession, data: RegisterAdminTokenRequest):
     response_model=GenericSuccessResponse[GetAdminTokenTypeResponse],
     response_model_exclude_unset=True,
 )
-def get_admin_token_type():
+async def get_admin_token_type():
     """
     Returns available token type.
     """
@@ -221,15 +229,17 @@ def get_admin_token_type():
     response_model_exclude_unset=True,
     responses=get_routers_responses(DataNotExistsError),
 )
-def retrieve_admin_token(
-    session: DBSession,
+async def retrieve_admin_token(
+    async_session: DBAsyncSession,
     token_address: str = Path(description="Token Address"),
 ):
     """
     Returns a listed token information.
     """
-    token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
 
     if token is not None:
@@ -245,8 +255,8 @@ def retrieve_admin_token(
     response_model=SuccessResponse,
     responses=get_routers_responses(InvalidParameterError, DataNotExistsError),
 )
-def update_token(
-    session: DBSession,
+async def update_token(
+    async_session: DBAsyncSession,
     data: UpdateAdminTokenRequest,
     token_address: str = Path(description="Token Address"),
 ):
@@ -257,8 +267,10 @@ def update_token(
     """
     # 更新対象レコードを取得
     # 更新対象のレコードが存在しない場合は404エラーを返す
-    token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if token is None:
         raise DataNotExistsError()
@@ -283,8 +295,8 @@ def update_token(
     token.max_holding_quantity = max_holding_quantity
     token.max_sell_amount = max_sell_amount
     token.owner_address = owner_address
-    session.merge(token)
-    session.commit()
+    await async_session.merge(token)
+    await async_session.commit()
     return json_response(SuccessResponse.default())
 
 
@@ -295,38 +307,40 @@ def update_token(
     response_model=SuccessResponse,
     responses=get_routers_responses(AppError),
 )
-def delete_token(
-    session: DBSession,
+async def delete_token(
+    async_session: DBAsyncSession,
     token_address: str = Path(description="Token Address"),
 ):
     """
     Deletes given token from listing.
     """
     try:
-        session.execute(delete(Listing).where(Listing.token_address == token_address))
-        session.execute(
+        await async_session.execute(
+            delete(Listing).where(Listing.token_address == token_address)
+        )
+        await async_session.execute(
             delete(ExecutableContract).where(
                 ExecutableContract.contract_address == token_address
             )
         )
-        session.execute(
+        await async_session.execute(
             delete(IDXBondToken).where(IDXBondToken.token_address == token_address)
         )
-        session.execute(
+        await async_session.execute(
             delete(IDXShareToken).where(IDXShareToken.token_address == token_address)
         )
-        session.execute(
+        await async_session.execute(
             delete(IDXMembershipToken).where(
                 IDXMembershipToken.token_address == token_address
             )
         )
-        session.execute(
+        await async_session.execute(
             delete(IDXCouponToken).where(IDXCouponToken.token_address == token_address)
         )
     except Exception as err:
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()
-    session.commit()
+    await async_session.commit()
     return json_response(SuccessResponse.default())
 
 
@@ -348,14 +362,14 @@ def available_token_template():
     return available_token_template_list
 
 
-def get_account_balance_all(
+async def get_account_balance_all(
     token_template: str, token_address: str, account_address: str
 ) -> tuple[int, int, int, int]:
     """Get balance"""
-    token_contract = Contract.get_contract(
+    token_contract = AsyncContract.get_contract(
         contract_name=token_template, address=token_address
     )
-    balance = Contract.call_function(
+    balance = await AsyncContract.call_function(
         contract=token_contract,
         function_name="balanceOf",
         args=(account_address,),
@@ -364,7 +378,7 @@ def get_account_balance_all(
     pending_transfer = 0
     if token_template in [TokenType.IbetStraightBond, TokenType.IbetShare]:
         # if security token, amount of pending transfer is needed
-        pending_transfer = Contract.call_function(
+        pending_transfer = await AsyncContract.call_function(
             contract=token_contract,
             function_name="pendingTransfer",
             args=(account_address,),
@@ -372,32 +386,43 @@ def get_account_balance_all(
         )
     exchange_balance = 0
     exchange_commitment = 0
-    tradable_exchange_address = Contract.call_function(
+    tradable_exchange_address = await AsyncContract.call_function(
         contract=token_contract,
         function_name="tradableExchange",
         args=(),
         default_returns=config.ZERO_ADDRESS,
     )
     if tradable_exchange_address != config.ZERO_ADDRESS:
-        exchange_contract = Contract.get_contract(
+        exchange_contract = AsyncContract.get_contract(
             "IbetExchangeInterface", tradable_exchange_address
         )
-        exchange_balance = Contract.call_function(
-            contract=exchange_contract,
-            function_name="balanceOf",
-            args=(
-                account_address,
-                token_contract.address,
-            ),
-            default_returns=0,
-        )
-        exchange_commitment = Contract.call_function(
-            contract=exchange_contract,
-            function_name="commitmentOf",
-            args=(
-                account_address,
-                token_contract.address,
-            ),
-            default_returns=0,
-        )
+        try:
+            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+                tasks = [
+                    tg.create_task(
+                        AsyncContract.call_function(
+                            contract=exchange_contract,
+                            function_name="balanceOf",
+                            args=(
+                                account_address,
+                                token_contract.address,
+                            ),
+                            default_returns=0,
+                        )
+                    ),
+                    tg.create_task(
+                        AsyncContract.call_function(
+                            contract=exchange_contract,
+                            function_name="commitmentOf",
+                            args=(
+                                account_address,
+                                token_contract.address,
+                            ),
+                            default_returns=0,
+                        )
+                    ),
+                ]
+            exchange_balance, exchange_commitment = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
     return balance, pending_transfer, exchange_balance, exchange_commitment

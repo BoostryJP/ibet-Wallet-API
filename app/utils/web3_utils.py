@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import threading
 import time
 from json.decoder import JSONDecodeError
@@ -34,18 +35,10 @@ from web3.net import AsyncNet
 from web3.types import RPCEndpoint, RPCResponse
 
 from app import config
-from app.database import get_async_engine, get_engine
+from app.database import async_engine, engine
 from app.errors import ServiceUnavailable
 from app.model.db import Node
 
-engine = get_engine(config.DATABASE_URL)
-if engine.dialect.name == "mysql":
-    MYSQL_ASYNC_DATABASE_URL = config.DATABASE_URL.replace(
-        "mysql+pymysql://", "mysql+aiomysql://"
-    )
-    async_engine = get_async_engine(MYSQL_ASYNC_DATABASE_URL)
-else:
-    async_engine = get_async_engine(config.DATABASE_URL)
 thread_local = threading.local()
 
 
@@ -213,7 +206,7 @@ class AsyncFailOverHTTPProvider(Web3.AsyncHTTPProvider):
                         if _node is None:
                             counter += 1
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                                time.sleep(config.WEB3_REQUEST_WAIT_TIME)
+                                await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
                                 continue
                             raise ServiceUnavailable("Block synchronization is down")
                         self.endpoint_uri = URI(_node.endpoint_uri)
@@ -225,7 +218,7 @@ class AsyncFailOverHTTPProvider(Web3.AsyncHTTPProvider):
                             #  while Quorum is terminating.
                             counter += 1
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                                time.sleep(config.WEB3_REQUEST_WAIT_TIME)
+                                await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
                                 continue
                             raise ServiceUnavailable("Block synchronization is down")
             else:  # Use default provider
@@ -236,4 +229,4 @@ class AsyncFailOverHTTPProvider(Web3.AsyncHTTPProvider):
 
     @staticmethod
     def set_fail_over_mode(use_fail_over: bool):
-        FailOverHTTPProvider.fail_over_mode = use_fail_over
+        AsyncFailOverHTTPProvider.fail_over_mode = use_fail_over

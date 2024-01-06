@@ -25,8 +25,8 @@ from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
 from sqlalchemy.orm import aliased
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
 from app.errors import DataNotExistsError, InvalidParameterError, ServiceUnavailable
 from app.model.db import (
     AccountTag,
@@ -62,6 +62,7 @@ from app.model.schema.base import (
     ValidatedEthereumAddress,
     ValueOperator,
 )
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 from app.utils.web3_utils import Web3Wrapper
@@ -79,8 +80,8 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     response_model=GenericSuccessResponse[TokenStatusResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def get_token_status(
-    session: DBSession,
+async def get_token_status(
+    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -89,19 +90,21 @@ def get_token_status(
     Returns status of given token.
     """
     # 取扱トークンチェック
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # TokenList-Contractへの接続
-    list_contract = Contract.get_contract(
+    list_contract = AsyncContract.get_contract(
         "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
     )
 
     # TokenList-Contractからトークンの情報を取得する
-    token = Contract.call_function(
+    token = await AsyncContract.call_function(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(token_address,),
@@ -111,17 +114,25 @@ def get_token_status(
     token_template = token[1]
     try:
         # Token-Contractへの接続
-        token_contract = Contract.get_contract(token_template, token_address)
-        status = Contract.call_function(
-            contract=token_contract, function_name="status", args=()
-        )
-        transferable = Contract.call_function(
-            contract=token_contract, function_name="transferable", args=()
-        )
-    except ServiceUnavailable as e:
+        token_contract = AsyncContract.get_contract(token_template, token_address)
+        async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+            tasks = [
+                tg.create_task(
+                    AsyncContract.call_function(
+                        contract=token_contract, function_name="status", args=()
+                    )
+                ),
+                tg.create_task(
+                    AsyncContract.call_function(
+                        contract=token_contract, function_name="transferable", args=()
+                    )
+                ),
+            ]
+        status, transferable = [task.result() for task in tasks]
+    except* ServiceUnavailable as e:
         LOG.warning(e)
         raise DataNotExistsError("token_address: %s" % token_address)
-    except Exception as e:
+    except* Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address)
 
@@ -140,8 +151,8 @@ def get_token_status(
     response_model=GenericSuccessResponse[TokenHoldersResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def get_token_holders(
-    session: DBSession,
+async def get_token_holders(
+    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -151,8 +162,10 @@ def get_token_holders(
     Returns a list of token holders for a given token.
     """
     # Check if it is a valid token
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -203,7 +216,9 @@ def get_token_holders(
                 lock_position_account.account_tag == request_query.account_tag,
             )
         )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
@@ -275,7 +290,9 @@ def get_token_holders(
             case ValueOperator.LTE:
                 stmt = stmt.where(IDXLockedPosition.value <= request_query.locked)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Pagination
     if limit is not None:
@@ -283,8 +300,8 @@ def get_token_holders(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(
-        stmt.order_by(desc(IDXPosition.created))
+    holders: Sequence[tuple[IDXPosition, int | None]] = (
+        await async_session.execute(stmt.order_by(desc(IDXPosition.created)))
     ).all()
 
     resp_body = {
@@ -324,8 +341,8 @@ def get_token_holders(
     response_model=GenericSuccessResponse[TokenHoldersResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def search_token_holders(
-    session: DBSession,
+async def search_token_holders(
+    async_session: DBAsyncSession,
     data: SearchTokenHoldersRequest,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -335,8 +352,10 @@ def search_token_holders(
     Returns a list of token holders for a given token using detailed search query.
     """
     # Check if the token exists in the list
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -377,7 +396,9 @@ def search_token_holders(
                 IDXLockedPosition.account_address.in_(data.account_address_list),
             )
         )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if data.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
@@ -431,7 +452,9 @@ def search_token_holders(
             case ValueOperator.LTE:
                 stmt = stmt.where(IDXLockedPosition.value <= data.locked)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Sort
     def _order(_order):
@@ -471,7 +494,9 @@ def search_token_holders(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    holders: Sequence[tuple[IDXPosition, int | None]] = session.execute(stmt).all()
+    holders: Sequence[tuple[IDXPosition, int | None]] = (
+        await async_session.execute(stmt)
+    ).all()
 
     resp_body = {
         "result_set": {
@@ -510,8 +535,8 @@ def search_token_holders(
     response_model=GenericSuccessResponse[TokenHoldersCountResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def get_token_holders_count(
-    session: DBSession,
+async def get_token_holders_count(
+    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -521,8 +546,10 @@ def get_token_holders_count(
     Returns count of token holders for a given token.
     """
     # Check if it is a valid token
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -573,7 +600,9 @@ def get_token_holders_count(
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
-    _count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    _count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     resp_body = {"count": _count}
 
@@ -587,8 +616,8 @@ def get_token_holders_count(
     response_model=GenericSuccessResponse[CreateTokenHoldersCollectionResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def create_token_holders_collection(
-    session: DBSession,
+async def create_token_holders_collection(
+    async_session: DBAsyncSession,
     data: CreateTokenHoldersCollectionRequest,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -608,25 +637,31 @@ def create_token_holders_collection(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # list_idの衝突チェック
-    _same_list_id_record = session.scalars(
-        select(TokenHoldersList).where(TokenHoldersList.list_id == list_id).limit(1)
+    _same_list_id_record = (
+        await async_session.scalars(
+            select(TokenHoldersList).where(TokenHoldersList.list_id == list_id).limit(1)
+        )
     ).first()
     if _same_list_id_record is not None:
         raise InvalidParameterError("list_id must be unique.")
 
-    _same_combi_record = session.scalars(
-        select(TokenHoldersList)
-        .where(TokenHoldersList.token_address == token_address)
-        .where(TokenHoldersList.block_number == block_number)
-        .where(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED)
-        .limit(1)
+    _same_combi_record = (
+        await async_session.scalars(
+            select(TokenHoldersList)
+            .where(TokenHoldersList.token_address == token_address)
+            .where(TokenHoldersList.block_number == block_number)
+            .where(TokenHoldersList.batch_status != TokenHolderBatchStatus.FAILED)
+            .limit(1)
+        )
     ).first()
 
     if _same_combi_record is not None:
@@ -648,8 +683,8 @@ def create_token_holders_collection(
             block_number=block_number,
             token_address=token_address,
         )
-        session.add(token_holder_list)
-        session.commit()
+        async_session.add(token_holder_list)
+        await async_session.commit()
 
         return json_response(
             {
@@ -669,8 +704,8 @@ def create_token_holders_collection(
     response_model=GenericSuccessResponse[TokenHoldersCollectionResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def get_token_holders_collection(
-    session: DBSession,
+async def get_token_holders_collection(
+    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -685,17 +720,21 @@ def get_token_holders_collection(
     """
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # 既存レコードの存在チェック
-    _same_list_id_record: Optional[TokenHoldersList] = session.scalars(
-        select(TokenHoldersList)
-        .where(TokenHoldersList.list_id == str(list_id))
-        .limit(1)
+    _same_list_id_record: Optional[TokenHoldersList] = (
+        await async_session.scalars(
+            select(TokenHoldersList)
+            .where(TokenHoldersList.list_id == str(list_id))
+            .limit(1)
+        )
     ).first()
 
     if not _same_list_id_record:
@@ -707,10 +746,12 @@ def get_token_holders_collection(
         )
         raise InvalidParameterError(description=description)
 
-    _token_holders: Sequence[TokenHolder] = session.scalars(
-        select(TokenHolder)
-        .where(TokenHolder.holder_list == _same_list_id_record.id)
-        .order_by(asc(TokenHolder.account_address))
+    _token_holders: Sequence[TokenHolder] = (
+        await async_session.scalars(
+            select(TokenHolder)
+            .where(TokenHolder.holder_list == _same_list_id_record.id)
+            .order_by(asc(TokenHolder.account_address))
+        )
     ).all()
     token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
@@ -732,8 +773,8 @@ def get_token_holders_collection(
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def list_all_transfer_histories(
-    session: DBSession,
+async def list_all_transfer_histories(
+    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -743,8 +784,10 @@ def list_all_transfer_histories(
     Returns a list of transfer histories for a given token.
     """
     # Check if it is a valid token
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -771,7 +814,9 @@ def list_all_transfer_histories(
                 to_address_tag.account_tag == request_query.account_tag,
             )
         )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if request_query.source_event is not None:
         stmt = stmt.where(IDXTransfer.source_event == request_query.source_event.value)
@@ -802,14 +847,16 @@ def list_all_transfer_histories(
             case ValueOperator.LTE:
                 stmt = stmt.where(IDXTransfer.value <= request_query.value)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Pagination
     if request_query.offset is not None:
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
         stmt = stmt.limit(request_query.limit)
-    transfer_history: Sequence[IDXTransfer] = session.scalars(stmt).all()
+    transfer_history: Sequence[IDXTransfer] = (await async_session.scalars(stmt)).all()
 
     resp_data = [transfer_event.json() for transfer_event in transfer_history]
     data = {
@@ -832,8 +879,8 @@ def list_all_transfer_histories(
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def search_transfer_histories(
-    session: DBSession,
+async def search_transfer_histories(
+    async_session: DBAsyncSession,
     data: SearchTransferHistoryRequest,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -843,8 +890,10 @@ def search_transfer_histories(
     Returns a list of transfer histories for a given token using detailed search query.
     """
     # 取扱トークンチェック
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -858,7 +907,9 @@ def search_transfer_histories(
                 IDXTransfer.to_address.in_(data.account_address_list),
             )
         )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if data.source_event is not None:
         stmt = stmt.where(IDXTransfer.source_event == data.source_event.value)
@@ -889,7 +940,9 @@ def search_transfer_histories(
             case ValueOperator.LTE:
                 stmt = stmt.where(IDXTransfer.value <= data.value)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     def _order(_order):
         if _order == 0:
@@ -939,7 +992,7 @@ def search_transfer_histories(
         stmt = stmt.offset(data.offset)
     if data.limit is not None:
         stmt = stmt.limit(data.limit)
-    transfer_history: Sequence[IDXTransfer] = session.scalars(stmt).all()
+    transfer_history: Sequence[IDXTransfer] = (await async_session.scalars(stmt)).all()
 
     resp_data = [transfer_event.json() for transfer_event in transfer_history]
     data = {
@@ -962,8 +1015,8 @@ def search_transfer_histories(
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def list_all_transfer_approval_histories(
-    session: DBSession,
+async def list_all_transfer_approval_histories(
+    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -973,8 +1026,10 @@ def list_all_transfer_approval_histories(
     Returns a list of transfer approval histories for a given token.
     """
     # Check if it is a valid token
-    _listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    _listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if _listed_token is None:
         raise DataNotExistsError(f"token_address: {token_address}")
@@ -1004,7 +1059,9 @@ def list_all_transfer_approval_histories(
                 to_address_tag.account_tag == request_query.account_tag,
             )
         )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if request_query.from_address is not None:
         stmt = stmt.where(
@@ -1025,15 +1082,17 @@ def list_all_transfer_approval_histories(
             case ValueOperator.LTE:
                 stmt = stmt.where(IDXTransferApproval.value <= request_query.value)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Pagination
     if request_query.offset is not None:
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
         stmt = stmt.limit(request_query.limit)
-    transfer_approval_history: Sequence[IDXTransferApproval] = session.scalars(
-        stmt
+    transfer_approval_history: Sequence[IDXTransferApproval] = (
+        await async_session.scalars(stmt)
     ).all()
 
     resp_data = [
@@ -1060,8 +1119,8 @@ def list_all_transfer_approval_histories(
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def search_transfer_approval_histories(
-    session: DBSession,
+async def search_transfer_approval_histories(
+    async_session: DBAsyncSession,
     data: SearchTransferApprovalHistoryRequest,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -1071,8 +1130,10 @@ def search_transfer_approval_histories(
     Returns a list of transfer approval histories for a given token using detailed search query.
     """
     # Check that it is a listed token
-    _listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    _listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if _listed_token is None:
         raise DataNotExistsError(f"token_address: {token_address}")
@@ -1092,7 +1153,9 @@ def search_transfer_approval_histories(
                 IDXTransferApproval.to_address.in_(data.account_address_list),
             )
         )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if data.application_datetime_from is not None:
         stmt = stmt.where(
@@ -1151,7 +1214,9 @@ def search_transfer_approval_histories(
             case ValueOperator.LTE:
                 stmt = stmt.where(IDXTransferApproval.value <= data.value)
 
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     def _order(_order):
         if _order == 0:
@@ -1202,8 +1267,8 @@ def search_transfer_approval_histories(
         stmt = stmt.offset(data.offset)
     if data.limit is not None:
         stmt = stmt.limit(data.limit)
-    transfer_approval_history: Sequence[IDXTransferApproval] = session.scalars(
-        stmt
+    transfer_approval_history: Sequence[IDXTransferApproval] = (
+        await async_session.scalars(stmt)
     ).all()
 
     resp_data = [

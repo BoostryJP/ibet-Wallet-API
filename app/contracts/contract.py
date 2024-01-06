@@ -21,6 +21,7 @@ from typing import TypeVar
 
 from eth_utils import to_checksum_address
 from web3 import contract
+from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
 from app.utils.web3_utils import AsyncWeb3Wrapper, Web3Wrapper
@@ -121,7 +122,7 @@ class AsyncContract:
     cache = {}  # コントラクト情報のキャッシュ
 
     @staticmethod
-    async def get_contract(contract_name: str, address: str):
+    def get_contract(contract_name: str, address: str) -> Web3AsyncContract:
         """
         コントラクト取得
 

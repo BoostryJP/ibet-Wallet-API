@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -57,8 +57,8 @@ router = APIRouter(prefix="/Token/Coupon", tags=["token_info"])
     response_model=GenericSuccessResponse[ListAllCouponTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def list_all_coupon_tokens(
-    session: DBSession,
+async def list_all_coupon_tokens(
+    async_session: DBAsyncSession,
     req: Request,
     address_list: Annotated[
         list[ValidatedEthereumAddress],
@@ -98,7 +98,9 @@ def list_all_coupon_tokens(
     )
     if len(address_list):
         stmt = stmt.where(IDXCouponToken.token_address.in_(address_list))
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -119,7 +121,9 @@ def list_all_coupon_tokens(
         stmt = stmt.where(
             IDXCouponToken.initial_offering_status == initial_offering_status
         )
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -140,7 +144,7 @@ def list_all_coupon_tokens(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXCouponToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXCouponToken] = (await async_session.scalars(stmt)).all()
 
     tokens = [CouponToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
@@ -163,8 +167,8 @@ def list_all_coupon_tokens(
     response_model=GenericSuccessResponse[ListAllCouponTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_coupon_token_addresses(
-    session: DBSession,
+async def list_all_coupon_token_addresses(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllCouponTokensQuery = Depends(),
 ):
@@ -195,7 +199,9 @@ def list_all_coupon_token_addresses(
         .join(Listing, Listing.token_address == IDXCouponToken.token_address)
         .where(Listing.is_public == True)
     )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -216,7 +222,9 @@ def list_all_coupon_token_addresses(
         stmt = stmt.where(
             IDXCouponToken.initial_offering_status == initial_offering_status
         )
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -237,7 +245,7 @@ def list_all_coupon_token_addresses(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXCouponToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXCouponToken] = (await async_session.scalars(stmt)).all()
 
     data = {
         "result_set": {
@@ -261,8 +269,8 @@ def list_all_coupon_token_addresses(
         NotSupportedError, InvalidParameterError, DataNotExistsError
     ),
 )
-def retrieve_coupon_token(
-    session: DBSession,
+async def retrieve_coupon_token(
+    async_session: DBAsyncSession,
     req: Request,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -276,15 +284,19 @@ def retrieve_coupon_token(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # TokenList-Contractからトークンの情報を取得する
     try:
-        token_detail = CouponToken.get(session=session, token_address=token_address)
+        token_detail = await CouponToken.get(
+            async_session=async_session, token_address=token_address
+        )
     except ServiceUnavailable as e:
         LOG.warning(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None

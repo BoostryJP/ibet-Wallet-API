@@ -130,6 +130,8 @@ class TestEthSendRawTransactionNoWait:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -253,6 +255,8 @@ class TestEthSendRawTransactionNoWait:
             to_checksum_address(local_account_2.address)
         )
         signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.key)
+
+        session.commit()
 
         request_params = {
             "raw_tx_hex_list": [
@@ -489,6 +493,8 @@ class TestEthSendRawTransactionNoWait:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -604,10 +610,15 @@ class TestEthSendRawTransactionNoWait:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
+        session.commit()
+
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {"Content-Type": "application/json"}
 
-        with patch("web3.eth.Eth.send_raw_transaction", side_effect=ConnectionError):
+        with patch(
+            "web3.eth.async_eth.AsyncEth.send_raw_transaction",
+            side_effect=ConnectionError,
+        ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200

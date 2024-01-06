@@ -76,6 +76,8 @@ class TestListAllCouponConsumptions:
         # Prepare test data
         self._insert_test_data(session)
 
+        session.commit()
+
         # Request target API
         resp = client.get(
             self.apiurl.format(

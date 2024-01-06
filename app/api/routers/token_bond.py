@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -57,8 +57,8 @@ router = APIRouter(prefix="/Token/StraightBond", tags=["token_info"])
     response_model=GenericSuccessResponse[ListAllStraightBondTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def list_all_straight_bond_tokens(
-    session: DBSession,
+async def list_all_straight_bond_tokens(
+    async_session: DBAsyncSession,
     req: Request,
     address_list: Annotated[
         list[ValidatedEthereumAddress],
@@ -103,7 +103,9 @@ def list_all_straight_bond_tokens(
     )
     if len(address_list):
         stmt = stmt.where(IDXBondToken.token_address.in_(address_list))
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -130,7 +132,9 @@ def list_all_straight_bond_tokens(
         )
     if is_redeemed is not None:
         stmt = stmt.where(IDXBondToken.is_redeemed == is_redeemed)
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -151,7 +155,7 @@ def list_all_straight_bond_tokens(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXBondToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXBondToken] = (await async_session.scalars(stmt)).all()
 
     tokens = [BondToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
@@ -174,8 +178,8 @@ def list_all_straight_bond_tokens(
     response_model=GenericSuccessResponse[ListAllStraightBondTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_straight_bond_token_addresses(
-    session: DBSession,
+async def list_all_straight_bond_token_addresses(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllStraightBondTokensQuery = Depends(),
 ):
@@ -211,7 +215,9 @@ def list_all_straight_bond_token_addresses(
         .join(Listing, Listing.token_address == IDXBondToken.token_address)
         .where(Listing.is_public == True)
     )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -238,7 +244,9 @@ def list_all_straight_bond_token_addresses(
         )
     if is_redeemed is not None:
         stmt = stmt.where(IDXBondToken.is_redeemed == is_redeemed)
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -259,7 +267,7 @@ def list_all_straight_bond_token_addresses(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXBondToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXBondToken] = (await async_session.scalars(stmt)).all()
 
     data = {
         "result_set": {
@@ -283,8 +291,8 @@ def list_all_straight_bond_token_addresses(
         NotSupportedError, DataNotExistsError, InvalidParameterError
     ),
 )
-def retrieve_straight_bond_token(
-    session: DBSession,
+async def retrieve_straight_bond_token(
+    async_session: DBAsyncSession,
     req: Request,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -298,14 +306,18 @@ def retrieve_straight_bond_token(
 
     # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail = BondToken.get(session=session, token_address=token_address)
+        token_detail = await BondToken.get(
+            async_session=async_session, token_address=token_address
+        )
     except ServiceUnavailable as e:
         LOG.warning(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None

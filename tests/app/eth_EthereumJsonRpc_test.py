@@ -155,7 +155,7 @@ class TestEthereumJsonRpc:
         session.commit()
 
         # Request target API
-        with mock.patch("requests.post", MagicMock(side_effect=Exception())):
+        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=Exception())):
             resp = client.post(
                 self.apiurl, json={"method": "eth_syncing", "params": []}
             )

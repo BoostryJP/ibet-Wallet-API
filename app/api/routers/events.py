@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, Path
 from web3.exceptions import Web3ValidationError
 
 from app import config, log
-from app.contracts import Contract
+from app.contracts import AsyncContract
 from app.errors import InvalidParameterError, RequestBlockRangeLimitExceededError
 from app.model.schema import (
     E2EMessagingEventArguments,
@@ -42,10 +42,10 @@ from app.model.schema.base import (
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 LOG = log.get_logger()
-web3 = Web3Wrapper()
+async_web3 = AsyncWeb3Wrapper()
 REQUEST_BLOCK_RANGE_LIMIT = 10000
 
 router = APIRouter(prefix="/Events", tags=["contract_log"])
@@ -61,7 +61,7 @@ router = APIRouter(prefix="/Events", tags=["contract_log"])
         InvalidParameterError, RequestBlockRangeLimitExceededError
     ),
 )
-def list_all_e2e_messaging_event_logs(
+async def list_all_e2e_messaging_event_logs(
     request_query: E2EMessagingEventsQuery = Depends(),
 ):
     """
@@ -83,7 +83,7 @@ def list_all_e2e_messaging_event_logs(
             raise InvalidParameterError("invalid argument_filters")
 
     # Get event logs
-    contract = Contract.get_contract(
+    contract = AsyncContract.get_contract(
         contract_name="E2EMessaging", address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
     )
     if request_query.event == "Message":
@@ -97,7 +97,7 @@ def list_all_e2e_messaging_event_logs(
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
         try:
-            events = contract_event.get_logs(
+            events = await contract_event.get_logs(
                 fromBlock=request_query.from_block,
                 toBlock=request_query.to_block,
                 argument_filters=argument_filters_dict,
@@ -106,7 +106,9 @@ def list_all_e2e_messaging_event_logs(
             events = []
         for event in events:
             block_number = event["blockNumber"]
-            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            block_timestamp = (await async_web3.eth.get_block(block_number))[
+                "timestamp"
+            ]
             tmp_list.append(
                 {
                     "event": event["event"],
@@ -133,7 +135,9 @@ def list_all_e2e_messaging_event_logs(
         InvalidParameterError, RequestBlockRangeLimitExceededError
     ),
 )
-def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depends()):
+async def list_all_ibet_escrow_event_logs(
+    request_query: IbetEscrowEventsQuery = Depends(),
+):
     """
     Returns a list of IbetEscrow event logs.
     """
@@ -152,7 +156,7 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
         except:
             raise InvalidParameterError("invalid argument_filters")
 
-    contract = Contract.get_contract(
+    contract = AsyncContract.get_contract(
         contract_name="IbetEscrow", address=str(config.IBET_ESCROW_CONTRACT_ADDRESS)
     )
     if request_query.event == "Deposited":
@@ -178,7 +182,7 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
         try:
-            events = contract_event.get_logs(
+            events = await contract_event.get_logs(
                 fromBlock=request_query.from_block,
                 toBlock=request_query.to_block,
                 argument_filters=argument_filters_dict,
@@ -187,7 +191,9 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
             events = []
         for event in events:
             block_number = event["blockNumber"]
-            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            block_timestamp = (await async_web3.eth.get_block(block_number))[
+                "timestamp"
+            ]
             tmp_list.append(
                 {
                     "event": event["event"],
@@ -214,7 +220,7 @@ def list_all_ibet_escrow_event_logs(request_query: IbetEscrowEventsQuery = Depen
         InvalidParameterError, RequestBlockRangeLimitExceededError
     ),
 )
-def list_all_ibet_security_token_escrow_event_logs(
+async def list_all_ibet_security_token_escrow_event_logs(
     request_query: IbetSecurityTokenEscrowEventsQuery = Depends(),
 ):
     """
@@ -235,7 +241,7 @@ def list_all_ibet_security_token_escrow_event_logs(
         except:
             raise InvalidParameterError("invalid argument_filters")
 
-    contract = Contract.get_contract(
+    contract = AsyncContract.get_contract(
         contract_name="IbetSecurityTokenEscrow",
         address=str(config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS),
     )
@@ -271,7 +277,7 @@ def list_all_ibet_security_token_escrow_event_logs(
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
         try:
-            events = contract_event.get_logs(
+            events = await contract_event.get_logs(
                 fromBlock=request_query.from_block,
                 toBlock=request_query.to_block,
                 argument_filters=argument_filters_dict,
@@ -280,7 +286,9 @@ def list_all_ibet_security_token_escrow_event_logs(
             events = []
         for event in events:
             block_number = event["blockNumber"]
-            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            block_timestamp = (await async_web3.eth.get_block(block_number))[
+                "timestamp"
+            ]
             tmp_list.append(
                 {
                     "event": event["event"],
@@ -307,7 +315,7 @@ def list_all_ibet_security_token_escrow_event_logs(
         InvalidParameterError, RequestBlockRangeLimitExceededError
     ),
 )
-def list_all_ibet_security_token_interface_event_logs(
+async def list_all_ibet_security_token_interface_event_logs(
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -331,7 +339,7 @@ def list_all_ibet_security_token_interface_event_logs(
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
-    contract = Contract.get_contract(
+    contract = AsyncContract.get_contract(
         contract_name="IbetSecurityTokenInterface", address=str(token_address)
     )
     if request_query.event is None:
@@ -343,7 +351,7 @@ def list_all_ibet_security_token_interface_event_logs(
     for attr in attr_list:
         contract_event = getattr(contract.events, attr)
         try:
-            events = contract_event.get_logs(
+            events = await contract_event.get_logs(
                 fromBlock=request_query.from_block,
                 toBlock=request_query.to_block,
                 argument_filters=argument_filters_dict,
@@ -352,7 +360,9 @@ def list_all_ibet_security_token_interface_event_logs(
             events = []
         for event in events:
             block_number = event["blockNumber"]
-            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            block_timestamp = (await async_web3.eth.get_block(block_number))[
+                "timestamp"
+            ]
             tmp_list.append(
                 {
                     "event": event["event"],
