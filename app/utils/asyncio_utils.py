@@ -16,7 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 from asyncio import Semaphore, TaskGroup
+from typing import Any, Coroutine, TypeVar
 
 
 class SemaphoreTaskGroup(TaskGroup):
@@ -29,6 +31,22 @@ class SemaphoreTaskGroup(TaskGroup):
             self._semaphore = Semaphore(value=max_concurrency)
         else:
             self._semaphore = None
+
+    T = TypeVar("T")
+
+    @classmethod
+    async def run(
+        cls, *args: Coroutine[Any, Any, T], max_concurrency: int
+    ) -> list[asyncio.Future[T]]:
+        """
+
+        @param args: coroutines
+        @param max_concurrency: the number of concurrent tasks running
+        @return: dispatched tasks
+        """
+        async with SemaphoreTaskGroup(max_concurrency=max_concurrency) as tg:
+            dispatched = [tg.create_task(coro) for coro in args]
+        return dispatched
 
     def create_task(self, coro, *args, **kwargs):
         """

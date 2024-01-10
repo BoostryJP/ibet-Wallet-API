@@ -159,26 +159,22 @@ class BaseOrderList(object):
             buyer_address,
         ) in _agreement_events:
             try:
-                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                    tasks = [
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=exchange_contract,
-                                function_name="getOrder",
-                                args=(order_id,),
-                            )
+                tasks = await SemaphoreTaskGroup.run(
+                    AsyncContract.call_function(
+                        contract=exchange_contract,
+                        function_name="getOrder",
+                        args=(order_id,),
+                    ),
+                    AsyncContract.call_function(
+                        contract=exchange_contract,
+                        function_name="getAgreement",
+                        args=(
+                            order_id,
+                            agreement_id,
                         ),
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=exchange_contract,
-                                function_name="getAgreement",
-                                args=(
-                                    order_id,
-                                    agreement_id,
-                                ),
-                            )
-                        ),
-                    ]
+                    ),
+                    max_concurrency=3,
+                )
                 order_book, agreement = [task.result() for task in tasks]
             except ExceptionGroup:
                 raise ServiceUnavailable from None
@@ -286,26 +282,22 @@ class BaseOrderList(object):
             else:
                 settlement_timestamp_jp = ""
             try:
-                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                    tasks = [
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=exchange_contract,
-                                function_name="getOrder",
-                                args=(order_id,),
-                            )
+                tasks = await SemaphoreTaskGroup.run(
+                    AsyncContract.call_function(
+                        contract=exchange_contract,
+                        function_name="getOrder",
+                        args=(order_id,),
+                    ),
+                    AsyncContract.call_function(
+                        contract=exchange_contract,
+                        function_name="getAgreement",
+                        args=(
+                            order_id,
+                            agreement_id,
                         ),
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=exchange_contract,
-                                function_name="getAgreement",
-                                args=(
-                                    order_id,
-                                    agreement_id,
-                                ),
-                            )
-                        ),
-                    ]
+                    ),
+                    max_concurrency=3,
+                )
                 order_book, agreement = [task.result() for task in tasks]
             except ExceptionGroup:
                 raise ServiceUnavailable from None

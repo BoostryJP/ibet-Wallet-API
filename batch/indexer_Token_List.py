@@ -16,14 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import os
 import sys
-import time
 from typing import Optional
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
@@ -32,24 +32,25 @@ sys.path.append(path)
 import log
 
 from app import config
-from app.contracts import Contract
+from app.contracts import AsyncContract
+from app.database import get_async_uri, get_batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
 from app.model.schema.base import TokenType
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 process_name = "INDEXER-TOKEN-LIST"
 LOG = log.get_logger(process_name=process_name)
 
-web3 = Web3Wrapper()
-db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
+async_web3 = AsyncWeb3Wrapper()
+async_db_engine = get_batch_async_engine(get_async_uri(config.DATABASE_URL))
 
 
 class Processor:
     """Processor for indexing TokenList events"""
 
     def __init__(self):
-        self.token_list_contract = Contract.get_contract(
+        self.token_list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
         self.available_token_template_list = []
@@ -64,14 +65,19 @@ class Processor:
 
     @staticmethod
     def __get_db_session():
-        return Session(autocommit=False, autoflush=True, bind=db_engine)
+        return AsyncSession(
+            autocommit=False,
+            autoflush=True,
+            expire_on_commit=False,
+            bind=async_db_engine,
+        )
 
-    def process(self):
+    async def process(self):
         local_session = self.__get_db_session()
         try:
-            latest_block = web3.eth.block_number
+            latest_block = await async_web3.eth.block_number
             _from_block = (
-                self.__get_idx_token_list_block_number(
+                await self.__get_idx_token_list_block_number(
                     db_session=local_session,
                     contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS,
                 )
@@ -80,13 +86,13 @@ class Processor:
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
                 while _to_block < latest_block:
-                    self.__sync_all(
+                    await self.__sync_all(
                         db_session=local_session,
                         block_from=_from_block,
                         block_to=_to_block,
                     )
                     _to_block += 1000000
-                self.__sync_all(
+                await self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=latest_block,
@@ -94,29 +100,33 @@ class Processor:
             else:
                 if _from_block > latest_block:
                     return
-                self.__sync_all(
+                await self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=latest_block,
                 )
-            self.__set_idx_token_list_block_number(
+            await self.__set_idx_token_list_block_number(
                 db_session=local_session,
                 contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS,
                 block_number=latest_block,
             )
-            local_session.commit()
+            await local_session.commit()
         except Exception as e:
-            local_session.rollback()
+            await local_session.rollback()
             raise
         finally:
-            local_session.close()
+            await local_session.close()
         LOG.info("Sync job has been completed")
 
-    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
+    async def __sync_all(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         LOG.info("Syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_register(db_session, block_from, block_to)
+        await self.__sync_register(db_session, block_from, block_to)
 
-    def __sync_register(self, db_session: Session, block_from: int, block_to: int):
+    async def __sync_register(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         """Sync Register Events
 
         :param db_session: ORM session
@@ -125,7 +135,7 @@ class Processor:
         :return: None
         """
         try:
-            events = self.token_list_contract.events.Register.get_logs(
+            events = await self.token_list_contract.events.Register.get_logs(
                 fromBlock=block_from, toBlock=block_to
             )
         except ABIEventFunctionNotFound:
@@ -135,7 +145,7 @@ class Processor:
                 token_address = _event["args"].get("token_address")
                 token_template = _event["args"].get("token_template")
                 owner_address = _event["args"].get("owner_address")
-                self.__sink_on_token_info(
+                await self.__sink_on_token_info(
                     db_session=db_session,
                     token_address=token_address,
                     token_template=token_template,
@@ -144,9 +154,9 @@ class Processor:
         except Exception as e:
             raise e
 
-    def __sink_on_token_info(
+    async def __sink_on_token_info(
         self,
-        db_session: Session,
+        db_session: AsyncSession,
         token_address: str,
         token_template: str,
         owner_address: str,
@@ -162,15 +172,17 @@ class Processor:
         if token_template not in self.available_token_template_list:
             return
 
-        idx_token_list: Optional[IDXTokenListItem] = db_session.scalars(
-            select(IDXTokenListItem)
-            .where(IDXTokenListItem.token_address == token_address)
-            .limit(1)
+        idx_token_list: Optional[IDXTokenListItem] = (
+            await db_session.scalars(
+                select(IDXTokenListItem)
+                .where(IDXTokenListItem.token_address == token_address)
+                .limit(1)
+            )
         ).first()
         if idx_token_list is not None:
             idx_token_list.token_template = token_template
             idx_token_list.owner_address = owner_address
-            db_session.merge(idx_token_list)
+            await db_session.merge(idx_token_list)
         else:
             idx_token_list = IDXTokenListItem()
             idx_token_list.token_address = token_address
@@ -179,12 +191,16 @@ class Processor:
             db_session.add(idx_token_list)
 
     @staticmethod
-    def __get_idx_token_list_block_number(db_session: Session, contract_address: str):
+    async def __get_idx_token_list_block_number(
+        db_session: AsyncSession, contract_address: str
+    ):
         """Get token list index for Share"""
-        _idx_token_list_block_number = db_session.scalars(
-            select(IDXTokenListBlockNumber)
-            .where(IDXTokenListBlockNumber.contract_address == contract_address)
-            .limit(1)
+        _idx_token_list_block_number = (
+            await db_session.scalars(
+                select(IDXTokenListBlockNumber)
+                .where(IDXTokenListBlockNumber.contract_address == contract_address)
+                .limit(1)
+            )
         ).first()
         if _idx_token_list_block_number is None:
             return -1
@@ -192,29 +208,31 @@ class Processor:
             return _idx_token_list_block_number.latest_block_number
 
     @staticmethod
-    def __set_idx_token_list_block_number(
-        db_session: Session, contract_address: str, block_number: int
+    async def __set_idx_token_list_block_number(
+        db_session: AsyncSession, contract_address: str, block_number: int
     ):
         """Get token list index for Share"""
-        _idx_token_list_block_number = db_session.scalars(
-            select(IDXTokenListBlockNumber)
-            .where(IDXTokenListBlockNumber.contract_address == contract_address)
-            .limit(1)
+        _idx_token_list_block_number = (
+            await db_session.scalars(
+                select(IDXTokenListBlockNumber)
+                .where(IDXTokenListBlockNumber.contract_address == contract_address)
+                .limit(1)
+            )
         ).first()
         if _idx_token_list_block_number is None:
             _idx_token_list_block_number = IDXTokenListBlockNumber()
         _idx_token_list_block_number.latest_block_number = block_number
         _idx_token_list_block_number.contract_address = contract_address
-        db_session.merge(_idx_token_list_block_number)
+        await db_session.merge(_idx_token_list_block_number)
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
 
     while True:
         try:
-            processor.process()
+            await processor.process()
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
@@ -223,8 +241,11 @@ def main():
         except Exception:
             LOG.exception("An exception occurred during event synchronization")
 
-        time.sleep(5)
+        await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

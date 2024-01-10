@@ -16,11 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import logging
 import time
 from datetime import datetime
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import select
@@ -70,7 +71,7 @@ def main_func(test_module):
 @pytest.fixture(scope="function")
 def processor(test_module, session):
     processor = test_module.Processor()
-    processor.initial_sync()
+    asyncio.run(processor.sync_new_logs())
     return processor
 
 
@@ -189,7 +190,7 @@ class TestProcessor:
         ).transact({"from": self.account1["account_address"]})
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -265,7 +266,7 @@ class TestProcessor:
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -343,7 +344,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -440,7 +441,7 @@ class TestProcessor:
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -525,7 +526,7 @@ class TestProcessor:
 
         # ApplyForTransfer events not emitted
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -576,7 +577,7 @@ class TestProcessor:
         ).transact({"from": self.account1["account_address"]})
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -643,7 +644,7 @@ class TestProcessor:
         ).transact({"from": self.account1["account_address"]})
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -738,7 +739,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -830,7 +831,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -927,7 +928,7 @@ class TestProcessor:
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -966,7 +967,7 @@ class TestProcessor:
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1_1(self, processor, shared_contract, session):
@@ -1009,7 +1010,7 @@ class TestProcessor:
         block_number_current = web3.eth.block_number
 
         # Run initial sync
-        processor.initial_sync()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -1036,10 +1037,10 @@ class TestProcessor:
         block_number_current = web3.eth.block_number
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1103,9 +1104,10 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+            "web3.eth.async_eth.AsyncEth.get_block",
+            MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.sync_new_logs())
         # Assertion
         _transfer_approval_list = session.scalars(
             select(IDXTransferApproval).order_by(IDXTransferApproval.created)
@@ -1127,9 +1129,10 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+            "web3.eth.async_eth.AsyncEth.get_block",
+            MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1189,10 +1192,10 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.sync_new_logs())
         # Assertion
         _transfer_approval_list = session.scalars(
             select(IDXTransferApproval).order_by(IDXTransferApproval.created)
@@ -1214,10 +1217,10 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1279,7 +1282,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.initial_sync()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -1304,7 +1307,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1325,20 +1328,22 @@ class TestProcessor:
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):
         # Mocking time.sleep to break mainloop
-        time_mock = MagicMock(wraps=time)
-        time_mock.sleep.side_effect = [True, TypeError()]
+        asyncio_mock = AsyncMock(wraps=asyncio)
+        asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_TransferApproval.time", time_mock), mock.patch(
+        with mock.patch(
+            "batch.indexer_TransferApproval.asyncio", asyncio_mock
+        ), mock.patch(
             "batch.indexer_TransferApproval.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            main_func()
+            asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.WARNING, "An external service was unavailable")

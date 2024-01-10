@@ -75,7 +75,7 @@ async def list_all_companies(
     """
 
     # Get company list
-    _company_list = await CompanyList.get_async()
+    _company_list = await CompanyList.get()
     company_list = [company.json() for company in _company_list.all()]
 
     # Get the token listed
@@ -180,7 +180,7 @@ async def retrieve_company(
     """
     Returns given issuer information.
     """
-    company = await CompanyList.get_find_async(to_checksum_address(eth_address))
+    company = await CompanyList.get_find(to_checksum_address(eth_address))
     if company.address == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
 

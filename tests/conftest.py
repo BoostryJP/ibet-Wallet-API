@@ -49,7 +49,7 @@ from app.database import (
 from app.main import app
 from app.model.db import Notification
 from app.model.db.base import Base
-from app.utils.web3_utils import FailOverHTTPProvider
+from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -81,7 +81,7 @@ class UnitTestAccount(TypedDict):
 
 @pytest.fixture(scope="session")
 def client() -> TestClient:
-    FailOverHTTPProvider.is_default = None
+    AsyncFailOverHTTPProvider.is_default = None
 
     client = TestClient(app)
     return client
@@ -269,40 +269,40 @@ async def async_db(async_db_engine):
     # Replace target API's dependency DB session.
     app.dependency_overrides[db_async_session] = override_inject_db_session
 
-    async with db as db:
-        await db.begin()
-        yield db
-        await db.rollback()
+    async with db as session:
+        await session.begin()
+        yield session
+        await session.rollback()
 
         # Remove DB tables
         if engine.name == "mysql":
-            await db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+            await session.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
             for table in Base.metadata.sorted_tables:
-                await db.execute(text(f"TRUNCATE TABLE `{table.name}`;"))
+                await session.execute(text(f"TRUNCATE TABLE `{table.name}`;"))
                 if table.autoincrement_column is not None:
-                    await db.execute(
+                    await session.execute(
                         text(f"ALTER TABLE `{table.name}` auto_increment = 1;")
                     )
-            await db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+            await session.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
         else:
-            await db.begin()
+            await session.begin()
             for table in Base.metadata.sorted_tables:
-                await db.execute(
+                await session.execute(
                     text(f'ALTER TABLE "{table.name}" DISABLE TRIGGER ALL;')
                 )
-                await db.execute(
+                await session.execute(
                     text(f'TRUNCATE TABLE "{table.name}" RESTART IDENTITY CASCADE;')
                 )
                 if table.autoincrement_column is not None:
-                    await db.execute(
+                    await session.execute(
                         text(
                             f"ALTER SEQUENCE {table.name}_{table.autoincrement_column.name}_seq RESTART WITH 1;"
                         )
                     )
-                await db.execute(
+                await session.execute(
                     text(f'ALTER TABLE "{table.name}" ENABLE TRIGGER ALL;')
                 )
-            await db.commit()
+            await session.commit()
     await db.close()
 
     app.dependency_overrides[db_async_session] = db_async_session

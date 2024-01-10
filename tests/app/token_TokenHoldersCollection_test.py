@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import uuid
 from unittest import mock
 
@@ -193,7 +194,7 @@ class TestTokenTokenHoldersCollection:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         apiurl = self.apiurl_after_post.format(
             contract_address=token["address"], list_id=list_id

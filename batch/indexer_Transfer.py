@@ -16,17 +16,17 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import json
 import os
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Sequence
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine, desc, select
+from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
@@ -35,7 +35,8 @@ sys.path.append(path)
 import log
 
 from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
-from app.contracts import Contract
+from app.contracts import AsyncContract
+from app.database import get_async_uri, get_batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXTransfer,
@@ -44,15 +45,15 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema.base import TokenType
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 UTC = timezone(timedelta(hours=0), "UTC")
 
 process_name = "INDEXER-TRANSFER"
 LOG = log.get_logger(process_name=process_name)
 
-web3 = Web3Wrapper()
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+async_web3 = AsyncWeb3Wrapper()
+async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 
 class Processor:
@@ -103,20 +104,20 @@ class Processor:
         self.token_list = self.TargetTokenList()
 
     @staticmethod
-    def __gen_block_timestamp(event):
+    async def __gen_block_timestamp(event):
         return datetime.fromtimestamp(
-            web3.eth.get_block(event["blockNumber"])["timestamp"], UTC
+            (await async_web3.eth.get_block(event["blockNumber"]))["timestamp"], UTC
         )
 
     @staticmethod
-    def __gen_block_timestamp_from_block_number(block_number: int):
+    async def __gen_block_timestamp_from_block_number(block_number: int):
         return datetime.fromtimestamp(
-            web3.eth.get_block(block_number)["timestamp"], UTC
+            (await async_web3.eth.get_block(block_number))["timestamp"], UTC
         )
 
     @staticmethod
-    def __get_latest_synchronized(
-        db_session: Session, token_address: str
+    async def __get_latest_synchronized(
+        db_session: AsyncSession, token_address: str
     ) -> tuple[datetime | None, int | None]:
         """Get latest synchronized data
 
@@ -124,18 +125,20 @@ class Processor:
         :param token_address: token address
         :return: latest timestamp, latest block number
         """
-        latest_registered: Optional[IDXTransfer] = db_session.scalars(
-            select(IDXTransfer)
-            .where(IDXTransfer.token_address == token_address)
-            .order_by(desc(IDXTransfer.created))
-            .limit(1)
+        latest_registered: Optional[IDXTransfer] = (
+            await db_session.scalars(
+                select(IDXTransfer)
+                .where(IDXTransfer.token_address == token_address)
+                .order_by(desc(IDXTransfer.created))
+                .limit(1)
+            )
         ).first()
-        latest_registered_block_number: Optional[
-            IDXTransferBlockNumber
-        ] = db_session.scalars(
-            select(IDXTransferBlockNumber)
-            .where(IDXTransferBlockNumber.contract_address == token_address)
-            .limit(1)
+        latest_registered_block_number: Optional[IDXTransferBlockNumber] = (
+            await db_session.scalars(
+                select(IDXTransferBlockNumber)
+                .where(IDXTransferBlockNumber.contract_address == token_address)
+                .limit(1)
+            )
         ).first()
         if latest_registered is not None and latest_registered_block_number is not None:
             return (
@@ -151,7 +154,7 @@ class Processor:
 
     @staticmethod
     def __insert_idx(
-        db_session: Session,
+        db_session: AsyncSession,
         transaction_hash: str,
         token_address: str,
         from_account_address: str,
@@ -193,15 +196,17 @@ class Processor:
         db_session.add(transfer)
 
     @staticmethod
-    def __update_idx_latest_block(
-        db_session: Session, token_list: TargetTokenList, block_number: int
+    async def __update_idx_latest_block(
+        db_session: AsyncSession, token_list: TargetTokenList, block_number: int
     ):
         for target in token_list:
             token = target.token_contract
-            idx_block_number: Optional[IDXTransferBlockNumber] = db_session.scalars(
-                select(IDXTransferBlockNumber)
-                .where(IDXTransferBlockNumber.contract_address == token.address)
-                .limit(1)
+            idx_block_number: Optional[IDXTransferBlockNumber] = (
+                await db_session.scalars(
+                    select(IDXTransferBlockNumber)
+                    .where(IDXTransferBlockNumber.contract_address == token.address)
+                    .limit(1)
+                )
             ).first()
             if idx_block_number is None:
                 idx_block_number = IDXTransferBlockNumber()
@@ -210,95 +215,105 @@ class Processor:
                 db_session.add(idx_block_number)
             else:
                 idx_block_number.latest_block_number = block_number
-                db_session.merge(idx_block_number)
+                await db_session.merge(idx_block_number)
 
     """
     Sync logs
     """
 
-    def sync_new_logs(self):
-        local_session = Session(autocommit=False, autoflush=True, bind=db_engine)
-        latest_block = web3.eth.block_number
+    async def sync_new_logs(self):
+        local_session = AsyncSession(
+            autocommit=False, autoflush=True, bind=async_db_engine
+        )
+        latest_block = await async_web3.eth.block_number
         try:
             LOG.info("Syncing to={}".format(latest_block))
 
             # Refresh listed tokens
-            self.__get_token_list(local_session)
+            await self.__get_token_list(local_session)
 
             # Synchronize 1,000,000 blocks each
             _to_block = 999_999
             _from_block = 0
             if latest_block > 999_999:
                 while _to_block < latest_block:
-                    self.__sync_all(local_session, _from_block, _to_block)
+                    await self.__sync_all(local_session, _from_block, _to_block)
                     _to_block += 1_000_000
                     _from_block += 1_000_000
-                self.__sync_all(local_session, _from_block, latest_block)
+                await self.__sync_all(local_session, _from_block, latest_block)
             else:
-                self.__sync_all(local_session, _from_block, latest_block)
+                await self.__sync_all(local_session, _from_block, latest_block)
 
             # Update latest synchronized block numbers
-            self.__update_idx_latest_block(
+            await self.__update_idx_latest_block(
                 db_session=local_session,
                 token_list=self.token_list,
                 block_number=latest_block,
             )
-            local_session.commit()
+            await local_session.commit()
         except Exception as e:
-            local_session.rollback()
+            await local_session.rollback()
             raise e
         finally:
-            local_session.close()
+            await local_session.close()
 
-    def __get_token_list(self, db_session: Session):
+    async def __get_token_list(self, db_session: AsyncSession):
         self.token_list = self.TargetTokenList()
-        list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
-        listed_tokens: Sequence[Listing] = db_session.scalars(select(Listing)).all()
+        list_contract = AsyncContract.get_contract(
+            "TokenList", TOKEN_LIST_CONTRACT_ADDRESS
+        )
+        listed_tokens: Sequence[Listing] = (
+            await db_session.scalars(select(Listing))
+        ).all()
         for listed_token in listed_tokens:
-            token_info = Contract.call_function(
+            token_info = await AsyncContract.call_function(
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(listed_token.token_address,),
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
-            skip_timestamp, skip_block_number = self.__get_latest_synchronized(
+            skip_timestamp, skip_block_number = await self.__get_latest_synchronized(
                 db_session, listed_token.token_address
             )
             if token_info[1] == TokenType.IbetCoupon:
-                token_contract = Contract.get_contract(
+                token_contract = AsyncContract.get_contract(
                     TokenType.IbetCoupon, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
             elif token_info[1] == TokenType.IbetMembership:
-                token_contract = Contract.get_contract(
+                token_contract = AsyncContract.get_contract(
                     TokenType.IbetMembership, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
             elif token_info[1] == TokenType.IbetStraightBond:
-                token_contract = Contract.get_contract(
+                token_contract = AsyncContract.get_contract(
                     TokenType.IbetStraightBond, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
             elif token_info[1] == TokenType.IbetShare:
-                token_contract = Contract.get_contract(
+                token_contract = AsyncContract.get_contract(
                     TokenType.IbetShare, listed_token.token_address
                 )
                 self.token_list.append(
                     token_contract, skip_timestamp, skip_block_number
                 )
 
-    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        self.__sync_transfer(db_session, block_from, block_to)
-        self.__sync_unlock(db_session, block_from, block_to)
-        self.__update_skip_block(db_session)
+    async def __sync_all(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
+        await self.__sync_transfer(db_session, block_from, block_to)
+        await self.__sync_unlock(db_session, block_from, block_to)
+        await self.__update_skip_block(db_session)
 
-    def __sync_transfer(self, db_session: Session, block_from: int, block_to: int):
+    async def __sync_transfer(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         """Sync Transfer events
 
         :param db_session: ORM session
@@ -320,14 +335,14 @@ class Processor:
                 elif skip_block is not None and block_from <= skip_block < block_to:
                     # block_from <= skip_block < block_to
                     LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events = token.events.Transfer.get_logs(
+                    events = await token.events.Transfer.get_logs(
                         fromBlock=skip_block + 1, toBlock=block_to
                     )
                 else:
                     # No logs or
                     # skip_block < block_from < block_to
                     LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = token.events.Transfer.get_logs(
+                    events = await token.events.Transfer.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
             except ABIEventFunctionNotFound:
@@ -341,7 +356,7 @@ class Processor:
                     if value > sys.maxsize:
                         pass
                     else:
-                        event_created = self.__gen_block_timestamp(event=event)
+                        event_created = await self.__gen_block_timestamp(event=event)
                         if (
                             skip_timestamp is not None
                             and event_created <= skip_timestamp
@@ -364,7 +379,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_unlock(self, db_session: Session, block_from: int, block_to: int):
+    async def __sync_unlock(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         """Synchronize Unlock events
 
         :param db_session: database session
@@ -385,14 +402,14 @@ class Processor:
                 elif skip_block is not None and block_from <= skip_block < block_to:
                     # block_from <= skip_block < block_to
                     LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events = token.events.Unlock.get_logs(
+                    events = await token.events.Unlock.get_logs(
                         fromBlock=skip_block + 1, toBlock=block_to
                     )
                 else:
                     # No logs or
                     # skip_block < block_from < block_to
                     LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = token.events.Unlock.get_logs(
+                    events = await token.events.Unlock.get_logs(
                         fromBlock=block_from, toBlock=block_to
                     )
             except ABIEventFunctionNotFound:
@@ -404,7 +421,9 @@ class Processor:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
                     block_timestamp = datetime.utcfromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"]
+                        (await async_web3.eth.get_block(event["blockNumber"]))[
+                            "timestamp"
+                        ]
                     )
                     if args["value"] > sys.maxsize:
                         pass
@@ -427,19 +446,22 @@ class Processor:
             except Exception:
                 raise
 
-    def __update_skip_block(self, db_session: Session):
+    async def __update_skip_block(self, db_session: AsyncSession):
         """Memorize the block number where next processing should start from
 
         :param db_session: ORM session
         :return: None
         """
         for target in self.token_list:
-            target.skip_timestamp, target.skip_block = self.__get_latest_synchronized(
+            (
+                target.skip_timestamp,
+                target.skip_block,
+            ) = await self.__get_latest_synchronized(
                 db_session, target.token_contract.address
             )
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
 
@@ -447,17 +469,17 @@ def main():
     initial_synced_completed = False
     while not initial_synced_completed:
         try:
-            processor.sync_new_logs()
+            await processor.sync_new_logs()
             initial_synced_completed = True
             LOG.info(f"<{process_name}> Initial sync has been completed")
         except Exception:
             LOG.exception("Initial sync failed")
-        time.sleep(5)
+        await asyncio.sleep(5)
 
     # Sync new logs
     while True:
         try:
-            processor.sync_new_logs()
+            await processor.sync_new_logs()
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
@@ -465,8 +487,11 @@ def main():
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
             LOG.exception("An exception occurred during event synchronization")
-        time.sleep(5)
+        await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

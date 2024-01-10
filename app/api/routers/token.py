@@ -65,10 +65,10 @@ from app.model.schema.base import (
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 LOG = log.get_logger()
-
+async_web3 = AsyncWeb3Wrapper()
 
 router = APIRouter(prefix="/Token", tags=["token_info"])
 
@@ -115,19 +115,15 @@ async def get_token_status(
     try:
         # Token-Contractへの接続
         token_contract = AsyncContract.get_contract(token_template, token_address)
-        async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-            tasks = [
-                tg.create_task(
-                    AsyncContract.call_function(
-                        contract=token_contract, function_name="status", args=()
-                    )
-                ),
-                tg.create_task(
-                    AsyncContract.call_function(
-                        contract=token_contract, function_name="transferable", args=()
-                    )
-                ),
-            ]
+        tasks = await SemaphoreTaskGroup.run(
+            AsyncContract.call_function(
+                contract=token_contract, function_name="status", args=()
+            ),
+            AsyncContract.call_function(
+                contract=token_contract, function_name="transferable", args=()
+            ),
+            max_concurrency=3,
+        )
         status, transferable = [task.result() for task in tasks]
     except* ServiceUnavailable as e:
         LOG.warning(e)
@@ -626,13 +622,11 @@ async def create_token_holders_collection(
     """
     Enqueues task of collecting token holders for a given block number.
     """
-    web3 = Web3Wrapper()
-
     list_id = str(data.list_id)
     block_number = data.block_number
 
     # ブロックナンバーのチェック
-    if block_number > web3.eth.block_number or block_number < 1:
+    if block_number > await async_web3.eth.block_number or block_number < 1:
         raise InvalidParameterError("Block number must be current or past one.")
 
     # 取扱トークンチェック

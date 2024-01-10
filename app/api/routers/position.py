@@ -454,31 +454,27 @@ class BasePosition:
             )
             if _exchange_contract is not None:
                 try:
-                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                        tasks = [
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="balanceOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                ),
+                    tasks = await SemaphoreTaskGroup.run(
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="balanceOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="commitmentOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                            default_returns=0,
+                        ),
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="commitmentOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                        ]
+                            default_returns=0,
+                        ),
+                        max_concurrency=3,
+                    )
                     _exchange_balance, _exchange_commitment = [
                         task.result() for task in tasks
                     ]
@@ -553,55 +549,47 @@ class BasePositionShare(BasePosition):
 
         try:
             try:
-                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                    tasks = [
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=_token_contract,
-                                function_name="balanceOf",
-                                args=(account_address,),
-                                default_returns=0,
-                            )
-                        ),
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=_token_contract,
-                                function_name="pendingTransfer",
-                                args=(account_address,),
-                                default_returns=0,
-                            ),
-                        ),
-                    ]
+                tasks = await SemaphoreTaskGroup.run(
+                    AsyncContract.call_function(
+                        contract=_token_contract,
+                        function_name="balanceOf",
+                        args=(account_address,),
+                        default_returns=0,
+                    ),
+                    AsyncContract.call_function(
+                        contract=_token_contract,
+                        function_name="pendingTransfer",
+                        args=(account_address,),
+                        default_returns=0,
+                    ),
+                    max_concurrency=3,
+                )
                 balance, pending_transfer = [task.result() for task in tasks]
             except ExceptionGroup:
                 raise ServiceUnavailable from None
             if _exchange_contract is not None:
                 try:
-                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                        tasks = [
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="balanceOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                    tasks = await SemaphoreTaskGroup.run(
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="balanceOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="commitmentOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                            default_returns=0,
+                        ),
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="commitmentOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                        ]
+                            default_returns=0,
+                        ),
+                        max_concurrency=3,
+                    )
                     _exchange_balance, _exchange_commitment = [
                         task.result() for task in tasks
                     ]
@@ -666,55 +654,47 @@ class BasePositionStraightBond(BasePosition):
 
         try:
             try:
-                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                    tasks = [
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=_token_contract,
-                                function_name="balanceOf",
-                                args=(account_address,),
-                                default_returns=0,
-                            )
-                        ),
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=_token_contract,
-                                function_name="pendingTransfer",
-                                args=(account_address,),
-                                default_returns=0,
-                            )
-                        ),
-                    ]
+                tasks = await SemaphoreTaskGroup.run(
+                    AsyncContract.call_function(
+                        contract=_token_contract,
+                        function_name="balanceOf",
+                        args=(account_address,),
+                        default_returns=0,
+                    ),
+                    AsyncContract.call_function(
+                        contract=_token_contract,
+                        function_name="pendingTransfer",
+                        args=(account_address,),
+                        default_returns=0,
+                    ),
+                    max_concurrency=3,
+                )
                 balance, pending_transfer = [task.result() for task in tasks]
             except ExceptionGroup:
                 raise ServiceUnavailable from None
             if _exchange_contract is not None:
                 try:
-                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                        tasks = [
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="balanceOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                    tasks = await SemaphoreTaskGroup.run(
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="balanceOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="commitmentOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                            default_returns=0,
+                        ),
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="commitmentOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                        ]
+                            default_returns=0,
+                        ),
+                        max_concurrency=3,
+                    )
                     _exchange_balance, _exchange_commitment = [
                         task.result() for task in tasks
                     ]
@@ -960,55 +940,47 @@ class BasePositionCoupon(BasePosition):
 
         try:
             try:
-                async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                    tasks = [
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=_token_contract,
-                                function_name="balanceOf",
-                                args=(account_address,),
-                                default_returns=0,
-                            )
-                        ),
-                        tg.create_task(
-                            AsyncContract.call_function(
-                                contract=_token_contract,
-                                function_name="usedOf",
-                                args=(account_address,),
-                                default_returns=0,
-                            )
-                        ),
-                    ]
+                tasks = await SemaphoreTaskGroup.run(
+                    AsyncContract.call_function(
+                        contract=_token_contract,
+                        function_name="balanceOf",
+                        args=(account_address,),
+                        default_returns=0,
+                    ),
+                    AsyncContract.call_function(
+                        contract=_token_contract,
+                        function_name="usedOf",
+                        args=(account_address,),
+                        default_returns=0,
+                    ),
+                    max_concurrency=3,
+                )
                 balance, used = [task.result() for task in tasks]
             except ExceptionGroup:
                 raise ServiceUnavailable from None
             if _exchange_contract is not None:
                 try:
-                    async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                        tasks = [
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="balanceOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                    tasks = await SemaphoreTaskGroup.run(
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="balanceOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                            tg.create_task(
-                                AsyncContract.call_function(
-                                    contract=_exchange_contract,
-                                    function_name="commitmentOf",
-                                    args=(
-                                        account_address,
-                                        token_address,
-                                    ),
-                                    default_returns=0,
-                                )
+                            default_returns=0,
+                        ),
+                        AsyncContract.call_function(
+                            contract=_exchange_contract,
+                            function_name="commitmentOf",
+                            args=(
+                                account_address,
+                                token_address,
                             ),
-                        ]
+                            default_returns=0,
+                        ),
+                        max_concurrency=3,
+                    )
                     _exchange_balance, _exchange_commitment = [
                         task.result() for task in tasks
                     ]

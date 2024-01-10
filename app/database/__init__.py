@@ -40,10 +40,14 @@ def get_engine(uri: str):
     return create_engine(uri, **options)
 
 
-def get_async_engine(uri: str):
+def get_async_uri(uri: str):
     if config.DATABASE_TYPE == "mysql":
         # DB URI should be converted to use async DB driver.
         uri = uri.replace("mysql+pymysql://", "mysql+aiomysql://")
+    return uri
+
+
+def get_async_engine(uri: str):
     if config.DATABASE_TYPE == "mysql" and config.UNIT_TEST_MODE:
         # If MySQL used in UT, connection pool should be disabled.
         options = {"pool_pre_ping": True, "echo": config.DB_ECHO, "poolclass": NullPool}
@@ -60,9 +64,22 @@ def get_async_engine(uri: str):
     return create_async_engine(uri, **options)
 
 
+def get_batch_async_engine(uri: str):
+    if config.DATABASE_TYPE == "mysql" and config.UNIT_TEST_MODE:
+        # If MySQL used in UT, connection pool should be disabled.
+        options = {"pool_pre_ping": True, "echo": False, "poolclass": NullPool}
+    else:
+        # If Postgres used, connection pool is activated.
+        options = {
+            "pool_pre_ping": True,
+            "echo": False,
+        }
+    return create_async_engine(uri, **options)
+
+
 # Create Engine
 engine = get_engine(config.DATABASE_URL)
-async_engine = get_async_engine(config.DATABASE_URL)
+async_engine = get_async_engine(get_async_uri(config.DATABASE_URL))
 
 # Create Session Maker
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)

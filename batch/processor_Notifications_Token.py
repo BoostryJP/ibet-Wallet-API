@@ -16,17 +16,17 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import os
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Sequence
 
-from sqlalchemy import and_, create_engine, select
+from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
-from web3.contract import Contract as Web3Contract
+from sqlalchemy.ext.asyncio import AsyncSession
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventFunctionNotFound
 from web3.types import EventData
 
@@ -41,7 +41,8 @@ from app.config import (
     TOKEN_LIST_CONTRACT_ADDRESS,
     WORKER_COUNT,
 )
-from app.contracts import Contract
+from app.contracts import AsyncContract
+from app.database import get_async_uri, get_batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXTokenListItem,
@@ -50,9 +51,9 @@ from app.model.db import (
     NotificationBlockNumber,
     NotificationType,
 )
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
-from app.utils.web3_utils import Web3Wrapper
-from batch.lib.misc import wait_all_futures
+from app.utils.web3_utils import AsyncWeb3Wrapper
 from batch.lib.token_list import TokenList
 
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")
@@ -60,12 +61,12 @@ LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")
 WORKER_COUNT = int(WORKER_COUNT)
 NOTIFICATION_PROCESS_INTERVAL = int(NOTIFICATION_PROCESS_INTERVAL)
 
-web3 = Web3Wrapper()
+async_web3 = AsyncWeb3Wrapper()
 
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 # Get TokenList contract
-list_contract = Contract.get_contract(
+list_contract = AsyncContract.get_contract(
     contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
 token_list = TokenList(list_contract)
@@ -73,7 +74,7 @@ token_list = TokenList(list_contract)
 
 # Watcher
 class Watcher:
-    contract_cache: dict[str, Web3Contract] = {}
+    contract_cache: dict[str, Web3AsyncContract] = {}
 
     def __init__(self, filter_name: str, filter_params: dict, notification_type: str):
         self.filter_name = filter_name
@@ -90,17 +91,20 @@ class Watcher:
         )
 
     @staticmethod
-    def _gen_block_timestamp(entry):
+    async def _gen_block_timestamp(entry):
         return datetime.utcfromtimestamp(
-            web3.eth.get_block(entry["blockNumber"])["timestamp"]
+            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"]
         )
 
     @staticmethod
-    def _get_token_all_list(db_session: Session):
+    async def _get_token_all_list(db_session: AsyncSession):
         _tokens = []
-        registered_tokens: Sequence[IDXTokenListItem] = db_session.scalars(
-            select(IDXTokenListItem).join(
-                Listing, and_(Listing.token_address == IDXTokenListItem.token_address)
+        registered_tokens: Sequence[IDXTokenListItem] = (
+            await db_session.scalars(
+                select(IDXTokenListItem).join(
+                    Listing,
+                    and_(Listing.token_address == IDXTokenListItem.token_address),
+                )
             )
         ).all()
         for registered_token in registered_tokens:
@@ -112,29 +116,31 @@ class Watcher:
             )
         return _tokens
 
-    def db_merge(
+    async def db_merge(
         self,
-        db_session: Session,
-        token_contract: Web3Contract,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
         token_type: str,
         log_entries: list[EventData],
         token_owner_address: str,
     ):
         pass
 
-    def loop(self):
+    async def loop(self):
         start_time = time.time()
-        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+        db_session = AsyncSession(
+            autocommit=False, autoflush=True, bind=async_db_engine
+        )
 
         try:
             # Get listed tokens
-            _token_list = self._get_token_all_list(db_session)
-            latest_block_number = web3.eth.block_number
+            _token_list = await self._get_token_all_list(db_session)
+            latest_block_number = await async_web3.eth.block_number
 
             for _token in _token_list:
                 # Get synchronized block number
                 from_block_number = (
-                    self.__get_synchronized_block_number(
+                    await self.__get_synchronized_block_number(
                         db_session=db_session,
                         contract_address=_token["token"].token_address,
                         notification_type=self.notification_type,
@@ -160,7 +166,7 @@ class Watcher:
                         _token["token"].token_address, None
                     )
                     if token_contract is None:
-                        token_contract = Contract.get_contract(
+                        token_contract = AsyncContract.get_contract(
                             contract_name=_token["token_type"],
                             address=_token["token"].token_address,
                         )
@@ -168,7 +174,7 @@ class Watcher:
                             _token["token"].token_address
                         ] = token_contract
                     _event = getattr(token_contract.events, self.filter_name)
-                    entries = _event.get_logs(
+                    entries = await _event.get_logs(
                         fromBlock=from_block_number, toBlock=to_block_number
                     )
                 except ABIEventFunctionNotFound:  # Backward compatibility
@@ -181,7 +187,7 @@ class Watcher:
 
                 # Register notifications
                 if len(entries) > 0:
-                    self.db_merge(
+                    await self.db_merge(
                         db_session=db_session,
                         token_contract=token_contract,
                         token_type=_token["token_type"],
@@ -190,36 +196,38 @@ class Watcher:
                     )
 
                 # Update synchronized block number
-                self.__set_synchronized_block_number(
+                await self.__set_synchronized_block_number(
                     db_session=db_session,
                     contract_address=_token["token"].token_address,
                     notification_type=self.notification_type,
                     block_number=to_block_number,
                 )
 
-                db_session.commit()
+                await db_session.commit()
 
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         finally:
-            db_session.close()
+            await db_session.close()
             elapsed_time = time.time() - start_time
             LOG.info(
                 "<{}> finished in {} secs".format(self.__class__.__name__, elapsed_time)
             )
 
     @staticmethod
-    def __get_synchronized_block_number(
-        db_session: Session, contract_address: str, notification_type: str
+    async def __get_synchronized_block_number(
+        db_session: AsyncSession, contract_address: str, notification_type: str
     ):
         """Get latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = db_session.scalars(
-            select(NotificationBlockNumber)
-            .where(NotificationBlockNumber.notification_type == notification_type)
-            .where(NotificationBlockNumber.contract_address == contract_address)
-            .limit(1)
+        notification_block_number: NotificationBlockNumber | None = (
+            await db_session.scalars(
+                select(NotificationBlockNumber)
+                .where(NotificationBlockNumber.notification_type == notification_type)
+                .where(NotificationBlockNumber.contract_address == contract_address)
+                .limit(1)
+            )
         ).first()
         if notification_block_number is None:
             return -1
@@ -227,25 +235,27 @@ class Watcher:
             return notification_block_number.latest_block_number
 
     @staticmethod
-    def __set_synchronized_block_number(
-        db_session: Session,
+    async def __set_synchronized_block_number(
+        db_session: AsyncSession,
         contract_address: str,
         notification_type: str,
         block_number: int,
     ):
         """Set latest synchronized blockNumber"""
-        notification_block_number: NotificationBlockNumber | None = db_session.scalars(
-            select(NotificationBlockNumber)
-            .where(NotificationBlockNumber.notification_type == notification_type)
-            .where(NotificationBlockNumber.contract_address == contract_address)
-            .limit(1)
+        notification_block_number: NotificationBlockNumber | None = (
+            await db_session.scalars(
+                select(NotificationBlockNumber)
+                .where(NotificationBlockNumber.notification_type == notification_type)
+                .where(NotificationBlockNumber.contract_address == contract_address)
+                .limit(1)
+            )
         ).first()
         if notification_block_number is None:
             notification_block_number = NotificationBlockNumber()
         notification_block_number.notification_type = notification_type
         notification_block_number.contract_address = contract_address
         notification_block_number.latest_block_number = block_number
-        db_session.merge(notification_block_number)
+        await db_session.merge(notification_block_number)
 
 
 class WatchTransfer(Watcher):
@@ -258,21 +268,21 @@ class WatchTransfer(Watcher):
     def __init__(self):
         super().__init__("Transfer", {}, NotificationType.TRANSFER)
 
-    def db_merge(
+    async def db_merge(
         self,
-        db_session: Session,
-        token_contract: Web3Contract,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
         token_type: str,
         log_entries: list[EventData],
         token_owner_address: str,
     ):
-        company_list = CompanyList.get()
-        token_name = Contract.call_function(
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             # If the contract address is the source of the transfer, skip the process
-            if web3.eth.get_code(entry["args"]["from"]).hex() != "0x":
+            if (await async_web3.eth.get_code(entry["args"]["from"])).hex() != "0x":
                 continue
 
             company = company_list.find(token_owner_address)
@@ -288,10 +298,10 @@ class WatchTransfer(Watcher):
             notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["to"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
-            db_session.merge(notification)
+            await db_session.merge(notification)
 
 
 class WatchApplyForTransfer(Watcher):
@@ -304,20 +314,20 @@ class WatchApplyForTransfer(Watcher):
     def __init__(self):
         super().__init__("ApplyForTransfer", {}, NotificationType.APPLY_FOR_TRANSFER)
 
-    def db_merge(
+    async def db_merge(
         self,
-        db_session: Session,
-        token_contract: Web3Contract,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
         token_type: str,
         log_entries: list[EventData],
         token_owner_address: str,
     ):
-        company_list = CompanyList.get()
-        token_name = Contract.call_function(
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
-            if not token_list.is_registered(entry["address"]):
+            if not await token_list.is_registered(entry["address"]):
                 continue
 
             company = company_list.find(token_owner_address)
@@ -333,10 +343,10 @@ class WatchApplyForTransfer(Watcher):
             notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["to"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
-            db_session.merge(notification)
+            await db_session.merge(notification)
 
 
 class WatchApproveTransfer(Watcher):
@@ -349,20 +359,20 @@ class WatchApproveTransfer(Watcher):
     def __init__(self):
         super().__init__("ApproveTransfer", {}, NotificationType.APPROVE_TRANSFER)
 
-    def db_merge(
+    async def db_merge(
         self,
-        db_session: Session,
-        token_contract: Web3Contract,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
         token_type: str,
         log_entries: list[EventData],
         token_owner_address: str,
     ):
-        company_list = CompanyList.get()
-        token_name = Contract.call_function(
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
-            if not token_list.is_registered(entry["address"]):
+            if not await token_list.is_registered(entry["address"]):
                 continue
 
             company = company_list.find(token_owner_address)
@@ -378,10 +388,10 @@ class WatchApproveTransfer(Watcher):
             notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["from"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
-            db_session.merge(notification)
+            await db_session.merge(notification)
 
 
 class WatchCancelTransfer(Watcher):
@@ -394,16 +404,16 @@ class WatchCancelTransfer(Watcher):
     def __init__(self):
         super().__init__("CancelTransfer", {}, NotificationType.CANCEL_TRANSFER)
 
-    def db_merge(
+    async def db_merge(
         self,
-        db_session: Session,
-        token_contract: Web3Contract,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
         token_type: str,
         log_entries: list[EventData],
         token_owner_address: str,
     ):
-        company_list = CompanyList.get()
-        token_name = Contract.call_function(
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
@@ -423,14 +433,14 @@ class WatchCancelTransfer(Watcher):
             notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["from"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
-            db_session.merge(notification)
+            await db_session.merge(notification)
 
 
 # メイン処理
-def main():
+async def main():
     watchers = [
         WatchTransfer(),
         WatchApplyForTransfer(),
@@ -438,22 +448,27 @@ def main():
         WatchCancelTransfer(),
     ]
 
-    e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
     LOG.info("Service started successfully")
 
     while True:
         start_time = time.time()
 
-        fs = []
-        for watcher in watchers:
-            fs.append(e.submit(watcher.loop))
-        wait_all_futures(fs)
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                *[watcher.loop() for watcher in watchers], max_concurrency=WORKER_COUNT
+            )
+            [task.result() for task in tasks]
+        except ExceptionGroup as e:
+            LOG.error(e)
 
         elapsed_time = time.time() - start_time
         LOG.info("<LOOP> finished in {} secs".format(elapsed_time))
 
-        time.sleep(max(NOTIFICATION_PROCESS_INTERVAL - elapsed_time, 0))
+        await asyncio.sleep(max(NOTIFICATION_PROCESS_INTERVAL - elapsed_time, 0))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

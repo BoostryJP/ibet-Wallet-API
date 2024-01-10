@@ -279,18 +279,18 @@ async def list_all_membership_last_price(
     )
 
     try:
-        async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-            tasks = [
-                tg.create_task(
-                    AsyncContract.call_function(
-                        contract=exchange_contract,
-                        function_name="lastPrice",
-                        args=(to_checksum_address(token_address),),
-                        default_returns=0,
-                    )
+        tasks = await SemaphoreTaskGroup.run(
+            *[
+                AsyncContract.call_function(
+                    contract=exchange_contract,
+                    function_name="lastPrice",
+                    args=(to_checksum_address(token_address),),
+                    default_returns=0,
                 )
                 for token_address in request_query.address_list
-            ]
+            ],
+            max_concurrency=3
+        )
         last_prices = [task.result() for task in tasks]
     except ExceptionGroup:
         raise ServiceUnavailable from None
@@ -509,18 +509,18 @@ async def list_all_coupon_last_price(
     )
 
     try:
-        async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-            tasks = [
-                tg.create_task(
-                    AsyncContract.call_function(
-                        contract=exchange_contract,
-                        function_name="lastPrice",
-                        args=(to_checksum_address(token_address),),
-                        default_returns=0,
-                    )
+        tasks = await SemaphoreTaskGroup.run(
+            *[
+                AsyncContract.call_function(
+                    contract=exchange_contract,
+                    function_name="lastPrice",
+                    args=(to_checksum_address(token_address),),
+                    default_returns=0,
                 )
                 for token_address in request_query.address_list
-            ]
+            ],
+            max_concurrency=3
+        )
         last_prices = [task.result() for task in tasks]
     except ExceptionGroup:
         raise ServiceUnavailable from None

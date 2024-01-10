@@ -101,7 +101,7 @@ class TestEthSendRawTransaction:
     # Web3 FailOver
     def test_normal_1(self, client: TestClient, session: Session):
         with mock.patch(
-            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+            "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
             insert_node_data(
                 session, is_synced=False, endpoint_uri="http://localhost:8546"
@@ -635,7 +635,7 @@ class TestEthSendRawTransaction:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
         with mock.patch(
-            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+            "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
             insert_node_data(session, is_synced=False)
             insert_node_data(

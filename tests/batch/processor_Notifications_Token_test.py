@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from __future__ import annotations
 
+import asyncio
 from importlib import reload
 from typing import TYPE_CHECKING, Callable
 from unittest import mock
@@ -25,6 +26,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -65,7 +67,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope="function")
 def watcher_factory(
-    session: Session, shared_contract: SharedContract
+    async_session: AsyncSession, shared_contract: SharedContract
 ) -> Callable[[str], Watcher]:
     def _watcher(cls_name):
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
@@ -73,7 +75,7 @@ def watcher_factory(
         from batch import processor_Notifications_Token
 
         test_module = reload(processor_Notifications_Token)
-        test_module.db_session = session
+        test_module.db_session = async_session
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
@@ -191,7 +193,7 @@ class TestWatchTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -257,7 +259,7 @@ class TestWatchTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -345,7 +347,7 @@ class TestWatchTransfer:
         # Not Transfer
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -391,7 +393,7 @@ class TestWatchTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -445,7 +447,7 @@ class TestWatchTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -467,7 +469,7 @@ class TestWatchTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -524,7 +526,7 @@ class TestWatchApplyForTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -606,7 +608,7 @@ class TestWatchApplyForTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -714,7 +716,7 @@ class TestWatchApplyForTransfer:
         # Not Transfer
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -736,7 +738,7 @@ class TestWatchApplyForTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -773,7 +775,7 @@ class TestWatchApplyForTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -831,7 +833,7 @@ class TestWatchApproveTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -914,7 +916,7 @@ class TestWatchApproveTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1020,7 +1022,7 @@ class TestWatchApproveTransfer:
         # Not Transfer
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1042,7 +1044,7 @@ class TestWatchApproveTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -1080,7 +1082,7 @@ class TestWatchApproveTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -1138,7 +1140,7 @@ class TestWatchCancelTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1219,7 +1221,7 @@ class TestWatchCancelTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1321,7 +1323,7 @@ class TestWatchCancelTransfer:
         # Not Transfer
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1343,7 +1345,7 @@ class TestWatchCancelTransfer:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -1381,7 +1383,7 @@ class TestWatchCancelTransfer:
         session.commit()
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(

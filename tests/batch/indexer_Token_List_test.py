@@ -16,8 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import logging
-import time
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -148,7 +148,7 @@ class TestProcessor:
         session.commit()
 
         # Run target process
-        processor.process()
+        asyncio.run(processor.process())
 
         # assertion
         _token_list = session.scalars(select(IDXTokenListItem)).all()
@@ -312,7 +312,7 @@ class TestProcessor:
             )
 
         # Run target process
-        processor.process()
+        asyncio.run(processor.process())
 
         # assertion
         for _expect_dict in _token_expected_list:
@@ -335,7 +335,7 @@ class TestProcessor:
 
     # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1(self, processor: Processor, shared_contract, session):
@@ -369,7 +369,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        processor.process()
+        asyncio.run(processor.process())
 
         # Assertion
         _token_list = session.scalars(select(IDXTokenListItem)).all()
@@ -387,10 +387,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        processor.process()
+        asyncio.run(processor.process())
 
         # Run target process
-        processor.process()
+        asyncio.run(processor.process())
 
         # Assertion
         session.rollback()
@@ -438,10 +438,10 @@ class TestProcessor:
         ).first()
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.process()
+            asyncio.run(processor.process())
 
         session.rollback()
         # Assertion
@@ -467,10 +467,10 @@ class TestProcessor:
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         session.rollback()
@@ -518,7 +518,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         _token_list = session.scalars(select(IDXTokenListItem)).all()
@@ -542,7 +542,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         session.rollback()
@@ -581,16 +581,16 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Mocking time.sleep to break mainloop
-        time_mock = MagicMock(wraps=time)
-        time_mock.sleep.side_effect = [TypeError()]
+        asyncio_mock = MagicMock(wraps=asyncio)
+        asyncio_mock.sleep.side_effect = [TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Token_List.time", time_mock), mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+        with mock.patch("batch.indexer_Token_List.asyncio", asyncio_mock), mock.patch(
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(TypeError):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
-            main_func()
+            asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.INFO, "Service started successfully")
