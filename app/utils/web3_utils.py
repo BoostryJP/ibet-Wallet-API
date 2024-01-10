@@ -28,7 +28,7 @@ from requests.exceptions import ConnectionError, HTTPError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from web3 import AsyncHTTPProvider, AsyncWeb3, Web3
+from web3 import AsyncHTTPProvider, AsyncWeb3, Web3, HTTPProvider
 from web3.eth import AsyncEth
 from web3.geth import AsyncGeth
 from web3.middleware import async_geth_poa_middleware, geth_poa_middleware
@@ -119,7 +119,7 @@ class AsyncWeb3Wrapper:
         return async_web3
 
 
-class FailOverHTTPProvider(Web3.HTTPProvider):
+class FailOverHTTPProvider(HTTPProvider):
     fail_over_mode = False  # If False, use only the default(primary) provider
 
     def __init__(self, *args, **kwargs):
