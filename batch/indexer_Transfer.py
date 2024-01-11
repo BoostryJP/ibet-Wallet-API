@@ -36,7 +36,7 @@ import log
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXTransfer,
@@ -221,9 +221,7 @@ class Processor:
     """
 
     async def sync_new_logs(self):
-        local_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=batch_async_engine
-        )
+        local_session = BatchAsyncSessionLocal()
         latest_block = await async_web3.eth.block_number
         try:
             LOG.info("Syncing to={}".format(latest_block))

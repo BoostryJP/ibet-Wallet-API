@@ -33,7 +33,7 @@ sys.path.append(path)
 import log
 
 from app.config import CHAT_WEBHOOK_URL
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.model.db import ChatWebhook
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-CHAT-WEBHOOK")
@@ -41,9 +41,7 @@ LOG = log.get_logger(process_name="PROCESSOR-SEND-CHAT-WEBHOOK")
 
 class Processor:
     async def process(self):
-        db_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=batch_async_engine
-        )
+        db_session = BatchAsyncSessionLocal()
         try:
             hook_list: Sequence[ChatWebhook] = (
                 await db_session.scalars(select(ChatWebhook))

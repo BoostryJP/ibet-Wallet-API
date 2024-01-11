@@ -39,7 +39,7 @@ from app.config import (
     WORKER_COUNT,
 )
 from app.contracts import AsyncContract
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import Notification, NotificationBlockNumber, NotificationType
 from app.model.schema.base import TokenType
@@ -101,9 +101,7 @@ class Watcher:
 
     async def loop(self):
         start_time = time.time()
-        db_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=batch_async_engine
-        )
+        db_session = BatchAsyncSessionLocal()
 
         try:
             # Get synchronized block number

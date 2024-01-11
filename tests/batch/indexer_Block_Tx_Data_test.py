@@ -116,6 +116,7 @@ class TestProcessor:
 
         # Generate empty block
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
 
         # Execute batch processing
         asyncio.run(processor.process())
@@ -132,8 +133,9 @@ class TestProcessor:
         block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
-        assert len(block_data) == 1
+        assert len(block_data) == 2
         assert block_data[0].number == before_block_number + 1
+        assert block_data[1].number == before_block_number + 2
 
         tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)

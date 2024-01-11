@@ -41,7 +41,7 @@ from app.config import (
     WORKER_COUNT,
 )
 from app.contracts import AsyncContract
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXTokenListItem,
@@ -126,9 +126,7 @@ class Watcher:
 
     async def loop(self):
         start_time = time.time()
-        db_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=batch_async_engine
-        )
+        db_session = BatchAsyncSessionLocal()
 
         try:
             # Get listed tokens
@@ -415,7 +413,7 @@ class WatchCancelTransfer(Watcher):
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
-            if not token_list.is_registered(entry["address"]):
+            if not await token_list.is_registered(entry["address"]):
                 continue
 
             company = company_list.find(token_owner_address)

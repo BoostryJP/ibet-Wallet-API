@@ -33,7 +33,7 @@ import log
 
 from app import config
 from app.contracts import AsyncContract
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
 from app.model.schema.base import TokenType
@@ -64,12 +64,7 @@ class Processor:
 
     @staticmethod
     def __get_db_session():
-        return AsyncSession(
-            autocommit=False,
-            autoflush=True,
-            expire_on_commit=False,
-            bind=batch_async_engine,
-        )
+        return BatchAsyncSessionLocal()
 
     async def process(self):
         local_session = self.__get_db_session()

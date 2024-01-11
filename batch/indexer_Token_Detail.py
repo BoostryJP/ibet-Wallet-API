@@ -36,7 +36,7 @@ sys.path.append(path)
 import log
 
 from app import config
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
@@ -87,12 +87,7 @@ class Processor:
 
     @staticmethod
     def __get_db_session() -> AsyncSession:
-        return AsyncSession(
-            autocommit=False,
-            autoflush=True,
-            expire_on_commit=False,
-            bind=batch_async_engine,
-        )
+        return BatchAsyncSessionLocal()
 
     async def process(self):
         LOG.info("Syncing token details")
