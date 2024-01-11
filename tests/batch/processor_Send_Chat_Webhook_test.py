@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import json
 import logging
 from unittest import mock
@@ -51,8 +52,8 @@ class TestProcessorSendChatWebhook:
     # No unsent hook exists
     def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with mock.patch("requests.post", MagicMock(side_effect=None)):
-            processor.process()
+        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=None)):
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion
@@ -68,8 +69,8 @@ class TestProcessorSendChatWebhook:
         session.commit()
 
         # Run processor
-        with mock.patch("requests.post", MagicMock(side_effect=None)):
-            processor.process()
+        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=None)):
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion
@@ -87,8 +88,8 @@ class TestProcessorSendChatWebhook:
         session.commit()
 
         # Run processor
-        with mock.patch("requests.post", MagicMock(side_effect=Exception())):
-            processor.process()
+        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=Exception())):
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion
@@ -115,11 +116,11 @@ class TestProcessorSendChatWebhook:
 
         # Run processor
         with (
-            mock.patch("requests.post", MagicMock(side_effect=None)),
+            mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=None)),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            processor.process()
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion

@@ -33,31 +33,7 @@ class CompanyList:
     DEFAULT = {"address": "", "corporate_name": "", "rsa_publickey": "", "homepage": ""}
 
     @classmethod
-    def get(cls):
-        try:
-            if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
-                company_list = []
-                _company_list = json.load(open("data/company_list.json", "r"))
-                for _company in _company_list:
-                    company_list.append(Company(_company))
-            else:
-                db_session = Session(autocommit=False, autoflush=True, bind=engine)
-                try:
-                    company_list = []
-                    _company_list = db_session.scalars(
-                        select(CompanyModel).order_by(CompanyModel.created)
-                    ).all()
-                    for _company in _company_list:
-                        company_list.append(Company(_company.json()))
-                finally:
-                    db_session.close()
-        except Exception as err:
-            company_list = []
-            LOG.error(err)
-        return cls(company_list)
-
-    @classmethod
-    async def get_async(cls):
+    async def get(cls):
         try:
             if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list = []
@@ -98,32 +74,7 @@ class CompanyList:
         return self.company_list
 
     @staticmethod
-    def get_find(address):
-        try:
-            if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
-                company_list = json.load(open("data/company_list.json", "r"))
-                for _company in company_list:
-                    if address == _company["address"]:
-                        return Company(_company)
-            else:
-                db_session = Session(autocommit=False, autoflush=True, bind=engine)
-                try:
-                    _company = db_session.scalars(
-                        select(CompanyModel)
-                        .where(CompanyModel.address == address)
-                        .limit(1)
-                    ).first()
-                    if _company is not None:
-                        return Company(_company.json())
-                finally:
-                    db_session.close()
-        except Exception as err:
-            LOG.error(err)
-
-        return Company(CompanyList.DEFAULT)
-
-    @staticmethod
-    async def get_find_async(address):
+    async def get_find(address):
         try:
             if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list = json.load(open("data/company_list.json", "r"))

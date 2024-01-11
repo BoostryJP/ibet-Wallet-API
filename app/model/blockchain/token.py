@@ -217,45 +217,19 @@ class BondToken(TokenBase):
         )
         # Fetch
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isOffering", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferApprovalRequired", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isRedeemed", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "isRedeemed", (), False),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 total_supply,
@@ -269,7 +243,7 @@ class BondToken(TokenBase):
         except ExceptionGroup:
             raise ServiceUnavailable from None
 
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -302,127 +276,51 @@ class BondToken(TokenBase):
 
         # Token-Contractから情報を取得する
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "name", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "symbol", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "faceValue", (), 0)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "faceValueCurrency", (), DEFAULT_CURRENCY
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "interestRate", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "interestPaymentDate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "redemptionDate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "interestPaymentCurrency", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "redemptionValue", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "redemptionValueCurrency", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "baseFXRate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "returnDate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "returnAmount", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "purpose", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isOffering", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "contactInformation", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "privacyPolicy", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "tradableExchange", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "personalInfoAddress", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferApprovalRequired", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isRedeemed", (), False
-                        )
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "faceValue", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "faceValueCurrency", (), DEFAULT_CURRENCY
+                ),
+                AsyncContract.call_function(token_contract, "interestRate", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "interestPaymentDate", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "redemptionDate", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "interestPaymentCurrency", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "redemptionValue", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "redemptionValueCurrency", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "baseFXRate", (), ""),
+                AsyncContract.call_function(token_contract, "returnDate", (), ""),
+                AsyncContract.call_function(token_contract, "returnAmount", (), ""),
+                AsyncContract.call_function(token_contract, "purpose", (), ""),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "personalInfoAddress", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "isRedeemed", (), False),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 name,
@@ -535,7 +433,7 @@ class BondToken(TokenBase):
             base_fx_rate = 0.0
 
         # 企業リストから、企業名を取得する
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -646,55 +544,23 @@ class ShareToken(TokenBase):
 
         # Fetch
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isOffering", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferApprovalRequired", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "principalValue", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isCanceled", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "dividendInformation", (), (0, "", "")
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "principalValue", (), 0),
+                AsyncContract.call_function(token_contract, "isCanceled", (), False),
+                AsyncContract.call_function(
+                    token_contract, "dividendInformation", (), (0, "", "")
+                ),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 total_supply,
@@ -710,7 +576,7 @@ class ShareToken(TokenBase):
         except ExceptionGroup:
             raise ServiceUnavailable from None
 
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -749,89 +615,37 @@ class ShareToken(TokenBase):
 
         # Token-Contractから情報を取得する
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "name", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "symbol", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "issuePrice", (), 0)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "principalValue", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "dividendInformation", (), (0, "", "")
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "cancellationDate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferApprovalRequired", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isOffering", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "contactInformation", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "privacyPolicy", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "tradableExchange", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "personalInfoAddress", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "isCanceled", (), False
-                        )
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "issuePrice", (), 0),
+                AsyncContract.call_function(token_contract, "principalValue", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "dividendInformation", (), (0, "", "")
+                ),
+                AsyncContract.call_function(token_contract, "cancellationDate", (), ""),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(
+                    token_contract, "personalInfoAddress", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(token_contract, "isCanceled", (), False),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 name,
@@ -856,7 +670,7 @@ class ShareToken(TokenBase):
             raise ServiceUnavailable from None
 
         # 企業リストから、企業名とRSA鍵を取得する
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -951,35 +765,17 @@ class MembershipToken(TokenBase):
 
         # Fetch
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "initialOfferingStatus", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 total_supply,
@@ -991,7 +787,7 @@ class MembershipToken(TokenBase):
         except ExceptionGroup:
             raise ServiceUnavailable from None
 
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -1022,84 +818,32 @@ class MembershipToken(TokenBase):
 
         # Token-Contractから情報を取得する
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "name", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "symbol", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "details", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "returnDetails", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "expirationDate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "initialOfferingStatus", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "image_urls", (0,), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "image_urls", (1,), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "image_urls", (2,), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "contactInformation", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "privacyPolicy", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "tradableExchange", (), ZERO_ADDRESS
-                        )
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "details", (), ""),
+                AsyncContract.call_function(token_contract, "returnDetails", (), ""),
+                AsyncContract.call_function(token_contract, "expirationDate", (), ""),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "image_urls", (0,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (1,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (2,), ""),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 name,
@@ -1123,7 +867,7 @@ class MembershipToken(TokenBase):
             raise ServiceUnavailable from None
 
         # 企業リストから、企業名を取得する
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -1215,35 +959,17 @@ class CouponToken(TokenBase):
 
         # Fetch
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "initialOfferingStatus", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 total_supply,
@@ -1255,7 +981,7 @@ class CouponToken(TokenBase):
         except ExceptionGroup:
             raise ServiceUnavailable from None
 
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
@@ -1284,84 +1010,32 @@ class CouponToken(TokenBase):
 
         # Token-Contractから情報を取得する
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "owner", (), ZERO_ADDRESS
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "name", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "symbol", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "totalSupply", (), 0
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "details", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "returnDetails", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "expirationDate", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "memo", (), "")
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "transferable", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(token_contract, "status", (), True)
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "initialOfferingStatus", (), False
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "image_urls", (0,), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "image_urls", (1,), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "image_urls", (2,), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "contactInformation", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "privacyPolicy", (), ""
-                        )
-                    ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            token_contract, "tradableExchange", (), ZERO_ADDRESS
-                        )
-                    ),
-                ]
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "details", (), ""),
+                AsyncContract.call_function(token_contract, "returnDetails", (), ""),
+                AsyncContract.call_function(token_contract, "expirationDate", (), ""),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "image_urls", (0,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (1,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (2,), ""),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                max_concurrency=3,
+            )
             (
                 owner_address,
                 name,
@@ -1385,7 +1059,7 @@ class CouponToken(TokenBase):
             raise ServiceUnavailable from None
 
         # 企業リストから、企業名を取得する
-        company = await CompanyList.get_find_async(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 

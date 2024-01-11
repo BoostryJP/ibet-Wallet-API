@@ -53,7 +53,7 @@ class TestNodeInfoBlockSyncStatus:
     # Node is synced
     def test_normal_1(self, client: TestClient, session: Session):
         with mock.patch(
-            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+            "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
             # prepare test data
             self.insert_node_data(
@@ -82,7 +82,7 @@ class TestNodeInfoBlockSyncStatus:
     # Node is not synced
     def test_normal_2(self, client: TestClient, session: Session):
         with mock.patch(
-            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+            "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
             # prepare test data
             self.insert_node_data(session, is_synced=False)

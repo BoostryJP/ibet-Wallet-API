@@ -22,12 +22,13 @@ import time
 from json.decoder import JSONDecodeError
 from typing import Any
 
+from aiohttp import ClientError
 from eth_typing import URI
 from requests.exceptions import ConnectionError, HTTPError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from web3 import AsyncWeb3, Web3
+from web3 import AsyncHTTPProvider, AsyncWeb3, HTTPProvider, Web3
 from web3.eth import AsyncEth
 from web3.geth import AsyncGeth
 from web3.middleware import async_geth_poa_middleware, geth_poa_middleware
@@ -118,7 +119,7 @@ class AsyncWeb3Wrapper:
         return async_web3
 
 
-class FailOverHTTPProvider(Web3.HTTPProvider):
+class FailOverHTTPProvider(HTTPProvider):
     fail_over_mode = False  # If False, use only the default(primary) provider
 
     def __init__(self, *args, **kwargs):
@@ -174,7 +175,7 @@ class FailOverHTTPProvider(Web3.HTTPProvider):
         FailOverHTTPProvider.fail_over_mode = use_fail_over
 
 
-class AsyncFailOverHTTPProvider(Web3.AsyncHTTPProvider):
+class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
     fail_over_mode = False  # If False, use only the default(primary) provider
 
     def __init__(self, *args, **kwargs):
@@ -184,7 +185,7 @@ class AsyncFailOverHTTPProvider(Web3.AsyncHTTPProvider):
     async def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
         db_session = AsyncSession(autocommit=False, autoflush=True, bind=async_engine)
         try:
-            if FailOverHTTPProvider.fail_over_mode is True:
+            if AsyncFailOverHTTPProvider.fail_over_mode is True:
                 # If never running the block monitoring processor,
                 # use default(primary) node.
                 if (await db_session.scalars(select(Node).limit(1))).first() is None:
@@ -212,7 +213,7 @@ class AsyncFailOverHTTPProvider(Web3.AsyncHTTPProvider):
                         self.endpoint_uri = URI(_node.endpoint_uri)
                         try:
                             return await super().make_request(method, params)
-                        except (ConnectionError, JSONDecodeError, HTTPError):
+                        except (ClientError, JSONDecodeError):
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.

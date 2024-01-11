@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import List, Sequence, Type
 
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -36,7 +36,7 @@ sys.path.append(path)
 import log
 
 from app import config
-from app.database import async_engine
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
@@ -45,8 +45,6 @@ from app.model.schema.base import TokenType
 
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
-
-db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -93,7 +91,7 @@ class Processor:
             autocommit=False,
             autoflush=True,
             expire_on_commit=False,
-            bind=async_engine,
+            bind=batch_async_engine,
         )
 
     async def process(self):

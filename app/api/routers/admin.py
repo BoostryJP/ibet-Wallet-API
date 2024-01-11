@@ -397,31 +397,27 @@ async def get_account_balance_all(
             "IbetExchangeInterface", tradable_exchange_address
         )
         try:
-            async with SemaphoreTaskGroup(max_concurrency=3) as tg:
-                tasks = [
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            contract=exchange_contract,
-                            function_name="balanceOf",
-                            args=(
-                                account_address,
-                                token_contract.address,
-                            ),
-                            default_returns=0,
-                        )
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(
+                    contract=exchange_contract,
+                    function_name="balanceOf",
+                    args=(
+                        account_address,
+                        token_contract.address,
                     ),
-                    tg.create_task(
-                        AsyncContract.call_function(
-                            contract=exchange_contract,
-                            function_name="commitmentOf",
-                            args=(
-                                account_address,
-                                token_contract.address,
-                            ),
-                            default_returns=0,
-                        )
+                    default_returns=0,
+                ),
+                AsyncContract.call_function(
+                    contract=exchange_contract,
+                    function_name="commitmentOf",
+                    args=(
+                        account_address,
+                        token_contract.address,
                     ),
-                ]
+                    default_returns=0,
+                ),
+                max_concurrency=3,
+            )
             exchange_balance, exchange_commitment = [task.result() for task in tasks]
         except ExceptionGroup:
             raise ServiceUnavailable from None

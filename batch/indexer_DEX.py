@@ -16,15 +16,15 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import os
 import sys
-import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
@@ -33,12 +33,12 @@ sys.path.append(path)
 import log
 
 from app.config import (
-    DATABASE_URL,
     IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
     TZ,
 )
-from app.contracts import Contract
+from app.contracts import AsyncContract
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import (
     AgreementStatus,
@@ -46,15 +46,14 @@ from app.model.db import (
     IDXOrder as Order,
     Listing,
 )
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 local_tz = ZoneInfo(TZ)
 
 process_name = "INDEXER-DEX"
 LOG = log.get_logger(process_name=process_name)
 
-web3 = Web3Wrapper()
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+async_web3 = AsyncWeb3Wrapper()
 
 
 class Processor:
@@ -66,93 +65,102 @@ class Processor:
         self.exchange_list = []
         # MEMBERSHIP Exchange
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
-            membership_exchange_contract = Contract.get_contract(
+            membership_exchange_contract = AsyncContract.get_contract(
                 "IbetExchange", IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(membership_exchange_contract)
         # COUPON Exchange
         if IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is not None:
-            coupon_exchange_contract = Contract.get_contract(
+            coupon_exchange_contract = AsyncContract.get_contract(
                 "IbetExchange", IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
 
     @staticmethod
     def __get_db_session():
-        return Session(autocommit=False, autoflush=True, bind=db_engine)
+        return AsyncSession(
+            autocommit=False,
+            autoflush=True,
+            expire_on_commit=False,
+            bind=batch_async_engine,
+        )
 
-    def initial_sync(self):
+    async def initial_sync(self):
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
-        self.latest_block = web3.eth.block_number
+        self.latest_block = await async_web3.eth.block_number
         try:
             # Synchronize 1,000,000 blocks each
             _to_block = 999999
             _from_block = 0
             if self.latest_block > 999999:
                 while _to_block < self.latest_block:
-                    self.__sync_all(
+                    await self.__sync_all(
                         db_session=local_session,
                         block_from=_from_block,
                         block_to=_to_block,
                     )
                     _to_block += 1000000
                     _from_block += 1000000
-                self.__sync_all(
+                await self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block,
                 )
             else:
-                self.__sync_all(
+                await self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block,
                 )
-            local_session.commit()
+            await local_session.commit()
         except Exception as e:
-            local_session.rollback()
+            await local_session.rollback()
             self.latest_block = latest_block_at_start
             raise e
         finally:
-            local_session.close()
+            await local_session.close()
         LOG.info("Initial sync has been completed")
 
-    def sync_new_logs(self):
+    async def sync_new_logs(self):
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
         try:
-            blockTo = web3.eth.block_number
+            blockTo = await async_web3.eth.block_number
             if blockTo == self.latest_block:
                 return
-            self.__sync_all(
+            await self.__sync_all(
                 db_session=local_session,
                 block_from=self.latest_block + 1,
                 block_to=blockTo,
             )
             self.latest_block = blockTo
-            local_session.commit()
+            await local_session.commit()
         except Exception as e:
-            local_session.rollback()
+            await local_session.rollback()
             self.latest_block = latest_block_at_start
             raise e
         finally:
-            local_session.close()
+            await local_session.close()
         LOG.info("Sync job has been completed")
 
-    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
+    async def __sync_all(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         LOG.info("Syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_new_order(db_session, block_from, block_to)
-        self.__sync_cancel_order(db_session, block_from, block_to)
-        self.__sync_force_cancel_order(db_session, block_from, block_to)
-        self.__sync_agree(db_session, block_from, block_to)
-        self.__sync_settlement_ok(db_session, block_from, block_to)
-        self.__sync_settlement_ng(db_session, block_from, block_to)
+        await self.__sync_new_order(db_session, block_from, block_to)
+        await self.__sync_cancel_order(db_session, block_from, block_to)
+        await self.__sync_force_cancel_order(db_session, block_from, block_to)
+        await self.__sync_agree(db_session, block_from, block_to)
+        await self.__sync_settlement_ok(db_session, block_from, block_to)
+        await self.__sync_settlement_ng(db_session, block_from, block_to)
 
-    def __sync_new_order(self, db_session: Session, block_from: int, block_to: int):
+    async def __sync_new_order(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.NewOrder.get_logs(
+                events = await exchange_contract.events.NewOrder.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -163,21 +171,25 @@ class Processor:
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
                         pass
                     else:
-                        available_token = db_session.scalars(
-                            select(Listing)
-                            .where(Listing.token_address == args["tokenAddress"])
-                            .limit(1)
+                        available_token = (
+                            await db_session.scalars(
+                                select(Listing)
+                                .where(Listing.token_address == args["tokenAddress"])
+                                .limit(1)
+                            )
                         ).first()
                         transaction_hash = event["transactionHash"].hex()
                         order_timestamp = datetime.utcfromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"]
+                            (await async_web3.eth.get_block(event["blockNumber"]))[
+                                "timestamp"
+                            ]
                         )
                         if available_token is not None:
                             account_address = args["accountAddress"]
                             counterpart_address = ""
                             is_buy = args["isBuy"]
 
-                            self.__sink_on_new_order(
+                            await self.__sink_on_new_order(
                                 db_session=db_session,
                                 transaction_hash=transaction_hash,
                                 token_address=args["tokenAddress"],
@@ -194,17 +206,17 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_cancel_order(self, db_session: Session, block_from, block_to):
+    async def __sync_cancel_order(self, db_session: AsyncSession, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.CancelOrder.get_logs(
+                events = await exchange_contract.events.CancelOrder.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 for event in events:
-                    self.__sink_on_cancel_order(
+                    await self.__sink_on_cancel_order(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=event["args"]["orderId"],
@@ -212,17 +224,19 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_force_cancel_order(self, db_session: Session, block_from, block_to):
+    async def __sync_force_cancel_order(
+        self, db_session: AsyncSession, block_from, block_to
+    ):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.ForceCancelOrder.get_logs(
+                events = await exchange_contract.events.ForceCancelOrder.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 for event in events:
-                    self.__sink_on_force_cancel_order(
+                    await self.__sink_on_force_cancel_order(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=event["args"]["orderId"],
@@ -230,10 +244,10 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_agree(self, db_session: Session, block_from, block_to):
+    async def __sync_agree(self, db_session: AsyncSession, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.Agree.get_logs(
+                events = await exchange_contract.events.Agree.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -245,7 +259,7 @@ class Processor:
                         pass
                     else:
                         order_id = args["orderId"]
-                        orderbook = Contract.call_function(
+                        orderbook = await AsyncContract.call_function(
                             contract=exchange_contract,
                             function_name="getOrder",
                             args=(order_id,),
@@ -257,9 +271,11 @@ class Processor:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].hex()
                         agreement_timestamp = datetime.utcfromtimestamp(
-                            web3.eth.get_block(event["blockNumber"])["timestamp"]
+                            (await async_web3.eth.get_block(event["blockNumber"]))[
+                                "timestamp"
+                            ]
                         )
-                        self.__sink_on_agree(
+                        await self.__sink_on_agree(
                             db_session=db_session,
                             transaction_hash=transaction_hash,
                             exchange_address=exchange_contract.address,
@@ -274,10 +290,12 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_settlement_ok(self, db_session: Session, block_from, block_to):
+    async def __sync_settlement_ok(
+        self, db_session: AsyncSession, block_from, block_to
+    ):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.SettlementOK.get_logs(
+                events = await exchange_contract.events.SettlementOK.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -286,9 +304,11 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     settlement_timestamp = datetime.utcfromtimestamp(
-                        web3.eth.get_block(event["blockNumber"])["timestamp"]
+                        (await async_web3.eth.get_block(event["blockNumber"]))[
+                            "timestamp"
+                        ]
                     )
-                    self.__sink_on_settlement_ok(
+                    await self.__sink_on_settlement_ok(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=args["orderId"],
@@ -298,10 +318,12 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_settlement_ng(self, db_session: Session, block_from, block_to):
+    async def __sync_settlement_ng(
+        self, db_session: AsyncSession, block_from, block_to
+    ):
         for exchange_contract in self.exchange_list:
             try:
-                events = exchange_contract.events.SettlementNG.get_logs(
+                events = await exchange_contract.events.SettlementNG.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -309,7 +331,7 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
-                    self.__sink_on_settlement_ng(
+                    await self.__sink_on_settlement_ng(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=args["orderId"],
@@ -318,9 +340,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sink_on_new_order(
+    async def __sink_on_new_order(
         self,
-        db_session: Session,
+        db_session: AsyncSession,
         transaction_hash: str,
         token_address: str,
         exchange_address: str,
@@ -333,7 +355,7 @@ class Processor:
         agent_address: str,
         order_timestamp: datetime,
     ):
-        order = self.__get_order(
+        order = await self.__get_order(
             db_session=db_session, exchange_address=exchange_address, order_id=order_id
         )
         if order is None:
@@ -354,12 +376,12 @@ class Processor:
             order.agent_address = agent_address
             order.is_cancelled = False
             order.order_timestamp = order_timestamp
-            db_session.merge(order)
+            await db_session.merge(order)
 
-    def __sink_on_cancel_order(
-        self, db_session: Session, exchange_address: str, order_id: int
+    async def __sink_on_cancel_order(
+        self, db_session: AsyncSession, exchange_address: str, order_id: int
     ):
-        order = self.__get_order(
+        order = await self.__get_order(
             db_session=db_session, exchange_address=exchange_address, order_id=order_id
         )
         if order is not None:
@@ -368,10 +390,10 @@ class Processor:
             )
             order.is_cancelled = True
 
-    def __sink_on_force_cancel_order(
-        self, db_session: Session, exchange_address: str, order_id: int
+    async def __sink_on_force_cancel_order(
+        self, db_session: AsyncSession, exchange_address: str, order_id: int
     ):
-        order = self.__get_order(
+        order = await self.__get_order(
             db_session=db_session, exchange_address=exchange_address, order_id=order_id
         )
         if order is not None:
@@ -380,9 +402,9 @@ class Processor:
             )
             order.is_cancelled = True
 
-    def __sink_on_agree(
+    async def __sink_on_agree(
         self,
-        db_session: Session,
+        db_session: AsyncSession,
         transaction_hash: str,
         exchange_address: str,
         order_id: int,
@@ -393,7 +415,7 @@ class Processor:
         amount: int,
         agreement_timestamp: datetime,
     ):
-        agreement = self.__get_agreement(
+        agreement = await self.__get_agreement(
             db_session=db_session,
             exchange_address=exchange_address,
             order_id=order_id,
@@ -415,17 +437,17 @@ class Processor:
             agreement.amount = amount
             agreement.status = AgreementStatus.PENDING.value
             agreement.agreement_timestamp = agreement_timestamp
-            db_session.merge(agreement)
+            await db_session.merge(agreement)
 
-    def __sink_on_settlement_ok(
+    async def __sink_on_settlement_ok(
         self,
-        db_session: Session,
+        db_session: AsyncSession,
         exchange_address: str,
         order_id: int,
         agreement_id: int,
         settlement_timestamp: datetime,
     ):
-        agreement = self.__get_agreement(
+        agreement = await self.__get_agreement(
             db_session=db_session,
             exchange_address=exchange_address,
             order_id=order_id,
@@ -438,14 +460,14 @@ class Processor:
             agreement.status = AgreementStatus.DONE.value
             agreement.settlement_timestamp = settlement_timestamp
 
-    def __sink_on_settlement_ng(
+    async def __sink_on_settlement_ng(
         self,
-        db_session: Session,
+        db_session: AsyncSession,
         exchange_address: str,
         order_id: int,
         agreement_id: int,
     ):
-        agreement = self.__get_agreement(
+        agreement = await self.__get_agreement(
             db_session=db_session,
             exchange_address=exchange_address,
             order_id=order_id,
@@ -458,44 +480,53 @@ class Processor:
             agreement.status = AgreementStatus.CANCELED.value
 
     @staticmethod
-    def __get_order(db_session: Session, exchange_address: str, order_id: int):
-        return db_session.scalars(
-            select(Order)
-            .where(Order.exchange_address == exchange_address)
-            .where(Order.order_id == order_id)
-            .limit(1)
+    async def __get_order(
+        db_session: AsyncSession, exchange_address: str, order_id: int
+    ):
+        return (
+            await db_session.scalars(
+                select(Order)
+                .where(Order.exchange_address == exchange_address)
+                .where(Order.order_id == order_id)
+                .limit(1)
+            )
         ).first()
 
     @staticmethod
-    def __get_agreement(
-        db_session: Session, exchange_address: str, order_id: int, agreement_id: int
+    async def __get_agreement(
+        db_session: AsyncSession,
+        exchange_address: str,
+        order_id: int,
+        agreement_id: int,
     ):
-        return db_session.scalars(
-            select(Agreement)
-            .where(Agreement.exchange_address == exchange_address)
-            .where(Agreement.order_id == order_id)
-            .where(Agreement.agreement_id == agreement_id)
-            .limit(1)
+        return (
+            await db_session.scalars(
+                select(Agreement)
+                .where(Agreement.exchange_address == exchange_address)
+                .where(Agreement.order_id == order_id)
+                .where(Agreement.agreement_id == agreement_id)
+                .limit(1)
+            )
         ).first()
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
 
     initial_synced_completed = False
     while not initial_synced_completed:
         try:
-            processor.initial_sync()
+            await processor.initial_sync()
             initial_synced_completed = True
         except Exception:
             LOG.exception("Initial sync failed")
 
-        time.sleep(1)
+        await asyncio.sleep(1)
 
     while True:
         try:
-            processor.sync_new_logs()
+            await processor.sync_new_logs()
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -503,8 +534,11 @@ def main():
         except Exception as ex:
             LOG.exception("An exception occurred during event synchronization")
 
-        time.sleep(1)
+        await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

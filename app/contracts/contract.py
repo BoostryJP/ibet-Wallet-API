@@ -169,7 +169,7 @@ class AsyncContract:
         tx_hash = await async_contract.constructor(*args).transact(
             {"from": deployer, "gas": 6000000}
         )
-        tx = await web3.eth.wait_for_transaction_receipt(tx_hash)
+        tx = await async_web3.eth.wait_for_transaction_receipt(tx_hash)
 
         contract_address = ""
         if tx is not None:

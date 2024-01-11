@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from app.config import ZERO_ADDRESS
-from app.contracts import Contract
+from app.contracts import AsyncContract
 
 
 class TokenList:
@@ -25,8 +25,8 @@ class TokenList:
         self.contract = contract
         self.token_template = token_template
 
-    def is_registered(self, address):
-        token_info = Contract.call_function(
+    async def is_registered(self, address):
+        token_info = await AsyncContract.call_function(
             contract=self.contract,
             function_name="getTokenByAddress",
             args=(address,),
@@ -38,8 +38,8 @@ class TokenList:
             return False
         return True
 
-    def get_token(self, address):
-        token_info = Contract.call_function(
+    async def get_token(self, address):
+        token_info = await AsyncContract.call_function(
             contract=self.contract,
             function_name="getTokenByAddress",
             args=(address,),

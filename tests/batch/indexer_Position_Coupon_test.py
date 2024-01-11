@@ -16,19 +16,20 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import logging
 import time
 from typing import Sequence
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from web3 import Web3
+from web3 import AsyncWeb3, Web3
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.middleware import geth_poa_middleware
+from web3.middleware import async_geth_poa_middleware, geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
@@ -60,6 +61,9 @@ from tests.contract_modules import (
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+async_web3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(config.WEB3_HTTP_PROVIDER))
+async_web3.middleware_onion.inject(async_geth_poa_middleware, layer=0)
+
 
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
@@ -83,7 +87,7 @@ def main_func(test_module):
 @pytest.fixture(scope="function")
 def processor(test_module, session):
     processor = test_module.Processor()
-    processor.initial_sync()
+    asyncio.run(processor.initial_sync())
     return processor
 
 
@@ -145,7 +149,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -210,7 +214,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -304,7 +308,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -445,7 +449,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -524,7 +528,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -592,7 +596,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -656,7 +660,7 @@ class TestProcessor:
         # Not Event
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -689,7 +693,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -710,7 +714,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -777,7 +781,11 @@ class TestProcessor:
 
         # Setting current block number to 19,999,999
         self.listing_token(token["address"], session)
-        with mock.patch("web3.eth.Eth.block_number", current_block_number):
+        block_number_mock = AsyncMock()
+        block_number_mock.return_value = current_block_number
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
             with mock.patch.object(
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
@@ -793,17 +801,19 @@ class TestProcessor:
                 session.merge(idx_position_coupon_block_number)
                 session.commit()
                 __sync_all_mock.return_value = None
-                processor.initial_sync()
+                asyncio.run(processor.initial_sync())
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
-        with mock.patch("web3.eth.Eth.block_number", current_block_number):
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
             with mock.patch.object(
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
-                processor.sync_new_logs()
+                asyncio.run(processor.sync_new_logs())
                 # Then processor call "__sync_all" method once.
                 assert __sync_all_mock.call_count == 1
 
@@ -812,13 +822,15 @@ class TestProcessor:
         )
         self.listing_token(new_token["address"], session)
 
-        with mock.patch("web3.eth.Eth.block_number", current_block_number):
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
             with mock.patch.object(
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
-                processor.sync_new_logs()
+                asyncio.run(processor.sync_new_logs())
                 # Then processor call "__sync_all" method 20 times.
                 assert __sync_all_mock.call_count == 20
 
@@ -884,7 +896,7 @@ class TestProcessor:
 
         # Run target process
         block_number1 = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -914,9 +926,9 @@ class TestProcessor:
         # Run target process
         block_number2 = web3.eth.block_number
 
-        eth_getCode_mock = MagicMock(wraps=web3.eth.get_code)
-        with mock.patch("web3.eth.Eth.get_code", eth_getCode_mock):
-            processor.sync_new_logs()
+        eth_getCode_mock = MagicMock(wraps=async_web3.eth.get_code)
+        with mock.patch("web3.eth.async_eth.AsyncEth.get_code", eth_getCode_mock):
+            asyncio.run(processor.sync_new_logs())
 
         session.rollback()
 
@@ -987,7 +999,7 @@ class TestProcessor:
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1_1(self, processor, shared_contract, session):
@@ -1005,7 +1017,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        processor.initial_sync()
+        asyncio.run(processor.initial_sync())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1033,10 +1045,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1061,7 +1073,10 @@ class TestProcessor:
         )
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.get_code", MagicMock(side_effect=ServiceUnavailable()))
+    @mock.patch(
+        "web3.eth.async_eth.AsyncEth.get_code",
+        MagicMock(side_effect=ServiceUnavailable()),
+    )
     def test_error_1_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1077,7 +1092,7 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1104,7 +1119,7 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1145,10 +1160,10 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1175,10 +1190,10 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1221,7 +1236,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1250,7 +1265,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1278,20 +1293,22 @@ class TestProcessor:
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):
         # Mocking time.sleep to break mainloop
-        time_mock = MagicMock(wraps=time)
-        time_mock.sleep.side_effect = [True, TypeError()]
+        asyncio_mock = AsyncMock(wraps=asyncio)
+        asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Position_Coupon.time", time_mock), mock.patch(
+        with mock.patch(
+            "batch.indexer_Position_Coupon.asyncio", asyncio_mock
+        ), mock.patch(
             "batch.indexer_Position_Coupon.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            main_func()
+            asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.WARNING, "An external service was unavailable")

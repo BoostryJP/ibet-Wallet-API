@@ -16,45 +16,41 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import asyncio
 import os
 import sys
 import time
 
-import requests
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine, delete, select
+from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 import log
 
-from app.config import (
-    COMPANY_LIST_SLEEP_INTERVAL,
-    COMPANY_LIST_URL,
-    DATABASE_URL,
-    REQUEST_TIMEOUT,
-)
+from app.config import COMPANY_LIST_SLEEP_INTERVAL, COMPANY_LIST_URL, REQUEST_TIMEOUT
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import Company
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
 
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
-
 
 class Processor:
     """Processor for indexing company list"""
 
-    def process(self):
+    async def process(self):
         LOG.info("Syncing company list")
 
         # Get from COMPANY_LIST_URL
         try:
-            req = requests.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
+            async with AsyncClient() as client:
+                req = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
             if req.status_code != 200:
                 raise Exception(f"status code={req.status_code}")
             company_list_json = req.json()
@@ -62,7 +58,9 @@ class Processor:
             LOG.exception(f"Failed to get company list: {e}")
             return
 
-        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+        db_session = AsyncSession(
+            autocommit=False, autoflush=True, bind=batch_async_engine
+        )
         try:
             # Upsert company list
             updated_company_dict: dict[str, True] = {}
@@ -98,7 +96,7 @@ class Processor:
                                 f"duplicate address error: index={i} address={address}"
                             )
                             continue
-                        self.__sink_on_company(
+                        await self.__sink_on_company(
                             db_session=db_session,
                             address=to_checksum_address(address),
                             corporate_name=corporate_name,
@@ -116,23 +114,23 @@ class Processor:
                 updated_company_dict[address] = True
 
             # Delete company list from DB
-            company_list_db = db_session.scalars(select(Company)).all()
+            company_list_db = (await db_session.scalars(select(Company))).all()
             for company in company_list_db:
                 is_updated = updated_company_dict.get(company.address, False)
                 if not is_updated:
-                    db_session.delete(company)
+                    await db_session.delete(company)
 
-            db_session.commit()
-            db_session.close()
+            await db_session.commit()
+            await db_session.close()
         except Exception as e:
-            db_session.rollback()
-            db_session.close()
+            await db_session.rollback()
+            await db_session.close()
             raise e
         LOG.info("Sync job has been completed")
 
     @staticmethod
-    def __sink_on_company(
-        db_session: Session,
+    async def __sink_on_company(
+        db_session: AsyncSession,
         address: str,
         corporate_name: str,
         rsa_publickey: str,
@@ -143,17 +141,17 @@ class Processor:
         _company.corporate_name = corporate_name
         _company.rsa_publickey = rsa_publickey
         _company.homepage = homepage
-        db_session.merge(_company)
+        await db_session.merge(_company)
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
     while True:
         start_time = time.time()
 
         try:
-            processor.process()
+            await processor.process()
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -162,8 +160,11 @@ def main():
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
-        time.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
+        await asyncio.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)
