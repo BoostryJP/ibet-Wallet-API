@@ -94,7 +94,6 @@ class Processor:
                 )
             await local_session.commit()
         except Exception as e:
-            LOG.exception("fail")
             await local_session.rollback()
             self.latest_block = latest_block_at_start
             raise e
@@ -232,7 +231,6 @@ async def main():
         except Exception:
             LOG.exception("Initial sync failed")
 
-        LOG.info("hoge")
         await asyncio.sleep(10)
 
     while True:
