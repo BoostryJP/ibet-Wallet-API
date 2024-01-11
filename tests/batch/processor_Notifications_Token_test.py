@@ -1316,8 +1316,6 @@ class TestWatchCancelTransfer:
         # Transfer
         share_apply_for_transfer(self.trader, token_1, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token_1, self.trader2, 20, "TEST_DATA2")
-        share_cancel_transfer(self.issuer, token_1, 0, "TEST_DATA1")
-        share_cancel_transfer(self.issuer, token_1, 1, "TEST_DATA2")
 
         idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token_1["address"]
@@ -1339,6 +1337,9 @@ class TestWatchCancelTransfer:
         # Transfer
         share_apply_for_transfer(self.trader, token_2, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token_2, self.trader2, 20, "TEST_DATA2")
+
+        share_cancel_transfer(self.issuer, token_1, 0, "TEST_DATA1")
+        share_cancel_transfer(self.issuer, token_1, 1, "TEST_DATA2")
         share_cancel_transfer(self.issuer, token_2, 0, "TEST_DATA1")
         share_cancel_transfer(self.issuer, token_2, 1, "TEST_DATA2")
 
@@ -1359,11 +1360,11 @@ class TestWatchCancelTransfer:
         _notification_list = session.scalars(
             select(Notification).order_by(Notification.created)
         ).all()
-        assert len(_notification_list) == 2
+        assert len(_notification_list) == 4
 
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 0, 0
+            block_number - 3, 0, 0, 0
         )
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
@@ -1385,7 +1386,7 @@ class TestWatchCancelTransfer:
 
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
+            block_number - 2, 0, 0, 0
         )
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
@@ -1400,6 +1401,50 @@ class TestWatchCancelTransfer:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token_1["address"],
+            "token_name": "テスト株式",
+            "exchange_address": "",
+            "token_type": "IbetShare",
+        }
+
+        _notification = _notification_list[2]
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
+            block_number - 1, 0, 0, 0
+        )
+        assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
+        assert _notification.priority == 0
+        assert _notification.address == self.trader["account_address"]
+        assert _notification.block_timestamp is not None
+        assert _notification.args == {
+            "index": 0,
+            "from": self.trader["account_address"],
+            "to": self.trader2["account_address"],
+            "data": "TEST_DATA1",
+        }
+        assert _notification.metainfo == {
+            "company_name": "株式会社DEMO",
+            "token_address": token_2["address"],
+            "token_name": "テスト株式",
+            "exchange_address": "",
+            "token_type": "IbetShare",
+        }
+
+        _notification = _notification_list[3]
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
+            block_number, 0, 0, 0
+        )
+        assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
+        assert _notification.priority == 0
+        assert _notification.address == self.trader["account_address"]
+        assert _notification.block_timestamp is not None
+        assert _notification.args == {
+            "index": 1,
+            "from": self.trader["account_address"],
+            "to": self.trader2["account_address"],
+            "data": "TEST_DATA2",
+        }
+        assert _notification.metainfo == {
+            "company_name": "株式会社DEMO",
+            "token_address": token_2["address"],
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",

@@ -413,7 +413,7 @@ class WatchCancelTransfer(Watcher):
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
-            if not token_list.is_registered(entry["address"]):
+            if not await token_list.is_registered(entry["address"]):
                 continue
 
             company = company_list.find(token_owner_address)
