@@ -32,7 +32,7 @@ sys.path.append(path)
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from app.model.schema.base import TokenType
@@ -83,12 +83,7 @@ class Processor:
 
     @staticmethod
     def __get_db_session() -> AsyncSession:
-        return AsyncSession(
-            autocommit=False,
-            autoflush=True,
-            expire_on_commit=False,
-            bind=batch_async_engine,
-        )
+        return BatchAsyncSessionLocal()
 
     async def __load_target(self, db_session: AsyncSession) -> bool:
         self.target: TokenHoldersList = (

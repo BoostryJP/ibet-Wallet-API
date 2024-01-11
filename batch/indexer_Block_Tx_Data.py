@@ -33,7 +33,7 @@ sys.path.append(path)
 import log
 
 from app.config import WEB3_CHAINID
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import IDXBlockData, IDXBlockDataBlockNumber, IDXTxData
 from app.utils.web3_utils import AsyncWeb3Wrapper
@@ -49,7 +49,7 @@ class Processor:
 
     @staticmethod
     def __get_db_session():
-        return AsyncSession(autocommit=False, autoflush=True, bind=batch_async_engine)
+        return BatchAsyncSessionLocal()
 
     async def process(self):
         local_session = self.__get_db_session()

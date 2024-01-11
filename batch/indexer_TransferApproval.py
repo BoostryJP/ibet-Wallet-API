@@ -34,7 +34,7 @@ import log
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
-from app.database import batch_async_engine
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
 from app.model.schema.base import TokenType
@@ -228,7 +228,7 @@ class Processor:
 
     @staticmethod
     def __get_db_session():
-        return AsyncSession(autocommit=False, autoflush=True, bind=batch_async_engine)
+        return BatchAsyncSessionLocal()
 
     async def initial_sync(self):
         local_session = self.__get_db_session()

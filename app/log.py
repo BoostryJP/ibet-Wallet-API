@@ -23,6 +23,8 @@ from app import config
 logging.basicConfig(level=config.LOG_LEVEL)
 LOG = logging.getLogger("ibet_wallet_app")
 LOG.propagate = False
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 if config.APP_ENV == "live":
     stream_handler = logging.StreamHandler(open(config.APP_LOGFILE, "a"))

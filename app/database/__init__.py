@@ -92,6 +92,13 @@ AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
     class_=AsyncSession,
 )
+BatchAsyncSessionLocal = async_sessionmaker(
+    autocommit=False,
+    autoflush=True,
+    expire_on_commit=False,
+    bind=batch_async_engine,
+    class_=AsyncSession,
+)
 
 
 def db_session():
