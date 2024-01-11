@@ -20,7 +20,7 @@ import asyncio
 import json
 import logging
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import select
@@ -52,7 +52,7 @@ class TestProcessorSendChatWebhook:
     # No unsent hook exists
     def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=None)):
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)):
             asyncio.run(processor.process())
             session.commit()
 
@@ -64,12 +64,15 @@ class TestProcessorSendChatWebhook:
     def test_normal_2(self, processor, session, caplog):
         # Prepare data
         hook = ChatWebhook()
-        hook.message = json.dumps({"title": "test_title", "text": "test_text"})
+        hook.message = json.dumps({"title": "test_title1", "text": "test_text"})
+        session.add(hook)
+        hook = ChatWebhook()
+        hook.message = json.dumps({"title": "test_title2", "text": "test_text"})
         session.add(hook)
         session.commit()
 
         # Run processor
-        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=None)):
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)):
             asyncio.run(processor.process())
             session.commit()
 
@@ -88,7 +91,7 @@ class TestProcessorSendChatWebhook:
         session.commit()
 
         # Run processor
-        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=Exception())):
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=Exception())):
             asyncio.run(processor.process())
             session.commit()
 
@@ -116,7 +119,7 @@ class TestProcessorSendChatWebhook:
 
         # Run processor
         with (
-            mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=None)),
+            mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
