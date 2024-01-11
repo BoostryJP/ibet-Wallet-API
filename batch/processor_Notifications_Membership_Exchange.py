@@ -33,14 +33,13 @@ sys.path.append(path)
 import log
 
 from app.config import (
-    DATABASE_URL,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
     NOTIFICATION_PROCESS_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS,
     WORKER_COUNT,
 )
 from app.contracts import AsyncContract
-from app.database import get_async_uri, get_batch_async_engine
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import Notification, NotificationBlockNumber, NotificationType
 from app.model.schema.base import TokenType
@@ -57,7 +56,6 @@ NOTIFICATION_PROCESS_INTERVAL = int(NOTIFICATION_PROCESS_INTERVAL)
 
 async_web3 = AsyncWeb3Wrapper()
 
-async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 token_factory = TokenFactory()
 
@@ -104,7 +102,7 @@ class Watcher:
     async def loop(self):
         start_time = time.time()
         db_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=async_db_engine
+            autocommit=False, autoflush=True, bind=batch_async_engine
         )
 
         try:

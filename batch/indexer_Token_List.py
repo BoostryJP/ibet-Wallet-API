@@ -33,7 +33,7 @@ import log
 
 from app import config
 from app.contracts import AsyncContract
-from app.database import get_async_uri, get_batch_async_engine
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
 from app.model.schema.base import TokenType
@@ -43,7 +43,6 @@ process_name = "INDEXER-TOKEN-LIST"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
-async_db_engine = get_batch_async_engine(get_async_uri(config.DATABASE_URL))
 
 
 class Processor:
@@ -69,7 +68,7 @@ class Processor:
             autocommit=False,
             autoflush=True,
             expire_on_commit=False,
-            bind=async_db_engine,
+            bind=batch_async_engine,
         )
 
     async def process(self):

@@ -34,9 +34,9 @@ sys.path.append(path)
 
 import log
 
-from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
+from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
-from app.database import get_async_uri, get_batch_async_engine
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXTransfer,
@@ -53,7 +53,6 @@ process_name = "INDEXER-TRANSFER"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
-async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 
 class Processor:
@@ -223,7 +222,7 @@ class Processor:
 
     async def sync_new_logs(self):
         local_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=async_db_engine
+            autocommit=False, autoflush=True, bind=batch_async_engine
         )
         latest_block = await async_web3.eth.block_number
         try:

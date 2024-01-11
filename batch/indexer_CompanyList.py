@@ -32,20 +32,13 @@ sys.path.append(path)
 
 import log
 
-from app.config import (
-    COMPANY_LIST_SLEEP_INTERVAL,
-    COMPANY_LIST_URL,
-    DATABASE_URL,
-    REQUEST_TIMEOUT,
-)
-from app.database import get_async_uri, get_batch_async_engine
+from app.config import COMPANY_LIST_SLEEP_INTERVAL, COMPANY_LIST_URL, REQUEST_TIMEOUT
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import Company
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
-
-async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 
 class Processor:
@@ -66,7 +59,7 @@ class Processor:
             return
 
         db_session = AsyncSession(
-            autocommit=False, autoflush=True, bind=async_db_engine
+            autocommit=False, autoflush=True, bind=batch_async_engine
         )
         try:
             # Upsert company list

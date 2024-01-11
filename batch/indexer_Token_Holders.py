@@ -30,9 +30,9 @@ from web3.exceptions import ABIEventFunctionNotFound
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
+from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
-from app.database import get_async_uri, get_batch_async_engine
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from app.model.schema.base import TokenType
@@ -43,7 +43,6 @@ process_name = "INDEXER-TOKEN_HOLDERS"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
-async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 
 class Processor:
@@ -88,7 +87,7 @@ class Processor:
             autocommit=False,
             autoflush=True,
             expire_on_commit=False,
-            bind=async_db_engine,
+            bind=batch_async_engine,
         )
 
     async def __load_target(self, db_session: AsyncSession) -> bool:

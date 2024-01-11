@@ -32,8 +32,8 @@ sys.path.append(path)
 
 import log
 
-from app.config import DATABASE_URL, WEB3_CHAINID
-from app.database import get_async_uri, get_batch_async_engine
+from app.config import WEB3_CHAINID
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.db import IDXBlockData, IDXBlockDataBlockNumber, IDXTxData
 from app.utils.web3_utils import AsyncWeb3Wrapper
@@ -43,15 +43,13 @@ LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
 
-async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
-
 
 class Processor:
     """Processor for indexing Block and Transaction data"""
 
     @staticmethod
     def __get_db_session():
-        return AsyncSession(autocommit=False, autoflush=True, bind=async_db_engine)
+        return AsyncSession(autocommit=False, autoflush=True, bind=batch_async_engine)
 
     async def process(self):
         local_session = self.__get_db_session()

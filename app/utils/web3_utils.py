@@ -28,7 +28,7 @@ from requests.exceptions import ConnectionError, HTTPError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from web3 import AsyncHTTPProvider, AsyncWeb3, Web3, HTTPProvider
+from web3 import AsyncHTTPProvider, AsyncWeb3, HTTPProvider, Web3
 from web3.eth import AsyncEth
 from web3.geth import AsyncGeth
 from web3.middleware import async_geth_poa_middleware, geth_poa_middleware

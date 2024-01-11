@@ -30,15 +30,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from app.config import DATABASE_URL
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 import log
 
 from app import config
-from app.database import get_async_uri, get_batch_async_engine
+from app.database import batch_async_engine
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
@@ -47,8 +45,6 @@ from app.model.schema.base import TokenType
 
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
-
-async_db_engine = get_batch_async_engine(get_async_uri(DATABASE_URL))
 
 
 class Processor:
@@ -95,7 +91,7 @@ class Processor:
             autocommit=False,
             autoflush=True,
             expire_on_commit=False,
-            bind=async_db_engine,
+            bind=batch_async_engine,
         )
 
     async def process(self):
