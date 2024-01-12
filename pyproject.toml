@@ -9,20 +9,20 @@ license = "Apache License, Version 2.0"
 python = "3.11.2"
 boto3 = "~1.29.6"
 coincurve = "~18.0.0"
-eth-keyfile = "0.6.1"
-eth-utils = "~2.3.1"
-fastapi = "~0.104.1"
+eth-keyfile = "0.7.0"
+eth-utils = "~3.0.0"
+fastapi = "~0.109.0"
 gunicorn = "~21.2.0"
 hexbytes = "~0.3.1"
-orjson = "~3.9.7"
+orjson = "~3.9.10"
 PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
-psycopg = {extras = ["c"], version = "^3.1.12"}
-pydantic = {extras = ["email"], version = "~2.5.2"}
-sqlalchemy = "~2.0.21"
-uvicorn = {extras = ["standard"], version = "~0.23.2"}
-web3 = "~6.12.0"
+psycopg = {extras = ["c"], version = "^3.1.17"}
+pydantic = {extras = ["email"], version = "~2.5.3"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.25"}
+uvicorn = {extras = ["standard"], version = "~0.25.0"}
+web3 = "~6.14.0"
 tzdata = "^2023.3"
-alembic = "^1.12.1"
+alembic = "^1.13.1"
 aiomysql = "0.2.0"
 httpx = "^0.26.0"
 
@@ -33,16 +33,16 @@ typer = {version = "~0.7.0", optional = true}
 aiohttp = {version = "~3.9.1", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
+pytest = "^7.4.4"
 pytest-cov = "^4.1.0"
 locustio = "0.9.0"
 httpx = "^0.26.0"
-black = "^23.11.0"
+black = "^23.12.1"
 flake8 = "^6.1.0"
 mypy = "^1.0.0"
-isort = "^5.12.0"
-pre-commit = "^3.5.0"
-pytest-alembic = "^0.10.0"
+isort = "^5.13.2"
+pre-commit = "^3.6.0"
+pytest-alembic = "^0.10.7"
 pytest-freezer = "^0.4.8"
 textual-dev = "^1.2.1"
 pytest-asyncio = "0.23.3"
