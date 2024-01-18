@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import os
-import sys
 import time
 from smtplib import SMTPException
 from typing import Sequence
@@ -27,14 +25,10 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
 from app.config import DATABASE_URL
 from app.model.db import Mail
 from app.model.mail import File, Mail as SMTPMail
+from batch import log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
 

@@ -17,11 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
-import os
 import sys
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
 
 from app import config
 

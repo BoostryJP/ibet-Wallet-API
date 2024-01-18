@@ -17,18 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
-import os
 import sys
 from typing import Dict, Optional, Sequence
 
-import log
 from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -37,6 +32,7 @@ from app.errors import ServiceUnavailable
 from app.model.db import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
+from batch import log
 from batch.lib.token_list import TokenList
 
 process_name = "INDEXER-TOKEN_HOLDERS"

@@ -18,8 +18,6 @@ SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
 import logging
-import os
-import sys
 import uuid
 from unittest import mock
 from unittest.mock import MagicMock
@@ -31,14 +29,10 @@ from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
 from web3.middleware import geth_poa_middleware
 
-from app.errors import ServiceUnavailable
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
 from app import config
 from app.config import ZERO_ADDRESS
 from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import Listing, TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import LOG, Processor
 from tests.account_config import eth_account

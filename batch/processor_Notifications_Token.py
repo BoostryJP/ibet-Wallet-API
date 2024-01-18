@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
-import os
 import sys
 import time
 from datetime import datetime
@@ -29,11 +28,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventFunctionNotFound
 from web3.types import EventData
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
 
 from app.config import (
     NOTIFICATION_PROCESS_INTERVAL,
@@ -53,6 +47,7 @@ from app.model.db import (
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
 from app.utils.web3_utils import AsyncWeb3Wrapper
+from batch import log
 from batch.lib.token_list import TokenList
 
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")

@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
-import os
 import sys
 from datetime import datetime
 from typing import Sequence
@@ -29,11 +28,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, TZ, ZERO_ADDRESS
 from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
@@ -41,6 +35,7 @@ from app.errors import ServiceUnavailable
 from app.model.db import IDXConsumeCoupon, Listing
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
+from batch import log
 
 local_tz = ZoneInfo(TZ)
 

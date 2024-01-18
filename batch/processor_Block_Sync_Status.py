@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import os
-import sys
 import time
 from typing import Any, Callable
 
@@ -28,13 +26,9 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from web3.types import RPCEndpoint, RPCResponse
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
 from app import config
 from app.model.db import Node
+from batch import log
 
 LOG = log.get_logger(process_name="PROCESSOR-BLOCK_SYNC_STATUS")
 
