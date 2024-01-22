@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
-import os
 import sys
 import time
 from typing import Sequence
@@ -25,16 +24,11 @@ from typing import Sequence
 import httpx
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
 
 from app.config import CHAT_WEBHOOK_URL
 from app.database import BatchAsyncSessionLocal
 from app.model.db import ChatWebhook
+from batch import log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-CHAT-WEBHOOK")
 

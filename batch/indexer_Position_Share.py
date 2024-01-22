@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
 import json
-import os
 import sys
 from datetime import datetime, timedelta, timezone
 from itertools import groupby
@@ -29,11 +28,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -50,6 +44,7 @@ from app.model.db import (
 from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.web3_utils import AsyncWeb3Wrapper
+from batch import log
 
 UTC = timezone(timedelta(hours=0), "UTC")
 

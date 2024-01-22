@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
-import os
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -26,11 +25,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
 
 from app.config import (
     IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
@@ -47,6 +41,7 @@ from app.model.db import (
     Listing,
 )
 from app.utils.web3_utils import AsyncWeb3Wrapper
+from batch import log
 
 local_tz = ZoneInfo(TZ)
 

@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import asyncio
-import os
 import sys
 import time
 from dataclasses import dataclass
@@ -30,11 +29,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
 from app import config
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
@@ -42,6 +36,7 @@ from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareT
 from app.model.blockchain.token import TokenClassTypes
 from app.model.db import IDXTokenListItem, Listing
 from app.model.schema.base import TokenType
+from batch import log
 
 process_name = "INDEXER-TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
