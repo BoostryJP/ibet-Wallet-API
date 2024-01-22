@@ -16,3 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+
+def wait_all_futures(fs):
+    for f in fs:
+        f.result()
