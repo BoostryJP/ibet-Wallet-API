@@ -80,7 +80,7 @@ COPY . /app/ibet-Wallet-API/
 RUN chown -R apl:apl /app/ibet-Wallet-API \
  && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
  && chmod 755 /app/ibet-Wallet-API
-ENV PYTHONPATH /app/E-Wallet-Core-API
+ENV PYTHONPATH /app/ibet-Wallet-API
 
 USER apl
 CMD /app/ibet-Wallet-API/tests/qa.sh

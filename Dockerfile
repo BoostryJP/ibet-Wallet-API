@@ -73,7 +73,7 @@ RUN . ~/.bash_profile \
  && poetry install --only main --no-root -E ibet-explorer \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/poetry.lock
-ENV PYTHONPATH /app/E-Wallet-Core-API
+ENV PYTHONPATH /app/ibet-Wallet-API
 
 # command deploy
 USER apl
