@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from app.config import ZERO_ADDRESS
 from app.contracts import AsyncContract
 

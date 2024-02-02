@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import asyncio
 import sys
 import time
@@ -161,9 +162,9 @@ class Watcher:
                             contract_name=_token["token_type"],
                             address=_token["token"].token_address,
                         )
-                        self.contract_cache[
-                            _token["token"].token_address
-                        ] = token_contract
+                        self.contract_cache[_token["token"].token_address] = (
+                            token_contract
+                        )
                     _event = getattr(token_contract.events, self.filter_name)
                     entries = await _event.get_logs(
                         fromBlock=from_block_number, toBlock=to_block_number

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated, Optional, Sequence
 
 from eth_utils import to_checksum_address
@@ -85,9 +86,9 @@ async def list_all_share_tokens(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[
-        bool
-    ] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[bool] = (
+        request_query.transfer_approval_required
+    )
     is_canceled: Optional[bool] = request_query.is_canceled
 
     sort_item = request_query.sort_item
@@ -199,9 +200,9 @@ async def list_all_share_token_addresses(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[
-        bool
-    ] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[bool] = (
+        request_query.transfer_approval_required
+    )
     is_canceled: Optional[bool] = request_query.is_canceled
 
     sort_item = request_query.sort_item

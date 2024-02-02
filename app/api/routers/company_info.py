@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated, Callable, Optional, Sequence
 
 from eth_utils import to_checksum_address

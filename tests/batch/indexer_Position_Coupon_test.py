@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import asyncio
 import logging
 import time
@@ -701,13 +702,13 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 0
 
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(
-            select(IDXPositionCouponBlockNumber).where(
-                IDXPositionCouponBlockNumber.token_address == token["address"]
-            )
-        ).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(
+                select(IDXPositionCouponBlockNumber).where(
+                    IDXPositionCouponBlockNumber.token_address == token["address"]
+                )
+            ).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         # Listing
@@ -1104,9 +1105,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         # Clear cache in DB session.
@@ -1131,9 +1132,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         assert 0 == caplog.record_tuples.count(
@@ -1175,9 +1176,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process when ServiceUnavailable occurs.
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         # Clear cache in DB session.
@@ -1205,9 +1206,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "sync_new_logs" process when ServiceUnavailable occurs.
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         assert 0 == caplog.record_tuples.count(
@@ -1248,9 +1249,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process when SQLAlchemyError occurs.
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         # Clear cache in DB session.
@@ -1277,9 +1278,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_coupon_block_number: Sequence[
-            IDXPositionCouponBlockNumber
-        ] = session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
+            session.scalars(select(IDXPositionCouponBlockNumber)).all()
+        )
         assert len(_idx_position_coupon_block_number) == 0
 
         assert 0 == caplog.record_tuples.count(

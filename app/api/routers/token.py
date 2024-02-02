@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from datetime import timezone
 from typing import Annotated, Optional, Sequence
 
@@ -312,15 +313,17 @@ async def get_token_holders(
                 "token_address": holder[0].token_address,
                 "account_address": holder[0].account_address,
                 "amount": holder[0].balance if holder[0].balance else 0,
-                "pending_transfer": holder[0].pending_transfer
-                if holder[0].pending_transfer
-                else 0,
-                "exchange_balance": holder[0].exchange_balance
-                if holder[0].exchange_balance
-                else 0,
-                "exchange_commitment": holder[0].exchange_commitment
-                if holder[0].exchange_commitment
-                else 0,
+                "pending_transfer": (
+                    holder[0].pending_transfer if holder[0].pending_transfer else 0
+                ),
+                "exchange_balance": (
+                    holder[0].exchange_balance if holder[0].exchange_balance else 0
+                ),
+                "exchange_commitment": (
+                    holder[0].exchange_commitment
+                    if holder[0].exchange_commitment
+                    else 0
+                ),
                 "locked": holder[1] if holder[1] else 0,
             }
             for holder in holders
@@ -506,15 +509,17 @@ async def search_token_holders(
                 "token_address": holder[0].token_address,
                 "account_address": holder[0].account_address,
                 "amount": holder[0].balance if holder[0].balance else 0,
-                "pending_transfer": holder[0].pending_transfer
-                if holder[0].pending_transfer
-                else 0,
-                "exchange_balance": holder[0].exchange_balance
-                if holder[0].exchange_balance
-                else 0,
-                "exchange_commitment": holder[0].exchange_commitment
-                if holder[0].exchange_commitment
-                else 0,
+                "pending_transfer": (
+                    holder[0].pending_transfer if holder[0].pending_transfer else 0
+                ),
+                "exchange_balance": (
+                    holder[0].exchange_balance if holder[0].exchange_balance else 0
+                ),
+                "exchange_commitment": (
+                    holder[0].exchange_commitment
+                    if holder[0].exchange_commitment
+                    else 0
+                ),
                 "locked": holder[1] if holder[1] else 0,
             }
             for holder in holders

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import json
 import os
 from enum import Enum
@@ -91,9 +92,11 @@ class ABIFunctionDescription(BaseModel):
 
     def get_signature(self) -> str:
         joined_input_types = ",".join(
-            input.type
-            if input.type != "tuple"
-            else eth_utils.abi.collapse_if_tuple(input.model_dump())
+            (
+                input.type
+                if input.type != "tuple"
+                else eth_utils.abi.collapse_if_tuple(input.model_dump())
+            )
             for input in self.inputs
         )
         return f"{self.name}({joined_input_types})"

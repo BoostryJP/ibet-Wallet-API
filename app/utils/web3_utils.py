@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import asyncio
 import threading
 import time
@@ -35,10 +36,12 @@ from web3.middleware import async_geth_poa_middleware, geth_poa_middleware
 from web3.net import AsyncNet
 from web3.types import RPCEndpoint, RPCResponse
 
-from app import config
+from app import config, log
 from app.database import async_engine, engine
 from app.errors import ServiceUnavailable
 from app.model.db import Node
+
+LOG = log.get_logger()
 
 thread_local = threading.local()
 
@@ -159,6 +162,9 @@ class FailOverHTTPProvider(HTTPProvider):
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.
+                            LOG.warning(
+                                f"Retry web3 request due to connection fail: method={method}, params={params}"
+                            )
                             counter += 1
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:
                                 time.sleep(config.WEB3_REQUEST_WAIT_TIME)
@@ -217,6 +223,9 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.
+                            LOG.warning(
+                                f"Retry web3 request due to connection fail: method={method}, params={params}"
+                            )
                             counter += 1
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:
                                 await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)

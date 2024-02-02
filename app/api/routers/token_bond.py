@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Path, Query, Request
@@ -84,9 +85,9 @@ async def list_all_straight_bond_tokens(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[
-        bool
-    ] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[bool] = (
+        request_query.transfer_approval_required
+    )
     is_redeemed: Optional[bool] = request_query.is_redeemed
 
     sort_item = request_query.sort_item
@@ -198,9 +199,9 @@ async def list_all_straight_bond_token_addresses(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[
-        bool
-    ] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[bool] = (
+        request_query.transfer_approval_required
+    )
     is_redeemed: Optional[bool] = request_query.is_redeemed
 
     sort_item = request_query.sort_item

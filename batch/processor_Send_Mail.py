@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import time
 from smtplib import SMTPException
 from typing import Sequence

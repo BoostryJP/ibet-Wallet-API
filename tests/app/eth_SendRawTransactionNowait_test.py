@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from unittest.mock import patch
 
 from eth_utils import to_checksum_address

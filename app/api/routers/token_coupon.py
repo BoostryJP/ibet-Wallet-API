@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Path, Query, Request

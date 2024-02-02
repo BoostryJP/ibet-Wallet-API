@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from datetime import datetime
 from enum import Enum
 from typing import Annotated, Generic, Optional, TypeVar, Union
@@ -231,9 +232,9 @@ class ListAllLockedPositionQuery:
     lock_address: Annotated[Optional[str], Query(description="lock address")] = None
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    sort_item: Annotated[
-        ListAllLockedSortItem, Query(description="sort item")
-    ] = ListAllLockedSortItem.token_address
+    sort_item: Annotated[ListAllLockedSortItem, Query(description="sort item")] = (
+        ListAllLockedSortItem.token_address
+    )
     sort_order: Annotated[
         SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
     ] = SortOrder.ASC
@@ -273,9 +274,9 @@ class ListAllLockEventQuery:
         Optional[LockEventCategory], Query(description="history item category")
     ] = None
 
-    sort_item: Annotated[
-        LockEventSortItem, Query(description="sort item")
-    ] = LockEventSortItem.block_timestamp
+    sort_item: Annotated[LockEventSortItem, Query(description="sort item")] = (
+        LockEventSortItem.block_timestamp
+    )
     sort_order: Annotated[
         SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
     ] = SortOrder.DESC

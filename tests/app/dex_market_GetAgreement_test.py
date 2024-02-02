@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -315,7 +316,9 @@ class TestDEXMarketGetAgreement:
     # 入力値エラー（exchange_addressの型誤り）
     # 400
     def test_error_2(self, client: TestClient, session: Session):
-        exchange_address = "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B"  # アドレス長が短い
+        exchange_address = (
+            "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B"  # アドレス長が短い
+        )
         query_string = (
             f"order_id=2&agreement_id=102&exchange_address={exchange_address}"
         )

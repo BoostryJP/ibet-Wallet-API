@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from decimal import Decimal
 from typing import Annotated, Sequence, Type, Union
 
@@ -207,15 +208,21 @@ class BasePosition:
         for item in _token_position_list:
             position = {
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "pending_transfer": item[1].pending_transfer
-                if item[1] and item[1].pending_transfer
-                else 0,
-                "exchange_balance": item[1].exchange_balance
-                if item[1] and item[1].exchange_balance
-                else 0,
-                "exchange_commitment": item[1].exchange_commitment
-                if item[1] and item[1].exchange_commitment
-                else 0,
+                "pending_transfer": (
+                    item[1].pending_transfer
+                    if item[1] and item[1].pending_transfer
+                    else 0
+                ),
+                "exchange_balance": (
+                    item[1].exchange_balance
+                    if item[1] and item[1].exchange_balance
+                    else 0
+                ),
+                "exchange_commitment": (
+                    item[1].exchange_commitment
+                    if item[1] and item[1].exchange_commitment
+                    else 0
+                ),
                 "locked": item[2] if item[2] else 0,
             }
             if include_token_details:
@@ -387,15 +394,21 @@ class BasePosition:
 
         return {
             "balance": _position.balance if _position and _position.balance else 0,
-            "pending_transfer": _position.pending_transfer
-            if _position and _position.pending_transfer
-            else 0,
-            "exchange_balance": _position.exchange_balance
-            if _position and _position.exchange_balance
-            else 0,
-            "exchange_commitment": _position.exchange_commitment
-            if _position and _position.exchange_commitment
-            else 0,
+            "pending_transfer": (
+                _position.pending_transfer
+                if _position and _position.pending_transfer
+                else 0
+            ),
+            "exchange_balance": (
+                _position.exchange_balance
+                if _position and _position.exchange_balance
+                else 0
+            ),
+            "exchange_commitment": (
+                _position.exchange_commitment
+                if _position and _position.exchange_commitment
+                else 0
+            ),
             "locked": _locked or 0,
             "token": self.token_model.from_model(token).__dict__,
         }
@@ -791,12 +804,16 @@ class BasePositionMembership(BasePosition):
         for item in _token_position_list:
             position = {
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "exchange_balance": item[1].exchange_balance
-                if item[1] and item[1].exchange_balance
-                else 0,
-                "exchange_commitment": item[1].exchange_commitment
-                if item[1] and item[1].exchange_commitment
-                else 0,
+                "exchange_balance": (
+                    item[1].exchange_balance
+                    if item[1] and item[1].exchange_balance
+                    else 0
+                ),
+                "exchange_commitment": (
+                    item[1].exchange_commitment
+                    if item[1] and item[1].exchange_commitment
+                    else 0
+                ),
             }
             if include_token_details:
                 position["token"] = self.token_model.from_model(item[2]).__dict__

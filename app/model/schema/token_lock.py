@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from enum import Enum
 from typing import Annotated, Optional
 
@@ -63,9 +64,9 @@ class ListAllTokenLockQuery:
     ] = None
     offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
     limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    sort_item: Annotated[
-        ListAllLockSortItem, Query(description="sort item")
-    ] = ListAllLockSortItem.token_address
+    sort_item: Annotated[ListAllLockSortItem, Query(description="sort item")] = (
+        ListAllLockSortItem.token_address
+    )
     sort_order: Annotated[
         SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
     ] = SortOrder.ASC
