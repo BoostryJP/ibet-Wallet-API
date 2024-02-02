@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from app.contracts import AsyncContract
 from app.model.schema.base import TokenType
 

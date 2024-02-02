@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum

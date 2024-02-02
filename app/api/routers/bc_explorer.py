@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Any, Dict, Sequence, Tuple
 
 from eth_utils import to_checksum_address
@@ -358,9 +359,9 @@ async def get_tx_data(
             contract = AsyncContract.get_contract(
                 contract_name=contract_name, address=tx_data.to_address
             )
-            decoded_input: Tuple[
-                "ContractFunction", Dict[str, Any]
-            ] = contract.decode_function_input(tx_data.input)
+            decoded_input: Tuple["ContractFunction", Dict[str, Any]] = (
+                contract.decode_function_input(tx_data.input)
+            )
             contract_function = decoded_input[0].fn_name
             contract_parameters = decoded_input[1]
         except FileNotFoundError:

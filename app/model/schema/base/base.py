@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from enum import IntEnum, StrEnum
 from typing import Annotated, Generic, Optional, TypeVar
 

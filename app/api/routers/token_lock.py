@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from datetime import timedelta, timezone
 from typing import Sequence
 from zoneinfo import ZoneInfo

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License
 """
+
 import json
 
 from fastapi import APIRouter
