@@ -18,12 +18,14 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
+import hashlib
+import json
 import sys
 import time
 
 from eth_utils import to_checksum_address
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,24 +42,40 @@ LOG = log.get_logger(process_name=process_name)
 class Processor:
     """Processor for indexing company list"""
 
+    def __init__(self):
+        self.company_list_digest = None
+
     async def process(self):
         LOG.info("Syncing company list")
 
         # Get from COMPANY_LIST_URL
         try:
             async with AsyncClient() as client:
-                req = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
-            if req.status_code != 200:
-                raise Exception(f"status code={req.status_code}")
-            company_list_json = req.json()
-        except Exception as e:
-            LOG.exception(f"Failed to get company list: {e}")
+                _resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
+            if _resp.status_code != 200:
+                raise Exception(f"status code={_resp.status_code}")
+            company_list_json = _resp.json()
+        except Exception:
+            LOG.exception("Failed to get company list")
             return
 
+        # Check the difference from the previous cycle
+        _resp_digest = hashlib.sha256(
+            json.dumps(company_list_json).encode()
+        ).hexdigest()
+        if _resp_digest == self.company_list_digest:
+            LOG.info("Skip: There are no differences from the previous cycle")
+            return
+        else:
+            self.company_list_digest = _resp_digest
+
+        # Update DB data
         db_session = BatchAsyncSessionLocal()
         try:
-            # Upsert company list
-            updated_company_dict: dict[str, True] = {}
+            # Delete all company list from DB
+            await db_session.execute(delete(Company))
+
+            # Insert company list
             for i, company in enumerate(company_list_json):
                 address = company.get("address", "")
                 corporate_name = company.get("corporate_name", "")
@@ -84,12 +102,6 @@ class Processor:
                         )
                         continue
                     try:
-                        has_already_updated = updated_company_dict.get(address, False)
-                        if has_already_updated:
-                            LOG.warning(
-                                f"duplicate address error: index={i} address={address}"
-                            )
-                            continue
                         await self.__sink_on_company(
                             db_session=db_session,
                             address=to_checksum_address(address),
@@ -105,14 +117,6 @@ class Processor:
                 else:
                     LOG.warning(f"required error: index={i}")
                     continue
-                updated_company_dict[address] = True
-
-            # Delete company list from DB
-            company_list_db = (await db_session.scalars(select(Company))).all()
-            for company in company_list_db:
-                is_updated = updated_company_dict.get(company.address, False)
-                if not is_updated:
-                    await db_session.delete(company)
 
             await db_session.commit()
             await db_session.close()
