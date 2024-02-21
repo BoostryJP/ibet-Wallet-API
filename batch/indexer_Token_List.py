@@ -48,15 +48,12 @@ class Processor:
         self.token_list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
-        self.available_token_template_list = []
-        if config.BOND_TOKEN_ENABLED:
-            self.available_token_template_list.append(TokenType.IbetStraightBond)
-        if config.SHARE_TOKEN_ENABLED:
-            self.available_token_template_list.append(TokenType.IbetShare)
-        if config.MEMBERSHIP_TOKEN_ENABLED:
-            self.available_token_template_list.append(TokenType.IbetMembership)
-        if config.COUPON_TOKEN_ENABLED:
-            self.available_token_template_list.append(TokenType.IbetCoupon)
+        self.available_token_template_list = [
+            TokenType.IbetStraightBond,
+            TokenType.IbetShare,
+            TokenType.IbetMembership,
+            TokenType.IbetCoupon,
+        ]
 
     @staticmethod
     def __get_db_session():
@@ -81,6 +78,7 @@ class Processor:
                         block_from=_from_block,
                         block_to=_to_block,
                     )
+                    _from_block += 1000000
                     _to_block += 1000000
                 await self.__sync_all(
                     db_session=local_session,
@@ -101,7 +99,7 @@ class Processor:
                 block_number=latest_block,
             )
             await local_session.commit()
-        except Exception as e:
+        except Exception:
             await local_session.rollback()
             raise
         finally:
@@ -161,7 +159,6 @@ class Processor:
         """
         if token_template not in self.available_token_template_list:
             return
-
         idx_token_list: Optional[IDXTokenListItem] = (
             await db_session.scalars(
                 select(IDXTokenListItem)
