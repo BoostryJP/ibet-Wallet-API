@@ -31,6 +31,7 @@ from web3.exceptions import ABIEventFunctionNotFound
 from web3.middleware import geth_poa_middleware
 
 from app import config
+from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem, Listing
 from batch import indexer_Token_List
@@ -288,7 +289,7 @@ class TestProcessor:
                 }
             )
 
-        # issue coupon token
+        # Issue coupon token
         for i in range(2):
             args = {
                 "name": "テストクーポン",
@@ -315,6 +316,52 @@ class TestProcessor:
                     "owner_address": self.issuer["account_address"],
                 }
             )
+
+        # register unknown token template
+        TokenListContract = Contract.get_contract(
+            "TokenList", token_list_contract["address"]
+        )
+        web3.eth.default_account = self.issuer["account_address"]
+        args = {
+            "name": f"TestToken",
+            "symbol": "Test",
+            "totalSupply": 1000000,
+            "tradableExchange": exchange_contract["address"],
+            "faceValue": 10000,
+            "interestRate": 602,
+            "interestPaymentDate1": "0101",
+            "interestPaymentDate2": "0201",
+            "interestPaymentDate3": "0301",
+            "interestPaymentDate4": "0401",
+            "interestPaymentDate5": "0501",
+            "interestPaymentDate6": "0601",
+            "interestPaymentDate7": "0701",
+            "interestPaymentDate8": "0801",
+            "interestPaymentDate9": "0901",
+            "interestPaymentDate10": "1001",
+            "interestPaymentDate11": "1101",
+            "interestPaymentDate12": "1201",
+            "redemptionDate": "20191231",
+            "redemptionValue": 10000,
+            "returnDate": "20191231",
+            "returnAmount": "商品券をプレゼント",
+            "purpose": "新商品の開発資金として利用。",
+            "memo": "メモ",
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+            "personalInfoAddress": personal_info_contract["address"],
+            "transferable": True,
+            "isRedeemed": False,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
+        }
+        test_token = issue_bond_token(self.issuer, args)
+        tx_hash = TokenListContract.functions.register(
+            test_token["address"], "UnknownTokenTemplate"
+        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         asyncio.run(processor.process())

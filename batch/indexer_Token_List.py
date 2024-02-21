@@ -48,6 +48,12 @@ class Processor:
         self.token_list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
+        self.available_token_template_list = [
+            TokenType.IbetStraightBond,
+            TokenType.IbetShare,
+            TokenType.IbetMembership,
+            TokenType.IbetCoupon,
+        ]
 
     @staticmethod
     def __get_db_session():
@@ -151,6 +157,8 @@ class Processor:
         :param owner_address: owner address
         :return: None
         """
+        if token_template not in self.available_token_template_list:
+            return
         idx_token_list: Optional[IDXTokenListItem] = (
             await db_session.scalars(
                 select(IDXTokenListItem)
