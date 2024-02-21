@@ -28,7 +28,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.exc import ObjectDeletedError
+from sqlalchemy.orm.exc import ObjectDeletedError, StaleDataError
 
 from app import config
 from app.database import BatchAsyncSessionLocal
@@ -129,7 +129,7 @@ class Processor:
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time
                     await asyncio.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
-                except ObjectDeletedError:
+                except (ObjectDeletedError, StaleDataError):
                     LOG.warning(
                         "The record may have been deleted in another session during the update"
                     )
