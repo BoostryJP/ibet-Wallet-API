@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import logging
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import select
@@ -54,17 +54,21 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
     config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-    return indexer_Token_List
+    return indexer_Token_List.Processor
 
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    config.BOND_TOKEN_ENABLED = True
-    config.SHARE_TOKEN_ENABLED = True
-    config.MEMBERSHIP_TOKEN_ENABLED = True
-    config.COUPON_TOKEN_ENABLED = True
-    processor = test_module.Processor()
-    return processor
+    LOG = logging.getLogger("ibet_wallet_batch")
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+
+    processor = test_module()
+    yield processor
+
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 @pytest.fixture(scope="function")
@@ -325,6 +329,229 @@ class TestProcessor:
 
             assert token_list_item.token_template == _expect_dict["token_template"]
             assert token_list_item.owner_address == _expect_dict["owner_address"]
+
+    # <Normal_3_1>
+    # When processed block_number is not stored and current block number is 9,999,999,
+    # then processor should call "__sync_register" method 10 times.
+    def test_normal_3_1(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        token_list_contract = shared_contract["TokenList"]
+
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+
+        mock_lib = MagicMock()
+
+        current_block_number = 10000000 - 1
+        block_number_mock = AsyncMock()
+        block_number_mock.return_value = current_block_number
+
+        # Run target process
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
+            with mock.patch.object(
+                Processor, "_Processor__sync_register", return_value=mock_lib
+            ) as __sync_register_mock:
+
+                __sync_register_mock.return_value = None
+                asyncio.run(processor.process())
+
+                # Then processor calls "__sync_register" method 10 times.
+                assert __sync_register_mock.call_count == 10
+
+                idx_token_list_block_number: IDXTokenListBlockNumber = session.scalars(
+                    select(IDXTokenListBlockNumber).limit(1)
+                ).first()
+                assert (
+                    idx_token_list_block_number.latest_block_number
+                    == current_block_number
+                )
+
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=0, to=999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=1000000, to=1999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=2000000, to=2999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=3000000, to=3999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=4000000, to=4999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=5000000, to=5999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=6000000, to=6999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=7000000, to=7999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=8000000, to=8999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=9000000, to=9999999")
+                )
+
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
+            with mock.patch.object(
+                Processor, "_Processor__sync_register", return_value=mock_lib
+            ) as __sync_register_mock:
+
+                __sync_register_mock.return_value = None
+                asyncio.run(processor.process())
+
+                # Then processor does not call "__sync_register" method.
+                assert __sync_register_mock.call_count == 0
+
+    # <Normal_3_2>
+    # When processed block_number is 9,999,999 and current block number is 19,999,999,
+    # then processor should call "__sync_register" method 10 times.
+    def test_normal_3_2(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        token_list_contract = shared_contract["TokenList"]
+
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+
+        mock_lib = MagicMock()
+
+        latest_block_number = 10000000 - 1
+        _token_list_block_number = IDXTokenListBlockNumber()
+        _token_list_block_number.latest_block_number = latest_block_number
+        _token_list_block_number.contract_address = token_list_contract["address"]
+        session.add(_token_list_block_number)
+        session.commit()
+
+        current_block_number = 20000000 - 1
+        block_number_mock = AsyncMock()
+        block_number_mock.return_value = current_block_number
+
+        # Run target process
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
+            with mock.patch.object(
+                Processor, "_Processor__sync_register", return_value=mock_lib
+            ) as __sync_register_mock:
+
+                __sync_register_mock.return_value = None
+                asyncio.run(processor.process())
+
+                # Then processor calls "__sync_register" method 10 times.
+                assert __sync_register_mock.call_count == 10
+
+                idx_token_list_block_number: IDXTokenListBlockNumber = session.scalars(
+                    select(IDXTokenListBlockNumber).limit(1)
+                ).first()
+                assert (
+                    idx_token_list_block_number.latest_block_number
+                    == current_block_number
+                )
+
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=10000000, to=10999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=11000000, to=11999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=12000000, to=12999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=13000000, to=13999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=14000000, to=14999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=15000000, to=15999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=16000000, to=16999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=17000000, to=17999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=18000000, to=18999999")
+                )
+                assert 1 == caplog.record_tuples.count(
+                    (LOG.name, logging.INFO, f"Syncing from=19000000, to=19999999")
+                )
+
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
+            with mock.patch.object(
+                Processor, "_Processor__sync_register", return_value=mock_lib
+            ) as __sync_register_mock:
+
+                __sync_register_mock.return_value = None
+                asyncio.run(processor.process())
+
+                # Then processor does not call "__sync_register" method.
+                assert __sync_register_mock.call_count == 0
+
+    # <Normal_3_3>
+    # When processed block_number is 19,999,999 and current block number is 19,999,999,
+    # then processor should not call "__sync_register" method.
+    def test_normal_3_3(
+        self,
+        processor: Processor,
+        shared_contract,
+        session: Session,
+        block_number: None,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        token_list_contract = shared_contract["TokenList"]
+
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+
+        mock_lib = MagicMock()
+
+        latest_block_number = 20000000 - 1
+        _token_list_block_number = IDXTokenListBlockNumber()
+        _token_list_block_number.latest_block_number = latest_block_number
+        _token_list_block_number.contract_address = token_list_contract["address"]
+        session.add(_token_list_block_number)
+        session.commit()
+
+        current_block_number = 20000000 - 1
+        block_number_mock = AsyncMock()
+        block_number_mock.return_value = current_block_number
+
+        # Run target process
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
+            with mock.patch.object(
+                Processor, "_Processor__sync_register", return_value=mock_lib
+            ) as __sync_register_mock:
+
+                __sync_register_mock.return_value = None
+                asyncio.run(processor.process())
+
+                # Then processor does not call "__sync_register" method.
+                assert __sync_register_mock.call_count == 0
 
     ###########################################################################
     # Error Case
