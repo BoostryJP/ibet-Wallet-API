@@ -10178,8 +10178,8 @@ components:
           examples:
             - 1
         status:
-          type: integer
-          title: Status
+          allOf:
+            - $ref: '#/components/schemas/SendRawTransactionStatus'
           description: execution failure:0, execution success:1
           examples:
             - 1
@@ -10216,8 +10216,8 @@ components:
           examples:
             - 1
         status:
-          type: integer
-          title: Status
+          allOf:
+            - $ref: '#/components/schemas/SendRawTransactionStatus'
           description: >-
             execution failure:0, execution success:1, execution success(pending
             transaction):2
@@ -10250,6 +10250,15 @@ components:
         - id
         - status
       title: SendRawTransactionResponse
+    SendRawTransactionStatus:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+      title: SendRawTransactionStatus
     SendRawTransactionsNoWaitResponse:
       items:
         $ref: '#/components/schemas/SendRawTransactionNoWaitResponse'
