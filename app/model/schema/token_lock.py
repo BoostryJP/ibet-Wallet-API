@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, StrictStr
+from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
