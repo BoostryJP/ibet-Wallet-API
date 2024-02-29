@@ -19,19 +19,11 @@ SPDX-License-Identifier: Apache-2.0
 
 import re
 import string
-from typing import Optional, Self, Set
+from typing import Optional, Self
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    Json,
-    StringConstraints,
-    conlist,
-    field_validator,
-    model_validator,
-)
-from typing_extensions import Annotated
+from pydantic import BaseModel, Field, Json, field_validator, model_validator
+
+from app.model.schema.base import EmailStr
 
 ############################
 # COMMON
@@ -63,7 +55,7 @@ RE_INVALID_WIN_FILENAME = re.compile(
 
 
 class SendMailRequest(BaseModel):
-    to_emails: list[EmailStr] = Field(min_length=1, max_length=100)
+    to_emails: list[EmailStr] = Field(min_length=1)
     subject: str = Field(..., description="Mail subject", max_length=100)
     text_content: Optional[str] = Field("", description="Plain text mail content")
     html_content: Optional[str] = Field("", description="HTML mail content")

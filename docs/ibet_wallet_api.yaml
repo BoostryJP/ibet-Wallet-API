@@ -10124,9 +10124,9 @@ components:
         to_emails:
           items:
             type: string
-            format: email
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$
           type: array
-          maxItems: 100
           minItems: 1
           title: To Emails
         subject:

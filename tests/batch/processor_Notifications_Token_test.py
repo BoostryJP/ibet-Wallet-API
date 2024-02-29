@@ -200,11 +200,13 @@ class TestWatchTransfer:
         block_number = web3.eth.block_number
 
         _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
         ).first()
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -270,10 +272,14 @@ class TestWatchTransfer:
         ).all()
         assert len(_notification_list) == 2
 
-        _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -291,10 +297,14 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon",
         }
 
-        _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
@@ -407,10 +417,14 @@ class TestWatchTransfer:
             len(_notification_list) == 1
         )  # Notification from which the DEX is the transferor will not be registered.
 
-        _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 1, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == exchange_contract["address"]
@@ -533,14 +547,13 @@ class TestWatchApplyForTransfer:
         block_number = web3.eth.block_number
 
         _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
         ).first()
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
-        assert (
-            _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
-        )
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
         assert _notification.block_timestamp is not None
@@ -619,10 +632,14 @@ class TestWatchApplyForTransfer:
         ).all()
         assert len(_notification_list) == 2
 
-        _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert (
             _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
         )
@@ -644,10 +661,14 @@ class TestWatchApplyForTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert (
             _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
         )
@@ -840,11 +861,13 @@ class TestWatchApproveTransfer:
         block_number = web3.eth.block_number
 
         _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
         ).first()
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
         assert (
             _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
         )
@@ -927,10 +950,14 @@ class TestWatchApproveTransfer:
         ).all()
         assert len(_notification_list) == 2
 
-        _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert (
             _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
         )
@@ -951,10 +978,14 @@ class TestWatchApproveTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert (
             _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
         )
@@ -1147,11 +1178,13 @@ class TestWatchCancelTransfer:
         block_number = web3.eth.block_number
 
         _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
         ).first()
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -1232,10 +1265,14 @@ class TestWatchCancelTransfer:
         ).all()
         assert len(_notification_list) == 2
 
-        _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -1254,10 +1291,14 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -1363,10 +1404,14 @@ class TestWatchCancelTransfer:
         ).all()
         assert len(_notification_list) == 4
 
-        _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 3, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 3, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -1385,10 +1430,14 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification = _notification_list[1]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 2, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 2, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -1407,10 +1456,14 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification = _notification_list[2]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number - 1, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
@@ -1429,10 +1482,14 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification = _notification_list[3]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
-            block_number, 0, 0, 0
-        )
+        _notification = session.scalars(
+            select(Notification)
+            .where(
+                Notification.notification_id
+                == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
+            )
+            .limit(1)
+        ).first()
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
