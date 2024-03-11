@@ -3589,13 +3589,13 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "uvicorn"
-version = "0.28.0"
+version = "0.27.1"
 description = "The lightning-fast ASGI server."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "uvicorn-0.28.0-py3-none-any.whl", hash = "sha256:6623abbbe6176204a4226e67607b4d52cc60ff62cda0ff177613645cefa2ece1"},
-    {file = "uvicorn-0.28.0.tar.gz", hash = "sha256:cab4473b5d1eaeb5a0f6375ac4bc85007ffc75c3cc1768816d9e5d589857b067"},
+    {file = "uvicorn-0.27.1-py3-none-any.whl", hash = "sha256:5c89da2f3895767472a35556e539fd59f7edbe9b1e9c0e1c99eebeadc61838e4"},
+    {file = "uvicorn-0.27.1.tar.gz", hash = "sha256:3d9a267296243532db80c83a959a3400502165ade2c1338dea4e67915fd4745a"},
 ]
 
 [package.dependencies]
@@ -4091,4 +4091,4 @@ ibet-explorer = ["aiohttp", "async-cache", "ibet-wallet-api-explorer", "textual"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.2"
-content-hash = "d80cecb8d78f16c2c7c540310038304a1b721a17ef874d4fb371beef025d3766"
+content-hash = "73bddce353e975ff19da5db8af010bc3425a68cc2c0b0f6a22ab516e69c2acce"
