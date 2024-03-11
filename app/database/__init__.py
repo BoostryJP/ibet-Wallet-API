@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Annotated, Literal
 
 from fastapi import Depends
-from sqlalchemy import NullPool, create_engine
+from sqlalchemy import AsyncAdaptedQueuePool, NullPool, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -55,6 +55,7 @@ def get_async_engine(uri: str):
     else:
         # If Postgres used, connection pool is activated.
         options = {
+            "poolclass": AsyncAdaptedQueuePool,
             "pool_recycle": 3600,
             "pool_size": 10,
             "pool_timeout": 30,
@@ -72,6 +73,7 @@ def get_batch_async_engine(uri: str):
     else:
         # If Postgres used, connection pool is activated.
         options = {
+            "poolclass": AsyncAdaptedQueuePool,
             "pool_pre_ping": True,
             "echo": False,
         }
@@ -84,7 +86,7 @@ async_engine = get_async_engine(get_async_uri(config.DATABASE_URL))
 batch_async_engine = get_batch_async_engine(get_async_uri(config.DATABASE_URL))
 
 
-# Create Session Maker
+# Create Session Mapker
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
