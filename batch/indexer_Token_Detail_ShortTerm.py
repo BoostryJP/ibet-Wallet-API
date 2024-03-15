@@ -136,8 +136,9 @@ class Processor:
                     token = token_type.token_class.from_model(available_token)
                     await token.fetch_expiry_short()
                     token_model = token.to_model()
-                    await local_session.merge(token_model)
-                    await local_session.commit()
+                    async with local_session.begin_nested():
+                        await local_session.merge(token_model)
+                        await local_session.commit()
 
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time

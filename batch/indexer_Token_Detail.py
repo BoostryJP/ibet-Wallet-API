@@ -123,8 +123,9 @@ class Processor:
                     )
                     token_detail = token_detail_obj.to_model()
                     token_detail.created = datetime.utcnow()
-                    await local_session.merge(token_detail)
-                    await local_session.commit()
+                    async with local_session.begin_nested():
+                        await local_session.merge(token_detail)
+                        await local_session.commit()
 
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time
