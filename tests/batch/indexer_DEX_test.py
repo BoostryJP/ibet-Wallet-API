@@ -16,11 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import logging
 import time
 from typing import Sequence
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import select
@@ -87,7 +89,7 @@ def processor_factory(session, shared_contract):
             exchange_address["coupon"] = coupon_exchange["address"]
 
         processor = indexer_DEX.Processor()
-        processor.initial_sync()
+        asyncio.run(processor.initial_sync())
 
         return processor, exchange_address
 
@@ -190,7 +192,7 @@ class TestProcessor:
         block_number = web3.eth.block_number
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -245,7 +247,7 @@ class TestProcessor:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -301,7 +303,7 @@ class TestProcessor:
         block_number2 = web3.eth.block_number
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -375,7 +377,7 @@ class TestProcessor:
         block_number2 = web3.eth.block_number
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -451,7 +453,7 @@ class TestProcessor:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -527,7 +529,7 @@ class TestProcessor:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -640,7 +642,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -736,7 +738,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -765,7 +767,7 @@ class TestProcessor:
         self.listing_token(coupon_token["address"], session)
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -783,7 +785,7 @@ class TestProcessor:
         processor, exchange_address = processor_factory()
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -806,7 +808,7 @@ class TestProcessor:
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1_1(self, processor_factory, shared_contract, session):
@@ -830,7 +832,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        processor.initial_sync()
+        asyncio.run(processor.initial_sync())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -855,10 +857,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
         # Assertion
         session.rollback()
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -895,9 +897,10 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+            "web3.eth.async_eth.AsyncEth.get_block",
+            MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -921,9 +924,10 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+            "web3.eth.async_eth.AsyncEth.get_block",
+            MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -961,10 +965,10 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
@@ -987,10 +991,10 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1030,7 +1034,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -1056,7 +1060,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1076,20 +1080,20 @@ class TestProcessor:
         self, main_func, processor_factory, shared_contract, session, caplog
     ):
         # Mocking time.sleep to break mainloop
-        time_mock = MagicMock(wraps=time)
-        time_mock.sleep.side_effect = [True, TypeError()]
+        asyncio_mock = AsyncMock(wraps=asyncio)
+        asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_DEX.time", time_mock), mock.patch(
+        with mock.patch("batch.indexer_DEX.asyncio", asyncio_mock), mock.patch(
             "batch.indexer_DEX.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            main_func()
+            asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.WARNING, "An external service was unavailable")

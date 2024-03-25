@@ -16,6 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+from unittest import mock
+
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -84,8 +87,8 @@ class TestTokenCouponTokenDetails:
     ###########################################################################
 
     # Normal_1
+    @mock.patch("app.config.COUPON_TOKEN_ENABLED", True)
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
-        config.COUPON_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -102,6 +105,8 @@ class TestTokenCouponTokenDetails:
 
         # Register tokens on the list
         self.list_token(session, token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -143,8 +148,8 @@ class TestTokenCouponTokenDetails:
 
     # Normal_2
     # status = False
+    @mock.patch("app.config.COUPON_TOKEN_ENABLED", True)
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        config.COUPON_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -164,6 +169,8 @@ class TestTokenCouponTokenDetails:
 
         # Invalidate token
         invalidate_coupon_token(issuer, token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -209,8 +216,8 @@ class TestTokenCouponTokenDetails:
     # Error_1
     # Invalid Parameter: invalid contract_address
     # -> 400
+    @mock.patch("app.config.COUPON_TOKEN_ENABLED", True)
     def test_error_1(self, client: TestClient, session: Session):
-        config.COUPON_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + "0xabcd"
 
         # Request target API
@@ -236,8 +243,8 @@ class TestTokenCouponTokenDetails:
     # Error_2
     # Not registered on the list
     # -> 404
+    @mock.patch("app.config.COUPON_TOKEN_ENABLED", True)
     def test_error_2(self, client, shared_contract, session):
-        config.COUPON_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -251,6 +258,8 @@ class TestTokenCouponTokenDetails:
         attribute = self.token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -268,9 +277,8 @@ class TestTokenCouponTokenDetails:
     # Error_3
     # Not Supported
     # -> 404
+    @mock.patch("app.config.COUPON_TOKEN_ENABLED", False)
     def test_error_3(self, client: TestClient, session: Session):
-        config.COUPON_TOKEN_ENABLED = False
-
         # Request target API
         resp = client.get(
             self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765"

@@ -16,10 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import json
 import logging
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import select
@@ -51,8 +53,8 @@ class TestProcessorSendChatWebhook:
     # No unsent hook exists
     def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with mock.patch("requests.post", MagicMock(side_effect=None)):
-            processor.process()
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)):
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion
@@ -63,13 +65,16 @@ class TestProcessorSendChatWebhook:
     def test_normal_2(self, processor, session, caplog):
         # Prepare data
         hook = ChatWebhook()
-        hook.message = json.dumps({"title": "test_title", "text": "test_text"})
+        hook.message = json.dumps({"title": "test_title1", "text": "test_text"})
+        session.add(hook)
+        hook = ChatWebhook()
+        hook.message = json.dumps({"title": "test_title2", "text": "test_text"})
         session.add(hook)
         session.commit()
 
         # Run processor
-        with mock.patch("requests.post", MagicMock(side_effect=None)):
-            processor.process()
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)):
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion
@@ -87,8 +92,8 @@ class TestProcessorSendChatWebhook:
         session.commit()
 
         # Run processor
-        with mock.patch("requests.post", MagicMock(side_effect=Exception())):
-            processor.process()
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=Exception())):
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion
@@ -115,11 +120,11 @@ class TestProcessorSendChatWebhook:
 
         # Run processor
         with (
-            mock.patch("requests.post", MagicMock(side_effect=None)),
+            mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            processor.process()
+            asyncio.run(processor.process())
             session.commit()
 
         # Assertion

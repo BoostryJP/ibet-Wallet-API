@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # make application directory
 RUN mkdir -p /app
@@ -11,6 +11,7 @@ RUN groupadd -g 1000 apl \
 
 # install packages
 RUN apt-get update -q \
+ && apt-get upgrade -qy \
  && apt-get install -y --no-install-recommends \
  unzip \
  build-essential \
@@ -55,7 +56,7 @@ RUN . ~/.bash_profile \
 
 # install poetry
 RUN . ~/.bash_profile \
- && python -m pip install poetry==1.6.1
+ && python -m pip install poetry==1.7.1
 RUN . ~/.bash_profile \
  && poetry config virtualenvs.create false
 
@@ -73,6 +74,7 @@ RUN . ~/.bash_profile \
  && poetry install --only main --no-root -E ibet-explorer \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/poetry.lock
+ENV PYTHONPATH /app/ibet-Wallet-API
 
 # command deploy
 USER apl

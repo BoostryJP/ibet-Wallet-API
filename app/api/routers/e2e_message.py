@@ -16,12 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Path
 
 from app import config, log
-from app.contracts import Contract
+from app.contracts import AsyncContract
 from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.schema import E2EMessageEncryptionKeyResponse
 from app.model.schema.base import (
@@ -44,7 +45,7 @@ router = APIRouter(prefix="/E2EMessage", tags=["messaging"])
     response_model=GenericSuccessResponse[E2EMessageEncryptionKeyResponse],
     responses=get_routers_responses(InvalidParameterError, DataNotExistsError),
 )
-def retrieve_encryption_key(
+async def retrieve_encryption_key(
     account_address: Annotated[
         ValidatedEthereumAddress, Path(description="Account address (message receiver)")
     ]
@@ -53,10 +54,10 @@ def retrieve_encryption_key(
     Returns encryption key for use in e2e messaging for given account address.
     """
     # Get public key
-    messaging_contract = Contract.get_contract(
+    messaging_contract = AsyncContract.get_contract(
         contract_name="E2EMessaging", address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
     )
-    key, key_type = Contract.call_function(
+    key, key_type = await AsyncContract.call_function(
         contract=messaging_contract,
         function_name="getPublicKey",
         args=(account_address,),

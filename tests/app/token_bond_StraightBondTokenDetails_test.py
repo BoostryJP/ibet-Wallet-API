@@ -16,6 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+from unittest import mock
+
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -101,8 +104,8 @@ class TestTokenStraightBondTokenDetails:
     ###########################################################################
 
     # Normal_1
+    @mock.patch("app.config.BOND_TOKEN_ENABLED", True)
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
-        config.BOND_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -120,6 +123,8 @@ class TestTokenStraightBondTokenDetails:
 
         # Register tokens on the list
         self.list_token(session, bond_token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + bond_token["address"]
@@ -177,8 +182,8 @@ class TestTokenStraightBondTokenDetails:
         assert resp.json()["data"] == assumed_body
 
     # Normal_2
+    @mock.patch("app.config.BOND_TOKEN_ENABLED", True)
     def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        config.BOND_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -199,6 +204,8 @@ class TestTokenStraightBondTokenDetails:
 
         # Invalidate token
         bond_invalidate(issuer, bond_token)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + bond_token["address"]
@@ -289,8 +296,8 @@ class TestTokenStraightBondTokenDetails:
     # Error_2
     # Not registered on the list
     # -> 404
+    @mock.patch("app.config.BOND_TOKEN_ENABLED", True)
     def test_error_2(self, client, shared_contract, session):
-        config.BOND_TOKEN_ENABLED = True
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -305,6 +312,8 @@ class TestTokenStraightBondTokenDetails:
         attribute = self.bond_token_attribute(exchange_address, personal_info)
         token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, token, token_list)
+
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + token["address"]
@@ -322,9 +331,8 @@ class TestTokenStraightBondTokenDetails:
     # Error_3
     # Not Supported
     # -> 404
+    @mock.patch("app.config.BOND_TOKEN_ENABLED", False)
     def test_error_3(self, client: TestClient, session: Session):
-        config.BOND_TOKEN_ENABLED = False
-
         # Request target API
         resp = client.get(
             self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765"

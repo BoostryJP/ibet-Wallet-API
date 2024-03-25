@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -121,6 +122,8 @@ class TestDEXMarketMembershipTick:
     #  -> 約定イベントの情報が返却される
     def test_normal_2(self, client: TestClient, session: Session):
         self._insert_test_data(session)
+
+        session.commit()
 
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = (

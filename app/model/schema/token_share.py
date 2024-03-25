@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from enum import Enum
 from typing import Optional
 
@@ -76,9 +77,9 @@ class ListAllShareTokensQuery:
     transfer_approval_required: Annotated[
         Optional[bool], Query(description="transfer approval required status")
     ] = None
-    is_canceled: Annotated[
-        Optional[bool], Query(description="cancellation status")
-    ] = None
+    is_canceled: Annotated[Optional[bool], Query(description="cancellation status")] = (
+        None
+    )
 
     sort_item: Annotated[
         Optional[ShareTokensSortItem], Query(description="sort item")

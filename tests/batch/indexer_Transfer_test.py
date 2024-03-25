@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -267,7 +269,7 @@ class TestProcessor:
         block_number_2 = web3.eth.block_number
 
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         idx_transfer_list = session.scalars(
@@ -341,7 +343,7 @@ class TestProcessor:
         block_number = web3.eth.block_number
 
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         idx_transfer_list = session.scalars(
@@ -425,7 +427,7 @@ class TestProcessor:
         block_number_4 = web3.eth.block_number
 
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         idx_transfer_list = session.scalars(
@@ -539,7 +541,7 @@ class TestProcessor:
         latest_block_number = web3.eth.block_number
 
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         idx_transfer_list = session.scalars(
@@ -642,7 +644,7 @@ class TestProcessor:
         1st execution
         """
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         _transfer_list = session.scalars(
             select(IDXTransfer).order_by(IDXTransfer.created)
@@ -674,7 +676,7 @@ class TestProcessor:
         """
         # Execute batch processing
         caplog.clear()
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -733,7 +735,7 @@ class TestProcessor:
         1st execution
         """
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         _transfer_list = session.scalars(
             select(IDXTransfer).order_by(IDXTransfer.created)
@@ -768,7 +770,7 @@ class TestProcessor:
 
         # Execute batch processing
         caplog.clear()
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -827,7 +829,7 @@ class TestProcessor:
         1st execution
         """
         # Execute batch processing
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         _transfer_list = session.scalars(
             select(IDXTransfer).order_by(IDXTransfer.created)
@@ -868,7 +870,7 @@ class TestProcessor:
         # Execute batch processing
         caplog.clear()
 
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -938,7 +940,7 @@ class TestProcessor:
 
         # Execute batch processing
         caplog.clear()
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -988,7 +990,7 @@ class TestProcessor:
 
         # Execute batch processing
         caplog.clear()
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         idx_transfer_list = session.scalars(
@@ -1040,7 +1042,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_list = session.scalars(
@@ -1058,7 +1060,7 @@ class TestProcessor:
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1_1(self, processor, shared_contract, session):
@@ -1087,8 +1089,8 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        processor.sync_new_logs()  # first execution
-        processor.sync_new_logs()  # second execution
+        asyncio.run(processor.sync_new_logs())  # first execution
+        asyncio.run(processor.sync_new_logs())  # second execution
 
         # Assertion
         session.rollback()
@@ -1125,9 +1127,10 @@ class TestProcessor:
 
         # Execute batch processing
         with mock.patch(
-            "web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())
+            "web3.eth.async_eth.AsyncEth.get_block",
+            MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1164,10 +1167,10 @@ class TestProcessor:
 
         # Execute batch processing
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         idx_transfer_list = session.scalars(
@@ -1205,7 +1208,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _transfer_list = session.scalars(

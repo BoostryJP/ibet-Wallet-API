@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import json
 
 from fastapi.testclient import TestClient
@@ -107,7 +108,9 @@ class TestEthGetTransactionCount:
     # addressのフォーマットが正しくない
     # -> 400エラー（InvalidParameterError）
     def test_transactioncount_error_2(self, client: TestClient, session: Session):
-        some_account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレス長が短い
+        some_account_address = (
+            "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレス長が短い
+        )
 
         apiurl = self.apiurl_base + some_account_address
         resp = client.get(apiurl)

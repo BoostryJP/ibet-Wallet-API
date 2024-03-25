@@ -5,6 +5,7 @@ Revises: 40ee030e9302
 Create Date: 2023-04-25 18:24:29.759654
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from app.config import ZERO_ADDRESS

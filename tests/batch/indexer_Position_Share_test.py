@@ -16,11 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import logging
 import time
 from typing import Sequence
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import and_, select
@@ -88,7 +90,7 @@ def main_func(test_module):
 @pytest.fixture(scope="function")
 def processor(test_module, session):
     processor = test_module.Processor()
-    processor.initial_sync()
+    asyncio.run(processor.initial_sync())
     return processor
 
 
@@ -168,7 +170,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -250,7 +252,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -350,7 +352,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -496,7 +498,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -582,7 +584,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -689,7 +691,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -737,7 +739,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -807,7 +809,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -911,7 +913,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1031,7 +1033,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1133,7 +1135,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1218,7 +1220,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1290,7 +1292,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1330,7 +1332,7 @@ class TestProcessor:
         # Not Event
         # Run target process
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1371,7 +1373,7 @@ class TestProcessor:
         )
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1379,20 +1381,20 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 0
 
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(
-            select(IDXPositionShareBlockNumber).where(
-                IDXPositionShareBlockNumber.token_address == token["address"]
-            )
-        ).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(
+                select(IDXPositionShareBlockNumber).where(
+                    IDXPositionShareBlockNumber.token_address == token["address"]
+                )
+            ).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         # Listing
         self.listing_token(token["address"], session)
 
         block_number = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         session.rollback()
@@ -1471,7 +1473,12 @@ class TestProcessor:
 
         # Setting current block number to 19,999,999
         self.listing_token(token["address"], session)
-        with mock.patch("web3.eth.Eth.block_number", current_block_number):
+        block_number_mock = AsyncMock()
+        block_number_mock.return_value = current_block_number
+        self.listing_token(token["address"], session)
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
             with mock.patch.object(
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
@@ -1487,17 +1494,19 @@ class TestProcessor:
                 session.merge(idx_position_share_block_number)
                 session.commit()
                 __sync_all_mock.return_value = None
-                processor.initial_sync()
+                asyncio.run(processor.initial_sync())
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
-        with mock.patch("web3.eth.Eth.block_number", current_block_number):
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
             with mock.patch.object(
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
-                processor.sync_new_logs()
+                asyncio.run(processor.sync_new_logs())
                 # Then processor call "__sync_all" method once.
                 assert __sync_all_mock.call_count == 1
 
@@ -1509,13 +1518,15 @@ class TestProcessor:
         )
         self.listing_token(new_token["address"], session)
 
-        with mock.patch("web3.eth.Eth.block_number", current_block_number):
+        with mock.patch(
+            "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
+        ):
             with mock.patch.object(
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
-                processor.sync_new_logs()
+                asyncio.run(processor.sync_new_logs())
                 # Then processor call "__sync_all" method 20 times.
                 assert __sync_all_mock.call_count == 20
 
@@ -1599,7 +1610,7 @@ class TestProcessor:
 
         # Run target process
         block_number1 = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1627,7 +1638,7 @@ class TestProcessor:
 
         # Run target process
         block_number2 = web3.eth.block_number
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         session.rollback()
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1698,7 +1709,7 @@ class TestProcessor:
 
     # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_1_1(self, processor, shared_contract, session):
@@ -1725,7 +1736,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        processor.initial_sync()
+        asyncio.run(processor.initial_sync())
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1750,10 +1761,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Run target process
-        processor.sync_new_logs()
+        asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1775,7 +1786,10 @@ class TestProcessor:
         )
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.get_code", MagicMock(side_effect=ServiceUnavailable()))
+    @mock.patch(
+        "web3.eth.async_eth.AsyncEth.get_code",
+        MagicMock(side_effect=ServiceUnavailable()),
+    )
     def test_error_1_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1801,7 +1815,7 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1813,9 +1827,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(select(IDXPositionShareBlockNumber)).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(select(IDXPositionShareBlockNumber)).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         # Clear cache in DB session.
@@ -1832,7 +1846,7 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1844,9 +1858,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(select(IDXPositionShareBlockNumber)).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(select(IDXPositionShareBlockNumber)).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         assert 0 == caplog.record_tuples.count(
@@ -1883,10 +1897,10 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1898,9 +1912,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process when ServiceUnavailable occurs.
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(select(IDXPositionShareBlockNumber)).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(select(IDXPositionShareBlockNumber)).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         # Clear cache in DB session.
@@ -1913,10 +1927,10 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1928,9 +1942,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(select(IDXPositionShareBlockNumber)).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(select(IDXPositionShareBlockNumber)).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         assert 0 == caplog.record_tuples.count(
@@ -1969,7 +1983,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.initial_sync()
+            asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
         session.rollback()
@@ -1981,9 +1995,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Any latest_block is not saved in "initial_sync" process when SQLAlchemyError occurs.
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(select(IDXPositionShareBlockNumber)).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(select(IDXPositionShareBlockNumber)).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         # Clear cache in DB session.
@@ -1998,7 +2012,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.sync_new_logs()
+            asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
         session.rollback()
@@ -2010,9 +2024,9 @@ class TestProcessor:
         assert len(_position_list) == 0
 
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_share_block_number: Sequence[
-            IDXPositionShareBlockNumber
-        ] = session.scalars(select(IDXPositionShareBlockNumber)).all()
+        _idx_position_share_block_number: Sequence[IDXPositionShareBlockNumber] = (
+            session.scalars(select(IDXPositionShareBlockNumber)).all()
+        )
         assert len(_idx_position_share_block_number) == 0
 
         assert 0 == caplog.record_tuples.count(
@@ -2026,20 +2040,22 @@ class TestProcessor:
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):
         # Mocking time.sleep to break mainloop
-        time_mock = MagicMock(wraps=time)
-        time_mock.sleep.side_effect = [True, TypeError()]
+        asyncio_mock = AsyncMock(wraps=asyncio)
+        asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Position_Share.time", time_mock), mock.patch(
+        with mock.patch(
+            "batch.indexer_Position_Share.asyncio", asyncio_mock
+        ), mock.patch(
             "batch.indexer_Position_Share.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            main_func()
+            asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.WARNING, "An external service was unavailable")

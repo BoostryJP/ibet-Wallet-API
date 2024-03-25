@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from .personal_info import PersonalInfoUtils
 from .share_token import IbetShareUtils
 from .standard_token import IbetStandardTokenUtils

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -74,6 +75,8 @@ class TestTokenTransferHistory:
         }
         self.insert_listing(session, listing=listing)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -108,6 +111,8 @@ class TestTokenTransferHistory:
             "value": 10,
         }
         self.insert_transfer_event(session, transfer_event=transfer_event)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
@@ -167,6 +172,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
@@ -244,6 +251,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         # テスト対象API呼び出し
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -324,6 +333,8 @@ class TestTokenTransferHistory:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
@@ -396,6 +407,8 @@ class TestTokenTransferHistory:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
@@ -451,6 +464,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(
@@ -515,6 +530,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"data": "unlock"})
@@ -767,6 +784,8 @@ class TestTokenTransferHistory:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(
             apiurl, params={"transaction_hash": self.transaction_hash[0:5]}
@@ -831,6 +850,8 @@ class TestTokenTransferHistory:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"from_address": self.from_address[0:5]})
 
@@ -892,6 +913,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.get(apiurl, params={"to_address": self.to_address[0:5]})
@@ -955,6 +978,8 @@ class TestTokenTransferHistory:
             transfer_event_data={"message": "unlock"},
         )
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "offset=1"
         resp = client.get(apiurl, params=query_string)
@@ -1017,6 +1042,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "offset=0"
@@ -1088,6 +1115,8 @@ class TestTokenTransferHistory:
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
         )
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "limit=1"

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from datetime import timedelta, timezone
 from typing import Annotated, Sequence
 from zoneinfo import ZoneInfo
@@ -25,7 +26,7 @@ from sqlalchemy import String, cast, column, desc, func, literal, null, select
 
 from app import config, log
 from app.config import TZ
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import DataNotExistsError, InvalidParameterError, NotSupportedError
 from app.model.blockchain import (
     BondToken,
@@ -83,9 +84,9 @@ class ListAllLock:
         self.token_model = token_model
         self.idx_token_model = idx_token_model
 
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
             ValidatedEthereumAddress, Path(description="account address")
@@ -117,12 +118,16 @@ class ListAllLock:
             IDXLockedPosition.value > 0
         )
 
-        total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+        total = await async_session.scalar(
+            select(func.count()).select_from(stmt.subquery())
+        )
 
         if lock_address is not None:
             stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-        count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+        count = await async_session.scalar(
+            select(func.count()).select_from(stmt.subquery())
+        )
 
         sort_attr = getattr(IDXLockedPosition, sort_item, None)
 
@@ -142,9 +147,9 @@ class ListAllLock:
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _locked_list: Sequence[
-            tuple[IDXLockedPosition, IDXTokenInstance]
-        ] = session.execute(stmt).all()
+        _locked_list: Sequence[tuple[IDXLockedPosition, IDXTokenInstance]] = (
+            await async_session.execute(stmt)
+        ).all()
         locked_list = []
 
         for _locked in _locked_list:
@@ -181,9 +186,9 @@ class ListAllLockEvent:
         self.token_model = token_model
         self.idx_token_model = idx_token_model
 
-    def __call__(
+    async def __call__(
         self,
-        session: DBSession,
+        async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
             ValidatedEthereumAddress, Path(description="account address")
@@ -237,9 +242,11 @@ class ListAllLockEvent:
                 IDXUnlock.token_address.label("token_address").in_(token_address_list)
             )
 
-        total = session.scalar(
+        total = await async_session.scalar(
             select(func.count()).select_from(stmt_lock.subquery())
-        ) + session.scalar(select(func.count()).select_from(stmt_unlock.subquery()))
+        ) + await async_session.scalar(
+            select(func.count()).select_from(stmt_unlock.subquery())
+        )
 
         match category:
             case LockEventCategory.Lock:
@@ -271,7 +278,9 @@ class ListAllLockEvent:
             stmt = stmt.where(
                 cast(column("data"), String).like("%" + request_query.data + "%")
             )
-        count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+        count = await async_session.scalar(
+            select(func.count()).select_from(stmt.subquery())
+        )
 
         # Sort
         sort_attr = column(request_query.sort_item)
@@ -288,7 +297,7 @@ class ListAllLockEvent:
             stmt = stmt.offset(request_query.offset)
         if request_query.limit is not None:
             stmt = stmt.limit(request_query.limit)
-        lock_events = session.execute(stmt).all()
+        lock_events = (await async_session.execute(stmt)).all()
 
         resp_data = []
         for lock_event in lock_events:
@@ -334,7 +343,7 @@ class ListAllLockEvent:
     ],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def list_all_share_locked_position(
+async def list_all_share_locked_position(
     data: dict = Depends(ListAllLock(TokenType.IbetShare, ShareToken, IDXShareToken))
 ):
     """
@@ -353,7 +362,7 @@ def list_all_share_locked_position(
     ],
     responses=get_routers_responses(),
 )
-def list_all_share_lock_events(
+async def list_all_share_lock_events(
     data: dict = Depends(
         ListAllLockEvent(TokenType.IbetShare, ShareToken, IDXShareToken)
     )
@@ -374,7 +383,7 @@ def list_all_share_lock_events(
     ],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-def list_all_straight_bond_locked_position(
+async def list_all_straight_bond_locked_position(
     data: dict = Depends(
         ListAllLock(TokenType.IbetStraightBond, BondToken, IDXBondToken)
     ),
@@ -395,7 +404,7 @@ def list_all_straight_bond_locked_position(
     ],
     responses=get_routers_responses(),
 )
-def list_all_straight_bond_lock_events(
+async def list_all_straight_bond_lock_events(
     data: dict = Depends(
         ListAllLockEvent(TokenType.IbetStraightBond, BondToken, IDXBondToken)
     ),

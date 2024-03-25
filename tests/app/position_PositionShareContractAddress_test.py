@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -400,6 +401,8 @@ class TestPositionShareContractAddress:
         )
         self.list_token(token_non.address, session)  # not target
 
+        session.commit()
+
         with mock.patch(
             "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]
         ):
@@ -567,6 +570,8 @@ class TestPositionShareContractAddress:
             token_list_contract,
         )
         self.list_token(token_non.address, session)  # not target
+
+        session.commit()
 
         with mock.patch(
             "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]
@@ -736,6 +741,8 @@ class TestPositionShareContractAddress:
         )
         self.list_token(token_non.address, session)  # not target
 
+        session.commit()
+
         with mock.patch(
             "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]
         ):
@@ -904,6 +911,8 @@ class TestPositionShareContractAddress:
         )
         self.list_token(token_non.address, session)  # not target
 
+        session.commit()
+
         with mock.patch(
             "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]
         ):
@@ -1071,6 +1080,8 @@ class TestPositionShareContractAddress:
             token_list_contract,
         )
         self.list_token(token_non.address, session)  # not target
+
+        session.commit()
 
         with mock.patch(
             "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]

@@ -16,12 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import json
-import os
-import sys
 from typing import TypedDict
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -30,16 +30,20 @@ from web3.eth import Contract as Web3Contract
 from web3.middleware import geth_poa_middleware
 from web3.types import ChecksumAddress, RPCEndpoint
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-path = os.path.join(os.path.dirname(__file__), "../batch/")
-sys.path.append(path)
-
 from app import config
 from app.contracts import Contract
-from app.database import SessionLocal, db_session, engine
+from app.database import (
+    AsyncSessionLocal,
+    SessionLocal,
+    async_engine,
+    db_async_session,
+    db_session,
+    engine,
+)
 from app.main import app
-from app.utils.web3_utils import FailOverHTTPProvider
+from app.model.db import Notification
+from app.model.db.base import Base
+from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -71,7 +75,7 @@ class UnitTestAccount(TypedDict):
 
 @pytest.fixture(scope="session")
 def client() -> TestClient:
-    FailOverHTTPProvider.is_default = None
+    AsyncFailOverHTTPProvider.is_default = None
 
     client = TestClient(app)
     return client
@@ -215,15 +219,92 @@ def shared_contract(
     }
 
 
+@pytest_asyncio.fixture(scope="session")
+async def async_db_engine():
+    if async_engine.name != "mysql":
+        async with async_engine.begin() as conn:
+            # NOTE:MySQLの場合はSEQ機能が利用できない
+            await conn.run_sync(Notification.notification_id_seq.create)
+
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield async_engine
+
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
 # テーブルの自動作成・自動削除
-@pytest.fixture(scope="function")
-def db(request):
-    from app.model.db import Notification
+@pytest.fixture(scope="session")
+def db_engine():
+    from app.model.db.base import Base
 
     if engine.name != "mysql":
         # NOTE:MySQLの場合はSEQ機能が利用できない
         Notification.notification_id_seq.create(bind=engine)
 
+    Base.metadata.create_all(engine)
+
+    yield engine
+
+    Base.metadata.drop_all(engine)
+
+
+# テーブル上のレコード削除
+@pytest_asyncio.fixture(scope="function")
+async def async_db(async_db_engine):
+    # Create DB session
+    db = AsyncSessionLocal()
+
+    def override_inject_db_session():
+        return db
+
+    # Replace target API's dependency DB session.
+    app.dependency_overrides[db_async_session] = override_inject_db_session
+
+    async with db as session:
+        await session.begin()
+        yield session
+        await session.rollback()
+
+        # Remove DB tables
+        if engine.name == "mysql":
+            await session.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+            for table in Base.metadata.sorted_tables:
+                await session.execute(text(f"TRUNCATE TABLE `{table.name}`;"))
+                if table.autoincrement_column is not None:
+                    await session.execute(
+                        text(f"ALTER TABLE `{table.name}` auto_increment = 1;")
+                    )
+            await session.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+        else:
+            await session.begin()
+            for table in Base.metadata.sorted_tables:
+                await session.execute(
+                    text(f'ALTER TABLE "{table.name}" DISABLE TRIGGER ALL;')
+                )
+                await session.execute(
+                    text(f'TRUNCATE TABLE "{table.name}" RESTART IDENTITY CASCADE;')
+                )
+                if table.autoincrement_column is not None:
+                    await session.execute(
+                        text(
+                            f"ALTER SEQUENCE {table.name}_{table.autoincrement_column.name}_seq RESTART WITH 1;"
+                        )
+                    )
+                await session.execute(
+                    text(f'ALTER TABLE "{table.name}" ENABLE TRIGGER ALL;')
+                )
+            await session.commit()
+    await db.close()
+
+    app.dependency_overrides[db_async_session] = db_async_session
+
+
+# テーブルの自動作成・自動削除
+@pytest.fixture(scope="function")
+def db(db_engine):
     # Create DB session
     db = SessionLocal()
 
@@ -233,24 +314,17 @@ def db(request):
     # Replace target API's dependency DB session.
     app.dependency_overrides[db_session] = override_inject_db_session
 
-    # Create DB tables
-    from app.model.db.base import Base
-
-    Base.metadata.create_all(engine)
-
     yield db
 
     # Remove DB tables
     db.rollback()
     if engine.name == "mysql":
-        db.begin()
         db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
         for table in Base.metadata.sorted_tables:
             db.execute(text(f"TRUNCATE TABLE `{table.name}`;"))
             if table.autoincrement_column is not None:
                 db.execute(text(f"ALTER TABLE `{table.name}` auto_increment = 1;"))
         db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
-        db.commit()
     else:
         db.begin()
         for table in Base.metadata.sorted_tables:
@@ -287,11 +361,13 @@ def block_number(request):
 
 # セッションの作成・自動ロールバック
 @pytest.fixture(scope="function")
-def session(request, db: Session):
+def session(db: Session):
     yield db
 
-    # Rollback DB after session is closed
-    db.rollback()
+
+@pytest_asyncio.fixture(scope="function")
+async def async_session(async_db):
+    yield async_db
 
 
 # 発行企業リストのモック

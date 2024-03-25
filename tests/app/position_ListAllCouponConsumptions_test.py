@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from app import config
 from app.model.db import IDXConsumeCoupon
 
@@ -75,6 +76,8 @@ class TestListAllCouponConsumptions:
 
         # Prepare test data
         self._insert_test_data(session)
+
+        session.commit()
 
         # Request target API
         resp = client.get(

@@ -16,68 +16,67 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import os
+
+import asyncio
 import sys
 import time
 from typing import Sequence
 
-import requests
-from sqlalchemy import create_engine, select
+import httpx
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
-from app.config import CHAT_WEBHOOK_URL, DATABASE_URL
+from app.config import CHAT_WEBHOOK_URL
+from app.database import BatchAsyncSessionLocal
 from app.model.db import ChatWebhook
+from batch import log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-CHAT-WEBHOOK")
 
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
-
 
 class Processor:
-    def process(self):
-        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+    async def process(self):
+        db_session = BatchAsyncSessionLocal()
         try:
-            hook_list: Sequence[ChatWebhook] = db_session.scalars(
-                select(ChatWebhook)
+            hook_list: Sequence[ChatWebhook] = (
+                await db_session.scalars(select(ChatWebhook))
             ).all()
             if len(hook_list) > 0:
                 LOG.info("Process start")
 
                 for hook in hook_list:
                     try:
-                        requests.post(CHAT_WEBHOOK_URL, hook.message)
+                        async with httpx.AsyncClient() as client:
+                            await client.post(CHAT_WEBHOOK_URL, json=hook.message)
                     except Exception:
                         LOG.exception("Failed to send chat webhook")
                     finally:
                         # Delete the message regardless of the status code of the response.
-                        db_session.delete(hook)
-                        db_session.commit()
+                        await db_session.delete(hook)
+                        await db_session.commit()
                 LOG.info("Process end")
         finally:
-            db_session.close()
+            await db_session.close()
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
     while True:
         start_time = time.time()
         try:
-            processor.process()
+            await processor.process()
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
             LOG.exception(ex)
 
         elapsed_time = time.time() - start_time
-        time.sleep(max(30 - elapsed_time, 0))
+        await asyncio.sleep(max(30 - elapsed_time, 0))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

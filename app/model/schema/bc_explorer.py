@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated, Optional
 
 from fastapi import Query
@@ -89,12 +90,12 @@ class TxDataDetail(BaseModel):
 ############################
 @dataclass
 class ListBlockDataQuery:
-    offset: Annotated[
-        Optional[NonNegativeInt], Query(description="start position")
-    ] = None
-    limit: Annotated[
-        Optional[NonNegativeInt], Query(description="number of set")
-    ] = None
+    offset: Annotated[Optional[NonNegativeInt], Query(description="start position")] = (
+        None
+    )
+    limit: Annotated[Optional[NonNegativeInt], Query(description="number of set")] = (
+        None
+    )
     from_block_number: Annotated[Optional[NonNegativeInt], Query()] = None
     to_block_number: Annotated[Optional[NonNegativeInt], Query()] = None
     sort_order: Annotated[
@@ -104,12 +105,12 @@ class ListBlockDataQuery:
 
 @dataclass
 class ListTxDataQuery:
-    offset: Annotated[
-        Optional[NonNegativeInt], Query(description="start position")
-    ] = None
-    limit: Annotated[
-        Optional[NonNegativeInt], Query(description="number of set")
-    ] = None
+    offset: Annotated[Optional[NonNegativeInt], Query(description="start position")] = (
+        None
+    )
+    limit: Annotated[Optional[NonNegativeInt], Query(description="number of set")] = (
+        None
+    )
     block_number: Annotated[
         Optional[NonNegativeInt], Query(description="block number")
     ] = None

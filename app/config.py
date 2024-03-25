@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import configparser
 import os
 
@@ -106,6 +107,7 @@ else:
     )
 DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
 DB_ECHO = True if CONFIG["database"]["echo"] == "yes" else False
+DATABASE_TYPE = "postgresql" if DATABASE_URL.startswith("postgresql") else "mysql"
 DATABASE_SCHEMA = os.environ.get("DATABASE_SCHEMA")
 
 # Logging

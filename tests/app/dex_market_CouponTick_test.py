@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -126,6 +127,8 @@ class TestDEXMarketCouponTick:
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = (
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         )
+
+        session.commit()
 
         request_params = {
             "address_list": ["0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a"]

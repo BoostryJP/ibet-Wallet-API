@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import json
 
 import requests
@@ -23,14 +24,14 @@ from fastapi import APIRouter
 from sqlalchemy import select
 
 from app import config, log
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import ServiceUnavailable
 from app.model.db import Node
 from app.model.schema import GetBlockSyncStatusResponse, GetNodeInfoResponse
 from app.model.schema.base import GenericSuccessResponse, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
 
 LOG = log.get_logger()
 
@@ -47,7 +48,7 @@ router = APIRouter(prefix="/NodeInfo", tags=["node_info"])
     operation_id="NodeInfo",
     response_model=GenericSuccessResponse[GetNodeInfoResponse],
 )
-def get_node_info():
+async def get_node_info():
     """
     Returns node information.
     """
@@ -91,13 +92,20 @@ def get_node_info():
     response_model=GenericSuccessResponse[GetBlockSyncStatusResponse],
     responses=get_routers_responses(ServiceUnavailable),
 )
-def get_block_sync_status(session: DBSession):
+async def get_block_sync_status(async_session: DBAsyncSession):
     """
     Returns block sync status of node.
     """
     # Get block sync status
-    node: Node = session.scalars(
-        select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
+    node: Node = (
+        (
+            await async_session.scalars(
+                select(Node)
+                .where(Node.is_synced == True)
+                .order_by(Node.priority)
+                .limit(1)
+            )
+        )
     ).first()
 
     # Get the latest block number
@@ -106,8 +114,8 @@ def get_block_sync_status(session: DBSession):
     if node is not None:
         is_synced = True
         try:
-            web3 = Web3Wrapper(request_timeout=1)
-            latest_block_number = web3.eth.block_number
+            async_web3 = AsyncWeb3Wrapper(request_timeout=1)
+            latest_block_number = await async_web3.eth.block_number
         except requests.exceptions.ReadTimeout:
             raise ServiceUnavailable("Temporarily unable to connect to web3 provider")
 
