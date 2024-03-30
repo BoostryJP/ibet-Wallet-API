@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="33%" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
+</p>
+
 # ibet Wallet API
 
 <p>
@@ -6,8 +10,6 @@
 </p>
 
 <a href='./README.md'>English</a> | 日本語
-
-<img width="33%" align="right" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
 
 ## 機能概要
 

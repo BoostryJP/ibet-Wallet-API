@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="33%" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
+</p>
+
 # ibet Wallet API
 
 <p>
@@ -6,8 +10,6 @@
 </p>
 
 English | <a href='./README_JA.md'>日本語</a>
-
-<img width="33%" align="right" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
 
 ## Features
 - ibe-Wallet-API is RPC services that provides utility functions for building a wallet system on [ibet-Network](https://github.com/BoostryJP/ibet-Network).
