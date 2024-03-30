@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import json
 
 from fastapi import APIRouter, Request
@@ -42,7 +43,7 @@ router = APIRouter(prefix="/ABI", tags=["abi"])
     response_model=GenericSuccessResponse[ABI],
     responses=get_routers_responses(NotSupportedError),
 )
-def get_straight_bond_abi(req: Request):
+async def get_straight_bond_abi(req: Request):
     """
     Returns ABI of IbetStraightBond.
     """
@@ -66,7 +67,7 @@ def get_straight_bond_abi(req: Request):
     response_model=GenericSuccessResponse[ABI],
     responses=get_routers_responses(NotSupportedError),
 )
-def get_share_abi(req: Request):
+async def get_share_abi(req: Request):
     """
     Returns ABI of IbetShare.
     """
@@ -88,7 +89,7 @@ def get_share_abi(req: Request):
     response_model=GenericSuccessResponse[ABI],
     responses=get_routers_responses(NotSupportedError),
 )
-def get_membership_abi(req: Request):
+async def get_membership_abi(req: Request):
     """
     Returns ABI of IbetMembership.
     """
@@ -112,7 +113,7 @@ def get_membership_abi(req: Request):
     response_model=GenericSuccessResponse[ABI],
     responses=get_routers_responses(NotSupportedError),
 )
-def get_coupon_abi(req: Request):
+async def get_coupon_abi(req: Request):
     """
     Returns ABI of IbetCoupon.
     """

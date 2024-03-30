@@ -4,7 +4,7 @@ info:
   description: >-
     RPC services that provides utility tools for building a wallet system on
     ibet network
-  version: 23.12.0
+  version: 24.3.0
 paths:
   /:
     get:
@@ -10124,9 +10124,9 @@ components:
         to_emails:
           items:
             type: string
-            format: email
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$
           type: array
-          maxItems: 100
           minItems: 1
           title: To Emails
         subject:
@@ -10178,8 +10178,8 @@ components:
           examples:
             - 1
         status:
-          type: integer
-          title: Status
+          allOf:
+            - $ref: '#/components/schemas/SendRawTransactionStatus'
           description: execution failure:0, execution success:1
           examples:
             - 1
@@ -10216,8 +10216,8 @@ components:
           examples:
             - 1
         status:
-          type: integer
-          title: Status
+          allOf:
+            - $ref: '#/components/schemas/SendRawTransactionStatus'
           description: >-
             execution failure:0, execution success:1, execution success(pending
             transaction):2
@@ -10250,6 +10250,15 @@ components:
         - id
         - status
       title: SendRawTransactionResponse
+    SendRawTransactionStatus:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+      title: SendRawTransactionStatus
     SendRawTransactionsNoWaitResponse:
       items:
         $ref: '#/components/schemas/SendRawTransactionNoWaitResponse'

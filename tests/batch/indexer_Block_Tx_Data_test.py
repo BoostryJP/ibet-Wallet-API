@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import logging
 from typing import Sequence
 from unittest import mock
@@ -83,7 +85,7 @@ class TestProcessor:
         self.set_block_number(session, before_block_number)
 
         # Execute batch processing
-        processor.process()
+        asyncio.run(processor.process())
 
         # Assertion
         indexed_block: IDXBlockDataBlockNumber = session.scalars(
@@ -115,9 +117,10 @@ class TestProcessor:
 
         # Generate empty block
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
 
         # Execute batch processing
-        processor.process()
+        asyncio.run(processor.process())
         after_block_number = web3.eth.block_number
 
         # Assertion: Data
@@ -131,8 +134,9 @@ class TestProcessor:
         block_data: Sequence[IDXBlockData] = session.scalars(
             select(IDXBlockData).order_by(IDXBlockData.number)
         ).all()
-        assert len(block_data) == 1
+        assert len(block_data) == 2
         assert block_data[0].number == before_block_number + 1
+        assert block_data[1].number == before_block_number + 2
 
         tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
@@ -173,7 +177,7 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        processor.process()
+        asyncio.run(processor.process())
         after_block_number = web3.eth.block_number
 
         # Assertion
@@ -227,7 +231,7 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        processor.process()
+        asyncio.run(processor.process())
         after_block_number = web3.eth.block_number
 
         # Assertion
@@ -278,10 +282,10 @@ class TestProcessor:
 
         # Execute batch processing
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         indexed_block: IDXBlockDataBlockNumber = session.scalars(
@@ -313,7 +317,7 @@ class TestProcessor:
         with mock.patch.object(
             Session, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         indexed_block: IDXBlockDataBlockNumber = session.scalars(

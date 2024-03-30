@@ -16,23 +16,20 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import os
+
+import asyncio
 import sys
 import time
 from dataclasses import dataclass
 from typing import List, Type
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
-from sqlalchemy.orm.exc import ObjectDeletedError
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.exc import ObjectDeletedError, StaleDataError
 
 from app import config
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.blockchain import (
     BondToken,
@@ -50,11 +47,10 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema.base import TokenType
+from batch import log
 
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)
-
-db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -105,30 +101,32 @@ class Processor:
             )
 
     @staticmethod
-    def __get_db_session() -> Session:
-        return Session(autocommit=False, autoflush=True, bind=db_engine)
+    def __get_db_session() -> AsyncSession:
+        return BatchAsyncSessionLocal()
 
-    def process(self):
+    async def process(self):
         LOG.info("Syncing token details")
         start_time = time.time()
         local_session = self.__get_db_session()
         try:
-            self.__sync(local_session)
+            await self.__sync(local_session)
         except Exception:
-            local_session.rollback()
-            local_session.close()
+            await local_session.rollback()
+            await local_session.close()
             raise
         finally:
-            local_session.close()
+            await local_session.close()
         elapsed_time = time.time() - start_time
         LOG.info(f"Sync job has been completed in {elapsed_time:.3f} sec")
 
-    def __sync(self, local_session: Session):
+    async def __sync(self, local_session: AsyncSession):
         for token_type in self.target_token_types:
-            available_tokens = local_session.scalars(
-                select(token_type.token_model).join(
-                    Listing,
-                    token_type.token_model.token_address == Listing.token_address,
+            available_tokens = (
+                await local_session.scalars(
+                    select(token_type.token_model).join(
+                        Listing,
+                        token_type.token_model.token_address == Listing.token_address,
+                    )
                 )
             ).all()
 
@@ -136,28 +134,29 @@ class Processor:
                 try:
                     start_time = time.time()
                     token = token_type.token_class.from_model(available_token)
-                    token.fetch_expiry_short()
+                    await token.fetch_expiry_short()
                     token_model = token.to_model()
-                    local_session.merge(token_model)
-                    local_session.commit()
+                    async with local_session.begin_nested():
+                        await local_session.merge(token_model)
+                        await local_session.commit()
 
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time
-                    time.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
-                except ObjectDeletedError:
+                    await asyncio.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
+                except (ObjectDeletedError, StaleDataError):
                     LOG.warning(
                         "The record may have been deleted in another session during the update"
                     )
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
     while True:
         start_time = time.time()
 
         try:
-            processor.process()
+            await processor.process()
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -171,8 +170,11 @@ def main():
         )
         if time_to_sleep == 0:
             LOG.debug("Processing is delayed")
-        time.sleep(time_to_sleep)
+        await asyncio.sleep(time_to_sleep)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

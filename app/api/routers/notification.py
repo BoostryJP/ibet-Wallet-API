@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from datetime import datetime
 from typing import Optional, Sequence
 
@@ -24,7 +25,7 @@ from fastapi import APIRouter, Depends, Path
 from sqlalchemy import desc, func, select, update
 
 from app import log
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import DataNotExistsError
 from app.model.db import Notification
 from app.model.schema import (
@@ -53,8 +54,8 @@ router = APIRouter(prefix="/Notifications", tags=["user_notification"])
     response_model=GenericSuccessResponse[NotificationsResponse],
     responses=get_routers_responses(),
 )
-def list_all_notifications(
-    session: DBSession,
+async def list_all_notifications(
+    async_session: DBAsyncSession,
     request_query: NotificationsQuery = Depends(),
 ):
     """
@@ -69,7 +70,9 @@ def list_all_notifications(
     limit = request_query.limit
 
     stmt = select(Notification)
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if address is not None:
@@ -78,7 +81,9 @@ def list_all_notifications(
         stmt = stmt.where(Notification.notification_type == notification_type)
     if priority is not None:
         stmt = stmt.where(Notification.priority == priority)
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Sort
     sort_attr = getattr(Notification, sort_item, None)
@@ -98,7 +103,9 @@ def list_all_notifications(
         stmt = stmt.offset(offset)
         sort_id = offset
 
-    _notification_list: Sequence[Notification] = session.scalars(stmt).all()
+    _notification_list: Sequence[Notification] = (
+        await async_session.scalars(stmt)
+    ).all()
 
     notifications = [
         {
@@ -135,8 +142,8 @@ def list_all_notifications(
     response_model=SuccessResponse,
     responses=get_routers_responses(),
 )
-def read_all_notifications(
-    session: DBSession,
+async def read_all_notifications(
+    async_session: DBAsyncSession,
     data: NotificationReadRequest,
 ):
     """
@@ -145,12 +152,12 @@ def read_all_notifications(
     address = to_checksum_address(data.address)
 
     # Update Data
-    session.execute(
+    await async_session.execute(
         update(Notification)
         .where(Notification.address == address)
         .values(is_read=data.is_read)
     )
-    session.commit()
+    await async_session.commit()
 
     return json_response(SuccessResponse.default())
 
@@ -162,8 +169,8 @@ def read_all_notifications(
     response_model=GenericSuccessResponse[NotificationsCountResponse],
     responses=get_routers_responses(),
 )
-def count_notifications(
-    session: DBSession,
+async def count_notifications(
+    async_session: DBAsyncSession,
     request_query: NotificationsCountQuery = Depends(),
 ):
     """
@@ -173,7 +180,7 @@ def count_notifications(
     address = to_checksum_address(request_query.address)
 
     # 未読数を取得
-    count = session.scalar(
+    count = await async_session.scalar(
         select(func.count())
         .where(Notification.address == address)
         .where(Notification.is_read == False)
@@ -197,8 +204,8 @@ def count_notifications(
     response_model=GenericSuccessResponse[NotificationUpdateResponse],
     responses=get_routers_responses(DataNotExistsError),
 )
-def update_notification(
-    session: DBSession,
+async def update_notification(
+    async_session: DBAsyncSession,
     data: UpdateNotificationRequest,
     notification_id: str = Path(description="Notification id"),
 ):
@@ -206,10 +213,12 @@ def update_notification(
     Registers given notification as read.
     """
     # Update Notification
-    notification: Optional[Notification] = session.scalars(
-        select(Notification)
-        .where(Notification.notification_id == notification_id)
-        .limit(1)
+    notification: Optional[Notification] = (
+        await async_session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        )
     ).first()
     if notification is None:
         raise DataNotExistsError("notification not found")
@@ -225,7 +234,7 @@ def update_notification(
         else:
             notification.deleted_at = None
 
-    session.commit()
+    await async_session.commit()
 
     return json_response({**SuccessResponse.default(), "data": notification.json()})
 
@@ -237,24 +246,26 @@ def update_notification(
     response_model=SuccessResponse,
     responses=get_routers_responses(DataNotExistsError),
 )
-def delete_notification(
-    session: DBSession,
+async def delete_notification(
+    async_session: DBAsyncSession,
     notification_id: str = Path(description="Notification id"),
 ):
     """
     Deletes given notification.
     """
     # Get Notification
-    _notification = session.scalars(
-        select(Notification)
-        .where(Notification.notification_id == notification_id)
-        .limit(1)
+    _notification = (
+        await async_session.scalars(
+            select(Notification)
+            .where(Notification.notification_id == notification_id)
+            .limit(1)
+        )
     ).first()
     if _notification is None:
         raise DataNotExistsError("id: %s" % notification_id)
 
     # Delete Notification
-    session.delete(_notification)
-    session.commit()
+    await async_session.delete(_notification)
+    await async_session.commit()
 
     return json_response(SuccessResponse.default())

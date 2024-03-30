@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -185,6 +186,8 @@ class TestCompanyInfoCompanyTokenList:
         register_bond_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
+        session.commit()
+
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url)
 
@@ -258,6 +261,8 @@ class TestCompanyInfoCompanyTokenList:
         register_share_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
+        session.commit()
+
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url)
 
@@ -312,6 +317,8 @@ class TestCompanyInfoCompanyTokenList:
         membership_register_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
+        session.commit()
+
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url)
 
@@ -362,6 +369,8 @@ class TestCompanyInfoCompanyTokenList:
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
+
+        session.commit()
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url)
@@ -427,6 +436,8 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(
             session, coupon_token["address"], issuer["account_address"]
         )
+
+        session.commit()
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url)
@@ -533,6 +544,8 @@ class TestCompanyInfoCompanyTokenList:
             session, coupon_token["address"], issuer["account_address"], False
         )
 
+        session.commit()
+
         # テスト対象API呼び出し
         query_string = f"include_private_listing=true"
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
@@ -625,6 +638,8 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(
             session, coupon_token["address"], issuer["account_address"], False
         )
+
+        session.commit()
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"

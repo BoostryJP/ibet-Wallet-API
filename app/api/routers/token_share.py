@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Annotated, Optional, Sequence
 
 from eth_utils import to_checksum_address
@@ -23,7 +24,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
-from app.database import DBSession
+from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
     InvalidParameterError,
@@ -58,8 +59,8 @@ router = APIRouter(prefix="/Token/Share", tags=["token_info"])
     response_model=GenericSuccessResponse[ListAllShareTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def list_all_share_tokens(
-    session: DBSession,
+async def list_all_share_tokens(
+    async_session: DBAsyncSession,
     req: Request,
     address_list: Annotated[
         list[ValidatedEthereumAddress],
@@ -85,9 +86,9 @@ def list_all_share_tokens(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[
-        bool
-    ] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[bool] = (
+        request_query.transfer_approval_required
+    )
     is_canceled: Optional[bool] = request_query.is_canceled
 
     sort_item = request_query.sort_item
@@ -104,7 +105,9 @@ def list_all_share_tokens(
     )
     if len(address_list):
         stmt = stmt.where(IDXShareToken.token_address.in_(address_list))
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -131,7 +134,9 @@ def list_all_share_tokens(
         )
     if is_canceled is not None:
         stmt = stmt.where(IDXShareToken.is_canceled == is_canceled)
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -152,7 +157,7 @@ def list_all_share_tokens(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXShareToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXShareToken] = (await async_session.scalars(stmt)).all()
 
     tokens = [ShareToken.from_model(_token).__dict__ for _token in _token_list]
     data = {
@@ -175,8 +180,8 @@ def list_all_share_tokens(
     response_model=GenericSuccessResponse[ListAllShareTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_share_token_addresses(
-    session: DBSession,
+async def list_all_share_token_addresses(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllShareTokensQuery = Depends(),
 ):
@@ -195,9 +200,9 @@ def list_all_share_token_addresses(
     personal_info_address: Optional[str] = request_query.personal_info_address
     transferable: Optional[bool] = request_query.transferable
     is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[
-        bool
-    ] = request_query.transfer_approval_required
+    transfer_approval_required: Optional[bool] = (
+        request_query.transfer_approval_required
+    )
     is_canceled: Optional[bool] = request_query.is_canceled
 
     sort_item = request_query.sort_item
@@ -212,7 +217,9 @@ def list_all_share_token_addresses(
         .join(Listing, Listing.token_address == IDXShareToken.token_address)
         .where(Listing.is_public == True)
     )
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    total = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     # Search Filter
     if owner_address is not None:
@@ -239,7 +246,9 @@ def list_all_share_token_addresses(
         )
     if is_canceled is not None:
         stmt = stmt.where(IDXShareToken.is_canceled == is_canceled)
-    count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+    count = await async_session.scalar(
+        select(func.count()).select_from(stmt.subquery())
+    )
 
     if sort_item == "created":
         sort_attr = getattr(Listing, sort_item, None)
@@ -260,7 +269,7 @@ def list_all_share_token_addresses(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_list: Sequence[IDXShareToken] = session.scalars(stmt).all()
+    _token_list: Sequence[IDXShareToken] = (await async_session.scalars(stmt)).all()
 
     data = {
         "result_set": {
@@ -282,8 +291,8 @@ def list_all_share_token_addresses(
     response_model=GenericSuccessResponse[RetrieveShareTokenResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def retrieve_share_token(
-    session: DBSession,
+async def retrieve_share_token(
+    async_session: DBAsyncSession,
     req: Request,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
@@ -297,8 +306,10 @@ def retrieve_share_token(
 
     # 取扱トークン情報を取得
     # NOTE:非公開トークンも取扱対象とする
-    listed_token = session.scalars(
-        select(Listing).where(Listing.token_address == token_address).limit(1)
+    listed_token = (
+        await async_session.scalars(
+            select(Listing).where(Listing.token_address == token_address).limit(1)
+        )
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -306,7 +317,9 @@ def retrieve_share_token(
     token_address = to_checksum_address(token_address)
 
     try:
-        token_detail = ShareToken.get(session=session, token_address=token_address)
+        token_detail = await ShareToken.get(
+            async_session=async_session, token_address=token_address
+        )
     except ServiceUnavailable as e:
         LOG.warning(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None

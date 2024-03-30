@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -52,6 +53,7 @@ class TestAdminTokenGET:
             "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6",
         }
         self.insert_listing_data(session, token)
+        session.commit()
 
         apiurl = self.apiurl_base + str(token["token_address"])
         resp = client.get(apiurl)

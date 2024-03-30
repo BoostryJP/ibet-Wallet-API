@@ -16,20 +16,15 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from decimal import Decimal
+
 from enum import Enum
 from typing import Annotated, Optional
 
 from fastapi import Query
-from pydantic import BaseModel, Field, PlainSerializer
+from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import (
-    ResultSet,
-    SortOrder,
-    TokenType,
-    ValidatedEthereumAddress,
-)
+from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
 
 ############################
 # COMMON

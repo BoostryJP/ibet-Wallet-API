@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -53,7 +54,7 @@ class TestNodeInfoBlockSyncStatus:
     # Node is synced
     def test_normal_1(self, client: TestClient, session: Session):
         with mock.patch(
-            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+            "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
             # prepare test data
             self.insert_node_data(
@@ -82,7 +83,7 @@ class TestNodeInfoBlockSyncStatus:
     # Node is not synced
     def test_normal_2(self, client: TestClient, session: Session):
         with mock.patch(
-            "app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True
+            "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
             # prepare test data
             self.insert_node_data(session, is_synced=False)
@@ -107,7 +108,7 @@ class TestNodeInfoBlockSyncStatus:
 
     # Error_1
     @mock.patch(
-        "web3.providers.rpc.HTTPProvider.make_request",
+        "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
         MagicMock(side_effect=requests.exceptions.ReadTimeout()),
     )
     def test_error_1(self, client: TestClient, session: Session):

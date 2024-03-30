@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import time
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -93,6 +94,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_listing(session, listing=listing)
 
+        session.commit()
+
         # request target API
         resp = client.post(
             self.apiurl_base.format(contract_address=self.token_address),
@@ -150,6 +153,8 @@ class TestTokenTransferApprovalHistorySearch:
             .astimezone(local_tz)
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -226,6 +231,8 @@ class TestTokenTransferApprovalHistorySearch:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -299,6 +306,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -377,6 +386,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -453,6 +464,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -531,6 +544,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -607,6 +622,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -685,6 +702,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -761,6 +780,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -839,6 +860,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -916,6 +939,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -985,6 +1010,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -1056,6 +1083,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1125,6 +1154,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -1196,6 +1227,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"from_address": self.from_address[0:5]})
@@ -1261,6 +1294,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_2)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -1342,6 +1377,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -1453,6 +1490,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1562,6 +1601,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -1673,6 +1714,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1783,6 +1826,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -1883,6 +1928,8 @@ class TestTokenTransferApprovalHistorySearch:
             "transfer_approved": True,
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -1996,6 +2043,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -2099,6 +2148,8 @@ class TestTokenTransferApprovalHistorySearch:
         }
         self.insert_transfer_approval(session, transfer_approval=transfer_approval_3)
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(
@@ -2187,6 +2238,8 @@ class TestTokenTransferApprovalHistorySearch:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"offset": 1})
@@ -2257,6 +2310,8 @@ class TestTokenTransferApprovalHistorySearch:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"offset": 2, "limit": 2})
@@ -2326,6 +2381,8 @@ class TestTokenTransferApprovalHistorySearch:
             .strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
+        session.commit()
+
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={"limit": 1})
@@ -2378,6 +2435,8 @@ class TestTokenTransferApprovalHistorySearch:
                 "transfer_approved": True,
             }
             self.insert_transfer_approval(session, transfer_approval=transfer_approval)
+
+        session.commit()
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)

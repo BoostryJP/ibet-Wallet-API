@@ -16,34 +16,31 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import os
+
+import asyncio
 import sys
-import time
 from datetime import datetime, timezone
 from typing import List, Optional, Sequence
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventFunctionNotFound
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
-from app.config import DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
-from app.contracts import Contract
+from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
+from app.contracts import AsyncContract
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
 from app.model.schema.base import TokenType
-from app.utils.web3_utils import Web3Wrapper
+from app.utils.web3_utils import AsyncWeb3Wrapper
+from batch import log
 
 process_name = "INDEXER-TRANSFER-APPROVAL"
 LOG = log.get_logger(process_name=process_name)
 
-web3 = Web3Wrapper()
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+async_web3 = AsyncWeb3Wrapper()
+
 
 """
 Batch process for indexing security token transfer approval events
@@ -162,22 +159,26 @@ class Processor:
         self.exchange_list = self.TargetExchangeList()
 
     @staticmethod
-    def get_block_timestamp(event) -> int:
-        block_timestamp = web3.eth.get_block(event["blockNumber"])["timestamp"]
+    async def get_block_timestamp(event) -> int:
+        block_timestamp = (await async_web3.eth.get_block(event["blockNumber"]))[
+            "timestamp"
+        ]
         return block_timestamp
 
-    def __get_contract_list(self, db_session: Session):
+    async def __get_contract_list(self, db_session: AsyncSession):
         self.token_list = self.TargetTokenList()
         self.exchange_list = self.TargetExchangeList()
 
-        list_contract = Contract.get_contract(
+        list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        listed_tokens: Sequence[Listing] = db_session.scalars(select(Listing)).all()
+        listed_tokens: Sequence[Listing] = (
+            await db_session.scalars(select(Listing))
+        ).all()
 
         _exchange_list_tmp = []
         for listed_token in listed_tokens:
-            token_info = Contract.call_function(
+            token_info = await AsyncContract.call_function(
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(listed_token.token_address,),
@@ -188,20 +189,22 @@ class Processor:
                 token_type == TokenType.IbetShare
                 or token_type == TokenType.IbetStraightBond
             ):
-                token_contract = Contract.get_contract(
+                token_contract = AsyncContract.get_contract(
                     contract_name="IbetSecurityTokenInterface",
                     address=listed_token.token_address,
                 )
-                tradable_exchange_address = Contract.call_function(
+                tradable_exchange_address = await AsyncContract.call_function(
                     contract=token_contract,
                     function_name="tradableExchange",
                     args=(),
                     default_returns=ZERO_ADDRESS,
                 )
-                synced_block_number = self.__get_idx_transfer_approval_block_number(
-                    db_session=db_session,
-                    token_address=listed_token.token_address,
-                    exchange_address=tradable_exchange_address,
+                synced_block_number = (
+                    await self.__get_idx_transfer_approval_block_number(
+                        db_session=db_session,
+                        token_address=listed_token.token_address,
+                        exchange_address=tradable_exchange_address,
+                    )
                 )
                 block_from = synced_block_number + 1
                 self.token_list.append(
@@ -211,7 +214,7 @@ class Processor:
                     if tradable_exchange_address not in [
                         e.exchange_address for e in self.exchange_list
                     ]:
-                        exchange_contract = Contract.get_contract(
+                        exchange_contract = AsyncContract.get_contract(
                             contract_name="IbetSecurityTokenEscrow",
                             address=tradable_exchange_address,
                         )
@@ -221,73 +224,73 @@ class Processor:
 
     @staticmethod
     def __get_db_session():
-        return Session(autocommit=False, autoflush=True, bind=db_engine)
+        return BatchAsyncSessionLocal()
 
-    def initial_sync(self):
+    async def initial_sync(self):
         local_session = self.__get_db_session()
         try:
-            self.__get_contract_list(local_session)
+            await self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            latest_block = web3.eth.block_number
+            latest_block = await async_web3.eth.block_number
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
                 while _to_block < latest_block:
-                    self.__sync_all(db_session=local_session, block_to=_to_block)
+                    await self.__sync_all(db_session=local_session, block_to=_to_block)
                     _to_block += 1000000
-                self.__sync_all(db_session=local_session, block_to=latest_block)
+                await self.__sync_all(db_session=local_session, block_to=latest_block)
             else:
-                self.__sync_all(db_session=local_session, block_to=latest_block)
-            self.__set_idx_transfer_approval_block_number(
+                await self.__sync_all(db_session=local_session, block_to=latest_block)
+            await self.__set_idx_transfer_approval_block_number(
                 local_session, self.token_list, latest_block
             )
-            local_session.commit()
+            await local_session.commit()
         except Exception as e:
-            local_session.rollback()
+            await local_session.rollback()
             raise e
         finally:
-            local_session.close()
+            await local_session.close()
             self.token_list = self.TargetTokenList()
             self.exchange_list = self.TargetExchangeList()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
-    def sync_new_logs(self):
+    async def sync_new_logs(self):
         local_session = self.__get_db_session()
         try:
-            self.__get_contract_list(local_session)
+            await self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            latest_block = web3.eth.block_number
+            latest_block = await async_web3.eth.block_number
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
                 while _to_block < latest_block:
-                    self.__sync_all(db_session=local_session, block_to=_to_block)
+                    await self.__sync_all(db_session=local_session, block_to=_to_block)
                     _to_block += 1000000
-                self.__sync_all(db_session=local_session, block_to=latest_block)
+                await self.__sync_all(db_session=local_session, block_to=latest_block)
             else:
-                self.__sync_all(db_session=local_session, block_to=latest_block)
-            self.__set_idx_transfer_approval_block_number(
+                await self.__sync_all(db_session=local_session, block_to=latest_block)
+            await self.__set_idx_transfer_approval_block_number(
                 local_session, self.token_list, latest_block
             )
-            local_session.commit()
+            await local_session.commit()
         except Exception as e:
-            local_session.rollback()
+            await local_session.rollback()
             raise e
         finally:
-            local_session.close()
+            await local_session.close()
             self.token_list = self.TargetTokenList()
             self.exchange_list = self.TargetExchangeList()
         LOG.info("Sync job has been completed")
 
-    def __sync_all(self, db_session: Session, block_to: int):
+    async def __sync_all(self, db_session: AsyncSession, block_to: int):
         LOG.info("Syncing to={}".format(block_to))
-        self.__sync_token_apply_for_transfer(db_session, block_to)
-        self.__sync_token_cancel_transfer(db_session, block_to)
-        self.__sync_token_approve_transfer(db_session, block_to)
-        self.__sync_exchange_apply_for_transfer(db_session, block_to)
-        self.__sync_exchange_cancel_transfer(db_session, block_to)
-        self.__sync_exchange_escrow_finished(db_session, block_to)
-        self.__sync_exchange_approve_transfer(db_session, block_to)
+        await self.__sync_token_apply_for_transfer(db_session, block_to)
+        await self.__sync_token_cancel_transfer(db_session, block_to)
+        await self.__sync_token_approve_transfer(db_session, block_to)
+        await self.__sync_exchange_apply_for_transfer(db_session, block_to)
+        await self.__sync_exchange_cancel_transfer(db_session, block_to)
+        await self.__sync_exchange_escrow_finished(db_session, block_to)
+        await self.__sync_exchange_approve_transfer(db_session, block_to)
 
         self.__update_cursor(block_to + 1)
 
@@ -303,7 +306,9 @@ class Processor:
             if block_number > exchange.start_block_number:
                 exchange.cursor = block_number
 
-    def __sync_token_apply_for_transfer(self, db_session: Session, block_to: int):
+    async def __sync_token_apply_for_transfer(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync ApplyForTransfer events of tokens
         :param db_session: ORM session
         :param block_to: To Block
@@ -315,7 +320,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApplyForTransfer.get_logs(
+                events = await token.events.ApplyForTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -327,8 +332,8 @@ class Processor:
                     if value > sys.maxsize:  # suppress overflow
                         pass
                     else:
-                        block_timestamp = self.get_block_timestamp(event=event)
-                        self.__sink_on_transfer_approval(
+                        block_timestamp = await self.get_block_timestamp(event=event)
+                        await self.__sink_on_transfer_approval(
                             db_session=db_session,
                             event_type="ApplyFor",
                             token_address=token.address,
@@ -343,7 +348,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_token_cancel_transfer(self, db_session: Session, block_to: int):
+    async def __sync_token_cancel_transfer(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync CancelTransfer events of tokens
         :param db_session: ORM session
         :param block_to: To Block
@@ -355,7 +362,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.CancelTransfer.get_logs(
+                events = await token.events.CancelTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -363,7 +370,7 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
-                    self.__sink_on_transfer_approval(
+                    await self.__sink_on_transfer_approval(
                         db_session=db_session,
                         event_type="Cancel",
                         token_address=token.address,
@@ -375,7 +382,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_token_approve_transfer(self, db_session: Session, block_to: int):
+    async def __sync_token_approve_transfer(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync ApproveTransfer events of tokens
         :param db_session: ORM session
         :param block_to: To Block
@@ -387,7 +396,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = token.events.ApproveTransfer.get_logs(
+                events = await token.events.ApproveTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -395,8 +404,8 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
-                    block_timestamp = self.get_block_timestamp(event=event)
-                    self.__sink_on_transfer_approval(
+                    block_timestamp = await self.get_block_timestamp(event=event)
+                    await self.__sink_on_transfer_approval(
                         db_session=db_session,
                         event_type="Approve",
                         token_address=token.address,
@@ -410,7 +419,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_apply_for_transfer(self, db_session: Session, block_to: int):
+    async def __sync_exchange_apply_for_transfer(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync ApplyForTransfer events of exchanges
         :param db_session: ORM session
         :param block_to: To Block
@@ -422,7 +433,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.ApplyForTransfer.get_logs(
+                events = await exchange.events.ApplyForTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -441,8 +452,8 @@ class Processor:
                     if value > sys.maxsize:  # suppress overflow
                         pass
                     else:
-                        block_timestamp = self.get_block_timestamp(event=event)
-                        self.__sink_on_transfer_approval(
+                        block_timestamp = await self.get_block_timestamp(event=event)
+                        await self.__sink_on_transfer_approval(
                             db_session=db_session,
                             event_type="ApplyFor",
                             token_address=args.get("token", ZERO_ADDRESS),
@@ -457,7 +468,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_cancel_transfer(self, db_session: Session, block_to: int):
+    async def __sync_exchange_cancel_transfer(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync CancelTransfer events of exchanges
         :param db_session: ORM session
         :param block_to: To Block
@@ -469,7 +482,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.CancelTransfer.get_logs(
+                events = await exchange.events.CancelTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -484,7 +497,7 @@ class Processor:
                         events_filtered.append(event)
                 for event in events_filtered:
                     args = event["args"]
-                    self.__sink_on_transfer_approval(
+                    await self.__sink_on_transfer_approval(
                         db_session=db_session,
                         event_type="Cancel",
                         token_address=args.get("token", ZERO_ADDRESS),
@@ -496,7 +509,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_escrow_finished(self, db_session: Session, block_to: int):
+    async def __sync_exchange_escrow_finished(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync EscrowFinished events of exchanges
         :param db_session: ORM session
         :param block_to: To Block
@@ -508,7 +523,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.EscrowFinished.get_logs(
+                events = await exchange.events.EscrowFinished.get_logs(
                     fromBlock=block_from,
                     toBlock=block_to,
                     argument_filters={"transferApprovalRequired": True},
@@ -525,7 +540,7 @@ class Processor:
                         events_filtered.append(event)
                 for event in events_filtered:
                     args = event["args"]
-                    self.__sink_on_transfer_approval(
+                    await self.__sink_on_transfer_approval(
                         db_session=db_session,
                         event_type="EscrowFinish",
                         token_address=args.get("token", ZERO_ADDRESS),
@@ -537,7 +552,9 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_approve_transfer(self, db_session: Session, block_to: int):
+    async def __sync_exchange_approve_transfer(
+        self, db_session: AsyncSession, block_to: int
+    ):
         """Sync ApproveTransfer events of exchanges
         :param db_session: ORM session
         :param block_to: To Block
@@ -549,7 +566,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = exchange.events.ApproveTransfer.get_logs(
+                events = await exchange.events.ApproveTransfer.get_logs(
                     fromBlock=block_from, toBlock=block_to
                 )
             except ABIEventFunctionNotFound:
@@ -564,8 +581,8 @@ class Processor:
                         events_filtered.append(event)
                 for event in events_filtered:
                     args = event["args"]
-                    block_timestamp = self.get_block_timestamp(event=event)
-                    self.__sink_on_transfer_approval(
+                    block_timestamp = await self.get_block_timestamp(event=event)
+                    await self.__sink_on_transfer_approval(
                         db_session=db_session,
                         event_type="Approve",
                         token_address=args.get("token", ZERO_ADDRESS),
@@ -589,15 +606,19 @@ class Processor:
         return oldest_block_number
 
     @staticmethod
-    def __get_idx_transfer_approval_block_number(
-        db_session: Session, token_address: str, exchange_address: str
+    async def __get_idx_transfer_approval_block_number(
+        db_session: AsyncSession, token_address: str, exchange_address: str
     ):
         """Get position index for Bond"""
-        _idx_transfer_approval_block_number = db_session.scalars(
-            select(IDXTransferApprovalBlockNumber)
-            .where(IDXTransferApprovalBlockNumber.token_address == token_address)
-            .where(IDXTransferApprovalBlockNumber.exchange_address == exchange_address)
-            .limit(1)
+        _idx_transfer_approval_block_number = (
+            await db_session.scalars(
+                select(IDXTransferApprovalBlockNumber)
+                .where(IDXTransferApprovalBlockNumber.token_address == token_address)
+                .where(
+                    IDXTransferApprovalBlockNumber.exchange_address == exchange_address
+                )
+                .limit(1)
+            )
         ).first()
         if _idx_transfer_approval_block_number is None:
             return -1
@@ -605,22 +626,24 @@ class Processor:
             return _idx_transfer_approval_block_number.latest_block_number
 
     @staticmethod
-    def __set_idx_transfer_approval_block_number(
-        db_session: Session, target_token_list: TargetTokenList, block_number: int
+    async def __set_idx_transfer_approval_block_number(
+        db_session: AsyncSession, target_token_list: TargetTokenList, block_number: int
     ):
         """Set position index for Bond"""
         for target_token in target_token_list:
-            _idx_transfer_approval_block_number = db_session.scalars(
-                select(IDXTransferApprovalBlockNumber)
-                .where(
-                    IDXTransferApprovalBlockNumber.token_address
-                    == target_token.token_contract.address
+            _idx_transfer_approval_block_number = (
+                await db_session.scalars(
+                    select(IDXTransferApprovalBlockNumber)
+                    .where(
+                        IDXTransferApprovalBlockNumber.token_address
+                        == target_token.token_contract.address
+                    )
+                    .where(
+                        IDXTransferApprovalBlockNumber.exchange_address
+                        == target_token.exchange_address
+                    )
+                    .limit(1)
                 )
-                .where(
-                    IDXTransferApprovalBlockNumber.exchange_address
-                    == target_token.exchange_address
-                )
-                .limit(1)
             ).first()
             if _idx_transfer_approval_block_number is None:
                 _idx_transfer_approval_block_number = IDXTransferApprovalBlockNumber()
@@ -631,11 +654,11 @@ class Processor:
             _idx_transfer_approval_block_number.exchange_address = (
                 target_token.exchange_address
             )
-            db_session.merge(_idx_transfer_approval_block_number)
+            await db_session.merge(_idx_transfer_approval_block_number)
 
     @staticmethod
-    def __sink_on_transfer_approval(
-        db_session: Session,
+    async def __sink_on_transfer_approval(
+        db_session: AsyncSession,
         event_type: str,
         token_address: str,
         application_id: int,
@@ -661,12 +684,14 @@ class Processor:
         :param block_timestamp: block timestamp
         :return: None
         """
-        transfer_approval = db_session.scalars(
-            select(IDXTransferApproval)
-            .where(IDXTransferApproval.token_address == token_address)
-            .where(IDXTransferApproval.exchange_address == exchange_address)
-            .where(IDXTransferApproval.application_id == application_id)
-            .limit(1)
+        transfer_approval = (
+            await db_session.scalars(
+                select(IDXTransferApproval)
+                .where(IDXTransferApproval.token_address == token_address)
+                .where(IDXTransferApproval.exchange_address == exchange_address)
+                .where(IDXTransferApproval.application_id == application_id)
+                .limit(1)
+            )
         ).first()
         if event_type == "ApplyFor":
             if transfer_approval is None:
@@ -704,26 +729,26 @@ class Processor:
                     block_timestamp, tz=timezone.utc
                 )
                 transfer_approval.transfer_approved = True
-        db_session.merge(transfer_approval)
+        await db_session.merge(transfer_approval)
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
 
     initial_synced_completed = False
     while not initial_synced_completed:
         try:
-            processor.initial_sync()
+            await processor.initial_sync()
             initial_synced_completed = True
         except Exception:
             LOG.exception("Initial sync failed")
 
-        time.sleep(5)
+        await asyncio.sleep(5)
 
     while True:
         try:
-            processor.sync_new_logs()
+            await processor.sync_new_logs()
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -731,8 +756,11 @@ def main():
         except Exception as ex:
             LOG.exception("An exception occurred during event synchronization")
 
-        time.sleep(5)
+        await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

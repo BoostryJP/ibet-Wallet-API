@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from datetime import datetime
 
 from fastapi.testclient import TestClient
@@ -117,6 +118,8 @@ class TestNotificationCount:
     # 未読カウントを表示
     def test_notificationcount_normal_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
+
+        session.commit()
 
         resp = client.get(
             self.apiurl, params={"address": TestNotificationCount.address}

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Optional
 
 from sqlalchemy import BigInteger, String
@@ -56,54 +57,66 @@ class IDXPosition(Base):
     def bond(position: Optional["IDXPosition"]):
         return {
             "balance": position.balance if position and position.balance else 0,
-            "pending_transfer": position.pending_transfer
-            if position and position.pending_transfer
-            else 0,
-            "exchange_balance": position.exchange_balance
-            if position and position.exchange_balance
-            else 0,
-            "exchange_commitment": position.exchange_commitment
-            if position and position.exchange_commitment
-            else 0,
+            "pending_transfer": (
+                position.pending_transfer
+                if position and position.pending_transfer
+                else 0
+            ),
+            "exchange_balance": (
+                position.exchange_balance
+                if position and position.exchange_balance
+                else 0
+            ),
+            "exchange_commitment": (
+                position.exchange_commitment
+                if position and position.exchange_commitment
+                else 0
+            ),
         }
 
     @staticmethod
     def share(share: Optional["IDXPosition"]):
         return {
             "balance": share.balance if share and share.balance else 0,
-            "pending_transfer": share.pending_transfer
-            if share and share.pending_transfer
-            else 0,
-            "exchange_balance": share.exchange_balance
-            if share and share.exchange_balance
-            else 0,
-            "exchange_commitment": share.exchange_commitment
-            if share and share.exchange_commitment
-            else 0,
+            "pending_transfer": (
+                share.pending_transfer if share and share.pending_transfer else 0
+            ),
+            "exchange_balance": (
+                share.exchange_balance if share and share.exchange_balance else 0
+            ),
+            "exchange_commitment": (
+                share.exchange_commitment if share and share.exchange_commitment else 0
+            ),
         }
 
     @staticmethod
     def coupon(coupon: Optional["IDXPosition"]):
         return {
             "balance": coupon.balance if coupon and coupon.balance else 0,
-            "exchange_balance": coupon.exchange_balance
-            if coupon and coupon.exchange_balance
-            else 0,
-            "exchange_commitment": coupon.exchange_commitment
-            if coupon and coupon.exchange_commitment
-            else 0,
+            "exchange_balance": (
+                coupon.exchange_balance if coupon and coupon.exchange_balance else 0
+            ),
+            "exchange_commitment": (
+                coupon.exchange_commitment
+                if coupon and coupon.exchange_commitment
+                else 0
+            ),
         }
 
     @staticmethod
     def membership(membership: Optional["IDXPosition"]):
         return {
             "balance": membership.balance if membership and membership.balance else 0,
-            "exchange_balance": membership.exchange_balance
-            if membership and membership.exchange_balance
-            else 0,
-            "exchange_commitment": membership.exchange_commitment
-            if membership and membership.exchange_commitment
-            else 0,
+            "exchange_balance": (
+                membership.exchange_balance
+                if membership and membership.exchange_balance
+                else 0
+            ),
+            "exchange_commitment": (
+                membership.exchange_commitment
+                if membership and membership.exchange_commitment
+                else 0
+            ),
         }
 
 

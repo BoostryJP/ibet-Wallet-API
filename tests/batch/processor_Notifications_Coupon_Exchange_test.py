@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 from importlib import reload
 from unittest import mock
 from unittest.mock import MagicMock
@@ -47,7 +49,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def watcher_factory(session, shared_contract):
+def watcher_factory(async_session, shared_contract):
     def _watcher(cls_name):
         # Create exchange contract for each test method.
         coupon_exchange = ibet_exchange_contract(
@@ -60,7 +62,7 @@ def watcher_factory(session, shared_contract):
         from batch import processor_Notifications_Coupon_Exchange
 
         test_module = reload(processor_Notifications_Coupon_Exchange)
-        test_module.db_session = session
+        test_module.db_session = async_session
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
@@ -116,7 +118,7 @@ class TestWatchCouponNewOrder:
         )
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -178,7 +180,7 @@ class TestWatchCouponNewOrder:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -268,7 +270,7 @@ class TestWatchCouponNewOrder:
         # Not Create Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -290,7 +292,7 @@ class TestWatchCouponNewOrder:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -299,7 +301,7 @@ class TestWatchCouponNewOrder:
         watcher, _ = watcher_factory("WatchCouponNewOrder")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -341,7 +343,7 @@ class TestWatchCouponCancelOrder:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -407,7 +409,7 @@ class TestWatchCouponCancelOrder:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 2)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -500,7 +502,7 @@ class TestWatchCouponCancelOrder:
         # Not Cancel Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -522,7 +524,7 @@ class TestWatchCouponCancelOrder:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -531,7 +533,7 @@ class TestWatchCouponCancelOrder:
         watcher, _ = watcher_factory("WatchCouponCancelOrder")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -592,7 +594,7 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -691,7 +693,7 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -804,7 +806,7 @@ class TestWatchCouponForceCancelOrder:
 
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -826,7 +828,7 @@ class TestWatchCouponForceCancelOrder:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -835,7 +837,7 @@ class TestWatchCouponForceCancelOrder:
         watcher, _ = watcher_factory("WatchCouponForceCancelOrder")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -878,7 +880,7 @@ class TestWatchCouponBuyAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -946,7 +948,7 @@ class TestWatchCouponBuyAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1041,7 +1043,7 @@ class TestWatchCouponBuyAgreement:
         # Not Buy Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1063,7 +1065,7 @@ class TestWatchCouponBuyAgreement:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -1072,7 +1074,7 @@ class TestWatchCouponBuyAgreement:
         watcher, _ = watcher_factory("WatchCouponBuyAgreement")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -1115,7 +1117,7 @@ class TestWatchCouponSellAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1183,7 +1185,7 @@ class TestWatchCouponSellAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1275,7 +1277,7 @@ class TestWatchCouponSellAgreement:
         # Not Buy Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1297,7 +1299,7 @@ class TestWatchCouponSellAgreement:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -1306,7 +1308,7 @@ class TestWatchCouponSellAgreement:
         watcher, _ = watcher_factory("WatchCouponSellAgreement")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -1354,7 +1356,7 @@ class TestWatchCouponBuySettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1430,7 +1432,7 @@ class TestWatchCouponBuySettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1534,7 +1536,7 @@ class TestWatchCouponBuySettlementOK:
         # Not Confirm Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1556,7 +1558,7 @@ class TestWatchCouponBuySettlementOK:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -1565,7 +1567,7 @@ class TestWatchCouponBuySettlementOK:
         watcher, _ = watcher_factory("WatchCouponBuySettlementOK")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -1613,7 +1615,7 @@ class TestWatchCouponSellSettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1689,7 +1691,7 @@ class TestWatchCouponSellSettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1793,7 +1795,7 @@ class TestWatchCouponSellSettlementOK:
         # Not Confirm Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1815,7 +1817,7 @@ class TestWatchCouponSellSettlementOK:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -1824,7 +1826,7 @@ class TestWatchCouponSellSettlementOK:
         watcher, _ = watcher_factory("WatchCouponSellSettlementOK")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -1872,7 +1874,7 @@ class TestWatchCouponBuySettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -1948,7 +1950,7 @@ class TestWatchCouponBuySettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -2052,7 +2054,7 @@ class TestWatchCouponBuySettlementNG:
         # Not Cancel Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -2074,7 +2076,7 @@ class TestWatchCouponBuySettlementNG:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -2083,7 +2085,7 @@ class TestWatchCouponBuySettlementNG:
         watcher, _ = watcher_factory("WatchCouponBuySettlementNG")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(
@@ -2131,7 +2133,7 @@ class TestWatchCouponSellSettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -2207,7 +2209,7 @@ class TestWatchCouponSellSettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -2311,7 +2313,7 @@ class TestWatchCouponSellSettlementNG:
         # Not Cancel Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         block_number = web3.eth.block_number
@@ -2333,7 +2335,7 @@ class TestWatchCouponSellSettlementNG:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
     def test_error_1(
@@ -2342,7 +2344,7 @@ class TestWatchCouponSellSettlementNG:
         watcher, _ = watcher_factory("WatchCouponSellSettlementNG")
 
         # Run target process
-        watcher.loop()
+        asyncio.run(watcher.loop())
 
         # Assertion
         _notification = session.scalars(

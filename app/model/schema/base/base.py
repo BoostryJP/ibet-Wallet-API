@@ -16,11 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from enum import IntEnum, StrEnum
 from typing import Annotated, Generic, Optional, TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel, Field, WrapValidator
+from pydantic import BaseModel, Field, WrapValidator, constr
 from pydantic.dataclasses import dataclass
 
 from app.validator import ethereum_address_validator
@@ -41,6 +42,10 @@ class ValueOperator(IntEnum):
     GTE = 1
     LTE = 2
 
+
+EmailStr = constr(
+    pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$", max_length=100
+)
 
 ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
 

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -194,6 +195,8 @@ class TestTokenTokenStatus:
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, bond_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=bond_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -236,6 +239,8 @@ class TestTokenTokenStatus:
 
         # Tokenの無効化
         bond_invalidate(issuer, token)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=token["address"])
         query_string = ""
@@ -280,6 +285,8 @@ class TestTokenTokenStatus:
         # Tokenの譲渡不可
         bond_untransferable(issuer, bond_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=bond_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -319,6 +326,8 @@ class TestTokenTokenStatus:
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, share_token)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=share_token["address"])
         query_string = ""
@@ -363,6 +372,8 @@ class TestTokenTokenStatus:
         # Tokenの無効化
         invalidate_share_token(issuer, share_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=share_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -406,6 +417,8 @@ class TestTokenTokenStatus:
         # Tokenの譲渡不可
         untransferable_share_token(issuer, share_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=share_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -442,6 +455,8 @@ class TestTokenTokenStatus:
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, membership_token)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=membership_token["address"])
         query_string = ""
@@ -483,6 +498,8 @@ class TestTokenTokenStatus:
         # Tokenの無効化
         membership_invalidate(issuer, membership_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=membership_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -523,6 +540,8 @@ class TestTokenTokenStatus:
         # Tokenの譲渡不可
         membership_untransferable(issuer, membership_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=membership_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -559,6 +578,8 @@ class TestTokenTokenStatus:
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, coupon_token)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=coupon_token["address"])
         query_string = ""
@@ -600,6 +621,8 @@ class TestTokenTokenStatus:
         # Tokenの無効化
         invalidate_coupon_token(issuer, coupon_token)
 
+        session.commit()
+
         apiurl = self.apiurl_base.format(contract_address=coupon_token["address"])
         query_string = ""
         resp = client.get(apiurl, params=query_string)
@@ -639,6 +662,8 @@ class TestTokenTokenStatus:
 
         # Tokenの譲渡不可
         untransferable_coupon_token(issuer, coupon_token)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=coupon_token["address"])
         query_string = ""
@@ -701,6 +726,8 @@ class TestTokenTokenStatus:
         token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, token, token_list)
 
+        session.commit()
+
         # NOTE:取扱トークンデータを挿入しない
 
         apiurl = self.apiurl_base.format(contract_address=token["address"])
@@ -724,6 +751,8 @@ class TestTokenTokenStatus:
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, share_exchange)
+
+        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=share_exchange["address"])
 

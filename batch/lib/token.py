@@ -16,28 +16,29 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from app.contracts import Contract
+
+from app.contracts import AsyncContract
 from app.model.schema.base import TokenType
 
 
 class TokenFactory:
-    def __init__(self, web3):
-        self.web3 = web3
+    def __init__(self):
+        pass
 
     def get_straight_bond(self, address):
-        contract = Contract.get_contract(TokenType.IbetStraightBond, address)
+        contract = AsyncContract.get_contract(TokenType.IbetStraightBond, address)
         return Token(contract)
 
     def get_share(self, address):
-        contract = Contract.get_contract(TokenType.IbetShare, address)
+        contract = AsyncContract.get_contract(TokenType.IbetShare, address)
         return Token(contract)
 
     def get_membership(self, address):
-        contract = Contract.get_contract(TokenType.IbetMembership, address)
+        contract = AsyncContract.get_contract(TokenType.IbetMembership, address)
         return Token(contract)
 
     def get_coupon(self, address):
-        contract = Contract.get_contract(TokenType.IbetCoupon, address)
+        contract = AsyncContract.get_contract(TokenType.IbetCoupon, address)
         return Token(contract)
 
 
@@ -46,13 +47,13 @@ class Token:
         self.contract = contract
 
     @property
-    def name(self):
-        return Contract.call_function(
+    async def name(self):
+        return await AsyncContract.call_function(
             contract=self.contract, function_name="name", args=(), default_returns=""
         )
 
     @property
-    def owner_address(self):
-        return Contract.call_function(
+    async def owner_address(self):
+        return await AsyncContract.call_function(
             contract=self.contract, function_name="owner", args=(), default_returns=""
         )

@@ -16,7 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from enum import Enum
+
+from enum import Enum, IntEnum
 from typing import Annotated, Optional
 
 from fastapi import Query
@@ -26,6 +27,14 @@ from pydantic.dataclasses import dataclass
 ############################
 # COMMON
 ############################
+
+
+class SendRawTransactionStatus(IntEnum):
+    Failure = 0
+    Success = 1
+    Pending = 2
+    NonceTooLow = 3
+    AlreadyKnown = 4
 
 
 ############################
@@ -85,7 +94,7 @@ class TransactionCountResponse(BaseModel):
 
 class SendRawTransactionResponse(BaseModel):
     id: int = Field(..., examples=[1], description="transaction send order")
-    status: int = Field(
+    status: SendRawTransactionStatus = Field(
         ...,
         examples=[1],
         description="execution failure:0, execution success:1, execution success("
@@ -110,7 +119,7 @@ class SendRawTransactionsResponse(RootModel[list[SendRawTransactionResponse]]):
 
 class SendRawTransactionNoWaitResponse(BaseModel):
     id: int = Field(..., examples=[1], description="transaction send order")
-    status: int = Field(
+    status: SendRawTransactionStatus = Field(
         ..., examples=[1], description="execution failure:0, execution success:1"
     )
     transaction_hash: Optional[str] = Field(

@@ -16,17 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from __future__ import annotations
 
 import functools
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Callable, Optional, Type, Union
+from typing import Awaitable, Callable, Optional, Type, Union
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import log
 from app.config import (
@@ -36,7 +37,8 @@ from app.config import (
     TOKEN_SHORT_TERM_CACHE_TTL,
     ZERO_ADDRESS,
 )
-from app.contracts import Contract
+from app.contracts import AsyncContract
+from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXBondToken as BondTokenModel,
     IDXCouponToken as CouponTokenModel,
@@ -46,6 +48,7 @@ from app.model.db import (
 )
 from app.model.db.idx_token import IDXTokenInstance, IDXTokenModel
 from app.model.schema.base import TokenType
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
@@ -64,31 +67,36 @@ def token_db_cache(TargetModel: IDXTokenModel):
     """
 
     def decorator(
-        func: Callable[[TokenClassTypes, Session, str], Optional[TokenInstanceTypes]]
+        func: Callable[
+            [TokenClassTypes, AsyncSession, str],
+            Awaitable[Optional[TokenInstanceTypes]],
+        ]
     ):
         """
         @param func: Function for decoration
         """
 
         @functools.wraps(func)
-        def wrapper(
-            cls: TokenClassTypes, session: Session, token_address: str
+        async def wrapper(
+            cls: TokenClassTypes, async_session: AsyncSession, token_address: str
         ) -> Optional[TokenInstanceTypes]:
             """
             @param cls: Class of return instance
-            @param session: ORM session
+            @param async_session: ORM async session
             @param token_address: Address of token which will be cached
             @return Token detail instance
             """
             if not TOKEN_CACHE:
                 # If token cache is not enabled, use raw data from chain
-                return func(cls, session, token_address)
+                return await func(cls, async_session, token_address)
 
             # Get data from cache
-            cached_token: Optional[IDXTokenInstance] = session.scalars(
-                select(TargetModel)
-                .where(TargetModel.token_address == token_address)
-                .limit(1)
+            cached_token: Optional[IDXTokenInstance] = (
+                await async_session.scalars(
+                    select(TargetModel)
+                    .where(TargetModel.token_address == token_address)
+                    .limit(1)
+                )
             ).first()
             if (
                 cached_token
@@ -103,12 +111,12 @@ def token_db_cache(TargetModel: IDXTokenModel):
                     < datetime.utcnow()
                 ):
                     # If short term cache expires, fetch raw data from chain
-                    cached_data.fetch_expiry_short()
-                    session.merge(cached_data.to_model())
+                    await cached_data.fetch_expiry_short()
+                    await async_session.merge(cached_data.to_model())
                 return cached_data
 
             # Get data from chain
-            return func(cls, session, token_address)
+            return await func(cls, async_session, token_address)
 
         return wrapper
 
@@ -199,33 +207,46 @@ class BondToken(TokenBase):
         token_model.short_term_cache_created = datetime.utcnow()
         return token_model
 
-    def fetch_expiry_short(self) -> None:
+    async def fetch_expiry_short(self) -> None:
         """
         債権トークン リアルタイム属性情報取得
 
         :return: None
         """
-        token_contract = Contract.get_contract(
+        token_contract = AsyncContract.get_contract(
             TokenType.IbetStraightBond, self.token_address
         )
-
         # Fetch
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "isRedeemed", (), False),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                total_supply,
+                status,
+                transferable,
+                is_offering,
+                transfer_approval_required,
+                is_redeemed,
+                memo,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
+
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        status = Contract.call_function(token_contract, "status", (), True)
-
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
-        transfer_approval_required = Contract.call_function(
-            token_contract, "transferApprovalRequired", (), False
-        )
-        is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
-        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -240,35 +261,97 @@ class BondToken(TokenBase):
         self.memo = memo
 
     @staticmethod
-    def fetch(session: Session, token_address: str) -> BondToken:
+    async def fetch(async_session: AsyncSession, token_address: str) -> BondToken:
         """
         債券トークン属性情報取得
 
-        :param session: DB session
+        :param async_session: DB Async session
         :param token_address: トークンアドレス
         :return: BondToken
         """
 
         # IbetStraightBond コントラクトへの接続
-        token_contract = Contract.get_contract(
+        token_contract = AsyncContract.get_contract(
             TokenType.IbetStraightBond, token_address
         )
 
-        # Contractから情報を取得する
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        name = Contract.call_function(token_contract, "name", (), "")
-        symbol = Contract.call_function(token_contract, "symbol", (), "")
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        face_value = Contract.call_function(token_contract, "faceValue", (), 0)
-        face_value_currency = Contract.call_function(
-            token_contract,
-            "faceValueCurrency",
-            (),
-            DEFAULT_CURRENCY,
-        )
-        interest_rate = Contract.call_function(token_contract, "interestRate", (), 0)
+        # Token-Contractから情報を取得する
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "faceValue", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "faceValueCurrency", (), DEFAULT_CURRENCY
+                ),
+                AsyncContract.call_function(token_contract, "interestRate", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "interestPaymentDate", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "redemptionDate", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "interestPaymentCurrency", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "redemptionValue", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "redemptionValueCurrency", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "baseFXRate", (), ""),
+                AsyncContract.call_function(token_contract, "returnDate", (), ""),
+                AsyncContract.call_function(token_contract, "returnAmount", (), ""),
+                AsyncContract.call_function(token_contract, "purpose", (), ""),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "personalInfoAddress", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "isRedeemed", (), False),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                name,
+                symbol,
+                total_supply,
+                face_value,
+                face_value_currency,
+                interest_rate,
+                interest_payment_date_string,
+                redemption_date,
+                interest_payment_currency,
+                redemption_value,
+                redemption_value_currency,
+                _raw_base_fx_rate,
+                return_date,
+                return_amount,
+                purpose,
+                transferable,
+                is_offering,
+                contact_information,
+                privacy_policy,
+                tradable_exchange,
+                status,
+                memo,
+                personal_info_address,
+                transfer_approval_required,
+                is_redeemed,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
 
         interest_payment_date1 = ""
         interest_payment_date2 = ""
@@ -283,9 +366,6 @@ class BondToken(TokenBase):
         interest_payment_date11 = ""
         interest_payment_date12 = ""
         try:
-            interest_payment_date_string = Contract.call_function(
-                token_contract, "interestPaymentDate", (), ""
-            )
             if interest_payment_date_string != "":
                 interest_payment_date = json.loads(
                     interest_payment_date_string.replace("'", '"')
@@ -344,60 +424,25 @@ class BondToken(TokenBase):
                 )
         except Exception:
             LOG.warning("Failed to load interestPaymentDate")
-        interest_payment_currency = Contract.call_function(
-            token_contract, "interestPaymentCurrency", (), ""
-        )
-
-        redemption_date = Contract.call_function(
-            token_contract, "redemptionDate", (), ""
-        )
-        redemption_value = Contract.call_function(
-            token_contract, "redemptionValue", (), 0
-        )
-        redemption_value_currency = Contract.call_function(
-            token_contract, "redemptionValueCurrency", (), ""
-        )
 
         try:
-            _raw_base_fx_rate = Contract.call_function(
-                token_contract, "baseFXRate", (), ""
-            )
             if _raw_base_fx_rate is not None and _raw_base_fx_rate != "":
                 base_fx_rate = float(_raw_base_fx_rate)
             else:
                 base_fx_rate = 0.0
         except ValueError:
             base_fx_rate = 0.0
-        return_date = Contract.call_function(token_contract, "returnDate", (), "")
-        return_amount = Contract.call_function(token_contract, "returnAmount", (), "")
-        purpose = Contract.call_function(token_contract, "purpose", (), "")
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
-        contact_information = Contract.call_function(
-            token_contract, "contactInformation", (), ""
-        )
-        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(
-            token_contract, "tradableExchange", (), ZERO_ADDRESS
-        )
-        status = Contract.call_function(token_contract, "status", (), True)
-        memo = Contract.call_function(token_contract, "memo", (), "")
-        personal_info_address = Contract.call_function(
-            token_contract, "personalInfoAddress", (), ZERO_ADDRESS
-        )
-        transfer_approval_required = Contract.call_function(
-            token_contract, "transferApprovalRequired", (), False
-        )
-        is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
 
         # 企業リストから、企業名を取得する
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = session.scalars(
-            select(Listing).where(Listing.token_address == token_address).limit(1)
+        listed_token = (
+            await async_session.scalars(
+                select(Listing).where(Listing.token_address == token_address).limit(1)
+            )
         ).first()
 
         bondtoken = BondToken()
@@ -457,8 +502,8 @@ class BondToken(TokenBase):
 
     @classmethod
     @token_db_cache(BondTokenModel)
-    def get(cls, session: Session, token_address: str) -> BondToken:
-        return cls.fetch(session, token_address)
+    async def get(cls, async_session: AsyncSession, token_address: str) -> BondToken:
+        return await cls.fetch(async_session, token_address)
 
 
 class ShareToken(TokenBase):
@@ -488,37 +533,53 @@ class ShareToken(TokenBase):
         token_model.short_term_cache_created = datetime.utcnow()
         return token_model
 
-    def fetch_expiry_short(self) -> None:
+    async def fetch_expiry_short(self) -> None:
         """
         株式トークン リアルタイム属性情報取得
 
         :return: ShareToken
         """
-        token_contract = Contract.get_contract(TokenType.IbetShare, self.token_address)
+        token_contract = AsyncContract.get_contract(
+            TokenType.IbetShare, self.token_address
+        )
 
         # Fetch
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "principalValue", (), 0),
+                AsyncContract.call_function(token_contract, "isCanceled", (), False),
+                AsyncContract.call_function(
+                    token_contract, "dividendInformation", (), (0, "", "")
+                ),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                total_supply,
+                status,
+                transferable,
+                is_offering,
+                transfer_approval_required,
+                principal_value,
+                is_canceled,
+                dividend_information,
+                memo,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
+
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        status = Contract.call_function(token_contract, "status", (), True)
-
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
-        transfer_approval_required = Contract.call_function(
-            token_contract, "transferApprovalRequired", (), False
-        )
-        principal_value = Contract.call_function(
-            token_contract, "principalValue", (), 0
-        )
-        is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
-        dividend_information = Contract.call_function(
-            token_contract, "dividendInformation", (), (0, "", "")
-        )
-        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -541,60 +602,84 @@ class ShareToken(TokenBase):
         self.memo = memo
 
     @staticmethod
-    def fetch(session: Session, token_address: str) -> ShareToken:
+    async def fetch(async_session: AsyncSession, token_address: str) -> ShareToken:
         """
         株式トークン属性情報取得
 
-        :param session: DB session
+        :param async_session: DB Async session
         :param token_address: トークンアドレス
         :return: ShareToken
         """
 
         # IbetShare コントラクトへの接続
-        token_contract = Contract.get_contract(TokenType.IbetShare, token_address)
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        name = Contract.call_function(token_contract, "name", (), "")
-        symbol = Contract.call_function(token_contract, "symbol", (), "")
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        issue_price = Contract.call_function(token_contract, "issuePrice", (), 0)
-        principal_value = Contract.call_function(
-            token_contract, "principalValue", (), 0
-        )
-        dividend_information = Contract.call_function(
-            token_contract, "dividendInformation", (), (0, "", "")
-        )
-        cancellation_date = Contract.call_function(
-            token_contract, "cancellationDate", (), ""
-        )
-        memo = Contract.call_function(token_contract, "memo", (), "")
-        status = Contract.call_function(token_contract, "status", (), True)
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        transfer_approval_required = Contract.call_function(
-            token_contract, "transferApprovalRequired", (), False
-        )
-        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
-        contact_information = Contract.call_function(
-            token_contract, "contactInformation", (), ""
-        )
-        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(
-            token_contract, "tradableExchange", (), ZERO_ADDRESS
-        )
-        personal_info_address = Contract.call_function(
-            token_contract, "personalInfoAddress", (), ZERO_ADDRESS
-        )
-        is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
+        token_contract = AsyncContract.get_contract(TokenType.IbetShare, token_address)
+
+        # Token-Contractから情報を取得する
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "issuePrice", (), 0),
+                AsyncContract.call_function(token_contract, "principalValue", (), 0),
+                AsyncContract.call_function(
+                    token_contract, "dividendInformation", (), (0, "", "")
+                ),
+                AsyncContract.call_function(token_contract, "cancellationDate", (), ""),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(
+                    token_contract, "transferApprovalRequired", (), False
+                ),
+                AsyncContract.call_function(token_contract, "isOffering", (), False),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(
+                    token_contract, "personalInfoAddress", (), ZERO_ADDRESS
+                ),
+                AsyncContract.call_function(token_contract, "isCanceled", (), False),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                name,
+                symbol,
+                total_supply,
+                issue_price,
+                principal_value,
+                dividend_information,
+                cancellation_date,
+                memo,
+                status,
+                transferable,
+                transfer_approval_required,
+                is_offering,
+                contact_information,
+                privacy_policy,
+                tradable_exchange,
+                personal_info_address,
+                is_canceled,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
 
         # 企業リストから、企業名とRSA鍵を取得する
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = session.scalars(
-            select(Listing).where(Listing.token_address == token_address).limit(1)
+        listed_token = (
+            await async_session.scalars(
+                select(Listing).where(Listing.token_address == token_address).limit(1)
+            )
         ).first()
 
         sharetoken = ShareToken()
@@ -641,8 +726,8 @@ class ShareToken(TokenBase):
 
     @classmethod
     @token_db_cache(ShareTokenModel)
-    def get(cls, session: Session, token_address: str) -> ShareToken:
-        return cls.fetch(session, token_address)
+    async def get(cls, async_session: AsyncSession, token_address: str) -> ShareToken:
+        return await cls.fetch(async_session, token_address)
 
 
 class MembershipToken(TokenBase):
@@ -669,31 +754,43 @@ class MembershipToken(TokenBase):
         token_model.short_term_cache_created = datetime.utcnow()
         return token_model
 
-    def fetch_expiry_short(self) -> None:
+    async def fetch_expiry_short(self) -> None:
         """
         会員権トークン リアルタイム属性情報取得
 
         :return: None
         """
-        token_contract = Contract.get_contract(
+        token_contract = AsyncContract.get_contract(
             TokenType.IbetMembership, self.token_address
         )
 
         # Fetch
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                total_supply,
+                status,
+                transferable,
+                initial_offering_status,
+                memo,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
+
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        status = Contract.call_function(token_contract, "status", (), True)
-
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        initial_offering_status = Contract.call_function(
-            token_contract, "initialOfferingStatus", (), False
-        )
-        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -706,55 +803,80 @@ class MembershipToken(TokenBase):
         self.memo = memo
 
     @staticmethod
-    def fetch(session: Session, token_address: str) -> MembershipToken:
+    async def fetch(async_session: AsyncSession, token_address: str) -> MembershipToken:
         """
         会員権トークン属性情報取得
 
-        :param session: DB session
+        :param async_session: DB Async session
         :param token_address: トークンアドレス
         :return: MembershipToken
         """
 
         # Token-Contractへの接続
-        token_contract = Contract.get_contract(TokenType.IbetMembership, token_address)
+        token_contract = AsyncContract.get_contract(
+            TokenType.IbetMembership, token_address
+        )
 
         # Token-Contractから情報を取得する
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        name = Contract.call_function(token_contract, "name", (), "")
-        symbol = Contract.call_function(token_contract, "symbol", (), "")
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        details = Contract.call_function(token_contract, "details", (), "")
-        return_details = Contract.call_function(token_contract, "returnDetails", (), "")
-        expiration_date = Contract.call_function(
-            token_contract, "expirationDate", (), ""
-        )
-        memo = Contract.call_function(token_contract, "memo", (), "")
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        status = Contract.call_function(token_contract, "status", (), True)
-        initial_offering_status = Contract.call_function(
-            token_contract, "initialOfferingStatus", (), False
-        )
-        image_url_1 = Contract.call_function(token_contract, "image_urls", (0,), "")
-        image_url_2 = Contract.call_function(token_contract, "image_urls", (1,), "")
-        image_url_3 = Contract.call_function(token_contract, "image_urls", (2,), "")
-        contact_information = Contract.call_function(
-            token_contract, "contactInformation", (), ""
-        )
-        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(
-            token_contract, "tradableExchange", (), ZERO_ADDRESS
-        )
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "details", (), ""),
+                AsyncContract.call_function(token_contract, "returnDetails", (), ""),
+                AsyncContract.call_function(token_contract, "expirationDate", (), ""),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "image_urls", (0,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (1,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (2,), ""),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                name,
+                symbol,
+                total_supply,
+                details,
+                return_details,
+                expiration_date,
+                memo,
+                transferable,
+                status,
+                initial_offering_status,
+                image_url_1,
+                image_url_2,
+                image_url_3,
+                contact_information,
+                privacy_policy,
+                tradable_exchange,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
 
         # 企業リストから、企業名を取得する
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = session.scalars(
-            select(Listing).where(Listing.token_address == token_address).limit(1)
+        listed_token = (
+            await async_session.scalars(
+                select(Listing).where(Listing.token_address == token_address).limit(1)
+            )
         ).first()
 
         membershiptoken = MembershipToken()
@@ -796,8 +918,10 @@ class MembershipToken(TokenBase):
 
     @classmethod
     @token_db_cache(MembershipTokenModel)
-    def get(cls, session: Session, token_address: str) -> MembershipToken:
-        return cls.fetch(session, token_address)
+    async def get(
+        cls, async_session: AsyncSession, token_address: str
+    ) -> MembershipToken:
+        return await cls.fetch(async_session, token_address)
 
 
 class CouponToken(TokenBase):
@@ -824,29 +948,43 @@ class CouponToken(TokenBase):
         token_model.short_term_cache_created = datetime.utcnow()
         return token_model
 
-    def fetch_expiry_short(self) -> None:
+    async def fetch_expiry_short(self) -> None:
         """
         クーポントークン リアルタイム属性情報取得
 
         :return: None
         """
-        token_contract = Contract.get_contract(TokenType.IbetCoupon, self.token_address)
+        token_contract = AsyncContract.get_contract(
+            TokenType.IbetCoupon, self.token_address
+        )
 
         # Fetch
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                total_supply,
+                status,
+                transferable,
+                initial_offering_status,
+                memo,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
+
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        status = Contract.call_function(token_contract, "status", (), True)
-
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        initial_offering_status = Contract.call_function(
-            token_contract, "initialOfferingStatus", (), False
-        )
-        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -859,55 +997,78 @@ class CouponToken(TokenBase):
         self.memo = memo
 
     @staticmethod
-    def fetch(session: Session, token_address: str) -> CouponToken:
+    async def fetch(async_session: AsyncSession, token_address: str) -> CouponToken:
         """
         クーポントークン属性情報取得
 
-        :param session: DB session
+        :param async_session: DB Async session
         :param token_address: トークンアドレス
         :return: CouponToken
         """
 
         # Token-Contractへの接続
-        token_contract = Contract.get_contract(TokenType.IbetCoupon, token_address)
+        token_contract = AsyncContract.get_contract(TokenType.IbetCoupon, token_address)
 
         # Token-Contractから情報を取得する
-        owner_address = Contract.call_function(
-            token_contract, "owner", (), ZERO_ADDRESS
-        )
-        name = Contract.call_function(token_contract, "name", (), "")
-        symbol = Contract.call_function(token_contract, "symbol", (), "")
-        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-        details = Contract.call_function(token_contract, "details", (), "")
-        return_details = Contract.call_function(token_contract, "returnDetails", (), "")
-        expiration_date = Contract.call_function(
-            token_contract, "expirationDate", (), ""
-        )
-        memo = Contract.call_function(token_contract, "memo", (), "")
-        transferable = Contract.call_function(token_contract, "transferable", (), False)
-        status = Contract.call_function(token_contract, "status", (), True)
-        initial_offering_status = Contract.call_function(
-            token_contract, "initialOfferingStatus", (), False
-        )
-        image_url_1 = Contract.call_function(token_contract, "image_urls", (0,), "")
-        image_url_2 = Contract.call_function(token_contract, "image_urls", (1,), "")
-        image_url_3 = Contract.call_function(token_contract, "image_urls", (2,), "")
-        contact_information = Contract.call_function(
-            token_contract, "contactInformation", (), ""
-        )
-        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(
-            token_contract, "tradableExchange", (), ZERO_ADDRESS
-        )
+        try:
+            tasks = await SemaphoreTaskGroup.run(
+                AsyncContract.call_function(token_contract, "owner", (), ZERO_ADDRESS),
+                AsyncContract.call_function(token_contract, "name", (), ""),
+                AsyncContract.call_function(token_contract, "symbol", (), ""),
+                AsyncContract.call_function(token_contract, "totalSupply", (), 0),
+                AsyncContract.call_function(token_contract, "details", (), ""),
+                AsyncContract.call_function(token_contract, "returnDetails", (), ""),
+                AsyncContract.call_function(token_contract, "expirationDate", (), ""),
+                AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(token_contract, "transferable", (), False),
+                AsyncContract.call_function(token_contract, "status", (), True),
+                AsyncContract.call_function(
+                    token_contract, "initialOfferingStatus", (), False
+                ),
+                AsyncContract.call_function(token_contract, "image_urls", (0,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (1,), ""),
+                AsyncContract.call_function(token_contract, "image_urls", (2,), ""),
+                AsyncContract.call_function(
+                    token_contract, "contactInformation", (), ""
+                ),
+                AsyncContract.call_function(token_contract, "privacyPolicy", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "tradableExchange", (), ZERO_ADDRESS
+                ),
+                max_concurrency=3,
+            )
+            (
+                owner_address,
+                name,
+                symbol,
+                total_supply,
+                details,
+                return_details,
+                expiration_date,
+                memo,
+                transferable,
+                status,
+                initial_offering_status,
+                image_url_1,
+                image_url_2,
+                image_url_3,
+                contact_information,
+                privacy_policy,
+                tradable_exchange,
+            ) = [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable from None
 
         # 企業リストから、企業名を取得する
-        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company = await CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
-        listed_token = session.scalars(
-            select(Listing).where(Listing.token_address == token_address).limit(1)
+        listed_token = (
+            await async_session.scalars(
+                select(Listing).where(Listing.token_address == token_address).limit(1)
+            )
         ).first()
 
         coupontoken = CouponToken()
@@ -949,5 +1110,5 @@ class CouponToken(TokenBase):
 
     @classmethod
     @token_db_cache(CouponTokenModel)
-    def get(cls, session: Session, token_address: str) -> CouponToken:
-        return cls.fetch(session, token_address)
+    async def get(cls, async_session: AsyncSession, token_address: str) -> CouponToken:
+        return await cls.fetch(async_session, token_address)

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # make application directory
 RUN mkdir -p /app
@@ -11,6 +11,7 @@ RUN groupadd -g 1000 apl \
 
 # install packages
 RUN apt-get update -q \
+ && apt-get upgrade -qy \
  && apt-get install -y --no-install-recommends \
  unzip \
  build-essential \
@@ -55,7 +56,7 @@ RUN . ~/.bash_profile \
 
 # install poetry
 RUN . ~/.bash_profile \
- && python -m pip install poetry==1.6.1
+ && python -m pip install poetry==1.7.1
 RUN . ~/.bash_profile \
  && poetry config virtualenvs.create false
 
@@ -80,6 +81,7 @@ COPY . /app/ibet-Wallet-API/
 RUN chown -R apl:apl /app/ibet-Wallet-API \
  && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
  && chmod 755 /app/ibet-Wallet-API
+ENV PYTHONPATH /app/ibet-Wallet-API
 
 USER apl
 CMD /app/ibet-Wallet-API/tests/qa.sh

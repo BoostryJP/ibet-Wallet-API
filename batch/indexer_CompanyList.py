@@ -16,56 +16,64 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import os
+
+import asyncio
+import hashlib
+import json
 import sys
 import time
 
-import requests
 from eth_utils import to_checksum_address
-from sqlalchemy import create_engine, delete, select
+from httpx import AsyncClient
+from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
-import log
-
-from app.config import (
-    COMPANY_LIST_SLEEP_INTERVAL,
-    COMPANY_LIST_URL,
-    DATABASE_URL,
-    REQUEST_TIMEOUT,
-)
+from app.config import COMPANY_LIST_SLEEP_INTERVAL, COMPANY_LIST_URL, REQUEST_TIMEOUT
+from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import Company
+from batch import log
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
-
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
     """Processor for indexing company list"""
 
-    def process(self):
+    def __init__(self):
+        self.company_list_digest = None
+
+    async def process(self):
         LOG.info("Syncing company list")
 
         # Get from COMPANY_LIST_URL
         try:
-            req = requests.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
-            if req.status_code != 200:
-                raise Exception(f"status code={req.status_code}")
-            company_list_json = req.json()
-        except Exception as e:
-            LOG.exception(f"Failed to get company list: {e}")
+            async with AsyncClient() as client:
+                _resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
+            if _resp.status_code != 200:
+                raise Exception(f"status code={_resp.status_code}")
+            company_list_json = _resp.json()
+        except Exception:
+            LOG.exception("Failed to get company list")
             return
 
-        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+        # Check the difference from the previous cycle
+        _resp_digest = hashlib.sha256(
+            json.dumps(company_list_json).encode()
+        ).hexdigest()
+        if _resp_digest == self.company_list_digest:
+            LOG.info("Skip: There are no differences from the previous cycle")
+            return
+        else:
+            self.company_list_digest = _resp_digest
+
+        # Update DB data
+        db_session = BatchAsyncSessionLocal()
         try:
             # Delete all company list from DB
-            db_session.execute(delete(Company))
+            await db_session.execute(delete(Company))
 
             # Insert company list
             for i, company in enumerate(company_list_json):
@@ -94,7 +102,7 @@ class Processor:
                         )
                         continue
                     try:
-                        self.__sink_on_company(
+                        await self.__sink_on_company(
                             db_session=db_session,
                             address=to_checksum_address(address),
                             corporate_name=corporate_name,
@@ -109,42 +117,39 @@ class Processor:
                 else:
                     LOG.warning(f"required error: index={i}")
                     continue
-            db_session.commit()
-            db_session.close()
+
+            await db_session.commit()
+            await db_session.close()
         except Exception as e:
-            db_session.rollback()
-            db_session.close()
+            await db_session.rollback()
+            await db_session.close()
             raise e
         LOG.info("Sync job has been completed")
 
     @staticmethod
-    def __sink_on_company(
-        db_session: Session,
+    async def __sink_on_company(
+        db_session: AsyncSession,
         address: str,
         corporate_name: str,
         rsa_publickey: str,
         homepage: str,
     ):
-        _company = db_session.scalars(
-            select(Company).where(Company.address == address).limit(1)
-        ).first()
-        if _company is None:
-            _company = Company()
-            _company.address = address
-            _company.corporate_name = corporate_name
-            _company.rsa_publickey = rsa_publickey
-            _company.homepage = homepage
-            db_session.add(_company)
+        _company = Company()
+        _company.address = address
+        _company.corporate_name = corporate_name
+        _company.rsa_publickey = rsa_publickey
+        _company.homepage = homepage
+        await db_session.merge(_company)
 
 
-def main():
+async def main():
     LOG.info("Service started successfully")
     processor = Processor()
     while True:
         start_time = time.time()
 
         try:
-            processor.process()
+            await processor.process()
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -153,8 +158,11 @@ def main():
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
-        time.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
+        await asyncio.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(1)

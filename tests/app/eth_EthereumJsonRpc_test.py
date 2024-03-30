@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from unittest import mock
 from unittest.mock import ANY, MagicMock
 
@@ -155,7 +156,7 @@ class TestEthereumJsonRpc:
         session.commit()
 
         # Request target API
-        with mock.patch("requests.post", MagicMock(side_effect=Exception())):
+        with mock.patch("httpx.AsyncClient.post", MagicMock(side_effect=Exception())):
             resp = client.post(
                 self.apiurl, json={"method": "eth_syncing", "params": []}
             )

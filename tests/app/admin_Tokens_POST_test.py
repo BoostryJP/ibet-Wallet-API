@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 import json
 
 from eth_utils import to_checksum_address
@@ -470,6 +471,8 @@ class TestAdminTokensPOST:
         }
         self.insert_listing_data(session, token)
 
+        session.commit()
+
         request_params = self.token_param_1
         request_params["contract_address"] = bond_token["address"]
         headers = {"Content-Type": "application/json"}
@@ -508,6 +511,8 @@ class TestAdminTokensPOST:
             "contract_address": bond_token["address"],
         }
         self.insert_executable_contract_data(session, contract)
+
+        session.commit()
 
         request_params = self.token_param_1
         request_params["contract_address"] = bond_token["address"]

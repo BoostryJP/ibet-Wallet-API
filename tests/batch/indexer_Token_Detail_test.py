@@ -16,9 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import logging
 import re
-import time
 from decimal import Decimal
 from typing import List
 from unittest import mock
@@ -27,6 +28,7 @@ from unittest.mock import MagicMock
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -86,6 +88,10 @@ def main_func(test_module):
     LOG.setLevel(default_log_level)
 
 
+@mock.patch("app.config.BOND_TOKEN_ENABLED", True)
+@mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
+@mock.patch("app.config.COUPON_TOKEN_ENABLED", True)
+@mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
 class TestProcessor:
     issuer = eth_account["issuer"]
     user1 = eth_account["user1"]
@@ -316,7 +322,7 @@ class TestProcessor:
 
         # Run target process
         processor.SEC_PER_RECORD = 0
-        processor.process()
+        asyncio.run(processor.process())
 
         # assertion
         for _expect_dict in _bond_token_expected_list:
@@ -393,10 +399,10 @@ class TestProcessor:
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         _coupon_token_list: List[CouponTokenModel] = session.scalars(
@@ -411,10 +417,10 @@ class TestProcessor:
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         session.rollback()
@@ -448,9 +454,9 @@ class TestProcessor:
 
         # Expect that process() raises SQLAlchemyError.
         with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
+            AsyncSession, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         _coupon_token_list: List[CouponTokenModel] = session.scalars(
@@ -465,9 +471,9 @@ class TestProcessor:
 
         # Expect that process() raises SQLAlchemyError.
         with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
+            AsyncSession, "commit", side_effect=SQLAlchemyError()
         ), pytest.raises(SQLAlchemyError):
-            processor.process()
+            asyncio.run(processor.process())
 
         # Assertion
         session.rollback()
@@ -499,16 +505,16 @@ class TestProcessor:
         )
         self.listing_token(token["address"], "IbetCoupon", session)
         # Mocking time.sleep to break mainloop
-        time_mock = MagicMock(wraps=time)
+        time_mock = MagicMock(wraps=asyncio)
         time_mock.sleep.side_effect = [TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Token_Detail.time", time_mock), mock.patch(
-            "web3.providers.rpc.HTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
+        with mock.patch("batch.indexer_Token_Detail.asyncio", time_mock), mock.patch(
+            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            MagicMock(side_effect=[ServiceUnavailable()]),
         ), pytest.raises(TypeError):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
-            main_func()
+            asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.INFO, "Service started successfully")

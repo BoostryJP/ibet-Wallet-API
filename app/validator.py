@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Any
 
 from pydantic_core.core_schema import ValidatorFunctionWrapHandler

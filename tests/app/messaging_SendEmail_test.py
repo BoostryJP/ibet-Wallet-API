@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -34,7 +35,7 @@ class TestSendEmail:
     # Normal_1_1
     def test_normal_1_1(self, client: TestClient, session: Session):
         params = {
-            "to_emails": ["test@example.com"],
+            "to_emails": ["t" * 80 + "@example.com"],
             "subject": "Test email",
             "text_content": "text content",
             "html_content": "<p>html content</p>",
@@ -50,7 +51,7 @@ class TestSendEmail:
 
         mail = mail_list[0]
         assert mail.id == 1
-        assert mail.to_email == "test@example.com"
+        assert mail.to_email == "t" * 80 + "@example.com"
         assert mail.subject == "Test email"
         assert mail.text_content == "text content"
         assert mail.html_content == "<p>html content</p>"
@@ -188,20 +189,16 @@ class TestSendEmail:
         assert resp.json() == {
             "meta": {
                 "code": 88,
-                "message": "Invalid Parameter",
                 "description": [
                     {
                         "ctx": {
-                            "reason": "The email address is not valid. "
-                            "It must have exactly one "
-                            "@-sign."
+                            "pattern": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$"
                         },
                         "input": "invalid_email",
                         "loc": ["body", "to_emails", 0],
-                        "msg": "value is not a valid email address: The "
-                        "email address is not valid. It must have "
-                        "exactly one @-sign.",
-                        "type": "value_error",
+                        "msg": "String should match pattern "
+                        "'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$'",
+                        "type": "string_pattern_mismatch",
                     },
                     {
                         "ctx": {"max_length": 100},
@@ -218,6 +215,7 @@ class TestSendEmail:
                         "type": "value_error",
                     },
                 ],
+                "message": "Invalid Parameter",
             }
         }
 

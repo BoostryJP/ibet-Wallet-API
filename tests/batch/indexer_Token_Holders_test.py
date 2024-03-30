@@ -16,9 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+import asyncio
 import logging
-import os
-import sys
 import uuid
 from unittest import mock
 from unittest.mock import MagicMock
@@ -30,14 +30,10 @@ from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
 from web3.middleware import geth_poa_middleware
 
-from app.errors import ServiceUnavailable
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
-
 from app import config
 from app.config import ZERO_ADDRESS
 from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import Listing, TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import LOG, Processor
 from tests.account_config import eth_account
@@ -423,7 +419,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -593,7 +589,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -741,7 +737,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -921,7 +917,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1091,7 +1087,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1239,7 +1235,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1372,7 +1368,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1508,7 +1504,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1644,7 +1640,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1777,7 +1773,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -1910,7 +1906,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -2042,7 +2038,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -2143,7 +2139,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -2218,7 +2214,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -2294,7 +2290,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -2411,7 +2407,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         user1_record: TokenHolder = session.scalars(
             select(TokenHolder)
@@ -2457,12 +2453,12 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
         assert 2 == caplog.record_tuples.count(
             (LOG.name, logging.DEBUG, f"There are no pending collect batch")
         )
@@ -2510,13 +2506,13 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         assert 1 == caplog.record_tuples.count(
             (
@@ -2576,7 +2572,7 @@ class TestProcessor:
             token_list_contract["address"],
         ):
             # Setting stored index to 9,999,999
-            processor.collect()
+            asyncio.run(processor.collect())
             # Then processor call "__process_all" method 10 times.
             assert 1 == caplog.record_tuples.count(
                 (LOG.name, logging.INFO, f"process from=10000000, to=10999999")
@@ -2638,7 +2634,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.DEBUG, f"There are no pending collect batch")
@@ -2672,7 +2668,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
         assert 1 == caplog.record_tuples.count(
             (
                 LOG.name,
@@ -2697,7 +2693,7 @@ class TestProcessor:
     # <Error_3>
     # Failed to get Logs because of ABIEventFunctionNotFound.
     @mock.patch(
-        "web3.contract.contract.ContractEvent.get_logs",
+        "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
     def test_error_3(
@@ -2748,7 +2744,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
         _records = session.scalars(
             select(TokenHolder).where(
                 TokenHolder.holder_list == target_token_holders_list.id
@@ -2806,11 +2802,11 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ), mock.patch(
-            "web3.eth.Eth.get_code", side_effect=ServiceUnavailable()
+            "web3.eth.async_eth.AsyncEth.get_code", side_effect=ServiceUnavailable()
         ), pytest.raises(
             ServiceUnavailable
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         _records = session.scalars(
             select(TokenHolder).where(
@@ -2839,11 +2835,11 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ), mock.patch(
-            "web3.eth.Eth.get_code", side_effect=ServiceUnavailable()
+            "web3.eth.async_eth.AsyncEth.get_code", side_effect=ServiceUnavailable()
         ), pytest.raises(
             ServiceUnavailable
         ):
-            processor.collect()
+            asyncio.run(processor.collect())
 
         session.rollback()
         _records = session.scalars(

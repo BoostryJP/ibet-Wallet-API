@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -229,6 +230,8 @@ class TestDEXOrderList:
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
+        session.commit()
+
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
         resp = client.get(self.base_url + bond_token["address"], params=request_params)
@@ -283,6 +286,8 @@ class TestDEXOrderList:
         order.is_cancelled = True
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
+
+        session.commit()
 
         # request target API
         request_params = {
@@ -357,6 +362,8 @@ class TestDEXOrderList:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         session.add(agreement)
 
+        session.commit()
+
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
         resp = client.get(self.base_url + bond_token["address"], params=request_params)
@@ -430,6 +437,8 @@ class TestDEXOrderList:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         agreement.settlement_timestamp = "2019-06-18 00:00:00"
         session.add(agreement)
+
+        session.commit()
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
@@ -509,6 +518,8 @@ class TestDEXOrderList:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         agreement.settlement_timestamp = "2019-06-18 00:00:00"
         session.add(agreement)
+
+        session.commit()
 
         # request target API
         request_params = {
@@ -766,6 +777,8 @@ class TestDEXOrderListMembership:
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
+        session.commit()
+
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
         resp = client.get(self.apiurl, params=request_params)
@@ -847,6 +860,8 @@ class TestDEXOrderListMembership:
         order.is_cancelled = True
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
+
+        session.commit()
 
         # request target API
         request_params = {
@@ -931,6 +946,8 @@ class TestDEXOrderListMembership:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         session.add(agreement)
 
+        session.commit()
+
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
         resp = client.get(self.apiurl, params=request_params)
@@ -1012,6 +1029,8 @@ class TestDEXOrderListMembership:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         agreement.settlement_timestamp = "2019-06-18 00:00:00"
         session.add(agreement)
+
+        session.commit()
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
@@ -1099,6 +1118,8 @@ class TestDEXOrderListMembership:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         agreement.settlement_timestamp = "2019-06-18 00:00:00"
         session.add(agreement)
+
+        session.commit()
 
         # request target API
         request_params = {
@@ -1444,6 +1465,8 @@ class TestDEXOrderListCoupon:
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
 
+        session.commit()
+
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
         resp = client.get(self.apiurl, params=request_params)
@@ -1525,6 +1548,8 @@ class TestDEXOrderListCoupon:
         order.is_cancelled = True
         order.order_timestamp = "2019-06-17 00:00:00"
         session.add(order)
+
+        session.commit()
 
         # request target API
         request_params = {
@@ -1609,6 +1634,8 @@ class TestDEXOrderListCoupon:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         session.add(agreement)
 
+        session.commit()
+
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
         resp = client.get(self.apiurl, params=request_params)
@@ -1690,6 +1717,8 @@ class TestDEXOrderListCoupon:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         agreement.settlement_timestamp = "2019-06-18 00:00:00"
         session.add(agreement)
+
+        session.commit()
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
@@ -1777,6 +1806,8 @@ class TestDEXOrderListCoupon:
         agreement.agreement_timestamp = "2019-06-17 12:00:00"
         agreement.settlement_timestamp = "2019-06-18 00:00:00"
         session.add(agreement)
+
+        session.commit()
 
         # request target API
         request_params = {

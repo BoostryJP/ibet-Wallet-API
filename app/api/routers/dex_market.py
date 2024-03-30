@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
 from typing import Sequence
 
 from eth_utils import to_checksum_address
@@ -23,9 +24,9 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy import and_, desc, func, select
 
 from app import config, log
-from app.contracts import Contract
-from app.database import DBSession
-from app.errors import InvalidParameterError, NotSupportedError
+from app.contracts import AsyncContract
+from app.database import DBAsyncSession
+from app.errors import InvalidParameterError, NotSupportedError, ServiceUnavailable
 from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
 from app.model.schema import (
     ListAllLastPriceQuery,
@@ -38,6 +39,7 @@ from app.model.schema import (
     RetrieveAgreementQuery,
 )
 from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -54,7 +56,9 @@ router = APIRouter(prefix="/DEX/Market", tags=["dex"])
     response_model=GenericSuccessResponse[RetrieveAgreementDetailResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
-def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Depends()):
+async def retrieve_agreement(
+    req: Request, request_query: RetrieveAgreementQuery = Depends()
+):
     """
     Returns agreement information of given id.
     """
@@ -79,10 +83,18 @@ def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Dep
     ]
     if exchange_address not in address_list:
         raise InvalidParameterError(description="Invalid Address")
-    exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
+    exchange_contract = AsyncContract.get_contract("IbetExchange", exchange_address)
 
     # 注文情報の取得
-    maker_address, token_address, _, _, is_buy, _, _ = Contract.call_function(
+    (
+        maker_address,
+        token_address,
+        _,
+        _,
+        is_buy,
+        _,
+        _,
+    ) = await AsyncContract.call_function(
         contract=exchange_contract, function_name="getOrder", args=(order_id,)
     )
 
@@ -90,7 +102,14 @@ def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Dep
         raise InvalidParameterError("Data not found")
 
     # 約定情報の取得
-    taker_address, amount, price, canceled, paid, expiry = Contract.call_function(
+    (
+        taker_address,
+        amount,
+        price,
+        canceled,
+        paid,
+        expiry,
+    ) = await AsyncContract.call_function(
         contract=exchange_contract,
         function_name="getAgreement",
         args=(
@@ -131,8 +150,8 @@ def retrieve_agreement(req: Request, request_query: RetrieveAgreementQuery = Dep
     response_model=GenericSuccessResponse[ListAllOrderBookItemResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_membership_order_book(
-    session: DBSession,
+async def list_all_membership_order_book(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
 ):
@@ -192,11 +211,13 @@ def list_all_membership_order_book(
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-        orders = session.execute(
-            stmt.where(Order.account_address != account_address)
+        orders = (
+            await async_session.execute(
+                stmt.where(Order.account_address != account_address)
+            )
         ).all()
     else:
-        orders = session.execute(stmt).all()
+        orders = (await async_session.execute(stmt)).all()
 
     # レスポンス用の注文一覧を構築
     order_list_tmp = []
@@ -242,7 +263,7 @@ def list_all_membership_order_book(
     response_model=GenericSuccessResponse[ListAllLastPriceResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_membership_last_price(
+async def list_all_membership_last_price(
     req: Request, request_query: ListAllLastPriceQuery = Depends()
 ):
     """
@@ -254,21 +275,30 @@ def list_all_membership_last_price(
     ):
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    exchange_contract = Contract.get_contract(
+    exchange_contract = AsyncContract.get_contract(
         "IbetExchange", config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
     )
 
+    try:
+        tasks = await SemaphoreTaskGroup.run(
+            *[
+                AsyncContract.call_function(
+                    contract=exchange_contract,
+                    function_name="lastPrice",
+                    args=(to_checksum_address(token_address),),
+                    default_returns=0,
+                )
+                for token_address in request_query.address_list
+            ],
+            max_concurrency=3
+        )
+        last_prices = [task.result() for task in tasks]
+    except ExceptionGroup:
+        raise ServiceUnavailable from None
+
     price_list = [
-        {
-            "token_address": token_address,
-            "last_price": Contract.call_function(
-                contract=exchange_contract,
-                function_name="lastPrice",
-                args=(to_checksum_address(token_address),),
-                default_returns=0,
-            ),
-        }
-        for token_address in request_query.address_list
+        {"token_address": token_address, "last_price": last_price}
+        for token_address, last_price in zip(request_query.address_list, last_prices)
     ]
     return json_response({**SuccessResponse.default(), "data": price_list})
 
@@ -281,8 +311,8 @@ def list_all_membership_last_price(
     response_model=GenericSuccessResponse[ListAllTicksResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_membership_tick(
-    session: DBSession,
+async def list_all_membership_tick(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllTickQuery = Depends(),
 ):
@@ -301,16 +331,18 @@ def list_all_membership_tick(
         token = to_checksum_address(token_address)
         try:
             entries: Sequence[tuple[Agreement, Order]] = (
-                session.execute(
-                    select(Agreement, Order)
-                    .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                    .where(
-                        and_(
-                            Order.token_address == token,
-                            Agreement.status == AgreementStatus.DONE.value,
+                (
+                    await async_session.execute(
+                        select(Agreement, Order)
+                        .join(Order, Agreement.unique_order_id == Order.unique_order_id)
+                        .where(
+                            and_(
+                                Order.token_address == token,
+                                Agreement.status == AgreementStatus.DONE.value,
+                            )
                         )
+                        .order_by(desc(Agreement.settlement_timestamp))
                     )
-                    .order_by(desc(Agreement.settlement_timestamp))
                 )
                 .tuples()
                 .all()
@@ -350,8 +382,8 @@ def list_all_membership_tick(
     response_model=GenericSuccessResponse[ListAllOrderBookItemResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_coupon_order_book(
-    session: DBSession,
+async def list_all_coupon_order_book(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllOrderBookQuery = Depends(),
 ):
@@ -409,11 +441,13 @@ def list_all_coupon_order_book(
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-        orders = session.execute(
-            stmt.where(Order.account_address != account_address)
+        orders = (
+            await async_session.execute(
+                stmt.where(Order.account_address != account_address)
+            )
         ).all()
     else:
-        orders = session.execute(stmt).all()
+        orders = (await async_session.execute(stmt)).all()
 
     # レスポンス用の注文一覧を構築
     order_list_tmp = []
@@ -459,7 +493,7 @@ def list_all_coupon_order_book(
     response_model=GenericSuccessResponse[ListAllLastPriceResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_coupon_last_price(
+async def list_all_coupon_last_price(
     req: Request, request_query: ListAllLastPriceQuery = Depends()
 ):
     """
@@ -471,21 +505,32 @@ def list_all_coupon_last_price(
     ):
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    exchange_contract = Contract.get_contract(
+    exchange_contract = AsyncContract.get_contract(
         "IbetExchange", config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
     )
 
+    try:
+        tasks = await SemaphoreTaskGroup.run(
+            *[
+                AsyncContract.call_function(
+                    contract=exchange_contract,
+                    function_name="lastPrice",
+                    args=(to_checksum_address(token_address),),
+                    default_returns=0,
+                )
+                for token_address in request_query.address_list
+            ],
+            max_concurrency=3
+        )
+        last_prices = [task.result() for task in tasks]
+    except ExceptionGroup:
+        raise ServiceUnavailable from None
     price_list = [
         {
             "token_address": token_address,
-            "last_price": Contract.call_function(
-                contract=exchange_contract,
-                function_name="lastPrice",
-                args=(to_checksum_address(token_address),),
-                default_returns=0,
-            ),
+            "last_price": last_price,
         }
-        for token_address in request_query.address_list
+        for token_address, last_price in zip(request_query.address_list, last_prices)
     ]
     return json_response({**SuccessResponse.default(), "data": price_list})
 
@@ -498,8 +543,8 @@ def list_all_coupon_last_price(
     response_model=GenericSuccessResponse[ListAllTicksResponse],
     responses=get_routers_responses(NotSupportedError),
 )
-def list_all_coupon_tick(
-    session: DBSession,
+async def list_all_coupon_tick(
+    async_session: DBAsyncSession,
     req: Request,
     request_query: ListAllTickQuery = Depends(),
 ):
@@ -518,16 +563,18 @@ def list_all_coupon_tick(
         token = to_checksum_address(token_address)
         try:
             entries: Sequence[tuple[Agreement, Order]] = (
-                session.execute(
-                    select(Agreement, Order)
-                    .join(Order, Agreement.unique_order_id == Order.unique_order_id)
-                    .where(
-                        and_(
-                            Order.token_address == token,
-                            Agreement.status == AgreementStatus.DONE.value,
+                (
+                    await async_session.execute(
+                        select(Agreement, Order)
+                        .join(Order, Agreement.unique_order_id == Order.unique_order_id)
+                        .where(
+                            and_(
+                                Order.token_address == token,
+                                Agreement.status == AgreementStatus.DONE.value,
+                            )
                         )
+                        .order_by(desc(Agreement.settlement_timestamp))
                     )
-                    .order_by(desc(Agreement.settlement_timestamp))
                 )
                 .tuples()
                 .all()
