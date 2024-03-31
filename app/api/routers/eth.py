@@ -87,6 +87,7 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
                 res_data = await client.post(
                     node.endpoint_uri,
                     json={
+                        "id": 1,
                         "jsonrpc": "2.0",
                         "method": data.method,
                         "params": data.params,

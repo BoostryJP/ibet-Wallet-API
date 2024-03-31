@@ -382,7 +382,7 @@ class TestEthSendRawTransaction:
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
-        # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
+        # NOTE: RPCメソッド:txpool_inspectのMock化
         async def mock_inspect():
             return AttributeDict(
                 {
@@ -1511,7 +1511,7 @@ class TestEthSendRawTransaction:
 
         # タイムアウト
         # queuedに滞留
-        # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
+        # NOTE: RPCメソッド:txpool_inspectのMock化
         async def mock_inspect():
             return AttributeDict(
                 {
