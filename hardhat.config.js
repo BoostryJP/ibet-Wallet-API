@@ -8,7 +8,8 @@ module.exports = {
       blockGasLimit: 800000000,
       hardfork: "merge",  // We should use "berlin", but because of the https://github.com/NomicFoundation/hardhat/issues/5052 issue we are using "merge".
       throwOnTransactionFailures: false,
-      throwOnCallFailures: false
+      throwOnCallFailures: false,
+      allowBlocksWithSameTimestamp: true
     },
   },
   solidity: "0.8.23",

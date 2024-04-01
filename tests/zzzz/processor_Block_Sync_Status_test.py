@@ -25,6 +25,7 @@ import pytest
 from sqlalchemy import select
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.types import RPCEndpoint
 
 from app import config
 from app.model.db import Node
@@ -36,6 +37,10 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope="function")
 def processor(session):
+    # NOTE:
+    # Initialize the blockchain because the block timestamp may be in the future
+    # rather than the current time.
+    web3.provider.make_request(RPCEndpoint("hardhat_reset"), [])
     return Processor()
 
 
