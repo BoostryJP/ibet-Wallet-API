@@ -21,21 +21,16 @@ services:
       - "3306:3306"
     command:
       mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  ganache:
-    image: "trufflesuite/ganache:latest"
+  hardhat-network:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile_hardhat
     ports:
       - "8545:8545"
-    command:
-      - -k
-      - 'berlin'
-      - -g
-      - '0'
-      - --chain.chainId
-      - '2017'
   ibet-wallet-api-postgres:
     build:
       context: ./
-      dockerfile: ./tests/Dockerfile
+      dockerfile: ./tests/Dockerfile_unittest
     environment:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
@@ -48,14 +43,14 @@ services:
       - SHARE_TOKEN_ENABLED=1
     links:
       - postgres:postgres
-      - ganache:quorum
+      - hardhat-network:quorum
     depends_on:
       - postgres
-      - ganache
+      - hardhat-network
   ibet-wallet-api-mysql:
     build:
       context: ./
-      dockerfile: ./tests/Dockerfile
+      dockerfile: ./tests/Dockerfile_unittest
     environment:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
@@ -68,7 +63,7 @@ services:
       - SHARE_TOKEN_ENABLED=1
     links:
       - mysql:mysql
-      - ganache:quorum
+      - hardhat-network:quorum
     depends_on:
       - mysql
-      - ganache
+      - hardhat-network

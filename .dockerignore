@@ -1,3 +1,4 @@
 .github/
 docs/
 .python-version
+/node_modules/
