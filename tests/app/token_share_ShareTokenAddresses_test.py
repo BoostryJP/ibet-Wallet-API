@@ -415,6 +415,7 @@ class TestTokenShareTokenAddresses:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             },
         )
         tokens = [token_address_list[i] for i in range(0, 5)]
@@ -511,6 +512,7 @@ class TestTokenShareTokenAddresses:
             "is_canceled": True,
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "personal_info_address": "0x0000000000000000000000000000000000000000",
+            "require_personal_info_registered": False,
         }
 
         for key, value in not_matched_key_value.items():
@@ -615,6 +617,10 @@ class TestTokenShareTokenAddresses:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
 
     # <Error_1>
     # NotSupportedError

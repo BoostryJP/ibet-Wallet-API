@@ -149,6 +149,7 @@ class TokenBase:
 
 class BondToken(TokenBase):
     personal_info_address: str
+    require_personal_info_registered: bool
     transferable: bool
     is_offering: bool
     transfer_approval_required: bool
@@ -229,6 +230,9 @@ class BondToken(TokenBase):
                 ),
                 AsyncContract.call_function(token_contract, "isRedeemed", (), False),
                 AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
                 max_concurrency=3,
             )
             (
@@ -240,6 +244,7 @@ class BondToken(TokenBase):
                 transfer_approval_required,
                 is_redeemed,
                 memo,
+                require_personal_info_registered,
             ) = [task.result() for task in tasks]
         except ExceptionGroup:
             raise ServiceUnavailable from None
@@ -259,6 +264,7 @@ class BondToken(TokenBase):
         self.transfer_approval_required = transfer_approval_required
         self.is_redeemed = is_redeemed
         self.memo = memo
+        self.require_personal_info_registered = require_personal_info_registered
 
     @staticmethod
     async def fetch(async_session: AsyncSession, token_address: str) -> BondToken:
@@ -317,6 +323,9 @@ class BondToken(TokenBase):
                     token_contract, "personalInfoAddress", (), ZERO_ADDRESS
                 ),
                 AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
+                AsyncContract.call_function(
                     token_contract, "transferApprovalRequired", (), False
                 ),
                 AsyncContract.call_function(token_contract, "isRedeemed", (), False),
@@ -347,6 +356,7 @@ class BondToken(TokenBase):
                 status,
                 memo,
                 personal_info_address,
+                require_personal_info_registered,
                 transfer_approval_required,
                 is_redeemed,
             ) = [task.result() for task in tasks]
@@ -469,6 +479,7 @@ class BondToken(TokenBase):
             else 0
         )
         bondtoken.personal_info_address = personal_info_address
+        bondtoken.require_personal_info_registered = require_personal_info_registered
         bondtoken.transferable = transferable
         bondtoken.is_offering = is_offering
         bondtoken.transfer_approval_required = transfer_approval_required
@@ -508,6 +519,7 @@ class BondToken(TokenBase):
 
 class ShareToken(TokenBase):
     personal_info_address: str
+    require_personal_info_registered: bool
     transferable: bool
     is_offering: bool
     transfer_approval_required: bool
@@ -560,6 +572,9 @@ class ShareToken(TokenBase):
                     token_contract, "dividendInformation", (), (0, "", "")
                 ),
                 AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
                 max_concurrency=3,
             )
             (
@@ -573,6 +588,7 @@ class ShareToken(TokenBase):
                 is_canceled,
                 dividend_information,
                 memo,
+                require_personal_info_registered,
             ) = [task.result() for task in tasks]
         except ExceptionGroup:
             raise ServiceUnavailable from None
@@ -600,6 +616,7 @@ class ShareToken(TokenBase):
             "dividend_payment_date": dividend_information[2],
         }
         self.memo = memo
+        self.require_personal_info_registered = require_personal_info_registered
 
     @staticmethod
     async def fetch(async_session: AsyncSession, token_address: str) -> ShareToken:
@@ -644,6 +661,9 @@ class ShareToken(TokenBase):
                 AsyncContract.call_function(
                     token_contract, "personalInfoAddress", (), ZERO_ADDRESS
                 ),
+                AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
                 AsyncContract.call_function(token_contract, "isCanceled", (), False),
                 max_concurrency=3,
             )
@@ -665,6 +685,7 @@ class ShareToken(TokenBase):
                 privacy_policy,
                 tradable_exchange,
                 personal_info_address,
+                require_personal_info_registered,
                 is_canceled,
             ) = [task.result() for task in tasks]
         except ExceptionGroup:
@@ -721,6 +742,7 @@ class ShareToken(TokenBase):
         )
         sharetoken.tradable_exchange = tradable_exchange
         sharetoken.personal_info_address = personal_info_address
+        sharetoken.require_personal_info_registered = require_personal_info_registered
 
         return sharetoken
 

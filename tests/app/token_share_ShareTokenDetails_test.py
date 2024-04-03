@@ -54,6 +54,7 @@ class TestTokenShareTokenDetails:
             "symbol": "SHARE",
             "tradableExchange": exchange_address,
             "personalInfoAddress": personal_info_address,
+            "requirePersonalInfoRegistered": False,
             "totalSupply": 1000000,
             "issuePrice": 10000,
             "principalValue": 10000,
@@ -149,6 +150,7 @@ class TestTokenShareTokenDetails:
             "is_canceled": False,
             "tradable_exchange": exchange_address,
             "personal_info_address": personal_info,
+            "require_personal_info_registered": False,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -216,6 +218,7 @@ class TestTokenShareTokenDetails:
             "is_canceled": False,
             "tradable_exchange": exchange_address,
             "personal_info_address": personal_info,
+            "require_personal_info_registered": False,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

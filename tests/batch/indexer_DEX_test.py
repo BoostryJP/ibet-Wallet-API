@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-import time
 from typing import Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -44,6 +43,7 @@ from tests.contract_modules import (
     cancel_order,
     confirm_agreement,
     coupon_register_list,
+    coupon_transfer_to_exchange,
     issue_coupon_token,
     make_buy,
     make_sell,
@@ -52,7 +52,6 @@ from tests.contract_modules import (
     membership_transfer_to_exchange,
     take_buy,
     take_sell,
-    transfer_coupon_token,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -612,8 +611,11 @@ class TestProcessor:
         )
         membership_block_number = web3.eth.block_number
 
-        transfer_coupon_token(
-            self.issuer, coupon_token, coupon_exchange_contract_address, 800000
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            exchange={"address": coupon_exchange_contract_address},
+            token=coupon_token,
+            amount=800000,
         )
         make_sell(
             self.issuer,

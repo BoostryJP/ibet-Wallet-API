@@ -431,6 +431,7 @@ class TestTokenStraightBondTokenAddresses:
                 "tradable_exchange": exchange_address,
                 "status": True,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
                 "transfer_approval_required": False,
             },
         )
@@ -527,6 +528,7 @@ class TestTokenStraightBondTokenAddresses:
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "status": False,
             "personal_info_address": "0x0000000000000000000000000000000000000000",
+            "require_personal_info_registered": False,
             "transfer_approval_required": True,
         }
 
@@ -632,6 +634,10 @@ class TestTokenStraightBondTokenAddresses:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
 
     # <Error_1>
     # NotSupportedError

@@ -47,6 +47,9 @@ REVISION_22_12: Final = "446f913d1f41"
 REVISION_23_3: Final = "1055cb068506"
 REVISION_23_6: Final = "37cfcb200317"
 REVISION_23_9: Final = "1f0ac8015f2f"
+REVISION_23_12: Final = "f6f13d28bb48"
+REVISION_24_3: Final = "3d3b90fda898"
+REVISION_24_6: Final = "418af51b07b5"
 
 REVISION_UP_TO_1_8 = [REVISION_22_3]
 REVISION_UP_TO_22_6 = REVISION_UP_TO_1_8 + [REVISION_22_6]
@@ -865,3 +868,68 @@ class TestMigrationsUpgrade:
             assert bond_tokens[1].interest_payment_currency == ""
             assert bond_tokens[1].redemption_value_currency == ""
             assert bond_tokens[1].base_fx_rate == 0.0
+
+    def test_upgrade_v24_3(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        # 1. Migrate to v24.3 initial
+        alembic_runner.migrate_up_to(REVISION_23_12)
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # 2. Run to head
+        alembic_runner.migrate_up_to("head")
+
+    def test_upgrade_v24_6(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        # 1. Migrate to v24.6 initial
+        alembic_runner.migrate_up_to(REVISION_24_3)
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # 2. Insert test record
+        bond_token = meta.tables.get("bond_token")
+        stmt1 = insert(bond_token).values(
+            token_address="test1",
+            face_value_currency="JPY",
+            interest_payment_currency="",
+            redemption_value_currency="",
+            base_fx_rate=0.0,
+        )
+        stmt2 = insert(bond_token).values(
+            token_address="test2",
+            face_value_currency="JPY",
+            interest_payment_currency="",
+            redemption_value_currency="",
+            base_fx_rate=0.0,
+        )
+
+        share_token = meta.tables.get("share_token")
+        stmt3 = insert(share_token).values(token_address="test3")
+        stmt4 = insert(share_token).values(token_address="test4")
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.execute(stmt4)
+            conn.commit()
+
+        # 3. Run to head
+        alembic_runner.migrate_up_to("head")
+
+        with engine.connect() as conn:
+            bond_tokens = conn.execute(
+                text("SELECT * FROM bond_token ORDER BY created ASC")
+            )
+            bond_tokens = list(bond_tokens)
+            assert bond_tokens[0].require_personal_info_registered is True
+            assert bond_tokens[1].require_personal_info_registered is True
+
+            share_tokens = conn.execute(
+                text("SELECT * FROM share_token ORDER BY created ASC")
+            )
+            share_tokens = list(share_tokens)
+            assert share_tokens[0].require_personal_info_registered is True
+            assert share_tokens[1].require_personal_info_registered is True

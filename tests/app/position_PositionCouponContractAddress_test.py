@@ -31,6 +31,7 @@ from tests.account_config import eth_account
 from tests.contract_modules import (
     consume_coupon_token,
     coupon_register_list,
+    coupon_transfer_to_exchange,
     issue_coupon_token,
     transfer_coupon_token,
 )
@@ -72,7 +73,7 @@ class TestPositionCouponContractAddress:
         transfer_coupon_token(
             TestPositionCouponContractAddress.issuer,
             token,
-            account["account_address"],
+            account,
             1000000,
         )
 
@@ -91,14 +92,13 @@ class TestPositionCouponContractAddress:
 
         # Sell order
         agent = eth_account["agent"]
-        transfer_coupon_token(account, token, exchange_contract["address"], commitment)
+        coupon_transfer_to_exchange(account, exchange_contract, token, commitment)
         ExchangeContract = Contract.get_contract(
             "IbetExchange", exchange_contract["address"]
         )
-        tx_hash = ExchangeContract.functions.createOrder(
+        ExchangeContract.functions.createOrder(
             token["address"], commitment, 10000, False, agent["account_address"]
-        ).transact({"from": account["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": account["account_address"]})
 
         return token
 
@@ -128,7 +128,7 @@ class TestPositionCouponContractAddress:
         )
 
         # Transfer all amount
-        transfer_coupon_token(account, token, to_account["account_address"], 1000000)
+        transfer_coupon_token(account, token, to_account, 1000000)
 
         return token
 

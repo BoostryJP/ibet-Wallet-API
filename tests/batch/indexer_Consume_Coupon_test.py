@@ -162,7 +162,7 @@ class TestProcessor:
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
         block_number = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 2000)
+        transfer_coupon_token(self.issuer, token, self.trader, 2000)
         consume_coupon_token(self.trader, token, 2000)
         block_number2 = web3.eth.block_number
 
@@ -209,12 +209,12 @@ class TestProcessor:
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
         block_number = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 2000)
+        transfer_coupon_token(self.issuer, token, self.trader, 2000)
         consume_coupon_token(self.trader, token, 2000)
         block_number2 = web3.eth.block_number
         consume_coupon_token(self.issuer, token2, 3000)
         block_number3 = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token2, self.trader["account_address"], 4000)
+        transfer_coupon_token(self.issuer, token2, self.trader, 4000)
         consume_coupon_token(self.trader, token2, 4000)
         block_number4 = web3.eth.block_number
 

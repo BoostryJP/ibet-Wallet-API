@@ -107,7 +107,7 @@ class TestEthWaitForTransactionReceipt:
             abi=coupontoken_1["abi"],
         )
         user1 = eth_account["user1"]
-        transfer_coupon_token(issuer, coupontoken_1, user1["account_address"], 10)
+        transfer_coupon_token(issuer, coupontoken_1, user1, 10)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             {

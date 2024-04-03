@@ -91,12 +91,10 @@ def payment_gateway_contract() -> DeployedContract:
     contract_address, abi = Contract.deploy_contract(
         "PaymentGateway", [], deployer["account_address"]
     )
-
     contract = Contract.get_contract("PaymentGateway", contract_address)
-    tx_hash = contract.functions.addAgent(agent["account_address"]).transact(
+    contract.functions.addAgent(agent["account_address"]).transact(
         {"from": deployer["account_address"], "gas": 4000000}
     )
-    web3.eth.wait_for_transaction_receipt(tx_hash)
 
     return {"address": contract_address, "abi": abi}
 

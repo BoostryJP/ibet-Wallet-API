@@ -358,10 +358,9 @@ class TestProcessor:
             "baseFxRate": "",
         }
         test_token = issue_bond_token(self.issuer, args)
-        tx_hash = TokenListContract.functions.register(
+        TokenListContract.functions.register(
             test_token["address"], "UnknownTokenTemplate"
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         asyncio.run(processor.process())
