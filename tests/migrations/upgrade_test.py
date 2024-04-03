@@ -24,20 +24,9 @@ from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
 from pytest_alembic import MigrationContext
-from sqlalchemy import (
-    Column,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    Text,
-    insert,
-    select,
-    text,
-)
+from sqlalchemy import Column, Integer, MetaData, String, Table, Text, insert, text
 from sqlalchemy.engine import Engine
 
-from app.config import ZERO_ADDRESS
 from app.database import engine
 
 REVISION_22_3: Final = "a80595c53d52"
@@ -924,12 +913,20 @@ class TestMigrationsUpgrade:
                 text("SELECT * FROM bond_token ORDER BY created ASC")
             )
             bond_tokens = list(bond_tokens)
-            assert bond_tokens[0].require_personal_info_registered is True
-            assert bond_tokens[1].require_personal_info_registered is True
+            if engine.name == "mysql":
+                assert bond_tokens[0].require_personal_info_registered == 1
+                assert bond_tokens[1].require_personal_info_registered == 1
+            else:
+                assert bond_tokens[0].require_personal_info_registered is True
+                assert bond_tokens[1].require_personal_info_registered is True
 
             share_tokens = conn.execute(
                 text("SELECT * FROM share_token ORDER BY created ASC")
             )
             share_tokens = list(share_tokens)
-            assert share_tokens[0].require_personal_info_registered is True
-            assert share_tokens[1].require_personal_info_registered is True
+            if engine.name == "mysql":
+                assert share_tokens[0].require_personal_info_registered == 1
+                assert share_tokens[1].require_personal_info_registered == 1
+            else:
+                assert share_tokens[0].require_personal_info_registered is True
+                assert share_tokens[1].require_personal_info_registered is True

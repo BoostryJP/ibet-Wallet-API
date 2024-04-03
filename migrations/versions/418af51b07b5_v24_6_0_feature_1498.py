@@ -8,10 +8,8 @@ Create Date: 2024-04-03 20:12:10.136869
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import update
 
 from app.database import get_db_schema
-from app.model.db import IDXBondToken, IDXShareToken
 
 # revision identifiers, used by Alembic.
 revision = "418af51b07b5"
@@ -28,16 +26,28 @@ def upgrade():
         sa.Column("require_personal_info_registered", sa.Boolean(), nullable=True),
         schema=get_db_schema(),
     )
-    stmt = update(IDXBondToken).values(require_personal_info_registered=True)
-    op.get_bind().execute(stmt)
+    if op.get_bind().dialect.name == "mysql":
+        op.execute(
+            sa.text("UPDATE bond_token SET require_personal_info_registered = 1;")
+        )
+    else:
+        op.execute(
+            sa.text("UPDATE bond_token SET require_personal_info_registered = 'true';")
+        )
 
     op.add_column(
         "share_token",
         sa.Column("require_personal_info_registered", sa.Boolean(), nullable=True),
         schema=get_db_schema(),
     )
-    stmt = update(IDXShareToken).values(require_personal_info_registered=True)
-    op.get_bind().execute(stmt)
+    if op.get_bind().dialect.name == "mysql":
+        op.execute(
+            sa.text("UPDATE share_token SET require_personal_info_registered = 1;")
+        )
+    else:
+        op.execute(
+            sa.text("UPDATE share_token SET require_personal_info_registered = 'true';")
+        )
 
 
 def downgrade():
