@@ -2809,6 +2809,20 @@ freezegun = ">=1.0"
 pytest = ">=3.6"
 
 [[package]]
+name = "pytest-order"
+version = "1.2.1"
+description = "pytest plugin to run your tests in a specific order"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pytest-order-1.2.1.tar.gz", hash = "sha256:4451bd8821ba4fa2109455a2fcc882af60ef8e53e09d244d67674be08f56eac3"},
+    {file = "pytest_order-1.2.1-py3-none-any.whl", hash = "sha256:c3082fc73f9ddcf13e4a22dda9bbcc2f39865bf537438a1d50fa241e028dd743"},
+]
+
+[package.dependencies]
+pytest = {version = ">=6.2.4", markers = "python_version >= \"3.10\""}
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -4169,4 +4183,4 @@ ibet-explorer = ["aiohttp", "async-cache", "ibet-wallet-api-explorer", "textual"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.2"
-content-hash = "f01ced6305b89588639ef8bd21f5fe6331eca738f50eb23a50229131eacd2d84"
+content-hash = "983ef5b8edb436e20aec8108237091b6a01d4f28dc7f34110fc72930d94df6cf"

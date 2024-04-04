@@ -93,7 +93,7 @@ def payment_gateway_contract() -> DeployedContract:
     )
     contract = Contract.get_contract("PaymentGateway", contract_address)
     contract.functions.addAgent(agent["account_address"]).transact(
-        {"from": deployer["account_address"], "gas": 4000000}
+        {"from": deployer["account_address"]}
     )
 
     return {"address": contract_address, "abi": abi}
@@ -424,7 +424,7 @@ def ibet_exchange_contract(payment_gateway_address) -> DeployedContract:
 
     storage = Contract.get_contract("ExchangeStorage", storage_address)
     storage.functions.upgradeVersion(contract_address).transact(
-        {"from": deployer["account_address"], "gas": 4000000}
+        {"from": deployer["account_address"]}
     )
 
     return {"address": contract_address, "abi": abi}
