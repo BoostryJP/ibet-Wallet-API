@@ -27,7 +27,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ## Supported contract version
 
-* ibet-SmartContract: version 22.12
+* ibet-SmartContract: version 24.6
 * See [details](./app/contracts/contract_version.md).
 
 ## Setup

@@ -227,7 +227,7 @@ class TestProcessor:
             },
         )
         tx_hash = token_contract.functions.transfer(to_address, 1).transact(
-            {"from": deployer, "gas": 4000000}
+            {"from": deployer}
         )
 
         # Execute batch processing

@@ -128,8 +128,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             {
@@ -222,8 +221,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             {
@@ -254,8 +252,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_2.functions.consume(10).build_transaction(
             {
@@ -351,8 +348,7 @@ class TestEthSendRawTransactionNoWait:
                     "gasPrice": 0,
                 }
             )
-            tx_hash = web3.eth.send_transaction(pre_tx)
-            web3.eth.wait_for_transaction_receipt(tx_hash)
+            web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
                 {
@@ -445,8 +441,7 @@ class TestEthSendRawTransactionNoWait:
                     "gasPrice": 0,
                 }
             )
-            tx_hash = web3.eth.send_transaction(pre_tx)
-            web3.eth.wait_for_transaction_receipt(tx_hash)
+            web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
                 {
@@ -677,8 +672,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         local_account_1 = web3.eth.account.create()
 

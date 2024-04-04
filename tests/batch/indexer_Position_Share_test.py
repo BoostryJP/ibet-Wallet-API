@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-import time
 from typing import Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -491,10 +490,10 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"], 1500, '{"message": "locked1"}'
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
         token_contract.functions.lock(
             self.trader["account_address"], 1500, '{"message": "locked2"}'
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -572,7 +571,7 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"], 3000, '{"message": "locked1"}'
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
 
         # Unlock
         token_contract.functions.unlock(
@@ -580,7 +579,7 @@ class TestProcessor:
             self.trader2["account_address"],
             100,
             '{"message": "unlocked1"}',
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
+        ).transact({"from": self.trader["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -684,10 +683,9 @@ class TestProcessor:
 
         # Issue(add balance)
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.issueFrom(
+        token_contract.functions.issueFrom(
             self.issuer["account_address"], config.ZERO_ADDRESS, 50000
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -732,10 +730,9 @@ class TestProcessor:
 
         # Redeem
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.redeemFrom(
+        token_contract.functions.redeemFrom(
             self.issuer["account_address"], config.ZERO_ADDRESS, 50000
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -796,16 +793,14 @@ class TestProcessor:
         )
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.setTransferApprovalRequired(True).transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
+        token_contract.functions.applyForTransfer(
             self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.trader["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -894,22 +889,19 @@ class TestProcessor:
         )
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.setTransferApprovalRequired(True).transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
+        token_contract.functions.applyForTransfer(
             self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.trader["account_address"]})
 
         # Approve
-        tx_hash = token_contract.functions.approveTransfer(0, "test").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.approveTransfer(0, "test").transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1014,22 +1006,19 @@ class TestProcessor:
         )
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.setTransferApprovalRequired(True).transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
+        token_contract.functions.applyForTransfer(
             self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.trader["account_address"]})
 
         # Cancel
-        tx_hash = token_contract.functions.cancelTransfer(0, "test").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.cancelTransfer(0, "test").transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1587,7 +1576,7 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"], 100, "lock_message"
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
 
         # Token2 Operation
         share_transfer_to_exchange(self.issuer, exchange_contract, token2, 10000)

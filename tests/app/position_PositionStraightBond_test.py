@@ -136,10 +136,9 @@ class TestPositionStraightBond:
         ExchangeContract = Contract.get_contract(
             "IbetExchange", exchange_contract["address"]
         )
-        tx_hash = ExchangeContract.functions.createOrder(
+        ExchangeContract.functions.createOrder(
             token["address"], commitment, 10000, False, agent["account_address"]
-        ).transact({"from": account["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": account["account_address"]})
 
         return token
 
@@ -253,6 +252,7 @@ class TestPositionStraightBond:
         idx_token.status = True
         idx_token.memo = "メモ"
         idx_token.personal_info_address = personal_info_address
+        idx_token.require_personal_info_registered = True
         idx_token.transfer_approval_required = False
         session.add(idx_token)
         idx_token_list_item = IDXTokenListItem()
@@ -653,6 +653,7 @@ class TestPositionStraightBond:
                         "status": True,
                         "memo": "メモ",
                         "personal_info_address": personal_info_contract["address"],
+                        "require_personal_info_registered": True,
                         "transfer_approval_required": False,
                         "face_value_currency": "JPY",
                         "interest_payment_currency": "JPY",
@@ -1292,6 +1293,7 @@ class TestPositionStraightBond:
                         "status": True,
                         "memo": "メモ",
                         "personal_info_address": personal_info_contract["address"],
+                        "require_personal_info_registered": True,
                         "transfer_approval_required": False,
                         "face_value_currency": "",
                         "interest_payment_currency": "",

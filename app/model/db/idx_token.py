@@ -112,6 +112,9 @@ class IDXBondToken(TokenBase):
 
     # Personal Info Address
     personal_info_address: Mapped[str | None] = mapped_column(String(42), index=True)
+    # Require Personal Info Registered
+    # NOTE: Short-term cache required
+    require_personal_info_registered: Mapped[bool | None] = mapped_column(Boolean)
     # Transferable
     # NOTE: Short-term cache required
     transferable: Mapped[bool | None] = mapped_column(Boolean)
@@ -156,6 +159,7 @@ class IDXBondToken(TokenBase):
 
     FIELDS = {
         "personal_info_address": str,
+        "require_personal_info_registered": bool,
         "transferable": bool,
         "is_offering": bool,
         "transfer_approval_required": bool,
@@ -181,6 +185,7 @@ class IDXBondToken(TokenBase):
         return {
             **super().json(),
             "personal_info_address": self.personal_info_address,
+            "require_personal_info_registered": self.require_personal_info_registered,
             "transferable": self.transferable,
             "is_offering": self.is_offering,
             "transfer_approval_required": self.transfer_approval_required,
@@ -208,6 +213,9 @@ class IDXShareToken(TokenBase):
 
     # Personal Info Address
     personal_info_address: Mapped[str | None] = mapped_column(String(42), index=True)
+    # Require Personal Info Registered
+    # NOTE: Short-term cache required
+    require_personal_info_registered: Mapped[bool | None] = mapped_column(Boolean)
     # Transferable
     # NOTE: Short-term cache required
     transferable: Mapped[bool | None] = mapped_column(Boolean)
@@ -238,6 +246,7 @@ class IDXShareToken(TokenBase):
 
     FIELDS = {
         "personal_info_address": str,
+        "require_personal_info_registered": bool,
         "transferable": bool,
         "is_offering": bool,
         "transfer_approval_required": bool,
@@ -255,6 +264,7 @@ class IDXShareToken(TokenBase):
         return {
             **super().json(),
             "personal_info_address": self.personal_info_address,
+            "require_personal_info_registered": self.require_personal_info_registered,
             "transferable": self.transferable,
             "is_offering": self.is_offering,
             "transfer_approval_required": self.transfer_approval_required,

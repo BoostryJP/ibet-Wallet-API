@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-import time
 from typing import Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -146,7 +145,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -210,8 +209,8 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
-        transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 3000)
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
+        transfer_coupon_token(self.issuer, token, self.trader2, 3000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -300,12 +299,10 @@ class TestProcessor:
         self.listing_token(token2["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
-        transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 3000)
-        transfer_coupon_token(self.issuer, token2, self.trader["account_address"], 5000)
-        transfer_coupon_token(
-            self.issuer, token2, self.trader2["account_address"], 3000
-        )
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
+        transfer_coupon_token(self.issuer, token, self.trader2, 3000)
+        transfer_coupon_token(self.issuer, token2, self.trader, 5000)
+        transfer_coupon_token(self.issuer, token2, self.trader2, 3000)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -443,7 +440,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
+        transfer_coupon_token(self.issuer, token, self.trader, 10000)
 
         # Consume
         consume_coupon_token(self.issuer, token, 3000)
@@ -748,9 +745,7 @@ class TestProcessor:
         from_block = web3.eth.block_number
         for i in range(0, 5):
             # Transfer
-            transfer_coupon_token(
-                self.issuer, token, self.trader["account_address"], 10000
-            )
+            transfer_coupon_token(self.issuer, token, self.trader, 10000)
         to_block = web3.eth.block_number
 
         # Get events for token address

@@ -231,6 +231,7 @@ class TestCompanyInfoCompanyTokenList:
                 "status": True,
                 "memo": "メモ",
                 "personal_info_address": personal_info["address"],
+                "require_personal_info_registered": True,
                 "transfer_approval_required": False,
                 "face_value_currency": "JPY",
                 "interest_payment_currency": "JPY",
@@ -296,6 +297,7 @@ class TestCompanyInfoCompanyTokenList:
                 "is_canceled": False,
                 "tradable_exchange": share_exchange["address"],
                 "personal_info_address": personal_info["address"],
+                "require_personal_info_registered": True,
             }
         ]
 

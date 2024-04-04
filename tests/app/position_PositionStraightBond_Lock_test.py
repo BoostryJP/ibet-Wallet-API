@@ -97,6 +97,7 @@ class TestPositionStraightBondLock:
             "status": True,
             "memo": "メモ",
             "personal_info_address": TestPositionStraightBondLock.personal_info_address,
+            "require_personal_info_registered": True,
             "transfer_approval_required": False,
             "face_value_currency": "",
             "interest_payment_currency": "",
@@ -154,6 +155,7 @@ class TestPositionStraightBondLock:
         idx_token.status = True
         idx_token.memo = "メモ"
         idx_token.personal_info_address = personal_info_address
+        idx_token.require_personal_info_registered = True
         idx_token.transfer_approval_required = False
         idx_token.face_value_currency = ""
         idx_token.interest_payment_currency = ""

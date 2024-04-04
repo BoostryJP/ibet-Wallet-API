@@ -25,7 +25,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -45,20 +45,20 @@ from batch import indexer_Transfer
 from batch.indexer_Transfer import LOG, UTC
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    bond_transfer_to_exchange,
     coupon_register_list,
     issue_bond_token,
     issue_coupon_token,
     issue_share_token,
     membership_issue,
     membership_register_list,
-    membership_transfer_to_exchange,
     register_bond_list,
     register_share_list,
     share_lock,
-    share_transfer_to_exchange,
     share_unlock,
+    transfer_bond_token,
     transfer_coupon_token,
+    transfer_membership_token,
+    transfer_share_token,
 )
 from tests.utils import PersonalInfoUtils
 
@@ -248,23 +248,30 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
         block_number_1 = web3.eth.block_number
 
         # emit "Unlock"
-        share_lock(self.trader, share_token, self.trader2["account_address"], 50000)
+        # - target: trader1
+        # - recipient: trader2
+        share_lock(
+            invoker=self.trader,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            amount=50000,
+        )
         share_unlock(
-            self.trader2,
-            share_token,
-            self.trader["account_address"],
-            self.trader2["account_address"],
-            50000,
-            json.dumps({"message": "unlock"}),
+            invoker=self.trader2,
+            token=share_token,
+            target=self.trader["account_address"],
+            recipient=self.trader2["account_address"],
+            amount=50000,
+            data_str=json.dumps({"message": "unlock"}),
         )
         block_number_2 = web3.eth.block_number
 
@@ -306,6 +313,7 @@ class TestProcessor:
         idx_block_number: IDXTransferBlockNumber = session.scalars(
             select(IDXTransferBlockNumber)
             .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .order_by(desc(IDXTransferBlockNumber.created))
             .limit(1)
         ).first()
         assert idx_block_number.latest_block_number == block_number_2
@@ -331,14 +339,29 @@ class TestProcessor:
             self.issuer["account_address"],
         )
 
+        # emit "Transfer"
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
+        )
+
         # emit "Unlock"
-        share_lock(self.trader, share_token, self.trader2["account_address"], 50000)
+        # - target: trader1
+        # - recipient: trader1
+        share_lock(
+            invoker=self.trader,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            amount=50000,
+        )
         share_unlock(
-            self.trader2,
-            share_token,
-            self.trader["account_address"],
-            self.trader["account_address"],
-            50000,
+            invoker=self.trader2,
+            token=share_token,
+            target=self.trader["account_address"],
+            recipient=self.trader["account_address"],
+            amount=50000,
         )
         block_number = web3.eth.block_number
 
@@ -347,13 +370,14 @@ class TestProcessor:
 
         # Assertion
         idx_transfer_list = session.scalars(
-            select(IDXTransfer).order_by(IDXTransfer.created)
+            select(IDXTransfer).where(IDXTransfer.source_event == "Unlock")
         ).all()
         assert len(idx_transfer_list) == 0
 
         idx_block_number: IDXTransferBlockNumber = session.scalars(
             select(IDXTransferBlockNumber)
             .where(IDXTransferBlockNumber.contract_address == share_token["address"])
+            .order_by(desc(IDXTransferBlockNumber.created))
             .limit(1)
         ).first()
         assert idx_block_number.latest_block_number == block_number
@@ -388,41 +412,46 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
         block_number_1 = web3.eth.block_number
 
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader2["account_address"]},
-            share_token,
-            200000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader2,
+            token=share_token,
+            amount=200000,
         )
         block_number_2 = web3.eth.block_number
 
         # emit "Unlock"
-        share_lock(self.trader, share_token, self.trader2["account_address"], 100000)
+        share_lock(
+            invoker=self.trader,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            amount=100000,
+        )
         share_unlock(
-            self.trader2,
-            share_token,
-            self.trader["account_address"],
-            self.trader2["account_address"],
-            50000,
-            json.dumps({"message": "unlock"}),
+            invoker=self.trader2,
+            token=share_token,
+            target=self.trader["account_address"],
+            recipient=self.trader2["account_address"],
+            amount=50000,
+            data_str=json.dumps({"message": "unlock"}),
         )
         block_number_3 = web3.eth.block_number
 
         share_unlock(
-            self.trader2,
-            share_token,
-            self.trader["account_address"],
-            self.trader2["account_address"],
-            50000,
-            json.dumps({"message": "unlock"}),
+            invoker=self.trader2,
+            token=share_token,
+            target=self.trader["account_address"],
+            recipient=self.trader2["account_address"],
+            amount=50000,
+            data_str=json.dumps({"message": "unlock"}),
         )
         block_number_4 = web3.eth.block_number
 
@@ -523,19 +552,24 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        bond_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, bond_token, 100000
+        transfer_bond_token(
+            invoker=self.issuer, to=self.trader, token=bond_token, amount=100000
         )
         bond_block_number = web3.eth.block_number
-        membership_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            membership_token,
-            200000,
+
+        transfer_membership_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=membership_token,
+            amount=200000,
         )
         membership_block_number = web3.eth.block_number
+
         transfer_coupon_token(
-            self.issuer, coupon_token, self.trader["account_address"], 300000
+            invoker=self.issuer,
+            to=self.trader,
+            token=coupon_token,
+            amount=300000,
         )
         coupon_block_number = web3.eth.block_number
         latest_block_number = web3.eth.block_number
@@ -632,11 +666,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
         block_number_1 = web3.eth.block_number
 
@@ -722,11 +756,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
@@ -816,11 +850,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
@@ -917,11 +951,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
         block_number_1 = web3.eth.block_number
         block = web3.eth.get_block(block_number_1)
@@ -1034,11 +1068,11 @@ class TestProcessor:
         )
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
 
         # Run target process
@@ -1081,11 +1115,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
 
         # Execute batch processing
@@ -1118,11 +1152,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
 
         # Execute batch processing
@@ -1158,11 +1192,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
 
         # Execute batch processing
@@ -1197,11 +1231,11 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        share_transfer_to_exchange(
-            self.issuer,
-            {"address": self.trader["account_address"]},
-            share_token,
-            100000,
+        transfer_share_token(
+            invoker=self.issuer,
+            to=self.trader,
+            token=share_token,
+            amount=100000,
         )
 
         # Execute batch processing

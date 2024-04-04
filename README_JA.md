@@ -28,7 +28,7 @@
 
 ## コントラクトのバージョン
 
-* ibet-SmartContract: バージョン 22.12
+* ibet-SmartContract: バージョン 24.6
 * [詳細](./app/contracts/contract_version.md)を参照ください。
 
 ## セットアップ

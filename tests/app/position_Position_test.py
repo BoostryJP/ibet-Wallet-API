@@ -154,6 +154,7 @@ class TestPosition:
             "interest_payment_currency": "",
             "redemption_value_currency": "",
             "base_fx_rate": 0.0,
+            "require_personal_info_registered": True,
         }
 
     @staticmethod
@@ -185,6 +186,7 @@ class TestPosition:
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "transfer_approval_required": False,
             "transferable": True,
+            "require_personal_info_registered": True,
         }
 
     @staticmethod
@@ -448,7 +450,6 @@ class TestPosition:
         token_7 = "0x{:010x}{:010x}{:010x}{:010x}".format(0, 1, index, 7)
 
         personal_info_contract = shared_contract["PersonalInfo"]
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
 
         # Prepare data
         self.create_idx_position(
