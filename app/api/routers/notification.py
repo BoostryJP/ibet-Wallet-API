@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, Sequence
 
 from eth_utils import to_checksum_address
@@ -230,7 +230,7 @@ async def update_notification(
     if data.is_deleted is not None:
         notification.is_deleted = data.is_deleted
         if data.is_deleted:
-            notification.deleted_at = datetime.utcnow()
+            notification.deleted_at = datetime.now(UTC).replace(tzinfo=None)
         else:
             notification.deleted_at = None
 

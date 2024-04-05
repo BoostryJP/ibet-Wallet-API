@@ -26,7 +26,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
 from app.database import engine
-from app.model.db.base import Base
+from app.model.db.base import Base, naive_utcnow
 
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
@@ -50,11 +50,11 @@ class Listing(Base):
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
         created: Mapped[datetime | None] = mapped_column(
-            MySQLDATETIME(fsp=6), default=datetime.utcnow, index=True
+            MySQLDATETIME(fsp=6), default=naive_utcnow, index=True
         )
     else:
         created: Mapped[datetime | None] = mapped_column(
-            DateTime, default=datetime.utcnow, index=True
+            DateTime, default=naive_utcnow, index=True
         )
 
     def __repr__(self):

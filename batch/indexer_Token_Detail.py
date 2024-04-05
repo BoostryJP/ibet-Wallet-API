@@ -21,7 +21,7 @@ import asyncio
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import List, Sequence, Type
 
 from eth_utils import to_checksum_address
@@ -122,7 +122,7 @@ class Processor:
                         local_session, token_address
                     )
                     token_detail = token_detail_obj.to_model()
-                    token_detail.created = datetime.utcnow()
+                    token_detail.created = datetime.now(UTC).replace(tzinfo=None)
                     async with local_session.begin_nested():
                         await local_session.merge(token_detail)
                         await local_session.commit()

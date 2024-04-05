@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest import mock
 from unittest.mock import MagicMock
@@ -301,7 +301,7 @@ class TestProcessor:
             _coupon_token_expected_list.append({"token_address": token["address"]})
 
         await async_session.commit()
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
         await asyncio.sleep(1)
 
         # Run target process
@@ -778,7 +778,7 @@ class TestProcessor:
 
         await async_session.commit()
         await asyncio.sleep(1)
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
@@ -806,7 +806,7 @@ class TestProcessor:
 
         await async_session.commit()
         await asyncio.sleep(1)
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
@@ -856,7 +856,7 @@ class TestProcessor:
 
         await async_session.commit()
         await asyncio.sleep(1)
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
 
         # Expect that process() raises SQLAlchemyError.
         with mock.patch.object(

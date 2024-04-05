@@ -18,7 +18,7 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.11
+  - バージョン 3.12
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 15
   - [MySQL](https://www.mysql.com/) - バージョン 8.0

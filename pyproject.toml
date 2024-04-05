@@ -6,7 +6,7 @@ authors = ["BOOSTRY Co., Ltd. <dev@boostry.co.jp>"]
 license = "Apache License, Version 2.0"
 
 [tool.poetry.dependencies]
-python = "3.11.2"
+python = "3.12.2"
 boto3 = "~1.34.59"
 coincurve = "~19.0.1"
 eth-keyfile = "0.8.0"

@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Sequence
 
 from sqlalchemy import and_, select
@@ -86,9 +86,9 @@ class Watcher:
 
     @staticmethod
     async def _gen_block_timestamp(entry):
-        return datetime.utcfromtimestamp(
-            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"]
-        )
+        return datetime.fromtimestamp(
+            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"], UTC
+        ).replace(tzinfo=None)
 
     @staticmethod
     async def _get_token_all_list(db_session: AsyncSession):
