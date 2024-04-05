@@ -20,4 +20,4 @@ SPDX-License-Identifier: Apache-2.0
 from .abi import create_abi_event_argument_models
 from .contract import AsyncContract, Contract
 
-contract_version = "v23.12.0"
+contract_version = "v24.6.0"

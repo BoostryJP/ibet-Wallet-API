@@ -123,10 +123,7 @@ class TestTokenTransferApprovalHistory:
         self.insert_listing(session, listing=listing)
 
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -137,10 +134,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -148,10 +145,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -197,10 +191,7 @@ class TestTokenTransferApprovalHistory:
         self.insert_listing(session, listing=listing)
 
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -212,10 +203,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -223,10 +214,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -279,10 +267,7 @@ class TestTokenTransferApprovalHistory:
 
         # データ準備；IDXTransferApproval
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -293,10 +278,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -304,10 +289,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -359,10 +341,7 @@ class TestTokenTransferApprovalHistory:
 
         # データ準備；IDXTransferApproval
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -373,10 +352,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -384,10 +363,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -438,10 +414,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -484,10 +460,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -500,10 +476,14 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 20,
-            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
-            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
-            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
-            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -556,10 +536,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -572,10 +552,14 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 20,
-            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
-            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
-            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
-            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -628,10 +612,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -644,10 +628,14 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 20,
-            "application_datetime": datetime.utcnow() - timedelta(seconds=1),
-            "application_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
-            "approval_datetime": datetime.utcnow() - timedelta(seconds=1),
-            "approval_blocktimestamp": datetime.utcnow() - timedelta(seconds=1),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None)
+            - timedelta(seconds=1),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -700,10 +688,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -716,10 +704,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": "other_from_address",
             "to_address": self.to_address,
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -768,10 +756,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -784,10 +772,10 @@ class TestTokenTransferApprovalHistory:
             "from_address": self.from_address,
             "to_address": "other_to_address",
             "value": 10,
-            "application_datetime": datetime.utcnow(),
-            "application_blocktimestamp": datetime.utcnow(),
-            "approval_datetime": datetime.utcnow(),
-            "approval_blocktimestamp": datetime.utcnow(),
+            "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+            "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+            "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
             "cancelled": False,
             "transfer_approved": True,
         }
@@ -830,10 +818,7 @@ class TestTokenTransferApprovalHistory:
         self.insert_listing(session, listing=listing)
 
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -844,10 +829,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -855,10 +840,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -903,10 +885,7 @@ class TestTokenTransferApprovalHistory:
         self.insert_listing(session, listing=listing)
 
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -917,10 +896,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -928,10 +907,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -975,10 +951,7 @@ class TestTokenTransferApprovalHistory:
         self.insert_listing(session, listing=listing)
 
         before_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
         time.sleep(1)
 
@@ -989,10 +962,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }
@@ -1000,10 +973,7 @@ class TestTokenTransferApprovalHistory:
 
         time.sleep(1)
         after_datetime = (
-            datetime.utcnow()
-            .replace(tzinfo=UTC)
-            .astimezone(local_tz)
-            .strftime("%Y/%m/%d %H:%M:%S.%f")
+            datetime.now(UTC).astimezone(local_tz).strftime("%Y/%m/%d %H:%M:%S.%f")
         )
 
         session.commit()
@@ -1053,10 +1023,10 @@ class TestTokenTransferApprovalHistory:
                 "from_address": self.from_address,
                 "to_address": self.to_address,
                 "value": 10,
-                "application_datetime": datetime.utcnow(),
-                "application_blocktimestamp": datetime.utcnow(),
-                "approval_datetime": datetime.utcnow(),
-                "approval_blocktimestamp": datetime.utcnow(),
+                "application_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "application_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
+                "approval_datetime": datetime.now(UTC).replace(tzinfo=None),
+                "approval_blocktimestamp": datetime.now(UTC).replace(tzinfo=None),
                 "cancelled": False,
                 "transfer_approved": True,
             }

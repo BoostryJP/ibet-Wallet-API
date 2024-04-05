@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import functools
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Awaitable, Callable, Optional, Type, Union
 
@@ -98,18 +98,14 @@ def token_db_cache(TargetModel: IDXTokenModel):
                     .limit(1)
                 )
             ).first()
-            if (
-                cached_token
-                and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL)
-                >= datetime.utcnow()
-            ):
+            if cached_token and cached_token.created + timedelta(
+                seconds=TOKEN_CACHE_TTL
+            ) >= datetime.now(UTC).replace(tzinfo=None):
                 # If cached data exists and doesn't expire, use cached data
                 cached_data = cls.from_model(cached_token)
-                if (
-                    cached_token.short_term_cache_created
-                    + timedelta(seconds=TOKEN_SHORT_TERM_CACHE_TTL)
-                    < datetime.utcnow()
-                ):
+                if cached_token.short_term_cache_created + timedelta(
+                    seconds=TOKEN_SHORT_TERM_CACHE_TTL
+                ) < datetime.now(UTC).replace(tzinfo=None):
                     # If short term cache expires, fetch raw data from chain
                     await cached_data.fetch_expiry_short()
                     await async_session.merge(cached_data.to_model())
@@ -205,7 +201,7 @@ class BondToken(TokenBase):
                     getattr(self, f"interest_payment_date{str(i)}")
                 )
         token_model.interest_payment_date = interest_payment_date_list
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:
@@ -542,7 +538,7 @@ class ShareToken(TokenBase):
         for key, value in self.__dict__.items():
             if hasattr(token_model, key):
                 setattr(token_model, key, value)
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:
@@ -773,7 +769,7 @@ class MembershipToken(TokenBase):
         for key, value in self.__dict__.items():
             if hasattr(token_model, key):
                 setattr(token_model, key, value)
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:
@@ -967,7 +963,7 @@ class CouponToken(TokenBase):
         for key, value in self.__dict__.items():
             if hasattr(token_model, key):
                 setattr(token_model, key, value)
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:

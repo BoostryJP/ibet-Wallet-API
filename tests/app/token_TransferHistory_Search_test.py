@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -431,7 +431,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
-            created=datetime.utcnow(),
+            created=datetime.now(UTC).replace(tzinfo=None),
         )
 
         # ２件目
@@ -447,7 +447,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
-            created=datetime.utcnow() - timedelta(seconds=1),
+            created=datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=1),
         )
         session.commit()
 
@@ -500,7 +500,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
-            created=datetime.utcnow(),
+            created=datetime.now(UTC).replace(tzinfo=None),
         )
 
         # ２件目
@@ -516,7 +516,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
-            created=datetime.utcnow() + timedelta(seconds=1),
+            created=datetime.now(UTC).replace(tzinfo=None) + timedelta(seconds=1),
         )
         session.commit()
 
@@ -565,7 +565,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
-            created=datetime.utcnow(),
+            created=datetime.now(UTC).replace(tzinfo=None),
         )
 
         # ２件目
@@ -581,7 +581,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
-            created=datetime.utcnow() + timedelta(seconds=1),
+            created=datetime.now(UTC).replace(tzinfo=None) + timedelta(seconds=1),
         )
         session.commit()
 
@@ -630,7 +630,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
-            created=datetime.utcnow(),
+            created=datetime.now(UTC).replace(tzinfo=None),
         )
 
         # ２件目
@@ -646,7 +646,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
-            created=datetime.utcnow() + timedelta(seconds=1),
+            created=datetime.now(UTC).replace(tzinfo=None) + timedelta(seconds=1),
         )
         session.commit()
 
@@ -695,7 +695,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_1,
             transfer_source_event=IDXTransferSourceEventType.TRANSFER,
             transfer_event_data=None,
-            created=datetime.utcnow(),
+            created=datetime.now(UTC).replace(tzinfo=None),
         )
 
         # ２件目
@@ -711,7 +711,7 @@ class TestTokenTransferHistorySearch:
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
             transfer_event_data={"message": "unlock"},
-            created=datetime.utcnow() + timedelta(seconds=1),
+            created=datetime.now(UTC).replace(tzinfo=None) + timedelta(seconds=1),
         )
         session.commit()
 

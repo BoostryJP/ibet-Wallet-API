@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, create_engine
 from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
@@ -32,21 +32,27 @@ URI = config.DATABASE_URL
 engine = create_engine(URI, echo=False)
 
 
+def aware_utcnow():
+    return datetime.now(UTC)
+
+
+def naive_utcnow():
+    return aware_utcnow().replace(tzinfo=None)
+
+
 class BaseModel(object):
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
         created: Mapped[datetime | None] = mapped_column(
-            MySQLDATETIME(fsp=6), default=datetime.utcnow
+            MySQLDATETIME(fsp=6), default=naive_utcnow
         )
         modified: Mapped[datetime | None] = mapped_column(
-            MySQLDATETIME(fsp=6), default=datetime.utcnow, onupdate=datetime.utcnow
+            MySQLDATETIME(fsp=6), default=naive_utcnow, onupdate=naive_utcnow
         )
     else:
-        created: Mapped[datetime | None] = mapped_column(
-            DateTime, default=datetime.utcnow
-        )
+        created: Mapped[datetime | None] = mapped_column(DateTime, default=naive_utcnow)
         modified: Mapped[datetime | None] = mapped_column(
-            DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+            DateTime, default=naive_utcnow, onupdate=naive_utcnow
         )
 
     def to_dict(self):

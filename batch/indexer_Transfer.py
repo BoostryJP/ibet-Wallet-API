@@ -413,11 +413,12 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
-                    block_timestamp = datetime.utcfromtimestamp(
+                    block_timestamp = datetime.fromtimestamp(
                         (await async_web3.eth.get_block(event["blockNumber"]))[
                             "timestamp"
-                        ]
-                    )
+                        ],
+                        UTC,
+                    ).replace(tzinfo=None)
                     if args["value"] > sys.maxsize:
                         pass
                     else:

@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import Request, Response
 from starlette.middleware.base import RequestResponseEndpoint
@@ -50,14 +50,16 @@ class ResponseLoggerMiddleware:
         self, req: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         # Before process request
-        request_start_time = datetime.utcnow()
+        request_start_time = datetime.now(UTC).replace(tzinfo=None)
 
         # Process request
         res: Response = await call_next(req)
 
         # After process request
         if req.url.path != "/":
-            response_time = (datetime.utcnow() - request_start_time).total_seconds()
+            response_time = (
+                datetime.now(UTC).replace(tzinfo=None) - request_start_time
+            ).total_seconds()
             if req.url.query:
                 log_msg = f"{req.method} {req.url.path}?{req.url.query} {res.status_code} ({response_time}sec)"
             else:
