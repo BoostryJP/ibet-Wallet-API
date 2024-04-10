@@ -50,10 +50,16 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | TOKEN_SHORT_TERM_CACHE_TTL     | False    | Token attribute data cache (Short-Term) expiration time (seconds)  | 60                                         | 40      |
 
 ### Token Escrow
-| Variable Name                                | Required | Details                                                                  | Example                                    | Default | 
-|----------------------------------------------|----------|--------------------------------------------------------------------------|--------------------------------------------|---------|
-| IBET_ESCROW_CONTRACT_ADDRESS                 | False    | Ibet Escrow contract address                                             | 0x0000000000000000000000000000000000000000 | --      |
-| IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS  | False    | Ibet Security Token Escrow contract address                              | 0x0000000000000000000000000000000000000000 | --      |
+| Variable Name                               | Required | Details                                     | Example                                    | Default | 
+|---------------------------------------------|----------|---------------------------------------------|--------------------------------------------|---------|
+| IBET_ESCROW_CONTRACT_ADDRESS                | False    | Ibet Escrow contract address                | 0x0000000000000000000000000000000000000000 | --      |
+| IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS | False    | Ibet Security Token Escrow contract address | 0x0000000000000000000000000000000000000000 | --      |
+
+### Token DVP
+
+| Variable Name                               | Required | Details                                     | Example                                    | Default | 
+|---------------------------------------------|----------|---------------------------------------------|--------------------------------------------|---------|
+| IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS    | False    | Ibet Security Token DVP contract address    | 0x0000000000000000000000000000000000000000 | --      |
 
 ### On-chain Exchange (Only for utility tokens)
 | Variable Name                               | Required | Details                                                                  | Example                                    | Default | 
