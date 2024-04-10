@@ -164,6 +164,53 @@ class IbetSecurityTokenEscrowEventsQuery:
         return values
 
 
+class IbetSecurityTokenDVPEventType(str, Enum):
+    Deposited = "Deposited"
+    Withdrawn = "Withdrawn"
+    DeliveryCreated = "DeliveryCreated"
+    DeliveryCanceled = "DeliveryCanceled"
+    DeliveryConfirmed = "DeliveryConfirmed"
+    DeliveryFinished = "DeliveryFinished"
+    DeliveryAborted = "DeliveryAborted"
+
+
+class IbetSecurityTokenDVPEventArguments(BaseModel):
+    token: Optional[str] = None
+    account: Optional[str] = None
+    deliveryId: Optional[int] = None
+
+
+@dataclass
+class IbetSecurityTokenDVPEventsQuery:
+    from_block: Annotated[
+        int, Query(default=..., description="from block number", ge=1)
+    ]
+    to_block: Annotated[int, Query(default=..., description="to block number", ge=1)]
+    event: Annotated[
+        Optional[IbetSecurityTokenDVPEventType], Query(description="events to get")
+    ] = None
+    argument_filters: Annotated[
+        Optional[str],
+        Query(
+            description="filter argument. serialize obj to a JSON formatted str required."
+            "eg."
+            "```"
+            "{"
+            '    "deliveryId": 0'
+            '    "token": "0x0000000000000000000000000000000000000000"'
+            "}"
+            "```",
+        ),
+    ] = None
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_block_number(cls, values: Self):
+        if values.to_block < values.from_block:
+            raise ValueError("to_block must be greater than or equal to the from_block")
+        return values
+
+
 class SecurityTokenEventArguments(
     RootModel[create_abi_event_argument_models("IbetSecurityTokenInterface")]
 ):

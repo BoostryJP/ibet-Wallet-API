@@ -5186,6 +5186,77 @@ paths:
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Ibetsecuritytokenescrowevents
           description: Bad Request
+  /Events/IbetSecurityTokenDVP:
+    get:
+      tags:
+        - contract_log
+      summary: List all IbetSecurityTokenDVP event logs
+      description: Returns a list of IbetSecurityTokenDVP event logs.
+      operationId: IbetSecurityTokenDVPEvents
+      parameters:
+        - name: from_block
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            description: from block number
+            title: From Block
+          description: from block number
+        - name: to_block
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            description: to block number
+            title: To Block
+          description: to block number
+        - name: event
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/IbetSecurityTokenDVPEventType'
+              - type: 'null'
+            description: events to get
+            title: Event
+          description: events to get
+        - name: argument_filters
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "deliveryId":
+              0    "token": "0x0000000000000000000000000000000000000000"}```'
+            title: Argument Filters
+          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "deliveryId":
+            0    "token": "0x0000000000000000000000000000000000000000"}```'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Ibetsecuritytokendvpevents
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
   /Events/IbetSecurityTokenInterface/{token_address}:
     get:
       tags:
@@ -7532,6 +7603,16 @@ components:
             - {}
             - type: 'null'
           title: Ibet Security Token Escrow Abi
+        ibet_security_token_dvp_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Ibet Security Token Dvp Address
+        ibet_security_token_dvp_abi:
+          anyOf:
+            - {}
+            - type: 'null'
+          title: Ibet Security Token Dvp Abi
         e2e_messaging_address:
           anyOf:
             - type: string
@@ -7556,6 +7637,8 @@ components:
         - ibet_escrow_abi
         - ibet_security_token_escrow_address
         - ibet_security_token_escrow_abi
+        - ibet_security_token_dvp_address
+        - ibet_security_token_dvp_abi
         - e2e_messaging_address
         - e2e_messaging_abi
       title: GetNodeInfoResponse
@@ -7577,6 +7660,17 @@ components:
         - EscrowCanceled
         - EscrowFinished
       title: IbetEscrowEventType
+    IbetSecurityTokenDVPEventType:
+      type: string
+      enum:
+        - Deposited
+        - Withdrawn
+        - DeliveryCreated
+        - DeliveryCanceled
+        - DeliveryConfirmed
+        - DeliveryFinished
+        - DeliveryAborted
+      title: IbetSecurityTokenDVPEventType
     IbetSecurityTokenEscrowEventType:
       type: string
       enum:

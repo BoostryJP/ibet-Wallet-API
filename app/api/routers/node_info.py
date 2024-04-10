@@ -61,6 +61,9 @@ async def get_node_info():
     ibet_security_token_escrow_json = json.load(
         open("app/contracts/json/IbetSecurityTokenEscrow.json", "r")
     )
+    ibet_security_token_dvp_json = json.load(
+        open("app/contracts/json/IbetSecurityTokenDVP.json", "r")
+    )
     e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
     nodeInfo = {
@@ -76,6 +79,8 @@ async def get_node_info():
         "ibet_escrow_abi": ibet_escrow_json["abi"],
         "ibet_security_token_escrow_address": config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
         "ibet_security_token_escrow_abi": ibet_security_token_escrow_json["abi"],
+        "ibet_security_token_dvp_address": config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS,
+        "ibet_security_token_dvp_abi": ibet_security_token_dvp_json["abi"],
         "e2e_messaging_address": config.E2E_MESSAGING_CONTRACT_ADDRESS,
         "e2e_messaging_abi": e2e_messaging_json["abi"],
     }

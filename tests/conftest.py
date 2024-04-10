@@ -66,6 +66,7 @@ class SharedContract(TypedDict):
     E2EMessaging: Web3Contract
     IbetEscrow: Web3Contract
     IbetSecurityTokenEscrow: Web3Contract
+    IbetSecurityTokenDVP: Web3Contract
 
 
 class UnitTestAccount(TypedDict):
@@ -187,6 +188,28 @@ def ibet_st_escrow_contract() -> Web3Contract:
 
 
 @pytest.fixture(scope="session")
+def ibet_st_dvp_contract() -> Web3Contract:
+    deployer = eth_account["deployer"]["account_address"]
+
+    storage_address, _ = Contract.deploy_contract(
+        contract_name="DVPStorage", args=[], deployer=deployer
+    )
+    contract_address, abi = Contract.deploy_contract(
+        contract_name="IbetSecurityTokenDVP",
+        args=[storage_address],
+        deployer=deployer,
+    )
+
+    storage = Contract.get_contract(contract_name="DVPStorage", address=storage_address)
+    storage.functions.upgradeVersion(contract_address).transact({"from": deployer})
+
+    _ibet_st_dvp_contract: Web3Contract = Contract.get_contract(
+        contract_name="IbetSecurityTokenDVP", address=contract_address
+    )
+    return _ibet_st_dvp_contract
+
+
+@pytest.fixture(scope="session")
 def shared_contract(
     payment_gateway_contract,
     personalinfo_contract,
@@ -194,6 +217,7 @@ def shared_contract(
     e2e_messaging_contract,
     ibet_escrow_contract,
     ibet_st_escrow_contract,
+    ibet_st_dvp_contract,
 ) -> SharedContract:
     return {
         "PaymentGateway": payment_gateway_contract,
@@ -214,6 +238,7 @@ def shared_contract(
         "E2EMessaging": e2e_messaging_contract,
         "IbetEscrow": ibet_escrow_contract,
         "IbetSecurityTokenEscrow": ibet_st_escrow_contract,
+        "IbetSecurityTokenDVP": ibet_st_dvp_contract,
     }
 
 

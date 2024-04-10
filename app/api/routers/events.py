@@ -24,12 +24,18 @@ from web3.exceptions import Web3ValidationError
 
 from app import config, log
 from app.contracts import AsyncContract
-from app.errors import InvalidParameterError, RequestBlockRangeLimitExceededError
+from app.errors import (
+    DataNotExistsError,
+    InvalidParameterError,
+    RequestBlockRangeLimitExceededError,
+)
 from app.model.schema import (
     E2EMessagingEventArguments,
     E2EMessagingEventsQuery,
     EscrowEventArguments,
     IbetEscrowEventsQuery,
+    IbetSecurityTokenDVPEventArguments,
+    IbetSecurityTokenDVPEventsQuery,
     IbetSecurityTokenEscrowEventsQuery,
     IbetSecurityTokenInterfaceEventsQuery,
     IbetSecurityTokenInterfaceEventType,
@@ -272,6 +278,102 @@ async def list_all_ibet_security_token_escrow_event_logs(
             "ApplyForTransfer",
             "CancelTransfer",
             "ApproveTransfer",
+        ]
+
+    tmp_list = []
+    for attr in attr_list:
+        contract_event = getattr(contract.events, attr)
+        try:
+            events = await contract_event.get_logs(
+                fromBlock=request_query.from_block,
+                toBlock=request_query.to_block,
+                argument_filters=argument_filters_dict,
+            )
+        except Web3ValidationError:
+            events = []
+        for event in events:
+            block_number = event["blockNumber"]
+            block_timestamp = (await async_web3.eth.get_block(block_number))[
+                "timestamp"
+            ]
+            tmp_list.append(
+                {
+                    "event": event["event"],
+                    "args": dict(event["args"]),
+                    "transaction_hash": event["transactionHash"].hex(),
+                    "block_number": block_number,
+                    "block_timestamp": block_timestamp,
+                    "log_index": event["logIndex"],
+                }
+            )
+
+    # Sort: block_number > log_index
+    resp_json = sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+    return json_response({**SuccessResponse.default(), "data": resp_json})
+
+
+# /Events/IbetSecurityTokenDVP
+@router.get(
+    "/IbetSecurityTokenDVP",
+    summary="List all IbetSecurityTokenDVP event logs",
+    operation_id="IbetSecurityTokenDVPEvents",
+    response_model=GenericSuccessResponse[ListAllEventsResponse],
+    responses=get_routers_responses(
+        InvalidParameterError, RequestBlockRangeLimitExceededError, DataNotExistsError
+    ),
+)
+async def list_all_ibet_security_token_escrow_event_logs(
+    request_query: IbetSecurityTokenDVPEventsQuery = Depends(),
+):
+    """
+    Returns a list of IbetSecurityTokenDVP event logs.
+    """
+    # Validate
+    if request_query.to_block - request_query.from_block > REQUEST_BLOCK_RANGE_LIMIT:
+        raise RequestBlockRangeLimitExceededError(
+            "Search request range is over the limit"
+        )
+
+    argument_filters_dict = {}
+    if request_query.argument_filters:
+        try:
+            argument_filters_dict = (
+                IbetSecurityTokenDVPEventArguments.model_validate_json(
+                    request_query.argument_filters
+                ).model_dump(exclude_none=True)
+            )
+        except:
+            raise InvalidParameterError("invalid argument_filters")
+
+    if config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS is None:
+        raise DataNotExistsError
+    contract = AsyncContract.get_contract(
+        contract_name="IbetSecurityTokenDVP",
+        address=str(config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS),
+    )
+    if request_query.event == "Deposited":
+        attr_list = ["Deposited"]
+    elif request_query.event == "Withdrawn":
+        attr_list = ["Withdrawn"]
+    elif request_query.event == "DeliveryCreated":
+        attr_list = ["DeliveryCreated"]
+    elif request_query.event == "DeliveryCanceled":
+        attr_list = ["DeliveryCanceled"]
+    elif request_query.event == "DeliveryConfirmed":
+        attr_list = ["DeliveryConfirmed"]
+    elif request_query.event == "DeliveryFinished":
+        attr_list = ["DeliveryFinished"]
+    elif request_query.event == "DeliveryAborted":
+        attr_list = ["DeliveryAborted"]
+    else:  # All events
+        attr_list = [
+            "Deposited",
+            "Withdrawn",
+            "DeliveryCreated",
+            "DeliveryCanceled",
+            "DeliveryConfirmed",
+            "DeliveryFinished",
+            "DeliveryAborted",
         ]
 
     tmp_list = []
