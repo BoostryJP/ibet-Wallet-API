@@ -910,3 +910,74 @@ def finish_token_escrow(invoker, exchange, escrow_id):
     IbetEscrow.functions.finishEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}
     )
+
+
+# DVP決済の作成
+def create_security_token_delivery(
+    invoker, exchange, token, recipient_address, agent_address, amount
+):
+    web3.eth.default_account = invoker["account_address"]
+    IbetSecurityTokenDVPContract = Contract.get_contract(
+        "IbetSecurityTokenDVP", exchange["address"]
+    )
+    IbetSecurityTokenDVPContract.functions.createDelivery(
+        token["address"],
+        recipient_address,
+        amount,
+        agent_address,
+        "{}",
+    ).transact({"from": invoker["account_address"]})
+
+
+def get_latest_security_delivery_id(exchange):
+    IbetSecurityTokenDVPContract = Contract.get_contract(
+        "IbetSecurityTokenDVP", exchange["address"]
+    )
+    latest_delivery_id = (
+        IbetSecurityTokenDVPContract.functions.latestDeliveryId().call()
+    )
+    return latest_delivery_id
+
+
+# DVP決済の取消
+def cancel_security_token_delivery(invoker, exchange, delivery_id):
+    web3.eth.default_account = invoker["account_address"]
+    IbetSecurityTokenDVPContract = Contract.get_contract(
+        "IbetSecurityTokenDVP", exchange["address"]
+    )
+    IbetSecurityTokenDVPContract.functions.cancelDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}
+    )
+
+
+# DVP決済の確認
+def confirm_security_token_delivery(invoker, exchange, delivery_id):
+    web3.eth.default_account = invoker["account_address"]
+    IbetSecurityTokenDVPContract = Contract.get_contract(
+        "IbetSecurityTokenDVP", exchange["address"]
+    )
+    IbetSecurityTokenDVPContract.functions.confirmDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}
+    )
+
+
+# DVP決済の完了
+def finish_security_token_dvlivery(invoker, exchange, delivery_id):
+    web3.eth.default_account = invoker["account_address"]
+    IbetSecurityTokenDVPContract = Contract.get_contract(
+        "IbetSecurityTokenDVP", exchange["address"]
+    )
+    IbetSecurityTokenDVPContract.functions.finishDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}
+    )
+
+
+# DVP決済の中断
+def abort_security_token_delivery(invoker, exchange, delivery_id):
+    web3.eth.default_account = invoker["account_address"]
+    IbetSecurityTokenDVPContract = Contract.get_contract(
+        "IbetSecurityTokenDVP", exchange["address"]
+    )
+    IbetSecurityTokenDVPContract.functions.abortDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}
+    )
