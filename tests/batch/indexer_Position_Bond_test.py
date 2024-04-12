@@ -47,14 +47,19 @@ from batch import indexer_Position_Bond
 from batch.indexer_Position_Bond import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    abort_security_token_delivery,
     bond_transfer_to_exchange,
     cancel_agreement,
     cancel_order,
+    confirm_security_token_delivery,
+    create_security_token_delivery,
     create_security_token_escrow,
+    finish_security_token_dvlivery,
     finish_security_token_escrow,
     force_cancel_order,
     get_latest_agreementid,
     get_latest_orderid,
+    get_latest_security_delivery_id,
     get_latest_security_escrow_id,
     issue_bond_token,
     make_buy,
@@ -1326,8 +1331,126 @@ class TestProcessor:
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_14>
-    # No event logs
+    # Single Token
+    # Multi event with DVP logs
+    # - DeliveryCreated
+    # - DeliveryCanceled
+    # - DeliveryFinished
+    # - DeliveryAborted
     def test_normal_14(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        dvp_contract = shared_contract["IbetSecurityTokenDVP"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            dvp_contract.address,
+            personal_info_contract["address"],
+            token_list_contract,
+        )
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+
+        # Deposit and Create Delivery
+        bond_transfer_to_exchange(
+            self.issuer, {"address": dvp_contract.address}, token, 10000
+        )
+        create_security_token_delivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            token,
+            self.trader["account_address"],
+            self.issuer["account_address"],
+            200,
+        )
+        confirm_security_token_delivery(
+            self.trader,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+        finish_security_token_dvlivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+        create_security_token_delivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            token,
+            self.trader["account_address"],
+            self.issuer["account_address"],
+            300,
+        )
+        confirm_security_token_delivery(
+            self.trader,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+        abort_security_token_delivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+
+        # Run target process
+        block_number = web3.eth.block_number
+        asyncio.run(processor.sync_new_logs())
+
+        # Assertion
+        _position_list: Sequence[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
+        assert len(_position_list) == 2
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 10000 - 200
+        assert _position.exchange_commitment == 0
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader["account_address"]
+        assert _position.balance == 0
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 200
+        assert _position.exchange_commitment == 0
+
+    # <Normal_15>
+    # No event logs
+    def test_normal_15(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1357,10 +1480,10 @@ class TestProcessor:
         ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
-    # <Normal_15>
+    # <Normal_16>
     # Not listing Token is NOT indexed,
     # and indexed properly after listing
-    def test_normal_15(self, processor, shared_contract, session):
+    def test_normal_16(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1420,12 +1543,12 @@ class TestProcessor:
         ).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
-    # <Normal_16>
+    # <Normal_17>
     # Single Token
     # Multi event logs
     # - Transfer
     # Duplicate events to be removed
-    def test_normal_16(self, processor, shared_contract, session):
+    def test_normal_17(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1462,10 +1585,10 @@ class TestProcessor:
         )
         assert len(filtered_events) == 2
 
-    # <Normal_17>
+    # <Normal_18>
     # When stored index is 9,999,999 and current block number is 19,999,999,
     # then processor must process "__sync_all" method 10 times.
-    def test_normal_17(self, processor, shared_contract, session):
+    def test_normal_18(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1538,12 +1661,12 @@ class TestProcessor:
                 # Then processor call "__sync_all" method 20 times.
                 assert __sync_all_mock.call_count == 20
 
-    # <Normal_18>
+    # <Normal_19>
     # Multiple Token
     # Multi event logs
     # - Transfer/Exchange/Lock
     # Skip exchange events which has already been synced
-    def test_normal_18(self, processor, shared_contract, session):
+    def test_normal_19(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         agent = eth_account["agent"]
