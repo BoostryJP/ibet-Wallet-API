@@ -30,7 +30,7 @@ ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = tr
 textual = {version = "~0.44.1", optional = true}
 async-cache = {version = "~1.1.1", optional = true}
 typer = {version = "~0.7.0", optional = true}
-aiohttp = {version = "~3.9.3", optional = true}
+aiohttp = {version = "~3.9.4", optional = true}
 black = "24.3.0"
 
 [tool.poetry.group.dev.dependencies]
