@@ -47,9 +47,9 @@ class TestEthGetTransactionCount:
 
         assumed_body = {
             "chainid": "2017",
-            "gasprice": 1000000000,
+            "gasprice": 8000000000,
             "nonce": 0,
-        }  # hardhat returns a fixed value of 1000000000 for eth_gasPrice
+        }  # hardhat returns a fixed value of 8000000000 for eth_gasPrice
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -70,9 +70,9 @@ class TestEthGetTransactionCount:
 
         assumed_body = {
             "chainid": "2017",
-            "gasprice": 1000000000,
+            "gasprice": 8000000000,
             "nonce": nonce,
-        }  # hardhat returns a fixed value of 1000000000 for eth_gasPrice
+        }  # hardhat returns a fixed value of 8000000000 for eth_gasPrice
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -93,9 +93,9 @@ class TestEthGetTransactionCount:
 
         assumed_body = {
             "chainid": "2017",
-            "gasprice": 1000000000,
+            "gasprice": 8000000000,
             "nonce": nonce,
-        }  # hardhat returns a fixed value of 1000000000 for eth_gasPrice
+        }  # hardhat returns a fixed value of 8000000000 for eth_gasPrice
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
