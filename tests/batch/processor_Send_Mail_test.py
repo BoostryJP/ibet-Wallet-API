@@ -100,8 +100,73 @@ class TestProcessorSendMail:
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     # Normal_3
-    # SMTPException -> skip
+    # ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST
+    # - Not send emails if the domain is not allowed
+    @mock.patch("app.config.ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST", ["example.net"])
     def test_normal_3(self, processor, session, caplog):
+        # Prepare data
+        mail = Mail()
+        mail.to_email = "to@example.com"
+        mail.subject = "Test mail"
+        mail.text_content = "text content"
+        mail.html_content = "<p>html content</p>"
+        session.add(mail)
+        session.commit()
+
+        # Run processor
+        processor.process()
+        session.commit()
+
+        # Assertion
+        assert len(session.scalars(select(Mail)).all()) == 0
+
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.WARNING,
+                "Destination address is not allowed to send: id=1",
+            )
+        )
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
+
+    # Normal_4
+    # DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX
+    # - Not send emails if the destination address is not allowed
+    @mock.patch(
+        "app.config.DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX",
+        "^[a-zA-Z0-9_.+-]+@example.com",
+    )
+    def test_normal_4(self, processor, session, caplog):
+        # Prepare data
+        mail = Mail()
+        mail.to_email = "to@example.com"
+        mail.subject = "Test mail"
+        mail.text_content = "text content"
+        mail.html_content = "<p>html content</p>"
+        session.add(mail)
+        session.commit()
+
+        # Run processor
+        processor.process()
+        session.commit()
+
+        # Assertion
+        assert len(session.scalars(select(Mail)).all()) == 0
+
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.WARNING,
+                "Destination address is not allowed to send: id=1",
+            )
+        )
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
+
+    # Normal_5
+    # SMTPException -> skip
+    def test_normal_5(self, processor, session, caplog):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"
@@ -122,7 +187,7 @@ class TestProcessorSendMail:
         assert len(session.scalars(select(Mail)).all()) == 0
 
         assert 1 == caplog.record_tuples.count(
-            (LOG.name, logging.WARNING, "Could not send email: ")
+            (LOG.name, logging.WARNING, "Could not send email: id=1")
         )
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))

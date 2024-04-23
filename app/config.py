@@ -308,6 +308,16 @@ SMTP_SENDER_PASSWORD = os.environ.get("SMTP_SENDER_PASSWORD")
 # Amazon SES
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
 
+# Send settings
+ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST = (
+    os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST").split(",")
+    if os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST")
+    else None
+)
+DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX = os.environ.get(
+    "DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX"
+)
+
 ####################################################
 # Chat webhook settings
 ####################################################
