@@ -98,6 +98,16 @@ Amazon SES
 |---------------------|----------|-----------------|-----------|---------|
 | AWS_SES_REGION_NAME | False    | AWS region name | us-east-1 | --      |
 
+Send settings
+
+| Variable Name                              | Required | Details                                                                         | Example                       | Default | 
+|--------------------------------------------|----------|---------------------------------------------------------------------------------|-------------------------------|---------|
+| ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST      | False    | Domains allowed to send email. Not set if all domains are allowed.              | example.com,example.net       | --      |
+| DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX | False    | Regular expression for destination email addresses that are not allowed to send | ^[a-zA-Z0-9_.+-]+@example.com | --      |
+
+
+
+
 ### Chat Webhook
 | Variable Name     | Required | Details          | Example                                                                        | Default | 
 |-------------------|----------|------------------|--------------------------------------------------------------------------------|---------|
