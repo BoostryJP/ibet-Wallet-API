@@ -19,7 +19,7 @@ PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
 psycopg = {extras = ["c"], version = "^3.1.12"}
 pydantic = {extras = ["email"], version = "~2.5.2"}
 sqlalchemy = "~2.0.21"
-uvicorn = "~0.23.2"
+uvicorn = "~0.27.1"
 web3 = "~6.11.3"
 tzdata = "^2023.3"
 alembic = "^1.12.1"
