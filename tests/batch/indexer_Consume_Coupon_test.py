@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-import time
 from typing import Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -28,10 +27,9 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.errors import ServiceUnavailable
@@ -47,7 +45,7 @@ from tests.contract_modules import (
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -142,7 +140,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
@@ -177,7 +175,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
@@ -185,7 +183,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number2)
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
@@ -229,7 +227,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
@@ -237,7 +235,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number2)
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
@@ -245,7 +243,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number3)
         _consume_coupon = _consume_coupon_list[2]
         assert _consume_coupon.id == 3
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token2["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 3000
@@ -253,7 +251,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number4)
         _consume_coupon = _consume_coupon_list[3]
         assert _consume_coupon.id == 4
-        assert _consume_coupon.transaction_hash == block["transactions"][0].hex()
+        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _consume_coupon.token_address == token2["address"]
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 4000
@@ -418,7 +416,7 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.initial_sync())
@@ -435,7 +433,7 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.sync_new_logs())
@@ -505,7 +503,7 @@ class TestProcessor:
         ), mock.patch(
             "batch.indexer_Consume_Coupon.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError

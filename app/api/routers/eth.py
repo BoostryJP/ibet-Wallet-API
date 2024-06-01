@@ -163,7 +163,7 @@ async def send_raw_transaction(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
             LOG.warning(f"RLP decoding failed: {err}")
             continue
@@ -205,7 +205,7 @@ async def send_raw_transaction(
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0, "transaction_hash": None})
@@ -266,13 +266,13 @@ async def send_raw_transaction(
             )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
-                err_msg = await inspect_tx_failure(tx_hash.hex())
+                err_msg = await inspect_tx_failure(tx_hash)
                 code, message = error_code_msg(err_msg)
                 result.append(
                     {
                         "id": i + 1,
                         "status": 0,
-                        "transaction_hash": tx_hash.hex(),
+                        "transaction_hash": tx_hash.to_0x_hex(),
                         "error_code": code,
                         "error_msg": message,
                     }
@@ -290,28 +290,36 @@ async def send_raw_transaction(
                 from_address = Account.recover_transaction(raw_tx_hex)
             except Exception as err:
                 result.append(
-                    {"id": i + 1, "status": 0, "transaction_hash": tx_hash.hex()}
+                    {"id": i + 1, "status": 0, "transaction_hash": tx_hash.to_0x_hex()}
                 )
                 LOG.error(f"get sender address from signed transaction failed: {err}")
                 continue
-            nonce = int("0x0" if raw_tx[0].hex() == "0x" else raw_tx[0].hex(), 16)
+            nonce = int(
+                "0x0" if raw_tx[0].to_0x_hex() == "0x" else raw_tx[0].to_0x_hex(), 16
+            )
             txpool_inspect = await async_web3.geth.txpool.inspect()
-            if from_address in txpool_inspect.queued:
-                if str(nonce) in txpool_inspect.queued[from_address]:
+            if from_address in txpool_inspect["queued"]:
+                if str(nonce) in txpool_inspect["queued"][from_address]:
                     status = 0  # execution failure
 
             result.append(
-                {"id": i + 1, "status": status, "transaction_hash": tx_hash.hex()}
+                {"id": i + 1, "status": status, "transaction_hash": tx_hash.to_0x_hex()}
             )
             LOG.warning(f"Transaction receipt timeout: {time_exhausted_err}")
             continue
         except Exception as err:
-            result.append({"id": i + 1, "status": 0, "transaction_hash": tx_hash.hex()})
+            result.append(
+                {"id": i + 1, "status": 0, "transaction_hash": tx_hash.to_0x_hex()}
+            )
             LOG.error(f"Transaction failed: {err}")
             continue
 
         result.append(
-            {"id": i + 1, "status": tx["status"], "transaction_hash": tx_hash.hex()}
+            {
+                "id": i + 1,
+                "status": tx["status"],
+                "transaction_hash": tx_hash.to_0x_hex(),
+            }
         )
 
     return json_response({**SuccessResponse.default(), "data": result})
@@ -346,7 +354,7 @@ async def send_raw_transaction_no_wait(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
             LOG.warning(f"RLP decoding failed: {err}")
             continue
@@ -389,7 +397,7 @@ async def send_raw_transaction_no_wait(
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0})
@@ -442,7 +450,7 @@ async def send_raw_transaction_no_wait(
             continue
 
         result.append(
-            {"id": i + 1, "status": 1, "transaction_hash": transaction_hash.hex()}
+            {"id": i + 1, "status": 1, "transaction_hash": transaction_hash.to_0x_hex()}
         )
 
     return json_response({**SuccessResponse.default(), "data": result})
@@ -489,7 +497,7 @@ async def wait_for_transaction_receipt(
     return json_response({**SuccessResponse.default(), "data": result})
 
 
-async def inspect_tx_failure(tx_hash: str) -> str:
+async def inspect_tx_failure(tx_hash: HexBytes) -> str:
     tx = await async_web3.eth.get_transaction(tx_hash)
 
     # build a new transaction to replay:
@@ -502,7 +510,7 @@ async def inspect_tx_failure(tx_hash: str) -> str:
 
     # replay the transaction locally:
     try:
-        await async_web3.eth.call(replay_tx, tx.blockNumber - 1)
+        await async_web3.eth.call(replay_tx, tx["blockNumber"] - 1)
     except ContractLogicError as e:
         if len(e.args) == 0:
             raise e

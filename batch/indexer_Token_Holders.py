@@ -24,6 +24,7 @@ from typing import Dict, Optional, Sequence
 from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventFunctionNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
@@ -69,9 +70,9 @@ class Processor:
     token_owner_address: str
     token_template: str
 
-    token_contract: Optional[AsyncContract]
-    exchange_contract: Optional[AsyncContract]
-    escrow_contract: Optional[AsyncContract]
+    token_contract: Optional[Web3AsyncContract]
+    exchange_contract: Optional[Web3AsyncContract]
+    escrow_contract: Optional[Web3AsyncContract]
 
     def __init__(self):
         self.target = None
@@ -283,15 +284,15 @@ class Processor:
             tmp_events = []
 
             # Get "HolderChanged" events from exchange contract
-            exchange_contract = AsyncContract.get_contract(
+            exchange_contract: Web3AsyncContract = AsyncContract.get_contract(
                 contract_name="IbetExchangeInterface",
                 address=self.tradable_exchange_address,
             )
             try:
                 holder_changed_events = (
                     await exchange_contract.events.HolderChanged.get_logs(
-                        fromBlock=block_from,
-                        toBlock=block_to,
+                        from_block=block_from,
+                        to_block=block_to,
                         argument_filters={"token": self.token_contract.address},
                     )
                 )
@@ -304,7 +305,7 @@ class Processor:
                         {
                             "event": _event["event"],
                             "args": dict(_event["args"]),
-                            "transaction_hash": _event["transactionHash"].hex(),
+                            "transaction_hash": _event["transactionHash"].to_0x_hex(),
                             "block_number": _event["blockNumber"],
                             "log_index": _event["logIndex"],
                         }
@@ -314,7 +315,7 @@ class Processor:
             try:
                 token_transfer_events = (
                     await self.token_contract.events.Transfer.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 )
             except ABIEventFunctionNotFound:
@@ -325,7 +326,7 @@ class Processor:
                     {
                         "event": _event["event"],
                         "args": dict(_event["args"]),
-                        "transaction_hash": _event["transactionHash"].hex(),
+                        "transaction_hash": _event["transactionHash"].to_0x_hex(),
                         "block_number": _event["blockNumber"],
                         "log_index": _event["logIndex"],
                     }
@@ -340,12 +341,14 @@ class Processor:
                 args = event["args"]
                 from_account = args.get("from", ZERO_ADDRESS)
                 to_account = args.get("to", ZERO_ADDRESS)
-                amount = args.get("value")
+                amount = int(args.get("value"))
 
                 # Skip in case of deposit to exchange or withdrawal from exchange
-                if (await async_web3.eth.get_code(from_account)).hex() != "0x" or (
+                if (
+                    await async_web3.eth.get_code(from_account)
+                ).to_0x_hex() != "0x" or (
                     await async_web3.eth.get_code(to_account)
-                ).hex() != "0x":
+                ).to_0x_hex() != "0x":
                     continue
 
                 if amount is not None and amount <= sys.maxsize:
@@ -372,7 +375,7 @@ class Processor:
         try:
             # Get "Issue" events from token contract
             events = await self.token_contract.events.Issue.get_logs(
-                fromBlock=block_from, toBlock=block_to
+                from_block=block_from, to_block=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -405,7 +408,7 @@ class Processor:
         try:
             # Get "Redeem" events from token contract
             events = await self.token_contract.events.Redeem.get_logs(
-                fromBlock=block_from, toBlock=block_to
+                from_block=block_from, to_block=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -437,7 +440,7 @@ class Processor:
         try:
             # Get "Consume" events from token contract
             events = await self.token_contract.events.Consume.get_logs(
-                fromBlock=block_from, toBlock=block_to
+                from_block=block_from, to_block=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -463,7 +466,7 @@ class Processor:
         try:
             # Get "Lock" events from token contract
             events = await self.token_contract.events.Lock.get_logs(
-                fromBlock=block_from, toBlock=block_to
+                from_block=block_from, to_block=block_to
             )
         except ABIEventFunctionNotFound:
             events = []
@@ -492,7 +495,7 @@ class Processor:
         try:
             # Get "Unlock" events from token contract
             events = await self.token_contract.events.Unlock.get_logs(
-                fromBlock=block_from, toBlock=block_to
+                from_block=block_from, to_block=block_to
             )
         except ABIEventFunctionNotFound:
             events = []

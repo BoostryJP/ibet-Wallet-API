@@ -81,8 +81,7 @@ class LoadTestTaskSet(TaskSet):
 
         signed_txn = w3.eth.account.signTransaction(txn, private_key=private_key)
 
-        raw_tx_hex_list = []
-        raw_tx_hex_list.append(str(signed_txn.rawTransaction.hex()))
+        raw_tx_hex_list = [str(signed_txn.raw_transaction.to_0x_hex())]
 
         payload = {"raw_tx_hex_list": raw_tx_hex_list}
         headers = {"content-type": "application/json"}

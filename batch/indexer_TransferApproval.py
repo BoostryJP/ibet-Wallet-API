@@ -321,7 +321,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.ApplyForTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -363,7 +363,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.CancelTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -397,7 +397,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.ApproveTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -434,7 +434,7 @@ class Processor:
             exchange = target.exchange_contract
             try:
                 events = await exchange.events.ApplyForTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -483,7 +483,7 @@ class Processor:
             exchange = target.exchange_contract
             try:
                 events = await exchange.events.CancelTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -524,8 +524,8 @@ class Processor:
             exchange = target.exchange_contract
             try:
                 events = await exchange.events.EscrowFinished.get_logs(
-                    fromBlock=block_from,
-                    toBlock=block_to,
+                    from_block=block_from,
+                    to_block=block_to,
                     argument_filters={"transferApprovalRequired": True},
                 )
             except ABIEventFunctionNotFound:
@@ -567,7 +567,7 @@ class Processor:
             exchange = target.exchange_contract
             try:
                 events = await exchange.events.ApproveTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []

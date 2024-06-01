@@ -105,8 +105,8 @@ async def list_all_e2e_messaging_event_logs(
         contract_event = getattr(contract.events, attr)
         try:
             events = await contract_event.get_logs(
-                fromBlock=request_query.from_block,
-                toBlock=request_query.to_block,
+                from_block=request_query.from_block,
+                to_block=request_query.to_block,
                 argument_filters=argument_filters_dict,
             )
         except Web3ValidationError:
@@ -120,7 +120,7 @@ async def list_all_e2e_messaging_event_logs(
                 {
                     "event": event["event"],
                     "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
+                    "transaction_hash": event["transactionHash"].to_0x_hex(),
                     "block_number": block_number,
                     "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"],
@@ -190,8 +190,8 @@ async def list_all_ibet_escrow_event_logs(
         contract_event = getattr(contract.events, attr)
         try:
             events = await contract_event.get_logs(
-                fromBlock=request_query.from_block,
-                toBlock=request_query.to_block,
+                from_block=request_query.from_block,
+                to_block=request_query.to_block,
                 argument_filters=argument_filters_dict,
             )
         except Web3ValidationError:
@@ -205,7 +205,7 @@ async def list_all_ibet_escrow_event_logs(
                 {
                     "event": event["event"],
                     "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
+                    "transaction_hash": event["transactionHash"].to_0x_hex(),
                     "block_number": block_number,
                     "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"],
@@ -285,8 +285,8 @@ async def list_all_ibet_security_token_escrow_event_logs(
         contract_event = getattr(contract.events, attr)
         try:
             events = await contract_event.get_logs(
-                fromBlock=request_query.from_block,
-                toBlock=request_query.to_block,
+                from_block=request_query.from_block,
+                to_block=request_query.to_block,
                 argument_filters=argument_filters_dict,
             )
         except Web3ValidationError:
@@ -300,7 +300,7 @@ async def list_all_ibet_security_token_escrow_event_logs(
                 {
                     "event": event["event"],
                     "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
+                    "transaction_hash": event["transactionHash"].to_0x_hex(),
                     "block_number": block_number,
                     "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"],
@@ -381,8 +381,8 @@ async def list_all_ibet_security_token_escrow_event_logs(
         contract_event = getattr(contract.events, attr)
         try:
             events = await contract_event.get_logs(
-                fromBlock=request_query.from_block,
-                toBlock=request_query.to_block,
+                from_block=request_query.from_block,
+                to_block=request_query.to_block,
                 argument_filters=argument_filters_dict,
             )
         except Web3ValidationError:
@@ -396,7 +396,7 @@ async def list_all_ibet_security_token_escrow_event_logs(
                 {
                     "event": event["event"],
                     "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
+                    "transaction_hash": event["transactionHash"].to_0x_hex(),
                     "block_number": block_number,
                     "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"],
@@ -455,8 +455,8 @@ async def list_all_ibet_security_token_interface_event_logs(
         contract_event = getattr(contract.events, attr)
         try:
             events = await contract_event.get_logs(
-                fromBlock=request_query.from_block,
-                toBlock=request_query.to_block,
+                from_block=request_query.from_block,
+                to_block=request_query.to_block,
                 argument_filters=argument_filters_dict,
             )
         except Web3ValidationError:
@@ -470,7 +470,7 @@ async def list_all_ibet_security_token_interface_event_logs(
                 {
                     "event": event["event"],
                     "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
+                    "transaction_hash": event["transactionHash"].to_0x_hex(),
                     "block_number": block_number,
                     "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"],

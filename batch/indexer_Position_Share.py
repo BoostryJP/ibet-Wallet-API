@@ -302,7 +302,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Transfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -311,7 +311,7 @@ class Processor:
                     events=events, account_keys=["from", "to"]
                 )
                 for _account in accounts_filtered:
-                    if (await async_web3.eth.get_code(_account)).hex() == "0x":
+                    if (await async_web3.eth.get_code(_account)).to_0x_hex() == "0x":
                         (
                             _balance,
                             _pending_transfer,
@@ -344,7 +344,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Lock.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -363,7 +363,7 @@ class Processor:
                     # Index Lock event
                     self.__insert_lock_idx(
                         db_session=db_session,
-                        transaction_hash=event["transactionHash"].hex(),
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
                         msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
@@ -424,7 +424,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Unlock.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -444,7 +444,7 @@ class Processor:
                     # Index Unlock event
                     self.__insert_unlock_idx(
                         db_session=db_session,
-                        transaction_hash=event["transactionHash"].hex(),
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
                         msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
@@ -506,7 +506,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Issue.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -542,7 +542,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Redeem.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -578,7 +578,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.ApplyForTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -614,7 +614,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.CancelTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -650,7 +650,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.ApproveTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -695,7 +695,7 @@ class Processor:
                 # NewOrder event
                 try:
                     _event_list = await exchange.events.NewOrder.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -720,7 +720,7 @@ class Processor:
                 # CancelOrder event
                 try:
                     _event_list = await exchange.events.CancelOrder.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -745,7 +745,7 @@ class Processor:
                 # ForceCancelOrder event
                 try:
                     _event_list = await exchange.events.ForceCancelOrder.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -770,7 +770,7 @@ class Processor:
                 # Agree event
                 try:
                     _event_list = await exchange.events.Agree.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -795,7 +795,7 @@ class Processor:
                 # SettlementOK event
                 try:
                     _event_list = await exchange.events.SettlementOK.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -830,7 +830,7 @@ class Processor:
                 # SettlementNG event
                 try:
                     _event_list = await exchange.events.SettlementNG.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -916,7 +916,7 @@ class Processor:
                 # EscrowCreated event
                 try:
                     _event_list = await escrow.events.EscrowCreated.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -939,7 +939,7 @@ class Processor:
                 # EscrowCanceled event
                 try:
                     _event_list = await escrow.events.EscrowCanceled.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -962,7 +962,7 @@ class Processor:
                 # HolderChanged event
                 try:
                     _event_list = await escrow.events.HolderChanged.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -1050,7 +1050,7 @@ class Processor:
                 # DeliveryCreated event
                 try:
                     _event_list = await dvp.events.DeliveryCreated.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -1073,7 +1073,7 @@ class Processor:
                 # DeliveryCanceled event
                 try:
                     _event_list = await dvp.events.DeliveryCanceled.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -1096,7 +1096,7 @@ class Processor:
                 # DeliveryAborted event
                 try:
                     _event_list = await dvp.events.DeliveryAborted.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -1119,7 +1119,7 @@ class Processor:
                     # HolderChanged event
                 try:
                     _event_list = await dvp.events.HolderChanged.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
