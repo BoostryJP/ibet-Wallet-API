@@ -20,7 +20,7 @@ psycopg = {extras = ["c"], version = "^3.1.18"}
 pydantic = {extras = ["email"], version = "~2.7.1"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.28"}
 uvicorn = {extras = ["standard"], version = "~0.30.0"}
-web3 = "~7.0.0b6"
+web3 = "7.0.0b6"
 tzdata = "^2024.1"
 alembic = "^1.13.1"
 aiomysql = "0.2.0"
