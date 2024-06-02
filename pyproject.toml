@@ -13,14 +13,14 @@ eth-keyfile = "0.8.1"
 eth-utils = "~4.1.1"
 fastapi = "~0.111.0"
 gunicorn = "~22.0.0"
-hexbytes = "~0.3.1"
+hexbytes = "~1.2.0"
 orjson = "~3.10.3"
 PyMySQL = {extras = ["rsa"], version = "~1.1.0"}
 psycopg = {extras = ["c"], version = "^3.1.18"}
 pydantic = {extras = ["email"], version = "~2.7.1"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.28"}
 uvicorn = {extras = ["standard"], version = "~0.30.0"}
-web3 = "~6.19.0"
+web3 = "7.0.0b6"
 tzdata = "^2024.1"
 alembic = "^1.13.1"
 aiomysql = "0.2.0"

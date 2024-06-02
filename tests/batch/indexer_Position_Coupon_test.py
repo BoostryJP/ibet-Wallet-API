@@ -29,7 +29,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import AsyncWeb3, Web3
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.middleware import async_geth_poa_middleware, geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -59,10 +59,10 @@ from tests.contract_modules import (
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 async_web3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(config.WEB3_HTTP_PROVIDER))
-async_web3.middleware_onion.inject(async_geth_poa_middleware, layer=0)
+async_web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -751,7 +751,7 @@ class TestProcessor:
         # Get events for token address
         events = Contract.get_contract(
             "IbetCoupon", token["address"]
-        ).events.Transfer.get_logs(fromBlock=from_block, toBlock=to_block)
+        ).events.Transfer.get_logs(from_block=from_block, to_block=to_block)
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5
         filtered_events = processor.remove_duplicate_event_by_token_account_desc(
@@ -1156,7 +1156,7 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.initial_sync())
@@ -1186,7 +1186,7 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.sync_new_logs())
@@ -1298,7 +1298,7 @@ class TestProcessor:
         ), mock.patch(
             "batch.indexer_Position_Coupon.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError

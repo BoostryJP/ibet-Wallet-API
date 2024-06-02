@@ -127,7 +127,7 @@ class Watcher:
             try:
                 _event = getattr(self.contract.events, self.filter_name)
                 entries = await _event.get_logs(
-                    fromBlock=from_block_number, toBlock=to_block_number
+                    from_block=from_block_number, to_block=to_block_number
                 )
             except ABIEventFunctionNotFound:
                 entries = []

@@ -30,7 +30,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import RPCEndpoint
 
 from app import config
@@ -63,7 +63,7 @@ from tests.contract_modules import (
 from tests.utils import PersonalInfoUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -287,7 +287,7 @@ class TestProcessor:
         block1 = web3.eth.get_block(block_number_1)
         idx_transfer: IDXTransfer = idx_transfer_list[0]
         assert idx_transfer.id == 1
-        assert idx_transfer.transaction_hash == block1["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block1["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -300,7 +300,7 @@ class TestProcessor:
         block2 = web3.eth.get_block(block_number_2)
         idx_transfer: IDXTransfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
-        assert idx_transfer.transaction_hash == block2["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -467,7 +467,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         idx_transfer = idx_transfer_list[0]
         assert idx_transfer.id == 1
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -480,7 +480,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_2)
         idx_transfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -493,7 +493,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_3)
         idx_transfer = idx_transfer_list[2]
         assert idx_transfer.id == 3
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -506,7 +506,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_4)
         idx_transfer = idx_transfer_list[3]
         assert idx_transfer.id == 4
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -586,7 +586,7 @@ class TestProcessor:
         block = web3.eth.get_block(bond_block_number)
         idx_transfer = idx_transfer_list[0]
         assert idx_transfer.id == 1
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == bond_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -599,7 +599,7 @@ class TestProcessor:
         block = web3.eth.get_block(membership_block_number)
         idx_transfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == membership_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -612,7 +612,7 @@ class TestProcessor:
         block = web3.eth.get_block(coupon_block_number)
         idx_transfer = idx_transfer_list[2]
         assert idx_transfer.id == 3
-        assert idx_transfer.transaction_hash == block["transactions"][0].hex()
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == coupon_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -688,7 +688,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
-        assert _transfer.transaction_hash == block["transactions"][0].hex()
+        assert _transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _transfer.token_address == share_token["address"]
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
@@ -779,7 +779,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
-        assert _transfer.transaction_hash == block["transactions"][0].hex()
+        assert _transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _transfer.token_address == share_token["address"]
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
@@ -873,7 +873,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
-        assert _transfer.transaction_hash == block["transactions"][0].hex()
+        assert _transfer.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _transfer.token_address == share_token["address"]
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
@@ -962,7 +962,7 @@ class TestProcessor:
 
         idx_transfer = IDXTransfer()
         idx_transfer.id = 1
-        idx_transfer.transaction_hash = block["transactions"][0].hex()
+        idx_transfer.transaction_hash = block["transactions"][0].to_0x_hex()
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.issuer["account_address"]
         idx_transfer.value = 100000
@@ -1201,7 +1201,7 @@ class TestProcessor:
 
         # Execute batch processing
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.sync_new_logs())

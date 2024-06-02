@@ -108,7 +108,7 @@ class TestNodeInfoBlockSyncStatus:
 
     # Error_1
     @mock.patch(
-        "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+        "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
         MagicMock(side_effect=requests.exceptions.ReadTimeout()),
     )
     def test_error_1(self, client: TestClient, session: Session):

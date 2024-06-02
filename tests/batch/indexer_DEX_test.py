@@ -29,7 +29,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.errors import ServiceUnavailable
@@ -55,7 +55,7 @@ from tests.contract_modules import (
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="function")
@@ -201,7 +201,7 @@ class TestProcessor:
 
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -256,7 +256,7 @@ class TestProcessor:
 
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -313,7 +313,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -333,7 +333,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].hex()
+        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -387,7 +387,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -407,7 +407,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].hex()
+        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -463,7 +463,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -483,7 +483,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].hex()
+        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -539,7 +539,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -559,7 +559,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].hex()
+        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -655,7 +655,7 @@ class TestProcessor:
         block = web3.eth.get_block(membership_block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == membership_token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{membership_exchange_contract_address}_1"
@@ -671,7 +671,7 @@ class TestProcessor:
         block = web3.eth.get_block(coupon_block_number)
         _order = _order_list[1]
         assert _order.id == 2
-        assert _order.transaction_hash == block["transactions"][0].hex()
+        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
         assert _order.token_address == coupon_token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{coupon_exchange_contract_address}_1"
@@ -691,7 +691,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(membership_block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].hex()
+        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert _agreement.exchange_address == membership_exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -706,7 +706,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(coupon_block_number2)
         _agreement = _agreement_list[1]
-        assert _agreement.transaction_hash == block2["transactions"][0].hex()
+        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert _agreement.exchange_address == coupon_exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -967,7 +967,7 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.initial_sync())
@@ -993,7 +993,7 @@ class TestProcessor:
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.sync_new_logs())
@@ -1089,7 +1089,7 @@ class TestProcessor:
         with mock.patch("batch.indexer_DEX.asyncio", asyncio_mock), mock.patch(
             "batch.indexer_DEX.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError

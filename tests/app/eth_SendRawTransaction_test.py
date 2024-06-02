@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.exceptions import TimeExhausted
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config, log
 from app.api.routers import eth
@@ -39,7 +39,7 @@ from tests.account_config import eth_account
 from tests.contract_modules import coupon_register_list, issue_coupon_token
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 def insert_node_data(
@@ -173,7 +173,9 @@ class TestEthSendRawTransaction:
 
             session.commit()
 
-            request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+            request_params = {
+                "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+            }
             headers = {"Content-Type": "application/json"}
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -297,8 +299,8 @@ class TestEthSendRawTransaction:
 
         request_params = {
             "raw_tx_hex_list": [
-                signed_tx_1.rawTransaction.hex(),
-                signed_tx_2.rawTransaction.hex(),
+                signed_tx_1.raw_transaction.to_0x_hex(),
+                signed_tx_2.raw_transaction.to_0x_hex(),
             ]
         }
         headers = {"Content-Type": "application/json"}
@@ -374,7 +376,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
@@ -485,7 +487,9 @@ class TestEthSendRawTransaction:
 
             session.commit()
 
-            request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+            request_params = {
+                "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+            }
             headers = {"Content-Type": "application/json"}
             with mock.patch(
                 "web3.eth.async_eth.AsyncEth.send_raw_transaction",
@@ -578,7 +582,9 @@ class TestEthSendRawTransaction:
 
             session.commit()
 
-            request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+            request_params = {
+                "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+            }
             headers = {"Content-Type": "application/json"}
             with mock.patch(
                 "web3.eth.async_eth.AsyncEth.send_raw_transaction",
@@ -813,7 +819,7 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
         with mock.patch(
@@ -894,7 +900,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -953,7 +959,7 @@ class TestEthSendRawTransaction:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -1013,7 +1019,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         with mock.patch(
@@ -1086,7 +1092,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         with mock.patch(
@@ -1170,7 +1176,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         with mock.patch(
@@ -1251,7 +1257,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         with mock.patch.object(eth.async_web3.eth, "get_transaction", ConnectionError):
@@ -1325,7 +1331,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         # waitForTransactionReceiptエラー
@@ -1415,7 +1421,7 @@ class TestEthSendRawTransaction:
             web3.eth.account, "recover_transaction", MagicMock(side_effect=Exception())
         )
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
@@ -1495,7 +1501,7 @@ class TestEthSendRawTransaction:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト

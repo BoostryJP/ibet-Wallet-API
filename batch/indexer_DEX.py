@@ -152,7 +152,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.NewOrder.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -169,7 +169,7 @@ class Processor:
                                 .limit(1)
                             )
                         ).first()
-                        transaction_hash = event["transactionHash"].hex()
+                        transaction_hash = event["transactionHash"].to_0x_hex()
                         order_timestamp = datetime.fromtimestamp(
                             (await async_web3.eth.get_block(event["blockNumber"]))[
                                 "timestamp"
@@ -202,7 +202,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.CancelOrder.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -222,7 +222,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.ForceCancelOrder.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -240,7 +240,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.Agree.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -261,7 +261,7 @@ class Processor:
                             counterpart_address = args["sellAddress"]
                         else:
                             counterpart_address = args["buyAddress"]
-                        transaction_hash = event["transactionHash"].hex()
+                        transaction_hash = event["transactionHash"].to_0x_hex()
                         agreement_timestamp = datetime.fromtimestamp(
                             (await async_web3.eth.get_block(event["blockNumber"]))[
                                 "timestamp"
@@ -289,7 +289,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.SettlementOK.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -318,7 +318,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.SettlementNG.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []

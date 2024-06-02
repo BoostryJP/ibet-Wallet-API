@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 from web3 import AsyncHTTPProvider, AsyncWeb3, HTTPProvider, Web3
 from web3.eth import AsyncEth
 from web3.geth import AsyncGeth
-from web3.middleware import async_geth_poa_middleware, geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 from web3.net import AsyncNet
 from web3.types import RPCEndpoint, RPCResponse
 
@@ -78,7 +78,7 @@ class Web3Wrapper:
             web3 = Web3(
                 FailOverHTTPProvider(request_kwargs={"timeout": request_timeout})
             )
-            web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+            web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
             thread_local.web3 = web3
 
         return web3
@@ -116,7 +116,7 @@ class AsyncWeb3Wrapper:
             async_web3 = AsyncWeb3(
                 AsyncFailOverHTTPProvider(request_kwargs={"timeout": request_timeout})
             )
-            async_web3.middleware_onion.inject(async_geth_poa_middleware, layer=0)
+            async_web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
             thread_local.async_web3 = async_web3
 
         return async_web3

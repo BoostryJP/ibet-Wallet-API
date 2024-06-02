@@ -23,14 +23,14 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
 from tests.utils import IbetShareUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestEventsIbetSecurityTokenDVP:
@@ -107,7 +107,7 @@ class TestEventsIbetSecurityTokenDVP:
             {
                 "event": "Deposited",
                 "args": {"token": token_contract.address, "account": issuer},
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -182,7 +182,7 @@ class TestEventsIbetSecurityTokenDVP:
             {
                 "event": "Withdrawn",
                 "args": {"token": token_contract.address, "account": issuer},
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 1,
@@ -273,7 +273,7 @@ class TestEventsIbetSecurityTokenDVP:
                     "agent": agent,
                     "data": "test_data",
                 },
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -370,7 +370,7 @@ class TestEventsIbetSecurityTokenDVP:
                     "amount": 1000,
                     "agent": agent,
                 },
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -467,7 +467,7 @@ class TestEventsIbetSecurityTokenDVP:
                     "amount": 1000,
                     "agent": agent,
                 },
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -571,7 +571,7 @@ class TestEventsIbetSecurityTokenDVP:
                     "amount": 1000,
                     "agent": agent,
                 },
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -675,7 +675,7 @@ class TestEventsIbetSecurityTokenDVP:
                     "amount": 1000,
                     "agent": agent,
                 },
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -736,7 +736,7 @@ class TestEventsIbetSecurityTokenDVP:
             {
                 "event": "Deposited",
                 "args": {"token": token_contract.address, "account": issuer},
-                "transaction_hash": tx_hash.hex(),
+                "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -863,7 +863,7 @@ class TestEventsIbetSecurityTokenDVP:
             {
                 "event": "Deposited",
                 "args": {"token": token_contract.address, "account": issuer},
-                "transaction_hash": tx_hash_1.hex(),
+                "transaction_hash": tx_hash_1.to_0x_hex(),
                 "block_number": block_number_1,
                 "block_timestamp": block_timestamp_1,
                 "log_index": 0,
@@ -879,7 +879,7 @@ class TestEventsIbetSecurityTokenDVP:
                     "agent": agent,
                     "data": "test_data",
                 },
-                "transaction_hash": tx_hash_2.hex(),
+                "transaction_hash": tx_hash_2.to_0x_hex(),
                 "block_number": block_number_2,
                 "block_timestamp": block_timestamp_2,
                 "log_index": 0,
@@ -956,7 +956,7 @@ class TestEventsIbetSecurityTokenDVP:
             {
                 "event": "Deposited",
                 "args": {"token": token_contract.address, "account": issuer},
-                "transaction_hash": tx_hash_1.hex(),
+                "transaction_hash": tx_hash_1.to_0x_hex(),
                 "block_number": block_number_1,
                 "block_timestamp": block_timestamp_1,
                 "log_index": 0,

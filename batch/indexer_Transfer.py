@@ -329,14 +329,14 @@ class Processor:
                     # block_from <= skip_block < block_to
                     LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
                     events = await token.events.Transfer.get_logs(
-                        fromBlock=skip_block + 1, toBlock=block_to
+                        from_block=skip_block + 1, to_block=block_to
                     )
                 else:
                     # No logs or
                     # skip_block < block_from < block_to
                     LOG.debug(f"{token.address}: skip_block < block_from < block_to")
                     events = await token.events.Transfer.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
             except ABIEventFunctionNotFound:
                 events = []
@@ -360,7 +360,7 @@ class Processor:
                             continue
                         self.__insert_idx(
                             db_session=db_session,
-                            transaction_hash=event["transactionHash"].hex(),
+                            transaction_hash=event["transactionHash"].to_0x_hex(),
                             token_address=to_checksum_address(token.address),
                             from_account_address=args.get("from", ZERO_ADDRESS),
                             to_account_address=args.get("to", ZERO_ADDRESS),
@@ -396,14 +396,14 @@ class Processor:
                     # block_from <= skip_block < block_to
                     LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
                     events = await token.events.Unlock.get_logs(
-                        fromBlock=skip_block + 1, toBlock=block_to
+                        from_block=skip_block + 1, to_block=block_to
                     )
                 else:
                     # No logs or
                     # skip_block < block_from < block_to
                     LOG.debug(f"{token.address}: skip_block < block_from < block_to")
                     events = await token.events.Unlock.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
             except ABIEventFunctionNotFound:
                 events = []
@@ -412,7 +412,7 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
-                    transaction_hash = event["transactionHash"].hex()
+                    transaction_hash = event["transactionHash"].to_0x_hex()
                     block_timestamp = datetime.fromtimestamp(
                         (await async_web3.eth.get_block(event["blockNumber"]))[
                             "timestamp"
