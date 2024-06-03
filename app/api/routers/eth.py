@@ -34,6 +34,7 @@ from app.contracts import AsyncContract
 from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
+    IbetNodeIsOnHighLoadError,
     InvalidParameterError,
     ServiceUnavailable,
     SuspendedTokenError,
@@ -143,7 +144,7 @@ async def get_transaction_count(
     operation_id="SendRawTransaction",
     response_model=GenericSuccessResponse[SendRawTransactionsResponse],
     response_model_exclude_unset=True,
-    responses=get_routers_responses(SuspendedTokenError),
+    responses=get_routers_responses(SuspendedTokenError, IbetNodeIsOnHighLoadError),
 )
 async def send_raw_transaction(
     async_session: DBAsyncSession, data: SendRawTransactionRequest
@@ -198,6 +199,11 @@ async def send_raw_transaction(
                     is False
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
+
+    # Check that ibet node is not on high load
+    txpool_status = await async_web3.geth.txpool.status()
+    if txpool_status.get("pending", 0) > config.TXPOOL_PENDING_TRANSACTIONS_THRESHOLD:
+        raise IbetNodeIsOnHighLoadError
 
     # Send transaction
     result: list[dict[str, Any]] = []
@@ -334,7 +340,7 @@ async def send_raw_transaction(
     operation_id="SendRawTransactionNoWait",
     response_model=GenericSuccessResponse[SendRawTransactionsNoWaitResponse],
     response_model_exclude_unset=True,
-    responses=get_routers_responses(SuspendedTokenError),
+    responses=get_routers_responses(SuspendedTokenError, IbetNodeIsOnHighLoadError),
 )
 async def send_raw_transaction_no_wait(
     async_session: DBAsyncSession, data: SendRawTransactionRequest
@@ -390,6 +396,11 @@ async def send_raw_transaction_no_wait(
                     is False
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
+
+    # Check that ibet node is not on high load
+    txpool_status = await async_web3.geth.txpool.status()
+    if txpool_status.get("pending", 0) > config.TXPOOL_PENDING_TRANSACTIONS_THRESHOLD:
+        raise IbetNodeIsOnHighLoadError
 
     # Send transaction
     result: list[dict[str, Any]] = []

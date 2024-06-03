@@ -900,6 +900,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
+                  - $ref: '#/components/schemas/IbetNodeIsOnHighLoadErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Sendrawtransaction
   /Eth/SendRawTransactionNoWait:
@@ -929,6 +930,7 @@ paths:
               schema:
                 anyOf:
                   - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
+                  - $ref: '#/components/schemas/IbetNodeIsOnHighLoadErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Sendrawtransactionnowait
   /Eth/WaitForTransactionReceipt:
@@ -7660,6 +7662,38 @@ components:
         - EscrowCanceled
         - EscrowFinished
       title: IbetEscrowEventType
+    IbetNodeIsOnHighLoadErrorMetainfo:
+      properties:
+        code:
+          type: integer
+          title: Code
+          examples:
+            - 32
+        message:
+          type: string
+          title: Message
+          examples:
+            - Ibet Node Is On High Load Error
+      type: object
+      required:
+        - code
+        - message
+      title: IbetNodeIsOnHighLoadErrorMetainfo
+    IbetNodeIsOnHighLoadErrorResponse:
+      properties:
+        meta:
+          $ref: '#/components/schemas/IbetNodeIsOnHighLoadErrorMetainfo'
+        details:
+          anyOf:
+            - type: object
+            - type: 'null'
+          title: Details
+          examples:
+            - null
+      type: object
+      required:
+        - meta
+      title: IbetNodeIsOnHighLoadErrorResponse
     IbetSecurityTokenDVPEventType:
       type: string
       enum:
