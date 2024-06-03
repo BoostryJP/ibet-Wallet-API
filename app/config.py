@@ -146,12 +146,6 @@ else:
         if os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD")
         else 10
     )
-# Threshold of the number of pending transaction for judging whether ibet node is on high load or not
-TXPOOL_PENDING_TRANSACTIONS_THRESHOLD = (
-    int(os.environ.get("TXPOOL_PENDING_TRANSACTIONS_THRESHOLD"))
-    if os.environ.get("TXPOOL_PENDING_TRANSACTIONS_THRESHOLD")
-    else 50
-)
 
 ####################################################
 # Web3 settings

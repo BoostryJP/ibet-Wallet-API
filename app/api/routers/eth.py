@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import asyncio
 from typing import Any
 
 import httpx
@@ -200,10 +201,13 @@ async def send_raw_transaction(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
-    # Check that ibet node is not on high load
+    # Shaping ibet tx sending rate
     txpool_status = await async_web3.geth.txpool.status()
-    if txpool_status.get("pending", 0) > config.TXPOOL_PENDING_TRANSACTIONS_THRESHOLD:
-        raise IbetNodeIsOnHighLoadError
+    pending = txpool_status.get("pending", 0)
+    if pending > 250:
+        raise IbetNodeIsOnHighLoadError()
+    elif pending > 10:
+        await asyncio.sleep(int(pending) * 0.1)
 
     # Send transaction
     result: list[dict[str, Any]] = []
@@ -397,10 +401,13 @@ async def send_raw_transaction_no_wait(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
-    # Check that ibet node is not on high load
+    # Shaping ibet tx sending rate
     txpool_status = await async_web3.geth.txpool.status()
-    if txpool_status.get("pending", 0) > config.TXPOOL_PENDING_TRANSACTIONS_THRESHOLD:
-        raise IbetNodeIsOnHighLoadError
+    pending = txpool_status.get("pending", 0)
+    if pending > 250:
+        raise IbetNodeIsOnHighLoadError()
+    elif pending >= 10:
+        await asyncio.sleep(int(pending) * 0.1)
 
     # Send transaction
     result: list[dict[str, Any]] = []

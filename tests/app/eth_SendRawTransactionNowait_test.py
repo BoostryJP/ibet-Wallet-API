@@ -73,8 +73,28 @@ def executable_contract_token(session, contract):
     session.add(executable_contract)
 
 
-# sendRawTransaction API (No Wait)
-# /Eth/SendRawTransactionNoWait
+async def mock_high_load_txpool_status():
+    return AttributeDict(
+        {
+            "pending": 251,
+            "queued": 0,
+        }
+    )
+
+
+async def mock_normal_txpool_status():
+    return AttributeDict(
+        {
+            "pending": 0,
+            "queued": 0,
+        }
+    )
+
+
+@mock.patch(
+    "web3.geth.AsyncGethTxPool.status",
+    MagicMock(side_effect=mock_normal_txpool_status),
+)
 class TestEthSendRawTransactionNoWait:
     # Test API
     apiurl = "/Eth/SendRawTransactionNoWait"
@@ -894,18 +914,10 @@ class TestEthSendRawTransactionNoWait:
         request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
-        async def mock_txpool_status():
-            return AttributeDict(
-                {
-                    "pending": 51,
-                    "queued": 0,
-                }
-            )
-
         # タイムアウト
         with mock.patch(
             "web3.geth.AsyncGethTxPool.status",
-            MagicMock(side_effect=[mock_txpool_status()]),
+            MagicMock(side_effect=[mock_high_load_txpool_status()]),
         ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
