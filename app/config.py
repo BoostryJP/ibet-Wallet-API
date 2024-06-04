@@ -189,7 +189,7 @@ WEB3_REQUEST_WAIT_TIME = (
 PENDING_TRANSACTION_WAIT_TIME = (
     float(os.environ.get("PENDING_TRANSACTION_WAIT_TIME"))
     if os.environ.get("PENDING_TRANSACTION_WAIT_TIME")
-    else 0.05
+    else 0.1
 )
 
 ####################################################

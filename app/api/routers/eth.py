@@ -404,8 +404,7 @@ async def send_raw_transaction_no_wait(
     wait_duration = pending_count * config.PENDING_TRANSACTION_WAIT_TIME
     if wait_duration > 25:
         raise IbetNodeIsOnHighLoadError()
-    elif pending_count > 50:
-        await asyncio.sleep(wait_duration)
+    await asyncio.sleep(wait_duration)
 
     # Send transaction
     result: list[dict[str, Any]] = []
