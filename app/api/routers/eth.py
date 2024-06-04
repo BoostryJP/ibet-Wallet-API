@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-import math
 from typing import Any
 
 import httpx
@@ -402,7 +401,10 @@ async def send_raw_transaction_no_wait(
         else int(txpool_pending)
     )
     wait_duration = (pending_count / 25) ** 5
-    await asyncio.sleep(wait_duration)
+    if wait_duration > 25:
+        await asyncio.sleep(25)
+    else:
+        await asyncio.sleep(wait_duration)
 
     # Send transaction
     result: list[dict[str, Any]] = []
