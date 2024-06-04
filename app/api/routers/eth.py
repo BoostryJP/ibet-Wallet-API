@@ -203,11 +203,16 @@ async def send_raw_transaction(
 
     # Shaping ibet tx sending rate
     txpool_status = await async_web3.geth.txpool.status()
-    pending = txpool_status.get("pending", 0)
-    wait_duration = int(pending) * config.PENDING_TRANSACTION_WAIT_TIME
+    txpool_pending = txpool_status.get("pending", "0x0")
+    pending_count = (
+        int(txpool_pending, 16)
+        if isinstance(txpool_pending, str)
+        else int(txpool_pending)
+    )
+    wait_duration = pending_count * config.PENDING_TRANSACTION_WAIT_TIME
     if wait_duration > 25:
         raise IbetNodeIsOnHighLoadError()
-    elif pending > 10:
+    elif pending_count > 10:
         await asyncio.sleep(wait_duration)
 
     # Send transaction
@@ -404,11 +409,16 @@ async def send_raw_transaction_no_wait(
 
     # Shaping ibet tx sending rate
     txpool_status = await async_web3.geth.txpool.status()
-    pending = txpool_status.get("pending", 0)
-    wait_duration = int(pending) * config.PENDING_TRANSACTION_WAIT_TIME
+    txpool_pending = txpool_status.get("pending", "0x0")
+    pending_count = (
+        int(txpool_pending, 16)
+        if isinstance(txpool_pending, str)
+        else int(txpool_pending)
+    )
+    wait_duration = pending_count * config.PENDING_TRANSACTION_WAIT_TIME
     if wait_duration > 25:
         raise IbetNodeIsOnHighLoadError()
-    elif pending > 10:
+    elif pending_count > 10:
         await asyncio.sleep(wait_duration)
 
     # Send transaction

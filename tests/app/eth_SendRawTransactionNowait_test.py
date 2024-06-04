@@ -76,8 +76,8 @@ def executable_contract_token(session, contract):
 async def mock_high_load_txpool_status():
     return AttributeDict(
         {
-            "pending": 251,
-            "queued": 0,
+            "pending": "0xfb",  # 251
+            "queued": "0x0",
         }
     )
 
@@ -85,8 +85,8 @@ async def mock_high_load_txpool_status():
 async def mock_normal_txpool_status():
     return AttributeDict(
         {
-            "pending": 0,
-            "queued": 0,
+            "pending": "0x0",
+            "queued": "0x0",
         }
     )
 
