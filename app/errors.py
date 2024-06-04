@@ -79,17 +79,6 @@ class RequestBlockRangeLimitExceededError(AppError):
     message = "Request Block Range Limit Exceeded"
 
 
-class IbetNodeIsOnHighLoadError(AppError):
-    """
-    400 ERROR: Ibet Node is on high load
-    """
-
-    status_code = 400
-    error_type = "IbetNodeIsOnHighLoadError"
-    error_code = 32
-    message = "Ibet Node Is On High Load Error"
-
-
 #################################################
 # 404 Not Found
 #################################################

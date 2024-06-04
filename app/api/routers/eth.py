@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
+import math
 from typing import Any
 
 import httpx
@@ -145,7 +146,7 @@ async def get_transaction_count(
     operation_id="SendRawTransaction",
     response_model=GenericSuccessResponse[SendRawTransactionsResponse],
     response_model_exclude_unset=True,
-    responses=get_routers_responses(SuspendedTokenError, IbetNodeIsOnHighLoadError),
+    responses=get_routers_responses(SuspendedTokenError),
 )
 async def send_raw_transaction(
     async_session: DBAsyncSession, data: SendRawTransactionRequest
@@ -336,7 +337,7 @@ async def send_raw_transaction(
     operation_id="SendRawTransactionNoWait",
     response_model=GenericSuccessResponse[SendRawTransactionsNoWaitResponse],
     response_model_exclude_unset=True,
-    responses=get_routers_responses(SuspendedTokenError, IbetNodeIsOnHighLoadError),
+    responses=get_routers_responses(SuspendedTokenError),
 )
 async def send_raw_transaction_no_wait(
     async_session: DBAsyncSession, data: SendRawTransactionRequest
@@ -401,9 +402,7 @@ async def send_raw_transaction_no_wait(
         if isinstance(txpool_pending, str)
         else int(txpool_pending)
     )
-    wait_duration = pending_count * config.PENDING_TRANSACTION_WAIT_TIME
-    if wait_duration > 25:
-        raise IbetNodeIsOnHighLoadError()
+    wait_duration = math.log10(pending_count) * 5
     await asyncio.sleep(wait_duration)
 
     # Send transaction
