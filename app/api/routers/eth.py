@@ -201,20 +201,6 @@ async def send_raw_transaction(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
-    # Shaping ibet tx sending rate
-    txpool_status = await async_web3.geth.txpool.status()
-    txpool_pending = txpool_status.get("pending", "0x0")
-    pending_count = (
-        int(txpool_pending, 16)
-        if isinstance(txpool_pending, str)
-        else int(txpool_pending)
-    )
-    wait_duration = pending_count * config.PENDING_TRANSACTION_WAIT_TIME
-    if wait_duration > 25:
-        raise IbetNodeIsOnHighLoadError()
-    elif pending_count > 10:
-        await asyncio.sleep(wait_duration)
-
     # Send transaction
     result: list[dict[str, Any]] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
@@ -418,7 +404,7 @@ async def send_raw_transaction_no_wait(
     wait_duration = pending_count * config.PENDING_TRANSACTION_WAIT_TIME
     if wait_duration > 25:
         raise IbetNodeIsOnHighLoadError()
-    elif pending_count > 10:
+    elif pending_count > 50:
         await asyncio.sleep(wait_duration)
 
     # Send transaction
