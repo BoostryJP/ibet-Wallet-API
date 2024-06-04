@@ -24,6 +24,7 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
+from web3.datastructures import AttributeDict
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -72,8 +73,19 @@ def executable_contract_token(session, contract):
     session.add(executable_contract)
 
 
-# sendRawTransaction API (No Wait)
-# /Eth/SendRawTransactionNoWait
+async def mock_normal_txpool_status():
+    return AttributeDict(
+        {
+            "pending": "0x0",
+            "queued": "0x0",
+        }
+    )
+
+
+@mock.patch(
+    "web3.geth.AsyncGethTxPool.status",
+    MagicMock(side_effect=mock_normal_txpool_status),
+)
 class TestEthSendRawTransactionNoWait:
     # Test API
     apiurl = "/Eth/SendRawTransactionNoWait"

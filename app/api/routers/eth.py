@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import asyncio
 from typing import Any
 
 import httpx
@@ -390,6 +391,20 @@ async def send_raw_transaction_no_wait(
                     is False
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
+
+    # Shaping ibet tx sending rate
+    txpool_status = await async_web3.geth.txpool.status()
+    txpool_pending = txpool_status.get("pending", "0x0")
+    pending_count = (
+        int(txpool_pending, 16)
+        if isinstance(txpool_pending, str)
+        else int(txpool_pending)
+    )
+    wait_duration = (pending_count / 25) ** 5
+    if wait_duration > 25:
+        await asyncio.sleep(25)
+    else:
+        await asyncio.sleep(wait_duration)
 
     # Send transaction
     result: list[dict[str, Any]] = []
