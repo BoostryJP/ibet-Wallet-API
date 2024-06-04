@@ -36,7 +36,6 @@ from app.contracts import AsyncContract
 from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
-    IbetNodeIsOnHighLoadError,
     InvalidParameterError,
     ServiceUnavailable,
     SuspendedTokenError,
@@ -402,7 +401,7 @@ async def send_raw_transaction_no_wait(
         if isinstance(txpool_pending, str)
         else int(txpool_pending)
     )
-    wait_duration = math.log10(pending_count) * 5
+    wait_duration = math.log10(pending_count + 1) * 5
     await asyncio.sleep(wait_duration)
 
     # Send transaction
