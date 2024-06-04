@@ -204,10 +204,11 @@ async def send_raw_transaction(
     # Shaping ibet tx sending rate
     txpool_status = await async_web3.geth.txpool.status()
     pending = txpool_status.get("pending", 0)
-    if pending > 250:
+    wait_duration = int(pending) * config.PENDING_TRANSACTION_WAIT_TIME
+    if wait_duration > 25:
         raise IbetNodeIsOnHighLoadError()
     elif pending > 10:
-        await asyncio.sleep(int(pending) * 0.1)
+        await asyncio.sleep(wait_duration)
 
     # Send transaction
     result: list[dict[str, Any]] = []
@@ -404,10 +405,11 @@ async def send_raw_transaction_no_wait(
     # Shaping ibet tx sending rate
     txpool_status = await async_web3.geth.txpool.status()
     pending = txpool_status.get("pending", 0)
-    if pending > 250:
+    wait_duration = int(pending) * config.PENDING_TRANSACTION_WAIT_TIME
+    if wait_duration > 25:
         raise IbetNodeIsOnHighLoadError()
-    elif pending >= 10:
-        await asyncio.sleep(int(pending) * 0.1)
+    elif pending > 10:
+        await asyncio.sleep(wait_duration)
 
     # Send transaction
     result: list[dict[str, Any]] = []

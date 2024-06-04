@@ -185,6 +185,13 @@ WEB3_REQUEST_WAIT_TIME = (
     else BLOCK_SYNC_STATUS_SLEEP_INTERVAL
 )  # Same batch interval
 
+# Transaction flow control settings
+PENDING_TRANSACTION_WAIT_TIME = (
+    float(os.environ.get("PENDING_TRANSACTION_WAIT_TIME"))
+    if os.environ.get("PENDING_TRANSACTION_WAIT_TIME")
+    else 0.1
+)
+
 ####################################################
 # Token settings
 ####################################################
