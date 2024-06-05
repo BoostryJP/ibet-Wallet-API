@@ -177,7 +177,7 @@ TRANSACTION_WAIT_POLL_LATENCY = (
 TXPOOL_THRESHOLD_FOR_TX_PAUSE = (
     int(os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE"))
     if os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE")
-    else 10
+    else 20
 )
 
 # Fail over settings

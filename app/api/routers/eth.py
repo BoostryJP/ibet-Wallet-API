@@ -211,7 +211,7 @@ async def send_raw_transaction(
     if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
         pass
     else:
-        wait_duration = (pending_count - config.TXPOOL_THRESHOLD_FOR_TX_PAUSE) * 1
+        wait_duration = (pending_count - config.TXPOOL_THRESHOLD_FOR_TX_PAUSE) * 0.5
         if wait_duration > 20:
             await asyncio.sleep(20)
         else:
@@ -420,7 +420,7 @@ async def send_raw_transaction_no_wait(
     if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
         pass
     else:
-        wait_duration = (pending_count - config.TXPOOL_THRESHOLD_FOR_TX_PAUSE) * 1
+        wait_duration = (pending_count - config.TXPOOL_THRESHOLD_FOR_TX_PAUSE) * 0.5
         if wait_duration > 20:
             await asyncio.sleep(20)
         else:
