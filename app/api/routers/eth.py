@@ -253,6 +253,10 @@ async def send_raw_transaction(
                 result.append({"id": i + 1, "status": 0, "transaction_hash": None})
                 LOG.error(f"Send transaction failed: {err}")
             continue
+        except Exception as err:
+            result.append({"id": i + 1, "status": 0, "transaction_hash": None})
+            LOG.error(f"Send transaction failed: {err}")
+            continue
 
         # Handling a transaction execution result
         try:
@@ -454,6 +458,10 @@ async def send_raw_transaction_no_wait(
             else:
                 result.append({"id": i + 1, "status": 0, "transaction_hash": None})
                 LOG.error(f"Send transaction failed: {err}")
+            continue
+        except Exception as err:
+            result.append({"id": i + 1, "status": 0, "transaction_hash": None})
+            LOG.error(f"Send transaction failed: {err}")
             continue
 
         result.append(

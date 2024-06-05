@@ -28,8 +28,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.datastructures import AttributeDict
-from web3.exceptions import TimeExhausted
+from web3.exceptions import TimeExhausted, Web3RPCError
 from web3.middleware import ExtraDataToPOAMiddleware
+from web3.types import RPCError, RPCResponse
 
 from app import config, log
 from app.api.routers import eth
@@ -494,8 +495,8 @@ class TestEthSendRawTransaction:
             with mock.patch(
                 "web3.eth.async_eth.AsyncEth.send_raw_transaction",
                 MagicMock(
-                    side_effect=ValueError(
-                        {"code": -320000, "message": "nonce too low"}
+                    side_effect=Web3RPCError(
+                        message="{'code': -32000, 'message': 'nonce too low'}",
                     )
                 ),
             ):
@@ -589,8 +590,8 @@ class TestEthSendRawTransaction:
             with mock.patch(
                 "web3.eth.async_eth.AsyncEth.send_raw_transaction",
                 MagicMock(
-                    side_effect=ValueError(
-                        {"code": -320000, "message": "already known"}
+                    side_effect=Web3RPCError(
+                        message="{'code': -32000, 'message': 'already known'}",
                     )
                 ),
             ):
