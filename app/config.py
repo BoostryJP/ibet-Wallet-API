@@ -173,6 +173,13 @@ TRANSACTION_WAIT_POLL_LATENCY = (
     else 0.5
 )
 
+# Txpool length at which tx sending begins to pause
+TXPOOL_THRESHOLD_FOR_TX_PAUSE = (
+    int(os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE"))
+    if os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE")
+    else 50
+)
+
 # Fail over settings
 WEB3_REQUEST_RETRY_COUNT = (
     int(os.environ.get("WEB3_REQUEST_RETRY_COUNT"))

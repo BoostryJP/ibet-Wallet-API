@@ -89,6 +89,19 @@ def caplog(caplog: pytest.LogCaptureFixture):
     LOG.setLevel(default_log_level)
 
 
+async def mock_normal_txpool_status():
+    return AttributeDict(
+        {
+            "pending": "0x0",
+            "queued": "0x0",
+        }
+    )
+
+
+@mock.patch(
+    "web3.geth.AsyncGethTxPool.status",
+    MagicMock(side_effect=mock_normal_txpool_status),
+)
 class TestEthSendRawTransaction:
     # Test API
     apiurl = "/Eth/SendRawTransaction"

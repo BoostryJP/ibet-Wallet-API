@@ -200,6 +200,23 @@ async def send_raw_transaction(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
+    # Shaping ibet tx sending rate
+    txpool_status = await async_web3.geth.txpool.status()
+    txpool_pending = txpool_status.get("pending", "0x0")
+    pending_count = (
+        int(txpool_pending, 16)
+        if isinstance(txpool_pending, str)
+        else int(txpool_pending)
+    )
+    if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+        pass
+    else:
+        wait_duration = (pending_count - config.TXPOOL_THRESHOLD_FOR_TX_PAUSE) * 1
+        if wait_duration > 20:
+            await asyncio.sleep(20)
+        else:
+            await asyncio.sleep(wait_duration)
+
     # Send transaction
     result: list[dict[str, Any]] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
@@ -400,11 +417,14 @@ async def send_raw_transaction_no_wait(
         if isinstance(txpool_pending, str)
         else int(txpool_pending)
     )
-    wait_duration = (pending_count / 25) ** 5
-    if wait_duration > 25:
-        await asyncio.sleep(25)
+    if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+        pass
     else:
-        await asyncio.sleep(wait_duration)
+        wait_duration = (pending_count - config.TXPOOL_THRESHOLD_FOR_TX_PAUSE) * 1
+        if wait_duration > 20:
+            await asyncio.sleep(20)
+        else:
+            await asyncio.sleep(wait_duration)
 
     # Send transaction
     result: list[dict[str, Any]] = []
