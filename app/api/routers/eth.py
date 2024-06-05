@@ -200,6 +200,18 @@ async def send_raw_transaction(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
+    # Shaping ibet tx sending rate
+    pending_count = await txpool_pending_count()
+    if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+        pass
+    else:
+        for i in range(150):
+            await asyncio.sleep(0.1)
+            if (await txpool_pending_count()) <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+                break
+            else:
+                continue
+
     # Send transaction
     result: list[dict[str, Any]] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
@@ -393,18 +405,16 @@ async def send_raw_transaction_no_wait(
                     raise SuspendedTokenError("Token is currently suspended")
 
     # Shaping ibet tx sending rate
-    txpool_status = await async_web3.geth.txpool.status()
-    txpool_pending = txpool_status.get("pending", "0x0")
-    pending_count = (
-        int(txpool_pending, 16)
-        if isinstance(txpool_pending, str)
-        else int(txpool_pending)
-    )
-    wait_duration = (pending_count / 25) ** 5
-    if wait_duration > 25:
-        await asyncio.sleep(25)
+    pending_count = await txpool_pending_count()
+    if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+        pass
     else:
-        await asyncio.sleep(wait_duration)
+        for i in range(150):
+            await asyncio.sleep(0.1)
+            if (await txpool_pending_count()) <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+                break
+            else:
+                continue
 
     # Send transaction
     result: list[dict[str, Any]] = []
@@ -537,3 +547,14 @@ async def inspect_tx_failure(tx_hash: HexBytes) -> str:
     except Exception as e:
         raise e
     raise Exception("Inspecting transaction revert is failed.")
+
+
+async def txpool_pending_count() -> int:
+    txpool_status = await async_web3.geth.txpool.status()
+    txpool_pending = txpool_status.get("pending", "0x0")
+    pending_count = (
+        int(txpool_pending, 16)
+        if isinstance(txpool_pending, str)
+        else int(txpool_pending)
+    )
+    return pending_count
