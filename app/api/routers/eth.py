@@ -27,7 +27,7 @@ from fastapi import APIRouter, Depends
 from hexbytes import HexBytes
 from rlp import decode
 from sqlalchemy import select
-from web3.exceptions import ContractLogicError, TimeExhausted
+from web3.exceptions import ContractLogicError, TimeExhausted, Web3RPCError
 from web3.types import TxReceipt
 
 from app import config, log
@@ -253,21 +253,21 @@ async def send_raw_transaction(
         # Send raw transaction
         try:
             tx_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
-        except Exception as err:
-            if len(err.args) > 0:
-                error_msg = err.args[0].get("message")
-                if "nonce too low" in error_msg:
-                    result.append({"id": i + 1, "status": 3, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction nonce is too low: {err}")
-                elif "already known" in error_msg:
-                    result.append({"id": i + 1, "status": 4, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction has been already known: {err}")
-                else:
-                    result.append({"id": i + 1, "status": 0, "transaction_hash": None})
-                    LOG.error(f"Send transaction failed: {err}")
+        except Web3RPCError as err:
+            error_msg = err.message
+            if "nonce too low" in error_msg:
+                result.append({"id": i + 1, "status": 3, "transaction_hash": None})
+                LOG.warning(f"Sent transaction nonce is too low: {err}")
+            elif "already known" in error_msg:
+                result.append({"id": i + 1, "status": 4, "transaction_hash": None})
+                LOG.warning(f"Sent transaction has been already known: {err}")
             else:
                 result.append({"id": i + 1, "status": 0, "transaction_hash": None})
                 LOG.error(f"Send transaction failed: {err}")
+            continue
+        except Exception as err:
+            result.append({"id": i + 1, "status": 0, "transaction_hash": None})
+            LOG.error(f"Send transaction failed: {err}")
             continue
 
         # Handling a transaction execution result
@@ -457,21 +457,21 @@ async def send_raw_transaction_no_wait(
         # Send raw transaction
         try:
             transaction_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
-        except Exception as err:
-            if len(err.args) > 0:
-                error_msg = err.args[0].get("message")
-                if "nonce too low" in error_msg:
-                    result.append({"id": i + 1, "status": 3, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction nonce is too low: {err}")
-                elif "already known" in error_msg:
-                    result.append({"id": i + 1, "status": 4, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction has been already known: {err}")
-                else:
-                    result.append({"id": i + 1, "status": 0, "transaction_hash": None})
-                    LOG.error(f"Send transaction failed: {err}")
+        except Web3RPCError as err:
+            error_msg = err.message
+            if "nonce too low" in error_msg:
+                result.append({"id": i + 1, "status": 3, "transaction_hash": None})
+                LOG.warning(f"Sent transaction nonce is too low: {err}")
+            elif "already known" in error_msg:
+                result.append({"id": i + 1, "status": 4, "transaction_hash": None})
+                LOG.warning(f"Sent transaction has been already known: {err}")
             else:
                 result.append({"id": i + 1, "status": 0, "transaction_hash": None})
                 LOG.error(f"Send transaction failed: {err}")
+            continue
+        except Exception as err:
+            result.append({"id": i + 1, "status": 0, "transaction_hash": None})
+            LOG.error(f"Send transaction failed: {err}")
             continue
 
         result.append(
