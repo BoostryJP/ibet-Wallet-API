@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
+from app.contracts import AsyncContract
 from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
@@ -41,6 +42,7 @@ from app.model.schema import (
 from app.model.schema.base import (
     GenericSuccessResponse,
     SuccessResponse,
+    TokenType,
     ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
@@ -293,6 +295,20 @@ async def retrieve_coupon_token(
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
+    list_contract = AsyncContract.get_contract(
+        contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
+    )
+    token = await AsyncContract.call_function(
+        contract=list_contract,
+        function_name="getTokenByAddress",
+        args=(token_address,),
+        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+    )
+    token_template = token[1]
+
+    if token_template != TokenType.IbetCoupon:
+        raise DataNotExistsError("token_address: %s" % token_address)
+
     # TokenList-Contractからトークンの情報を取得する
     try:
         token_detail = await CouponToken.get(
@@ -304,5 +320,8 @@ async def retrieve_coupon_token(
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
+
+    if token_detail is None or token_detail.token_template != TokenType.IbetCoupon:
+        raise DataNotExistsError("token_address: %s" % token_address)
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})
