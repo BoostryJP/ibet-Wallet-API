@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
+from app.contracts import AsyncContract
 from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
@@ -41,6 +42,7 @@ from app.model.schema import (
 from app.model.schema.base import (
     GenericSuccessResponse,
     SuccessResponse,
+    TokenType,
     ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
@@ -309,6 +311,20 @@ async def retrieve_straight_bond_token(
         )
     ).first()
     if listed_token is None:
+        raise DataNotExistsError("token_address: %s" % token_address)
+
+    list_contract = AsyncContract.get_contract(
+        contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
+    )
+    token = await AsyncContract.call_function(
+        contract=list_contract,
+        function_name="getTokenByAddress",
+        args=(token_address,),
+        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+    )
+    token_template = token[1]
+
+    if token_template != TokenType.IbetStraightBond:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
