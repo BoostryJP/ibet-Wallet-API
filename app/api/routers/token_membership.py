@@ -298,8 +298,6 @@ async def retrieve_membership_token(
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
-    token_address = to_checksum_address(token_address)
-
     list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
     )

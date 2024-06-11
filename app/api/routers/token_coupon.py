@@ -309,7 +309,6 @@ async def retrieve_coupon_token(
     if token_template != TokenType.IbetCoupon:
         raise DataNotExistsError("token_address: %s" % token_address)
 
-    # TokenList-Contractからトークンの情報を取得する
     try:
         token_detail = await CouponToken.get(
             async_session=async_session, token_address=token_address
@@ -321,7 +320,7 @@ async def retrieve_coupon_token(
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
-    if token_detail is None or token_detail.token_template != TokenType.IbetCoupon:
+    if token_detail is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

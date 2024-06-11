@@ -302,7 +302,7 @@ async def retrieve_share_token(
     if config.SHARE_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    # 取扱トークン情報を取得
+    # 取扱トークンチェック
     # NOTE:非公開トークンも取扱対象とする
     listed_token = (
         await async_session.scalars(
@@ -311,8 +311,6 @@ async def retrieve_share_token(
     ).first()
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
-
-    token_address = to_checksum_address(token_address)
 
     list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
