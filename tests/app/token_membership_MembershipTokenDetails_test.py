@@ -30,6 +30,8 @@ from app.contracts import Contract
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    coupon_register_list,
+    issue_coupon_token,
     membership_invalidate,
     membership_issue,
     membership_register_list,
@@ -48,7 +50,24 @@ class TestTokenMembershipTokenDetails:
     apiurl_base = "/Token/Membership/"  # {contract_address}
 
     @staticmethod
-    def token_attribute(exchange_address):
+    def coupon_token_attribute(exchange_address):
+        attribute = {
+            "name": "テストクーポン",
+            "symbol": "COUPON",
+            "totalSupply": 10000,
+            "tradableExchange": exchange_address,
+            "details": "クーポン詳細",
+            "returnDetails": "リターン詳細",
+            "memo": "クーポンメモ欄",
+            "expirationDate": "20191231",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+        }
+        return attribute
+
+    @staticmethod
+    def membership_token_attribute(exchange_address):
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -99,7 +118,7 @@ class TestTokenMembershipTokenDetails:
         exchange_address = to_checksum_address(
             shared_contract["IbetMembershipExchange"]["address"]
         )
-        attribute = self.token_attribute(exchange_address)
+        attribute = self.membership_token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
@@ -159,7 +178,7 @@ class TestTokenMembershipTokenDetails:
         exchange_address = to_checksum_address(
             shared_contract["IbetMembershipExchange"]["address"]
         )
-        attribute = self.token_attribute(exchange_address)
+        attribute = self.membership_token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
@@ -254,7 +273,7 @@ class TestTokenMembershipTokenDetails:
         exchange_address = to_checksum_address(
             shared_contract["IbetMembershipExchange"]["address"]
         )
-        attribute = self.token_attribute(exchange_address)
+        attribute = self.membership_token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
@@ -289,4 +308,41 @@ class TestTokenMembershipTokenDetails:
             "code": 10,
             "message": "Not Supported",
             "description": "method: GET, url: /Token/Membership/0xe6A75581C7299c75392a63BCF18a3618B30ff765",
+        }
+
+    # Error_4
+    # Retrieve the token address of other token type
+    # -> 404
+    @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]
+
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
+
+        # Prepare data: issue token
+        exchange_address = to_checksum_address(
+            shared_contract["IbetCouponExchange"]["address"]
+        )
+        attribute = self.coupon_token_attribute(exchange_address)
+        token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, token, token_list)
+
+        # Register tokens on the list
+        self.list_token(session, token)
+
+        session.commit()
+
+        # Request target API
+        apiurl = self.apiurl_base + token["address"]
+        query_string = ""
+        resp = client.get(apiurl, params=query_string)
+
+        # Assertion
+        assert resp.status_code == 404
+        assert resp.json()["meta"] == {
+            "code": 30,
+            "description": f'token_address: {token["address"]}',
+            "message": "Data Not Exists",
         }
