@@ -27,6 +27,9 @@ LOG.propagate = False
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 
+logging.getLogger("web3.manager.RequestManager").propagate = False
+logging.getLogger("web3.manager.RequestManager").addHandler(logging.NullHandler())
+
 if config.APP_ENV == "live":
     stream_handler = logging.StreamHandler(open(config.APP_LOGFILE, "a"))
     formatter = logging.Formatter(
