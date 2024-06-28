@@ -42,7 +42,6 @@ class MembershipTokensSortItem(str, Enum):
     company_name = "company_name"
     tradable_exchange = "tradable_exchange"
     status = "status"
-    personal_info_address = "personal_info_address"
     transferable = "transferable"
     initial_offering_status = "initial_offering_status"
     created = "created"

@@ -18,13 +18,13 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import time
-from typing import Any, Callable
+from typing import Any
 
 from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware, Web3Middleware
 from web3.types import RPCEndpoint, RPCResponse
 
 from app import config
@@ -40,27 +40,27 @@ class Web3WrapperException(Exception):
     pass
 
 
-def web3_exception_handler_middleware(
-    make_request: Callable[[RPCEndpoint, Any], Any], w3: "Web3"
-) -> Callable[[RPCEndpoint, Any], RPCResponse]:
-    METHODS = [
-        "eth_blockNumber",
-        "eth_getBlockByNumber",
-        "eth_syncing",
-    ]
+class CustomWeb3ExceptionMiddleware(Web3Middleware):
 
-    def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
-        if method in METHODS:
-            try:
+    def wrap_make_request(self, make_request):
+
+        def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+            METHODS = [
+                "eth_blockNumber",
+                "eth_getBlockByNumber",
+                "eth_syncing",
+            ]
+            if method in METHODS:
+                try:
+                    return make_request(method, params)
+                except Exception as ex:
+                    # Throw Web3WrapperException if an error occurred in Web3(connection error, timeout, etc),
+                    # Web3WrapperException is handled in this module.
+                    raise Web3WrapperException(ex)
+            else:
                 return make_request(method, params)
-            except Exception as ex:
-                # Throw Web3WrapperException if an error occurred in Web3(connection error, timeout, etc),
-                # Web3WrapperException is handled in this module.
-                raise Web3WrapperException(ex)
-        else:
-            return make_request(method, params)
 
-    return middleware
+        return middleware
 
 
 # Average block generation interval
@@ -130,8 +130,8 @@ class Processor:
         self.node_info[endpoint_uri] = {"priority": priority}
 
         web3 = Web3(Web3.HTTPProvider(endpoint_uri))
-        web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-        web3.middleware_onion.add(web3_exception_handler_middleware)
+        web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+        web3.middleware_onion.add(CustomWeb3ExceptionMiddleware)
         self.node_info[endpoint_uri]["web3"] = web3
 
         # Get block number

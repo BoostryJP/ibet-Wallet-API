@@ -173,6 +173,13 @@ TRANSACTION_WAIT_POLL_LATENCY = (
     else 0.5
 )
 
+# Txpool length at which tx sending begins to pause
+TXPOOL_THRESHOLD_FOR_TX_PAUSE = (
+    int(os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE"))
+    if os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE")
+    else 200
+)
+
 # Fail over settings
 WEB3_REQUEST_RETRY_COUNT = (
     int(os.environ.get("WEB3_REQUEST_RETRY_COUNT"))
@@ -210,6 +217,11 @@ TOKEN_NOTIFICATION_ENABLED = (
 IBET_ESCROW_CONTRACT_ADDRESS = os.environ.get("IBET_ESCROW_CONTRACT_ADDRESS")
 IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = os.environ.get(
     "IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS"
+)
+
+# Token DVP
+IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = os.environ.get(
+    "IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS"
 )
 
 # On-chain Exchange
@@ -302,6 +314,16 @@ SMTP_SENDER_PASSWORD = os.environ.get("SMTP_SENDER_PASSWORD")
 
 # Amazon SES
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
+
+# Send settings
+ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST = (
+    os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST").split(",")
+    if os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST")
+    else None
+)
+DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX = os.environ.get(
+    "DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX"
+)
 
 ####################################################
 # Chat webhook settings

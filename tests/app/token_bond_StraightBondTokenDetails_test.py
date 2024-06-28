@@ -23,16 +23,22 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
 from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import bond_invalidate, issue_bond_token, register_bond_list
+from tests.contract_modules import (
+    bond_invalidate,
+    issue_bond_token,
+    issue_share_token,
+    register_bond_list,
+    register_share_list,
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestTokenStraightBondTokenDetails:
@@ -73,10 +79,32 @@ class TestTokenStraightBondTokenDetails:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
             "personalInfoAddress": personal_info_address,
+            "requirePersonalInfoRegistered": False,
             "faceValueCurrency": "JPY",
             "interestPaymentCurrency": "JPY",
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
+        }
+        return attribute
+
+    @staticmethod
+    def share_token_attribute(exchange_address, personal_info_address):
+        attribute = {
+            "name": "テスト株式",
+            "symbol": "SHARE",
+            "tradableExchange": exchange_address,
+            "personalInfoAddress": personal_info_address,
+            "totalSupply": 1000000,
+            "issuePrice": 10000,
+            "principalValue": 10000,
+            "dividends": 101,
+            "dividendRecordDate": "20200909",
+            "dividendPaymentDate": "20201001",
+            "cancellationDate": "20210101",
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+            "memo": "メモ",
+            "transferable": True,
         }
         return attribute
 
@@ -171,6 +199,7 @@ class TestTokenStraightBondTokenDetails:
             "status": True,
             "memo": "メモ",
             "personal_info_address": personal_info,
+            "require_personal_info_registered": False,
             "transfer_approval_required": False,
             "face_value_currency": "JPY",
             "interest_payment_currency": "JPY",
@@ -252,6 +281,7 @@ class TestTokenStraightBondTokenDetails:
             "status": False,
             "memo": "メモ",
             "personal_info_address": personal_info,
+            "require_personal_info_registered": False,
             "transfer_approval_required": False,
             "face_value_currency": "JPY",
             "interest_payment_currency": "JPY",
@@ -344,4 +374,42 @@ class TestTokenStraightBondTokenDetails:
             "code": 10,
             "message": "Not Supported",
             "description": "method: GET, url: /Token/StraightBond/0xe6A75581C7299c75392a63BCF18a3618B30ff765",
+        }
+
+    # Error_4
+    # Retrieve the token address of other token type
+    # -> 404
+    @mock.patch("app.config.BOND_TOKEN_ENABLED", True)
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]
+
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
+
+        # Issue token
+        exchange_address = to_checksum_address(
+            shared_contract["IbetStraightBondExchange"]["address"]
+        )
+        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        attribute = self.share_token_attribute(exchange_address, personal_info)
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+
+        # Register tokens on the list
+        self.list_token(session, share_token)
+
+        session.commit()
+
+        # Request target API
+        apiurl = self.apiurl_base + share_token["address"]
+        query_string = ""
+        resp = client.get(apiurl, params=query_string)
+
+        # Assertion
+        assert resp.status_code == 404
+        assert resp.json()["meta"] == {
+            "code": 30,
+            "description": f'token_address: {share_token["address"]}',
+            "message": "Data Not Exists",
         }

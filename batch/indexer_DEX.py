@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -152,7 +152,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.NewOrder.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -169,12 +169,13 @@ class Processor:
                                 .limit(1)
                             )
                         ).first()
-                        transaction_hash = event["transactionHash"].hex()
-                        order_timestamp = datetime.utcfromtimestamp(
+                        transaction_hash = event["transactionHash"].to_0x_hex()
+                        order_timestamp = datetime.fromtimestamp(
                             (await async_web3.eth.get_block(event["blockNumber"]))[
                                 "timestamp"
-                            ]
-                        )
+                            ],
+                            UTC,
+                        ).replace(tzinfo=None)
                         if available_token is not None:
                             account_address = args["accountAddress"]
                             counterpart_address = ""
@@ -201,7 +202,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.CancelOrder.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -221,7 +222,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.ForceCancelOrder.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -239,7 +240,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.Agree.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -260,12 +261,13 @@ class Processor:
                             counterpart_address = args["sellAddress"]
                         else:
                             counterpart_address = args["buyAddress"]
-                        transaction_hash = event["transactionHash"].hex()
-                        agreement_timestamp = datetime.utcfromtimestamp(
+                        transaction_hash = event["transactionHash"].to_0x_hex()
+                        agreement_timestamp = datetime.fromtimestamp(
                             (await async_web3.eth.get_block(event["blockNumber"]))[
                                 "timestamp"
-                            ]
-                        )
+                            ],
+                            UTC,
+                        ).replace(tzinfo=None)
                         await self.__sink_on_agree(
                             db_session=db_session,
                             transaction_hash=transaction_hash,
@@ -287,18 +289,19 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.SettlementOK.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 for event in events:
                     args = event["args"]
-                    settlement_timestamp = datetime.utcfromtimestamp(
+                    settlement_timestamp = datetime.fromtimestamp(
                         (await async_web3.eth.get_block(event["blockNumber"]))[
                             "timestamp"
-                        ]
-                    )
+                        ],
+                        UTC,
+                    ).replace(tzinfo=None)
                     await self.__sink_on_settlement_ok(
                         db_session=db_session,
                         exchange_address=exchange_contract.address,
@@ -315,7 +318,7 @@ class Processor:
         for exchange_contract in self.exchange_list:
             try:
                 events = await exchange_contract.events.SettlementNG.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []

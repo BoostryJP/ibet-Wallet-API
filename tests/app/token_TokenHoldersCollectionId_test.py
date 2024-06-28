@@ -25,7 +25,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -33,7 +33,7 @@ from app.model.db import Listing, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -249,19 +249,7 @@ class TestTokenTokenHoldersCollectionId:
         )
         resp = client.get(apiurl)
 
-        holders = [
-            {
-                "account_address": self.trader["account_address"],
-                "hold_balance": 27000,
-                "locked_balance": 2000,
-            },
-            {
-                "account_address": self.user1["account_address"],
-                "hold_balance": 51000,
-                "locked_balance": 0,
-            },
-        ]
-
+        # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"]["status"] == TokenHolderBatchStatus.DONE.value

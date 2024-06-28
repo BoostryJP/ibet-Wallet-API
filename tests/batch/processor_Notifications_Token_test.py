@@ -30,7 +30,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import RPCEndpoint
 
 from app import config
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     from batch.processor_Notifications_Token import Watcher
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="function")
@@ -184,7 +184,7 @@ class TestWatchTransfer:
         )
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 100)
+        transfer_coupon_token(self.issuer, token, self.trader, 100)
 
         idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
@@ -251,8 +251,8 @@ class TestWatchTransfer:
         )
 
         # Transfer
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 100)
-        transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 200)
+        transfer_coupon_token(self.issuer, token, self.trader, 100)
+        transfer_coupon_token(self.issuer, token, self.trader2, 200)
 
         idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]

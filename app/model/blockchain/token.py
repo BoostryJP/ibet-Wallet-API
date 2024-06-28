@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import functools
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Awaitable, Callable, Optional, Type, Union
 
@@ -98,18 +98,14 @@ def token_db_cache(TargetModel: IDXTokenModel):
                     .limit(1)
                 )
             ).first()
-            if (
-                cached_token
-                and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL)
-                >= datetime.utcnow()
-            ):
+            if cached_token and cached_token.created + timedelta(
+                seconds=TOKEN_CACHE_TTL
+            ) >= datetime.now(UTC).replace(tzinfo=None):
                 # If cached data exists and doesn't expire, use cached data
                 cached_data = cls.from_model(cached_token)
-                if (
-                    cached_token.short_term_cache_created
-                    + timedelta(seconds=TOKEN_SHORT_TERM_CACHE_TTL)
-                    < datetime.utcnow()
-                ):
+                if cached_token.short_term_cache_created + timedelta(
+                    seconds=TOKEN_SHORT_TERM_CACHE_TTL
+                ) < datetime.now(UTC).replace(tzinfo=None):
                     # If short term cache expires, fetch raw data from chain
                     await cached_data.fetch_expiry_short()
                     await async_session.merge(cached_data.to_model())
@@ -149,6 +145,7 @@ class TokenBase:
 
 class BondToken(TokenBase):
     personal_info_address: str
+    require_personal_info_registered: bool
     transferable: bool
     is_offering: bool
     transfer_approval_required: bool
@@ -204,7 +201,7 @@ class BondToken(TokenBase):
                     getattr(self, f"interest_payment_date{str(i)}")
                 )
         token_model.interest_payment_date = interest_payment_date_list
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:
@@ -229,6 +226,9 @@ class BondToken(TokenBase):
                 ),
                 AsyncContract.call_function(token_contract, "isRedeemed", (), False),
                 AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
                 max_concurrency=3,
             )
             (
@@ -240,6 +240,7 @@ class BondToken(TokenBase):
                 transfer_approval_required,
                 is_redeemed,
                 memo,
+                require_personal_info_registered,
             ) = [task.result() for task in tasks]
         except ExceptionGroup:
             raise ServiceUnavailable from None
@@ -259,6 +260,7 @@ class BondToken(TokenBase):
         self.transfer_approval_required = transfer_approval_required
         self.is_redeemed = is_redeemed
         self.memo = memo
+        self.require_personal_info_registered = require_personal_info_registered
 
     @staticmethod
     async def fetch(async_session: AsyncSession, token_address: str) -> BondToken:
@@ -317,6 +319,9 @@ class BondToken(TokenBase):
                     token_contract, "personalInfoAddress", (), ZERO_ADDRESS
                 ),
                 AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
+                AsyncContract.call_function(
                     token_contract, "transferApprovalRequired", (), False
                 ),
                 AsyncContract.call_function(token_contract, "isRedeemed", (), False),
@@ -347,6 +352,7 @@ class BondToken(TokenBase):
                 status,
                 memo,
                 personal_info_address,
+                require_personal_info_registered,
                 transfer_approval_required,
                 is_redeemed,
             ) = [task.result() for task in tasks]
@@ -469,6 +475,7 @@ class BondToken(TokenBase):
             else 0
         )
         bondtoken.personal_info_address = personal_info_address
+        bondtoken.require_personal_info_registered = require_personal_info_registered
         bondtoken.transferable = transferable
         bondtoken.is_offering = is_offering
         bondtoken.transfer_approval_required = transfer_approval_required
@@ -508,6 +515,7 @@ class BondToken(TokenBase):
 
 class ShareToken(TokenBase):
     personal_info_address: str
+    require_personal_info_registered: bool
     transferable: bool
     is_offering: bool
     transfer_approval_required: bool
@@ -530,7 +538,7 @@ class ShareToken(TokenBase):
         for key, value in self.__dict__.items():
             if hasattr(token_model, key):
                 setattr(token_model, key, value)
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:
@@ -560,6 +568,9 @@ class ShareToken(TokenBase):
                     token_contract, "dividendInformation", (), (0, "", "")
                 ),
                 AsyncContract.call_function(token_contract, "memo", (), ""),
+                AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
                 max_concurrency=3,
             )
             (
@@ -573,6 +584,7 @@ class ShareToken(TokenBase):
                 is_canceled,
                 dividend_information,
                 memo,
+                require_personal_info_registered,
             ) = [task.result() for task in tasks]
         except ExceptionGroup:
             raise ServiceUnavailable from None
@@ -600,6 +612,7 @@ class ShareToken(TokenBase):
             "dividend_payment_date": dividend_information[2],
         }
         self.memo = memo
+        self.require_personal_info_registered = require_personal_info_registered
 
     @staticmethod
     async def fetch(async_session: AsyncSession, token_address: str) -> ShareToken:
@@ -644,6 +657,9 @@ class ShareToken(TokenBase):
                 AsyncContract.call_function(
                     token_contract, "personalInfoAddress", (), ZERO_ADDRESS
                 ),
+                AsyncContract.call_function(
+                    token_contract, "requirePersonalInfoRegistered", (), True
+                ),
                 AsyncContract.call_function(token_contract, "isCanceled", (), False),
                 max_concurrency=3,
             )
@@ -665,6 +681,7 @@ class ShareToken(TokenBase):
                 privacy_policy,
                 tradable_exchange,
                 personal_info_address,
+                require_personal_info_registered,
                 is_canceled,
             ) = [task.result() for task in tasks]
         except ExceptionGroup:
@@ -721,6 +738,7 @@ class ShareToken(TokenBase):
         )
         sharetoken.tradable_exchange = tradable_exchange
         sharetoken.personal_info_address = personal_info_address
+        sharetoken.require_personal_info_registered = require_personal_info_registered
 
         return sharetoken
 
@@ -751,7 +769,7 @@ class MembershipToken(TokenBase):
         for key, value in self.__dict__.items():
             if hasattr(token_model, key):
                 setattr(token_model, key, value)
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:
@@ -945,7 +963,7 @@ class CouponToken(TokenBase):
         for key, value in self.__dict__.items():
             if hasattr(token_model, key):
                 setattr(token_model, key, value)
-        token_model.short_term_cache_created = datetime.utcnow()
+        token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
     async def fetch_expiry_short(self) -> None:

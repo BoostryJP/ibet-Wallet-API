@@ -44,6 +44,7 @@ class ShareTokensSortItem(str, Enum):
     tradable_exchange = "tradable_exchange"
     status = "status"
     personal_info_address = "personal_info_address"
+    require_personal_info_registered = "require_personal_info_registered"
     transferable = "transferable"
     is_offering = "is_offering"
     transfer_approval_required = "transfer_approval_required"
@@ -69,6 +70,10 @@ class ListAllShareTokensQuery:
     personal_info_address: Annotated[
         Optional[ValidatedEthereumAddress],
         Query(description="personal information address"),
+    ] = None
+    require_personal_info_registered: Annotated[
+        Optional[bool],
+        Query(description="whether personal information registration is required"),
     ] = None
     transferable: Annotated[
         Optional[bool], Query(description="transferable status")
@@ -114,6 +119,7 @@ class RetrieveShareTokenResponse(BaseModel):
     max_holding_quantity: Optional[int]
     max_sell_amount: Optional[int]
     personal_info_address: str
+    require_personal_info_registered: bool
     transferable: bool
     is_offering: bool
     transfer_approval_required: bool

@@ -22,7 +22,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -39,12 +39,13 @@ from tests.account_config import eth_account
 from tests.contract_modules import (
     consume_coupon_token,
     coupon_register_list,
+    coupon_transfer_to_exchange,
     issue_coupon_token,
     transfer_coupon_token,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPositionCoupon:
@@ -78,7 +79,7 @@ class TestPositionCoupon:
         transfer_coupon_token(
             TestPositionCoupon.issuer,
             token,
-            account["account_address"],
+            account,
             1000000,
         )
 
@@ -97,14 +98,13 @@ class TestPositionCoupon:
 
         # Sell order
         agent = eth_account["agent"]
-        transfer_coupon_token(account, token, exchange_contract["address"], commitment)
+        coupon_transfer_to_exchange(account, exchange_contract, token, commitment)
         ExchangeContract = Contract.get_contract(
             "IbetExchange", exchange_contract["address"]
         )
-        tx_hash = ExchangeContract.functions.createOrder(
+        ExchangeContract.functions.createOrder(
             token["address"], commitment, 10000, False, agent["account_address"]
-        ).transact({"from": account["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": account["account_address"]})
 
         return token
 
@@ -134,7 +134,7 @@ class TestPositionCoupon:
         )
 
         # Transfer all amount
-        transfer_coupon_token(account, token, to_account["account_address"], 1000000)
+        transfer_coupon_token(account, token, to_account, 1000000)
 
         return token
 

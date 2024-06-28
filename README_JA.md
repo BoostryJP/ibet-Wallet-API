@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-24.3-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-24.6-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -18,17 +18,17 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.11
+  - バージョン 3.12
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 15
   - [MySQL](https://www.mysql.com/) - バージョン 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - [ibet-Network](https://github.com/BoostryJP/ibet-Network) の公式の GoQuorum をサポートしています。
-  - 最新の [ganache](https://github.com/trufflesuite/ganache) (ganache-cli) をローカル開発およびユニットテストで利用しています。
+  - 最新の [hardhat network](https://hardhat.org/hardhat-network/) をローカル開発およびユニットテストで利用しています。
 
 ## コントラクトのバージョン
 
-* ibet-SmartContract: バージョン 22.12
+* ibet-SmartContract: バージョン 24.6
 * [詳細](./app/contracts/contract_version.md)を参照ください。
 
 ## セットアップ

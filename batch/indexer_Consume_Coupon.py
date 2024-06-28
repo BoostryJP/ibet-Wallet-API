@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Sequence
 from zoneinfo import ZoneInfo
 
@@ -156,19 +156,20 @@ class Processor:
         for token in self.token_list:
             try:
                 events = await token.events.Consume.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
             try:
                 for event in events:
                     args = event["args"]
-                    transaction_hash = event["transactionHash"].hex()
-                    block_timestamp = datetime.utcfromtimestamp(
+                    transaction_hash = event["transactionHash"].to_0x_hex()
+                    block_timestamp = datetime.fromtimestamp(
                         (await async_web3.eth.get_block(event["blockNumber"]))[
                             "timestamp"
-                        ]
-                    )
+                        ],
+                        UTC,
+                    ).replace(tzinfo=None)
                     amount = args.get("value", 0)
                     consumer = args.get("consumer", ZERO_ADDRESS)
                     if amount > sys.maxsize:

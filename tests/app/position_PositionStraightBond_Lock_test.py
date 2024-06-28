@@ -23,13 +23,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXBondToken, IDXLockedPosition
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPositionStraightBondLock:
@@ -97,6 +97,7 @@ class TestPositionStraightBondLock:
             "status": True,
             "memo": "メモ",
             "personal_info_address": TestPositionStraightBondLock.personal_info_address,
+            "require_personal_info_registered": True,
             "transfer_approval_required": False,
             "face_value_currency": "",
             "interest_payment_currency": "",
@@ -154,6 +155,7 @@ class TestPositionStraightBondLock:
         idx_token.status = True
         idx_token.memo = "メモ"
         idx_token.personal_info_address = personal_info_address
+        idx_token.require_personal_info_registered = True
         idx_token.transfer_approval_required = False
         idx_token.face_value_currency = ""
         idx_token.interest_payment_currency = ""

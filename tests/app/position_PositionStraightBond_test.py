@@ -22,7 +22,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -44,7 +44,7 @@ from tests.contract_modules import (
 from tests.utils import PersonalInfoUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPositionStraightBond:
@@ -136,10 +136,9 @@ class TestPositionStraightBond:
         ExchangeContract = Contract.get_contract(
             "IbetExchange", exchange_contract["address"]
         )
-        tx_hash = ExchangeContract.functions.createOrder(
+        ExchangeContract.functions.createOrder(
             token["address"], commitment, 10000, False, agent["account_address"]
-        ).transact({"from": account["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": account["account_address"]})
 
         return token
 
@@ -253,6 +252,7 @@ class TestPositionStraightBond:
         idx_token.status = True
         idx_token.memo = "メモ"
         idx_token.personal_info_address = personal_info_address
+        idx_token.require_personal_info_registered = True
         idx_token.transfer_approval_required = False
         session.add(idx_token)
         idx_token_list_item = IDXTokenListItem()
@@ -653,6 +653,7 @@ class TestPositionStraightBond:
                         "status": True,
                         "memo": "メモ",
                         "personal_info_address": personal_info_contract["address"],
+                        "require_personal_info_registered": True,
                         "transfer_approval_required": False,
                         "face_value_currency": "JPY",
                         "interest_payment_currency": "JPY",
@@ -1292,6 +1293,7 @@ class TestPositionStraightBond:
                         "status": True,
                         "memo": "メモ",
                         "personal_info_address": personal_info_contract["address"],
+                        "require_personal_info_registered": True,
                         "transfer_approval_required": False,
                         "face_value_currency": "",
                         "interest_payment_currency": "",

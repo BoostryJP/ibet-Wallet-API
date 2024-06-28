@@ -24,7 +24,7 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -35,7 +35,7 @@ from tests.account_config import eth_account
 from tests.contract_modules import issue_share_token, register_share_list
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -177,6 +177,7 @@ class TestTokenShareTokens:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             }
         ]
 
@@ -294,6 +295,7 @@ class TestTokenShareTokens:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             }
             for i in range(1, 4)
         ]
@@ -414,6 +416,7 @@ class TestTokenShareTokens:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             }
             for i in range(1, 3)
         ]
@@ -593,6 +596,7 @@ class TestTokenShareTokens:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             },
         )
         tokens = [
@@ -625,6 +629,7 @@ class TestTokenShareTokens:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             }
             for i in range(0, 5)
         ]
@@ -720,6 +725,7 @@ class TestTokenShareTokens:
             "is_canceled": True,
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "personal_info_address": "0x0000000000000000000000000000000000000000",
+            "require_personal_info_registered": False,
         }
 
         for key, value in not_matched_key_value.items():
@@ -843,6 +849,7 @@ class TestTokenShareTokens:
                 "is_canceled": False,
                 "tradable_exchange": exchange_address,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
             }
             for i in range(0, 5)
         ]

@@ -20,15 +20,14 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Dict
 
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
 from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-gas_limit = 4000000
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class IbetShareUtils:
@@ -64,6 +63,10 @@ class IbetShareUtils:
             share_contract.functions.setPersonalInfoAddress(
                 args["personalInfoAddress"]
             ).transact({"from": tx_from})
+        if "requirePersonalInfoRegistered" in args:
+            share_contract.functions.setRequirePersonalInfoRegistered(
+                args["requirePersonalInfoRegistered"]
+            ).transact({"from": tx_from})
         if "contactInformation" in args:
             share_contract.functions.setContactInformation(
                 args["contactInformation"]
@@ -92,7 +95,7 @@ class IbetShareUtils:
         )
         web3.eth.default_account = tx_from
         TokenListContract.functions.register(token_address, "IbetShare").transact(
-            {"from": tx_from, "gas": gas_limit}
+            {"from": tx_from}
         )
 
     @staticmethod
@@ -122,7 +125,7 @@ class IbetShareUtils:
             contract_name="IbetShare", address=token_address
         )
         TokenContract.functions.transfer(exchange_address, amount).transact(
-            {"from": tx_from, "gas": gas_limit}
+            {"from": tx_from}
         )
 
     @staticmethod
@@ -136,7 +139,7 @@ class IbetShareUtils:
         )
         ExchangeContract.functions.createOrder(
             token_address, amount, price, False, agent_address
-        ).transact({"from": tx_from, "gas": gas_limit})
+        ).transact({"from": tx_from})
 
     @staticmethod
     def set_transfer_approval_required(
@@ -146,7 +149,7 @@ class IbetShareUtils:
             contract_name="IbetShare", address=token_address
         )
         TokenContract.functions.setTransferApprovalRequired(required).transact(
-            {"from": tx_from, "gas": gas_limit}
+            {"from": tx_from}
         )
 
     @staticmethod
@@ -155,5 +158,5 @@ class IbetShareUtils:
             contract_name="IbetShare", address=token_address
         )
         TokenContract.functions.applyForTransfer(to, value, "").transact(
-            {"from": tx_from, "gas": gas_limit}
+            {"from": tx_from}
         )

@@ -45,7 +45,11 @@ class TestEthGetTransactionCount:
         apiurl = self.apiurl_base + some_account_address
         resp = client.get(apiurl)
 
-        assumed_body = {"chainid": "2017", "gasprice": 0, "nonce": 0}
+        assumed_body = {
+            "chainid": "2017",
+            "gasprice": 8000000000,
+            "nonce": 0,
+        }  # hardhat returns a fixed value of 8000000000 for eth_gasPrice
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -64,7 +68,11 @@ class TestEthGetTransactionCount:
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.get_transaction_count(eth_address)
 
-        assumed_body = {"chainid": "2017", "gasprice": 0, "nonce": nonce}
+        assumed_body = {
+            "chainid": "2017",
+            "gasprice": 8000000000,
+            "nonce": nonce,
+        }  # hardhat returns a fixed value of 8000000000 for eth_gasPrice
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -83,7 +91,11 @@ class TestEthGetTransactionCount:
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.get_transaction_count(eth_address)
 
-        assumed_body = {"chainid": "2017", "gasprice": 0, "nonce": nonce}
+        assumed_body = {
+            "chainid": "2017",
+            "gasprice": 8000000000,
+            "nonce": nonce,
+        }  # hardhat returns a fixed value of 8000000000 for eth_gasPrice
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

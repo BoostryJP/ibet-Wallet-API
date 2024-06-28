@@ -112,7 +112,7 @@ class Processor:
         class TargetExchange:
             """
             Attributes:
-                exchange_address: contract address of exchange or escrow
+                exchange_address: contract address of exchange, escrow or dvp
                 start_block_number(int): block number that the processor first reads
                 cursor(int): pointer where next process should be start
             """
@@ -272,6 +272,7 @@ class Processor:
         await self.__sync_approve_transfer(db_session, block_to)
         await self.__sync_exchange(db_session, block_to)
         await self.__sync_escrow(db_session, block_to)
+        await self.__sync_dvp(db_session, block_to)
 
         self.__update_cursor(block_to + 1)
 
@@ -302,7 +303,7 @@ class Processor:
                 continue
             try:
                 events: list[LogReceipt] = await token.events.Transfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -311,7 +312,7 @@ class Processor:
                     events=events, account_keys=["from", "to"]
                 )
                 for _account in accounts_filtered:
-                    if (await async_web3.eth.get_code(_account)).hex() == "0x":
+                    if (await async_web3.eth.get_code(_account)).to_0x_hex() == "0x":
                         (
                             _balance,
                             _pending_transfer,
@@ -344,7 +345,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Lock.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -363,7 +364,7 @@ class Processor:
                     # Index Lock event
                     self.__insert_lock_idx(
                         db_session=db_session,
-                        transaction_hash=event["transactionHash"].hex(),
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
                         msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
@@ -424,7 +425,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Unlock.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -444,7 +445,7 @@ class Processor:
                     # Index Unlock event
                     self.__insert_unlock_idx(
                         db_session=db_session,
-                        transaction_hash=event["transactionHash"].hex(),
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
                         msg_sender=msg_sender,
                         block_number=event["blockNumber"],
                         token_address=token.address,
@@ -506,7 +507,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Issue.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -542,7 +543,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.Redeem.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -578,7 +579,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.ApplyForTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -614,7 +615,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.CancelTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -650,7 +651,7 @@ class Processor:
                 continue
             try:
                 events = await token.events.ApproveTransfer.get_logs(
-                    fromBlock=block_from, toBlock=block_to
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventFunctionNotFound:
                 events = []
@@ -695,7 +696,7 @@ class Processor:
                 # NewOrder event
                 try:
                     _event_list = await exchange.events.NewOrder.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -720,7 +721,7 @@ class Processor:
                 # CancelOrder event
                 try:
                     _event_list = await exchange.events.CancelOrder.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -745,7 +746,7 @@ class Processor:
                 # ForceCancelOrder event
                 try:
                     _event_list = await exchange.events.ForceCancelOrder.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -770,7 +771,7 @@ class Processor:
                 # Agree event
                 try:
                     _event_list = await exchange.events.Agree.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -795,7 +796,7 @@ class Processor:
                 # SettlementOK event
                 try:
                     _event_list = await exchange.events.SettlementOK.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -830,7 +831,7 @@ class Processor:
                 # SettlementNG event
                 try:
                     _event_list = await exchange.events.SettlementNG.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -916,7 +917,7 @@ class Processor:
                 # EscrowCreated event
                 try:
                     _event_list = await escrow.events.EscrowCreated.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -939,7 +940,7 @@ class Processor:
                 # EscrowCanceled event
                 try:
                     _event_list = await escrow.events.EscrowCanceled.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []
@@ -962,7 +963,164 @@ class Processor:
                 # HolderChanged event
                 try:
                     _event_list = await escrow.events.HolderChanged.get_logs(
-                        fromBlock=block_from, toBlock=block_to
+                        from_block=block_from, to_block=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
+                for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
+                    if event_block_number < token_cursor:
+                        continue
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get("from", ZERO_ADDRESS),
+                        }
+                    )
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get("to", ZERO_ADDRESS),
+                        }
+                    )
+
+                # Make temporary list unique
+                account_list_tmp.sort(
+                    key=lambda x: (x["token_address"], x["account_address"])
+                )
+                account_list_unfiltered = []
+                for k, g in groupby(
+                    account_list_tmp,
+                    lambda x: (x["token_address"], x["account_address"]),
+                ):
+                    account_list_unfiltered.append(
+                        {"token_address": k[0], "account_address": k[1]}
+                    )
+
+                # Filter account_list by listed token
+                token_address_list = [t.token_contract.address for t in self.token_list]
+                account_list = []
+                for _account in account_list_unfiltered:
+                    if _account["token_address"] in token_address_list:
+                        account_list.append(_account)
+
+                # Update position
+                for _account in account_list:
+                    token_address = _account["token_address"]
+                    account_address = _account["account_address"]
+                    (
+                        exchange_balance,
+                        exchange_commitment,
+                    ) = await self.__get_account_balance_exchange(
+                        exchange_address=exchange_address,
+                        token_address=token_address,
+                        account_address=account_address,
+                    )
+                    await self.__sink_on_position(
+                        db_session=db_session,
+                        token_address=token_address,
+                        account_address=account_address,
+                        exchange_balance=exchange_balance,
+                        exchange_commitment=exchange_commitment,
+                    )
+            except Exception as e:
+                raise e
+
+    async def __sync_dvp(self, db_session: AsyncSession, block_to: int):
+        """Sync Events from IbetSecurityTokenDVP
+
+        :param db_session: ORM session
+        :param block_to: To block
+        :return: None
+        """
+        for exchange in self.exchange_list:
+            block_from = exchange.cursor
+            if block_from > block_to:
+                continue
+            exchange_address = exchange.exchange_address
+            try:
+                dvp = AsyncContract.get_contract(
+                    "IbetSecurityTokenDVP", exchange_address
+                )
+
+                account_list_tmp = []
+
+                # DeliveryCreated event
+                try:
+                    _event_list = await dvp.events.DeliveryCreated.get_logs(
+                        from_block=block_from, to_block=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
+                for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
+                    if event_block_number < token_cursor:
+                        continue
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get(
+                                "seller", ZERO_ADDRESS
+                            ),  # only seller has changed
+                        }
+                    )
+
+                # DeliveryCanceled event
+                try:
+                    _event_list = await dvp.events.DeliveryCanceled.get_logs(
+                        from_block=block_from, to_block=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
+                for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
+                    if event_block_number < token_cursor:
+                        continue
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get(
+                                "seller", ZERO_ADDRESS
+                            ),  # only seller has changed
+                        }
+                    )
+
+                # DeliveryAborted event
+                try:
+                    _event_list = await dvp.events.DeliveryAborted.get_logs(
+                        from_block=block_from, to_block=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
+                for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(
+                        _event["args"].get("token", ZERO_ADDRESS)
+                    )
+                    if event_block_number < token_cursor:
+                        continue
+                    account_list_tmp.append(
+                        {
+                            "token_address": _event["args"].get("token", ZERO_ADDRESS),
+                            "account_address": _event["args"].get(
+                                "seller", ZERO_ADDRESS
+                            ),  # only seller has changed
+                        }
+                    )
+
+                    # HolderChanged event
+                try:
+                    _event_list = await dvp.events.HolderChanged.get_logs(
+                        from_block=block_from, to_block=block_to
                     )
                 except ABIEventFunctionNotFound:
                     _event_list = []

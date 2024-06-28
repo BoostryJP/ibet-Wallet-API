@@ -23,7 +23,7 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -36,7 +36,7 @@ from tests.contract_modules import (
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 def tokenlist_contract():
@@ -107,7 +107,7 @@ class TestEthWaitForTransactionReceipt:
             abi=coupontoken_1["abi"],
         )
         user1 = eth_account["user1"]
-        transfer_coupon_token(issuer, coupontoken_1, user1["account_address"], 10)
+        transfer_coupon_token(issuer, coupontoken_1, user1, 10)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             {
@@ -119,7 +119,7 @@ class TestEthWaitForTransactionReceipt:
         tx_hash = web3.eth.send_transaction(tx)
 
         # Request the target API
-        resp = client.get(self.apiurl, params={"transaction_hash": tx_hash.hex()})
+        resp = client.get(self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()})
 
         # Assertion
         assert resp.status_code == 200
@@ -176,7 +176,9 @@ class TestEthWaitForTransactionReceipt:
         with mock.patch(
             "app.api.routers.eth.inspect_tx_failure", return_value="130401"
         ):
-            resp = client.get(self.apiurl, params={"transaction_hash": tx_hash.hex()})
+            resp = client.get(
+                self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()}
+            )
 
             # Assertion
             assert resp.status_code == 200

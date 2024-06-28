@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -88,9 +88,9 @@ class Watcher:
 
     @staticmethod
     async def _gen_block_timestamp(entry):
-        return datetime.utcfromtimestamp(
-            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"]
-        )
+        return datetime.fromtimestamp(
+            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"], UTC
+        ).replace(tzinfo=None)
 
     async def watch(self, db_session: AsyncSession, entries):
         pass
@@ -127,7 +127,7 @@ class Watcher:
             try:
                 _event = getattr(self.contract.events, self.filter_name)
                 entries = await _event.get_logs(
-                    fromBlock=from_block_number, toBlock=to_block_number
+                    from_block=from_block_number, to_block=to_block_number
                 )
             except ABIEventFunctionNotFound:
                 entries = []

@@ -51,6 +51,8 @@ class GetNodeInfoResponse(BaseModel):
     ibet_escrow_abi: Optional[object]
     ibet_security_token_escrow_address: Optional[ValidatedEthereumAddress]
     ibet_security_token_escrow_abi: Optional[object]
+    ibet_security_token_dvp_address: Optional[ValidatedEthereumAddress]
+    ibet_security_token_dvp_abi: Optional[object]
     e2e_messaging_address: Optional[ValidatedEthereumAddress]
     e2e_messaging_abi: Optional[object]
 

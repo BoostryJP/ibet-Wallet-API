@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import asyncio
 from typing import Any
 
 import httpx
@@ -26,7 +27,7 @@ from fastapi import APIRouter, Depends
 from hexbytes import HexBytes
 from rlp import decode
 from sqlalchemy import select
-from web3.exceptions import ContractLogicError, TimeExhausted
+from web3.exceptions import ContractLogicError, TimeExhausted, Web3RPCError
 from web3.types import TxReceipt
 
 from app import config, log
@@ -87,6 +88,7 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
                 res_data = await client.post(
                     node.endpoint_uri,
                     json={
+                        "id": 1,
                         "jsonrpc": "2.0",
                         "method": data.method,
                         "params": data.params,
@@ -162,7 +164,7 @@ async def send_raw_transaction(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
             LOG.warning(f"RLP decoding failed: {err}")
             continue
@@ -198,13 +200,25 @@ async def send_raw_transaction(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
+    # Shaping ibet tx sending rate
+    pending_count = await txpool_pending_count()
+    if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+        pass
+    else:
+        for i in range(150):
+            await asyncio.sleep(0.1)
+            if (await txpool_pending_count()) <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+                break
+            else:
+                continue
+
     # Send transaction
     result: list[dict[str, Any]] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0, "transaction_hash": None})
@@ -239,21 +253,21 @@ async def send_raw_transaction(
         # Send raw transaction
         try:
             tx_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
-        except Exception as err:
-            if len(err.args) > 0:
-                error_msg = err.args[0].get("message")
-                if "nonce too low" in error_msg:
-                    result.append({"id": i + 1, "status": 3, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction nonce is too low: {err}")
-                elif "already known" in error_msg:
-                    result.append({"id": i + 1, "status": 4, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction has been already known: {err}")
-                else:
-                    result.append({"id": i + 1, "status": 0, "transaction_hash": None})
-                    LOG.error(f"Send transaction failed: {err}")
+        except Web3RPCError as err:
+            error_msg = err.message
+            if "nonce too low" in error_msg:
+                result.append({"id": i + 1, "status": 3, "transaction_hash": None})
+                LOG.warning(f"Sent transaction nonce is too low: {err}")
+            elif "already known" in error_msg:
+                result.append({"id": i + 1, "status": 4, "transaction_hash": None})
+                LOG.warning(f"Sent transaction has been already known: {err}")
             else:
                 result.append({"id": i + 1, "status": 0, "transaction_hash": None})
                 LOG.error(f"Send transaction failed: {err}")
+            continue
+        except Exception as err:
+            result.append({"id": i + 1, "status": 0, "transaction_hash": None})
+            LOG.error(f"Send transaction failed: {err}")
             continue
 
         # Handling a transaction execution result
@@ -265,13 +279,13 @@ async def send_raw_transaction(
             )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
-                err_msg = await inspect_tx_failure(tx_hash.hex())
+                err_msg = await inspect_tx_failure(tx_hash)
                 code, message = error_code_msg(err_msg)
                 result.append(
                     {
                         "id": i + 1,
                         "status": 0,
-                        "transaction_hash": tx_hash.hex(),
+                        "transaction_hash": tx_hash.to_0x_hex(),
                         "error_code": code,
                         "error_msg": message,
                     }
@@ -289,28 +303,36 @@ async def send_raw_transaction(
                 from_address = Account.recover_transaction(raw_tx_hex)
             except Exception as err:
                 result.append(
-                    {"id": i + 1, "status": 0, "transaction_hash": tx_hash.hex()}
+                    {"id": i + 1, "status": 0, "transaction_hash": tx_hash.to_0x_hex()}
                 )
                 LOG.error(f"get sender address from signed transaction failed: {err}")
                 continue
-            nonce = int("0x0" if raw_tx[0].hex() == "0x" else raw_tx[0].hex(), 16)
+            nonce = int(
+                "0x0" if raw_tx[0].to_0x_hex() == "0x" else raw_tx[0].to_0x_hex(), 16
+            )
             txpool_inspect = await async_web3.geth.txpool.inspect()
-            if from_address in txpool_inspect.queued:
-                if str(nonce) in txpool_inspect.queued[from_address]:
+            if from_address in txpool_inspect["queued"]:
+                if str(nonce) in txpool_inspect["queued"][from_address]:
                     status = 0  # execution failure
 
             result.append(
-                {"id": i + 1, "status": status, "transaction_hash": tx_hash.hex()}
+                {"id": i + 1, "status": status, "transaction_hash": tx_hash.to_0x_hex()}
             )
             LOG.warning(f"Transaction receipt timeout: {time_exhausted_err}")
             continue
         except Exception as err:
-            result.append({"id": i + 1, "status": 0, "transaction_hash": tx_hash.hex()})
+            result.append(
+                {"id": i + 1, "status": 0, "transaction_hash": tx_hash.to_0x_hex()}
+            )
             LOG.error(f"Transaction failed: {err}")
             continue
 
         result.append(
-            {"id": i + 1, "status": tx["status"], "transaction_hash": tx_hash.hex()}
+            {
+                "id": i + 1,
+                "status": tx["status"],
+                "transaction_hash": tx_hash.to_0x_hex(),
+            }
         )
 
     return json_response({**SuccessResponse.default(), "data": result})
@@ -345,7 +367,7 @@ async def send_raw_transaction_no_wait(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
             LOG.warning(f"RLP decoding failed: {err}")
             continue
@@ -382,13 +404,25 @@ async def send_raw_transaction_no_wait(
                 ):
                     raise SuspendedTokenError("Token is currently suspended")
 
+    # Shaping ibet tx sending rate
+    pending_count = await txpool_pending_count()
+    if pending_count <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+        pass
+    else:
+        for i in range(150):
+            await asyncio.sleep(0.1)
+            if (await txpool_pending_count()) <= config.TXPOOL_THRESHOLD_FOR_TX_PAUSE:
+                break
+            else:
+                continue
+
     # Send transaction
     result: list[dict[str, Any]] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0})
@@ -423,25 +457,25 @@ async def send_raw_transaction_no_wait(
         # Send raw transaction
         try:
             transaction_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
-        except Exception as err:
-            if len(err.args) > 0:
-                error_msg = err.args[0].get("message")
-                if "nonce too low" in error_msg:
-                    result.append({"id": i + 1, "status": 3, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction nonce is too low: {err}")
-                elif "already known" in error_msg:
-                    result.append({"id": i + 1, "status": 4, "transaction_hash": None})
-                    LOG.warning(f"Sent transaction has been already known: {err}")
-                else:
-                    result.append({"id": i + 1, "status": 0, "transaction_hash": None})
-                    LOG.error(f"Send transaction failed: {err}")
+        except Web3RPCError as err:
+            error_msg = err.message
+            if "nonce too low" in error_msg:
+                result.append({"id": i + 1, "status": 3, "transaction_hash": None})
+                LOG.warning(f"Sent transaction nonce is too low: {err}")
+            elif "already known" in error_msg:
+                result.append({"id": i + 1, "status": 4, "transaction_hash": None})
+                LOG.warning(f"Sent transaction has been already known: {err}")
             else:
                 result.append({"id": i + 1, "status": 0, "transaction_hash": None})
                 LOG.error(f"Send transaction failed: {err}")
             continue
+        except Exception as err:
+            result.append({"id": i + 1, "status": 0, "transaction_hash": None})
+            LOG.error(f"Send transaction failed: {err}")
+            continue
 
         result.append(
-            {"id": i + 1, "status": 1, "transaction_hash": transaction_hash.hex()}
+            {"id": i + 1, "status": 1, "transaction_hash": transaction_hash.to_0x_hex()}
         )
 
     return json_response({**SuccessResponse.default(), "data": result})
@@ -488,7 +522,7 @@ async def wait_for_transaction_receipt(
     return json_response({**SuccessResponse.default(), "data": result})
 
 
-async def inspect_tx_failure(tx_hash: str) -> str:
+async def inspect_tx_failure(tx_hash: HexBytes) -> str:
     tx = await async_web3.eth.get_transaction(tx_hash)
 
     # build a new transaction to replay:
@@ -501,7 +535,7 @@ async def inspect_tx_failure(tx_hash: str) -> str:
 
     # replay the transaction locally:
     try:
-        await async_web3.eth.call(replay_tx, tx.blockNumber - 1)
+        await async_web3.eth.call(replay_tx, tx["blockNumber"] - 1)
     except ContractLogicError as e:
         if len(e.args) == 0:
             raise e
@@ -513,3 +547,14 @@ async def inspect_tx_failure(tx_hash: str) -> str:
     except Exception as e:
         raise e
     raise Exception("Inspecting transaction revert is failed.")
+
+
+async def txpool_pending_count() -> int:
+    txpool_status = await async_web3.geth.txpool.status()
+    txpool_pending = txpool_status.get("pending", "0x0")
+    pending_count = (
+        int(txpool_pending, 16)
+        if isinstance(txpool_pending, str)
+        else int(txpool_pending)
+    )
+    return pending_count

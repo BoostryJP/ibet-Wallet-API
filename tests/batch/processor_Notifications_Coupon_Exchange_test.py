@@ -25,7 +25,7 @@ from unittest.mock import MagicMock
 import pytest
 from sqlalchemy import and_, select
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import RPCEndpoint
 
 from app import config
@@ -37,15 +37,15 @@ from tests.contract_modules import (
     cancel_order,
     confirm_agreement,
     coupon_register_list,
+    coupon_transfer_to_exchange,
     force_cancel_order,
     issue_coupon_token,
     make_sell,
     take_buy,
-    transfer_coupon_token,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="function")
@@ -112,7 +112,12 @@ class TestWatchCouponNewOrder:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -175,7 +180,12 @@ class TestWatchCouponNewOrder:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 5000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=5000,
+        )
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000, 100)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
@@ -334,7 +344,12 @@ class TestWatchCouponCancelOrder:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -400,7 +415,12 @@ class TestWatchCouponCancelOrder:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 5000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=5000,
+        )
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000, 100)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
@@ -494,7 +514,12 @@ class TestWatchCouponCancelOrder:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -572,11 +597,11 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Create Order
-        transfer_coupon_token(
+        coupon_transfer_to_exchange(
             invoker=self.issuer,
-            coupon_token=token,
-            to=exchange_contract_address,
-            value=1000000,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
         )
         make_sell(
             invoker=self.issuer,
@@ -659,11 +684,11 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Create Order
-        transfer_coupon_token(
+        coupon_transfer_to_exchange(
             invoker=self.issuer,
-            coupon_token=token,
-            to=exchange_contract_address,
-            value=5000,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=5000,
         )
         make_sell(
             invoker=self.issuer,
@@ -788,11 +813,11 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Create Order
-        transfer_coupon_token(
+        coupon_transfer_to_exchange(
             invoker=self.issuer,
-            coupon_token=token,
-            to=exchange_contract_address,
-            value=1000000,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
         )
         make_sell(
             invoker=self.issuer,
@@ -871,7 +896,12 @@ class TestWatchCouponBuyAgreement:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -938,7 +968,12 @@ class TestWatchCouponBuyAgreement:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1035,7 +1070,12 @@ class TestWatchCouponBuyAgreement:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1108,7 +1148,12 @@ class TestWatchCouponSellAgreement:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1175,7 +1220,12 @@ class TestWatchCouponSellAgreement:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1269,7 +1319,12 @@ class TestWatchCouponSellAgreement:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1344,7 +1399,12 @@ class TestWatchCouponBuySettlementOK:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1418,7 +1478,12 @@ class TestWatchCouponBuySettlementOK:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1525,7 +1590,12 @@ class TestWatchCouponBuySettlementOK:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1603,7 +1673,12 @@ class TestWatchCouponSellSettlementOK:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1677,7 +1752,12 @@ class TestWatchCouponSellSettlementOK:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1784,7 +1864,12 @@ class TestWatchCouponSellSettlementOK:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1862,7 +1947,12 @@ class TestWatchCouponBuySettlementNG:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -1936,7 +2026,12 @@ class TestWatchCouponBuySettlementNG:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -2043,7 +2138,12 @@ class TestWatchCouponBuySettlementNG:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -2121,7 +2221,12 @@ class TestWatchCouponSellSettlementNG:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -2195,7 +2300,12 @@ class TestWatchCouponSellSettlementNG:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )
@@ -2302,7 +2412,12 @@ class TestWatchCouponSellSettlementNG:
         token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            token=token,
+            exchange={"address": exchange_contract_address},
+            amount=1000000,
+        )
         make_sell(
             self.issuer, {"address": exchange_contract_address}, token, 1000000, 100
         )

@@ -23,7 +23,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import (
@@ -40,7 +40,7 @@ from tests.app.position_PositionShare_test import TestPositionShare
 from tests.app.position_PositionStraightBond_test import TestPositionStraightBond
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPosition:
@@ -154,6 +154,7 @@ class TestPosition:
             "interest_payment_currency": "",
             "redemption_value_currency": "",
             "base_fx_rate": 0.0,
+            "require_personal_info_registered": True,
         }
 
     @staticmethod
@@ -185,6 +186,7 @@ class TestPosition:
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "transfer_approval_required": False,
             "transferable": True,
+            "require_personal_info_registered": True,
         }
 
     @staticmethod
@@ -448,7 +450,6 @@ class TestPosition:
         token_7 = "0x{:010x}{:010x}{:010x}{:010x}".format(0, 1, index, 7)
 
         personal_info_contract = shared_contract["PersonalInfo"]
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
 
         # Prepare data
         self.create_idx_position(

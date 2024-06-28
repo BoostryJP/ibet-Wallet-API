@@ -24,7 +24,7 @@ from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import engine
-from app.model.db.base import Base
+from app.model.db.base import Base, naive_utcnow
 
 
 class Company(Base):
@@ -44,11 +44,11 @@ class Company(Base):
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
         created: Mapped[datetime | None] = mapped_column(
-            MySQLDATETIME(fsp=6), default=datetime.utcnow, index=True
+            MySQLDATETIME(fsp=6), default=naive_utcnow, index=True
         )
     else:
         created: Mapped[datetime | None] = mapped_column(
-            DateTime, default=datetime.utcnow, index=True
+            DateTime, default=naive_utcnow, index=True
         )
     __table_args__ = (
         # Covering Index

@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest import mock
 from unittest.mock import MagicMock
@@ -30,7 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -59,7 +59,7 @@ from tests.contract_modules import (
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -301,7 +301,7 @@ class TestProcessor:
             _coupon_token_expected_list.append({"token_address": token["address"]})
 
         await async_session.commit()
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
         await asyncio.sleep(1)
 
         # Run target process
@@ -778,11 +778,11 @@ class TestProcessor:
 
         await async_session.commit()
         await asyncio.sleep(1)
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             await processor.process()
@@ -806,11 +806,11 @@ class TestProcessor:
 
         await async_session.commit()
         await asyncio.sleep(1)
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
 
         # Expect that process() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             await processor.process()
@@ -856,7 +856,7 @@ class TestProcessor:
 
         await async_session.commit()
         await asyncio.sleep(1)
-        current = datetime.utcnow()
+        current = datetime.now(UTC).replace(tzinfo=None)
 
         # Expect that process() raises SQLAlchemyError.
         with mock.patch.object(
@@ -910,7 +910,7 @@ class TestProcessor:
         with mock.patch(
             "batch.indexer_Token_Detail_ShortTerm.asyncio", time_mock
         ), mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError

@@ -23,7 +23,7 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -31,12 +31,14 @@ from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
     invalidate_share_token,
+    issue_bond_token,
     issue_share_token,
+    register_bond_list,
     register_share_list,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestTokenShareTokenDetails:
@@ -48,12 +50,51 @@ class TestTokenShareTokenDetails:
     apiurl_base = "/Token/Share/"  # {contract_address}
 
     @staticmethod
+    def bond_token_attribute(exchange_address, personal_info_address):
+        attribute = {
+            "name": "テスト債券",
+            "symbol": "BOND",
+            "totalSupply": 1000000,
+            "tradableExchange": exchange_address,
+            "faceValue": 10000,
+            "interestRate": 602,
+            "interestPaymentDate1": "0101",
+            "interestPaymentDate2": "0201",
+            "interestPaymentDate3": "0301",
+            "interestPaymentDate4": "0401",
+            "interestPaymentDate5": "0501",
+            "interestPaymentDate6": "0601",
+            "interestPaymentDate7": "0701",
+            "interestPaymentDate8": "0801",
+            "interestPaymentDate9": "0901",
+            "interestPaymentDate10": "1001",
+            "interestPaymentDate11": "1101",
+            "interestPaymentDate12": "1201",
+            "redemptionDate": "20191231",
+            "redemptionValue": 10000,
+            "returnDate": "20191231",
+            "returnAmount": "商品券をプレゼント",
+            "purpose": "新商品の開発資金として利用。",
+            "memo": "メモ",
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+            "personalInfoAddress": personal_info_address,
+            "requirePersonalInfoRegistered": False,
+            "faceValueCurrency": "JPY",
+            "interestPaymentCurrency": "JPY",
+            "redemptionValueCurrency": "JPY",
+            "baseFxRate": "",
+        }
+        return attribute
+
+    @staticmethod
     def share_token_attribute(exchange_address, personal_info_address):
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
             "tradableExchange": exchange_address,
             "personalInfoAddress": personal_info_address,
+            "requirePersonalInfoRegistered": False,
             "totalSupply": 1000000,
             "issuePrice": 10000,
             "principalValue": 10000,
@@ -149,6 +190,7 @@ class TestTokenShareTokenDetails:
             "is_canceled": False,
             "tradable_exchange": exchange_address,
             "personal_info_address": personal_info,
+            "require_personal_info_registered": False,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -216,6 +258,7 @@ class TestTokenShareTokenDetails:
             "is_canceled": False,
             "tradable_exchange": exchange_address,
             "personal_info_address": personal_info,
+            "require_personal_info_registered": False,
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -302,4 +345,42 @@ class TestTokenShareTokenDetails:
             "code": 10,
             "message": "Not Supported",
             "description": "method: GET, url: /Token/Share/0xe6A75581C7299c75392a63BCF18a3618B30ff765",
+        }
+
+    # Error_4
+    # Retrieve the token address of other token type
+    # -> 404
+    @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]
+
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
+
+        # Issue token
+        exchange_address = to_checksum_address(
+            shared_contract["IbetStraightBondExchange"]["address"]
+        )
+        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        attribute = self.bond_token_attribute(exchange_address, personal_info)
+        bond_token = issue_bond_token(issuer, attribute)
+        register_bond_list(issuer, bond_token, token_list)
+
+        # Register tokens on the list
+        self.list_token(session, bond_token)
+
+        session.commit()
+
+        # Request target API
+        apiurl = self.apiurl_base + bond_token["address"]
+        query_string = ""
+        resp = client.get(apiurl, params=query_string)
+
+        # Assertion
+        assert resp.status_code == 404
+        assert resp.json()["meta"] == {
+            "code": 30,
+            "description": f'token_address: {bond_token["address"]}',
+            "message": "Data Not Exists",
         }

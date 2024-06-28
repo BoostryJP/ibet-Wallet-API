@@ -24,7 +24,7 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -35,7 +35,7 @@ from tests.account_config import eth_account
 from tests.contract_modules import issue_bond_token, register_bond_list
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -431,6 +431,7 @@ class TestTokenStraightBondTokenAddresses:
                 "tradable_exchange": exchange_address,
                 "status": True,
                 "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
                 "transfer_approval_required": False,
             },
         )
@@ -527,6 +528,7 @@ class TestTokenStraightBondTokenAddresses:
             "tradable_exchange": "0x0000000000000000000000000000000000000000",
             "status": False,
             "personal_info_address": "0x0000000000000000000000000000000000000000",
+            "require_personal_info_registered": False,
             "transfer_approval_required": True,
         }
 
@@ -632,6 +634,10 @@ class TestTokenStraightBondTokenAddresses:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
 
     # <Error_1>
     # NotSupportedError

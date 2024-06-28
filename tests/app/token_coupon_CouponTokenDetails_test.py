@@ -23,7 +23,7 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -33,10 +33,12 @@ from tests.contract_modules import (
     coupon_register_list,
     invalidate_coupon_token,
     issue_coupon_token,
+    membership_issue,
+    membership_register_list,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestTokenCouponTokenDetails:
@@ -48,7 +50,7 @@ class TestTokenCouponTokenDetails:
     apiurl_base = "/Token/Coupon/"  # {contract_address}
 
     @staticmethod
-    def token_attribute(exchange_address):
+    def coupon_token_attribute(exchange_address):
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -58,6 +60,23 @@ class TestTokenCouponTokenDetails:
             "returnDetails": "リターン詳細",
             "memo": "クーポンメモ欄",
             "expirationDate": "20191231",
+            "transferable": True,
+            "contactInformation": "問い合わせ先",
+            "privacyPolicy": "プライバシーポリシー",
+        }
+        return attribute
+
+    @staticmethod
+    def membership_token_attribute(exchange_address):
+        attribute = {
+            "name": "テスト会員権",
+            "symbol": "MEMBERSHIP",
+            "initialSupply": 1000000,
+            "tradableExchange": exchange_address,
+            "details": "詳細",
+            "returnDetails": "リターン詳細",
+            "expirationDate": "20191231",
+            "memo": "メモ",
             "transferable": True,
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
@@ -99,7 +118,7 @@ class TestTokenCouponTokenDetails:
         exchange_address = to_checksum_address(
             shared_contract["IbetCouponExchange"]["address"]
         )
-        attribute = self.token_attribute(exchange_address)
+        attribute = self.coupon_token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
 
@@ -160,7 +179,7 @@ class TestTokenCouponTokenDetails:
         exchange_address = to_checksum_address(
             shared_contract["IbetCouponExchange"]["address"]
         )
-        attribute = self.token_attribute(exchange_address)
+        attribute = self.coupon_token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
 
@@ -255,7 +274,7 @@ class TestTokenCouponTokenDetails:
         exchange_address = to_checksum_address(
             shared_contract["IbetCouponExchange"]["address"]
         )
-        attribute = self.token_attribute(exchange_address)
+        attribute = self.coupon_token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
 
@@ -290,4 +309,41 @@ class TestTokenCouponTokenDetails:
             "code": 10,
             "message": "Not Supported",
             "description": "method: GET, url: /Token/Coupon/0xe6A75581C7299c75392a63BCF18a3618B30ff765",
+        }
+
+    # Error_4
+    # Retrieve the token address of other token type
+    # -> 404
+    @mock.patch("app.config.COUPON_TOKEN_ENABLED", True)
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]
+
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
+
+        # Prepare data: issue token
+        exchange_address = to_checksum_address(
+            shared_contract["IbetCouponExchange"]["address"]
+        )
+        attribute = self.membership_token_attribute(exchange_address)
+        token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, token, token_list)
+
+        # Register tokens on the list
+        self.list_token(session, token)
+
+        session.commit()
+
+        # Request target API
+        apiurl = self.apiurl_base + token["address"]
+        query_string = ""
+        resp = client.get(apiurl, params=query_string)
+
+        # Assertion
+        assert resp.status_code == 404
+        assert resp.json()["meta"] == {
+            "code": 30,
+            "description": f'token_address: {token["address"]}',
+            "message": "Data Not Exists",
         }

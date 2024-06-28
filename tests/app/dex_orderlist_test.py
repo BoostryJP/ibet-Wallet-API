@@ -25,7 +25,7 @@ from tests.contract_modules import *
 from tests.utils import PersonalInfoUtils as pi_utils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestDEXOrderList:

@@ -124,7 +124,7 @@ class Processor:
         """
         try:
             events = await self.token_list_contract.events.Register.get_logs(
-                fromBlock=block_from, toBlock=block_to
+                from_block=block_from, to_block=block_to
             )
         except ABIEventFunctionNotFound:
             events = []

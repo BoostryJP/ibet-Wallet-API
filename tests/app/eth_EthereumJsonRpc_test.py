@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from unittest import mock
-from unittest.mock import ANY, MagicMock
+from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -60,7 +60,11 @@ class TestEthereumJsonRpc:
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == {"jsonrpc": "2.0", "result": web3.eth.syncing}
+        assert resp.json()["data"] == {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": web3.eth.syncing,
+        }
 
     # Normal_2
     # method is not exists
@@ -80,12 +84,15 @@ class TestEthereumJsonRpc:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
-            "id": None,
             "jsonrpc": "2.0",
+            "id": 1,
             "error": {
-                "message": "The method eth_sync does not exist/is not available",
-                "stack": ANY,
-                "code": -32700,
+                "code": -32004,
+                "message": "Method eth_sync is not supported",
+                "data": {
+                    "message": "Method eth_sync is not supported",
+                    "data": {"method": "eth_sync", "params": []},
+                },
             },
         }
 

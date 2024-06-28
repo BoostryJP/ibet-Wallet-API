@@ -50,10 +50,16 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | TOKEN_SHORT_TERM_CACHE_TTL     | False    | Token attribute data cache (Short-Term) expiration time (seconds)  | 60                                         | 40      |
 
 ### Token Escrow
-| Variable Name                                | Required | Details                                                                  | Example                                    | Default | 
-|----------------------------------------------|----------|--------------------------------------------------------------------------|--------------------------------------------|---------|
-| IBET_ESCROW_CONTRACT_ADDRESS                 | False    | Ibet Escrow contract address                                             | 0x0000000000000000000000000000000000000000 | --      |
-| IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS  | False    | Ibet Security Token Escrow contract address                              | 0x0000000000000000000000000000000000000000 | --      |
+| Variable Name                               | Required | Details                                     | Example                                    | Default | 
+|---------------------------------------------|----------|---------------------------------------------|--------------------------------------------|---------|
+| IBET_ESCROW_CONTRACT_ADDRESS                | False    | Ibet Escrow contract address                | 0x0000000000000000000000000000000000000000 | --      |
+| IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS | False    | Ibet Security Token Escrow contract address | 0x0000000000000000000000000000000000000000 | --      |
+
+### Token DVP
+
+| Variable Name                               | Required | Details                                     | Example                                    | Default | 
+|---------------------------------------------|----------|---------------------------------------------|--------------------------------------------|---------|
+| IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS    | False    | Ibet Security Token DVP contract address    | 0x0000000000000000000000000000000000000000 | --      |
 
 ### On-chain Exchange (Only for utility tokens)
 | Variable Name                               | Required | Details                                                                  | Example                                    | Default | 
@@ -91,6 +97,16 @@ Amazon SES
 | Variable Name       | Required | Details         | Example   | Default | 
 |---------------------|----------|-----------------|-----------|---------|
 | AWS_SES_REGION_NAME | False    | AWS region name | us-east-1 | --      |
+
+Send settings
+
+| Variable Name                              | Required | Details                                                                         | Example                       | Default | 
+|--------------------------------------------|----------|---------------------------------------------------------------------------------|-------------------------------|---------|
+| ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST      | False    | Domains allowed to send email. Not set if all domains are allowed.              | example.com,example.net       | --      |
+| DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX | False    | Regular expression for destination email addresses that are not allowed to send | ^[a-zA-Z0-9_.+-]+@example.com | --      |
+
+
+
 
 ### Chat Webhook
 | Variable Name     | Required | Details          | Example                                                                        | Default | 

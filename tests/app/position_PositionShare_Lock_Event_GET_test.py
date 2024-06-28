@@ -87,6 +87,7 @@ class TestPositionShareLockEvent:
             "privacy_policy": "プライバシーポリシー",
             "tradable_exchange": TestPositionShareLockEvent.exchange_address,
             "personal_info_address": TestPositionShareLockEvent.personal_info_address,
+            "require_personal_info_registered": True,
             "max_holding_quantity": 1,
             "max_sell_amount": 1000,
         }
@@ -134,6 +135,7 @@ class TestPositionShareLockEvent:
         idx_token.privacy_policy = "プライバシーポリシー"
         idx_token.tradable_exchange = exchange_address
         idx_token.personal_info_address = personal_info_address
+        idx_token.require_personal_info_registered = True
         idx_token.max_holding_quantity = 1
         idx_token.max_sell_amount = 1000
         session.add(idx_token)

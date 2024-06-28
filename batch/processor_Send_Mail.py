@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import re
 import time
 from smtplib import SMTPException
 from typing import Sequence
@@ -26,14 +27,14 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.config import DATABASE_URL
+from app import config
 from app.model.db import Mail
 from app.model.mail import File, Mail as SMTPMail
 from batch import log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
 
-db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -45,6 +46,33 @@ class Processor:
                 LOG.info("Process start")
                 for mail in mail_list:
                     try:
+                        # Not send emails if the domain is not allowed
+                        if (
+                            config.ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST is not None
+                            and mail.to_email.split("@")[1]
+                            not in config.ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST
+                        ):
+                            LOG.warning(
+                                f"Destination address is not allowed to send: id={mail.id}"
+                            )
+                            continue
+
+                        # Not send emails if the destination address is not allowed
+                        if (
+                            config.DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX
+                            is not None
+                            and bool(
+                                re.fullmatch(
+                                    config.DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX,
+                                    mail.to_email,
+                                )
+                            )
+                        ):
+                            LOG.warning(
+                                f"Destination address is not allowed to send: id={mail.id}"
+                            )
+                            continue
+
                         file = None
                         if mail.file_name and mail.file_content:
                             file = File(name=mail.file_name, content=mail.file_content)
@@ -56,8 +84,8 @@ class Processor:
                             file=file,
                         )
                         smtp_mail.send_mail()
-                    except (SMTPException, SESException) as err:
-                        LOG.warning(f"Could not send email: {err}")
+                    except (SMTPException, SESException, IndexError):
+                        LOG.warning(f"Could not send email: id={mail.id}")
                         continue
                     finally:
                         db_session.delete(mail)

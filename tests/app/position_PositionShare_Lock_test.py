@@ -23,13 +23,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXLockedPosition, IDXShareToken
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPositionShareLock:
@@ -85,6 +85,7 @@ class TestPositionShareLock:
             "privacy_policy": "プライバシーポリシー",
             "tradable_exchange": TestPositionShareLock.exchange_address,
             "personal_info_address": TestPositionShareLock.personal_info_address,
+            "require_personal_info_registered": True,
             "max_holding_quantity": 1,
             "max_sell_amount": 1000,
         }
@@ -125,6 +126,7 @@ class TestPositionShareLock:
         idx_token.privacy_policy = "プライバシーポリシー"
         idx_token.tradable_exchange = exchange_address
         idx_token.personal_info_address = personal_info_address
+        idx_token.require_personal_info_registered = True
         idx_token.max_holding_quantity = 1
         idx_token.max_sell_amount = 1000
         session.add(idx_token)

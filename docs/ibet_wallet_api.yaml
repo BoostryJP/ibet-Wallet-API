@@ -1,10 +1,9 @@
 openapi: 3.1.0
 info:
   title: ibet Wallet API
-  description: >-
-    RPC services that provides utility tools for building a wallet system on
-    ibet network
-  version: 24.3.0
+  description: RPC services that provides utility tools for building a wallet system
+    on ibet network
+  version: 24.6.0
 paths:
   /:
     get:
@@ -28,8 +27,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllAdminTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllAdminTokensResponse_'
     post:
       tags:
         - admin
@@ -77,8 +75,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_GetAdminTokenTypeResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_GetAdminTokenTypeResponse_'
   /Admin/Tokens/{token_address}:
     get:
       tags:
@@ -101,8 +98,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveAdminTokenResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveAdminTokenResponse_'
         '400':
           content:
             application/json:
@@ -208,8 +204,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_GetNodeInfoResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_GetNodeInfoResponse_'
   /NodeInfo/BlockSyncStatus:
     get:
       tags:
@@ -223,8 +218,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_GetBlockSyncStatusResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_GetBlockSyncStatusResponse_'
         '400':
           description: Bad Request
           content:
@@ -304,8 +298,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_BlockDataListResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_BlockDataListResponse_'
         '400':
           content:
             application/json:
@@ -429,8 +422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TxDataListResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TxDataListResponse_'
         '400':
           content:
             application/json:
@@ -613,8 +605,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllCompanyInfoResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyInfoResponse_'
         '400':
           content:
             application/json:
@@ -643,8 +634,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_'
         '400':
           content:
             application/json:
@@ -693,8 +683,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_'
         '400':
           content:
             application/json:
@@ -757,8 +746,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_'
         '400':
           content:
             application/json:
@@ -805,8 +793,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_'
         '400':
           content:
             application/json:
@@ -876,8 +863,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransactionCountResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransactionCountResponse_'
         '400':
           content:
             application/json:
@@ -906,8 +892,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_SendRawTransactionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_SendRawTransactionsResponse_'
         '400':
           description: Bad Request
           content:
@@ -936,8 +921,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_SendRawTransactionsNoWaitResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_SendRawTransactionsNoWaitResponse_'
         '400':
           description: Bad Request
           content:
@@ -982,8 +966,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_WaitForTransactionReceiptResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_WaitForTransactionReceiptResponse_'
         '400':
           content:
             application/json:
@@ -1106,6 +1089,16 @@ paths:
             description: personal information address
             title: Personal Info Address
           description: personal information address
+        - name: require_personal_info_registered
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: whether personal information registration is required
+            title: Require Personal Info Registered
+          description: whether personal information registration is required
         - name: transferable
           in: query
           required: false
@@ -1174,8 +1167,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllStraightBondTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllStraightBondTokensResponse_'
         '400':
           content:
             application/json:
@@ -1291,6 +1283,16 @@ paths:
             description: personal information address
             title: Personal Info Address
           description: personal information address
+        - name: require_personal_info_registered
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: whether personal information registration is required
+            title: Require Personal Info Registered
+          description: whether personal information registration is required
         - name: transferable
           in: query
           required: false
@@ -1359,8 +1361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllStraightBondTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllStraightBondTokenAddressesResponse_'
         '400':
           content:
             application/json:
@@ -1395,8 +1396,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveStraightBondTokenResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveStraightBondTokenResponse_'
         '400':
           content:
             application/json:
@@ -1525,6 +1525,16 @@ paths:
             description: personal information address
             title: Personal Info Address
           description: personal information address
+        - name: require_personal_info_registered
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: whether personal information registration is required
+            title: Require Personal Info Registered
+          description: whether personal information registration is required
         - name: transferable
           in: query
           required: false
@@ -1593,8 +1603,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllShareTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllShareTokensResponse_'
         '400':
           content:
             application/json:
@@ -1710,6 +1719,16 @@ paths:
             description: personal information address
             title: Personal Info Address
           description: personal information address
+        - name: require_personal_info_registered
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: whether personal information registration is required
+            title: Require Personal Info Registered
+          description: whether personal information registration is required
         - name: transferable
           in: query
           required: false
@@ -1778,8 +1797,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllShareTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllShareTokenAddressesResponse_'
         '400':
           content:
             application/json:
@@ -1814,8 +1832,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveShareTokenResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveShareTokenResponse_'
         '400':
           content:
             application/json:
@@ -1979,8 +1996,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllMembershipTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllMembershipTokensResponse_'
         '400':
           content:
             application/json:
@@ -2134,8 +2150,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_'
         '400':
           content:
             application/json:
@@ -2170,8 +2185,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveMembershipTokenResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveMembershipTokenResponse_'
         '400':
           content:
             application/json:
@@ -2335,8 +2349,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllCouponTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCouponTokensResponse_'
         '400':
           content:
             application/json:
@@ -2490,8 +2503,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllCouponTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCouponTokenAddressesResponse_'
         '400':
           content:
             application/json:
@@ -2526,8 +2538,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveCouponTokenResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCouponTokenResponse_'
         '400':
           content:
             application/json:
@@ -2568,8 +2579,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenStatusResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenStatusResponse_'
         '400':
           content:
             application/json:
@@ -2661,10 +2671,12 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Amount Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
         - name: pending_transfer
           in: query
           required: false
@@ -2682,10 +2694,12 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Pending Transfer Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
         - name: exchange_balance
           in: query
           required: false
@@ -2703,10 +2717,12 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Exchange Balance Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
         - name: exchange_commitment
           in: query
           required: false
@@ -2724,10 +2740,12 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Exchange Commitment Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
         - name: locked
           in: query
           required: false
@@ -2745,18 +2763,19 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Locked Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenHoldersResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersResponse_'
         '400':
           content:
             application/json:
@@ -2777,9 +2796,8 @@ paths:
       tags:
         - token_info
       summary: Search Token holders
-      description: >-
-        Returns a list of token holders for a given token using detailed search
-        query.
+      description: Returns a list of token holders for a given token using detailed
+        search query.
       operationId: SearchTokenHolders
       parameters:
         - name: token_address
@@ -2802,8 +2820,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenHoldersResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersResponse_'
         '400':
           content:
             application/json:
@@ -2862,8 +2879,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenHoldersCountResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersCountResponse_'
         '400':
           content:
             application/json:
@@ -2907,8 +2923,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CreateTokenHoldersCollectionResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_CreateTokenHoldersCollectionResponse_'
         '400':
           content:
             application/json:
@@ -2946,23 +2961,20 @@ paths:
           schema:
             type: string
             format: uuid
-            description: >-
-              Unique id to be assigned to each token holder list.This must be
-              Version4 UUID.
+            description: Unique id to be assigned to each token holder list.This must
+              be Version4 UUID.
             examples:
               - cfd83622-34dc-4efe-a68b-2cc275d3d824
             title: List Id
-          description: >-
-            Unique id to be assigned to each token holder list.This must be
-            Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This must
+            be Version4 UUID.
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenHoldersCollectionResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersCollectionResponse_'
         '400':
           content:
             application/json:
@@ -3093,18 +3105,19 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Value Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_'
         '400':
           content:
             application/json:
@@ -3125,8 +3138,7 @@ paths:
       tags:
         - token_info
       summary: Search Token Transfer History
-      description: >-
-        Returns a list of transfer histories for a given token using detailed
+      description: Returns a list of transfer histories for a given token using detailed
         search query.
       operationId: SearchTransferHistory
       parameters:
@@ -3150,8 +3162,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_'
         '400':
           content:
             application/json:
@@ -3252,18 +3263,19 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/ValueOperator'
               - type: 'null'
-            description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
             default: 0
             title: Value Operator
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransferApprovalHistoriesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferApprovalHistoriesResponse_'
         '400':
           content:
             application/json:
@@ -3284,9 +3296,8 @@ paths:
       tags:
         - token_info
       summary: Search Token Transfer Approval History
-      description: >-
-        Returns a list of transfer approval histories for a given token using
-        detailed search query.
+      description: Returns a list of transfer approval histories for a given token
+        using detailed search query.
       operationId: SearchTransferApprovalHistory
       parameters:
         - name: token_address
@@ -3309,8 +3320,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransferApprovalHistoriesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferApprovalHistoriesResponse_'
         '400':
           content:
             application/json:
@@ -3412,8 +3422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllTokenLockResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTokenLockResponse_'
         '400':
           content:
             application/json:
@@ -3467,8 +3476,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveTokenLockCountResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveTokenLockCountResponse_'
         '400':
           content:
             application/json:
@@ -3573,8 +3581,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveShareTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveShareTokenResponse__'
         '400':
           content:
             application/json:
@@ -3725,8 +3732,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_RetrieveShareTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_RetrieveShareTokenResponse__'
         '400':
           content:
             application/json:
@@ -3828,8 +3834,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveStraightBondTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveStraightBondTokenResponse__'
         '400':
           content:
             application/json:
@@ -3980,8 +3985,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_RetrieveStraightBondTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_RetrieveStraightBondTokenResponse__'
         '400':
           content:
             application/json:
@@ -4053,8 +4057,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveShareTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveShareTokenResponse__'
         '400':
           content:
             application/json:
@@ -4138,8 +4141,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveStraightBondTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveStraightBondTokenResponse__'
         '400':
           content:
             application/json:
@@ -4223,8 +4225,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_MembershipPositionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_MembershipPositionsResponse_'
         '400':
           content:
             application/json:
@@ -4308,8 +4309,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CouponPositionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_CouponPositionsResponse_'
         '400':
           content:
             application/json:
@@ -4368,8 +4368,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveShareTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveShareTokenResponse__'
         '400':
           content:
             application/json:
@@ -4428,8 +4427,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse__'
         '400':
           content:
             application/json:
@@ -4488,8 +4486,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_MembershipPositionWithDetail_
+                $ref: '#/components/schemas/GenericSuccessResponse_MembershipPositionWithDetail_'
         '400':
           content:
             application/json:
@@ -4548,8 +4545,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CouponPositionWithDetail_
+                $ref: '#/components/schemas/GenericSuccessResponse_CouponPositionWithDetail_'
         '400':
           content:
             application/json:
@@ -4598,8 +4594,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllCouponConsumptionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCouponConsumptionsResponse_'
         '400':
           content:
             application/json:
@@ -4668,8 +4663,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenPositionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenPositionsResponse_'
         '400':
           content:
             application/json:
@@ -4765,8 +4759,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_NotificationsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_NotificationsResponse_'
         '400':
           content:
             application/json:
@@ -4819,8 +4812,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_NotificationsCountResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_NotificationsCountResponse_'
         '400':
           content:
             application/json:
@@ -4855,8 +4847,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_NotificationUpdateResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_NotificationUpdateResponse_'
         '400':
           content:
             application/json:
@@ -4908,8 +4899,7 @@ paths:
       tags:
         - messaging
       summary: Retrieve message encryption key
-      description: >-
-        Returns encryption key for use in e2e messaging for given account
+      description: Returns encryption key for use in e2e messaging for given account
         address.
       operationId: EncryptionKey
       parameters:
@@ -4927,8 +4917,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_E2EMessageEncryptionKeyResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_E2EMessageEncryptionKeyResponse_'
         '400':
           content:
             application/json:
@@ -5045,31 +5034,25 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: >-
-              filter argument. serialize obj to a JSON formatted str
-              required.eg.```{"sender":
-              "0x0000000000000000000000000000000000000000"}```
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{"sender":
+              "0x0000000000000000000000000000000000000000"}```'
             title: Argument Filters
-          description: >-
-            filter argument. serialize obj to a JSON formatted str
-            required.eg.```{"sender":
-            "0x0000000000000000000000000000000000000000"}```
+          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{"sender":
+            "0x0000000000000000000000000000000000000000"}```'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllEventsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: >-
-                      #/components/schemas/RequestBlockRangeLimitExceededErrorResponse
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 E2Emessagingevents
           description: Bad Request
@@ -5116,31 +5099,25 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: >-
-              filter argument. serialize obj to a JSON formatted str
-              required.eg.```{    "escrowId": 0    "token":
-              "0x0000000000000000000000000000000000000000"}```
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId":
+              0    "token": "0x0000000000000000000000000000000000000000"}```'
             title: Argument Filters
-          description: >-
-            filter argument. serialize obj to a JSON formatted str
-            required.eg.```{    "escrowId": 0    "token":
-            "0x0000000000000000000000000000000000000000"}```
+          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId":
+            0    "token": "0x0000000000000000000000000000000000000000"}```'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllEventsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: >-
-                      #/components/schemas/RequestBlockRangeLimitExceededErrorResponse
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Ibetescrowevents
           description: Bad Request
@@ -5187,34 +5164,99 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: >-
-              filter argument. serialize obj to a JSON formatted str
-              required.eg.```{    "escrowId": 0    "token":
-              "0x0000000000000000000000000000000000000000"}```
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId":
+              0    "token": "0x0000000000000000000000000000000000000000"}```'
             title: Argument Filters
-          description: >-
-            filter argument. serialize obj to a JSON formatted str
-            required.eg.```{    "escrowId": 0    "token":
-            "0x0000000000000000000000000000000000000000"}```
+          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId":
+            0    "token": "0x0000000000000000000000000000000000000000"}```'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllEventsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: >-
-                      #/components/schemas/RequestBlockRangeLimitExceededErrorResponse
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Ibetsecuritytokenescrowevents
           description: Bad Request
+  /Events/IbetSecurityTokenDVP:
+    get:
+      tags:
+        - contract_log
+      summary: List all IbetSecurityTokenDVP event logs
+      description: Returns a list of IbetSecurityTokenDVP event logs.
+      operationId: IbetSecurityTokenDVPEvents
+      parameters:
+        - name: from_block
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            description: from block number
+            title: From Block
+          description: from block number
+        - name: to_block
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            description: to block number
+            title: To Block
+          description: to block number
+        - name: event
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/IbetSecurityTokenDVPEventType'
+              - type: 'null'
+            description: events to get
+            title: Event
+          description: events to get
+        - name: argument_filters
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "deliveryId":
+              0    "token": "0x0000000000000000000000000000000000000000"}```'
+            title: Argument Filters
+          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "deliveryId":
+            0    "token": "0x0000000000000000000000000000000000000000"}```'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Ibetsecuritytokendvpevents
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
   /Events/IbetSecurityTokenInterface/{token_address}:
     get:
       tags:
@@ -5266,33 +5308,25 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: >-
-              filter argument. serialize obj to a JSON formatted str
-              required.eg.```{    "from":
-              "0x0000000000000000000000000000000000000000"    "to":
-              "0x0000000000000000000000000000000000000000"}```
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "from":
+              "0x0000000000000000000000000000000000000000"    "to": "0x0000000000000000000000000000000000000000"}```'
             title: Argument Filters
-          description: >-
-            filter argument. serialize obj to a JSON formatted str
-            required.eg.```{    "from":
-            "0x0000000000000000000000000000000000000000"    "to":
-            "0x0000000000000000000000000000000000000000"}```
+          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "from":
+            "0x0000000000000000000000000000000000000000"    "to": "0x0000000000000000000000000000000000000000"}```'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllEventsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: >-
-                      #/components/schemas/RequestBlockRangeLimitExceededErrorResponse
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Ibetsecuritytokeninterfaceevents
           description: Bad Request
@@ -5334,8 +5368,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_RetrieveAgreementDetailResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveAgreementDetailResponse_'
         '400':
           content:
             application/json:
@@ -5381,13 +5414,11 @@ paths:
           schema:
             allOf:
               - $ref: '#/components/schemas/OrderType'
-            description: >-
-              Order type to be executed by the Orderer. If "buy" is selected,
+            description: Order type to be executed by the Orderer. If "buy" is selected,
               the sell order book will be returned.
             title: Order Type
-          description: >-
-            Order type to be executed by the Orderer. If "buy" is selected, the
-            sell order book will be returned.
+          description: Order type to be executed by the Orderer. If "buy" is selected,
+            the sell order book will be returned.
         - name: account_address
           in: query
           required: false
@@ -5395,21 +5426,18 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: >-
-              Orderer's account address. Orders from the given address will not
-              be included in the response.
+            description: Orderer's account address. Orders from the given address
+              will not be included in the response.
             title: Account Address
-          description: >-
-            Orderer's account address. Orders from the given address will not be
-            included in the response.
+          description: Orderer's account address. Orders from the given address will
+            not be included in the response.
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
         '400':
           content:
             application/json:
@@ -5446,8 +5474,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
         '400':
           content:
             application/json:
@@ -5484,8 +5511,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllTicksResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
         '400':
           content:
             application/json:
@@ -5528,13 +5554,11 @@ paths:
           schema:
             allOf:
               - $ref: '#/components/schemas/OrderType'
-            description: >-
-              Order type to be executed by the Orderer. If "buy" is selected,
+            description: Order type to be executed by the Orderer. If "buy" is selected,
               the sell order book will be returned.
             title: Order Type
-          description: >-
-            Order type to be executed by the Orderer. If "buy" is selected, the
-            sell order book will be returned.
+          description: Order type to be executed by the Orderer. If "buy" is selected,
+            the sell order book will be returned.
         - name: account_address
           in: query
           required: false
@@ -5542,21 +5566,18 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: >-
-              Orderer's account address. Orders from the given address will not
-              be included in the response.
+            description: Orderer's account address. Orders from the given address
+              will not be included in the response.
             title: Account Address
-          description: >-
-            Orderer's account address. Orders from the given address will not be
-            included in the response.
+          description: Orderer's account address. Orders from the given address will
+            not be included in the response.
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
         '400':
           content:
             application/json:
@@ -5593,8 +5614,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
         '400':
           content:
             application/json:
@@ -5631,8 +5651,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllTicksResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
         '400':
           content:
             application/json:
@@ -5679,8 +5698,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__'
         '400':
           content:
             application/json:
@@ -5727,8 +5745,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_RetrieveCouponTokenResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_RetrieveCouponTokenResponse__'
         '400':
           content:
             application/json:
@@ -5783,8 +5800,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_TokenAddress__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_TokenAddress__'
         '400':
           content:
             application/json:
@@ -5934,7 +5950,7 @@ components:
       properties:
         number:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Number
           description: Block number
         hash:
@@ -5958,7 +5974,7 @@ components:
           title: Gas Used
         size:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Size
       type: object
       required:
@@ -5974,7 +5990,7 @@ components:
       properties:
         number:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Number
           description: Block number
         parent_hash:
@@ -6025,7 +6041,7 @@ components:
           description: Block hash
         size:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Size
         transactions:
           items:
@@ -6252,7 +6268,6 @@ components:
         - company_name
         - tradable_exchange
         - status
-        - personal_info_address
         - transferable
         - initial_offering_status
         - created
@@ -6263,9 +6278,8 @@ components:
           type: string
           format: uuid4
           title: List Id
-          description: >-
-            Unique id to be assigned to each token holder list.This must be
-            Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This must
+            be Version4 UUID.
           examples:
             - cfd83622-34dc-4efe-a68b-2cc275d3d824
         block_number:
@@ -6283,9 +6297,8 @@ components:
           type: string
           format: uuid4
           title: List Id
-          description: >-
-            Unique id to be assigned to each token holder list.This must be
-            Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This must
+            be Version4 UUID.
           examples:
             - cfd83622-34dc-4efe-a68b-2cc275d3d824
         status:
@@ -6448,8 +6461,7 @@ components:
         positions:
           anyOf:
             - items:
-                $ref: >-
-                  #/components/schemas/SecurityTokenPositionWithDetail_RetrieveShareTokenResponse_
+                $ref: '#/components/schemas/SecurityTokenPositionWithDetail_RetrieveShareTokenResponse_'
               type: array
             - items:
                 $ref: '#/components/schemas/SecurityTokenPositionWithAddress'
@@ -6467,8 +6479,7 @@ components:
         positions:
           anyOf:
             - items:
-                $ref: >-
-                  #/components/schemas/SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse_
+                $ref: '#/components/schemas/SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse_'
               type: array
             - items:
                 $ref: '#/components/schemas/SecurityTokenPositionWithAddress'
@@ -6608,13 +6619,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/GenericSecurityTokenPositionsResponse_RetrieveShareTokenResponse_
+          $ref: '#/components/schemas/GenericSecurityTokenPositionsResponse_RetrieveShareTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[GenericSecurityTokenPositionsResponse[RetrieveShareTokenResponse]]
     GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveStraightBondTokenResponse__:
       properties:
@@ -6625,13 +6635,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/GenericSecurityTokenPositionsResponse_RetrieveStraightBondTokenResponse_
+          $ref: '#/components/schemas/GenericSecurityTokenPositionsResponse_RetrieveStraightBondTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]]
     GenericSuccessResponse_GetAdminTokenTypeResponse_:
       properties:
@@ -6807,14 +6816,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/ListAllLockEventsResponse_RetrieveShareTokenResponse_
+          $ref: '#/components/schemas/ListAllLockEventsResponse_RetrieveShareTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
-        GenericSuccessResponse[ListAllLockEventsResponse[RetrieveShareTokenResponse]]
+      title: GenericSuccessResponse[ListAllLockEventsResponse[RetrieveShareTokenResponse]]
     GenericSuccessResponse_ListAllLockEventsResponse_RetrieveStraightBondTokenResponse__:
       properties:
         meta:
@@ -6824,13 +6831,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/ListAllLockEventsResponse_RetrieveStraightBondTokenResponse_
+          $ref: '#/components/schemas/ListAllLockEventsResponse_RetrieveStraightBondTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[ListAllLockEventsResponse[RetrieveStraightBondTokenResponse]]
     GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveShareTokenResponse__:
       properties:
@@ -6841,13 +6847,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/ListAllLockedPositionResponse_RetrieveShareTokenResponse_
+          $ref: '#/components/schemas/ListAllLockedPositionResponse_RetrieveShareTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[ListAllLockedPositionResponse[RetrieveShareTokenResponse]]
     GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveStraightBondTokenResponse__:
       properties:
@@ -6858,13 +6863,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/ListAllLockedPositionResponse_RetrieveStraightBondTokenResponse_
+          $ref: '#/components/schemas/ListAllLockedPositionResponse_RetrieveStraightBondTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[ListAllLockedPositionResponse[RetrieveStraightBondTokenResponse]]
     GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
       properties:
@@ -6920,14 +6924,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/ListAllOrderListResponse_RetrieveCouponTokenResponse_
+          $ref: '#/components/schemas/ListAllOrderListResponse_RetrieveCouponTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
-        GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]]
+      title: GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]]
     GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__:
       properties:
         meta:
@@ -6937,13 +6939,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/ListAllOrderListResponse_RetrieveMembershipTokenResponse_
+          $ref: '#/components/schemas/ListAllOrderListResponse_RetrieveMembershipTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[ListAllOrderListResponse[RetrieveMembershipTokenResponse]]
     GenericSuccessResponse_ListAllOrderListResponse_TokenAddress__:
       properties:
@@ -7209,8 +7210,7 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/RetrievePaymentAccountRegistrationStatusResponse
+          $ref: '#/components/schemas/RetrievePaymentAccountRegistrationStatusResponse'
       type: object
       required:
         - meta
@@ -7285,13 +7285,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/SecurityTokenPositionWithDetail_RetrieveShareTokenResponse_
+          $ref: '#/components/schemas/SecurityTokenPositionWithDetail_RetrieveShareTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]]
     GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse__:
       properties:
@@ -7302,13 +7301,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: >-
-            #/components/schemas/SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse_
+          $ref: '#/components/schemas/SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse_'
       type: object
       required:
         - meta
         - data
-      title: >-
+      title: 
         GenericSuccessResponse[SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]]
     GenericSuccessResponse_SendRawTransactionsNoWaitResponse_:
       properties:
@@ -7605,6 +7603,16 @@ components:
             - {}
             - type: 'null'
           title: Ibet Security Token Escrow Abi
+        ibet_security_token_dvp_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Ibet Security Token Dvp Address
+        ibet_security_token_dvp_abi:
+          anyOf:
+            - {}
+            - type: 'null'
+          title: Ibet Security Token Dvp Abi
         e2e_messaging_address:
           anyOf:
             - type: string
@@ -7629,6 +7637,8 @@ components:
         - ibet_escrow_abi
         - ibet_security_token_escrow_address
         - ibet_security_token_escrow_abi
+        - ibet_security_token_dvp_address
+        - ibet_security_token_dvp_abi
         - e2e_messaging_address
         - e2e_messaging_abi
       title: GetNodeInfoResponse
@@ -7650,6 +7660,17 @@ components:
         - EscrowCanceled
         - EscrowFinished
       title: IbetEscrowEventType
+    IbetSecurityTokenDVPEventType:
+      type: string
+      enum:
+        - Deposited
+        - Withdrawn
+        - DeliveryCreated
+        - DeliveryCanceled
+        - DeliveryConfirmed
+        - DeliveryFinished
+        - DeliveryAborted
+      title: IbetSecurityTokenDVPEventType
     IbetSecurityTokenEscrowEventType:
       type: string
       enum:
@@ -7810,8 +7831,7 @@ components:
         events:
           anyOf:
             - items:
-                $ref: >-
-                  #/components/schemas/LockEventWithTokenDetail_RetrieveShareTokenResponse_
+                $ref: '#/components/schemas/LockEventWithTokenDetail_RetrieveShareTokenResponse_'
               type: array
             - items:
                 $ref: '#/components/schemas/LockEvent'
@@ -7830,8 +7850,7 @@ components:
         events:
           anyOf:
             - items:
-                $ref: >-
-                  #/components/schemas/LockEventWithTokenDetail_RetrieveStraightBondTokenResponse_
+                $ref: '#/components/schemas/LockEventWithTokenDetail_RetrieveStraightBondTokenResponse_'
               type: array
             - items:
                 $ref: '#/components/schemas/LockEvent'
@@ -7858,8 +7877,7 @@ components:
         locked_positions:
           anyOf:
             - items:
-                $ref: >-
-                  #/components/schemas/LockedWithTokenDetail_RetrieveShareTokenResponse_
+                $ref: '#/components/schemas/LockedWithTokenDetail_RetrieveShareTokenResponse_'
               type: array
             - items:
                 $ref: '#/components/schemas/Locked'
@@ -7877,8 +7895,7 @@ components:
         locked_positions:
           anyOf:
             - items:
-                $ref: >-
-                  #/components/schemas/LockedWithTokenDetail_RetrieveStraightBondTokenResponse_
+                $ref: '#/components/schemas/LockedWithTokenDetail_RetrieveStraightBondTokenResponse_'
               type: array
             - items:
                 $ref: '#/components/schemas/Locked'
@@ -7944,8 +7961,7 @@ components:
           title: Settlement List
         complete_list:
           items:
-            $ref: >-
-              #/components/schemas/CompleteAgreementSet_RetrieveCouponTokenResponse_
+            $ref: '#/components/schemas/CompleteAgreementSet_RetrieveCouponTokenResponse_'
           type: array
           title: Complete List
       type: object
@@ -7968,8 +7984,7 @@ components:
           title: Settlement List
         complete_list:
           items:
-            $ref: >-
-              #/components/schemas/CompleteAgreementSet_RetrieveMembershipTokenResponse_
+            $ref: '#/components/schemas/CompleteAgreementSet_RetrieveMembershipTokenResponse_'
           type: array
           title: Complete List
       type: object
@@ -8439,7 +8454,6 @@ components:
         - company_name
         - tradable_exchange
         - status
-        - personal_info_address
         - transferable
         - initial_offering_status
         - created
@@ -8815,14 +8829,14 @@ components:
         max_holding_quantity:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Max Holding Quantity
           description: Maximum holding quantity limit
         max_sell_amount:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Max Sell Amount
           description: Maximum sell amount limit
@@ -9383,6 +9397,9 @@ components:
         personal_info_address:
           type: string
           title: Personal Info Address
+        require_personal_info_registered:
+          type: boolean
+          title: Require Personal Info Registered
         transferable:
           type: boolean
           title: Transferable
@@ -9426,6 +9443,7 @@ components:
         - max_holding_quantity
         - max_sell_amount
         - personal_info_address
+        - require_personal_info_registered
         - transferable
         - is_offering
         - transfer_approval_required
@@ -9492,6 +9510,9 @@ components:
         personal_info_address:
           type: string
           title: Personal Info Address
+        require_personal_info_registered:
+          type: boolean
+          title: Require Personal Info Registered
         transferable:
           type: boolean
           title: Transferable
@@ -9617,6 +9638,7 @@ components:
         - max_holding_quantity
         - max_sell_amount
         - personal_info_address
+        - require_personal_info_registered
         - transferable
         - is_offering
         - transfer_approval_required
@@ -9674,14 +9696,14 @@ components:
         offset:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Offset
           description: start position
         limit:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Limit
           description: number of set
@@ -9695,7 +9717,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         pending_transfer:
           anyOf:
@@ -9707,7 +9730,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         exchange_balance:
           anyOf:
@@ -9719,7 +9743,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         exchange_commitment:
           anyOf:
@@ -9731,7 +9756,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         locked:
           anyOf:
@@ -9743,7 +9769,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         sort_item:
           anyOf:
@@ -9782,14 +9809,14 @@ components:
         offset:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Offset
           description: start position
         limit:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Limit
           description: number of set
@@ -9871,7 +9898,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         sort_item:
           anyOf:
@@ -9915,14 +9943,14 @@ components:
         offset:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Offset
           description: start position
         limit:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Limit
           description: number of set
@@ -9979,7 +10007,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/ValueOperator'
             - type: 'null'
-          description: 'value filter condition(0: equal, 1: greater than, 2: less than)'
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
           default: 0
         sort_item:
           anyOf:
@@ -10218,8 +10247,7 @@ components:
         status:
           allOf:
             - $ref: '#/components/schemas/SendRawTransactionStatus'
-          description: >-
-            execution failure:0, execution success:1, execution success(pending
+          description: execution failure:0, execution success:1, execution success(pending
             transaction):2
           examples:
             - 1
@@ -10344,6 +10372,7 @@ components:
         - tradable_exchange
         - status
         - personal_info_address
+        - require_personal_info_registered
         - transferable
         - is_offering
         - transfer_approval_required
@@ -10399,6 +10428,7 @@ components:
         - tradable_exchange
         - status
         - personal_info_address
+        - require_personal_info_registered
         - transferable
         - is_offering
         - transfer_approval_required
@@ -10595,9 +10625,7 @@ components:
         hold_balance:
           type: integer
           title: Hold Balance
-          description: >-
-            Amount of balance.This includes
-            balance/pending_transfer/exchange_balance/exchange_commitment/locked.
+          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked.
         locked_balance:
           type: integer
           title: Locked Balance
@@ -10883,11 +10911,11 @@ components:
           title: Block Hash
         block_number:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Block Number
         transaction_index:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Transaction Index
         from_address:
           type: string
@@ -10917,11 +10945,11 @@ components:
           title: Block Hash
         block_number:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Block Number
         transaction_index:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Transaction Index
         from_address:
           type: string
@@ -10948,19 +10976,19 @@ components:
           title: Contract Parameters
         gas:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Gas
         gas_price:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Gas Price
         value:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Value
         nonce:
           type: integer
-          minimum: 0
+          minimum: 0.0
           title: Nonce
       type: object
       required:
@@ -11006,13 +11034,13 @@ components:
         max_holding_quantity:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Max Holding Quantity
         max_sell_amount:
           anyOf:
             - type: integer
-              minimum: 0
+              minimum: 0.0
             - type: 'null'
           title: Max Sell Amount
         owner_address:

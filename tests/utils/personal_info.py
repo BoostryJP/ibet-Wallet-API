@@ -18,14 +18,13 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-gas_limit = 4000000
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class PersonalInfoUtils:
@@ -37,5 +36,5 @@ class PersonalInfoUtils:
         )
         encrypted_info = "some_encrypted_info"
         PersonalInfoContract.functions.register(link_address, encrypted_info).transact(
-            {"from": tx_from, "gas": 4000000}
+            {"from": tx_from}
         )

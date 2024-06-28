@@ -24,7 +24,9 @@ from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.datastructures import AttributeDict
+from web3.exceptions import Web3RPCError
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -33,7 +35,7 @@ from tests.account_config import eth_account
 from tests.contract_modules import coupon_register_list, issue_coupon_token
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 def insert_node_data(
@@ -72,8 +74,19 @@ def executable_contract_token(session, contract):
     session.add(executable_contract)
 
 
-# sendRawTransaction API (No Wait)
-# /Eth/SendRawTransactionNoWait
+async def mock_normal_txpool_status():
+    return AttributeDict(
+        {
+            "pending": "0x0",
+            "queued": "0x0",
+        }
+    )
+
+
+@mock.patch(
+    "web3.geth.AsyncGethTxPool.status",
+    MagicMock(side_effect=mock_normal_txpool_status),
+)
 class TestEthSendRawTransactionNoWait:
     # Test API
     apiurl = "/Eth/SendRawTransactionNoWait"
@@ -128,8 +141,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             {
@@ -145,7 +157,7 @@ class TestEthSendRawTransactionNoWait:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -222,8 +234,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             {
@@ -254,8 +265,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_2.functions.consume(10).build_transaction(
             {
@@ -273,8 +283,8 @@ class TestEthSendRawTransactionNoWait:
 
         request_params = {
             "raw_tx_hex_list": [
-                signed_tx_1.rawTransaction.hex(),
-                signed_tx_2.rawTransaction.hex(),
+                signed_tx_1.raw_transaction.to_0x_hex(),
+                signed_tx_2.raw_transaction.to_0x_hex(),
             ]
         }
         headers = {"Content-Type": "application/json"}
@@ -351,8 +361,7 @@ class TestEthSendRawTransactionNoWait:
                     "gasPrice": 0,
                 }
             )
-            tx_hash = web3.eth.send_transaction(pre_tx)
-            web3.eth.wait_for_transaction_receipt(tx_hash)
+            web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
                 {
@@ -368,13 +377,15 @@ class TestEthSendRawTransactionNoWait:
 
             session.commit()
 
-            request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+            request_params = {
+                "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+            }
             headers = {"Content-Type": "application/json"}
             with mock.patch(
                 "web3.eth.async_eth.AsyncEth.send_raw_transaction",
                 MagicMock(
-                    side_effect=ValueError(
-                        {"code": -320000, "message": "nonce too low"}
+                    side_effect=Web3RPCError(
+                        message="{'code': -32000, 'message': 'nonce too low'}",
                     )
                 ),
             ):
@@ -445,8 +456,7 @@ class TestEthSendRawTransactionNoWait:
                     "gasPrice": 0,
                 }
             )
-            tx_hash = web3.eth.send_transaction(pre_tx)
-            web3.eth.wait_for_transaction_receipt(tx_hash)
+            web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
                 {
@@ -462,13 +472,15 @@ class TestEthSendRawTransactionNoWait:
 
             session.commit()
 
-            request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+            request_params = {
+                "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+            }
             headers = {"Content-Type": "application/json"}
             with mock.patch(
                 "web3.eth.async_eth.AsyncEth.send_raw_transaction",
                 MagicMock(
-                    side_effect=ValueError(
-                        {"code": -320000, "message": "already known"}
+                    side_effect=Web3RPCError(
+                        message="{'code': -32000, 'message': 'already known'}",
                     )
                 ),
             ):
@@ -677,8 +689,7 @@ class TestEthSendRawTransactionNoWait:
                 "gasPrice": 0,
             }
         )
-        tx_hash = web3.eth.send_transaction(pre_tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        web3.eth.send_transaction(pre_tx)
 
         local_account_1 = web3.eth.account.create()
 
@@ -696,7 +707,7 @@ class TestEthSendRawTransactionNoWait:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -754,7 +765,7 @@ class TestEthSendRawTransactionNoWait:
         )
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -813,7 +824,7 @@ class TestEthSendRawTransactionNoWait:
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
 
         with patch(

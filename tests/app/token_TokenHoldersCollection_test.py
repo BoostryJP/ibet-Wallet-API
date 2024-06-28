@@ -24,7 +24,7 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -32,7 +32,7 @@ from app.model.db import Listing, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 from sqlalchemy.orm import Session
 
 from tests.account_config import eth_account

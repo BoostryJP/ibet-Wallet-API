@@ -17,12 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Optional, Sequence
+from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
+from app.contracts import AsyncContract
 from app.database import DBAsyncSession
 from app.errors import (
     DataNotExistsError,
@@ -41,6 +42,7 @@ from app.model.schema import (
 from app.model.schema.base import (
     GenericSuccessResponse,
     SuccessResponse,
+    TokenType,
     ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
@@ -76,27 +78,13 @@ async def list_all_straight_bond_tokens(
     if config.BOND_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    owner_address: Optional[str] = request_query.owner_address
-    name: Optional[str] = request_query.name
-    symbol: Optional[str] = request_query.symbol
-    company_name: Optional[str] = request_query.company_name
-    tradable_exchange: Optional[str] = request_query.tradable_exchange
-    status: Optional[bool] = request_query.status
-    personal_info_address: Optional[str] = request_query.personal_info_address
-    transferable: Optional[bool] = request_query.transferable
-    is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[bool] = (
-        request_query.transfer_approval_required
-    )
-    is_redeemed: Optional[bool] = request_query.is_redeemed
-
     sort_item = request_query.sort_item
     sort_order = request_query.sort_order  # default: asc
     offset = request_query.offset
     limit = request_query.limit
 
-    # 取扱トークンリストを取得
-    # 公開属性によるフィルタリングを行うためJOIN
+    # Get list of available tokens
+    # - JOIN Listing to filter public/private tokens
     stmt = (
         select(IDXBondToken)
         .join(Listing, Listing.token_address == IDXBondToken.token_address)
@@ -109,30 +97,42 @@ async def list_all_straight_bond_tokens(
     )
 
     # Search Filter
-    if owner_address is not None:
-        stmt = stmt.where(IDXBondToken.owner_address == owner_address)
-    if name is not None:
-        stmt = stmt.where(IDXBondToken.name.contains(name))
-    if symbol is not None:
-        stmt = stmt.where(IDXBondToken.symbol.contains(symbol))
-    if company_name is not None:
-        stmt = stmt.where(IDXBondToken.company_name.contains(company_name))
-    if tradable_exchange is not None:
-        stmt = stmt.where(IDXBondToken.tradable_exchange == tradable_exchange)
-    if status is not None:
-        stmt = stmt.where(IDXBondToken.status == status)
-    if personal_info_address is not None:
-        stmt = stmt.where(IDXBondToken.personal_info_address == personal_info_address)
-    if transferable is not None:
-        stmt = stmt.where(IDXBondToken.transferable == transferable)
-    if is_offering is not None:
-        stmt = stmt.where(IDXBondToken.is_offering == is_offering)
-    if transfer_approval_required is not None:
+    if request_query.owner_address is not None:
+        stmt = stmt.where(IDXBondToken.owner_address == request_query.owner_address)
+    if request_query.name is not None:
+        stmt = stmt.where(IDXBondToken.name.contains(request_query.name))
+    if request_query.symbol is not None:
+        stmt = stmt.where(IDXBondToken.symbol.contains(request_query.symbol))
+    if request_query.company_name is not None:
         stmt = stmt.where(
-            IDXBondToken.transfer_approval_required == transfer_approval_required
+            IDXBondToken.company_name.contains(request_query.company_name)
         )
-    if is_redeemed is not None:
-        stmt = stmt.where(IDXBondToken.is_redeemed == is_redeemed)
+    if request_query.tradable_exchange is not None:
+        stmt = stmt.where(
+            IDXBondToken.tradable_exchange == request_query.tradable_exchange
+        )
+    if request_query.status is not None:
+        stmt = stmt.where(IDXBondToken.status == request_query.status)
+    if request_query.personal_info_address is not None:
+        stmt = stmt.where(
+            IDXBondToken.personal_info_address == request_query.personal_info_address
+        )
+    if request_query.require_personal_info_registered is not None:
+        stmt = stmt.where(
+            IDXBondToken.require_personal_info_registered
+            == request_query.require_personal_info_registered
+        )
+    if request_query.transferable is not None:
+        stmt = stmt.where(IDXBondToken.transferable == request_query.transferable)
+    if request_query.is_offering is not None:
+        stmt = stmt.where(IDXBondToken.is_offering == request_query.is_offering)
+    if request_query.transfer_approval_required is not None:
+        stmt = stmt.where(
+            IDXBondToken.transfer_approval_required
+            == request_query.transfer_approval_required
+        )
+    if request_query.is_redeemed is not None:
+        stmt = stmt.where(IDXBondToken.is_redeemed == request_query.is_redeemed)
     count = await async_session.scalar(
         select(func.count()).select_from(stmt.subquery())
     )
@@ -190,27 +190,13 @@ async def list_all_straight_bond_token_addresses(
     if config.BOND_TOKEN_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    owner_address: Optional[str] = request_query.owner_address
-    name: Optional[str] = request_query.name
-    symbol: Optional[str] = request_query.symbol
-    company_name: Optional[str] = request_query.company_name
-    tradable_exchange: Optional[str] = request_query.tradable_exchange
-    status: Optional[bool] = request_query.status
-    personal_info_address: Optional[str] = request_query.personal_info_address
-    transferable: Optional[bool] = request_query.transferable
-    is_offering: Optional[bool] = request_query.is_offering
-    transfer_approval_required: Optional[bool] = (
-        request_query.transfer_approval_required
-    )
-    is_redeemed: Optional[bool] = request_query.is_redeemed
-
     sort_item = request_query.sort_item
     sort_order = request_query.sort_order  # default: asc
     offset = request_query.offset
     limit = request_query.limit
 
-    # 取扱トークンリストを取得
-    # 公開属性によるフィルタリングを行うためJOIN
+    # Get list of available tokens
+    # - JOIN Listing to filter public/private tokens
     stmt = (
         select(IDXBondToken)
         .join(Listing, Listing.token_address == IDXBondToken.token_address)
@@ -221,30 +207,42 @@ async def list_all_straight_bond_token_addresses(
     )
 
     # Search Filter
-    if owner_address is not None:
-        stmt = stmt.where(IDXBondToken.owner_address == owner_address)
-    if name is not None:
-        stmt = stmt.where(IDXBondToken.name.contains(name))
-    if symbol is not None:
-        stmt = stmt.where(IDXBondToken.symbol.contains(symbol))
-    if company_name is not None:
-        stmt = stmt.where(IDXBondToken.company_name.contains(company_name))
-    if tradable_exchange is not None:
-        stmt = stmt.where(IDXBondToken.tradable_exchange == tradable_exchange)
-    if status is not None:
-        stmt = stmt.where(IDXBondToken.status == status)
-    if personal_info_address is not None:
-        stmt = stmt.where(IDXBondToken.personal_info_address == personal_info_address)
-    if transferable is not None:
-        stmt = stmt.where(IDXBondToken.transferable == transferable)
-    if is_offering is not None:
-        stmt = stmt.where(IDXBondToken.is_offering == is_offering)
-    if transfer_approval_required is not None:
+    if request_query.owner_address is not None:
+        stmt = stmt.where(IDXBondToken.owner_address == request_query.owner_address)
+    if request_query.name is not None:
+        stmt = stmt.where(IDXBondToken.name.contains(request_query.name))
+    if request_query.symbol is not None:
+        stmt = stmt.where(IDXBondToken.symbol.contains(request_query.symbol))
+    if request_query.company_name is not None:
         stmt = stmt.where(
-            IDXBondToken.transfer_approval_required == transfer_approval_required
+            IDXBondToken.company_name.contains(request_query.company_name)
         )
-    if is_redeemed is not None:
-        stmt = stmt.where(IDXBondToken.is_redeemed == is_redeemed)
+    if request_query.tradable_exchange is not None:
+        stmt = stmt.where(
+            IDXBondToken.tradable_exchange == request_query.tradable_exchange
+        )
+    if request_query.status is not None:
+        stmt = stmt.where(IDXBondToken.status == request_query.status)
+    if request_query.personal_info_address is not None:
+        stmt = stmt.where(
+            IDXBondToken.personal_info_address == request_query.personal_info_address
+        )
+    if request_query.require_personal_info_registered is not None:
+        stmt = stmt.where(
+            IDXBondToken.require_personal_info_registered
+            == request_query.require_personal_info_registered
+        )
+    if request_query.transferable is not None:
+        stmt = stmt.where(IDXBondToken.transferable == request_query.transferable)
+    if request_query.is_offering is not None:
+        stmt = stmt.where(IDXBondToken.is_offering == request_query.is_offering)
+    if request_query.transfer_approval_required is not None:
+        stmt = stmt.where(
+            IDXBondToken.transfer_approval_required
+            == request_query.transfer_approval_required
+        )
+    if request_query.is_redeemed is not None:
+        stmt = stmt.where(IDXBondToken.is_redeemed == request_query.is_redeemed)
     count = await async_session.scalar(
         select(func.count()).select_from(stmt.subquery())
     )
@@ -313,6 +311,20 @@ async def retrieve_straight_bond_token(
         )
     ).first()
     if listed_token is None:
+        raise DataNotExistsError("token_address: %s" % token_address)
+
+    list_contract = AsyncContract.get_contract(
+        contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
+    )
+    token = await AsyncContract.call_function(
+        contract=list_contract,
+        function_name="getTokenByAddress",
+        args=(token_address,),
+        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+    )
+    token_template = token[1]
+
+    if token_template != TokenType.IbetStraightBond:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:

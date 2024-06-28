@@ -23,14 +23,14 @@ from unittest.mock import ANY
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
 from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestEventsE2EMessaging:
@@ -98,7 +98,7 @@ class TestEventsE2EMessaging:
             {
                 "event": "PublicKeyUpdated",
                 "args": {"key": "test_key", "key_type": "test_key_type", "who": user1},
-                "transaction_hash": tx.hex(),
+                "transaction_hash": tx.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -145,7 +145,7 @@ class TestEventsE2EMessaging:
                     "time": ANY,
                     "text": "test_message",
                 },
-                "transaction_hash": tx.hex(),
+                "transaction_hash": tx.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -182,7 +182,7 @@ class TestEventsE2EMessaging:
             {
                 "event": "PublicKeyUpdated",
                 "args": {"key": "test_key", "key_type": "test_key_type", "who": user1},
-                "transaction_hash": tx.hex(),
+                "transaction_hash": tx.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -234,7 +234,7 @@ class TestEventsE2EMessaging:
                     "time": ANY,
                     "text": "test_message",
                 },
-                "transaction_hash": tx_1.hex(),
+                "transaction_hash": tx_1.to_0x_hex(),
                 "block_number": latest_block_number - 1,
                 "block_timestamp": block_timestamp_1,
                 "log_index": 0,
@@ -247,7 +247,7 @@ class TestEventsE2EMessaging:
                     "time": ANY,
                     "text": "test_message",
                 },
-                "transaction_hash": tx_2.hex(),
+                "transaction_hash": tx_2.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": block_timestamp_2,
                 "log_index": 0,
@@ -290,7 +290,7 @@ class TestEventsE2EMessaging:
             {
                 "event": "PublicKeyUpdated",
                 "args": {"key": "test_key", "key_type": "test_key_type", "who": user1},
-                "transaction_hash": tx.hex(),
+                "transaction_hash": tx.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
                 "log_index": 0,
@@ -383,7 +383,7 @@ class TestEventsE2EMessaging:
                     "time": ANY,
                     "text": "test_message",
                 },
-                "transaction_hash": tx_1.hex(),
+                "transaction_hash": tx_1.to_0x_hex(),
                 "block_number": block_number_1,
                 "block_timestamp": block_timestamp_1,
                 "log_index": 0,
@@ -391,7 +391,7 @@ class TestEventsE2EMessaging:
             {
                 "event": "PublicKeyUpdated",
                 "args": {"who": user1, "key": "test_key", "key_type": "test_key_type"},
-                "transaction_hash": tx_2.hex(),
+                "transaction_hash": tx_2.to_0x_hex(),
                 "block_number": block_number_2,
                 "block_timestamp": block_timestamp_2,
                 "log_index": 0,
@@ -446,7 +446,7 @@ class TestEventsE2EMessaging:
             {
                 "event": "PublicKeyUpdated",
                 "args": {"who": user1, "key": "test_key", "key_type": "test_key_type"},
-                "transaction_hash": tx_2.hex(),
+                "transaction_hash": tx_2.to_0x_hex(),
                 "block_number": block_number_2,
                 "block_timestamp": block_timestamp_2,
                 "log_index": 0,

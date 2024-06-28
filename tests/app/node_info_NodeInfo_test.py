@@ -26,11 +26,14 @@ from app import config
 
 
 class TestNodeInfoNodeInfo:
-    # テスト対象API
+    # Test API
     apiurl = "/NodeInfo"
 
-    # ＜正常系1＞
-    # 通常参照
+    ###########################################################################
+    # Normal
+    ###########################################################################
+
+    # Normal_1
     def test_nodeinfo_normal_1(self, client: TestClient, session: Session):
         resp = client.get(self.apiurl)
 
@@ -40,6 +43,9 @@ class TestNodeInfoNodeInfo:
         ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
         ibet_security_token_escrow_json = json.load(
             open("app/contracts/json/IbetSecurityTokenEscrow.json", "r")
+        )
+        ibet_security_token_dvp_json = json.load(
+            open("app/contracts/json/IbetSecurityTokenDVP.json", "r")
         )
         e2e_messaging_json = json.load(
             open("app/contracts/json/E2EMessaging.json", "r")
@@ -65,6 +71,11 @@ class TestNodeInfoNodeInfo:
         )
         ibet_security_token_escrow_abi = ibet_security_token_escrow_json["abi"]
 
+        ibet_security_token_dvp_address = (
+            config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS
+        )
+        ibet_security_token_dvp_abi = ibet_security_token_dvp_json["abi"]
+
         e2e_messaging_address = config.E2E_MESSAGING_CONTRACT_ADDRESS
         e2e_messaging_abi = e2e_messaging_json["abi"]
 
@@ -81,6 +92,8 @@ class TestNodeInfoNodeInfo:
             "ibet_escrow_abi": ibet_escrow_abi,
             "ibet_security_token_escrow_address": ibet_security_token_escrow_address,
             "ibet_security_token_escrow_abi": ibet_security_token_escrow_abi,
+            "ibet_security_token_dvp_address": ibet_security_token_dvp_address,
+            "ibet_security_token_dvp_abi": ibet_security_token_dvp_abi,
             "e2e_messaging_address": e2e_messaging_address,
             "e2e_messaging_abi": e2e_messaging_abi,
         }
@@ -89,9 +102,12 @@ class TestNodeInfoNodeInfo:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # ＜エラー系1＞
-    # HTTPメソッド不正
-    # -> 404エラー
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # Error_1
+    # Invalid HTTP method: 405
     def test_nodeinfo_error_1(self, client: TestClient, session: Session):
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})

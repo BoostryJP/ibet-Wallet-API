@@ -27,7 +27,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.eth import Contract as Web3Contract
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import ChecksumAddress, RPCEndpoint
 
 from app import config
@@ -47,7 +47,7 @@ from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class DeployedContract(TypedDict):
@@ -66,6 +66,7 @@ class SharedContract(TypedDict):
     E2EMessaging: Web3Contract
     IbetEscrow: Web3Contract
     IbetSecurityTokenEscrow: Web3Contract
+    IbetSecurityTokenDVP: Web3Contract
 
 
 class UnitTestAccount(TypedDict):
@@ -91,12 +92,10 @@ def payment_gateway_contract() -> DeployedContract:
     contract_address, abi = Contract.deploy_contract(
         "PaymentGateway", [], deployer["account_address"]
     )
-
     contract = Contract.get_contract("PaymentGateway", contract_address)
-    tx_hash = contract.functions.addAgent(agent["account_address"]).transact(
-        {"from": deployer["account_address"], "gas": 4000000}
+    contract.functions.addAgent(agent["account_address"]).transact(
+        {"from": deployer["account_address"]}
     )
-    web3.eth.wait_for_transaction_receipt(tx_hash)
 
     return {"address": contract_address, "abi": abi}
 
@@ -189,6 +188,28 @@ def ibet_st_escrow_contract() -> Web3Contract:
 
 
 @pytest.fixture(scope="session")
+def ibet_st_dvp_contract() -> Web3Contract:
+    deployer = eth_account["deployer"]["account_address"]
+
+    storage_address, _ = Contract.deploy_contract(
+        contract_name="DVPStorage", args=[], deployer=deployer
+    )
+    contract_address, abi = Contract.deploy_contract(
+        contract_name="IbetSecurityTokenDVP",
+        args=[storage_address],
+        deployer=deployer,
+    )
+
+    storage = Contract.get_contract(contract_name="DVPStorage", address=storage_address)
+    storage.functions.upgradeVersion(contract_address).transact({"from": deployer})
+
+    _ibet_st_dvp_contract: Web3Contract = Contract.get_contract(
+        contract_name="IbetSecurityTokenDVP", address=contract_address
+    )
+    return _ibet_st_dvp_contract
+
+
+@pytest.fixture(scope="session")
 def shared_contract(
     payment_gateway_contract,
     personalinfo_contract,
@@ -196,6 +217,7 @@ def shared_contract(
     e2e_messaging_contract,
     ibet_escrow_contract,
     ibet_st_escrow_contract,
+    ibet_st_dvp_contract,
 ) -> SharedContract:
     return {
         "PaymentGateway": payment_gateway_contract,
@@ -216,6 +238,7 @@ def shared_contract(
         "E2EMessaging": e2e_messaging_contract,
         "IbetEscrow": ibet_escrow_contract,
         "IbetSecurityTokenEscrow": ibet_st_escrow_contract,
+        "IbetSecurityTokenDVP": ibet_st_dvp_contract,
     }
 
 
@@ -426,7 +449,7 @@ def ibet_exchange_contract(payment_gateway_address) -> DeployedContract:
 
     storage = Contract.get_contract("ExchangeStorage", storage_address)
     storage.functions.upgradeVersion(contract_address).transact(
-        {"from": deployer["account_address"], "gas": 4000000}
+        {"from": deployer["account_address"]}
     )
 
     return {"address": contract_address, "abi": abi}

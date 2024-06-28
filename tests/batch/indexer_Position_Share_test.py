@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-import time
 from typing import Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -30,7 +29,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.middleware import geth_poa_middleware
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
@@ -47,13 +46,18 @@ from batch import indexer_Position_Share
 from batch.indexer_Position_Share import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    abort_security_token_delivery,
     cancel_agreement,
     cancel_order,
+    confirm_security_token_delivery,
+    create_security_token_delivery,
     create_security_token_escrow,
+    finish_security_token_dvlivery,
     finish_security_token_escrow,
     force_cancel_order,
     get_latest_agreementid,
     get_latest_orderid,
+    get_latest_security_delivery_id,
     get_latest_security_escrow_id,
     issue_share_token,
     make_buy,
@@ -65,7 +69,7 @@ from tests.contract_modules import (
 from tests.utils import PersonalInfoUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="session")
@@ -491,10 +495,10 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"], 1500, '{"message": "locked1"}'
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
         token_contract.functions.lock(
             self.trader["account_address"], 1500, '{"message": "locked2"}'
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -572,7 +576,7 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"], 3000, '{"message": "locked1"}'
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
 
         # Unlock
         token_contract.functions.unlock(
@@ -580,7 +584,7 @@ class TestProcessor:
             self.trader2["account_address"],
             100,
             '{"message": "unlocked1"}',
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
+        ).transact({"from": self.trader["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -684,10 +688,9 @@ class TestProcessor:
 
         # Issue(add balance)
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.issueFrom(
+        token_contract.functions.issueFrom(
             self.issuer["account_address"], config.ZERO_ADDRESS, 50000
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -732,10 +735,9 @@ class TestProcessor:
 
         # Redeem
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.redeemFrom(
+        token_contract.functions.redeemFrom(
             self.issuer["account_address"], config.ZERO_ADDRESS, 50000
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -796,16 +798,14 @@ class TestProcessor:
         )
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.setTransferApprovalRequired(True).transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
+        token_contract.functions.applyForTransfer(
             self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.trader["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
@@ -894,22 +894,19 @@ class TestProcessor:
         )
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.setTransferApprovalRequired(True).transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
+        token_contract.functions.applyForTransfer(
             self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.trader["account_address"]})
 
         # Approve
-        tx_hash = token_contract.functions.approveTransfer(0, "test").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.approveTransfer(0, "test").transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1014,22 +1011,19 @@ class TestProcessor:
         )
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.setTransferApprovalRequired(True).transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
+        token_contract.functions.applyForTransfer(
             self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"], "gas": 4000000})
-        web3.eth.wait_for_transaction_receipt(tx_hash)
+        ).transact({"from": self.trader["account_address"]})
 
         # Cancel
-        tx_hash = token_contract.functions.cancelTransfer(0, "test").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        token_contract.functions.cancelTransfer(0, "test").transact(
+            {"from": self.issuer["account_address"]}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1316,8 +1310,126 @@ class TestProcessor:
         assert _position.exchange_commitment == 66
 
     # <Normal_14>
-    # No event logs
+    # Single Token
+    # Multi event with DVP logs
+    # - DeliveryCreated
+    # - DeliveryCanceled
+    # - DeliveryFinished
+    # - DeliveryAborted
     def test_normal_14(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        dvp_contract = shared_contract["IbetSecurityTokenDVP"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_share(
+            self.issuer,
+            dvp_contract.address,
+            personal_info_contract["address"],
+            token_list_contract,
+        )
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+
+        # Deposit and Create Delivery
+        share_transfer_to_exchange(
+            self.issuer, {"address": dvp_contract.address}, token, 10000
+        )
+        create_security_token_delivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            token,
+            self.trader["account_address"],
+            self.issuer["account_address"],
+            200,
+        )
+        confirm_security_token_delivery(
+            self.trader,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+        finish_security_token_dvlivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+        create_security_token_delivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            token,
+            self.trader["account_address"],
+            self.issuer["account_address"],
+            300,
+        )
+        confirm_security_token_delivery(
+            self.trader,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+        abort_security_token_delivery(
+            self.issuer,
+            {"address": dvp_contract.address},
+            get_latest_security_delivery_id({"address": dvp_contract.address}),
+        )
+
+        # Run target process
+        block_number = web3.eth.block_number
+        asyncio.run(processor.sync_new_logs())
+
+        # Assertion
+        _position_list: Sequence[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
+        assert len(_position_list) == 2
+
+        _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
+            select(IDXPositionShareBlockNumber)
+            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_share_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 10000 - 200
+        assert _position.exchange_commitment == 0
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader["account_address"]
+        assert _position.balance == 0
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 200
+        assert _position.exchange_commitment == 0
+
+    # <Normal_15>
+    # No event logs
+    def test_normal_15(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1347,10 +1459,10 @@ class TestProcessor:
         ).first()
         assert _idx_position_share_block_number.latest_block_number == block_number
 
-    # <Normal_15>
+    # <Normal_16>
     # Not listing Token is NOT indexed,
     # and indexed properly after listing
-    def test_normal_15(self, processor, shared_contract, session):
+    def test_normal_16(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1410,12 +1522,12 @@ class TestProcessor:
         ).first()
         assert _idx_position_share_block_number.latest_block_number == block_number
 
-    # <Normal_16>
+    # <Normal_17>
     # Single Token
     # Multi event logs
     # - Transfer
     # Duplicate events to be removed
-    def test_normal_16(self, processor, shared_contract, session):
+    def test_normal_17(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1443,7 +1555,7 @@ class TestProcessor:
         # Get events for token address
         events = Contract.get_contract(
             "IbetShare", token["address"]
-        ).events.Transfer.get_logs(fromBlock=from_block, toBlock=to_block)
+        ).events.Transfer.get_logs(from_block=from_block, to_block=to_block)
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5
         filtered_events = processor.remove_duplicate_event_by_token_account_desc(
@@ -1451,10 +1563,10 @@ class TestProcessor:
         )
         assert len(filtered_events) == 2
 
-    # <Normal_17>
+    # <Normal_18>
     # When stored index is 9,999,999 and current block number is 19,999,999,
     # then processor must process "__sync_all" method 10 times.
-    def test_normal_17(self, processor, shared_contract, session):
+    def test_normal_18(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1530,12 +1642,12 @@ class TestProcessor:
                 # Then processor call "__sync_all" method 20 times.
                 assert __sync_all_mock.call_count == 20
 
-    # <Normal_18>
+    # <Normal_19>
     # Multiple Token
     # Multi event logs
     # - Transfer/Exchange/Lock
     # Skip exchange events which has already been synced
-    def test_normal_18(self, processor, shared_contract, session):
+    def test_normal_19(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         agent = eth_account["agent"]
@@ -1587,7 +1699,7 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"], 100, "lock_message"
-        ).transact({"from": self.issuer["account_address"], "gas": 4000000})
+        ).transact({"from": self.issuer["account_address"]})
 
         # Token2 Operation
         share_transfer_to_exchange(self.issuer, exchange_contract, token2, 10000)
@@ -1897,7 +2009,7 @@ class TestProcessor:
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.initial_sync())
@@ -1927,7 +2039,7 @@ class TestProcessor:
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(ServiceUnavailable):
             asyncio.run(processor.sync_new_logs())
@@ -2049,7 +2161,7 @@ class TestProcessor:
         ), mock.patch(
             "batch.indexer_Position_Share.Processor.initial_sync", return_value=True
         ), mock.patch(
-            "web3.providers.async_rpc.AsyncHTTPProvider.make_request",
+            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
             MagicMock(side_effect=ServiceUnavailable()),
         ), pytest.raises(
             TypeError
