@@ -243,6 +243,8 @@ async def send_raw_transaction(
                 and to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address
+                != config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS
+                and to_contract_address
                 != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS
             ):
@@ -446,6 +448,8 @@ async def send_raw_transaction_no_wait(
                 != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS
+                and to_contract_address
+                != config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS
                 and to_contract_address
                 != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS
