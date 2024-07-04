@@ -26,6 +26,7 @@ services:
     ports:
       - "8545:8545"
   ibet-wallet-api-postgres:
+    image: ibet-wallet-api
     build:
       context: ./
       dockerfile: ./tests/Dockerfile_unittest
@@ -46,6 +47,7 @@ services:
       - postgres
       - hardhat-network
   ibet-wallet-api-mysql:
+    image: ibet-wallet-api
     build:
       context: ./
       dockerfile: ./tests/Dockerfile_unittest

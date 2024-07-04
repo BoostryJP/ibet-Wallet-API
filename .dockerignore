@@ -2,3 +2,10 @@
 docs/
 .python-version
 /node_modules/
+**/__pycache__/
+**/*.py[cod]
+.cache/
+.pytest_cache/
+.git/
+.idea/
+.DS_Store
