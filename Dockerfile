@@ -1,4 +1,7 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS builder
+
+ENV PYTHON_VERSION=3.12.2
+ENV POETRY_VERSION=1.7.1
 
 # make application directory
 RUN mkdir -p /app
@@ -34,10 +37,9 @@ RUN apt-get update -q \
  git \
  libyaml-cpp-dev \
  libc-bin \
- liblzma-dev
-
-# remove unnessesory package files
-RUN apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ liblzma-dev \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # install pyenv
 RUN git clone https://github.com/pyenv/pyenv.git /home/apl/.pyenv
@@ -45,42 +47,68 @@ RUN chown -R apl:apl /home/apl
 USER apl
 RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~apl/.bash_profile \
  && echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~apl/.bash_profile \
+ && echo 'export POETRY_CACHE_DIR=/tmp/poetry_cache' >> ~apl/.bash_profile \
  && echo 'eval "$(pyenv init --path)"' >> ~apl/.bash_profile \
  && echo 'export LANG=ja_JP.utf8' >> ~apl/.bash_profile
 
 # install python
 RUN . ~/.bash_profile \
- && pyenv install 3.12.2 \
- && pyenv global 3.12.2 \
- && pip install --upgrade pip setuptools
+ && pyenv install $PYTHON_VERSION \
+ && pyenv global $PYTHON_VERSION \
+ && pip install --upgrade --no-cache-dir pip setuptools
 
 # install poetry
 RUN . ~/.bash_profile \
- && python -m pip install poetry==1.7.1
-RUN . ~/.bash_profile \
+ && python -m pip install --no-cache-dir poetry==$POETRY_VERSION \
+ && . ~/.bash_profile \
  && poetry config virtualenvs.create false
 
 # install python packages
-USER root
-COPY . /app/ibet-Wallet-API
-RUN chown -R apl:apl /app/ibet-Wallet-API \
- && rm -rf /app/ibet-Wallet-API/tests/ \
- && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
- && chmod 755 /app/ibet-Wallet-API
-
-USER apl
+COPY --chown=apl:apl . /app/ibet-Wallet-API
 RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
  && poetry install --only main --no-root -E ibet-explorer \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
- && rm -f /app/ibet-Wallet-API/poetry.lock
-ENV PYTHONPATH /app/ibet-Wallet-API
+ && rm -f /app/ibet-Wallet-API/poetry.lock \
+ && rm -rf /app/ibet-Wallet-API/tests/
 
-# command deploy
+FROM ubuntu:22.04 AS runner
+
+# make application directory
+RUN mkdir -p /app
+
+# add apl user/group
+RUN groupadd -g 1000 apl \
+ && useradd -g apl -s /bin/bash -u 1000 -p apl apl \
+ && echo 'apl ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+ && chown -R apl:apl /app
+
+# install packages
+RUN apt-get update -q \
+  && apt-get upgrade -qy \
+  && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  libssl-dev \
+  libpq-dev \
+  language-pack-ja-base \
+  language-pack-ja \
+  jq \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# copy python and dependencies from builder stage
 USER apl
+COPY --from=builder /home/apl/ /home/apl/
+COPY --from=builder /app/ibet-Wallet-API/ /app/ibet-Wallet-API/
+RUN . ~/.bash_profile
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/ibet-Wallet-API
+
 COPY run.sh healthcheck.sh /app/
 
 EXPOSE 5000
 
-CMD /app/run.sh
-HEALTHCHECK --interval=10s CMD /app/healthcheck.sh
+CMD ["/app/run.sh"]
+HEALTHCHECK --interval=10s CMD ["/app/healthcheck.sh"]
