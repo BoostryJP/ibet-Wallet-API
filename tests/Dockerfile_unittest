@@ -69,6 +69,38 @@ RUN . ~/.bash_profile \
  && cd /app/ibet-Wallet-API \
  && poetry install --no-root -E ibet-explorer
 
+FROM ubuntu:22.04 AS runner
+
+# make application directory
+RUN mkdir -p /app
+
+# add apl user/group
+RUN groupadd -g 1000 apl \
+ && useradd -g apl -s /bin/bash -u 1000 -p apl apl \
+ && echo 'apl ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+ && chown -R apl:apl /app
+
+# install packages
+RUN apt-get update -q \
+  && apt-get upgrade -qy \
+  && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  libssl-dev \
+  libpq-dev \
+  language-pack-ja-base \
+  language-pack-ja \
+  jq \
+  libsqlite3-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# copy python and dependencies from builder stage
+USER apl
+COPY --from=builder --chown=apl:apl /home/apl/ /home/apl/
+COPY --from=builder --chown=apl:apl /app/ibet-Wallet-API/ /app/ibet-Wallet-API/
+RUN . ~/.bash_profile
+
 # deploy app
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/ibet-Wallet-API
