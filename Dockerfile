@@ -99,8 +99,8 @@ RUN apt-get update -q \
 
 # copy python and dependencies from builder stage
 USER apl
-COPY --from=builder /home/apl/ /home/apl/
-COPY --from=builder /app/ibet-Wallet-API/ /app/ibet-Wallet-API/
+COPY --from=builder --chown=apl:apl /home/apl/ /home/apl/
+COPY --from=builder --chown=apl:apl /app/ibet-Wallet-API/ /app/ibet-Wallet-API/
 RUN . ~/.bash_profile
 
 ENV PYTHONUNBUFFERED=1
