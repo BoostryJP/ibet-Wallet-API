@@ -344,7 +344,7 @@ class ListAllLockEvent:
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def list_all_share_locked_position(
-    data: dict = Depends(ListAllLock(TokenType.IbetShare, ShareToken, IDXShareToken))
+    data: dict = Depends(ListAllLock(TokenType.IbetShare, ShareToken, IDXShareToken)),
 ):
     """
     [Share]Returns a list of locked positions.
@@ -365,7 +365,7 @@ async def list_all_share_locked_position(
 async def list_all_share_lock_events(
     data: dict = Depends(
         ListAllLockEvent(TokenType.IbetShare, ShareToken, IDXShareToken)
-    )
+    ),
 ):
     """
     [Share]Returns a list of lock events.

@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import json
 import os
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 from typing import Any, List, Literal, Optional, Type, Union
 
@@ -29,7 +29,7 @@ from pydantic import BaseModel, ConfigDict, RootModel, create_model
 from web3 import Web3
 
 
-class ABIInputType(str, Enum):
+class ABIInputType(StrEnum):
     address = "address"
     uint256 = "uint256"
     string = "string"
@@ -47,7 +47,7 @@ class ABIInputType(str, Enum):
                 return Any
 
 
-class ABIDescriptionType(str, Enum):
+class ABIDescriptionType(StrEnum):
     function = "function"
     constructor = "constructor"
     fallback = "fallback"

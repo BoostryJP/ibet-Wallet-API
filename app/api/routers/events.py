@@ -322,7 +322,7 @@ async def list_all_ibet_security_token_escrow_event_logs(
         InvalidParameterError, RequestBlockRangeLimitExceededError, DataNotExistsError
     ),
 )
-async def list_all_ibet_security_token_escrow_event_logs(
+async def list_all_ibet_security_token_dvp_event_logs(
     request_query: IbetSecurityTokenDVPEventsQuery = Depends(),
 ):
     """

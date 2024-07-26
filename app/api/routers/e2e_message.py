@@ -48,7 +48,7 @@ router = APIRouter(prefix="/E2EMessage", tags=["messaging"])
 async def retrieve_encryption_key(
     account_address: Annotated[
         ValidatedEthereumAddress, Path(description="Account address (message receiver)")
-    ]
+    ],
 ):
     """
     Returns encryption key for use in e2e messaging for given account address.

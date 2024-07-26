@@ -401,7 +401,7 @@ class TestCompanyInfoCompanyInfoList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=true"
+        query_string = "include_private_listing=true"
         resp = client.get(self.apiurl, params=query_string)
 
         # 検証
@@ -470,7 +470,7 @@ class TestCompanyInfoCompanyInfoList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=false"
+        query_string = "include_private_listing=false"
         resp = client.get(self.apiurl, params=query_string)
 
         # 検証
@@ -543,7 +543,7 @@ class TestCompanyInfoCompanyInfoList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=false"
+        query_string = "include_private_listing=false"
         with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
@@ -620,7 +620,7 @@ class TestCompanyInfoCompanyInfoList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=false"
+        query_string = "include_private_listing=false"
         with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
@@ -693,7 +693,7 @@ class TestCompanyInfoCompanyInfoList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=false"
+        query_string = "include_private_listing=false"
         with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
@@ -766,7 +766,7 @@ class TestCompanyInfoCompanyInfoList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=false"
+        query_string = "include_private_listing=false"
         with mock.patch("app.api.routers.company_info.AsyncContract") as m:
             resp = client.get(self.apiurl, params=query_string)
 
@@ -797,7 +797,7 @@ class TestCompanyInfoCompanyInfoList:
         self, client: TestClient, session: Session, shared_contract, mocked_company_list
     ):
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=test"
+        query_string = "include_private_listing=test"
         resp = client.get(self.apiurl, params=query_string)
 
         # 検証

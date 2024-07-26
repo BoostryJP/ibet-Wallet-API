@@ -41,9 +41,7 @@ class Web3WrapperException(Exception):
 
 
 class CustomWeb3ExceptionMiddleware(Web3Middleware):
-
     def wrap_make_request(self, make_request):
-
         def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
             METHODS = [
                 "eth_blockNumber",

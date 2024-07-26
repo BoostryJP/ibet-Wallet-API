@@ -398,10 +398,13 @@ class TestProcessor:
         self.listing_token(token["address"], "IbetCoupon", session)
 
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -416,10 +419,13 @@ class TestProcessor:
         self.listing_token(token["address"], "IbetCoupon", session)
 
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -453,9 +459,10 @@ class TestProcessor:
         self.listing_token(token["address"], "IbetCoupon", session)
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(
-            AsyncSession, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(AsyncSession, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -470,9 +477,10 @@ class TestProcessor:
         self.listing_token(token["address"], "IbetCoupon", session)
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(
-            AsyncSession, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(AsyncSession, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -509,10 +517,14 @@ class TestProcessor:
         time_mock.sleep.side_effect = [TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Token_Detail.asyncio", time_mock), mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=[ServiceUnavailable()]),
-        ), pytest.raises(TypeError):
+        with (
+            mock.patch("batch.indexer_Token_Detail.asyncio", time_mock),
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=[ServiceUnavailable()]),
+            ),
+            pytest.raises(TypeError),
+        ):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
             asyncio.run(main_func())
 

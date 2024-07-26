@@ -129,7 +129,7 @@ def tokenlist_contract() -> DeployedContract:
 def e2e_messaging_contract() -> Web3Contract:
     deployer = eth_account["deployer"]
     web3.eth.default_account = deployer["account_address"]
-    contract_address, abi = Contract.deploy_contract(
+    contract_address, _ = Contract.deploy_contract(
         contract_name="E2EMessaging", args=[], deployer=deployer["account_address"]
     )
     _e2e_messaging_contract: Web3Contract = Contract.get_contract(
@@ -148,7 +148,7 @@ def ibet_escrow_contract() -> Web3Contract:
         contract_name="EscrowStorage", args=[], deployer=deployer
     )
 
-    contract_address, abi = Contract.deploy_contract(
+    contract_address, _ = Contract.deploy_contract(
         contract_name="IbetEscrow", args=[storage_address], deployer=deployer
     )
 
@@ -170,7 +170,7 @@ def ibet_st_escrow_contract() -> Web3Contract:
     storage_address, _ = Contract.deploy_contract(
         contract_name="EscrowStorage", args=[], deployer=deployer
     )
-    contract_address, abi = Contract.deploy_contract(
+    contract_address, _ = Contract.deploy_contract(
         contract_name="IbetSecurityTokenEscrow",
         args=[storage_address],
         deployer=deployer,
@@ -194,7 +194,7 @@ def ibet_st_dvp_contract() -> Web3Contract:
     storage_address, _ = Contract.deploy_contract(
         contract_name="DVPStorage", args=[], deployer=deployer
     )
-    contract_address, abi = Contract.deploy_contract(
+    contract_address, _ = Contract.deploy_contract(
         contract_name="IbetSecurityTokenDVP",
         args=[storage_address],
         deployer=deployer,

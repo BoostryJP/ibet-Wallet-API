@@ -70,7 +70,7 @@ def token_db_cache(TargetModel: IDXTokenModel):
         func: Callable[
             [TokenClassTypes, AsyncSession, str],
             Awaitable[Optional[TokenInstanceTypes]],
-        ]
+        ],
     ):
         """
         @param func: Function for decoration

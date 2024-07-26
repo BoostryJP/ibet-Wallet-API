@@ -323,7 +323,7 @@ class TestProcessor:
         )
         web3.eth.default_account = self.issuer["account_address"]
         args = {
-            "name": f"TestToken",
+            "name": "TestToken",
             "symbol": "Test",
             "totalSupply": 1000000,
             "tradableExchange": exchange_contract["address"],
@@ -404,7 +404,6 @@ class TestProcessor:
             with mock.patch.object(
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
-
                 __sync_register_mock.return_value = None
                 asyncio.run(processor.process())
 
@@ -420,34 +419,34 @@ class TestProcessor:
                 )
 
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=0, to=999999")
+                    (LOG.name, logging.INFO, "Syncing from=0, to=999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=1000000, to=1999999")
+                    (LOG.name, logging.INFO, "Syncing from=1000000, to=1999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=2000000, to=2999999")
+                    (LOG.name, logging.INFO, "Syncing from=2000000, to=2999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=3000000, to=3999999")
+                    (LOG.name, logging.INFO, "Syncing from=3000000, to=3999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=4000000, to=4999999")
+                    (LOG.name, logging.INFO, "Syncing from=4000000, to=4999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=5000000, to=5999999")
+                    (LOG.name, logging.INFO, "Syncing from=5000000, to=5999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=6000000, to=6999999")
+                    (LOG.name, logging.INFO, "Syncing from=6000000, to=6999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=7000000, to=7999999")
+                    (LOG.name, logging.INFO, "Syncing from=7000000, to=7999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=8000000, to=8999999")
+                    (LOG.name, logging.INFO, "Syncing from=8000000, to=8999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=9000000, to=9999999")
+                    (LOG.name, logging.INFO, "Syncing from=9000000, to=9999999")
                 )
 
         with mock.patch(
@@ -456,7 +455,6 @@ class TestProcessor:
             with mock.patch.object(
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
-
                 __sync_register_mock.return_value = None
                 asyncio.run(processor.process())
 
@@ -498,7 +496,6 @@ class TestProcessor:
             with mock.patch.object(
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
-
                 __sync_register_mock.return_value = None
                 asyncio.run(processor.process())
 
@@ -514,34 +511,34 @@ class TestProcessor:
                 )
 
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=10000000, to=10999999")
+                    (LOG.name, logging.INFO, "Syncing from=10000000, to=10999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=11000000, to=11999999")
+                    (LOG.name, logging.INFO, "Syncing from=11000000, to=11999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=12000000, to=12999999")
+                    (LOG.name, logging.INFO, "Syncing from=12000000, to=12999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=13000000, to=13999999")
+                    (LOG.name, logging.INFO, "Syncing from=13000000, to=13999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=14000000, to=14999999")
+                    (LOG.name, logging.INFO, "Syncing from=14000000, to=14999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=15000000, to=15999999")
+                    (LOG.name, logging.INFO, "Syncing from=15000000, to=15999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=16000000, to=16999999")
+                    (LOG.name, logging.INFO, "Syncing from=16000000, to=16999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=17000000, to=17999999")
+                    (LOG.name, logging.INFO, "Syncing from=17000000, to=17999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=18000000, to=18999999")
+                    (LOG.name, logging.INFO, "Syncing from=18000000, to=18999999")
                 )
                 assert 1 == caplog.record_tuples.count(
-                    (LOG.name, logging.INFO, f"Syncing from=19000000, to=19999999")
+                    (LOG.name, logging.INFO, "Syncing from=19000000, to=19999999")
                 )
 
         with mock.patch(
@@ -550,7 +547,6 @@ class TestProcessor:
             with mock.patch.object(
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
-
                 __sync_register_mock.return_value = None
                 asyncio.run(processor.process())
 
@@ -592,7 +588,6 @@ class TestProcessor:
             with mock.patch.object(
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
-
                 __sync_register_mock.return_value = None
                 asyncio.run(processor.process())
 
@@ -711,10 +706,13 @@ class TestProcessor:
             select(IDXTokenListBlockNumber).limit(1)
         ).first()
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.process())
 
         session.rollback()
@@ -740,10 +738,13 @@ class TestProcessor:
         ).first()
 
         # Expect that process() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -789,9 +790,10 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -813,9 +815,10 @@ class TestProcessor:
         session.rollback()
 
         # Expect that process() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.process())
 
         # Assertion
@@ -859,10 +862,14 @@ class TestProcessor:
         asyncio_mock.sleep.side_effect = [TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch("batch.indexer_Token_List.asyncio", asyncio_mock), mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(TypeError):
+        with (
+            mock.patch("batch.indexer_Token_List.asyncio", asyncio_mock),
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(TypeError),
+        ):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
             asyncio.run(main_func())
 

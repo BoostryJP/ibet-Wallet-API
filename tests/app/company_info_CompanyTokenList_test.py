@@ -549,7 +549,7 @@ class TestCompanyInfoCompanyTokenList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=true"
+        query_string = "include_private_listing=true"
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url, params=query_string)
 
@@ -644,7 +644,7 @@ class TestCompanyInfoCompanyTokenList:
         session.commit()
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=false"
+        query_string = "include_private_listing=false"
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url, params=query_string)
 
@@ -718,7 +718,7 @@ class TestCompanyInfoCompanyTokenList:
         issuer = eth_account["issuer"]
 
         # テスト対象API呼び出し
-        query_string = f"include_private_listing=test"
+        query_string = "include_private_listing=test"
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.get(url, params=query_string)
 

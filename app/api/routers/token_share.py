@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated, Sequence
 
-from eth_utils import to_checksum_address
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import desc, func, select
 

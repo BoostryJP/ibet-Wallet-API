@@ -176,7 +176,9 @@ async def list_all_companies(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def retrieve_company(
-    eth_address: Annotated[ValidatedEthereumAddress, Path(description="Issuer address")]
+    eth_address: Annotated[
+        ValidatedEthereumAddress, Path(description="Issuer address")
+    ],
 ):
     """
     Returns given issuer information.

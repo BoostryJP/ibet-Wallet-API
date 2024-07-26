@@ -1747,10 +1747,12 @@ class TestPosition:
             config.COUPON_TOKEN_ENABLED = False
             config.MEMBERSHIP_TOKEN_ENABLED = False
 
-            with mock.patch(
-                "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
-            ), mock.patch("app.config.BOND_TOKEN_ENABLED", True), mock.patch(
-                "app.config.SHARE_TOKEN_ENABLED", True
+            with (
+                mock.patch(
+                    "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract
+                ),
+                mock.patch("app.config.BOND_TOKEN_ENABLED", True),
+                mock.patch("app.config.SHARE_TOKEN_ENABLED", True),
             ):
                 # Request target API
                 resp = client.get(

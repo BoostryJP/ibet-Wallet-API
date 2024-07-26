@@ -52,10 +52,11 @@ class TestProcessorSendMail:
     # No unsent email exists
     def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with mock.patch(
-            "app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"
-        ), mock.patch(
-            "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
+        with (
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+            mock.patch(
+                "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
+            ),
         ):
             processor.process()
             session.commit()
@@ -86,10 +87,11 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with mock.patch(
-            "app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"
-        ), mock.patch(
-            "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
+        with (
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+            mock.patch(
+                "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
+            ),
         ):
             processor.process()
             session.commit()
@@ -177,9 +179,13 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with mock.patch(
-            "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())
-        ), mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"):
+        with (
+            mock.patch(
+                "app.model.mail.mail.Mail.send_mail",
+                MagicMock(side_effect=SMTPException()),
+            ),
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+        ):
             processor.process()
             session.commit()
 

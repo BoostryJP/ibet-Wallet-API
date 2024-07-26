@@ -146,9 +146,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # Withdraw token from escrow contract
         tx_hash = escrow_contract.functions.withdraw(
             token_contract.address,
-        ).transact(
-            {"from": issuer}
-        )  # Withdrawn
+        ).transact({"from": issuer})  # Withdrawn
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -214,9 +212,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -306,9 +302,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -387,9 +381,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -467,9 +459,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         # Cancel escrow
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
@@ -561,9 +551,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         # Cancel escrow
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
@@ -646,9 +634,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         # Cancel escrow
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
@@ -729,9 +715,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Finish escrow
@@ -811,9 +795,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Finish escrow
@@ -897,9 +879,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Finish escrow
@@ -980,9 +960,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Finish escrow
@@ -1173,9 +1151,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # Deposit token to escrow contract
         tx_hash_1 = token_contract.functions.transfer(
             escrow_contract.address, 1000
-        ).transact(
-            {"from": issuer}
-        )  # Deposited
+        ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
@@ -1187,9 +1163,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
 
@@ -1279,9 +1253,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # Deposit token to escrow contract
         tx_hash_1 = token_contract.functions.transfer(
             escrow_contract.address, 1000
-        ).transact(
-            {"from": issuer}
-        )  # Deposited
+        ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
@@ -1293,9 +1265,7 @@ class TestEventsIbetSecurityTokenEscrow:
             agent,
             "test_application_data",
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         block_number_2 = web3.eth.block_number
 
         # Request target API

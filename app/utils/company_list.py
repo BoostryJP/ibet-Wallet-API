@@ -21,10 +21,9 @@ import json
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from app import config, log
-from app.database import async_engine, engine
+from app.database import async_engine
 from app.model.db import Company as CompanyModel
 
 LOG = log.get_logger()

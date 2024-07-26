@@ -2460,7 +2460,7 @@ class TestProcessor:
         ):
             asyncio.run(processor.collect())
         assert 2 == caplog.record_tuples.count(
-            (LOG.name, logging.DEBUG, f"There are no pending collect batch")
+            (LOG.name, logging.DEBUG, "There are no pending collect batch")
         )
 
         # Issuer issues bond token.
@@ -2529,7 +2529,7 @@ class TestProcessor:
             )
         )
         assert 2 == caplog.record_tuples.count(
-            (LOG.name, logging.INFO, f"Collect job has been completed")
+            (LOG.name, logging.INFO, "Collect job has been completed")
         )
 
     # <Normal_16>
@@ -2575,34 +2575,34 @@ class TestProcessor:
             asyncio.run(processor.collect())
             # Then processor call "__process_all" method 10 times.
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=10000000, to=10999999")
+                (LOG.name, logging.INFO, "process from=10000000, to=10999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=11000000, to=11999999")
+                (LOG.name, logging.INFO, "process from=11000000, to=11999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=12000000, to=12999999")
+                (LOG.name, logging.INFO, "process from=12000000, to=12999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=13000000, to=13999999")
+                (LOG.name, logging.INFO, "process from=13000000, to=13999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=14000000, to=14999999")
+                (LOG.name, logging.INFO, "process from=14000000, to=14999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=15000000, to=15999999")
+                (LOG.name, logging.INFO, "process from=15000000, to=15999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=16000000, to=16999999")
+                (LOG.name, logging.INFO, "process from=16000000, to=16999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=17000000, to=17999999")
+                (LOG.name, logging.INFO, "process from=17000000, to=17999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=18000000, to=18999999")
+                (LOG.name, logging.INFO, "process from=18000000, to=18999999")
             )
             assert 1 == caplog.record_tuples.count(
-                (LOG.name, logging.INFO, f"process from=19000000, to=19999999")
+                (LOG.name, logging.INFO, "process from=19000000, to=19999999")
             )
 
             session.rollback()
@@ -2637,7 +2637,7 @@ class TestProcessor:
             asyncio.run(processor.collect())
 
         assert 1 == caplog.record_tuples.count(
-            (LOG.name, logging.DEBUG, f"There are no pending collect batch")
+            (LOG.name, logging.DEBUG, "There are no pending collect batch")
         )
 
     # <Error_2>
@@ -2673,7 +2673,7 @@ class TestProcessor:
             (
                 LOG.name,
                 logging.DEBUG,
-                f"Token contract must be listed to TokenList contract.",
+                "Token contract must be listed to TokenList contract.",
             )
         )
 
@@ -2798,13 +2798,15 @@ class TestProcessor:
         session.add(target_token_holders_list)
         session.commit()
 
-        with mock.patch(
-            "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
-            token_list_contract["address"],
-        ), mock.patch(
-            "web3.eth.async_eth.AsyncEth.get_code", side_effect=ServiceUnavailable()
-        ), pytest.raises(
-            ServiceUnavailable
+        with (
+            mock.patch(
+                "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
+                token_list_contract["address"],
+            ),
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_code", side_effect=ServiceUnavailable()
+            ),
+            pytest.raises(ServiceUnavailable),
         ):
             asyncio.run(processor.collect())
 
@@ -2831,13 +2833,15 @@ class TestProcessor:
         session.add(target_token_holders_list)
         session.commit()
 
-        with mock.patch(
-            "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
-            token_list_contract["address"],
-        ), mock.patch(
-            "web3.eth.async_eth.AsyncEth.get_code", side_effect=ServiceUnavailable()
-        ), pytest.raises(
-            ServiceUnavailable
+        with (
+            mock.patch(
+                "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
+                token_list_contract["address"],
+            ),
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_code", side_effect=ServiceUnavailable()
+            ),
+            pytest.raises(ServiceUnavailable),
         ):
             asyncio.run(processor.collect())
 

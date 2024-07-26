@@ -19,9 +19,29 @@ SPDX-License-Identifier: Apache-2.0
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from web3 import Web3
+from web3.middleware import ExtraDataToPOAMiddleware
 
+from app import config
 from app.model.db import AgreementStatus, IDXAgreement as Agreement, IDXOrder as Order
-from tests.contract_modules import *
+from tests.contract_modules import (
+    cancel_agreement,
+    cancel_order,
+    confirm_agreement,
+    coupon_offer,
+    coupon_register_list,
+    eth_account,
+    get_latest_agreementid,
+    get_latest_orderid,
+    issue_bond_token,
+    issue_coupon_token,
+    membership_issue,
+    membership_offer,
+    membership_register_list,
+    offer_bond_token,
+    register_bond_list,
+    take_buy,
+)
 from tests.utils import PersonalInfoUtils as pi_utils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -569,7 +589,7 @@ class TestDEXOrderList:
         )
 
         # emit NewOrder event
-        bond_token, order_id, _ = self.bond_order_event(
+        bond_token, _order_id, _ = self.bond_order_event(
             bond_exchange=bond_exchange,
             personal_info=personal_info,
             token_list=token_list,
@@ -756,7 +776,7 @@ class TestDEXOrderListMembership:
         _, membership_exchange, _, token_list = self.set_env(shared_contract)
 
         # emit NewOrder event
-        token, order_id, agreement_id = self.order_event(
+        token, order_id, _agreement_id = self.order_event(
             membership_exchange, token_list
         )
 
@@ -840,7 +860,7 @@ class TestDEXOrderListMembership:
         _, membership_exchange, _, token_list = self.set_env(shared_contract)
 
         # emit CancelOrder event
-        token, order_id, agreement_id = self.order_event(
+        token, order_id, _agreement_id = self.order_event(
             membership_exchange, token_list
         )
 
@@ -1446,7 +1466,7 @@ class TestDEXOrderListCoupon:
         _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit NewOrder event
-        token, order_id, agreement_id = self.order_event(coupon_exchange, token_list)
+        token, order_id, _agreement_id = self.order_event(coupon_exchange, token_list)
 
         # add order event
         order = Order()
@@ -1528,7 +1548,7 @@ class TestDEXOrderListCoupon:
         _, _, coupon_exchange, token_list = self.set_env(shared_contract)
 
         # emit CancelOrder event
-        token, order_id, agreement_id = self.cancel_order_event(
+        token, order_id, _agreement_id = self.cancel_order_event(
             coupon_exchange, token_list
         )
 

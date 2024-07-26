@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Optional
 
 from fastapi import Query
@@ -37,7 +37,7 @@ from app.model.schema.base import (
 ############################
 # COMMON
 ############################
-class TransferSourceEvent(str, Enum):
+class TransferSourceEvent(StrEnum):
     Transfer = "Transfer"
     Unlock = "Unlock"
 
@@ -107,7 +107,7 @@ class ListAllTokenHoldersQuery:
     ] = ValueOperator.EQUAL
 
 
-class SearchTokenHoldersSortItem(str, Enum):
+class SearchTokenHoldersSortItem(StrEnum):
     created = "created"
     account_address_list = "account_address_list"
     amount = "amount"
@@ -200,7 +200,7 @@ class ListAllTransferHistoryQuery:
     ] = ValueOperator.EQUAL
 
 
-class SearchTransferHistorySortItem(str, Enum):
+class SearchTransferHistorySortItem(StrEnum):
     from_account_address_list = "from_account_address_list"
     to_account_address_list = "to_account_address_list"
     id = "id"
@@ -266,7 +266,7 @@ class ListAllTransferApprovalHistoryQuery:
     ] = ValueOperator.EQUAL
 
 
-class SearchTransferApprovalHistorySortItem(str, Enum):
+class SearchTransferApprovalHistorySortItem(StrEnum):
     from_account_address_list = "from_account_address_list"
     to_account_address_list = "to_account_address_list"
     application_id = "application_id"
@@ -356,7 +356,7 @@ class TokenHoldersCountResponse(BaseModel):
     count: int
 
 
-class TokenHoldersCollectionBatchStatus(str, Enum):
+class TokenHoldersCollectionBatchStatus(StrEnum):
     pending = "pending"
     done = "done"
     failed = "failed"

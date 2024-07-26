@@ -1,7 +1,7 @@
 """026_v22.3
 
 Revision ID: a80595c53d52
-Revises: 
+Revises:
 Create Date: 2023-03-30 17:02:32.252005
 
 """

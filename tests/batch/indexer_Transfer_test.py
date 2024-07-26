@@ -1160,10 +1160,13 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        with mock.patch(
-            "web3.eth.async_eth.AsyncEth.get_block",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_block",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion
@@ -1200,10 +1203,13 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion
@@ -1239,9 +1245,10 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion

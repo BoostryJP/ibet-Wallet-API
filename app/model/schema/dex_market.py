@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Optional
 
 from fastapi import Query
@@ -34,7 +34,7 @@ from app.model.schema.base import ValidatedEthereumAddress
 ############################
 # REQUEST
 ############################
-class OrderType(str, Enum):
+class OrderType(StrEnum):
     buy = "buy"
     sell = "sell"
 
