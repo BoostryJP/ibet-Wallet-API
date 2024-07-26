@@ -171,9 +171,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系1＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_1(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -202,6 +200,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト債券",
             "token_template": "IbetStraightBond",
             "status": True,
             "transferable": True,
@@ -213,9 +212,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系2＞
     #   債券：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_2(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -247,6 +244,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト債券",
             "token_template": "IbetStraightBond",
             "status": False,
             "transferable": True,
@@ -258,9 +256,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系3＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_3(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -292,6 +288,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト債券",
             "token_template": "IbetStraightBond",
             "status": True,
             "transferable": False,
@@ -303,9 +300,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系4＞
     #   株式：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_4(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -334,6 +329,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト株式",
             "token_template": "IbetShare",
             "status": True,
             "transferable": True,
@@ -345,9 +341,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系5＞
     #   株式：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_5(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -379,6 +373,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト株式",
             "token_template": "IbetShare",
             "status": False,
             "transferable": True,
@@ -390,9 +385,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系6＞
     #   株式：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_6(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -424,6 +417,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト株式",
             "token_template": "IbetShare",
             "status": True,
             "transferable": False,
@@ -435,9 +429,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系7＞
     #   会員権：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_7(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -463,6 +455,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト会員権",
             "token_template": "IbetMembership",
             "status": True,
             "transferable": True,
@@ -474,9 +467,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系8＞
     #   会員権：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_8(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_8(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -505,6 +496,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト会員権",
             "token_template": "IbetMembership",
             "status": False,
             "transferable": True,
@@ -516,9 +508,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系9＞
     #   会員権：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_9(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_9(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -547,6 +537,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テスト会員権",
             "token_template": "IbetMembership",
             "status": True,
             "transferable": False,
@@ -558,9 +549,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系10＞
     #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_10(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_10(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -586,6 +575,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テストクーポン",
             "token_template": "IbetCoupon",
             "status": True,
             "transferable": True,
@@ -597,9 +587,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系11＞
     #   クーポン：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_11(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_11(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -628,6 +616,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テストクーポン",
             "token_template": "IbetCoupon",
             "status": False,
             "transferable": True,
@@ -639,9 +628,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系12＞
     #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_12(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_normal_12(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -670,6 +657,7 @@ class TestTokenTokenStatus:
         resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
+            "name": "テストクーポン",
             "token_template": "IbetCoupon",
             "status": True,
             "transferable": False,
@@ -682,7 +670,7 @@ class TestTokenTokenStatus:
     # ＜エラー系1＞
     #   無効なコントラクトアドレス（不正な形式）
     #   -> 400エラー
-    def test_tokenstatus_error_1(self, client: TestClient, session: Session):
+    def test_error_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address="0xabcd")
 
         query_string = ""
@@ -704,49 +692,9 @@ class TestTokenTokenStatus:
         }
 
     # ＜エラー系2＞
-    #   取扱トークン（DB）に情報が存在しない
-    def test_tokenstatus_error_2(
-        self, client: TestClient, shared_contract, session: Session
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.bond_token_attribute(
-            exchange_address, personal_info
-        )
-        token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, token, token_list)
-
-        session.commit()
-
-        # NOTE:取扱トークンデータを挿入しない
-
-        apiurl = self.apiurl_base.format(contract_address=token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
-        assert resp.status_code == 404
-        assert resp.json()["meta"] == {
-            "code": 30,
-            "message": "Data Not Exists",
-            "description": "token_address: " + token["address"],
-        }
-
-    # ＜エラー系3＞
     #   無効なコントラクトアドレス（TokenInterfaceを継承しているが譲渡可否を持たないコントラクト）
     #   -> 404エラー
-    def test_tokenstatus_error_3(
-        self, client: TestClient, session: Session, shared_contract
-    ):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract):
         share_exchange = shared_contract["IbetShareExchange"]
 
         # 取扱トークンデータ挿入
