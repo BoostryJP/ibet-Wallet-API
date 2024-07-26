@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from enum import Enum, IntEnum
+from enum import IntEnum, StrEnum
 from typing import Annotated, Optional
 
 from fastapi import Query
@@ -54,7 +54,7 @@ class JsonRPCRequest(BaseModel):
         return v
 
 
-class BlockIdentifier(str, Enum):
+class BlockIdentifier(StrEnum):
     latest = "latest"
     earliest = "earliest"
     pending = "pending"

@@ -156,9 +156,7 @@ class TestEventsIbetSecurityTokenDVP:
         # Withdraw token from DVP contract
         tx_hash = dvp_contract.functions.withdraw(
             token_contract.address,
-        ).transact(
-            {"from": issuer}
-        )  # Withdrawn
+        ).transact({"from": issuer})  # Withdrawn
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -238,9 +236,7 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -329,16 +325,12 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCanceled
+        ).transact({"from": issuer})  # DeliveryCanceled
 
         # Cancel delivery
         tx_hash = dvp_contract.functions.cancelDelivery(
             dvp_contract.functions.latestDeliveryId().call()
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -426,16 +418,12 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
 
         # Confirm delivery
         tx_hash = dvp_contract.functions.confirmDelivery(
             dvp_contract.functions.latestDeliveryId().call()
-        ).transact(
-            {"from": user1}
-        )  # DeliveryConfirmed
+        ).transact({"from": user1})  # DeliveryConfirmed
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -523,23 +511,17 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
 
         # Confirm delivery
         dvp_contract.functions.confirmDelivery(
             dvp_contract.functions.latestDeliveryId().call()
-        ).transact(
-            {"from": user1}
-        )  # DeliveryConfirmed
+        ).transact({"from": user1})  # DeliveryConfirmed
 
         # Finish delivery
         tx_hash = dvp_contract.functions.finishDelivery(
             dvp_contract.functions.latestDeliveryId().call()
-        ).transact(
-            {"from": agent}
-        )  # DeliveryFinished
+        ).transact({"from": agent})  # DeliveryFinished
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -627,23 +609,17 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
 
         # Confirm delivery
         dvp_contract.functions.confirmDelivery(
             dvp_contract.functions.latestDeliveryId().call()
-        ).transact(
-            {"from": user1}
-        )  # DeliveryConfirmed
+        ).transact({"from": user1})  # DeliveryConfirmed
 
         # Finish delivery
         tx_hash = dvp_contract.functions.abortDelivery(
             dvp_contract.functions.latestDeliveryId().call()
-        ).transact(
-            {"from": agent}
-        )  # DeliveryFinished
+        ).transact({"from": agent})  # DeliveryFinished
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -829,9 +805,7 @@ class TestEventsIbetSecurityTokenDVP:
         # Deposit token to DVP contract
         tx_hash_1 = token_contract.functions.transfer(
             dvp_contract.address, 1000
-        ).transact(
-            {"from": issuer}
-        )  # Deposited
+        ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
@@ -842,9 +816,7 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
 
@@ -919,9 +891,7 @@ class TestEventsIbetSecurityTokenDVP:
         # Deposit token to DVP contract
         tx_hash_1 = token_contract.functions.transfer(
             dvp_contract.address, 1000
-        ).transact(
-            {"from": issuer}
-        )  # Deposited
+        ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
@@ -932,9 +902,7 @@ class TestEventsIbetSecurityTokenDVP:
             1000,
             agent,
             "test_data",
-        ).transact(
-            {"from": issuer}
-        )  # DeliveryCreated
+        ).transact({"from": issuer})  # DeliveryCreated
         block_number_2 = web3.eth.block_number
 
         # Request target API

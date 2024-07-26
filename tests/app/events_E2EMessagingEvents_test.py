@@ -348,17 +348,13 @@ class TestEventsE2EMessaging:
 
         tx_1 = e2e_messaging_contract.functions.sendMessage(
             user2, "test_message"
-        ).transact(
-            {"from": user1}
-        )  # Message
+        ).transact({"from": user1})  # Message
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
         tx_2 = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
-        ).transact(
-            {"from": user1}
-        )  # PublicKeyUpdated
+        ).transact({"from": user1})  # PublicKeyUpdated
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
 
@@ -413,19 +409,15 @@ class TestEventsE2EMessaging:
             contract_name="E2EMessaging", address=e2e_messaging_contract.address
         )
 
-        tx_1 = e2e_messaging_contract.functions.sendMessage(
-            user2, "test_message"
-        ).transact(
+        e2e_messaging_contract.functions.sendMessage(user2, "test_message").transact(
             {"from": user1}
         )  # Message
         block_number_1 = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+        web3.eth.get_block(block_number_1)["timestamp"]
 
         tx_2 = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
-        ).transact(
-            {"from": user1}
-        )  # PublicKeyUpdated
+        ).transact({"from": user1})  # PublicKeyUpdated
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
 

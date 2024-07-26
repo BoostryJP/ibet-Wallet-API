@@ -304,8 +304,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                 title: Response 400 Listblockdata
           description: Bad Request
         '404':
@@ -349,8 +349,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Getblockdata
           description: Not Found
   /NodeInfo/TxData:
@@ -428,8 +428,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                 title: Response 400 Listtxdata
           description: Bad Request
         '404':
@@ -472,8 +472,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Gettxdata
           description: Not Found
   /ABI/StraightBond:
@@ -899,8 +899,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                 title: Response 400 Sendrawtransaction
   /Eth/SendRawTransactionNoWait:
     post:
@@ -928,8 +928,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                 title: Response 400 Sendrawtransactionnowait
   /Eth/WaitForTransactionReceipt:
     get:
@@ -1411,8 +1411,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Straightbondtokendetails
           description: Not Found
   /Token/Share:
@@ -2197,8 +2197,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Membershiptokendetails
           description: Not Found
   /Token/Coupon:
@@ -2553,8 +2553,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Coupontokendetails
           description: Not Found
   /Token/{token_address}/Status:

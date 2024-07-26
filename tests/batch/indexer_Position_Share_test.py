@@ -2008,10 +2008,13 @@ class TestProcessor:
         )
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
@@ -2038,10 +2041,13 @@ class TestProcessor:
         )
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
@@ -2092,9 +2098,10 @@ class TestProcessor:
         )
 
         # Expect that initial_sync() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
@@ -2121,9 +2128,10 @@ class TestProcessor:
         )
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
@@ -2156,15 +2164,16 @@ class TestProcessor:
         asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch(
-            "batch.indexer_Position_Share.asyncio", asyncio_mock
-        ), mock.patch(
-            "batch.indexer_Position_Share.Processor.initial_sync", return_value=True
-        ), mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(
-            TypeError
+        with (
+            mock.patch("batch.indexer_Position_Share.asyncio", asyncio_mock),
+            mock.patch(
+                "batch.indexer_Position_Share.Processor.initial_sync", return_value=True
+            ),
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(TypeError),
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             asyncio.run(main_func())

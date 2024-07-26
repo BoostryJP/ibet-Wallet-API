@@ -26,7 +26,6 @@ from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.database import engine
 from app.model.db import IDXLockedPosition
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))

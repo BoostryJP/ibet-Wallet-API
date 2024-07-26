@@ -171,7 +171,7 @@ async def internal_server_error_handler(request: Request, exc: Exception):
 
 # 429:TooManyRequests
 @app.exception_handler(OperationalError)
-async def internal_server_error_handler(request: Request, exc: OperationalError):
+async def too_many_request_error_handler(request: Request, exc: OperationalError):
     meta = {"code": 1, "title": "TooManyRequestsError"}
     if exc.orig.args == ("FATAL:  sorry, too many clients already\n",):
         # NOTE: If postgres is used and has run out of connections, exception above would be thrown.

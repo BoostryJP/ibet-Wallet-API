@@ -47,7 +47,7 @@ class IbetStandardTokenUtils:
             args["contactInformation"],
             args["privacyPolicy"],
         ]
-        contract_address, abi = Contract.deploy_contract(
+        contract_address, _ = Contract.deploy_contract(
             contract_name="IbetStandardToken", args=arguments, deployer=tx_from
         )
         contract = Contract.get_contract(

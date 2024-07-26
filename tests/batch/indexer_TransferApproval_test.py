@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-import time
 from datetime import datetime
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -187,7 +186,9 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Run target process
@@ -258,12 +259,15 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Approve transfer
         token.functions.approveTransfer(
-            0, "1609418096"  # 2020/12/31 12:34:56
+            0,
+            "1609418096",  # 2020/12/31 12:34:56
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -427,18 +431,24 @@ class TestProcessor:
 
         # Apply for transfer
         token_1.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
         token_2.functions.applyForTransfer(
-            self.account2["account_address"], 3000, "978266097"  # 2000/12/31 12:34:57
+            self.account2["account_address"],
+            3000,
+            "978266097",  # 2000/12/31 12:34:57
         ).transact({"from": self.account1["account_address"]})
 
         # Approve transfer
         token_1.functions.approveTransfer(
-            0, "1609418096"  # 2020/12/31 12:34:56
+            0,
+            "1609418096",  # 2020/12/31 12:34:56
         ).transact({"from": self.issuer["account_address"]})
         token_2.functions.approveTransfer(
-            0, "1609418097"  # 2020/12/31 12:34:57
+            0,
+            "1609418097",  # 2020/12/31 12:34:57
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -574,7 +584,9 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Run target process
@@ -925,7 +937,8 @@ class TestProcessor:
 
         # Approve transfer
         st_escrow_contract.functions.approveTransfer(
-            escrow_id, "1609418096"  # 2020/12/31 12:34:56
+            escrow_id,
+            "1609418096",  # 2020/12/31 12:34:56
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -1005,7 +1018,9 @@ class TestProcessor:
         self.set_transfer_approval_required(token_contract=token, required=True)
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         block_number_current = web3.eth.block_number
@@ -1033,7 +1048,9 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
         block_number_current = web3.eth.block_number
 
@@ -1100,14 +1117,19 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.eth.async_eth.AsyncEth.get_block",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_block",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -1125,14 +1147,19 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.eth.async_eth.AsyncEth.get_block",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_block",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion
@@ -1188,14 +1215,19 @@ class TestProcessor:
         self.set_transfer_approval_required(token_contract=token, required=True)
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
         # Assertion
         _transfer_approval_list = session.scalars(
@@ -1213,14 +1245,19 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion
@@ -1276,13 +1313,16 @@ class TestProcessor:
         self.set_transfer_approval_required(token_contract=token, required=True)
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Expect that initial_sync() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion
@@ -1301,13 +1341,16 @@ class TestProcessor:
 
         # Apply for transfer
         token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"  # 2000/12/31 12:34:56
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
         ).transact({"from": self.account1["account_address"]})
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Assertion
@@ -1333,15 +1376,17 @@ class TestProcessor:
         asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch(
-            "batch.indexer_TransferApproval.asyncio", asyncio_mock
-        ), mock.patch(
-            "batch.indexer_TransferApproval.Processor.initial_sync", return_value=True
-        ), mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(
-            TypeError
+        with (
+            mock.patch("batch.indexer_TransferApproval.asyncio", asyncio_mock),
+            mock.patch(
+                "batch.indexer_TransferApproval.Processor.initial_sync",
+                return_value=True,
+            ),
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(TypeError),
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             asyncio.run(main_func())

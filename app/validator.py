@@ -29,7 +29,7 @@ def ethereum_address_validator(
     """Validator for ethereum address"""
     if value is not None:
         if not isinstance(value, str):
-            raise ValueError(f"Value must be of string")
+            raise ValueError("Value must be of string")
         if not Web3.is_address(value):
             raise ValueError("Invalid ethereum address")
     return value

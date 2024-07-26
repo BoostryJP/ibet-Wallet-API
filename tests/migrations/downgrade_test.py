@@ -502,22 +502,22 @@ class TestMigrationsDowngrade:
             # NOTE: idx_lock
             if engine.name == "mysql":
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM `lock`;""")
+                    text("""SELECT COUNT(*) FROM `lock`;""")
                 ).scalar()
             else:
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM "lock";""")
+                    text("""SELECT COUNT(*) FROM "lock";""")
                 ).scalar()
             assert all_row_count == 2
 
             # NOTE: idx_unlock
             if engine.name == "mysql":
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM `unlock`;""")
+                    text("""SELECT COUNT(*) FROM `unlock`;""")
                 ).scalar()
             else:
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM "unlock";""")
+                    text("""SELECT COUNT(*) FROM "unlock";""")
                 ).scalar()
             assert all_row_count == 2
 

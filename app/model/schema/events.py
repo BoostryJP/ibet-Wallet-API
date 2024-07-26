@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Optional, Self
 
 from fastapi import Query
@@ -36,7 +36,7 @@ from app.contracts import create_abi_event_argument_models
 ############################
 
 
-class E2EMessagingEventType(str, Enum):
+class E2EMessagingEventType(StrEnum):
     PublicKeyUpdated = "PublicKeyUpdated"
     Message = "Message"
 
@@ -75,7 +75,7 @@ class E2EMessagingEventsQuery:
         return values
 
 
-class IbetEscrowEventType(str, Enum):
+class IbetEscrowEventType(StrEnum):
     Deposited = "Deposited"
     Withdrawn = "Withdrawn"
     EscrowCreated = "EscrowCreated"
@@ -120,7 +120,7 @@ class IbetEscrowEventsQuery:
         return values
 
 
-class IbetSecurityTokenEscrowEventType(str, Enum):
+class IbetSecurityTokenEscrowEventType(StrEnum):
     Deposited = "Deposited"
     Withdrawn = "Withdrawn"
     EscrowCreated = "EscrowCreated"
@@ -164,7 +164,7 @@ class IbetSecurityTokenEscrowEventsQuery:
         return values
 
 
-class IbetSecurityTokenDVPEventType(str, Enum):
+class IbetSecurityTokenDVPEventType(StrEnum):
     Deposited = "Deposited"
     Withdrawn = "Withdrawn"
     DeliveryCreated = "DeliveryCreated"
@@ -217,7 +217,7 @@ class SecurityTokenEventArguments(
     pass
 
 
-class IbetSecurityTokenInterfaceEventType(str, Enum):
+class IbetSecurityTokenInterfaceEventType(StrEnum):
     Allot = "Allot"
     ApplyForOffering = "ApplyForOffering"
     ApplyForTransfer = "ApplyForTransfer"

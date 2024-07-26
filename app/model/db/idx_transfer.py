@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime, timedelta, timezone
-from enum import Enum
+from enum import StrEnum
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import JSON, BigInteger, String
@@ -31,7 +31,7 @@ UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
 
 
-class IDXTransferSourceEventType(str, Enum):
+class IDXTransferSourceEventType(StrEnum):
     """Transfer source event type"""
 
     TRANSFER = "Transfer"
