@@ -331,8 +331,13 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
 ############################
 # RESPONSE
 ############################
+class TokenTemplateResponse(BaseModel):
+    token_template: TokenType = Field(examples=["IbetStraightBond"])
+
+
 class TokenStatusResponse(BaseModel):
     token_template: TokenType = Field(examples=["IbetStraightBond"])
+    name: str
     status: bool
     transferable: bool
 

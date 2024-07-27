@@ -82,7 +82,6 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def get_token_status(
-    async_session: DBAsyncSession,
     token_address: Annotated[
         ValidatedEthereumAddress, Path(description="Token address")
     ],
@@ -90,15 +89,6 @@ async def get_token_status(
     """
     Returns status of given token.
     """
-    # 取扱トークンチェック
-    listed_token = (
-        await async_session.scalars(
-            select(Listing).where(Listing.token_address == token_address).limit(1)
-        )
-    ).first()
-    if listed_token is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
-
     # TokenList-Contractへの接続
     list_contract = AsyncContract.get_contract(
         "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
@@ -118,6 +108,9 @@ async def get_token_status(
         token_contract = AsyncContract.get_contract(token_template, token_address)
         tasks = await SemaphoreTaskGroup.run(
             AsyncContract.call_function(
+                contract=token_contract, function_name="name", args=()
+            ),
+            AsyncContract.call_function(
                 contract=token_contract, function_name="status", args=()
             ),
             AsyncContract.call_function(
@@ -125,7 +118,7 @@ async def get_token_status(
             ),
             max_concurrency=3,
         )
-        status, transferable = [task.result() for task in tasks]
+        name, status, transferable = [task.result() for task in tasks]
     except* ServiceUnavailable as e:
         LOG.warning(e)
         raise DataNotExistsError("token_address: %s" % token_address)
@@ -135,6 +128,7 @@ async def get_token_status(
 
     response_json = {
         "token_template": token_template,
+        "name": name,
         "status": status,
         "transferable": transferable,
     }
