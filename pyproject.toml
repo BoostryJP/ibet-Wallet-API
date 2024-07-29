@@ -94,10 +94,6 @@ exclude = ["migrations/*"]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 
-[tool.coverage.run]
-branch = true
-concurrency = ["thread", "greenlet"]
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
