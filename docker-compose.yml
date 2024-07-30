@@ -46,6 +46,8 @@ services:
     depends_on:
       - postgres
       - hardhat-network
+    volumes:
+      - ./cov:/app/ibet-Wallet-API/cov
   ibet-wallet-api-mysql:
     image: ibet-wallet-api
     build:
@@ -67,3 +69,5 @@ services:
     depends_on:
       - mysql
       - hardhat-network
+    volumes:
+      - ./cov:/app/ibet-Wallet-API/cov
