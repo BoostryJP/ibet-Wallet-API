@@ -10,7 +10,7 @@
 | IbetExchangeInterface.json      | **v22.12.0** | no                     | yes      |
 | IbetMembership.json             | **v24.9.0**  | yes(only for unittest) | yes      |
 | IbetSecurityTokenEscrow.json    | **v22.12.0** | yes(only for unittest) | yes      |
-| IbetSecurityTokenDVP.json       | **v24.6.0**  | yes(only for unittest) | yes      |
+| IbetSecurityTokenDVP.json       | **v24.9.0**  | yes(only for unittest) | yes      |
 | IbetSecurityTokenInterface.json | **v24.9.0**  | no                     | yes      |
 | IbetShare.json                  | **v24.9.0**  | yes(only for unittest) | yes      |
 | IbetStandardToken.json          | **v24.9.0**  | yes(only for unittest) | yes      |

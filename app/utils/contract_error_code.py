@@ -207,6 +207,7 @@ def error_code_msg(code_str: str) -> Tuple[int, str]:
         260403: "Target delivery has been confirmed.",
         260404: "Message sender is not the delivery agent.",
         260501: "Message sender balance is insufficient.",
+        260601: "Message sender balance is insufficient.",
         # PaymentGateway (30XXXX)
         300001: "Payment account is banned.",
         300101: "Target account address is not registered.",
