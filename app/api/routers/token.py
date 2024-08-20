@@ -800,6 +800,14 @@ async def list_all_transfer_histories(
         )
         .order_by(IDXTransfer.id)
     )
+
+    # Filtering by created_from and created_to
+    if request_query.created_from is not None:
+        stmt = stmt.where(IDXTransfer.created >= request_query.created_from)
+
+    if request_query.created_to is not None:
+        stmt = stmt.where(IDXTransfer.created <= request_query.created_to)
+
     if request_query.account_tag is not None:
         stmt = stmt.where(
             or_(

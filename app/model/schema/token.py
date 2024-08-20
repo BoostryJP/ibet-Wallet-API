@@ -199,6 +199,13 @@ class ListAllTransferHistoryQuery:
         ),
     ] = ValueOperator.EQUAL
 
+    created_from: Annotated[
+        Optional[datetime], Query(description="created from datetime")
+    ] = None
+    created_to: Annotated[
+        Optional[datetime], Query(description="created to datetime")
+    ] = None
+
 
 class SearchTransferHistorySortItem(StrEnum):
     from_account_address_list = "from_account_address_list"
