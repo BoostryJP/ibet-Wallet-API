@@ -1141,6 +1141,16 @@ class TestTokenTransferHistory:
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
 
+    # Normal_6_1
+    # Transferイベントあり : 2件
+    # Filter(created_from)
+    def test_normal_6_1(self, client: TestClient, session: Session):
+        listing = {
+            "token_adress": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
     ####################################################################
     # Error
     ####################################################################
