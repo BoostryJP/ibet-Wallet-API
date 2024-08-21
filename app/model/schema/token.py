@@ -198,13 +198,8 @@ class ListAllTransferHistoryQuery:
             description="value filter condition(0: equal, 1: greater than, 2: less than)"
         ),
     ] = ValueOperator.EQUAL
-
-    created_from: Annotated[
-        Optional[datetime], Query(description="created from datetime")
-    ] = None
-    created_to: Annotated[
-        Optional[datetime], Query(description="created to datetime")
-    ] = None
+    created_from: Optional[str] = Query(None, description="created from datetime")
+    created_to: Optional[str] = Query(None, description="created to datetime")
 
 
 class SearchTransferHistorySortItem(StrEnum):
