@@ -800,13 +800,6 @@ async def list_all_transfer_histories(
         )
         .order_by(IDXTransfer.id)
     )
-    if request_query.created_from:
-        created_from = datetime.fromisoformat(request_query.created_from)
-        created_from_utc = created_from.astimezone(timezone.utc)
-        stmt = stmt.where(IDXTransfer.created >= created_from_utc)
-
-    if request_query.created_to is not None:
-        stmt = stmt.where(IDXTransfer.created <= request_query.created_to)
 
     if request_query.account_tag is not None:
         stmt = stmt.where(
@@ -838,6 +831,14 @@ async def list_all_transfer_histories(
     if request_query.to_address is not None:
         stmt = stmt.where(
             IDXTransfer.to_address.like("%" + request_query.to_address + "%")
+        )
+
+    if request_query.created_from:
+        created_from = datetime.fromisoformat(request_query.created_from)
+    stmt = stmt.where(IDXTransfer.created >= created_from)
+    if request_query.created_to is not None:
+        stmt = stmt.where(
+            IDXTransfer.created <= request_query.created_to.astimezone(timezone.utc)
         )
     if request_query.value is not None and request_query.value_operator is not None:
         match request_query.value_operator:
@@ -925,10 +926,6 @@ async def search_transfer_histories(
     if data.to_address is not None:
         stmt = stmt.where(IDXTransfer.to_address.like("%" + data.to_address + "%"))
     if data.created_from is not None:
-        created_fromSee = data.created_from
-        print(created_fromSee)
-        convertedcreated_from = data.created_from.astimezone((timezone.utc))
-        print(convertedcreated_from)
         stmt = stmt.where(
             IDXTransfer.created >= data.created_from.astimezone(timezone.utc)
         )

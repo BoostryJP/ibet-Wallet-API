@@ -17,12 +17,14 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import datetime, timezone
 from enum import IntEnum, StrEnum
-from typing import Annotated, Generic, Optional, TypeVar
+from typing import Annotated, Any, Generic, Optional, TypeVar
 
 from fastapi import Query
 from pydantic import BaseModel, Field, WrapValidator, constr
 from pydantic.dataclasses import dataclass
+from pydantic_core.core_schema import ValidatorFunctionWrapHandler
 
 from app.validator import ethereum_address_validator
 
@@ -48,6 +50,39 @@ EmailStr = constr(
 )
 
 ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
+
+
+def datetime_string_validator(
+    value: Any, handler: ValidatorFunctionWrapHandler, *args, **kwargs
+):
+    """Validate string datetime format
+
+    - %Y/%m/%d %H:%M:%S
+    """
+    if value is not None:
+        if not isinstance(value, str):
+            raise ValueError("Value must be a string")
+        try:
+            dt = datetime.fromisoformat(value)
+
+            # Ensure the datetime has timezone info
+            if dt.tzinfo is None:
+                raise ValueError("Timezone information is required")
+
+            # Convert JST to UTC
+            dt_utc = dt.astimezone(timezone.utc)
+
+            # Strip timezone info and return as string
+            return dt_utc.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError as e:
+            raise ValueError(f"Invalid datetime format: {str(e)}")
+    return value
+
+
+ValidatedDatetimeStr = Annotated[str, WrapValidator(datetime_string_validator)]
+
+
+print(ValidatedDatetimeStr)
 
 
 ############################

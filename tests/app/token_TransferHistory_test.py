@@ -64,6 +64,8 @@ class TestTokenTransferHistory:
         _transfer.value = transfer_event["value"]
         _transfer.source_event = transfer_source_event.value
         _transfer.data = transfer_event_data
+        if created is not None:
+            _transfer.created = created
         session.add(_transfer)
 
     ####################################################################
@@ -1205,13 +1207,13 @@ class TestTokenTransferHistory:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         print(resp.json()["data"]["result_set"])
         assert resp.json()["data"]["result_set"] == {
-            "count": 2,
+            "count": 1,
             "offset": None,
             "limit": None,
             "total": 2,
         }
         data = resp.json()["data"]["transfer_history"]
-        assert len(data) == 2
+        assert len(data) == 1
         assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
         assert data[0]["token_address"] == transfer_event_1["token_address"]
         assert data[0]["from_address"] == transfer_event_1["from_address"]
