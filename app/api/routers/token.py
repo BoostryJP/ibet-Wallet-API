@@ -832,14 +832,12 @@ async def list_all_transfer_histories(
         stmt = stmt.where(
             IDXTransfer.to_address.like("%" + request_query.to_address + "%")
         )
-
-    if request_query.created_from:
+    if request_query.created_from is not None:
         created_from = datetime.fromisoformat(request_query.created_from)
-    stmt = stmt.where(IDXTransfer.created >= created_from)
+        stmt = stmt.where(IDXTransfer.created >= created_from)
     if request_query.created_to is not None:
-        stmt = stmt.where(
-            IDXTransfer.created <= request_query.created_to.astimezone(timezone.utc)
-        )
+        created_to = datetime.fromisoformat(request_query.created_to)
+        stmt = stmt.where(IDXTransfer.created <= created_to)
     if request_query.value is not None and request_query.value_operator is not None:
         match request_query.value_operator:
             case ValueOperator.EQUAL:

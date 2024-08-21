@@ -54,10 +54,10 @@ ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validat
 
 def datetime_string_validator(
     value: Any, handler: ValidatorFunctionWrapHandler, *args, **kwargs
-):
+) -> str | None:
     """Validate string datetime format
 
-    - %Y/%m/%d %H:%M:%S
+    - %Y-%m-%dT%H:%M:%S.%f
     """
     if value is not None:
         if not isinstance(value, str):
@@ -72,17 +72,14 @@ def datetime_string_validator(
             # Convert JST to UTC
             dt_utc = dt.astimezone(timezone.utc)
 
-            # Strip timezone info and return as string
-            return dt_utc.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
+            # Strip timezone info and return as iso format string
+            return dt_utc.replace(tzinfo=None).strftime("%Y-%m-%dT%H:%M:%S.%f")
         except ValueError as e:
             raise ValueError(f"Invalid datetime format: {str(e)}")
     return value
 
 
 ValidatedDatetimeStr = Annotated[str, WrapValidator(datetime_string_validator)]
-
-
-print(ValidatedDatetimeStr)
 
 
 ############################
