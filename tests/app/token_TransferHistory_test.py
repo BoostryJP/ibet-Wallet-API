@@ -944,6 +944,157 @@ class TestTokenTransferHistory:
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
 
+        # Normal_4_7
+        # Transferイベントあり : 2件
+        # Filter(created_from)
+
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "created_from", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
+    )
+    def test_normal_4_7(self, created_from: str, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        created_time1 = datetime.now(UTC).replace(tzinfo=None)
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=created_time1,
+        )
+        print(f"Event 1 created at: {created_time1}")
+        print(created_time1)
+        # 2件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        created_time2 = datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=1)
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=created_time2,
+        )
+
+        print(f"Event 1 created at: {created_time2}")
+        print(created_time2)
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"created_from": created_from})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        print(resp.json()["data"]["result_set"])
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
+    # Normal_4_8
+    # Transferイベントあり : 2件
+    # Filter(created_from)
+    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
+    @pytest.mark.parametrize(
+        "created_to", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
+    )
+    def test_normal_4_8(self, created_to: str, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10,
+        }
+        created_time1 = datetime.now(UTC).replace(tzinfo=None)
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_1,
+            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
+            transfer_event_data=None,
+            created=created_time1,
+        )
+        print(f"Event 1 created at: {created_time1}")
+        print(created_time1)
+        # 2件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 20,
+        }
+        created_time2 = datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=1)
+        self.insert_transfer_event(
+            session=session,
+            transfer_event=transfer_event_2,
+            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
+            transfer_event_data={"message": "unlock"},
+            created=created_time2,
+        )
+
+        print(f"Event 1 created at: {created_time2}")
+        print(created_time2)
+        session.commit()
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        resp = client.get(apiurl, params={"created_from": created_to})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        print(resp.json()["data"]["result_set"])
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": None,
+            "limit": None,
+            "total": 2,
+        }
+        data = resp.json()["data"]["transfer_history"]
+        assert len(data) == 1
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
+        assert data[0]["data"] is None
+
     # Normal_5_1
     # offset=1, limit=設定なし
     # Transferイベントあり：2件
@@ -1139,81 +1290,6 @@ class TestTokenTransferHistory:
         data = resp.json()["data"]["transfer_history"]
         assert len(data) == 1
 
-        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
-        assert data[0]["token_address"] == transfer_event_1["token_address"]
-        assert data[0]["from_address"] == transfer_event_1["from_address"]
-        assert data[0]["to_address"] == transfer_event_1["to_address"]
-        assert data[0]["value"] == transfer_event_1["value"]
-        assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
-        assert data[0]["data"] is None
-
-    # Normal_6_1
-    # Transferイベントあり : 2件
-    # Filter(created_from)
-    @pytest.mark.freeze_time(datetime(2023, 11, 6, 14, 0, 0, tzinfo=timezone.utc))
-    @pytest.mark.parametrize(
-        "created_from", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
-    )
-    def test_normal_6_1(self, created_from: str, client: TestClient, session: Session):
-        listing = {
-            "token_address": self.token_address,
-            "is_public": True,
-        }
-        self.insert_listing(session, listing=listing)
-
-        # １件目
-        transfer_event_1 = {
-            "transaction_hash": self.transaction_hash,
-            "token_address": self.token_address,
-            "from_address": self.from_address,
-            "to_address": self.to_address,
-            "value": 10,
-        }
-        created_time1 = datetime.now(UTC).replace(tzinfo=None)
-        self.insert_transfer_event(
-            session=session,
-            transfer_event=transfer_event_1,
-            transfer_source_event=IDXTransferSourceEventType.TRANSFER,
-            transfer_event_data=None,
-            created=created_time1,
-        )
-        print(f"Event 1 created at: {created_time1}")
-        print(created_time1)
-        # 2件目
-        transfer_event_2 = {
-            "transaction_hash": self.transaction_hash,
-            "token_address": self.token_address,
-            "from_address": self.from_address,
-            "to_address": self.to_address,
-            "value": 20,
-        }
-        created_time2 = datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=1)
-        self.insert_transfer_event(
-            session=session,
-            transfer_event=transfer_event_2,
-            transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
-            created=created_time2,
-        )
-
-        print(f"Event 1 created at: {created_time2}")
-        print(created_time2)
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.get(apiurl, params={"created_from": created_from})
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        print(resp.json()["data"]["result_set"])
-        assert resp.json()["data"]["result_set"] == {
-            "count": 1,
-            "offset": None,
-            "limit": None,
-            "total": 2,
-        }
-        data = resp.json()["data"]["transfer_history"]
-        assert len(data) == 1
         assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
         assert data[0]["token_address"] == transfer_event_1["token_address"]
         assert data[0]["from_address"] == transfer_event_1["from_address"]

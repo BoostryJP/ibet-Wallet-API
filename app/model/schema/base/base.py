@@ -73,7 +73,7 @@ def datetime_string_validator(
             dt_utc = dt.astimezone(timezone.utc)
 
             # Strip timezone info and return as iso format string
-            return dt_utc.replace(tzinfo=None).strftime("%Y-%m-%dT%H:%M:%S.%f")
+            return dt_utc.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S:%f")
         except ValueError as e:
             raise ValueError(f"Invalid datetime format: {str(e)}")
     return value
