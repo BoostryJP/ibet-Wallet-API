@@ -30,9 +30,9 @@ from app.model.schema.base import (
     SortOrder,
     TokenType,
     ValidatedEthereumAddress,
+    ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
-from app.model.schema.base.base import ValidatedDatetimeStr
 
 
 ############################
@@ -200,10 +200,11 @@ class ListAllTransferHistoryQuery:
         ),
     ] = ValueOperator.EQUAL
     created_from: Annotated[
-        Optional[ValidatedDatetimeStr], Query(description="created datetime (From)")
+        Optional[ValidatedNaiveUTCDatetime],
+        Query(description="created datetime (From)"),
     ] = None
     created_to: Annotated[
-        Optional[ValidatedDatetimeStr], Query(description="created datetime (To)")
+        Optional[ValidatedNaiveUTCDatetime], Query(description="created datetime (To)")
     ] = None
 
 

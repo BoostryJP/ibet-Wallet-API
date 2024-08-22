@@ -21,8 +21,9 @@ from datetime import datetime, timezone
 from enum import IntEnum, StrEnum
 from typing import Annotated, Any, Generic, Optional, TypeVar
 
+from annotated_types import Timezone
 from fastapi import Query
-from pydantic import BaseModel, Field, WrapValidator, constr
+from pydantic import AfterValidator, BaseModel, Field, WrapValidator, constr
 from pydantic.dataclasses import dataclass
 from pydantic_core.core_schema import ValidatorFunctionWrapHandler
 
@@ -51,35 +52,34 @@ EmailStr = constr(
 
 ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
 
+NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
 
-def datetime_string_validator(
+
+def naive_utc_datetime_validator(
     value: Any, handler: ValidatorFunctionWrapHandler, *args, **kwargs
-) -> str | None:
+) -> NaiveUTCDatetime | None:
     """Validate string datetime format
 
     - %Y-%m-%dT%H:%M:%S.%f
     """
     if value is not None:
-        if not isinstance(value, str):
-            raise ValueError("Value must be a string")
         try:
-            dt = datetime.fromisoformat(value)
-
             # Ensure the datetime has timezone info
-            if dt.tzinfo is None:
-                raise ValueError("Timezone information is required")
+            if value.tzinfo is None:
+                return value
+            # Convert timezone to UTC
+            dt_utc = value.astimezone(timezone.utc)
 
-            # Convert JST to UTC
-            dt_utc = dt.astimezone(timezone.utc)
-
-            # Strip timezone info and return as iso format string
-            return dt_utc.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S:%f")
+            # Strip timezone info and return as iso format
+            return dt_utc.replace(tzinfo=None)
         except ValueError as e:
             raise ValueError(f"Invalid datetime format: {str(e)}")
     return value
 
 
-ValidatedDatetimeStr = Annotated[str, WrapValidator(datetime_string_validator)]
+ValidatedNaiveUTCDatetime = Annotated[
+    datetime, AfterValidator(naive_utc_datetime_validator)
+]
 
 
 ############################

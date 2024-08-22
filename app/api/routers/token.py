@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timezone
+from datetime import timezone
 from typing import Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Path
@@ -833,11 +833,9 @@ async def list_all_transfer_histories(
             IDXTransfer.to_address.like("%" + request_query.to_address + "%")
         )
     if request_query.created_from is not None:
-        created_from = datetime.fromisoformat(request_query.created_from)
-        stmt = stmt.where(IDXTransfer.created >= created_from)
+        stmt = stmt.where(IDXTransfer.created >= request_query.created_from)
     if request_query.created_to is not None:
-        created_to = datetime.fromisoformat(request_query.created_to)
-        stmt = stmt.where(IDXTransfer.created <= created_to)
+        stmt = stmt.where(IDXTransfer.created <= request_query.created_to)
     if request_query.value is not None and request_query.value_operator is not None:
         match request_query.value_operator:
             case ValueOperator.EQUAL:
