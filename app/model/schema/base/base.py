@@ -55,22 +55,17 @@ ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validat
 NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
 
 
-def naive_utc_datetime_validator(
-    value: Any, handler: ValidatorFunctionWrapHandler, *args, **kwargs
-) -> NaiveUTCDatetime | None:
-    """Validate string datetime format
-
-    - %Y-%m-%dT%H:%M:%S.%f
-    """
+def naive_utc_datetime_validator(value: Any) -> NaiveUTCDatetime | None:
+    """Validate datetime"""
     if value is not None:
         try:
-            # Ensure the datetime has timezone info
             if value.tzinfo is None:
+                # Return the datetime as is if it has no timezone info
                 return value
             # Convert timezone to UTC
             dt_utc = value.astimezone(timezone.utc)
 
-            # Strip timezone info and return as iso format
+            # Return naive UTC datetime
             return dt_utc.replace(tzinfo=None)
         except ValueError as e:
             raise ValueError(f"Invalid datetime format: {str(e)}")
