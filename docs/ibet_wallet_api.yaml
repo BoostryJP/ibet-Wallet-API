@@ -3111,6 +3111,28 @@ paths:
             title: Value Operator
           description: 'value filter condition(0: equal, 1: greater than, 2: less
             than)'
+        - name: created_from
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (From)
+            title: Created From
+          description: created datetime (From)
+        - name: created_to
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (To)
+            title: Created To
+          description: created datetime (To)
       responses:
         '200':
           description: Successful Response
@@ -10699,6 +10721,9 @@ components:
             - $ref: '#/components/schemas/TokenType'
           examples:
             - IbetStraightBond
+        name:
+          type: string
+          title: Name
         status:
           type: boolean
           title: Status
@@ -10708,6 +10733,7 @@ components:
       type: object
       required:
         - token_template
+        - name
         - status
         - transferable
       title: TokenStatusResponse
