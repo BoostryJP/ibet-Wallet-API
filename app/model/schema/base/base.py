@@ -17,12 +17,15 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import datetime, timezone
 from enum import IntEnum, StrEnum
-from typing import Annotated, Generic, Optional, TypeVar
+from typing import Annotated, Any, Generic, Optional, TypeVar
 
+from annotated_types import Timezone
 from fastapi import Query
-from pydantic import BaseModel, Field, WrapValidator, constr
+from pydantic import AfterValidator, BaseModel, Field, WrapValidator, constr
 from pydantic.dataclasses import dataclass
+from pydantic_core.core_schema import ValidatorFunctionWrapHandler
 
 from app.validator import ethereum_address_validator
 
@@ -48,6 +51,30 @@ EmailStr = constr(
 )
 
 ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
+
+NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
+
+
+def naive_utc_datetime_validator(value: Any) -> NaiveUTCDatetime | None:
+    """Validate datetime"""
+    if value is not None:
+        try:
+            if value.tzinfo is None:
+                # Return the datetime as is if it has no timezone info
+                return value
+            # Convert timezone to UTC
+            dt_utc = value.astimezone(timezone.utc)
+
+            # Return naive UTC datetime
+            return dt_utc.replace(tzinfo=None)
+        except ValueError as e:
+            raise ValueError(f"Invalid datetime format: {str(e)}")
+    return value
+
+
+ValidatedNaiveUTCDatetime = Annotated[
+    datetime, AfterValidator(naive_utc_datetime_validator)
+]
 
 
 ############################

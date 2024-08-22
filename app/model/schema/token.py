@@ -30,6 +30,7 @@ from app.model.schema.base import (
     SortOrder,
     TokenType,
     ValidatedEthereumAddress,
+    ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
 
@@ -198,6 +199,13 @@ class ListAllTransferHistoryQuery:
             description="value filter condition(0: equal, 1: greater than, 2: less than)"
         ),
     ] = ValueOperator.EQUAL
+    created_from: Annotated[
+        Optional[ValidatedNaiveUTCDatetime],
+        Query(description="created datetime (From)"),
+    ] = None
+    created_to: Annotated[
+        Optional[ValidatedNaiveUTCDatetime], Query(description="created datetime (To)")
+    ] = None
 
 
 class SearchTransferHistorySortItem(StrEnum):
