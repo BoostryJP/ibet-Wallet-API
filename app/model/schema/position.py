@@ -156,7 +156,7 @@ class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
     msg_sender: Optional[ValidatedEthereumAddress] = Field(
-        description="Message sender", nullable=True
+        ..., description="Message sender"
     )
     token_address: ValidatedEthereumAddress = Field(description="Token address")
     lock_address: ValidatedEthereumAddress = Field(description="Lock address")

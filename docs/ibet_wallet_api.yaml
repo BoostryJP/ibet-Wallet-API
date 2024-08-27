@@ -8129,7 +8129,6 @@ components:
             - type: 'null'
           title: Msg Sender
           description: Message sender
-          nullable: true
         token_address:
           type: string
           title: Token Address
@@ -8204,7 +8203,6 @@ components:
             - type: 'null'
           title: Msg Sender
           description: Message sender
-          nullable: true
         token_address:
           type: string
           title: Token Address
@@ -8269,7 +8267,6 @@ components:
             - type: 'null'
           title: Msg Sender
           description: Message sender
-          nullable: true
         token_address:
           type: string
           title: Token Address
