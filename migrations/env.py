@@ -128,9 +128,11 @@ if "--autogenerate" in argv:
             if "get_db_schema())" not in new_line:
                 # Set schema of migration exec-environment
                 if "schema=" not in new_line:
-                    new_line = re.sub("\)$", ", schema=get_db_schema())", line)
+                    new_line = re.sub(r"\)$", ", schema=get_db_schema())", line)
                 else:  # If local environment has a schema set
-                    new_line = re.sub("schema=(.)*\)$", "schema=get_db_schema())", line)
+                    new_line = re.sub(
+                        r"schema=(.)*\)$", "schema=get_db_schema())", line
+                    )
             new_lines.append(new_line)
         return new_lines
 
