@@ -25,7 +25,6 @@ from annotated_types import Timezone
 from fastapi import Query
 from pydantic import AfterValidator, BaseModel, Field, WrapValidator, constr
 from pydantic.dataclasses import dataclass
-from pydantic_core.core_schema import ValidatorFunctionWrapHandler
 
 from app.validator import ethereum_address_validator
 
