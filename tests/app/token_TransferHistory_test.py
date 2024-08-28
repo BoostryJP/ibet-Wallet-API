@@ -947,7 +947,6 @@ class TestTokenTransferHistory:
     # Normal_4_7
     # Transferイベントあり : 2件
     # Filter(created_from)
-    @pytest.mark.aysincio
     @pytest.mark.parametrize(
         "created_from", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
     )
@@ -1016,7 +1015,6 @@ class TestTokenTransferHistory:
     # Normal_4_8
     # Transferイベントあり : 2件
     # Filter(created_to)
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "created_to", ["2023-11-06T23:00:00+09:00", "2023-11-06T14:00:00+00:00"]
     )
