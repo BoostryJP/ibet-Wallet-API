@@ -319,7 +319,7 @@ class Processor:
                     for _account in accounts_filtered
                     if _account != target.exchange_address
                 ]
-                balances_list = await self.get_bulk_account_balance(
+                balances_list = await self.get_bulk_account_balance_for_transfer(
                     token=token,
                     exchange_address=target.exchange_address,
                     accounts=eoa_list,
@@ -330,7 +330,6 @@ class Processor:
                         _balance,
                         _pending_transfer,
                         _exchange_balance,
-                        _exchange_commitment,
                     ) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
@@ -339,7 +338,6 @@ class Processor:
                         balance=_balance,
                         pending_transfer=_pending_transfer,
                         exchange_balance=_exchange_balance,
-                        exchange_commitment=_exchange_commitment,
                     )
             except Exception as e:
                 raise e
@@ -1277,11 +1275,15 @@ class Processor:
             await db_session.merge(_idx_position_block_number)
 
     @staticmethod
-    async def __get_account_balance_all(
+    async def __get_account_balance_for_transfer(
         token_contract, exchange_address: str, account_address: str
     ):
         """Get balance"""
         try:
+
+            async def return_zero():
+                return 0
+
             tasks = await SemaphoreTaskGroup.run(
                 AsyncContract.call_function(
                     contract=token_contract,
@@ -1295,53 +1297,34 @@ class Processor:
                     args=(account_address,),
                     default_returns=0,
                 ),
+                AsyncContract.call_function(
+                    contract=AsyncContract.get_contract(
+                        "IbetExchangeInterface", exchange_address
+                    ),
+                    function_name="balanceOf",
+                    args=(
+                        account_address,
+                        token_contract.address,
+                    ),
+                    default_returns=0,
+                )
+                if exchange_address != ZERO_ADDRESS
+                else return_zero(),
                 max_concurrency=3,
             )
-            balance, pending_transfer = (tasks[0].result(), tasks[1].result())
+            balance, pending_transfer, exchange_balance = (
+                tasks[0].result(),
+                tasks[1].result(),
+                tasks[2].result(),
+            )
         except ExceptionGroup:
             raise ServiceUnavailable
-
-        exchange_balance = 0
-        exchange_commitment = 0
-        if exchange_address != ZERO_ADDRESS:
-            exchange_contract = AsyncContract.get_contract(
-                "IbetExchangeInterface", exchange_address
-            )
-            try:
-                tasks = await SemaphoreTaskGroup.run(
-                    AsyncContract.call_function(
-                        contract=exchange_contract,
-                        function_name="balanceOf",
-                        args=(
-                            account_address,
-                            token_contract.address,
-                        ),
-                        default_returns=0,
-                    ),
-                    AsyncContract.call_function(
-                        contract=exchange_contract,
-                        function_name="commitmentOf",
-                        args=(
-                            account_address,
-                            token_contract.address,
-                        ),
-                        default_returns=0,
-                    ),
-                    max_concurrency=3,
-                )
-                exchange_balance, exchange_commitment = (
-                    tasks[0].result(),
-                    tasks[1].result(),
-                )
-            except ExceptionGroup:
-                raise ServiceUnavailable
 
         return (
             account_address,
             balance,
             pending_transfer,
             exchange_balance,
-            exchange_commitment,
         )
 
     @staticmethod
@@ -1634,9 +1617,11 @@ class Processor:
         # return events in original order
         return list(reversed(remove_duplicate_list))
 
-    async def get_bulk_account_balance(self, token, exchange_address, accounts):
+    async def get_bulk_account_balance_for_transfer(
+        self, token, exchange_address, accounts
+    ):
         coroutines = [
-            self.__get_account_balance_all(token, exchange_address, _account)
+            self.__get_account_balance_for_transfer(token, exchange_address, _account)
             for _account in accounts
         ]
         if not coroutines:

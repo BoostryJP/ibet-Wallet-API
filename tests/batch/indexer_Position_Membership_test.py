@@ -942,18 +942,17 @@ class TestProcessor:
     ###########################################################################
     # Error Case
     ###########################################################################
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
-    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
-    def test_error_1_1(self, processor, shared_contract, session):
+    def test_error_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -1022,78 +1021,6 @@ class TestProcessor:
         assert (
             _idx_position_membership_block_number.latest_block_number
             == block_number_current
-        )
-
-    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch(
-        "web3.eth.async_eth.AsyncEth.get_code",
-        MagicMock(side_effect=ServiceUnavailable()),
-    )
-    def test_error_1_2(self, processor, shared_contract, session, caplog):
-        # Issue Token
-        token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_membership(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract
-        )
-        self.listing_token(token["address"], session)
-
-        # Transfer
-        membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        # Expect that initial_sync() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
-            asyncio.run(processor.initial_sync())
-        # Clear cache in DB session.
-        session.rollback()
-        # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 0
-
-        # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_membership_block_number = session.scalars(
-            select(IDXPositionMembershipBlockNumber)
-        ).all()
-        assert len(_idx_position_membership_block_number) == 0
-
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Transfer
-        membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-        _idx_position_membership_block_number_bf = session.scalars(
-            select(IDXPositionMembershipBlockNumber).limit(1)
-        ).first()
-
-        # Expect that sync_new_logs() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
-            asyncio.run(processor.sync_new_logs())
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 0
-
-        # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_membership_block_number = session.scalars(
-            select(IDXPositionMembershipBlockNumber)
-        ).all()
-        assert len(_idx_position_membership_block_number) == 0
-
-        assert 0 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.ERROR,
-                "An exception occurred during event synchronization",
-            )
         )
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".

@@ -1829,18 +1829,17 @@ class TestProcessor:
     ###########################################################################
     # Error Case
     ###########################################################################
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
-    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
     @mock.patch(
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventFunctionNotFound()),
     )
-    def test_error_1_1(self, processor, shared_contract, session):
+    def test_error_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1909,87 +1908,6 @@ class TestProcessor:
         ).first()
         assert (
             _idx_position_bond_block_number.latest_block_number == block_number_current
-        )
-
-    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch(
-        "web3.eth.async_eth.AsyncEth.get_code",
-        MagicMock(side_effect=ServiceUnavailable()),
-    )
-    def test_error_1_2(self, processor, shared_contract, session, caplog):
-        # Issue Token
-        token_list_contract = shared_contract["TokenList"]
-        personal_info_contract = shared_contract["PersonalInfo"]
-        token = self.issue_token_bond(
-            self.issuer,
-            config.ZERO_ADDRESS,
-            personal_info_contract["address"],
-            token_list_contract,
-        )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
-
-        # Transfer
-        bond_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        # Expect that initial_sync() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
-            asyncio.run(processor.initial_sync())
-
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 0
-
-        # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_bond_block_number: Sequence[IDXPositionBondBlockNumber] = (
-            session.scalars(select(IDXPositionBondBlockNumber)).all()
-        )
-        assert len(_idx_position_bond_block_number) == 0
-
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Transfer
-        bond_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        # Expect that sync_new_logs() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
-            asyncio.run(processor.sync_new_logs())
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 0
-
-        # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_bond_block_number: Sequence[IDXPositionBondBlockNumber] = (
-            session.scalars(select(IDXPositionBondBlockNumber)).all()
-        )
-        assert len(_idx_position_bond_block_number) == 0
-
-        assert 0 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.ERROR,
-                "An exception occurred during event synchronization",
-            )
         )
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
