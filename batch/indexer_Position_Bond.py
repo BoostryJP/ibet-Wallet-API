@@ -314,13 +314,11 @@ class Processor:
                 if len(accounts_filtered) == 0:
                     continue
 
-                results = await self.check_bulk_is_contract(accounts_filtered)
                 eoa_list = [
                     _account
-                    for result, _account in zip(results, accounts_filtered)
-                    if result.to_0x_hex() == "0x"
+                    for _account in accounts_filtered
+                    if _account != target.exchange_address
                 ]
-
                 balances_list = await self.get_bulk_account_balance(
                     token=token,
                     exchange_address=target.exchange_address,
@@ -1635,15 +1633,6 @@ class Processor:
 
         # return events in original order
         return list(reversed(remove_duplicate_list))
-
-    @staticmethod
-    async def check_bulk_is_contract(accounts: List[str]):
-        coroutines = [async_web3.eth.get_code(_account) for _account in accounts]
-        try:
-            tasks = await SemaphoreTaskGroup.run(*coroutines, max_concurrency=5)
-            return [task.result() for task in tasks]
-        except ExceptionGroup:
-            raise ServiceUnavailable
 
     async def get_bulk_account_balance(self, token, exchange_address, accounts):
         coroutines = [
