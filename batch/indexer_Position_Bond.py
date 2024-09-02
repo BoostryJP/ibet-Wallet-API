@@ -314,31 +314,38 @@ class Processor:
                 if len(accounts_filtered) == 0:
                     continue
 
-                eoa_list = [
+                all_eoa_list = [
                     _account
                     for _account in accounts_filtered
                     if _account != target.exchange_address
                 ]
-                balances_list = await self.get_bulk_account_balance_for_transfer(
-                    token=token,
-                    exchange_address=target.exchange_address,
-                    accounts=eoa_list,
-                )
-                for balances in balances_list:
-                    (
-                        _account_address,
-                        _balance,
-                        _pending_transfer,
-                        _exchange_balance,
-                    ) = balances
-                    await self.__sink_on_position(
-                        db_session=db_session,
-                        token_address=to_checksum_address(token.address),
-                        account_address=_account_address,
-                        balance=_balance,
-                        pending_transfer=_pending_transfer,
-                        exchange_balance=_exchange_balance,
+                chunked_eoa_list: list[list[str]] = [
+                    all_eoa_list[i : i + 1000]
+                    for i in range(0, len(all_eoa_list), 1000)
+                ]
+                for eoa_list in chunked_eoa_list:
+                    balances_list = await self.get_bulk_account_balance_for_transfer(
+                        token=token,
+                        exchange_address=target.exchange_address,
+                        accounts=eoa_list,
                     )
+                    for balances in balances_list:
+                        (
+                            _account_address,
+                            _balance,
+                            _pending_transfer,
+                            _exchange_balance,
+                        ) = balances
+                        await self.__sink_on_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            account_address=_account_address,
+                            balance=_balance,
+                            pending_transfer=_pending_transfer,
+                            exchange_balance=_exchange_balance,
+                        )
+                    # Commit every 1000 EOAs for bulk transfer
+                    await db_session.commit()
             except Exception as e:
                 raise e
 

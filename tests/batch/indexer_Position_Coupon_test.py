@@ -24,6 +24,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from eth_utils import to_checksum_address
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -983,6 +984,74 @@ class TestProcessor:
         assert _position2.balance == 1000000 - 10000 + 55
         assert _position2.exchange_balance == 10000 - 55 - 66
         assert _position2.exchange_commitment == 66
+
+    # <Normal_12>
+    # Single Token
+    # Multi event logs (Over 1000)
+    # - Transfer
+    def test_normal_12(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        token = self.issue_token_coupon(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        # Transfer
+        for i in range(1001):
+            transfer_coupon_token(
+                self.issuer,
+                token,
+                {"account_address": to_checksum_address(f"0x{hex(i)[2:].zfill(40)}")},
+                1,
+            )
+
+        # Run target process
+        block_number = web3.eth.block_number
+        asyncio.run(processor.sync_new_logs())
+
+        # Assertion
+        _position_list: Sequence[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
+        assert len(_position_list) == 1001
+
+        _idx_position_coupon_block_number: IDXPositionCouponBlockNumber = (
+            session.scalars(
+                select(IDXPositionCouponBlockNumber)
+                .where(IDXPositionCouponBlockNumber.token_address == token["address"])
+                .limit(1)
+            ).first()
+        )
+        assert _idx_position_coupon_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 1001
+        assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
+
+        _positions: list[IDXPosition] = session.scalars(
+            select(IDXPosition).where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.balance == 1,
+                )
+            )
+        ).all()
+
+        assert len(_positions) == 1000
 
     ###########################################################################
     # Error Case
