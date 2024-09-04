@@ -25,7 +25,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.eth.async_eth import AsyncContract as Web3AsyncContract
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -296,7 +296,7 @@ class Processor:
                         argument_filters={"token": self.token_contract.address},
                     )
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 holder_changed_events = []
 
             for _event in holder_changed_events:
@@ -318,7 +318,7 @@ class Processor:
                         from_block=block_from, to_block=block_to
                     )
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 token_transfer_events = []
 
             for _event in token_transfer_events:
@@ -377,7 +377,7 @@ class Processor:
             events = await self.token_contract.events.Issue.get_logs(
                 from_block=block_from, to_block=block_to
             )
-        except ABIEventFunctionNotFound:
+        except ABIEventNotFound:
             events = []
         try:
             for event in events:
@@ -410,7 +410,7 @@ class Processor:
             events = await self.token_contract.events.Redeem.get_logs(
                 from_block=block_from, to_block=block_to
             )
-        except ABIEventFunctionNotFound:
+        except ABIEventNotFound:
             events = []
         try:
             for event in events:
@@ -442,7 +442,7 @@ class Processor:
             events = await self.token_contract.events.Consume.get_logs(
                 from_block=block_from, to_block=block_to
             )
-        except ABIEventFunctionNotFound:
+        except ABIEventNotFound:
             events = []
         try:
             for event in events:
@@ -468,7 +468,7 @@ class Processor:
             events = await self.token_contract.events.Lock.get_logs(
                 from_block=block_from, to_block=block_to
             )
-        except ABIEventFunctionNotFound:
+        except ABIEventNotFound:
             events = []
         try:
             for event in events:
@@ -497,7 +497,7 @@ class Processor:
             events = await self.token_contract.events.Unlock.get_logs(
                 from_block=block_from, to_block=block_to
             )
-        except ABIEventFunctionNotFound:
+        except ABIEventNotFound:
             events = []
         try:
             for event in events:

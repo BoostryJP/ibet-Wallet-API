@@ -27,7 +27,7 @@ import pytest
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -2691,10 +2691,10 @@ class TestProcessor:
         assert error_record_num == 1
 
     # <Error_3>
-    # Failed to get Logs because of ABIEventFunctionNotFound.
+    # Failed to get Logs because of ABIEventNotFound.
     @mock.patch(
         "web3.eth.async_eth.AsyncEth.get_logs",
-        MagicMock(side_effect=ABIEventFunctionNotFound()),
+        MagicMock(side_effect=ABIEventNotFound()),
     )
     def test_error_3(
         self,

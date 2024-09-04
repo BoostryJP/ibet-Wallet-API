@@ -28,7 +28,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 from web3.types import LogReceipt
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
@@ -305,7 +305,7 @@ class Processor:
                 events: list[LogReceipt] = await token.events.Transfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
@@ -365,7 +365,7 @@ class Processor:
                 events = await token.events.Lock.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 lock_map: dict[str, dict[str, True]] = {}
@@ -447,7 +447,7 @@ class Processor:
                 events = await token.events.Unlock.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 lock_map: dict[str, dict[str, True]] = {}
@@ -531,7 +531,7 @@ class Processor:
                 events = await token.events.Issue.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
@@ -569,7 +569,7 @@ class Processor:
                 events = await token.events.Redeem.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
@@ -607,7 +607,7 @@ class Processor:
                 events = await token.events.ApplyForTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
@@ -645,7 +645,7 @@ class Processor:
                 events = await token.events.CancelTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
@@ -683,7 +683,7 @@ class Processor:
                 events = await token.events.ApproveTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
@@ -729,7 +729,7 @@ class Processor:
                     _event_list = await exchange.events.NewOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -754,7 +754,7 @@ class Processor:
                     _event_list = await exchange.events.CancelOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -779,7 +779,7 @@ class Processor:
                     _event_list = await exchange.events.ForceCancelOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -804,7 +804,7 @@ class Processor:
                     _event_list = await exchange.events.Agree.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -829,7 +829,7 @@ class Processor:
                     _event_list = await exchange.events.SettlementOK.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -864,7 +864,7 @@ class Processor:
                     _event_list = await exchange.events.SettlementNG.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -950,7 +950,7 @@ class Processor:
                     _event_list = await escrow.events.EscrowCreated.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -973,7 +973,7 @@ class Processor:
                     _event_list = await escrow.events.EscrowCanceled.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -996,7 +996,7 @@ class Processor:
                     _event_list = await escrow.events.HolderChanged.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1084,7 +1084,7 @@ class Processor:
                     _event_list = await dvp.events.DeliveryCreated.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1107,7 +1107,7 @@ class Processor:
                     _event_list = await dvp.events.DeliveryCanceled.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1130,7 +1130,7 @@ class Processor:
                     _event_list = await dvp.events.DeliveryAborted.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1153,7 +1153,7 @@ class Processor:
                     _event_list = await dvp.events.HolderChanged.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)

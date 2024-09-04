@@ -24,7 +24,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app import config
 from app.contracts import AsyncContract
@@ -126,7 +126,7 @@ class Processor:
             events = await self.token_list_contract.events.Register.get_logs(
                 from_block=block_from, to_block=block_to
             )
-        except ABIEventFunctionNotFound:
+        except ABIEventNotFound:
             events = []
         try:
             for _event in events:
