@@ -28,7 +28,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -973,16 +973,16 @@ class TestProcessor:
     ###########################################################################
     # Error Case
     ###########################################################################
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1_1>: ABIEventNotFound occurs in __sync_xx method.
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1_1>: ABIEventNotFound occurs in __sync_xx method.
     @mock.patch(
         "web3.eth.async_eth.AsyncEth.get_logs",
-        MagicMock(side_effect=ABIEventFunctionNotFound()),
+        MagicMock(side_effect=ABIEventNotFound()),
     )
     def test_error_1_1(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]

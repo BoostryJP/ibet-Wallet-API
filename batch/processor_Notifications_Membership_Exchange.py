@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app.config import (
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -129,7 +129,7 @@ class Watcher:
                 entries = await _event.get_logs(
                     from_block=from_block_number, to_block=to_block_number
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 entries = []
 
             # Register notifications

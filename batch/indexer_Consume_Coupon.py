@@ -27,7 +27,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, TZ, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -158,7 +158,7 @@ class Processor:
                 events = await token.events.Consume.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
