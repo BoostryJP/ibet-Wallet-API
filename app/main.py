@@ -25,7 +25,6 @@ from pydantic import ValidationError
 from pydantic_core import ArgsKwargs, ErrorDetails
 from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app import log
@@ -139,9 +138,6 @@ app.include_router(routers_dex_order_list.router)
 # MIDDLEWARE
 ###############################################################
 
-strip_trailing_slash = StripTrailingSlashMiddleware()
-response_logger = ResponseLoggerMiddleware()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -149,8 +145,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(BaseHTTPMiddleware, dispatch=strip_trailing_slash)
-app.add_middleware(BaseHTTPMiddleware, dispatch=response_logger)
+app.add_middleware(ResponseLoggerMiddleware)
+app.add_middleware(StripTrailingSlashMiddleware)
 
 
 ###############################################################
