@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import json
 import logging
 from unittest import mock
 from unittest.mock import ANY, MagicMock
@@ -30,7 +29,6 @@ from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.exceptions import TimeExhausted, Web3RPCError
 from web3.middleware import ExtraDataToPOAMiddleware
-from web3.types import RPCError, RPCResponse
 
 from app import config, log
 from app.api.routers import eth
@@ -413,12 +411,15 @@ class TestEthSendRawTransaction:
                 }
             )
 
-        with mock.patch(
-            "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
-            MagicMock(side_effect=TimeExhausted()),
-        ), mock.patch(
-            "web3.geth.AsyncGethTxPool.inspect",
-            MagicMock(side_effect=[mock_inspect()]),
+        with (
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
+                MagicMock(side_effect=TimeExhausted()),
+            ),
+            mock.patch(
+                "web3.geth.AsyncGethTxPool.inspect",
+                MagicMock(side_effect=[mock_inspect()]),
+            ),
         ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -835,7 +836,6 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
         with mock.patch(
             "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
@@ -1440,12 +1440,15 @@ class TestEthSendRawTransaction:
 
         # タイムアウト
         # recover_transactionエラー
-        with mock.patch(
-            "web3.eth.Eth.wait_for_transaction_receipt",
-            MagicMock(side_effect=TimeExhausted()),
-        ), mock.patch(
-            "eth_account.Account.recover_transaction",
-            MagicMock(side_effect=Exception()),
+        with (
+            mock.patch(
+                "web3.eth.Eth.wait_for_transaction_receipt",
+                MagicMock(side_effect=TimeExhausted()),
+            ),
+            mock.patch(
+                "eth_account.Account.recover_transaction",
+                MagicMock(side_effect=Exception()),
+            ),
         ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
@@ -1539,12 +1542,15 @@ class TestEthSendRawTransaction:
                 }
             )
 
-        with mock.patch(
-            "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
-            MagicMock(side_effect=TimeExhausted()),
-        ) as m, mock.patch(
-            "web3.geth.AsyncGethTxPool.inspect",
-            MagicMock(side_effect=[mock_inspect()]),
+        with (
+            mock.patch(
+                "web3.eth.async_eth.AsyncEth.wait_for_transaction_receipt",
+                MagicMock(side_effect=TimeExhausted()),
+            ) as m,
+            mock.patch(
+                "web3.geth.AsyncGethTxPool.inspect",
+                MagicMock(side_effect=[mock_inspect()]),
+            ),
         ):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 

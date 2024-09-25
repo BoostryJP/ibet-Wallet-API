@@ -18,10 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import logging
-from datetime import UTC, datetime
+import time
 
-from fastapi import Request, Response
-from starlette.middleware.base import RequestResponseEndpoint
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app import config, log
 
@@ -43,27 +42,36 @@ ACCESS_LOG.addHandler(stream_handler_access)
 class ResponseLoggerMiddleware:
     """Response Logger Middleware"""
 
-    def __init__(self):
-        pass
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
 
-    async def __call__(
-        self, req: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         # Before process request
-        request_start_time = datetime.now(UTC).replace(tzinfo=None)
+        request_start_time = time.monotonic()
 
-        # Process request
-        res: Response = await call_next(req)
+        method = scope["method"]
+        path = scope["path"]
+        query_string = scope["query_string"].decode("utf-8")
+        status_code = None
+
+        async def send_wrapper(message: Message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
 
         # After process request
-        if req.url.path != "/":
-            response_time = (
-                datetime.now(UTC).replace(tzinfo=None) - request_start_time
-            ).total_seconds()
-            if req.url.query:
-                log_msg = f"{req.method} {req.url.path}?{req.url.query} {res.status_code} ({response_time}sec)"
-            else:
-                log_msg = f"{req.method} {req.url.path} {res.status_code} ({response_time}sec)"
-            ACCESS_LOG.info(log_msg)
-
-        return res
+        response_time = time.monotonic() - request_start_time
+        if query_string:
+            log_msg = (
+                f"{method} {path}?{query_string} {status_code} ({response_time:.6f}sec)"
+            )
+        else:
+            log_msg = f"{method} {path} {status_code} ({response_time:.6f}sec)"
+        ACCESS_LOG.info(log_msg)

@@ -26,6 +26,7 @@ services:
     ports:
       - "8545:8545"
   ibet-wallet-api-postgres:
+    image: ibet-wallet-api
     build:
       context: ./
       dockerfile: ./tests/Dockerfile_unittest
@@ -45,7 +46,10 @@ services:
     depends_on:
       - postgres
       - hardhat-network
+    volumes:
+      - ./cov:/app/ibet-Wallet-API/cov
   ibet-wallet-api-mysql:
+    image: ibet-wallet-api
     build:
       context: ./
       dockerfile: ./tests/Dockerfile_unittest
@@ -65,3 +69,5 @@ services:
     depends_on:
       - mysql
       - hardhat-network
+    volumes:
+      - ./cov:/app/ibet-Wallet-API/cov

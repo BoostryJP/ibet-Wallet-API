@@ -25,7 +25,6 @@ from pydantic import ValidationError
 from pydantic_core import ArgsKwargs, ErrorDetails
 from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app import log
@@ -90,7 +89,7 @@ app = FastAPI(
     title="ibet Wallet API",
     description="RPC services that provides utility tools for building a wallet system on ibet network",
     terms_of_service="",
-    version="24.6.0",
+    version="24.9.0",
     contact={"email": "dev@boostry.co.jp"},
     license_info={
         "name": "Apache 2.0",
@@ -139,9 +138,6 @@ app.include_router(routers_dex_order_list.router)
 # MIDDLEWARE
 ###############################################################
 
-strip_trailing_slash = StripTrailingSlashMiddleware()
-response_logger = ResponseLoggerMiddleware()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -149,8 +145,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(BaseHTTPMiddleware, dispatch=strip_trailing_slash)
-app.add_middleware(BaseHTTPMiddleware, dispatch=response_logger)
+app.add_middleware(ResponseLoggerMiddleware)
+app.add_middleware(StripTrailingSlashMiddleware)
 
 
 ###############################################################
@@ -171,7 +167,7 @@ async def internal_server_error_handler(request: Request, exc: Exception):
 
 # 429:TooManyRequests
 @app.exception_handler(OperationalError)
-async def internal_server_error_handler(request: Request, exc: OperationalError):
+async def too_many_request_error_handler(request: Request, exc: OperationalError):
     meta = {"code": 1, "title": "TooManyRequestsError"}
     if exc.orig.args == ("FATAL:  sorry, too many clients already\n",):
         # NOTE: If postgres is used and has run out of connections, exception above would be thrown.

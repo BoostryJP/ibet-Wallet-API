@@ -25,7 +25,7 @@ from typing import List, Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -323,7 +323,7 @@ class Processor:
                 events = await token.events.ApplyForTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -365,7 +365,7 @@ class Processor:
                 events = await token.events.CancelTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -399,7 +399,7 @@ class Processor:
                 events = await token.events.ApproveTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -436,7 +436,7 @@ class Processor:
                 events = await exchange.events.ApplyForTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
@@ -485,7 +485,7 @@ class Processor:
                 events = await exchange.events.CancelTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
@@ -528,7 +528,7 @@ class Processor:
                     to_block=block_to,
                     argument_filters={"transferApprovalRequired": True},
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
@@ -569,7 +569,7 @@ class Processor:
                 events = await exchange.events.ApproveTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
@@ -753,7 +753,7 @@ async def main():
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception as ex:
+        except Exception:
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(5)

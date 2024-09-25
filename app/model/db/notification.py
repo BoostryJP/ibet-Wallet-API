@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import sys
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import (
     JSON,
@@ -184,7 +184,7 @@ Index(
 )
 
 
-class NotificationType(str, Enum):
+class NotificationType(StrEnum):
     NEW_ORDER = "NewOrder"
     NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
     CANCEL_ORDER = "CancelOrder"

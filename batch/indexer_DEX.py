@@ -25,7 +25,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app.config import (
     IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
@@ -154,7 +154,7 @@ class Processor:
                 events = await exchange_contract.events.NewOrder.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -204,7 +204,7 @@ class Processor:
                 events = await exchange_contract.events.CancelOrder.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -224,7 +224,7 @@ class Processor:
                 events = await exchange_contract.events.ForceCancelOrder.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -242,7 +242,7 @@ class Processor:
                 events = await exchange_contract.events.Agree.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -291,7 +291,7 @@ class Processor:
                 events = await exchange_contract.events.SettlementOK.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -320,7 +320,7 @@ class Processor:
                 events = await exchange_contract.events.SettlementNG.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
@@ -525,7 +525,7 @@ async def main():
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception as ex:
+        except Exception:
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(1)

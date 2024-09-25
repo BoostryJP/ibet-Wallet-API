@@ -174,11 +174,6 @@ class TestMigrationsUpgrade:
     @classmethod
     def reset_alembic_revision(cls, db_engine: Engine):
         metadata = MetaData()
-        alembic_version = Table(
-            "alembic_version",
-            metadata,
-            Column("version_num", String(32), primary_key=True),
-        )
         metadata.drop_all(bind=db_engine)
 
     @staticmethod
@@ -225,7 +220,7 @@ class TestMigrationsUpgrade:
         from_legacy_migration: bool,
     ):
         # 1. Migrate at v22.6
-        meta = self.alembic_definition(REVISION_UP_TO_22_6, alembic_runner)
+        _ = self.alembic_definition(REVISION_UP_TO_22_6, alembic_runner)
         if from_legacy_migration:
             self.reset_alembic_revision(engine)
             self.create_migrate_version(engine, 34)
@@ -235,7 +230,7 @@ class TestMigrationsUpgrade:
         assert "WARNING" not in caplog.text
 
         # 2. Insert null contained data
-        with engine.connect() as conn:
+        with engine.connect() as _:
             pass
 
         # 3. Migrate up to head
@@ -320,7 +315,7 @@ class TestMigrationsUpgrade:
         from_legacy_migration: bool,
     ):
         # 1. Migrate at v23.3
-        meta = self.alembic_definition(REVISION_UP_TO_23_3, alembic_runner)
+        _ = self.alembic_definition(REVISION_UP_TO_23_3, alembic_runner)
         if from_legacy_migration:
             self.reset_alembic_revision(engine)
             self.create_migrate_version(engine, 54)
@@ -800,22 +795,22 @@ class TestMigrationsUpgrade:
             # NOTE: idx_lock
             if engine.name == "mysql":
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM `lock`;""")
+                    text("""SELECT COUNT(*) FROM `lock`;""")
                 ).scalar()
             else:
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM "lock";""")
+                    text("""SELECT COUNT(*) FROM "lock";""")
                 ).scalar()
             assert all_row_count == 2
 
             # NOTE: idx_unlock
             if engine.name == "mysql":
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM `unlock`;""")
+                    text("""SELECT COUNT(*) FROM `unlock`;""")
                 ).scalar()
             else:
                 all_row_count = conn.execute(
-                    text(f"""SELECT COUNT(*) FROM "unlock";""")
+                    text("""SELECT COUNT(*) FROM "unlock";""")
                 ).scalar()
             assert all_row_count == 2
 

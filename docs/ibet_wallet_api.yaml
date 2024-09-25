@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet system
     on ibet network
-  version: 24.6.0
+  version: 24.9.0
 paths:
   /:
     get:
@@ -304,8 +304,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                 title: Response 400 Listblockdata
           description: Bad Request
         '404':
@@ -349,8 +349,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Getblockdata
           description: Not Found
   /NodeInfo/TxData:
@@ -428,8 +428,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
                 title: Response 400 Listtxdata
           description: Bad Request
         '404':
@@ -472,8 +472,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Gettxdata
           description: Not Found
   /ABI/StraightBond:
@@ -899,8 +899,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                 title: Response 400 Sendrawtransaction
   /Eth/SendRawTransactionNoWait:
     post:
@@ -928,8 +928,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                  - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                 title: Response 400 Sendrawtransactionnowait
   /Eth/WaitForTransactionReceipt:
     get:
@@ -1411,8 +1411,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Straightbondtokendetails
           description: Not Found
   /Token/Share:
@@ -2197,8 +2197,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Membershiptokendetails
           description: Not Found
   /Token/Coupon:
@@ -2553,8 +2553,8 @@ paths:
             application/json:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                   - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Coupontokendetails
           description: Not Found
   /Token/{token_address}/Status:
@@ -3111,6 +3111,28 @@ paths:
             title: Value Operator
           description: 'value filter condition(0: equal, 1: greater than, 2: less
             than)'
+        - name: created_from
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (From)
+            title: Created From
+          description: created datetime (From)
+        - name: created_to
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (To)
+            title: Created To
+          description: created datetime (To)
       responses:
         '200':
           description: Successful Response
@@ -8107,7 +8129,6 @@ components:
             - type: 'null'
           title: Msg Sender
           description: Message sender
-          nullable: true
         token_address:
           type: string
           title: Token Address
@@ -8182,7 +8203,6 @@ components:
             - type: 'null'
           title: Msg Sender
           description: Message sender
-          nullable: true
         token_address:
           type: string
           title: Token Address
@@ -8247,7 +8267,6 @@ components:
             - type: 'null'
           title: Msg Sender
           description: Message sender
-          nullable: true
         token_address:
           type: string
           title: Token Address
@@ -10699,6 +10718,9 @@ components:
             - $ref: '#/components/schemas/TokenType'
           examples:
             - IbetStraightBond
+        name:
+          type: string
+          title: Name
         status:
           type: boolean
           title: Status
@@ -10708,6 +10730,7 @@ components:
       type: object
       required:
         - token_template
+        - name
         - status
         - transferable
       title: TokenStatusResponse

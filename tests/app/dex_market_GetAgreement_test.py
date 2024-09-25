@@ -377,7 +377,7 @@ class TestDEXMarketGetAgreement:
     def test_error_4(self, client: TestClient, session: Session, shared_contract):
         exchange = shared_contract["IbetMembershipExchange"]
 
-        _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
+        _, _order_id, _agreement_id = self._generate_agree_event_membership(exchange)
         not_exist_order_id = 999
         not_exist_agreement_id = 999
 

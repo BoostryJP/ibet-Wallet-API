@@ -27,7 +27,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.contract import AsyncContract as Web3AsyncContract
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 from web3.types import EventData
 
 from app.config import (
@@ -169,7 +169,7 @@ class Watcher:
                     entries = await _event.get_logs(
                         from_block=from_block_number, to_block=to_block_number
                     )
-                except ABIEventFunctionNotFound:  # Backward compatibility
+                except ABIEventNotFound:  # Backward compatibility
                     entries = []
                 except FileNotFoundError:
                     continue

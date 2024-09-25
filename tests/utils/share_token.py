@@ -47,7 +47,7 @@ class IbetShareUtils:
             args["cancellationDate"],
             args["principalValue"],
         ]
-        contract_address, abi = Contract.deploy_contract(
+        contract_address, _ = Contract.deploy_contract(
             contract_name="IbetShare", args=arguments, deployer=tx_from
         )
 

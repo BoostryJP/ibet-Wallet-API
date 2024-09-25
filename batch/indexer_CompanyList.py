@@ -154,7 +154,7 @@ async def main():
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception as ex:  # Unexpected errors
+        except Exception:  # Unexpected errors
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time

@@ -27,7 +27,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -338,7 +338,7 @@ class Processor:
                     events = await token.events.Transfer.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
 
             # Index logs
@@ -405,7 +405,7 @@ class Processor:
                     events = await token.events.Unlock.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
 
             # Index logs
@@ -479,7 +479,7 @@ async def main():
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception as ex:
+        except Exception:
             LOG.exception("An exception occurred during event synchronization")
         await asyncio.sleep(5)
 

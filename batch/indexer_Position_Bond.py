@@ -28,7 +28,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 from web3.types import LogReceipt
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
@@ -305,29 +305,47 @@ class Processor:
                 events: list[LogReceipt] = await token.events.Transfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["from", "to"]
                 )
-                for _account in accounts_filtered:
-                    if (await async_web3.eth.get_code(_account)).to_0x_hex() == "0x":
+                if len(accounts_filtered) == 0:
+                    continue
+
+                all_eoa_list = [
+                    _account
+                    for _account in accounts_filtered
+                    if _account != target.exchange_address
+                ]
+                chunked_eoa_list: list[list[str]] = [
+                    all_eoa_list[i : i + 1000]
+                    for i in range(0, len(all_eoa_list), 1000)
+                ]
+                for eoa_list in chunked_eoa_list:
+                    balances_list = await self.get_bulk_account_balance_for_transfer(
+                        token=token,
+                        exchange_address=target.exchange_address,
+                        accounts=eoa_list,
+                    )
+                    for balances in balances_list:
                         (
+                            _account_address,
                             _balance,
                             _pending_transfer,
                             _exchange_balance,
-                            _exchange_commitment,
-                        ) = await self.__get_account_balance_all(token, _account)
+                        ) = balances
                         await self.__sink_on_position(
                             db_session=db_session,
                             token_address=to_checksum_address(token.address),
-                            account_address=_account,
+                            account_address=_account_address,
                             balance=_balance,
                             pending_transfer=_pending_transfer,
                             exchange_balance=_exchange_balance,
-                            exchange_commitment=_exchange_commitment,
                         )
+                    # Commit every 1000 EOAs for bulk transfer
+                    await db_session.commit()
             except Exception as e:
                 raise e
 
@@ -347,7 +365,7 @@ class Processor:
                 events = await token.events.Lock.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 lock_map: dict[str, dict[str, True]] = {}
@@ -397,10 +415,12 @@ class Processor:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["accountAddress"]
                 )
-                for account in accounts_filtered:
-                    balance, pending_transfer = await self.__get_account_balance_token(
-                        token, account
-                    )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -427,7 +447,7 @@ class Processor:
                 events = await token.events.Unlock.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 lock_map: dict[str, dict[str, True]] = {}
@@ -479,10 +499,12 @@ class Processor:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["recipientAddress"]
                 )
-                for account in accounts_filtered:
-                    balance, pending_transfer = await self.__get_account_balance_token(
-                        token, account
-                    )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -509,16 +531,18 @@ class Processor:
                 events = await token.events.Issue.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["targetAddress"]
                 )
-                for account in accounts_filtered:
-                    balance, pending_transfer = await self.__get_account_balance_token(
-                        token, account
-                    )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -545,16 +569,18 @@ class Processor:
                 events = await token.events.Redeem.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["targetAddress"]
                 )
-                for account in accounts_filtered:
-                    balance, pending_transfer = await self.__get_account_balance_token(
-                        token, account
-                    )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -581,16 +607,18 @@ class Processor:
                 events = await token.events.ApplyForTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["from"]
                 )
-                for account in accounts_filtered:
-                    balance, pending_transfer = await self.__get_account_balance_token(
-                        token, account
-                    )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -617,16 +645,18 @@ class Processor:
                 events = await token.events.CancelTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["from"]
                 )
-                for account in accounts_filtered:
-                    balance, pending_transfer = await self.__get_account_balance_token(
-                        token, account
-                    )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -653,23 +683,24 @@ class Processor:
                 events = await token.events.ApproveTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
-            except ABIEventFunctionNotFound:
+            except ABIEventNotFound:
                 events = []
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["from", "to"]
                 )
-                for _account in accounts_filtered:
-                    (
-                        _balance,
-                        _pending_transfer,
-                    ) = await self.__get_account_balance_token(token, _account)
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
-                        account_address=_account,
-                        balance=_balance,
-                        pending_transfer=_pending_transfer,
+                        account_address=account,
+                        balance=balance,
+                        pending_transfer=pending_transfer,
                     )
             except Exception as e:
                 raise e
@@ -698,7 +729,7 @@ class Processor:
                     _event_list = await exchange.events.NewOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -723,7 +754,7 @@ class Processor:
                     _event_list = await exchange.events.CancelOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -748,7 +779,7 @@ class Processor:
                     _event_list = await exchange.events.ForceCancelOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -773,7 +804,7 @@ class Processor:
                     _event_list = await exchange.events.Agree.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -798,7 +829,7 @@ class Processor:
                     _event_list = await exchange.events.SettlementOK.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -833,7 +864,7 @@ class Processor:
                     _event_list = await exchange.events.SettlementNG.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -873,18 +904,18 @@ class Processor:
                     if _account["token_address"] in token_address_list:
                         account_list.append(_account)
 
+                balances_list = await self.get_bulk_account_balance_exchange(
+                    exchange_address=exchange_address,
+                    accounts=account_list,
+                )
                 # Update position
-                for _account in account_list:
-                    token_address = _account["token_address"]
-                    account_address = _account["account_address"]
+                for balances in balances_list:
                     (
+                        token_address,
+                        account_address,
                         exchange_balance,
                         exchange_commitment,
-                    ) = await self.__get_account_balance_exchange(
-                        exchange_address=exchange_address,
-                        token_address=token_address,
-                        account_address=account_address,
-                    )
+                    ) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=token_address,
@@ -919,7 +950,7 @@ class Processor:
                     _event_list = await escrow.events.EscrowCreated.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -942,7 +973,7 @@ class Processor:
                     _event_list = await escrow.events.EscrowCanceled.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -965,7 +996,7 @@ class Processor:
                     _event_list = await escrow.events.HolderChanged.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1007,18 +1038,18 @@ class Processor:
                     if _account["token_address"] in token_address_list:
                         account_list.append(_account)
 
+                balances_list = await self.get_bulk_account_balance_exchange(
+                    exchange_address=exchange_address,
+                    accounts=account_list,
+                )
                 # Update position
-                for _account in account_list:
-                    token_address = _account["token_address"]
-                    account_address = _account["account_address"]
+                for balances in balances_list:
                     (
+                        token_address,
+                        account_address,
                         exchange_balance,
                         exchange_commitment,
-                    ) = await self.__get_account_balance_exchange(
-                        exchange_address=exchange_address,
-                        token_address=token_address,
-                        account_address=account_address,
-                    )
+                    ) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=token_address,
@@ -1053,7 +1084,7 @@ class Processor:
                     _event_list = await dvp.events.DeliveryCreated.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1076,7 +1107,7 @@ class Processor:
                     _event_list = await dvp.events.DeliveryCanceled.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1099,7 +1130,7 @@ class Processor:
                     _event_list = await dvp.events.DeliveryAborted.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1122,7 +1153,7 @@ class Processor:
                     _event_list = await dvp.events.HolderChanged.get_logs(
                         from_block=block_from, to_block=block_to
                     )
-                except ABIEventFunctionNotFound:
+                except ABIEventNotFound:
                     _event_list = []
                 for _event in _event_list:
                     event_block_number = _event.get("blockNumber", block_from)
@@ -1164,18 +1195,18 @@ class Processor:
                     if _account["token_address"] in token_address_list:
                         account_list.append(_account)
 
+                balances_list = await self.get_bulk_account_balance_exchange(
+                    exchange_address=exchange_address,
+                    accounts=account_list,
+                )
                 # Update position
-                for _account in account_list:
-                    token_address = _account["token_address"]
-                    account_address = _account["account_address"]
+                for balances in balances_list:
                     (
+                        token_address,
+                        account_address,
                         exchange_balance,
                         exchange_commitment,
-                    ) = await self.__get_account_balance_exchange(
-                        exchange_address=exchange_address,
-                        token_address=token_address,
-                        account_address=account_address,
-                    )
+                    ) = balances
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=token_address,
@@ -1251,9 +1282,15 @@ class Processor:
             await db_session.merge(_idx_position_block_number)
 
     @staticmethod
-    async def __get_account_balance_all(token_contract, account_address: str):
+    async def __get_account_balance_for_transfer(
+        token_contract, exchange_address: str, account_address: str
+    ):
         """Get balance"""
         try:
+
+            async def return_zero():
+                return 0
+
             tasks = await SemaphoreTaskGroup.run(
                 AsyncContract.call_function(
                     contract=token_contract,
@@ -1267,54 +1304,35 @@ class Processor:
                     args=(account_address,),
                     default_returns=0,
                 ),
+                AsyncContract.call_function(
+                    contract=AsyncContract.get_contract(
+                        "IbetExchangeInterface", exchange_address
+                    ),
+                    function_name="balanceOf",
+                    args=(
+                        account_address,
+                        token_contract.address,
+                    ),
+                    default_returns=0,
+                )
+                if exchange_address != ZERO_ADDRESS
+                else return_zero(),
                 max_concurrency=3,
             )
-            balance, pending_transfer = (tasks[0].result(), tasks[1].result())
+            balance, pending_transfer, exchange_balance = (
+                tasks[0].result(),
+                tasks[1].result(),
+                tasks[2].result(),
+            )
         except ExceptionGroup:
             raise ServiceUnavailable
 
-        exchange_balance = 0
-        exchange_commitment = 0
-        tradable_exchange_address = await AsyncContract.call_function(
-            contract=token_contract,
-            function_name="tradableExchange",
-            args=(),
-            default_returns=ZERO_ADDRESS,
+        return (
+            account_address,
+            balance,
+            pending_transfer,
+            exchange_balance,
         )
-        if tradable_exchange_address != ZERO_ADDRESS:
-            exchange_contract = AsyncContract.get_contract(
-                "IbetExchangeInterface", tradable_exchange_address
-            )
-            try:
-                tasks = await SemaphoreTaskGroup.run(
-                    AsyncContract.call_function(
-                        contract=exchange_contract,
-                        function_name="balanceOf",
-                        args=(
-                            account_address,
-                            token_contract.address,
-                        ),
-                        default_returns=0,
-                    ),
-                    AsyncContract.call_function(
-                        contract=exchange_contract,
-                        function_name="commitmentOf",
-                        args=(
-                            account_address,
-                            token_contract.address,
-                        ),
-                        default_returns=0,
-                    ),
-                    max_concurrency=3,
-                )
-                exchange_balance, exchange_commitment = (
-                    tasks[0].result(),
-                    tasks[1].result(),
-                )
-            except ExceptionGroup:
-                raise ServiceUnavailable
-
-        return balance, pending_transfer, exchange_balance, exchange_commitment
 
     @staticmethod
     async def __get_account_balance_token(token_contract, account_address: str):
@@ -1338,7 +1356,7 @@ class Processor:
             balance, pending_transfer = (tasks[0].result(), tasks[1].result())
         except ExceptionGroup:
             raise ServiceUnavailable
-        return balance, pending_transfer
+        return account_address, balance, pending_transfer
 
     @staticmethod
     async def __get_account_locked_token(
@@ -1392,7 +1410,7 @@ class Processor:
             )
         except ExceptionGroup:
             raise ServiceUnavailable
-        return exchange_balance, exchange_commitment
+        return token_address, account_address, exchange_balance, exchange_commitment
 
     @staticmethod
     def __insert_lock_idx(
@@ -1606,6 +1624,51 @@ class Processor:
         # return events in original order
         return list(reversed(remove_duplicate_list))
 
+    async def get_bulk_account_balance_for_transfer(
+        self, token, exchange_address, accounts
+    ):
+        coroutines = [
+            self.__get_account_balance_for_transfer(token, exchange_address, _account)
+            for _account in accounts
+        ]
+        if not coroutines:
+            return []
+
+        try:
+            tasks = await SemaphoreTaskGroup.run(*coroutines, max_concurrency=5)
+            return [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable
+
+    async def get_bulk_account_balance_token(self, token, accounts):
+        coroutines = [
+            self.__get_account_balance_token(token, _account) for _account in accounts
+        ]
+        if not coroutines:
+            return []
+
+        try:
+            tasks = await SemaphoreTaskGroup.run(*coroutines, max_concurrency=5)
+            return [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable
+
+    async def get_bulk_account_balance_exchange(self, exchange_address, accounts):
+        coroutines = [
+            self.__get_account_balance_exchange(
+                exchange_address, _account["token_address"], _account["account_address"]
+            )
+            for _account in accounts
+        ]
+        if not coroutines:
+            return []
+
+        try:
+            tasks = await SemaphoreTaskGroup.run(*coroutines, max_concurrency=5)
+            return [task.result() for task in tasks]
+        except ExceptionGroup:
+            raise ServiceUnavailable
+
 
 async def main():
     LOG.info("Service started successfully")
@@ -1628,7 +1691,7 @@ async def main():
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception as ex:
+        except Exception:
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(10)

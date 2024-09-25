@@ -24,11 +24,12 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from eth_utils import to_checksum_address
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import AsyncWeb3, Web3
-from web3.exceptions import ABIEventFunctionNotFound
+from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -928,7 +929,7 @@ class TestProcessor:
 
         session.rollback()
 
-        assert eth_getCode_mock.call_count == 2
+        assert eth_getCode_mock.call_count == 0
         _position_list: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).order_by(IDXPosition.created)
         ).all()
@@ -984,21 +985,88 @@ class TestProcessor:
         assert _position2.exchange_balance == 10000 - 55 - 66
         assert _position2.exchange_commitment == 66
 
+    # <Normal_12>
+    # Single Token
+    # Multi event logs (Over 1000)
+    # - Transfer
+    def test_normal_12(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        token = self.issue_token_coupon(
+            self.issuer, config.ZERO_ADDRESS, token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        # Transfer
+        for i in range(1001):
+            transfer_coupon_token(
+                self.issuer,
+                token,
+                {"account_address": to_checksum_address(f"0x{hex(i)[2:].zfill(40)}")},
+                1,
+            )
+
+        # Run target process
+        block_number = web3.eth.block_number
+        asyncio.run(processor.sync_new_logs())
+
+        # Assertion
+        _position_list: Sequence[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
+        assert len(_position_list) == 1001
+
+        _idx_position_coupon_block_number: IDXPositionCouponBlockNumber = (
+            session.scalars(
+                select(IDXPositionCouponBlockNumber)
+                .where(IDXPositionCouponBlockNumber.token_address == token["address"])
+                .limit(1)
+            ).first()
+        )
+        assert _idx_position_coupon_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 1001
+        assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
+
+        _positions: list[IDXPosition] = session.scalars(
+            select(IDXPosition).where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.balance == 1,
+                )
+            )
+        ).all()
+
+        assert len(_positions) == 1000
+
     ###########################################################################
     # Error Case
     ###########################################################################
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
-    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    # <Error_1>: ABIEventNotFound occurs in __sync_xx method.
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1>: ABIEventNotFound occurs in __sync_xx method.
     @mock.patch(
         "web3.eth.async_eth.AsyncEth.get_logs",
-        MagicMock(side_effect=ABIEventFunctionNotFound()),
+        MagicMock(side_effect=ABIEventNotFound()),
     )
-    def test_error_1_1(self, processor, shared_contract, session):
+    def test_error_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -1068,78 +1136,6 @@ class TestProcessor:
             == block_number_current
         )
 
-    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch(
-        "web3.eth.async_eth.AsyncEth.get_code",
-        MagicMock(side_effect=ServiceUnavailable()),
-    )
-    def test_error_1_2(self, processor, shared_contract, session, caplog):
-        # Issue Token
-        token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract
-        )
-        self.listing_token(token["address"], session)
-
-        # Transfer
-        coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        # Expect that initial_sync() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
-            asyncio.run(processor.initial_sync())
-
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 0
-
-        # Any latest_block is not saved in "initial_sync" process.
-        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
-            session.scalars(select(IDXPositionCouponBlockNumber)).all()
-        )
-        assert len(_idx_position_coupon_block_number) == 0
-
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Transfer
-        coupon_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        # Expect that sync_new_logs() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
-            asyncio.run(processor.sync_new_logs())
-
-        # Clear cache in DB session.
-        session.rollback()
-
-        # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 0
-
-        # Any latest_block is not saved in "sync_new_logs" process.
-        _idx_position_coupon_block_number: Sequence[IDXPositionCouponBlockNumber] = (
-            session.scalars(select(IDXPositionCouponBlockNumber)).all()
-        )
-        assert len(_idx_position_coupon_block_number) == 0
-
-        assert 0 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.ERROR,
-                "An exception occurred during event synchronization",
-            )
-        )
-
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_1(self, processor, shared_contract, session, caplog):
         # Issue Token
@@ -1155,10 +1151,13 @@ class TestProcessor:
         )
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
@@ -1185,10 +1184,13 @@ class TestProcessor:
         )
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(ServiceUnavailable):
+        with (
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(ServiceUnavailable),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
@@ -1229,9 +1231,10 @@ class TestProcessor:
         )
 
         # Expect that initial_sync() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.initial_sync())
 
         # Clear cache in DB session.
@@ -1258,9 +1261,10 @@ class TestProcessor:
         )
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
-        with mock.patch.object(
-            Session, "commit", side_effect=SQLAlchemyError()
-        ), pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError),
+        ):
             asyncio.run(processor.sync_new_logs())
 
         # Clear cache in DB session.
@@ -1293,15 +1297,17 @@ class TestProcessor:
         asyncio_mock.sleep.side_effect = [True, TypeError()]
 
         # Run mainloop once and fail with web3 utils error
-        with mock.patch(
-            "batch.indexer_Position_Coupon.asyncio", asyncio_mock
-        ), mock.patch(
-            "batch.indexer_Position_Coupon.Processor.initial_sync", return_value=True
-        ), mock.patch(
-            "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-            MagicMock(side_effect=ServiceUnavailable()),
-        ), pytest.raises(
-            TypeError
+        with (
+            mock.patch("batch.indexer_Position_Coupon.asyncio", asyncio_mock),
+            mock.patch(
+                "batch.indexer_Position_Coupon.Processor.initial_sync",
+                return_value=True,
+            ),
+            mock.patch(
+                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
+                MagicMock(side_effect=ServiceUnavailable()),
+            ),
+            pytest.raises(TypeError),
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             asyncio.run(main_func())

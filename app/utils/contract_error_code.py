@@ -64,6 +64,9 @@ def error_code_msg(code_str: str) -> Tuple[int, str]:
         111101: "Redeem amount is less than locked address balance.",
         111102: "Redeem amount is less than target address balance.",
         111201: "Unlock amount is greater than locked amount.",
+        111301: "The length of the target address, the lock address and the amount don't match.",
+        111401: "The length of the target address, the lock address and the amount don't match.",
+        111501: "The From, To and Value lengths don't match.",
         # IbetStraightBond (12XXXX)
         120001: "Lock address is invalid.",  # < v22.12
         120002: "Lock amount is greater than message sender balance.",
@@ -89,6 +92,9 @@ def error_code_msg(code_str: str) -> Tuple[int, str]:
         121101: "Redeem amount is less than locked address balance.",
         121102: "Redeem amount is less than target address balance.",
         121201: "Unlock amount is greater than locked amount.",
+        121301: "The length of the target address, the lock address and the amount don't match.",
+        121401: "The length of the target address, the lock address and the amount don't match.",
+        121501: "The From, To and Value lengths don't match.",
         # IbetCoupon (13XXXX)
         130001: "Destination address isn't tradable exchange.",
         130101: "Message sender balance is insufficient.",
@@ -100,6 +106,7 @@ def error_code_msg(code_str: str) -> Tuple[int, str]:
         130401: "Message sender balance is insufficient.",
         130501: "Offering is stopped.",
         130502: "Personal information of message sender isn't registered to token owner.",
+        130601: "The From, To and Value lengths don't match.",
         # IbetMembership (14XXXX)
         140001: "Destination address isn't tradable exchange.",
         140101: "Message sender balance is insufficient.",
@@ -110,12 +117,14 @@ def error_code_msg(code_str: str) -> Tuple[int, str]:
         140301: "Transfer amount is greater than from address balance.",
         140401: "Offering is stopped.",
         140402: "Personal information of message sender isn't registered to token owner.",
+        140501: "The From, To and Value lengths don't match.",
         # IbetStandardToken (15XXXX)
         150001: "Destination address isn't tradable exchange.",
         150101: "Message sender balance is insufficient.",
         150201: "Length of To and of Value aren't matched.",
         150202: "Transfer amount is greater than from address balance.",
         150301: "Transfer amount is greater than from address balance.",
+        150401: "The From, To and Value lengths don't match.",
         # ExchangeStorage (20XXXX)
         200001: "Message sender(exchange contract) isn't latest version.",
         # IbetExchange (21XXXX)
@@ -198,6 +207,7 @@ def error_code_msg(code_str: str) -> Tuple[int, str]:
         260403: "Target delivery has been confirmed.",
         260404: "Message sender is not the delivery agent.",
         260501: "Message sender balance is insufficient.",
+        260601: "Message sender balance is insufficient.",
         # PaymentGateway (30XXXX)
         300001: "Payment account is banned.",
         300101: "Target account address is not registered.",

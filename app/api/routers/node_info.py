@@ -103,13 +103,8 @@ async def get_block_sync_status(async_session: DBAsyncSession):
     """
     # Get block sync status
     node: Node = (
-        (
-            await async_session.scalars(
-                select(Node)
-                .where(Node.is_synced == True)
-                .order_by(Node.priority)
-                .limit(1)
-            )
+        await async_session.scalars(
+            select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
         )
     ).first()
 

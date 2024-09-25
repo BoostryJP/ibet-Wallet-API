@@ -230,7 +230,7 @@ async def list_all_membership_order_book(
         agreement_amount,
     ) in orders:
         # 残存注文数量 = 発注数量 - 約定済み数量
-        if not (agreement_amount is None):
+        if agreement_amount is not None:
             amount -= int(agreement_amount)
         # 残注文ありの注文のみを抽出する
         if amount <= 0:
@@ -290,7 +290,7 @@ async def list_all_membership_last_price(
                 )
                 for token_address in request_query.address_list
             ],
-            max_concurrency=3
+            max_concurrency=3,
         )
         last_prices = [task.result() for task in tasks]
     except ExceptionGroup:
@@ -460,7 +460,7 @@ async def list_all_coupon_order_book(
         agreement_amount,
     ) in orders:
         # 残存注文数量 = 発注数量 - 約定済み数量
-        if not (agreement_amount is None):
+        if agreement_amount is not None:
             amount -= int(agreement_amount)
         # 残注文ありの注文のみを抽出する
         if amount <= 0:
@@ -520,7 +520,7 @@ async def list_all_coupon_last_price(
                 )
                 for token_address in request_query.address_list
             ],
-            max_concurrency=3
+            max_concurrency=3,
         )
         last_prices = [task.result() for task in tasks]
     except ExceptionGroup:

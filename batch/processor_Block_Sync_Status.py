@@ -28,6 +28,7 @@ from web3.middleware import ExtraDataToPOAMiddleware, Web3Middleware
 from web3.types import RPCEndpoint, RPCResponse
 
 from app import config
+from app.config import EXPECTED_BLOCKS_PER_SEC
 from app.model.db import Node
 from batch import log
 
@@ -41,9 +42,7 @@ class Web3WrapperException(Exception):
 
 
 class CustomWeb3ExceptionMiddleware(Web3Middleware):
-
     def wrap_make_request(self, make_request):
-
         def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
             METHODS = [
                 "eth_blockNumber",
@@ -61,10 +60,6 @@ class CustomWeb3ExceptionMiddleware(Web3Middleware):
                 return make_request(method, params)
 
         return middleware
-
-
-# Average block generation interval
-EXPECTED_BLOCKS_PER_SEC = 1
 
 
 class RingBuffer:

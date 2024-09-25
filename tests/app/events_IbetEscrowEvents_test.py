@@ -132,9 +132,7 @@ class TestEventsIbetEscrow:
 
         tx_hash = escrow_contract.functions.withdraw(
             token_contract.address,
-        ).transact(
-            {"from": issuer}
-        )  # Withdrawn
+        ).transact({"from": issuer})  # Withdrawn
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -187,9 +185,7 @@ class TestEventsIbetEscrow:
 
         tx_hash = escrow_contract.functions.createEscrow(
             token_contract.address, user1, 1000, agent, "test_data"
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
@@ -251,9 +247,7 @@ class TestEventsIbetEscrow:
 
         escrow_contract.functions.createEscrow(
             token_contract.address, user1, 1000, agent, "test_data"
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         tx_hash = escrow_contract.functions.cancelEscrow(latest_escrow_id).transact(
@@ -318,9 +312,7 @@ class TestEventsIbetEscrow:
 
         escrow_contract.functions.createEscrow(
             token_contract.address, user1, 1000, agent, "test_data"
-        ).transact(
-            {"from": issuer}
-        )  # EscrowCreated
+        ).transact({"from": issuer})  # EscrowCreated
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         tx_hash = escrow_contract.functions.finishEscrow(latest_escrow_id).transact(
@@ -481,17 +473,13 @@ class TestEventsIbetEscrow:
 
         tx_hash_1 = token_contract.functions.transfer(
             escrow_contract.address, 1000
-        ).transact(
-            {"from": issuer}
-        )  # Deposited
+        ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
 
         tx_hash_2 = escrow_contract.functions.withdraw(
             token_contract.address,
-        ).transact(
-            {"from": issuer}
-        )  # Withdrawn
+        ).transact({"from": issuer})  # Withdrawn
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
 

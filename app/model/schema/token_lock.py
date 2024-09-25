@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Optional
 
 from fastapi import Query
@@ -40,7 +40,7 @@ class Locked(BaseModel):
 ############################
 # REQUEST
 ############################
-class ListAllLockSortItem(str, Enum):
+class ListAllLockSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     account_address = "account_address"

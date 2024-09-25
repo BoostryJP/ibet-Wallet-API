@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Generic, Optional, TypeVar, Union
 
 from fastapi import Query
@@ -136,7 +136,7 @@ class CouponPositionWithAddress(CouponPosition):
     )
 
 
-class LockEventCategory(str, Enum):
+class LockEventCategory(StrEnum):
     Lock = "Lock"
     Unlock = "Unlock"
 
@@ -156,7 +156,7 @@ class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
     msg_sender: Optional[ValidatedEthereumAddress] = Field(
-        description="Message sender", nullable=True
+        ..., description="Message sender"
     )
     token_address: ValidatedEthereumAddress = Field(description="Token address")
     lock_address: ValidatedEthereumAddress = Field(description="Lock address")
@@ -212,7 +212,7 @@ class GetPositionQuery:
     ] = None
 
 
-class ListAllLockedSortItem(str, Enum):
+class ListAllLockedSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     account_address = "account_address"
@@ -243,7 +243,7 @@ class ListAllLockedPositionQuery:
     ] = False
 
 
-class LockEventSortItem(str, Enum):
+class LockEventSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     recipient_address = "recipient_address"

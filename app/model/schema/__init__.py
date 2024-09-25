@@ -128,6 +128,7 @@ from .token import (
     TokenHoldersCountResponse,
     TokenHoldersResponse,
     TokenStatusResponse,
+    TokenTemplateResponse,
     TransferApprovalHistoriesResponse,
     TransferHistoriesResponse,
 )

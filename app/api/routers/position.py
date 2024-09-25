@@ -202,7 +202,7 @@ class BasePosition:
 
         _token_position_list: Sequence[
             tuple[str, IDXPosition, int | None, IDXTokenInstance]
-        ] = ((await async_session.execute(stmt)).tuples().all())
+        ] = (await async_session.execute(stmt)).tuples().all()
 
         position_list = []
         for item in _token_position_list:
@@ -916,7 +916,7 @@ class BasePositionCoupon(BasePosition):
 
         _token_position_list: Sequence[
             tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]
-        ] = ((await async_session.execute(stmt)).tuples().all())
+        ] = (await async_session.execute(stmt)).tuples().all()
 
         position_list = []
         for item in _token_position_list:
@@ -1117,7 +1117,7 @@ class GetPosition:
 async def list_all_share_positions(
     positions: Union[
         list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
-    ] = Depends(GetPositionList(BasePositionShare))
+    ] = Depends(GetPositionList(BasePositionShare)),
 ):
     """
     [Share]Returns a list of positions for a given account.
@@ -1140,7 +1140,7 @@ async def list_all_share_positions(
 async def list_all_straight_bond_positions(
     positions: Union[
         list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
-    ] = Depends(GetPositionList(BasePositionStraightBond))
+    ] = Depends(GetPositionList(BasePositionStraightBond)),
 ):
     """
     [StraightBond]Returns a list of positions for a given account.
@@ -1161,7 +1161,7 @@ async def list_all_straight_bond_positions(
 async def list_all_membership_positions(
     positions: Union[
         list[MembershipPositionWithDetail], list[MembershipPositionWithAddress]
-    ] = Depends(GetPositionList(BasePositionMembership))
+    ] = Depends(GetPositionList(BasePositionMembership)),
 ):
     """
     [Membership]Returns a list of positions for a given account.
@@ -1182,7 +1182,7 @@ async def list_all_membership_positions(
 async def list_all_coupon_positions(
     positions: Union[
         list[CouponPositionWithDetail], list[CouponPositionWithAddress]
-    ] = Depends(GetPositionList(BasePositionCoupon))
+    ] = Depends(GetPositionList(BasePositionCoupon)),
 ):
     """
     [Coupon]Returns a list of positions for a given account.

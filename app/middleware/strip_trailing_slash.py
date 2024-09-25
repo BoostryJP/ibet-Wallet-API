@@ -17,8 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from fastapi import Request, Response
-from starlette.middleware.base import RequestResponseEndpoint
+from urllib.parse import urlparse, urlunparse
+
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app import log
 
@@ -34,22 +35,29 @@ class StripTrailingSlashMiddleware:
     *        this middleware replaces it to "/Admin/Tokens" for avoiding redirect(307).
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, app: ASGIApp):
+        self.app = app
 
-    async def __call__(
-        self, req: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         # Before process request
-        if req.url.path != "/" and req.url.path[-1] == "/":
-            replace_path = req.url.path[:-1]
-            req._url = req.url.replace(path=replace_path)
-            req.scope["path"] = replace_path
-            req.scope["raw_path"] = replace_path.encode()
+        path = scope["path"]
+        if path != "/" and path.endswith("/"):
+            # Remove trailing slash
+            new_path = path.rstrip("/")
+
+            # Update scope
+            scope["path"] = new_path
+            scope["raw_path"] = new_path.encode()
+
+            # Update url in scope
+            if "url" in scope:
+                url_parts = list(urlparse(scope["url"]))
+                url_parts[2] = new_path  # Update path
+                scope["url"] = urlunparse(url_parts)
 
         # Process request
-        res: Response = await call_next(req)
-
-        # After process request
-
-        return res
+        await self.app(scope, receive, send)

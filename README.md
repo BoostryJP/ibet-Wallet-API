@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-24.6-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-24.9-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -27,7 +27,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ## Supported contract version
 
-* ibet-SmartContract: version 24.6
+* ibet-SmartContract: version 24.9
 * See [details](./app/contracts/contract_version.md).
 
 ## Setup

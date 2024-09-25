@@ -20,7 +20,6 @@ SPDX-License-Identifier: Apache-2.0
 import mimetypes
 import smtplib
 import ssl
-from email import encoders
 from email.header import Header
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart

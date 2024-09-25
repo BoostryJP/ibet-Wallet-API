@@ -277,7 +277,6 @@ class TestEventsIbetSecurityTokenInterface:
     # Normal_1_1
     # No event
     def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
-        current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1239,7 +1238,6 @@ class TestEventsIbetSecurityTokenInterface:
     # InvalidParameterError
     # from_block, to_block: min value
     def test_error_2(self, client: TestClient, session: Session, shared_contract):
-        current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1320,7 +1318,6 @@ class TestEventsIbetSecurityTokenInterface:
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
     def test_error_4(self, client: TestClient, session: Session, shared_contract):
-        current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
         # request target API
