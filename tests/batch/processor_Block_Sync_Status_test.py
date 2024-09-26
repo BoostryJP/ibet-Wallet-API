@@ -46,47 +46,43 @@ class TestProcessor:
     ###########################################################################
 
     # <Normal_1>
-    # Execute Batch Run 1st: synced
-    # Execute Batch Run 2nd: block generation speed down(same the previous)
-    # Execute Batch Run 3rd: synced
-    # Execute Batch Run 4th: node syncing(DIFF:over 2)
-    # Execute Batch Run 5th: node syncing(DIFF:2) == synced
+    # Run 1st: Normal state
+    # Run 2nd: Abnormal state - Setting BLOCK_GENERATION_SPEED_THRESHOLD to 100% will trigger an error.
+    # Run 3rd: Return to normal state
+    # Run 4th: Abnormal state - An error occurs when the difference between highestBlock and currentBlock exceeds a threshold.
+    # Run 5th: Return to normal state - Since the difference between highestBlock and currentBlock is within the threshold, no error occurs.
     def test_normal_1(self, processor, session):
-        # Run 1st: synced
+        # Run 1st: Normal state
         processor.process()
         session.commit()
 
-        # assertion
         _node = session.scalars(select(Node).limit(1)).first()
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0
         assert _node.is_synced == True
 
+        # Run 2nd: Abnormal state
+        # - Setting BLOCK_GENERATION_SPEED_THRESHOLD to 100% will trigger an error.
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
-
-        # Run 2nd: block generation speed down(same the previous)
         with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
             processor.process()
             session.commit()
 
-        # assertion
         _node = session.scalars(select(Node).limit(1)).first()
         assert _node.is_synced == False
 
+        # Run 3rd: Return to normal state
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
-
-        # Run 3rd: synced
         processor.process()
         session.commit()
 
-        # assertion
         _node = session.scalars(select(Node).limit(1)).first()
         assert _node.is_synced == True
 
+        # Run 4th: Abnormal state
+        # - An error occurs when the difference between highestBlock and currentBlock exceeds a threshold.
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
-
-        # Run 4th: node syncing(DIFF:over 1)
         block_number = web3.eth.block_number
         with mock.patch("web3.eth.Eth._syncing") as mock_is_syncing:
             mock_is_syncing.side_effect = [
@@ -95,13 +91,12 @@ class TestProcessor:
             processor.process()
             session.commit()
 
-        # assertion
         _node = session.scalars(select(Node).limit(1)).first()
         assert _node.is_synced == False
 
+        # Run 5th: Return to normal state
+        # - Since the difference between highestBlock and currentBlock is within the threshold, no error occurs.
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
-
-        # Run 5th: node syncing(DIFF:1) == synced
         block_number = web3.eth.block_number
         with mock.patch("web3.eth.Eth._syncing") as mock_is_syncing:
             mock_is_syncing.side_effect = [
@@ -110,12 +105,11 @@ class TestProcessor:
             processor.process()
             session.commit()
 
-        # assertion
         _node = session.scalars(select(Node).limit(1)).first()
         assert _node.is_synced == True
 
     # <Normal_2>
-    # standby node is down to sync
+    # Standby node is down to sync
     @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000"])
     def test_normal_2(self, session):
         processor = Processor()
