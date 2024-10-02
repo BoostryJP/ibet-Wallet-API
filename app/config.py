@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import configparser
 import os
+from email.policy import HTTP, SMTP, SMTPUTF8
 
 BRAND_NAME = "ibet-Wallet-API"
 
@@ -302,6 +303,15 @@ BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else 
 SMTP_METHOD = (
     int(os.environ.get("SMTP_METHOD")) if os.environ.get("SMTP_METHOD") else 0
 )  # 0:SMTP server, 1:Amazon SES
+SMTP_POLICY = (
+    SMTP
+    if os.environ.get("SMTP_POLICY") == "SMTP"
+    else SMTPUTF8
+    if os.environ.get("SMTP_POLICY") == "SMTPUTF8"
+    else HTTP
+    if os.environ.get("SMTP_POLICY") == "HTTP"
+    else None
+)  # SMTP, SMTPUTF8, HTTP, None (default)
 SMTP_SERVER_ENCRYPTION_METHOD = (
     int(os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD"))
     if os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD")
