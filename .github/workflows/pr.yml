@@ -23,30 +23,8 @@ jobs:
       matrix:
         db: [postgres, mysql]
         test_target: [
-          'tests/app/admin_* tests/app/company_* tests/app/config_* tests/app/contract_*',
-          'tests/app/dex_*',
-          'tests/app/e2e_* tests/app/eth_*',
-          'tests/app/events_*',
-          'tests/app/messaging_* tests/app/node_info_* tests/app/notification_* tests/app/openapi_*',
-          'tests/app/position_ListAllCouponConsumptions_*',
-          'tests/app/position_Position_*',
-          'tests/app/position_PositionCoupon* tests/app/position_PositionMembership*',
-          'tests/app/position_PositionShare*',
-          'tests/app/position_PositionStraightBond*',
-          'tests/app/token_*',
-          'tests/app/userinfo_*',
-          'tests/batch/indexer_Block_* tests/batch/indexer_CompanyList_* tests/batch/indexer_Consume_*',
-          'tests/batch/indexer_DEX_*',
-          'tests/batch/indexer_Position_Bond_*',
-          'tests/batch/indexer_Position_Coupon_*',
-          'tests/batch/indexer_Position_Membership_*',
-          'tests/batch/indexer_Position_Share_*',
-          'tests/batch/indexer_Token_Detail_*',
-          'tests/batch/indexer_Token_Holders_*',
-          'tests/batch/indexer_Token_List_*',
-          'tests/batch/indexer_Transfer_*',
-          'tests/batch/indexer_TransferApproval_*',
-          'tests/batch/processor_*',
+          'tests/app/',
+          'tests/batch/',
         ]
     steps:
       - uses: actions/checkout@v4
