@@ -31,6 +31,7 @@ import boto3
 from app.config import (
     AWS_SES_REGION_NAME,
     SMTP_METHOD,
+    SMTP_POLICY,
     SMTP_SENDER_EMAIL,
     SMTP_SENDER_NAME,
     SMTP_SENDER_PASSWORD,
@@ -67,8 +68,7 @@ class Mail:
             self.sender_password = SMTP_SENDER_PASSWORD
         elif SMTP_METHOD == 1:  # Amazon SES
             self.aws_region_name = AWS_SES_REGION_NAME
-
-        self.msg = MIMEMultipart("alternative")
+        self.msg = MIMEMultipart("alternative", policy=SMTP_POLICY)
         self.msg.attach(MIMEText(text_content, "plain"))
         self.msg.attach(MIMEText(html_content, "html"))
         self.msg["Subject"] = subject

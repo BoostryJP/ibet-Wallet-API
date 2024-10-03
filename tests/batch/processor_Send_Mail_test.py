@@ -198,6 +198,38 @@ class TestProcessorSendMail:
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
+    # Normal_6
+    # SMTP_POLICY setting
+    @pytest.mark.parametrize(
+        "policy",
+        ["", "SMTPUTF8", "HTTP"],
+    )
+    def test_normal_6(self, policy, processor, session, caplog, monkeypatch):
+        # Prepare data
+        mail = Mail()
+        mail.to_email = "to@example.com"
+        mail.subject = "Test mail"
+        mail.text_content = "text content"
+        mail.html_content = "<p>html content</p>"
+        session.add(mail)
+        session.commit()
+
+        # Run processor
+        with (
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+            mock.patch(
+                "app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=None)
+            ),
+        ):
+            monkeypatch.setenv("SMTP_POLICY", policy)
+            processor.process()
+            session.commit()
+
+        # Assertion
+        assert len(session.scalars(select(Mail)).all()) == 0
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
+
     ###########################################################################
     # Error
     ###########################################################################
