@@ -27,9 +27,15 @@ from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 from app.model.schema.token_share import RetrieveShareTokenResponse
 
+
 ############################
 # COMMON
 ############################
+class CompanyInfo(BaseModel):
+    address: ValidatedEthereumAddress
+    corporate_name: str
+    rsa_publickey: str
+    homepage: str
 
 
 ############################
@@ -40,15 +46,11 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 ############################
 # RESPONSE
 ############################
-class RetrieveCompanyInfoResponse(BaseModel):
-    address: ValidatedEthereumAddress
-    corporate_name: str
-    rsa_publickey: str
-    homepage: str
+class RetrieveCompanyInfoResponse(CompanyInfo):
     in_use_personal_info_addresses: list[str]
 
 
-class ListAllCompanyInfoResponse(RootModel[list[RetrieveCompanyInfoResponse]]):
+class ListAllCompanyInfoResponse(RootModel[list[CompanyInfo]]):
     pass
 
 
