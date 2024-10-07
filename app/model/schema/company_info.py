@@ -45,6 +45,7 @@ class RetrieveCompanyInfoResponse(BaseModel):
     corporate_name: str
     rsa_publickey: str
     homepage: str
+    in_use_personal_info_addresses: list[str]
 
 
 class ListAllCompanyInfoResponse(RootModel[list[RetrieveCompanyInfoResponse]]):
