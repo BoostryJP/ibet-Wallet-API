@@ -9117,12 +9117,18 @@ components:
         homepage:
           type: string
           title: Homepage
+        in_use_personal_info_addresses:
+          items:
+            type: string
+          type: array
+          title: In Use Personal Info Addresses
       type: object
       required:
         - address
         - corporate_name
         - rsa_publickey
         - homepage
+        - in_use_personal_info_addresses
       title: RetrieveCompanyInfoResponse
     RetrieveCouponTokenResponse:
       properties:

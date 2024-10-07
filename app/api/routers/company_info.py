@@ -21,7 +21,8 @@ from typing import Annotated, Callable, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Path, Query
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, distinct, select
+from sqlalchemy.orm import aliased
 
 from app import config, log
 from app.contracts import AsyncContract
@@ -176,6 +177,7 @@ async def list_all_companies(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def retrieve_company(
+    async_session: DBAsyncSession,
     eth_address: Annotated[
         ValidatedEthereumAddress, Path(description="Issuer address")
     ],
@@ -183,11 +185,43 @@ async def retrieve_company(
     """
     Returns given issuer information.
     """
+    # Retrieve the company information linked to the issuer.
     company = await CompanyList.get_find(to_checksum_address(eth_address))
     if company.address == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
 
-    return json_response({**SuccessResponse.default(), "data": company.json()})
+    # Retrieve the personal information address linked to the issuer.
+    token_all = aliased(
+        (
+            select(
+                IDXBondToken.personal_info_address.label("personal_info_address")
+            ).where(
+                and_(
+                    IDXBondToken.owner_address == eth_address,
+                    IDXBondToken.personal_info_address != None,
+                )
+            )
+        )
+        .union_all(
+            select(
+                IDXShareToken.personal_info_address.label("personal_info_address")
+            ).where(
+                and_(
+                    IDXShareToken.owner_address == eth_address,
+                    IDXShareToken.personal_info_address != None,
+                )
+            )
+        )
+        .subquery()
+    )
+
+    _personal_info_list = (
+        await async_session.scalars(select(distinct(token_all.c.personal_info_address)))
+    ).all()
+    resp = company.json()
+    resp["in_use_personal_info_addresses"] = _personal_info_list
+
+    return json_response({**SuccessResponse.default(), "data": resp})
 
 
 # ------------------------------
