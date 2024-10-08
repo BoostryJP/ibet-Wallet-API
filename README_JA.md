@@ -20,7 +20,7 @@
 - [python3](https://www.python.org/)
   - バージョン 3.12
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - バージョン 15
+  - [PostgreSQL](https://www.postgresql.org/) - バージョン 16
   - [MySQL](https://www.mysql.com/) - バージョン 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - [ibet-Network](https://github.com/BoostryJP/ibet-Network) の公式の GoQuorum をサポートしています。
