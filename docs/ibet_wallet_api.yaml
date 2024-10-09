@@ -10724,6 +10724,9 @@ components:
             - $ref: '#/components/schemas/TokenType'
           examples:
             - IbetStraightBond
+        owner_address:
+          type: string
+          title: Owner Address
         name:
           type: string
           title: Name
@@ -10736,6 +10739,7 @@ components:
       type: object
       required:
         - token_template
+        - owner_address
         - name
         - status
         - transferable

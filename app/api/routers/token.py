@@ -101,8 +101,8 @@ async def get_token_status(
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-
     token_template = token[1]
+    owner_address = token[2]
     try:
         # Token-Contractへの接続
         token_contract = AsyncContract.get_contract(token_template, token_address)
@@ -128,6 +128,7 @@ async def get_token_status(
 
     response_json = {
         "token_template": token_template,
+        "owner_address": owner_address,
         "name": name,
         "status": status,
         "transferable": transferable,
