@@ -345,6 +345,7 @@ class TokenTemplateResponse(BaseModel):
 
 class TokenStatusResponse(BaseModel):
     token_template: TokenType = Field(examples=["IbetStraightBond"])
+    owner_address: ValidatedEthereumAddress
     name: str
     status: bool
     transferable: bool

@@ -202,6 +202,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -246,6 +247,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -290,6 +292,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -331,6 +334,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -375,6 +379,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -419,6 +424,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -457,6 +463,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -498,6 +505,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -539,6 +547,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -577,6 +586,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -618,6 +628,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -659,6 +670,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
