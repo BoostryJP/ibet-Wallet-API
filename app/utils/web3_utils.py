@@ -162,7 +162,7 @@ class FailOverHTTPProvider(HTTPProvider):
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.
-                            LOG.warning(
+                            LOG.notice(
                                 f"Retry web3 request due to connection fail: method={method}, params={params}"
                             )
                             counter += 1
@@ -223,7 +223,7 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.
-                            LOG.warning(
+                            LOG.notice(
                                 f"Retry web3 request due to connection fail: method={method}, params={params}"
                             )
                             counter += 1

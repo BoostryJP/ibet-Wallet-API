@@ -166,7 +166,7 @@ async def send_raw_transaction(
             raw_tx = decode(HexBytes(raw_tx_hex))
             to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
-            LOG.warning(f"RLP decoding failed: {err}")
+            LOG.notice(f"RLP decoding failed: {err}")
             continue
 
         listed_token = (
@@ -190,7 +190,7 @@ async def send_raw_transaction(
                         contract_name=token_attribute[1], address=to_contract_address
                     )
                 except Exception as err:
-                    LOG.warning(f"Could not get token status: {err}")
+                    LOG.notice(f"Could not get token status: {err}")
                     continue
                 if (
                     await AsyncContract.call_function(
@@ -292,7 +292,7 @@ async def send_raw_transaction(
                         "error_msg": message,
                     }
                 )
-                LOG.warning(
+                LOG.notice(
                     f"Contract revert detected: code: {str(code)} message: {message}"
                 )
                 continue
@@ -320,7 +320,7 @@ async def send_raw_transaction(
             result.append(
                 {"id": i + 1, "status": status, "transaction_hash": tx_hash.to_0x_hex()}
             )
-            LOG.warning(f"Transaction receipt timeout: {time_exhausted_err}")
+            LOG.notice(f"Transaction receipt timeout: {time_exhausted_err}")
             continue
         except Exception as err:
             result.append(
@@ -371,7 +371,7 @@ async def send_raw_transaction_no_wait(
             raw_tx = decode(HexBytes(raw_tx_hex))
             to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
-            LOG.warning(f"RLP decoding failed: {err}")
+            LOG.notice(f"RLP decoding failed: {err}")
             continue
 
         listed_token = (
@@ -396,7 +396,7 @@ async def send_raw_transaction_no_wait(
                         contract_name=token_attribute[1], address=to_contract_address
                     )
                 except Exception as err:
-                    LOG.warning(f"Could not get token status: {err}")
+                    LOG.notice(f"Could not get token status: {err}")
                     continue
                 if (
                     await AsyncContract.call_function(

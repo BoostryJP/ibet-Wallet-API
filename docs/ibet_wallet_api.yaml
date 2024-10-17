@@ -6117,6 +6117,27 @@ components:
         - earliest
         - pending
       title: BlockIdentifier
+    CompanyInfo:
+      properties:
+        address:
+          type: string
+          title: Address
+        corporate_name:
+          type: string
+          title: Corporate Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        homepage:
+          type: string
+          title: Homepage
+      type: object
+      required:
+        - address
+        - corporate_name
+        - rsa_publickey
+        - homepage
+      title: CompanyInfo
     CompleteAgreementSet_RetrieveCouponTokenResponse_:
       properties:
         token:
@@ -7791,7 +7812,7 @@ components:
       title: ListAllAdminTokensResponse
     ListAllCompanyInfoResponse:
       items:
-        $ref: '#/components/schemas/RetrieveCompanyInfoResponse'
+        $ref: '#/components/schemas/CompanyInfo'
       type: array
       title: ListAllCompanyInfoResponse
     ListAllCompanyTokensResponse:

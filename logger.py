@@ -18,21 +18,14 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import logging
-import sys
 
-from app import config
-from logger import SystemLogger
+NOTICE = 25  # Set the log level to a number between info (20) and warning (30).
 
 
-def get_logger(process_name: str = None):
-    logging.setLoggerClass(SystemLogger)
-    LOG = logging.getLogger("ibet_wallet_batch")
-    LOG.propagate = False
-    stream_handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        config.INFO_LOG_FORMAT.format(f"[{process_name}]"), config.LOG_TIMESTAMP_FORMAT
-    )
-    stream_handler.setFormatter(formatter)
-    LOG.addHandler(stream_handler)
+class SystemLogger(logging.Logger):
+    def __init__(self, name, level=logging.NOTSET):
+        super().__init__(name, level)
 
-    return LOG
+    def notice(self, msg, *args, **kwargs):
+        if self.isEnabledFor(NOTICE):
+            self._log(NOTICE, msg, args, **kwargs)

@@ -156,7 +156,7 @@ async def list_all_companies(
             )
             listing_owner_set.add(owner_address)
         except Exception as e:
-            LOG.warning(e)
+            LOG.notice(e)
 
     has_listing_owner_function = has_listing_owner_function_creator(listing_owner_set)
     filtered_company_list = filter(has_listing_owner_function, company_list)
