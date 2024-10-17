@@ -144,8 +144,8 @@ class Processor:
                     elapsed_time = time.time() - start_time
                     await asyncio.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
                 except (ObjectDeletedError, StaleDataError):
-                    LOG.warning(
-                        "The record may have been deleted in another session during the update"
+                    LOG.notice(
+                        "The record may have been deleted in a different session during the update"
                     )
 
 
@@ -158,7 +158,7 @@ async def main():
         try:
             await processor.process()
         except ServiceUnavailable:
-            LOG.warning("An external service was unavailable")
+            LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors

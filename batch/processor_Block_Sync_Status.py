@@ -198,7 +198,7 @@ class Processor:
         else:
             if not is_synced:
                 # If the same previous processing status, log output with WARING level.
-                LOG.warning(f"{endpoint_uri} Block synchronization is down: %s", errors)
+                LOG.notice(f"{endpoint_uri} Block synchronization is down: %s", errors)
 
     def __web3_errors(self, db_session: Session, endpoint_uri: str):
         try:

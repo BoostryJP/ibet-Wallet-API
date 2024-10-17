@@ -429,7 +429,7 @@ class BondToken(TokenBase):
                     "interestPaymentDate12", ""
                 )
         except Exception:
-            LOG.warning("Failed to load interestPaymentDate")
+            LOG.notice("Failed to load interestPaymentDate")
 
         try:
             if _raw_base_fx_rate is not None and _raw_base_fx_rate != "":

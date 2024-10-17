@@ -125,7 +125,7 @@ class TestProcessorSendMail:
         assert 1 == caplog.record_tuples.count(
             (
                 LOG.name,
-                logging.WARNING,
+                25,
                 "Destination address is not allowed to send: id=1",
             )
         )
@@ -159,7 +159,7 @@ class TestProcessorSendMail:
         assert 1 == caplog.record_tuples.count(
             (
                 LOG.name,
-                logging.WARNING,
+                25,
                 "Destination address is not allowed to send: id=1",
             )
         )

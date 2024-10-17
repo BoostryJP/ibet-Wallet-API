@@ -516,7 +516,7 @@ class BasePosition:
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -639,7 +639,7 @@ class BasePositionShare(BasePosition):
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -744,7 +744,7 @@ class BasePositionStraightBond(BasePosition):
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -1044,7 +1044,7 @@ class BasePositionCoupon(BasePosition):
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)

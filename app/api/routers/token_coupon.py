@@ -314,7 +314,7 @@ async def retrieve_coupon_token(
             async_session=async_session, token_address=token_address
         )
     except ServiceUnavailable as e:
-        LOG.warning(e)
+        LOG.notice(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)

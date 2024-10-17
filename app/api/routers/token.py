@@ -120,7 +120,7 @@ async def get_token_status(
         )
         name, status, transferable = [task.result() for task in tasks]
     except* ServiceUnavailable as e:
-        LOG.warning(e)
+        LOG.notice(e)
         raise DataNotExistsError("token_address: %s" % token_address)
     except* Exception as e:
         LOG.error(e)

@@ -147,7 +147,7 @@ class Watcher:
             await db_session.commit()
 
         except ServiceUnavailable:
-            LOG.warning("An external service was unavailable")
+            LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as err:  # Exceptionが発生した場合は処理を継続
