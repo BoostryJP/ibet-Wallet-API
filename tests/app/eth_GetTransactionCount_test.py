@@ -128,7 +128,19 @@ class TestEthGetTransactionCount:
         resp = client.get(apiurl)
 
         assert resp.status_code == 400
-        assert resp.json()["meta"] == {"code": 88, "message": "Invalid Parameter"}
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": [
+                {
+                    "type": "value_error",
+                    "loc": ["path", "eth_address"],
+                    "msg": "Value error, Invalid ethereum address",
+                    "input": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9",
+                    "ctx": {"error": {}},
+                }
+            ],
+        }
 
     # ＜エラー系3＞
     # addressが未設定

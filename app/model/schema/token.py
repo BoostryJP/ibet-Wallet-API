@@ -17,19 +17,18 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import UUID4, BaseModel, Field, StrictStr
 
 from app.model.schema.base import (
+    BasePaginationQuery,
+    EthereumAddress,
     ResultSet,
     SortOrder,
     TokenType,
-    ValidatedEthereumAddress,
     ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
@@ -55,57 +54,36 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
     block_number: int = Field(description="block number")
 
 
-@dataclass
-class ListAllTokenHoldersQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-
-    account_tag: Annotated[
-        Optional[str], Query(description="account tag (**this affects total number**)")
-    ] = None
-
-    exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
-    amount: Annotated[Optional[int], Query(description="amount")] = None
-    amount_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)",
-        ),
-    ] = ValueOperator.EQUAL
-    pending_transfer: Annotated[
-        Optional[int], Query(description="pending transfer")
-    ] = None
-    pending_transfer_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)",
-        ),
-    ] = ValueOperator.EQUAL
-    exchange_balance: Annotated[
-        Optional[int], Query(description="exchange balance")
-    ] = None
-    exchange_balance_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)",
-        ),
-    ] = ValueOperator.EQUAL
-    exchange_commitment: Annotated[
-        Optional[int], Query(description="exchange commitment")
-    ] = None
-    exchange_commitment_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)",
-        ),
-    ] = ValueOperator.EQUAL
-    locked: Annotated[Optional[int], Query(description="locked")] = None
-    locked_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)",
-        ),
-    ] = ValueOperator.EQUAL
+class ListAllTokenHoldersQuery(BasePaginationQuery):
+    account_tag: Optional[str] = Field(
+        None, description="account tag (**this affects total number**)"
+    )
+    exclude_owner: Optional[bool] = Field(False, description="exclude owner")
+    amount: Optional[int] = Field(None, description="amount")
+    amount_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    pending_transfer: Optional[int] = Field(None, description="pending transfer")
+    pending_transfer_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    exchange_balance: Optional[int] = Field(None, description="exchange balance")
+    exchange_balance_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    exchange_commitment: Optional[int] = Field(None, description="exchange commitment")
+    exchange_commitment_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    locked: Optional[int] = Field(None, description="locked")
+    locked_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
 
 
 class SearchTokenHoldersSortItem(StrEnum):
@@ -166,46 +144,35 @@ class SearchTokenHoldersRequest(BaseModel):
     )
 
 
-@dataclass
-class RetrieveTokenHoldersCountQuery:
-    account_tag: Annotated[
-        Optional[str], Query(description="account tag (**this affects total number**)")
-    ] = None
-    exclude_owner: Annotated[Optional[bool], Query(description="exclude owner")] = False
+class RetrieveTokenHoldersCountQuery(BaseModel):
+    account_tag: Optional[str] = Field(
+        None, description="account tag (**this affects total number**)"
+    )
+    exclude_owner: Optional[bool] = Field(False, description="exclude owner")
 
 
-@dataclass
-class ListAllTransferHistoryQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-
-    account_tag: Annotated[
-        Optional[str], Query(description="account tag (**this affects total number**)")
-    ] = None
-
-    source_event: Annotated[
-        Optional[TransferSourceEvent], Query(description="source event of transfer")
-    ] = None
-    data: Annotated[Optional[str], Query(description="source event data")] = None
-    transaction_hash: Annotated[
-        Optional[str], Query(description="transaction hash")
-    ] = None
-    from_address: Annotated[Optional[str], Query(description="from address")] = None
-    to_address: Annotated[Optional[str], Query(description="to address")] = None
-    value: Annotated[Optional[int], Query(description="value")] = None
-    value_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)"
-        ),
-    ] = ValueOperator.EQUAL
-    created_from: Annotated[
-        Optional[ValidatedNaiveUTCDatetime],
-        Query(description="created datetime (From)"),
-    ] = None
-    created_to: Annotated[
-        Optional[ValidatedNaiveUTCDatetime], Query(description="created datetime (To)")
-    ] = None
+class ListAllTransferHistoryQuery(BasePaginationQuery):
+    account_tag: Optional[str] = Field(
+        None, description="account tag (**this affects total number**)"
+    )
+    source_event: Optional[TransferSourceEvent] = Field(
+        None, description="source event of transfer"
+    )
+    data: Optional[str] = Field(None, description="source event data")
+    transaction_hash: Optional[str] = Field(None, description="transaction hash")
+    from_address: Optional[str] = Field(None, description="from address")
+    to_address: Optional[str] = Field(None, description="to address")
+    value: Optional[int] = Field(None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    created_from: Optional[ValidatedNaiveUTCDatetime] = Field(
+        None, description="created datetime (From)"
+    )
+    created_to: Optional[ValidatedNaiveUTCDatetime] = Field(
+        None, description="created datetime (To)"
+    )
 
 
 class SearchTransferHistorySortItem(StrEnum):
@@ -254,24 +221,17 @@ class SearchTransferHistoryRequest(BaseModel):
     )
 
 
-@dataclass
-class ListAllTransferApprovalHistoryQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-
-    account_tag: Annotated[
-        Optional[str], Query(description="account tag (**this affects total number**)")
-    ] = None
-
-    from_address: Annotated[Optional[str], Query(description="from address")] = None
-    to_address: Annotated[Optional[str], Query(description="to address")] = None
-    value: Annotated[Optional[int], Query(description="value")] = None
-    value_operator: Annotated[
-        Optional[ValueOperator],
-        Query(
-            description="value filter condition(0: equal, 1: greater than, 2: less than)"
-        ),
-    ] = ValueOperator.EQUAL
+class ListAllTransferApprovalHistoryQuery(BasePaginationQuery):
+    account_tag: Optional[str] = Field(
+        None, description="account tag (**this affects total number**)"
+    )
+    from_address: Optional[str] = Field(None, description="from address")
+    to_address: Optional[str] = Field(None, description="to address")
+    value: Optional[int] = Field(None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
 
 
 class SearchTransferApprovalHistorySortItem(StrEnum):
@@ -345,15 +305,15 @@ class TokenTemplateResponse(BaseModel):
 
 class TokenStatusResponse(BaseModel):
     token_template: TokenType = Field(examples=["IbetStraightBond"])
-    owner_address: ValidatedEthereumAddress
+    owner_address: EthereumAddress
     name: str
     status: bool
     transferable: bool
 
 
 class TokenHolder(BaseModel):
-    token_address: ValidatedEthereumAddress
-    account_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
+    account_address: EthereumAddress
     amount: int = Field(default=0)
     pending_transfer: int = Field(default=0)
     exchange_balance: int = Field(default=0)
@@ -388,7 +348,7 @@ class CreateTokenHoldersCollectionResponse(BaseModel):
 
 
 class TokenHoldersCollectionHolder(BaseModel):
-    account_address: ValidatedEthereumAddress = Field(
+    account_address: EthereumAddress = Field(
         description="Account address of token holder."
     )
     hold_balance: int = Field(
@@ -407,11 +367,11 @@ class TokenHoldersCollectionResponse(BaseModel):
 
 class TransferHistory(BaseModel):
     transaction_hash: str = Field(description="Transaction hash")
-    token_address: ValidatedEthereumAddress = Field(description="Token address")
-    from_address: ValidatedEthereumAddress = Field(
+    token_address: EthereumAddress = Field(description="Token address")
+    from_address: EthereumAddress = Field(
         description="Account address of transfer source"
     )
-    to_address: ValidatedEthereumAddress = Field(
+    to_address: EthereumAddress = Field(
         description="Account address of transfer destination"
     )
     value: int = Field(description="Transfer quantity")
@@ -428,15 +388,13 @@ class TransferHistoriesResponse(BaseModel):
 
 
 class TransferApprovalHistory(BaseModel):
-    token_address: ValidatedEthereumAddress = Field(description="Token address")
-    exchange_address: Optional[ValidatedEthereumAddress] = Field(
-        description="Exchange address"
-    )
+    token_address: EthereumAddress = Field(description="Token address")
+    exchange_address: Optional[EthereumAddress] = Field(description="Exchange address")
     application_id: int = Field(description="Application id")
-    from_address: ValidatedEthereumAddress = Field(
+    from_address: EthereumAddress = Field(
         description="Account address of transfer source"
     )
-    to_address: ValidatedEthereumAddress = Field(
+    to_address: EthereumAddress = Field(
         description="Account address of transfer destination"
     )
     value: int = Field(description="Transfer quantity")

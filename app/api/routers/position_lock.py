@@ -21,7 +21,7 @@ from datetime import timedelta, timezone
 from typing import Annotated, Sequence
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import String, cast, column, desc, func, literal, null, select
 
 from app import config, log
@@ -53,10 +53,10 @@ from app.model.schema import (
     RetrieveStraightBondTokenResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -89,9 +89,9 @@ class ListAllLock:
         async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
+            EthereumAddress, Path(description="account address")
         ],
-        request_query: ListAllLockedPositionQuery = Depends(),
+        request_query: Annotated[ListAllLockedPositionQuery, Query()],
     ):
         if self.token_type == TokenType.IbetShare:
             token_enabled = config.SHARE_TOKEN_ENABLED
@@ -191,9 +191,9 @@ class ListAllLockEvent:
         async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
+            EthereumAddress, Path(description="account address")
         ],
-        request_query: ListAllLockEventQuery = Depends(),
+        request_query: Annotated[ListAllLockEventQuery, Query()],
     ):
         if self.token_type == TokenType.IbetShare:
             token_enabled = config.SHARE_TOKEN_ENABLED

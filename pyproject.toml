@@ -11,7 +11,7 @@ boto3 = "~1.35.11"
 coincurve = "~20.0.0"
 eth-keyfile = "0.8.1"
 eth-utils = "~5.0.0"
-fastapi = "~0.112.0"
+fastapi = "~0.115.0"
 gunicorn = "~23.0.0"
 hexbytes = "~1.2.0"
 orjson = "~3.10.3"
@@ -31,7 +31,7 @@ ibet-wallet-api-explorer = {path = "cmd/explorer", optional = true, develop = tr
 textual = {version = "~0.44.1", optional = true}
 async-cache = {version = "~1.1.1", optional = true}
 typer = {version = "~0.12.3", optional = true}
-aiohttp = {version = "~3.9.4", optional = true}
+aiohttp = {version = "~3.10.10", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

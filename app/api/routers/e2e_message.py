@@ -26,9 +26,9 @@ from app.contracts import AsyncContract
 from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.schema import E2EMessageEncryptionKeyResponse
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -47,7 +47,7 @@ router = APIRouter(prefix="/E2EMessage", tags=["messaging"])
 )
 async def retrieve_encryption_key(
     account_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Account address (message receiver)")
+        EthereumAddress, Path(description="Account address (message receiver)")
     ],
 ):
     """

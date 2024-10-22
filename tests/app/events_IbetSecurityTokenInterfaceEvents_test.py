@@ -1223,13 +1223,13 @@ class TestEventsIbetSecurityTokenInterface:
                     "type": "missing",
                     "loc": ["query", "from_block"],
                     "msg": "Field required",
-                    "input": None,
+                    "input": {},
                 },
                 {
                     "type": "missing",
                     "loc": ["query", "to_block"],
                     "msg": "Field required",
-                    "input": None,
+                    "input": {},
                 },
             ],
         }
@@ -1337,12 +1337,10 @@ class TestEventsIbetSecurityTokenInterface:
                 {
                     "ctx": {"error": {}},
                     "input": {
-                        "argument_filters": None,
-                        "event": None,
-                        "from_block": self.latest_block_number,
-                        "to_block": self.latest_block_number - 1,
+                        "from_block": str(self.latest_block_number),
+                        "to_block": str(self.latest_block_number - 1),
                     },
-                    "loc": [],
+                    "loc": ["query"],
                     "msg": "Value error, to_block must be greater than or equal "
                     "to the from_block",
                     "type": "value_error",

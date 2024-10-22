@@ -18,11 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Annotated, Optional, Self
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field, RootModel, StrictStr, model_validator
-from pydantic.dataclasses import dataclass
 
 from app.contracts import create_abi_event_argument_models
 
@@ -34,8 +32,6 @@ from app.contracts import create_abi_event_argument_models
 ############################
 # REQUEST
 ############################
-
-
 class E2EMessagingEventType(StrEnum):
     PublicKeyUpdated = "PublicKeyUpdated"
     Message = "Message"
@@ -47,32 +43,24 @@ class E2EMessagingEventArguments(BaseModel):
     who: Optional[StrictStr] = None
 
 
-@dataclass
-class E2EMessagingEventsQuery:
-    from_block: Annotated[
-        int, Query(default=..., description="from block number", ge=1)
-    ]
-    to_block: Annotated[int, Query(default=..., description="to block number", ge=1)]
-    event: Annotated[
-        Optional[E2EMessagingEventType], Query(description="events to get")
-    ] = None
-    argument_filters: Annotated[
-        Optional[str],
-        Query(
-            description="filter argument. serialize obj to a JSON formatted str required."
-            "eg."
-            "```"
-            '{"sender": "0x0000000000000000000000000000000000000000"}'
-            "```",
-        ),
-    ] = None
+class E2EMessagingEventsQuery(BaseModel):
+    from_block: int = Field(..., description="from block number", ge=1)
+    to_block: int = Field(..., description="to block number", ge=1)
+    event: Optional[E2EMessagingEventType] = Field(None, description="events to get")
+    argument_filters: Optional[str] = Field(
+        None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+        "eg."
+        "```"
+        '{"sender": "0x0000000000000000000000000000000000000000"}'
+        "```",
+    )
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_block_number(cls, values: Self):
-        if values.to_block < values.from_block:
+    def validate_block_number(self):
+        if self.to_block < self.from_block:
             raise ValueError("to_block must be greater than or equal to the from_block")
-        return values
+        return self
 
 
 class IbetEscrowEventType(StrEnum):
@@ -89,35 +77,27 @@ class EscrowEventArguments(BaseModel):
     escrowId: Optional[int] = None
 
 
-@dataclass
-class IbetEscrowEventsQuery:
-    from_block: Annotated[
-        int, Query(default=..., description="from block number", ge=1)
-    ]
-    to_block: Annotated[int, Query(default=..., description="to block number", ge=1)]
-    event: Annotated[
-        Optional[IbetEscrowEventType], Query(description="events to get")
-    ] = None
-    argument_filters: Annotated[
-        Optional[str],
-        Query(
-            description="filter argument. serialize obj to a JSON formatted str required."
-            "eg."
-            "```"
-            "{"
-            '    "escrowId": 0'
-            '    "token": "0x0000000000000000000000000000000000000000"'
-            "}"
-            "```",
-        ),
-    ] = None
+class IbetEscrowEventsQuery(BaseModel):
+    from_block: int = Field(..., description="from block number", ge=1)
+    to_block: int = Field(..., description="to block number", ge=1)
+    event: Optional[IbetEscrowEventType] = Field(None, description="events to get")
+    argument_filters: Optional[str] = Field(
+        None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+        "eg."
+        "```"
+        "{"
+        '    "escrowId": 0'
+        '    "token": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
+    )
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_block_number(cls, values: Self):
-        if values.to_block < values.from_block:
+    def validate_block_number(self):
+        if self.to_block < self.from_block:
             raise ValueError("to_block must be greater than or equal to the from_block")
-        return values
+        return self
 
 
 class IbetSecurityTokenEscrowEventType(StrEnum):
@@ -133,35 +113,29 @@ class IbetSecurityTokenEscrowEventType(StrEnum):
     FinishTransfer = "FinishTransfer"
 
 
-@dataclass
-class IbetSecurityTokenEscrowEventsQuery:
-    from_block: Annotated[
-        int, Query(default=..., description="from block number", ge=1)
-    ]
-    to_block: Annotated[int, Query(default=..., description="to block number", ge=1)]
-    event: Annotated[
-        Optional[IbetSecurityTokenEscrowEventType], Query(description="events to get")
-    ] = None
-    argument_filters: Annotated[
-        Optional[str],
-        Query(
-            description="filter argument. serialize obj to a JSON formatted str required."
-            "eg."
-            "```"
-            "{"
-            '    "escrowId": 0'
-            '    "token": "0x0000000000000000000000000000000000000000"'
-            "}"
-            "```",
-        ),
-    ] = None
+class IbetSecurityTokenEscrowEventsQuery(BaseModel):
+    from_block: int = Field(..., description="from block number", ge=1)
+    to_block: int = Field(..., description="to block number", ge=1)
+    event: Optional[IbetSecurityTokenEscrowEventType] = Field(
+        None, description="events to get"
+    )
+    argument_filters: Optional[str] = Field(
+        None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+        "eg."
+        "```"
+        "{"
+        '    "escrowId": 0'
+        '    "token": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
+    )
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_block_number(cls, values: Self):
-        if values.to_block < values.from_block:
+    def validate_block_number(self):
+        if self.to_block < self.from_block:
             raise ValueError("to_block must be greater than or equal to the from_block")
-        return values
+        return self
 
 
 class IbetSecurityTokenDVPEventType(StrEnum):
@@ -180,35 +154,29 @@ class IbetSecurityTokenDVPEventArguments(BaseModel):
     deliveryId: Optional[int] = None
 
 
-@dataclass
-class IbetSecurityTokenDVPEventsQuery:
-    from_block: Annotated[
-        int, Query(default=..., description="from block number", ge=1)
-    ]
-    to_block: Annotated[int, Query(default=..., description="to block number", ge=1)]
-    event: Annotated[
-        Optional[IbetSecurityTokenDVPEventType], Query(description="events to get")
-    ] = None
-    argument_filters: Annotated[
-        Optional[str],
-        Query(
-            description="filter argument. serialize obj to a JSON formatted str required."
-            "eg."
-            "```"
-            "{"
-            '    "deliveryId": 0'
-            '    "token": "0x0000000000000000000000000000000000000000"'
-            "}"
-            "```",
-        ),
-    ] = None
+class IbetSecurityTokenDVPEventsQuery(BaseModel):
+    from_block: int = Field(..., description="from block number", ge=1)
+    to_block: int = Field(..., description="to block number", ge=1)
+    event: Optional[IbetSecurityTokenDVPEventType] = Field(
+        None, description="events to get"
+    )
+    argument_filters: Optional[str] = Field(
+        None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+        "eg."
+        "```"
+        "{"
+        '    "deliveryId": 0'
+        '    "token": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
+    )
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_block_number(cls, values: Self):
-        if values.to_block < values.from_block:
+    def validate_block_number(self):
+        if self.to_block < self.from_block:
             raise ValueError("to_block must be greater than or equal to the from_block")
-        return values
+        return self
 
 
 class SecurityTokenEventArguments(
@@ -233,43 +201,34 @@ class IbetSecurityTokenInterfaceEventType(StrEnum):
     Unlock = "Unlock"
 
 
-@dataclass
-class IbetSecurityTokenInterfaceEventsQuery:
-    from_block: Annotated[
-        int, Query(default=..., description="from block number", ge=1)
-    ]
-    to_block: Annotated[int, Query(default=..., description="to block number", ge=1)]
-    event: Annotated[
-        Optional[IbetSecurityTokenInterfaceEventType],
-        Query(description="events to get"),
-    ] = None
-    argument_filters: Annotated[
-        Optional[str],
-        Query(
-            description="filter argument. serialize obj to a JSON formatted str required."
-            "eg."
-            "```"
-            "{"
-            '    "from": "0x0000000000000000000000000000000000000000"'
-            '    "to": "0x0000000000000000000000000000000000000000"'
-            "}"
-            "```",
-        ),
-    ] = None
+class IbetSecurityTokenInterfaceEventsQuery(BaseModel):
+    from_block: int = Field(..., description="from block number", ge=1)
+    to_block: int = Field(..., description="to block number", ge=1)
+    event: Optional[IbetSecurityTokenInterfaceEventType] = Field(
+        None, description="events to get"
+    )
+    argument_filters: Optional[str] = Field(
+        None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+        "eg."
+        "```"
+        "{"
+        '    "from": "0x0000000000000000000000000000000000000000"'
+        '    "to": "0x0000000000000000000000000000000000000000"'
+        "}"
+        "```",
+    )
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_block_number(cls, values: Self):
-        if values.to_block < values.from_block:
+    def validate_block_number(self):
+        if self.to_block < self.from_block:
             raise ValueError("to_block must be greater than or equal to the from_block")
-        return values
+        return self
 
 
 ############################
 # RESPONSE
 ############################
-
-
 class Event(BaseModel):
     event: str = Field(description="the event name")
     args: object = Field(description="event args")

@@ -18,10 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import timedelta, timezone
-from typing import Sequence
+from typing import Annotated, Sequence
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Query
 from sqlalchemy import desc, func, select
 
 from app import log
@@ -55,7 +55,8 @@ router = APIRouter(prefix="/Token/Lock", tags=["token_info"])
     responses=get_routers_responses(InvalidParameterError),
 )
 async def list_all_lock(
-    async_session: DBAsyncSession, request_query: ListAllTokenLockQuery = Depends()
+    async_session: DBAsyncSession,
+    request_query: Annotated[ListAllTokenLockQuery, Query()],
 ):
     """
     Returns a list of locked positions.
@@ -128,7 +129,7 @@ async def list_all_lock(
 )
 async def retrieve_lock_count(
     async_session: DBAsyncSession,
-    request_query: RetrieveTokenLockCountQuery = Depends(),
+    request_query: Annotated[RetrieveTokenLockCountQuery, Query()],
 ):
     """
     Returns count of locked positions.

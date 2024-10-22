@@ -19,17 +19,16 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Generic, Optional, TypeVar, Union
+from typing import Generic, Optional, TypeVar, Union
 
-from fastapi import Query
 from pydantic import BaseModel, Field, RootModel, StrictStr
-from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import (
+    BasePaginationQuery,
+    EthereumAddress,
     ResultSet,
     SortOrder,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
@@ -41,7 +40,7 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 # COMMON
 ############################
 class TokenAddress(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
 
 
 class SecurityTokenPosition(BaseModel):
@@ -68,7 +67,7 @@ class StraightBondPositionWithDetail(SecurityTokenPosition):
 
 
 class StraightBondPositionWithAddress(SecurityTokenPosition):
-    token_address: ValidatedEthereumAddress = Field(
+    token_address: EthereumAddress = Field(
         description="set when include_token_details=false"
     )
 
@@ -80,7 +79,7 @@ class SharePositionWithDetail(SecurityTokenPosition):
 
 
 class SharePositionWithAddress(SecurityTokenPosition):
-    token_address: ValidatedEthereumAddress = Field(
+    token_address: EthereumAddress = Field(
         description="set when include_token_details=false"
     )
 
@@ -94,7 +93,7 @@ class SecurityTokenPositionWithDetail(
 
 
 class SecurityTokenPositionWithAddress(SecurityTokenPosition):
-    token_address: ValidatedEthereumAddress = Field(
+    token_address: EthereumAddress = Field(
         description="set when include_token_details=false or null"
     )
 
@@ -112,7 +111,7 @@ class MembershipPositionWithDetail(MembershipPosition):
 
 
 class MembershipPositionWithAddress(MembershipPosition):
-    token_address: ValidatedEthereumAddress = Field(
+    token_address: EthereumAddress = Field(
         description="set when include_token_details=false"
     )
 
@@ -131,7 +130,7 @@ class CouponPositionWithDetail(CouponPosition):
 
 
 class CouponPositionWithAddress(CouponPosition):
-    token_address: ValidatedEthereumAddress = Field(
+    token_address: EthereumAddress = Field(
         description="set when include_token_details=true"
     )
 
@@ -142,9 +141,9 @@ class LockEventCategory(StrEnum):
 
 
 class Locked(BaseModel):
-    token_address: ValidatedEthereumAddress
-    lock_address: ValidatedEthereumAddress
-    account_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
+    lock_address: EthereumAddress
+    account_address: EthereumAddress
     value: int
 
 
@@ -155,12 +154,10 @@ class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
 class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
-    msg_sender: Optional[ValidatedEthereumAddress] = Field(
-        ..., description="Message sender"
-    )
-    token_address: ValidatedEthereumAddress = Field(description="Token address")
-    lock_address: ValidatedEthereumAddress = Field(description="Lock address")
-    account_address: ValidatedEthereumAddress = Field(description="Account address")
+    msg_sender: Optional[EthereumAddress] = Field(..., description="Message sender")
+    token_address: EthereumAddress = Field(description="Token address")
+    lock_address: EthereumAddress = Field(description="Lock address")
+    account_address: EthereumAddress = Field(description="Account address")
     recipient_address: Optional[str] = Field(
         default=None, description="Recipient address"
     )
@@ -184,32 +181,25 @@ class CouponConsumption(BaseModel):
 ############################
 # REQUEST
 ############################
-@dataclass
-class ListAllTokenPositionQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    token_type_list: Annotated[
-        Optional[list[TokenType]], Query(description="type of token")
-    ] = None
+class ListAllTokenPositionQuery(BasePaginationQuery):
+    token_type_list: Optional[list[TokenType]] = Field(
+        None, description="type of token"
+    )
 
 
-@dataclass
-class ListAllPositionQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    include_token_details: Annotated[
-        Optional[bool], Query(description="include token details")
-    ] = False
-    enable_index: Annotated[
-        Optional[bool], Query(description="enable using indexed position data")
-    ] = None
+class ListAllPositionQuery(BasePaginationQuery):
+    include_token_details: Optional[bool] = Field(
+        False, description="include token details"
+    )
+    enable_index: Optional[bool] = Field(
+        None, description="enable using indexed position data"
+    )
 
 
-@dataclass
-class GetPositionQuery:
-    enable_index: Annotated[
-        Optional[bool], Query(description="enable using indexed position data")
-    ] = None
+class GetPositionQuery(BaseModel):
+    enable_index: Optional[bool] = Field(
+        None, description="enable using indexed position data"
+    )
 
 
 class ListAllLockedSortItem(StrEnum):
@@ -219,28 +209,20 @@ class ListAllLockedSortItem(StrEnum):
     value = "value"
 
 
-@dataclass
-class ListAllLockedPositionQuery:
-    token_address_list: Annotated[
-        list[StrictStr],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ]
-
-    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    sort_item: Annotated[ListAllLockedSortItem, Query(description="sort item")] = (
-        ListAllLockedSortItem.token_address
+class ListAllLockedPositionQuery(BasePaginationQuery):
+    token_address_list: list[StrictStr] = Field(
+        default_factory=list,
+        description="list of token address (**this affects total number**)",
     )
-    sort_order: Annotated[
-        SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
-    include_token_details: Annotated[
-        Optional[bool], Query(description="include token details")
-    ] = False
+    lock_address: Optional[str] = Field(None, description="lock address")
+    include_token_details: Optional[bool] = Field(
+        False, description="include token details"
+    )
+
+    sort_item: ListAllLockedSortItem = Field(
+        ListAllLockedSortItem.token_address, description="sort item"
+    )
+    sort_order: SortOrder = Field(SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class LockEventSortItem(StrEnum):
@@ -251,38 +233,26 @@ class LockEventSortItem(StrEnum):
     block_timestamp = "block_timestamp"
 
 
-@dataclass
-class ListAllLockEventQuery:
-    token_address_list: Annotated[
-        list[StrictStr],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ]
-
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-
-    msg_sender: Annotated[Optional[str], Query(description="message sender")] = None
-    lock_address: Annotated[Optional[str], Query(description="lock address")] = None
-    recipient_address: Annotated[
-        Optional[str], Query(description="recipient address")
-    ] = None
-    data: Annotated[Optional[str], Query(description="data")] = None
-    category: Annotated[
-        Optional[LockEventCategory], Query(description="history item category")
-    ] = None
-
-    sort_item: Annotated[LockEventSortItem, Query(description="sort item")] = (
-        LockEventSortItem.block_timestamp
+class ListAllLockEventQuery(BasePaginationQuery):
+    token_address_list: list[StrictStr] = Field(
+        default_factory=list,
+        description="list of token address (**this affects total number**)",
     )
-    sort_order: Annotated[
-        SortOrder, Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.DESC
-    include_token_details: Annotated[
-        Optional[bool], Query(description="include token details")
-    ] = False
+    msg_sender: Optional[str] = Field(None, description="message sender")
+    lock_address: Optional[str] = Field(None, description="lock address")
+    recipient_address: Optional[str] = Field(None, description="recipient address")
+    data: Optional[str] = Field(None, description="data")
+    category: Optional[LockEventCategory] = Field(
+        None, description="history item category"
+    )
+    include_token_details: Optional[bool] = Field(
+        False, description="include token details"
+    )
+
+    sort_item: LockEventSortItem = Field(
+        LockEventSortItem.block_timestamp, description="sort item"
+    )
+    sort_order: SortOrder = Field(SortOrder.DESC, description=SortOrder.__doc__)
 
 
 ############################

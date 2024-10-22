@@ -17,10 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Sequence
+from typing import Annotated, Sequence
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Query, Request
 from sqlalchemy import and_, desc, func, select
 
 from app import config, log
@@ -57,7 +57,7 @@ router = APIRouter(prefix="/DEX/Market", tags=["dex"])
     responses=get_routers_responses(NotSupportedError, InvalidParameterError),
 )
 async def retrieve_agreement(
-    req: Request, request_query: RetrieveAgreementQuery = Depends()
+    req: Request, request_query: Annotated[RetrieveAgreementQuery, Query()]
 ):
     """
     Returns agreement information of given id.
@@ -153,7 +153,7 @@ async def retrieve_agreement(
 async def list_all_membership_order_book(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllOrderBookQuery = Depends(),
+    request_query: Annotated[ListAllOrderBookQuery, Query()],
 ):
     """
     [Membership]Returns orderbook of given token.
@@ -264,7 +264,7 @@ async def list_all_membership_order_book(
     responses=get_routers_responses(NotSupportedError),
 )
 async def list_all_membership_last_price(
-    req: Request, request_query: ListAllLastPriceQuery = Depends()
+    req: Request, request_query: Annotated[ListAllLastPriceQuery, Query()]
 ):
     """
     [Membership]Returns last price of given token.
@@ -314,7 +314,7 @@ async def list_all_membership_last_price(
 async def list_all_membership_tick(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllTickQuery = Depends(),
+    request_query: Annotated[ListAllTickQuery, Query()],
 ):
     """
     [Membership]Returns ticks of given token.
@@ -385,7 +385,7 @@ async def list_all_membership_tick(
 async def list_all_coupon_order_book(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllOrderBookQuery = Depends(),
+    request_query: Annotated[ListAllOrderBookQuery, Query()],
 ):
     """
     [Coupon]Returns orderbook of given token.
@@ -494,7 +494,7 @@ async def list_all_coupon_order_book(
     responses=get_routers_responses(NotSupportedError),
 )
 async def list_all_coupon_last_price(
-    req: Request, request_query: ListAllLastPriceQuery = Depends()
+    req: Request, request_query: Annotated[ListAllLastPriceQuery, Query()]
 ):
     """
     [Coupon]Returns last price of given token.
@@ -546,7 +546,7 @@ async def list_all_coupon_last_price(
 async def list_all_coupon_tick(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllTickQuery = Depends(),
+    request_query: Annotated[ListAllTickQuery, Query()],
 ):
     """
     [Coupon]Returns ticks of given token.

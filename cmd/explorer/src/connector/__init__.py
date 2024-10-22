@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from dataclasses import asdict
 from typing import Any
 
 from aiohttp import ClientSession
@@ -59,7 +58,7 @@ async def list_block_data(
     session: ClientSession, url: str, query: ListBlockDataQuery
 ) -> BlockDataListResponse:
     async with session.get(
-        url=f"{url}/NodeInfo/BlockData", params=asdict(query, dict_factory=dict_factory)
+        url=f"{url}/NodeInfo/BlockData", params=query.model_dump_json()
     ) as resp:
         data = await resp.json()
         if resp.status == 404:
@@ -81,7 +80,7 @@ async def list_tx_data(
     session: ClientSession, url: str, query: ListTxDataQuery
 ) -> TxDataListResponse:
     async with session.get(
-        url=f"{url}/NodeInfo/TxData", params=asdict(query, dict_factory=dict_factory)
+        url=f"{url}/NodeInfo/TxData", params=query.model_dump_json()
     ) as resp:
         data = await resp.json()
         return TxDataListResponse.model_validate(data.get("data"))

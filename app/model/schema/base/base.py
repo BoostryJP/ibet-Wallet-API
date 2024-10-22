@@ -22,9 +22,14 @@ from enum import IntEnum, StrEnum
 from typing import Annotated, Any, Generic, Optional, TypeVar
 
 from annotated_types import Timezone
-from fastapi import Query
-from pydantic import AfterValidator, BaseModel, Field, WrapValidator, constr
-from pydantic.dataclasses import dataclass
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    NonNegativeInt,
+    WrapValidator,
+    constr,
+)
 
 from app.validator import ethereum_address_validator
 
@@ -49,7 +54,7 @@ EmailStr = constr(
     pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$", max_length=100
 )
 
-ValidatedEthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
+EthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
 
 NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
 
@@ -80,14 +85,15 @@ ValidatedNaiveUTCDatetime = Annotated[
 # REQUEST
 ############################
 class SortOrder(IntEnum):
+    """sort order(0: ASC, 1: DESC)"""
+
     ASC = 0
     DESC = 1
 
 
-@dataclass
-class ResultSetQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+class BasePaginationQuery(BaseModel):
+    offset: Optional[NonNegativeInt] = Field(None, description="Offset for pagination")
+    limit: Optional[NonNegativeInt] = Field(None, description="Limit for pagination")
 
 
 ############################

@@ -18,12 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-from typing import Any
+from typing import Annotated, Any
 
 import httpx
 from eth_account import Account
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Path, Query
 from hexbytes import HexBytes
 from rlp import decode
 from sqlalchemy import select
@@ -50,7 +50,11 @@ from app.model.schema import (
     WaitForTransactionReceiptQuery,
     WaitForTransactionReceiptResponse,
 )
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.model.schema.base import (
+    EthereumAddress,
+    GenericSuccessResponse,
+    SuccessResponse,
+)
 from app.utils.contract_error_code import error_code_msg
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -114,7 +118,8 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
     responses=get_routers_responses(InvalidParameterError),
 )
 async def get_transaction_count(
-    eth_address: str, query: GetTransactionCountQuery = Depends()
+    eth_address: Annotated[EthereumAddress, Path(description="ethereum address")],
+    query: Annotated[GetTransactionCountQuery, Query()],
 ):
     """
     Returns nonce counts of given ethereum address.
@@ -497,7 +502,7 @@ async def send_raw_transaction_no_wait(
     responses=get_routers_responses(DataNotExistsError),
 )
 async def wait_for_transaction_receipt(
-    query: WaitForTransactionReceiptQuery = Depends(),
+    query: Annotated[WaitForTransactionReceiptQuery, Query()],
 ):
     """
     Waits for transaction receipt returned.

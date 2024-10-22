@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated, Optional, Sequence
 
-from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
@@ -34,16 +34,17 @@ from app.errors import (
 from app.model.blockchain import CouponToken
 from app.model.db import IDXCouponToken, Listing
 from app.model.schema import (
+    CouponTokensQuery,
     ListAllCouponTokenAddressesResponse,
     ListAllCouponTokensQuery,
     ListAllCouponTokensResponse,
     RetrieveCouponTokenResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -63,14 +64,7 @@ router = APIRouter(prefix="/Token/Coupon", tags=["token_info"])
 async def list_all_coupon_tokens(
     async_session: DBAsyncSession,
     req: Request,
-    address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ],
-    request_query: ListAllCouponTokensQuery = Depends(),
+    request_query: Annotated[ListAllCouponTokensQuery, Query()],
 ):
     """
     [Coupon]Returns a detail list of tokens.
@@ -99,8 +93,8 @@ async def list_all_coupon_tokens(
         .join(Listing, Listing.token_address == IDXCouponToken.token_address)
         .where(Listing.is_public == True)
     )
-    if len(address_list):
-        stmt = stmt.where(IDXCouponToken.token_address.in_(address_list))
+    if len(request_query.address_list):
+        stmt = stmt.where(IDXCouponToken.token_address.in_(request_query.address_list))
     total = await async_session.scalar(
         select(func.count()).select_from(stmt.subquery())
     )
@@ -173,7 +167,7 @@ async def list_all_coupon_tokens(
 async def list_all_coupon_token_addresses(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllCouponTokensQuery = Depends(),
+    request_query: Annotated[CouponTokensQuery, Query()],
 ):
     """
     [Coupon]Returns a list of token addresses.
@@ -275,9 +269,7 @@ async def list_all_coupon_token_addresses(
 async def retrieve_coupon_token(
     async_session: DBAsyncSession,
     req: Request,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     [Coupon]Returns the details of the token.
