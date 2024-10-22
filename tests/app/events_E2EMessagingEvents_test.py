@@ -465,13 +465,13 @@ class TestEventsE2EMessaging:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "from_block"],
                     "msg": "Field required",
                     "type": "missing",
                 },
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "to_block"],
                     "msg": "Field required",
                     "type": "missing",
@@ -599,14 +599,11 @@ class TestEventsE2EMessaging:
                 {
                     "ctx": {"error": {}},
                     "input": {
-                        "argument_filters": None,
-                        "event": None,
-                        "from_block": latest_block_number,
-                        "to_block": latest_block_number - 1,
+                        "from_block": str(latest_block_number),
+                        "to_block": str(latest_block_number - 1),
                     },
-                    "loc": [],
-                    "msg": "Value error, to_block must be greater than or equal "
-                    "to the from_block",
+                    "loc": ["query"],
+                    "msg": "Value error, to_block must be greater than or equal to the from_block",
                     "type": "value_error",
                 }
             ],

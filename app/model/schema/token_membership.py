@@ -18,13 +18,16 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+from app.model.schema.base import (
+    BasePaginationQuery,
+    EthereumAddress,
+    ResultSet,
+    SortOrder,
+)
 
 ############################
 # COMMON
@@ -47,33 +50,31 @@ class MembershipTokensSortItem(StrEnum):
     created = "created"
 
 
-@dataclass
-class ListAllMembershipTokensQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    owner_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="issuer address")
-    ] = None
-    name: Annotated[Optional[str], Query(description="token name")] = None
-    symbol: Annotated[Optional[str], Query(description="token symbol")] = None
-    company_name: Annotated[Optional[str], Query(description="company name")] = None
-    tradable_exchange: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="tradable exchange")
-    ] = None
-    status: Annotated[Optional[bool], Query(description="token status")] = None
-    transferable: Annotated[
-        Optional[bool], Query(description="transferable status")
-    ] = None
-    initial_offering_status: Annotated[
-        Optional[bool], Query(description="offering status")
-    ] = None
+class MembershipTokensQuery(BasePaginationQuery):
+    owner_address: Optional[EthereumAddress] = Field(None, description="issuer address")
+    name: Optional[str] = Field(None, description="token name")
+    symbol: Optional[str] = Field(None, description="token symbol")
+    company_name: Optional[str] = Field(None, description="company name")
+    tradable_exchange: Optional[EthereumAddress] = Field(
+        None, description="tradable exchange"
+    )
+    status: Optional[bool] = Field(None, description="token status")
+    transferable: Optional[bool] = Field(None, description="transferable status")
+    initial_offering_status: Optional[bool] = Field(None, description="offering status")
 
-    sort_item: Annotated[
-        Optional[MembershipTokensSortItem], Query(description="sort item")
-    ] = MembershipTokensSortItem.created
-    sort_order: Annotated[
-        Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
+    sort_item: Optional[MembershipTokensSortItem] = Field(
+        MembershipTokensSortItem.created, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        SortOrder.ASC, description=SortOrder.__doc__
+    )
+
+
+class ListAllMembershipTokensQuery(MembershipTokensQuery):
+    address_list: list[EthereumAddress] = Field(
+        default_factory=list,
+        description="list of token address (**this affects total number**)",
+    )
 
 
 ############################
@@ -85,15 +86,15 @@ class MembershipImage(BaseModel):
 
 
 class RetrieveMembershipTokenResponse(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
     token_template: str = Field(examples=["IbetMembership"])
-    owner_address: ValidatedEthereumAddress = Field(description="issuer address")
+    owner_address: EthereumAddress = Field(description="issuer address")
     company_name: str
     rsa_publickey: str
     name: str = Field(description="token name")
     symbol: str = Field(description="token symbol")
     total_supply: int
-    tradable_exchange: ValidatedEthereumAddress
+    tradable_exchange: EthereumAddress
     contact_information: str
     privacy_policy: str
     status: bool
@@ -115,4 +116,4 @@ class ListAllMembershipTokensResponse(BaseModel):
 
 class ListAllMembershipTokenAddressesResponse(BaseModel):
     result_set: ResultSet
-    address_list: list[ValidatedEthereumAddress]
+    address_list: list[EthereumAddress]

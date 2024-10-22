@@ -17,8 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Annotated
+
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Query
 
 from app import config, log
 from app.contracts import AsyncContract
@@ -72,7 +74,7 @@ async def tagging_account_address(
     responses=get_routers_responses(),
 )
 async def get_payment_account_registration_status(
-    query: RetrievePaymentAccountQuery = Depends(),
+    query: Annotated[RetrievePaymentAccountQuery, Query()],
 ):
     """
     Returns payment registration status of given account.
@@ -117,7 +119,7 @@ async def get_payment_account_registration_status(
     responses=get_routers_responses(),
 )
 async def get_personal_info_registration_status(
-    query: RetrievePersonalInfoQuery = Depends(),
+    query: Annotated[RetrievePersonalInfoQuery, Query()],
 ):
     """
     Returns personal information about given address.

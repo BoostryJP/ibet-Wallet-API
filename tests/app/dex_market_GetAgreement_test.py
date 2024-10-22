@@ -291,19 +291,19 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "order_id"],
                     "msg": "Field required",
                     "type": "missing",
                 },
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "agreement_id"],
                     "msg": "Field required",
                     "type": "missing",
                 },
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "exchange_address"],
                     "msg": "Field required",
                     "type": "missing",

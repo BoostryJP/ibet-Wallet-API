@@ -35,7 +35,9 @@ from .bc_explorer import (
     TxDataResponse,
 )
 from .company_info import (
-    ListAllCompanyInfoResponse,
+    ListAllCompaniesQuery,
+    ListAllCompaniesResponse,
+    ListAllCompanyTokensQuery,
     ListAllCompanyTokensResponse,
     RetrieveCompanyInfoResponse,
 )
@@ -137,8 +139,10 @@ from .token_bond import (
     ListAllStraightBondTokensQuery,
     ListAllStraightBondTokensResponse,
     RetrieveStraightBondTokenResponse,
+    StraightBondTokensQuery,
 )
 from .token_coupon import (
+    CouponTokensQuery,
     ListAllCouponTokenAddressesResponse,
     ListAllCouponTokensQuery,
     ListAllCouponTokensResponse,
@@ -154,6 +158,7 @@ from .token_membership import (
     ListAllMembershipTokenAddressesResponse,
     ListAllMembershipTokensQuery,
     ListAllMembershipTokensResponse,
+    MembershipTokensQuery,
     RetrieveMembershipTokenResponse,
 )
 from .token_share import (
@@ -161,6 +166,7 @@ from .token_share import (
     ListAllShareTokensQuery,
     ListAllShareTokensResponse,
     RetrieveShareTokenResponse,
+    ShareTokensQuery,
 )
 from .user_info import (
     RetrievePaymentAccountQuery,

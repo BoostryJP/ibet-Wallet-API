@@ -18,13 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ValidatedEthereumAddress
+from app.model.schema.base import EthereumAddress
 
 ############################
 # COMMON
@@ -35,34 +33,21 @@ from app.model.schema.base import ValidatedEthereumAddress
 # REQUEST
 ############################
 class TaggingAccountAddressRequest(BaseModel):
-    account_address: ValidatedEthereumAddress = Field(
-        ..., description="Account address"
-    )
+    account_address: EthereumAddress = Field(..., description="Account address")
     account_tag: str | None = Field(..., description="Account tag", max_length=50)
 
 
-@dataclass
-class RetrievePaymentAccountQuery:
-    account_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="Account Address")
-    ]
-    agent_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="Agent Address")
-    ]
+class RetrievePaymentAccountQuery(BaseModel):
+    account_address: EthereumAddress = Field(..., description="Account Address")
+    agent_address: EthereumAddress = Field(..., description="Agent Address")
 
 
-@dataclass
-class RetrievePersonalInfoQuery:
-    account_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="Account Address")
-    ]
-    owner_address: Annotated[
-        ValidatedEthereumAddress, Query(..., description="owner(issuer) address")
-    ]
-    personal_info_address: Annotated[
-        Optional[ValidatedEthereumAddress],
-        Query(description="PersonalInfo contract address"),
-    ] = None
+class RetrievePersonalInfoQuery(BaseModel):
+    account_address: EthereumAddress = Field(..., description="Account Address")
+    owner_address: EthereumAddress = Field(..., description="Owner(issuer) address")
+    personal_info_address: Optional[EthereumAddress] = Field(
+        None, description="PersonalInfo contract address"
+    )
 
 
 ############################
@@ -77,14 +62,14 @@ class ApprovalStatus(int, Enum):
 
 
 class RetrievePaymentAccountRegistrationStatusResponse(BaseModel):
-    account_address: ValidatedEthereumAddress
-    agent_address: ValidatedEthereumAddress
+    account_address: EthereumAddress
+    agent_address: EthereumAddress
     approval_status: ApprovalStatus = Field(
         description="approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))"
     )
 
 
 class RetrievePersonalInfoRegistrationStatusResponse(BaseModel):
-    account_address: ValidatedEthereumAddress
-    owner_address: ValidatedEthereumAddress = Field(description="link address")
+    account_address: EthereumAddress
+    owner_address: EthereumAddress = Field(description="link address")
     registered: bool

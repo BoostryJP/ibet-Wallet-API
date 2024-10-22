@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated, Optional, Sequence
 
-from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
@@ -37,13 +37,14 @@ from app.model.schema import (
     ListAllMembershipTokenAddressesResponse,
     ListAllMembershipTokensQuery,
     ListAllMembershipTokensResponse,
+    MembershipTokensQuery,
     RetrieveMembershipTokenResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -63,14 +64,7 @@ router = APIRouter(prefix="/Token/Membership", tags=["token_info"])
 async def list_all_membership_tokens(
     async_session: DBAsyncSession,
     req: Request,
-    address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ],
-    request_query: ListAllMembershipTokensQuery = Depends(),
+    request_query: Annotated[ListAllMembershipTokensQuery, Query()],
 ):
     """
     [Membership]Returns a detail list of tokens.
@@ -99,8 +93,10 @@ async def list_all_membership_tokens(
         .join(Listing, Listing.token_address == IDXMembershipToken.token_address)
         .where(Listing.is_public == True)
     )
-    if len(address_list):
-        stmt = stmt.where(IDXMembershipToken.token_address.in_(address_list))
+    if len(request_query.address_list):
+        stmt = stmt.where(
+            IDXMembershipToken.token_address.in_(request_query.address_list)
+        )
     total = await async_session.scalar(
         select(func.count()).select_from(stmt.subquery())
     )
@@ -175,7 +171,7 @@ async def list_all_membership_tokens(
 async def list_all_membership_token_addresses(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllMembershipTokensQuery = Depends(),
+    request_query: Annotated[MembershipTokensQuery, Query()],
 ):
     """
     [Membership]Returns a list of token addresses.
@@ -277,9 +273,7 @@ async def list_all_membership_token_addresses(
 async def retrieve_membership_token(
     async_session: DBAsyncSession,
     req: Request,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     [Membership]Returns the details of the token.

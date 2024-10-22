@@ -26,7 +26,7 @@ from app.model.db import Company, IDXBondToken, IDXShareToken
 from tests.account_config import eth_account
 
 
-class TestCompanyInfoCompanyInfo:
+class TestRetrieveCompanyInfo:
     # テスト対象API
     apiurl_base = "/Companies/"
 

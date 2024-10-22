@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import timezone
 from typing import Annotated, Optional, Sequence
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Path, Query
 from pydantic import UUID4
 from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
 from sqlalchemy.orm import aliased
@@ -58,9 +58,9 @@ from app.model.schema import (
     TransferHistoriesResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
-    ValidatedEthereumAddress,
     ValueOperator,
 )
 from app.utils.asyncio_utils import SemaphoreTaskGroup
@@ -82,9 +82,7 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def get_token_status(
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns status of given token.
@@ -145,10 +143,8 @@ async def get_token_status(
 )
 async def get_token_holders(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: ListAllTokenHoldersQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListAllTokenHoldersQuery, Query()],
 ):
     """
     Returns a list of token holders for a given token.
@@ -338,9 +334,7 @@ async def get_token_holders(
 async def search_token_holders(
     async_session: DBAsyncSession,
     data: SearchTokenHoldersRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns a list of token holders for a given token using detailed search query.
@@ -533,10 +527,8 @@ async def search_token_holders(
 )
 async def get_token_holders_count(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: RetrieveTokenHoldersCountQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[RetrieveTokenHoldersCountQuery, Query()],
 ):
     """
     Returns count of token holders for a given token.
@@ -615,9 +607,7 @@ async def get_token_holders_count(
 async def create_token_holders_collection(
     async_session: DBAsyncSession,
     data: CreateTokenHoldersCollectionRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Enqueues task of collecting token holders for a given block number.
@@ -700,9 +690,7 @@ async def create_token_holders_collection(
 )
 async def get_token_holders_collection(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
     list_id: UUID4 = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
@@ -769,10 +757,8 @@ async def get_token_holders_collection(
 )
 async def list_all_transfer_histories(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: ListAllTransferHistoryQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListAllTransferHistoryQuery, Query()],
 ):
     """
     Returns a list of transfer histories for a given token.
@@ -881,9 +867,7 @@ async def list_all_transfer_histories(
 async def search_transfer_histories(
     async_session: DBAsyncSession,
     data: SearchTransferHistoryRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns a list of transfer histories for a given token using detailed search query.
@@ -1016,10 +1000,8 @@ async def search_transfer_histories(
 )
 async def list_all_transfer_approval_histories(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: ListAllTransferApprovalHistoryQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListAllTransferApprovalHistoryQuery, Query()],
 ):
     """
     Returns a list of transfer approval histories for a given token.
@@ -1121,9 +1103,7 @@ async def list_all_transfer_approval_histories(
 async def search_transfer_approval_histories(
     async_session: DBAsyncSession,
     data: SearchTransferApprovalHistoryRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns a list of transfer approval histories for a given token using detailed search query.

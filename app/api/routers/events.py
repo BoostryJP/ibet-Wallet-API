@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 from web3.exceptions import Web3ValidationError
 
 from app import config, log
@@ -43,9 +43,9 @@ from app.model.schema import (
     SecurityTokenEventArguments,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -69,7 +69,7 @@ router = APIRouter(prefix="/Events", tags=["contract_log"])
     ),
 )
 async def list_all_e2e_messaging_event_logs(
-    request_query: E2EMessagingEventsQuery = Depends(),
+    request_query: Annotated[E2EMessagingEventsQuery, Query()],
 ):
     """
     Returns a list of E2EMessaging event logs.
@@ -143,7 +143,7 @@ async def list_all_e2e_messaging_event_logs(
     ),
 )
 async def list_all_ibet_escrow_event_logs(
-    request_query: IbetEscrowEventsQuery = Depends(),
+    request_query: Annotated[IbetEscrowEventsQuery, Query()],
 ):
     """
     Returns a list of IbetEscrow event logs.
@@ -228,7 +228,7 @@ async def list_all_ibet_escrow_event_logs(
     ),
 )
 async def list_all_ibet_security_token_escrow_event_logs(
-    request_query: IbetSecurityTokenEscrowEventsQuery = Depends(),
+    request_query: Annotated[IbetSecurityTokenEscrowEventsQuery, Query()],
 ):
     """
     Returns a list of IbetSecurityTokenEscrow event logs.
@@ -419,10 +419,8 @@ async def list_all_ibet_security_token_dvp_event_logs(
     ),
 )
 async def list_all_ibet_security_token_interface_event_logs(
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: IbetSecurityTokenInterfaceEventsQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[IbetSecurityTokenInterfaceEventsQuery, Query()],
 ):
     """
     Returns a list of IbetSecurityTokenInterface event logs.
