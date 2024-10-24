@@ -79,7 +79,9 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     summary="Token Status",
     operation_id="TokenStatus",
     response_model=GenericSuccessResponse[TokenStatusResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+    responses=get_routers_responses(
+        DataNotExistsError, InvalidParameterError, ServiceUnavailable
+    ),
 )
 async def get_token_status(
     token_address: Annotated[EthereumAddress, Path(description="Token address")],
@@ -87,21 +89,22 @@ async def get_token_status(
     """
     Returns status of given token.
     """
-    # TokenList-Contractへの接続
-    list_contract = AsyncContract.get_contract(
-        "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
-    )
-
-    # TokenList-Contractからトークンの情報を取得する
-    token = await AsyncContract.call_function(
-        contract=list_contract,
-        function_name="getTokenByAddress",
-        args=(token_address,),
-        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
-    )
-    token_template = token[1]
-    owner_address = token[2]
     try:
+        # TokenList-Contractへの接続
+        list_contract = AsyncContract.get_contract(
+            "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
+        )
+
+        # TokenList-Contractからトークンの情報を取得する
+        token = await AsyncContract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+        )
+        token_template = token[1]
+        owner_address = token[2]
+
         # Token-Contractへの接続
         token_contract = AsyncContract.get_contract(token_template, token_address)
         tasks = await SemaphoreTaskGroup.run(
@@ -117,11 +120,9 @@ async def get_token_status(
             max_concurrency=3,
         )
         name, status, transferable = [task.result() for task in tasks]
-    except* ServiceUnavailable as e:
-        LOG.notice(e)
-        raise DataNotExistsError("token_address: %s" % token_address)
-    except* Exception as e:
-        LOG.error(e)
+    except* ServiceUnavailable:
+        raise ServiceUnavailable("Service is temporarily unavailable") from None
+    except* Exception:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     response_json = {
