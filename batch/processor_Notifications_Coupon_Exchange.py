@@ -594,7 +594,7 @@ async def main():
             )
             [task.result() for task in tasks]
         except ExceptionGroup as e:
-            LOG.error(e)
+            LOG.error(e.exceptions)
 
         elapsed_time = time.time() - start_time
         LOG.info("<LOOP> finished in {} secs".format(elapsed_time))
