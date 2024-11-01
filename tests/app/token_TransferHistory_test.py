@@ -64,6 +64,11 @@ class TestTokenTransferHistory:
         _transfer.value = transfer_event["value"]
         _transfer.source_event = transfer_source_event.value
         _transfer.data = transfer_event_data
+        _transfer.message = (
+            transfer_event_data.get("message")
+            if transfer_event_data is not None
+            else None
+        )
         if created is not None:
             _transfer.created = created
         session.add(_transfer)
@@ -176,7 +181,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -202,6 +207,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
         assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
         assert data[1]["token_address"] == transfer_event_2["token_address"]
@@ -209,7 +215,8 @@ class TestTokenTransferHistory:
         assert data[1]["to_address"] == transfer_event_2["to_address"]
         assert data[1]["value"] == transfer_event_2["value"]
         assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[1]["data"] == {"message": "unlock"}
+        assert data[1]["data"] == {"message": "force_unlock"}
+        assert data[1]["message"] == "force_unlock"
 
     # Normal_3_2_1
     # Transferイベントあり：2件
@@ -255,7 +262,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -283,6 +290,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
         assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
         assert data[1]["token_address"] == transfer_event_2["token_address"]
@@ -290,7 +298,8 @@ class TestTokenTransferHistory:
         assert data[1]["to_address"] == transfer_event_2["to_address"]
         assert data[1]["value"] == transfer_event_2["value"]
         assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[1]["data"] == {"message": "unlock"}
+        assert data[1]["data"] == {"message": "force_unlock"}
+        assert data[1]["message"] == "force_unlock"
 
     # Normal_3_2_2
     # Transferイベントあり：2件
@@ -336,7 +345,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -364,6 +373,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
         assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
         assert data[1]["token_address"] == transfer_event_2["token_address"]
@@ -371,7 +381,8 @@ class TestTokenTransferHistory:
         assert data[1]["to_address"] == transfer_event_2["to_address"]
         assert data[1]["value"] == transfer_event_2["value"]
         assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[1]["data"] == {"message": "unlock"}
+        assert data[1]["data"] == {"message": "force_unlock"}
+        assert data[1]["message"] == "force_unlock"
 
     # Normal_3_2_3
     # Transferイベントあり：2件
@@ -410,7 +421,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -468,7 +479,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -495,7 +506,8 @@ class TestTokenTransferHistory:
         assert data[0]["to_address"] == transfer_event_2["to_address"]
         assert data[0]["value"] == transfer_event_2["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[0]["data"] == {"message": "unlock"}
+        assert data[0]["data"] == {"message": "force_unlock"}
+        assert data[0]["message"] == "force_unlock"
 
     # Normal_4_2
     # Transferイベントあり：2件
@@ -534,13 +546,13 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.get(apiurl, params={"data": "unlock"})
+        resp = client.get(apiurl, params={"data": "force_unlock"})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -559,7 +571,8 @@ class TestTokenTransferHistory:
         assert data[0]["to_address"] == transfer_event_2["to_address"]
         assert data[0]["value"] == transfer_event_2["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[0]["data"] == {"message": "unlock"}
+        assert data[0]["data"] == {"message": "force_unlock"}
+        assert data[0]["message"] == "force_unlock"
 
     # Normal_4_3_1
     # Transferイベントあり：2件
@@ -598,7 +611,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
         session.commit()
 
@@ -623,6 +636,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_4_3_2
     # Transferイベントあり：2件
@@ -661,7 +675,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
         session.commit()
 
@@ -685,7 +699,8 @@ class TestTokenTransferHistory:
         assert data[0]["to_address"] == transfer_event_2["to_address"]
         assert data[0]["value"] == transfer_event_2["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[0]["data"] == {"message": "unlock"}
+        assert data[0]["data"] == {"message": "force_unlock"}
+        assert data[0]["message"] == "force_unlock"
 
     # Normal_4_3_3
     # Transferイベントあり：2件
@@ -724,7 +739,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
         session.commit()
 
@@ -749,6 +764,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_4_4
     # Transferイベントあり：2件
@@ -787,7 +803,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -815,6 +831,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_4_5
     # Transferイベントあり：2件
@@ -853,7 +870,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -879,6 +896,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_4_6
     # Transferイベントあり：2件
@@ -917,7 +935,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -943,6 +961,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_4_7
     # Transferイベントあり : 2件
@@ -985,7 +1004,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
             created=base_time - timedelta(seconds=1),
         )
 
@@ -1011,6 +1030,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_4_8
     # Transferイベントあり : 2件
@@ -1053,7 +1073,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
             created=base_time + timedelta(seconds=1),
         )
 
@@ -1079,6 +1099,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     # Normal_5_1
     # offset=1, limit=設定なし
@@ -1117,7 +1138,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -1143,7 +1164,8 @@ class TestTokenTransferHistory:
         assert data[0]["to_address"] == transfer_event_2["to_address"]
         assert data[0]["value"] == transfer_event_2["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[0]["data"] == {"message": "unlock"}
+        assert data[0]["data"] == {"message": "force_unlock"}
+        assert data[0]["message"] == "force_unlock"
 
     # Normal_5_2
     # offset=0, limit=設定なし
@@ -1182,7 +1204,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -1209,6 +1231,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
         assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
         assert data[1]["token_address"] == transfer_event_2["token_address"]
@@ -1216,7 +1239,8 @@ class TestTokenTransferHistory:
         assert data[1]["to_address"] == transfer_event_2["to_address"]
         assert data[1]["value"] == transfer_event_2["value"]
         assert data[1]["source_event"] == IDXTransferSourceEventType.UNLOCK.value
-        assert data[1]["data"] == {"message": "unlock"}
+        assert data[1]["data"] == {"message": "force_unlock"}
+        assert data[1]["message"] == "force_unlock"
 
     # Normal_5_3
     # offset =設定なし, limit=1
@@ -1255,7 +1279,7 @@ class TestTokenTransferHistory:
             session=session,
             transfer_event=transfer_event_2,
             transfer_source_event=IDXTransferSourceEventType.UNLOCK,
-            transfer_event_data={"message": "unlock"},
+            transfer_event_data={"message": "force_unlock"},
         )
 
         session.commit()
@@ -1282,6 +1306,7 @@ class TestTokenTransferHistory:
         assert data[0]["value"] == transfer_event_1["value"]
         assert data[0]["source_event"] == IDXTransferSourceEventType.TRANSFER.value
         assert data[0]["data"] is None
+        assert data[0]["message"] is None
 
     ####################################################################
     # Error

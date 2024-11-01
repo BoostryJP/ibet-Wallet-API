@@ -264,6 +264,7 @@ class TestProcessor:
             token=share_token,
             lock_address=self.trader2["account_address"],
             amount=50000,
+            data_str=json.dumps({"message": "garnishment"}),
         )
         share_unlock(
             invoker=self.trader2,
@@ -271,7 +272,7 @@ class TestProcessor:
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
             amount=50000,
-            data_str=json.dumps({"message": "unlock"}),
+            data_str=json.dumps({"invalid_message": "invalid_value"}),
         )
         block_number_2 = web3.eth.block_number
 
@@ -306,7 +307,8 @@ class TestProcessor:
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 50000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
-        assert idx_transfer.data == {"message": "unlock"}
+        assert idx_transfer.data == {}
+        assert idx_transfer.message is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -355,6 +357,7 @@ class TestProcessor:
             token=share_token,
             lock_address=self.trader2["account_address"],
             amount=50000,
+            data_str=json.dumps({"message": "garnishment"}),
         )
         share_unlock(
             invoker=self.trader2,
@@ -362,6 +365,7 @@ class TestProcessor:
             target=self.trader["account_address"],
             recipient=self.trader["account_address"],
             amount=50000,
+            data_str=json.dumps({"message": "force_unlock"}),
         )
         block_number = web3.eth.block_number
 
@@ -434,6 +438,7 @@ class TestProcessor:
             token=share_token,
             lock_address=self.trader2["account_address"],
             amount=100000,
+            data_str=json.dumps({"message": "garnishment"}),
         )
         share_unlock(
             invoker=self.trader2,
@@ -441,7 +446,7 @@ class TestProcessor:
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
             amount=50000,
-            data_str=json.dumps({"message": "unlock"}),
+            data_str=json.dumps({"message": "force_unlock"}),
         )
         block_number_3 = web3.eth.block_number
 
@@ -451,7 +456,7 @@ class TestProcessor:
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
             amount=50000,
-            data_str=json.dumps({"message": "unlock"}),
+            data_str=json.dumps({"message": "force_unlock"}),
         )
         block_number_4 = web3.eth.block_number
 
@@ -499,7 +504,8 @@ class TestProcessor:
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 50000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
-        assert idx_transfer.data == {"message": "unlock"}
+        assert idx_transfer.data == {"message": "force_unlock"}
+        assert idx_transfer.message == "force_unlock"
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -512,7 +518,8 @@ class TestProcessor:
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 50000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
-        assert idx_transfer.data == {"message": "unlock"}
+        assert idx_transfer.data == {"message": "force_unlock"}
+        assert idx_transfer.message == "force_unlock"
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
