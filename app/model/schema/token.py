@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import UUID4, BaseModel, Field, StrictStr
 
@@ -365,7 +365,7 @@ class TokenHoldersCollectionResponse(BaseModel):
     )
 
 
-class TransferHistory(BaseModel):
+class TransferHistoryBase(BaseModel):
     transaction_hash: str = Field(description="Transaction hash")
     token_address: EthereumAddress = Field(description="Token address")
     from_address: EthereumAddress = Field(
@@ -375,16 +375,47 @@ class TransferHistory(BaseModel):
         description="Account address of transfer destination"
     )
     value: int = Field(description="Transfer quantity")
-    source_event: TransferSourceEvent = Field(description="Source Event")
     data: dict | None = Field(description="Event data")
+    message: (
+        Literal[
+            "garnishment",
+            "inheritance",
+            "force_unlock",
+        ]
+        | None
+    )
     created: str = Field(
         description="block_timestamp when Transfer log was emitted (local timezone)"
     )
 
 
+class TransferHistory(TransferHistoryBase):
+    source_event: Literal[TransferSourceEvent.Transfer] = Field(
+        description="Source Event"
+    )
+    data: None = Field(description="Event data")
+
+
+class DataMessage(BaseModel):
+    message: Literal[
+        "garnishment",
+        "inheritance",
+        "force_unlock",
+    ]
+
+
+class UnlockTransferHistory(TransferHistoryBase):
+    source_event: Literal[TransferSourceEvent.Unlock] = Field(
+        description="Source Event"
+    )
+    data: DataMessage | dict = Field(description="Event data")
+
+
 class TransferHistoriesResponse(BaseModel):
     result_set: ResultSet
-    transfer_history: list[TransferHistory] = Field(description="Transfer history")
+    transfer_history: list[TransferHistory | UnlockTransferHistory] = Field(
+        description="Transfer history"
+    )
 
 
 class TransferApprovalHistory(BaseModel):

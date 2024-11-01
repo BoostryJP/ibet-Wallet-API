@@ -482,11 +482,11 @@ def share_approve_transfer(invoker, token, application_id, application_data):
 
 
 # SHAREトークン：資産ロック
-def share_lock(invoker, token, lock_address: str, amount: int):
+def share_lock(invoker, token, lock_address: str, amount: int, data_str: str = ""):
     web3.eth.default_account = invoker["account_address"]
 
     TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.lock(lock_address, amount, "").transact(
+    TokenContract.functions.lock(lock_address, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
 

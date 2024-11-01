@@ -42,6 +42,7 @@ from .idx_token import (
 )
 from .idx_token_list import IDXTokenListBlockNumber, IDXTokenListItem
 from .idx_transfer import (
+    DataMessage,
     IDXTransfer,
     IDXTransferBlockNumber,
     IDXTransferSourceEventType,
