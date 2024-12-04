@@ -32,6 +32,13 @@ RUN apt-get update -q \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# install uv
+ADD https://astral.sh/uv/$UV_VERSION/install.sh /uv-installer.sh
+RUN INSTALLER_NO_MODIFY_PATH=1 sh /uv-installer.sh && rm /uv-installer.sh
+
+# install Python
+RUN uv python install $PYTHON_VERSION
+
 # prepare venv
 USER apl
 RUN mkdir /home/apl/.venv
@@ -46,8 +53,7 @@ RUN echo '. $HOME/.venv/bin/activate' >> ~apl/.bashrc
 
 # install python packages
 COPY --chown=apl:apl . /app/ibet-Wallet-API
-RUN . ~/.bash_profile \
- && cd /app/ibet-Wallet-API \
+RUN cd /app/ibet-Wallet-API \
  && uv venv $UV_PROJECT_ENVIRONMENT \
  && uv sync --frozen --no-dev --no-install-project \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
