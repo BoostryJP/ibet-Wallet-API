@@ -51,9 +51,14 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ### Install packages
 
+Create virtual environment with:
+```bash
+$ uv venv
+```
+
 Install python packages with:
 ```bash
-$ poetry install --no-root --only main -E ibet-explorer
+$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
 ```
 
 ### Setting environment variables
@@ -109,16 +114,21 @@ You will see the alternative automatic documentation provided by ReDoc:
 
 ## Running the tests
 
+Create virtual environment with:
+```bash
+$ uv venv
+```
+
 Install packages with:
 ```bash
-$ poetry install --no-root
+$ uv sync --frozen --no-install-project
 ```
 
 You can run the tests with:
 ```bash
 $ export UNIT_TEST_MODE=1
 $ export RESPONSE_VALIDATION_MODE=1
-$ pytest tests/
+$ uv run pytest tests/
 ```
 
 ## Branching model

@@ -1,26 +1,26 @@
 .PHONY: format lint doc test test_migrations run
 
 install:
-	poetry install --no-root -E ibet-explorer
-	poetry run pre-commit install
+	uv sync --frozen --no-install-project --all-extras
+	uv run pre-commit install
 
 update:
-	poetry update
+	uv lock --upgrade
 
 format:
-	poetry run ruff format && poetry run ruff check --fix --select I
+	uv run ruff format && uv run ruff check --fix --select I
 
 lint:
-	poetry run ruff check --fix
+	uv run ruff check --fix
 
 doc:
-	poetry run python docs/generate_openapi_doc.py
+	uv run python docs/generate_openapi_doc.py
 
 test:
-	pytest tests/ ${ARG}
+	uv run pytest tests/ ${ARG}
 
 test_migrations:
-	poetry run pytest -vv --test-alembic -m "alembic"
+	uv run pytest -vv --test-alembic -m "alembic"
 
 run:
-	gunicorn --worker-class server.AppUvicornWorker app.main:app
+	uv run gunicorn --worker-class server.AppUvicornWorker app.main:app

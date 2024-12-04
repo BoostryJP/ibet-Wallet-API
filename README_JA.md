@@ -52,9 +52,14 @@
 
 ### パッケージインストール
 
+以下のコマンドで Python の仮想環境を作成します。
+```bash
+$ uv venv
+```
+
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ poetry install --no-root --only main -E explorer
+$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
 ```
 
 ### 環境変数の設定
@@ -108,15 +113,20 @@ ReDoc 形式のドキュメントを参照することができるはずです�
 
 ## テストの実行
 
+テストで利用する Python の仮想環境を作成します。
+```bash
+$ uv venv
+```
+
 テストで利用するパッケージをインストールします。
 ```bash
-$ poetry install --no-root
+$ uv sync --frozen --no-install-project
 ```
 
 以下のようにテストを実行します。
 ```bash
 $ export UNIT_TEST_MODE=1
-$ pytest tests/
+$ uv run pytest tests/
 ```
 
 ## ブランチ作成方針
