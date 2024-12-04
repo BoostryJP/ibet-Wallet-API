@@ -10,10 +10,14 @@ requires-python = "==3.12.2"
 dependencies = []
 
 [project.scripts]
-ibet-explorer = "src.main:app"
+ibet-explorer = "main:app"
 
 [tool.mypy]
 python_version = "3.12"
 no_strict_optional = true
 ignore_missing_imports = true
 check_untyped_defs = true
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["*"]

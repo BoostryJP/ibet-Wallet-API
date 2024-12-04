@@ -1,7 +1,7 @@
 .PHONY: format lint doc test test_migrations run
 
 install:
-	uv sync --frozen --no-install-project
+	uv sync --frozen --no-install-project --all-extras
 	uv run pre-commit install
 
 update:

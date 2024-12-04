@@ -55,7 +55,7 @@ RUN echo '. $HOME/.venv/bin/activate' >> ~apl/.bashrc
 COPY --chown=apl:apl . /app/ibet-Wallet-API
 RUN cd /app/ibet-Wallet-API \
  && uv venv $UV_PROJECT_ENVIRONMENT \
- && uv sync --frozen --no-dev --no-install-project \
+ && uv sync --frozen --no-install-project --no-dev --extra ibet-explorer \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/uv.lock \
  && rm -rf /app/ibet-Wallet-API/tests/
