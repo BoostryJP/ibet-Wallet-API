@@ -739,6 +739,7 @@ dependencies = [
     { name = "memray" },
     { name = "orjson" },
     { name = "psycopg", extra = ["c"] },
+    { name = "py-spy" },
     { name = "pydantic", extra = ["email"] },
     { name = "pymysql", extra = ["rsa"] },
     { name = "sqlalchemy", extra = ["asyncio"] },
@@ -760,7 +761,6 @@ ibet-explorer = [
 dev = [
     { name = "locustio" },
     { name = "pre-commit" },
-    { name = "py-spy" },
     { name = "pytest" },
     { name = "pytest-aiohttp" },
     { name = "pytest-alembic" },
@@ -792,6 +792,7 @@ requires-dist = [
     { name = "memray", specifier = ">=1.14.0,<2.0.0" },
     { name = "orjson", specifier = "~=3.10.3" },
     { name = "psycopg", extras = ["c"], specifier = ">=3.2.0,<4.0.0" },
+    { name = "py-spy", specifier = ">=0.4.0" },
     { name = "pydantic", extras = ["email"], specifier = "~=2.10.3" },
     { name = "pymysql", extras = ["rsa"], specifier = "~=1.1.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.33,<3.0.0" },
@@ -806,7 +807,6 @@ requires-dist = [
 dev = [
     { name = "locustio", specifier = "==0.9.0" },
     { name = "pre-commit", specifier = ">=3.6.0,<4.0.0" },
-    { name = "py-spy", specifier = ">=0.4.0" },
     { name = "pytest", specifier = ">=8.3.2,<9.0.0" },
     { name = "pytest-aiohttp", specifier = ">=1.0.5,<2.0.0" },
     { name = "pytest-alembic", specifier = ">=0.10.7,<1.0.0" },
