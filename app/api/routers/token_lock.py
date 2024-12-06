@@ -74,7 +74,7 @@ async def list_all_lock(
     if len(token_address_list) > 0:
         stmt = stmt.where(IDXLockedPosition.token_address.in_(token_address_list))
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if account_address is not None:
@@ -83,7 +83,7 @@ async def list_all_lock(
         stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     sort_attr = getattr(IDXLockedPosition, sort_item, None)
@@ -148,7 +148,7 @@ async def retrieve_lock_count(
         stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
     _count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     data = {"count": _count}

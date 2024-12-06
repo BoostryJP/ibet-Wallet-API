@@ -71,7 +71,7 @@ async def list_all_notifications(
 
     stmt = select(Notification)
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(Notification).order_by(None)
     )
 
     # Search Filter
@@ -82,7 +82,7 @@ async def list_all_notifications(
     if priority is not None:
         stmt = stmt.where(Notification.priority == priority)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(Notification).order_by(None)
     )
 
     # Sort

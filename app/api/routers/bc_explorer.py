@@ -125,7 +125,7 @@ async def list_block_data(
         stmt = stmt.where(IDXBlockData.number <= to_block_number)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(IDXBlockData).order_by(None)
     )
 
     # Sort
@@ -134,17 +134,21 @@ async def list_block_data(
     else:
         stmt = stmt.order_by(desc(IDXBlockData.number))
 
+    if (
+        await async_session.scalar(
+            stmt.with_only_columns(func.count())
+            .select_from(IDXBlockData)
+            .order_by(None)
+        )
+        > BLOCK_RESPONSE_LIMIT
+    ):
+        raise ResponseLimitExceededError("Search results exceed the limit")
+
     # Pagination
     if limit is not None:
         stmt = stmt.limit(limit)
     if offset is not None:
         stmt = stmt.offset(offset)
-
-    if (
-        await async_session.scalar(select(func.count()).select_from(stmt.subquery()))
-        > BLOCK_RESPONSE_LIMIT
-    ):
-        raise ResponseLimitExceededError("Search results exceed the limit")
 
     block_data_tmp: Sequence[IDXBlockData] = (await async_session.scalars(stmt)).all()
 
@@ -269,23 +273,25 @@ async def list_tx_data(
         stmt = stmt.where(IDXTxData.to_address == to_checksum_address(to_address))
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(IDXTxData).order_by(None)
     )
 
     # Sort
     stmt = stmt.order_by(desc(IDXTxData.created))
+
+    if (
+        await async_session.scalar(
+            stmt.with_only_columns(func.count()).select_from(IDXTxData).order_by(None)
+        )
+        > TX_RESPONSE_LIMIT
+    ):
+        raise ResponseLimitExceededError("Search results exceed the limit")
 
     # Pagination
     if limit is not None:
         stmt = stmt.limit(limit)
     if offset is not None:
         stmt = stmt.offset(offset)
-
-    if (
-        await async_session.scalar(select(func.count()).select_from(stmt.subquery()))
-        > TX_RESPONSE_LIMIT
-    ):
-        raise ResponseLimitExceededError("Search results exceed the limit")
 
     tx_data_tmp: Sequence[IDXTxData] = (await async_session.scalars(stmt)).all()
 

@@ -206,7 +206,9 @@ async def get_token_holders(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     if request_query.exclude_owner is True:
@@ -280,7 +282,9 @@ async def get_token_holders(
                 stmt = stmt.where(IDXLockedPosition.value <= request_query.locked)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     # Pagination
@@ -386,7 +390,9 @@ async def search_token_holders(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     if data.exclude_owner is True:
@@ -442,7 +448,9 @@ async def search_token_holders(
                 stmt = stmt.where(IDXLockedPosition.value <= data.locked)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     # Sort
@@ -590,7 +598,9 @@ async def get_token_holders_count(
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
     _count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     resp_body = {"count": _count}
@@ -796,8 +806,9 @@ async def list_all_transfer_histories(
                 to_address_tag.account_tag == request_query.account_tag,
             )
         )
+
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if request_query.source_event is not None:
@@ -834,7 +845,7 @@ async def list_all_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= request_query.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Pagination
@@ -892,7 +903,7 @@ async def search_transfer_histories(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if data.source_event is not None:
@@ -925,7 +936,7 @@ async def search_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= data.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     def _order(_order):
@@ -1042,7 +1053,7 @@ async def list_all_transfer_approval_histories(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if request_query.from_address is not None:
@@ -1065,7 +1076,7 @@ async def list_all_transfer_approval_histories(
                 stmt = stmt.where(IDXTransferApproval.value <= request_query.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Pagination
@@ -1134,7 +1145,7 @@ async def search_transfer_approval_histories(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if data.application_datetime_from is not None:
@@ -1195,7 +1206,7 @@ async def search_transfer_approval_histories(
                 stmt = stmt.where(IDXTransferApproval.value <= data.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     def _order(_order):

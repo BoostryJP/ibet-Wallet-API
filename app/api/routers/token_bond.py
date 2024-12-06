@@ -87,7 +87,7 @@ async def list_all_straight_bond_tokens(
     if len(request_query.address_list):
         stmt = stmt.where(IDXBondToken.token_address.in_(request_query.address_list))
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -128,7 +128,7 @@ async def list_all_straight_bond_tokens(
     if request_query.is_redeemed is not None:
         stmt = stmt.where(IDXBondToken.is_redeemed == request_query.is_redeemed)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
@@ -197,7 +197,7 @@ async def list_all_straight_bond_token_addresses(
         .where(Listing.is_public == True)
     )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -238,7 +238,7 @@ async def list_all_straight_bond_token_addresses(
     if request_query.is_redeemed is not None:
         stmt = stmt.where(IDXBondToken.is_redeemed == request_query.is_redeemed)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
