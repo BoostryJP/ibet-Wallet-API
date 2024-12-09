@@ -87,7 +87,7 @@ async def list_all_share_tokens(
     if len(request_query.address_list):
         stmt = stmt.where(IDXShareToken.token_address.in_(request_query.address_list))
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -128,7 +128,7 @@ async def list_all_share_tokens(
     if request_query.is_canceled is not None:
         stmt = stmt.where(IDXShareToken.is_canceled == request_query.is_canceled)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
@@ -197,7 +197,7 @@ async def list_all_share_token_addresses(
         .where(Listing.is_public == True)
     )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -238,7 +238,7 @@ async def list_all_share_token_addresses(
     if request_query.is_canceled is not None:
         stmt = stmt.where(IDXShareToken.is_canceled == request_query.is_canceled)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":

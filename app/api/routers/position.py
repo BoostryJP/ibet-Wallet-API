@@ -190,9 +190,10 @@ class BasePosition:
             )
             .order_by(Listing.id)
         )
-
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
         count = total
         if limit is not None:
@@ -786,9 +787,10 @@ class BasePositionMembership(BasePosition):
             )
             .order_by(Listing.id)
         )
-
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
         count = total
         if limit is not None:
@@ -906,8 +908,11 @@ class BasePositionCoupon(BasePosition):
         )
 
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
+
         count = total
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -1479,8 +1484,11 @@ async def list_all_token_position(
     )
 
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
+
     count = total
 
     if limit is not None:

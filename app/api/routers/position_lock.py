@@ -119,14 +119,18 @@ class ListAllLock:
         )
 
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            stmt.with_only_columns(func.count())
+            .select_from(IDXLockedPosition)
+            .order_by(None)
         )
 
         if lock_address is not None:
             stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
         count = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            stmt.with_only_columns(func.count())
+            .select_from(IDXLockedPosition)
+            .order_by(None)
         )
 
         sort_attr = getattr(IDXLockedPosition, sort_item, None)
@@ -243,9 +247,13 @@ class ListAllLockEvent:
             )
 
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt_lock.subquery())
+            stmt_lock.with_only_columns(func.count())
+            .select_from(IDXLock)
+            .order_by(None)
         ) + await async_session.scalar(
-            select(func.count()).select_from(stmt_unlock.subquery())
+            stmt_unlock.with_only_columns(func.count())
+            .select_from(IDXUnlock)
+            .order_by(None)
         )
 
         match category:
@@ -279,7 +287,7 @@ class ListAllLockEvent:
                 cast(column("data"), String).like("%" + request_query.data + "%")
             )
         count = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            stmt.with_only_columns(func.count()).order_by(None)
         )
 
         # Sort
