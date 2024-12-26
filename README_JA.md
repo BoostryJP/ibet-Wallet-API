@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-24.9-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-24.12-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -20,7 +20,7 @@
 - [python3](https://www.python.org/)
   - バージョン 3.12
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - バージョン 15
+  - [PostgreSQL](https://www.postgresql.org/) - バージョン 16
   - [MySQL](https://www.mysql.com/) - バージョン 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - [ibet-Network](https://github.com/BoostryJP/ibet-Network) の公式の GoQuorum をサポートしています。
@@ -52,9 +52,14 @@
 
 ### パッケージインストール
 
+以下のコマンドで Python の仮想環境を作成します。
+```bash
+$ uv venv
+```
+
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ poetry install --no-root --only main -E explorer
+$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
 ```
 
 ### 環境変数の設定
@@ -108,15 +113,20 @@ ReDoc 形式のドキュメントを参照することができるはずです�
 
 ## テストの実行
 
+テストで利用する Python の仮想環境を作成します。
+```bash
+$ uv venv
+```
+
 テストで利用するパッケージをインストールします。
 ```bash
-$ poetry install --no-root
+$ uv sync --frozen --no-install-project
 ```
 
 以下のようにテストを実行します。
 ```bash
 $ export UNIT_TEST_MODE=1
-$ pytest tests/
+$ uv run pytest tests/
 ```
 
 ## ブランチ作成方針

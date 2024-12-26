@@ -1113,6 +1113,6 @@ class TestProcessor:
             asyncio.run(main_func())
 
         assert 1 == caplog.record_tuples.count(
-            (LOG.name, logging.WARNING, "An external service was unavailable")
+            (LOG.name, 25, "An external service was unavailable")
         )
         caplog.clear()

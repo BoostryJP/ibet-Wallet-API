@@ -429,7 +429,9 @@ class TestEthSendRawTransaction:
 
     # <Normal_4>
     # nonce too low
-    def test_normal_4(self, client: TestClient, session: Session):
+    def test_normal_4(
+        self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         with mock.patch(
             "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
@@ -522,9 +524,22 @@ class TestEthSendRawTransaction:
                 {"id": 1, "status": 3, "transaction_hash": ANY}
             ]
 
+            assert (
+                caplog.record_tuples.count(
+                    (
+                        log.LOG.name,
+                        logging.WARNING,
+                        "Sent transaction nonce is too low: {'code': -32000, 'message': 'nonce too low'}",
+                    )
+                )
+                == 1
+            )
+
     # <Normal_5>
     # already known
-    def test_normal_5(self, client: TestClient, session: Session):
+    def test_normal_5(
+        self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         with mock.patch(
             "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
@@ -616,6 +631,17 @@ class TestEthSendRawTransaction:
             assert resp.json()["data"] == [
                 {"id": 1, "status": 4, "transaction_hash": ANY}
             ]
+
+            assert (
+                caplog.record_tuples.count(
+                    (
+                        log.LOG.name,
+                        logging.WARNING,
+                        "Sent transaction has been already known: {'code': -32000, 'message': 'already known'}",
+                    )
+                )
+                == 1
+            )
 
     ###########################################################################
     # Error
@@ -1130,7 +1156,7 @@ class TestEthSendRawTransaction:
                 caplog.record_tuples.count(
                     (
                         log.LOG.name,
-                        logging.WARN,
+                        25,
                         "Contract revert detected: code: 0 message: Message sender balance is insufficient.",
                     )
                 )
@@ -1213,7 +1239,7 @@ class TestEthSendRawTransaction:
                 caplog.record_tuples.count(
                     (
                         log.LOG.name,
-                        logging.WARN,
+                        25,
                         "Contract revert detected: code: 0 message: execution reverted",
                     )
                 )

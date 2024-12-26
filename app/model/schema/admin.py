@@ -21,7 +21,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, RootModel
 
-from app.model.schema.base import ValidatedEthereumAddress
+from app.model.schema.base import EthereumAddress
 
 ############################
 # COMMON
@@ -32,7 +32,7 @@ from app.model.schema.base import ValidatedEthereumAddress
 # REQUEST
 ############################
 class RegisterAdminTokenRequest(BaseModel):
-    contract_address: ValidatedEthereumAddress = Field(..., description="Token Address")
+    contract_address: EthereumAddress = Field(..., description="Token Address")
     is_public: bool = Field(..., description="Public and private listings")
     max_holding_quantity: int | None = Field(
         None, ge=0, description="Maximum holding quantity limit"
@@ -46,7 +46,7 @@ class UpdateAdminTokenRequest(BaseModel):
     is_public: bool | None = None
     max_holding_quantity: int | None = Field(None, ge=0)
     max_sell_amount: int | None = Field(None, ge=0)
-    owner_address: ValidatedEthereumAddress | None = Field(None)
+    owner_address: EthereumAddress | None = Field(None)
 
 
 ############################
@@ -54,11 +54,11 @@ class UpdateAdminTokenRequest(BaseModel):
 ############################
 class RetrieveAdminTokenResponse(BaseModel):
     id: int = Field(...)
-    token_address: ValidatedEthereumAddress = Field(..., description="Token address")
+    token_address: EthereumAddress = Field(..., description="Token address")
     is_public: bool = Field(...)
     max_holding_quantity: Optional[int]
     max_sell_amount: Optional[int]
-    owner_address: ValidatedEthereumAddress = Field(..., description="Issuer address")
+    owner_address: EthereumAddress = Field(..., description="Issuer address")
     created: str = Field(..., description="Create Datetime (local timezone)")
 
 

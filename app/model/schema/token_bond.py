@@ -18,13 +18,16 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+from app.model.schema.base import (
+    BasePaginationQuery,
+    EthereumAddress,
+    ResultSet,
+    SortOrder,
+)
 
 ############################
 # COMMON
@@ -51,65 +54,62 @@ class StraightBondTokensSortItem(StrEnum):
     created = "created"
 
 
-@dataclass
-class ListAllStraightBondTokensQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
+class StraightBondTokensQuery(BasePaginationQuery):
+    owner_address: Optional[EthereumAddress] = Field(None, description="issuer address")
+    name: Optional[str] = Field(None, description="token name")
+    symbol: Optional[str] = Field(None, description="token symbol")
+    company_name: Optional[str] = Field(None, description="company name")
+    tradable_exchange: Optional[EthereumAddress] = Field(
+        None, description="tradable exchange"
+    )
+    status: Optional[bool] = Field(None, description="token status")
+    personal_info_address: Optional[EthereumAddress] = Field(
+        None, description="personal information address"
+    )
+    require_personal_info_registered: Optional[bool] = Field(
+        None, description="whether personal information registration is required"
+    )
+    transferable: Optional[bool] = Field(None, description="transferable status")
+    is_offering: Optional[bool] = Field(None, description="offering status")
+    transfer_approval_required: Optional[bool] = Field(
+        None, description="transfer approval required status"
+    )
+    is_redeemed: Optional[bool] = Field(None, description="redeem status")
 
-    owner_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="issuer address")
-    ] = None
-    name: Annotated[Optional[str], Query(description="token name")] = None
-    symbol: Annotated[Optional[str], Query(description="token symbol")] = None
-    company_name: Annotated[Optional[str], Query(description="company name")] = None
-    tradable_exchange: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="tradable exchange")
-    ] = None
-    status: Annotated[Optional[bool], Query(description="token status")] = None
-    personal_info_address: Annotated[
-        Optional[ValidatedEthereumAddress],
-        Query(description="personal information address"),
-    ] = None
-    require_personal_info_registered: Annotated[
-        Optional[bool],
-        Query(description="whether personal information registration is required"),
-    ] = None
-    transferable: Annotated[
-        Optional[bool], Query(description="transferable status")
-    ] = None
-    is_offering: Annotated[Optional[bool], Query(description="offering status")] = None
-    transfer_approval_required: Annotated[
-        Optional[bool], Query(description="transfer approval required status")
-    ] = None
-    is_redeemed: Annotated[Optional[bool], Query(description="redeem status")] = None
+    sort_item: Optional[StraightBondTokensSortItem] = Field(
+        StraightBondTokensSortItem.created, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        SortOrder.ASC, description=SortOrder.__doc__
+    )
 
-    sort_item: Annotated[
-        Optional[StraightBondTokensSortItem], Query(description="sort item")
-    ] = StraightBondTokensSortItem.created
-    sort_order: Annotated[
-        Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
+
+class ListAllStraightBondTokensQuery(StraightBondTokensQuery):
+    address_list: list[EthereumAddress] = Field(
+        default_factory=list,
+        description="list of token address (**this affects total number**)",
+    )
 
 
 ############################
 # RESPONSE
 ############################
 class RetrieveStraightBondTokenResponse(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
     token_template: str = Field(examples=["IbetStraightBond"])
-    owner_address: ValidatedEthereumAddress = Field(description="issuer address")
+    owner_address: EthereumAddress = Field(description="issuer address")
     company_name: str
     rsa_publickey: str
     name: str = Field(description="token name")
     symbol: str = Field(description="token symbol")
     total_supply: int
-    tradable_exchange: ValidatedEthereumAddress
+    tradable_exchange: EthereumAddress
     contact_information: str
     privacy_policy: str
     status: bool
     max_holding_quantity: Optional[int]
     max_sell_amount: Optional[int]
-    personal_info_address: ValidatedEthereumAddress
+    personal_info_address: EthereumAddress
     require_personal_info_registered: bool
     transferable: bool
     is_offering: bool
@@ -148,4 +148,4 @@ class ListAllStraightBondTokensResponse(BaseModel):
 
 class ListAllStraightBondTokenAddressesResponse(BaseModel):
     result_set: ResultSet
-    address_list: list[ValidatedEthereumAddress]
+    address_list: list[EthereumAddress]

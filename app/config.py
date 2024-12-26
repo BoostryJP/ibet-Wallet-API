@@ -148,7 +148,7 @@ else:
         else 10
     )
 # Average block generation interval
-EXPECTED_BLOCKS_PER_SEC = float(os.environ.get("EXPECTED_BLOCKS_PER_SEC", 1))
+EXPECTED_BLOCKS_PER_SEC = float(os.environ.get("EXPECTED_BLOCKS_PER_SEC", 0.1))
 
 
 ####################################################
@@ -304,14 +304,12 @@ SMTP_METHOD = (
     int(os.environ.get("SMTP_METHOD")) if os.environ.get("SMTP_METHOD") else 0
 )  # 0:SMTP server, 1:Amazon SES
 SMTP_POLICY = (
-    SMTP
-    if os.environ.get("SMTP_POLICY") == "SMTP"
-    else SMTPUTF8
+    SMTPUTF8
     if os.environ.get("SMTP_POLICY") == "SMTPUTF8"
     else HTTP
     if os.environ.get("SMTP_POLICY") == "HTTP"
-    else None
-)  # SMTP, SMTPUTF8, HTTP, None (default)
+    else SMTP
+)  # SMTP (default), SMTPUTF8, HTTP
 SMTP_SERVER_ENCRYPTION_METHOD = (
     int(os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD"))
     if os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD")

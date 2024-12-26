@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet system
     on ibet network
-  version: 24.9.0
+  version: 24.12.0
 paths:
   /:
     get:
@@ -249,9 +249,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -260,9 +260,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: from_block_number
           in: query
           required: false
@@ -371,9 +371,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -382,9 +382,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: block_number
           in: query
           required: false
@@ -586,7 +586,7 @@ paths:
         - company_info
       summary: Issuer Information List
       description: Returns a list of issuer information.
-      operationId: Companies
+      operationId: ListAllCompanies
       parameters:
         - name: include_private_listing
           in: query
@@ -605,7 +605,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyInfoResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompaniesResponse_'
         '400':
           content:
             application/json:
@@ -618,7 +618,7 @@ paths:
         - company_info
       summary: Issuer Information
       description: Returns given issuer information.
-      operationId: Company
+      operationId: RetrieveCompanyInfo
       parameters:
         - name: eth_address
           in: path
@@ -642,7 +642,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Company
+                title: Response 400 Retrievecompanyinfo
           description: Bad Request
         '404':
           content:
@@ -656,7 +656,7 @@ paths:
         - company_info
       summary: List of tokens issued by issuer
       description: Returns a list of tokens issued by given issuer.
-      operationId: retrieve_company_tokens_Companies__eth_address__Tokens_get
+      operationId: ListAllCompanyTokens
       parameters:
         - name: eth_address
           in: path
@@ -774,9 +774,9 @@ paths:
           required: true
           schema:
             type: string
-            description: owner(issuer) address
+            description: Owner(issuer) address
             title: Owner Address
-          description: owner(issuer) address
+          description: Owner(issuer) address
         - name: personal_info_address
           in: query
           required: false
@@ -848,7 +848,9 @@ paths:
           required: true
           schema:
             type: string
+            description: ethereum address
             title: Eth Address
+          description: ethereum address
         - name: block_identifier
           in: query
           required: false
@@ -956,10 +958,10 @@ paths:
                 maximum: 30
                 minimum: 1
               - type: 'null'
-            description: Timeout value
+            description: timeout value
             default: 5
             title: Timeout
-          description: Timeout value
+          description: timeout value
       responses:
         '200':
           description: Successful Response
@@ -987,16 +989,6 @@ paths:
       description: '[StraightBond]Returns a detail list of tokens.'
       operationId: StraightBondTokens
       parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: list of token address (**this affects total number**)
-            title: Address List
-          description: list of token address (**this affects total number**)
         - name: offset
           in: query
           required: false
@@ -1005,9 +997,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -1016,9 +1008,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -1161,6 +1153,16 @@ paths:
             default: 0
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
+        - name: address_list
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            title: Address List
+          description: list of token address (**this affects total number**)
       responses:
         '200':
           description: Successful Response
@@ -1199,9 +1201,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -1210,9 +1212,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -1423,16 +1425,6 @@ paths:
       description: '[Share]Returns a detail list of tokens.'
       operationId: ShareTokens
       parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: list of token address (**this affects total number**)
-            title: Address List
-          description: list of token address (**this affects total number**)
         - name: offset
           in: query
           required: false
@@ -1441,9 +1433,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -1452,9 +1444,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -1597,6 +1589,16 @@ paths:
             default: 0
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
+        - name: address_list
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            title: Address List
+          description: list of token address (**this affects total number**)
       responses:
         '200':
           description: Successful Response
@@ -1635,9 +1637,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -1646,9 +1648,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -1856,16 +1858,6 @@ paths:
       description: '[Membership]Returns a detail list of tokens.'
       operationId: MembershipTokens
       parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: list of token address (**this affects total number**)
-            title: Address List
-          description: list of token address (**this affects total number**)
         - name: offset
           in: query
           required: false
@@ -1874,9 +1866,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -1885,9 +1877,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -1990,6 +1982,16 @@ paths:
             default: 0
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
+        - name: address_list
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            title: Address List
+          description: list of token address (**this affects total number**)
       responses:
         '200':
           description: Successful Response
@@ -2028,9 +2030,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -2039,9 +2041,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -2209,16 +2211,6 @@ paths:
       description: '[Coupon]Returns a detail list of tokens.'
       operationId: CouponTokens
       parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: list of token address (**this affects total number**)
-            title: Address List
-          description: list of token address (**this affects total number**)
         - name: offset
           in: query
           required: false
@@ -2227,9 +2219,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -2238,9 +2230,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -2343,6 +2335,16 @@ paths:
             default: 0
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
+        - name: address_list
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            title: Address List
+          description: list of token address (**this affects total number**)
       responses:
         '200':
           description: Successful Response
@@ -2381,9 +2383,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -2392,9 +2394,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: owner_address
           in: query
           required: false
@@ -2595,6 +2597,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
           description: Not Found
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableResponse'
+          description: Service Unavailable
   /Token/{token_address}/Holders:
     get:
       tags:
@@ -2619,9 +2627,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -2630,9 +2638,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: account_tag
           in: query
           required: false
@@ -3014,9 +3022,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -3025,9 +3033,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: account_tag
           in: query
           required: false
@@ -3224,9 +3232,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -3235,9 +3243,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: account_tag
           in: query
           required: false
@@ -3366,6 +3374,28 @@ paths:
       description: Returns a list of locked positions.
       operationId: ListAllTokenLock
       parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
         - name: token_address_list
           in: query
           required: false
@@ -3396,28 +3426,6 @@ paths:
             description: account address
             title: Account Address
           description: account address
-        - name: offset
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: start position
-            title: Offset
-          description: start position
-        - name: limit
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: number of set
-            title: Limit
-          description: number of set
         - name: sort_item
           in: query
           required: false
@@ -3524,6 +3532,28 @@ paths:
             description: account address
             title: Account Address
           description: account address
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
         - name: token_address_list
           in: query
           required: false
@@ -3544,28 +3574,17 @@ paths:
             description: lock address
             title: Lock Address
           description: lock address
-        - name: offset
+        - name: include_token_details
           in: query
           required: false
           schema:
             anyOf:
-              - type: integer
-                minimum: 0
+              - type: boolean
               - type: 'null'
-            description: start position
-            title: Offset
-          description: start position
-        - name: limit
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: number of set
-            title: Limit
-          description: number of set
+            description: include token details
+            default: false
+            title: Include Token Details
+          description: include token details
         - name: sort_item
           in: query
           required: false
@@ -3586,17 +3605,6 @@ paths:
             default: 0
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
-        - name: include_token_details
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include token details
-            default: false
-            title: Include Token Details
-          description: include token details
       responses:
         '200':
           description: Successful Response
@@ -3635,6 +3643,28 @@ paths:
             description: account address
             title: Account Address
           description: account address
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
         - name: token_address_list
           in: query
           required: false
@@ -3645,28 +3675,6 @@ paths:
             description: list of token address (**this affects total number**)
             title: Token Address List
           description: list of token address (**this affects total number**)
-        - name: offset
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: start position
-            title: Offset
-          description: start position
-        - name: limit
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: number of set
-            title: Limit
-          description: number of set
         - name: msg_sender
           in: query
           required: false
@@ -3717,6 +3725,17 @@ paths:
             description: history item category
             title: Category
           description: history item category
+        - name: include_token_details
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: include token details
+            default: false
+            title: Include Token Details
+          description: include token details
         - name: sort_item
           in: query
           required: false
@@ -3737,17 +3756,6 @@ paths:
             default: 1
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
-        - name: include_token_details
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include token details
-            default: false
-            title: Include Token Details
-          description: include token details
       responses:
         '200':
           description: Successful Response
@@ -3777,6 +3785,28 @@ paths:
             description: account address
             title: Account Address
           description: account address
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
         - name: token_address_list
           in: query
           required: false
@@ -3797,28 +3827,17 @@ paths:
             description: lock address
             title: Lock Address
           description: lock address
-        - name: offset
+        - name: include_token_details
           in: query
           required: false
           schema:
             anyOf:
-              - type: integer
-                minimum: 0
+              - type: boolean
               - type: 'null'
-            description: start position
-            title: Offset
-          description: start position
-        - name: limit
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: number of set
-            title: Limit
-          description: number of set
+            description: include token details
+            default: false
+            title: Include Token Details
+          description: include token details
         - name: sort_item
           in: query
           required: false
@@ -3839,17 +3858,6 @@ paths:
             default: 0
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
-        - name: include_token_details
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include token details
-            default: false
-            title: Include Token Details
-          description: include token details
       responses:
         '200':
           description: Successful Response
@@ -3888,6 +3896,28 @@ paths:
             description: account address
             title: Account Address
           description: account address
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
         - name: token_address_list
           in: query
           required: false
@@ -3898,28 +3928,6 @@ paths:
             description: list of token address (**this affects total number**)
             title: Token Address List
           description: list of token address (**this affects total number**)
-        - name: offset
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: start position
-            title: Offset
-          description: start position
-        - name: limit
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: number of set
-            title: Limit
-          description: number of set
         - name: msg_sender
           in: query
           required: false
@@ -3970,6 +3978,17 @@ paths:
             description: history item category
             title: Category
           description: history item category
+        - name: include_token_details
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: include token details
+            default: false
+            title: Include Token Details
+          description: include token details
         - name: sort_item
           in: query
           required: false
@@ -3990,17 +4009,6 @@ paths:
             default: 1
             title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
-        - name: include_token_details
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include token details
-            default: false
-            title: Include Token Details
-          description: include token details
       responses:
         '200':
           description: Successful Response
@@ -4038,9 +4046,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -4049,9 +4057,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: include_token_details
           in: query
           required: false
@@ -4122,9 +4130,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -4133,9 +4141,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: include_token_details
           in: query
           required: false
@@ -4206,9 +4214,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -4217,9 +4225,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: include_token_details
           in: query
           required: false
@@ -4290,9 +4298,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -4301,9 +4309,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: include_token_details
           in: query
           required: false
@@ -4653,9 +4661,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -4664,9 +4672,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: token_type_list
           in: query
           required: false
@@ -4711,9 +4719,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: start position
+            description: Offset for pagination
             title: Offset
-          description: start position
+          description: Offset for pagination
         - name: limit
           in: query
           required: false
@@ -4722,9 +4730,9 @@ paths:
               - type: integer
                 minimum: 0
               - type: 'null'
-            description: number of set
+            description: Limit for pagination
             title: Limit
-          description: number of set
+          description: Limit for pagination
         - name: address
           in: query
           required: false
@@ -5222,18 +5230,14 @@ paths:
           schema:
             type: integer
             minimum: 1
-            description: from block number
             title: From Block
-          description: from block number
         - name: to_block
           in: query
           required: true
           schema:
             type: integer
             minimum: 1
-            description: to block number
             title: To Block
-          description: to block number
         - name: event
           in: query
           required: false
@@ -5241,9 +5245,7 @@ paths:
             anyOf:
               - $ref: '#/components/schemas/IbetSecurityTokenDVPEventType'
               - type: 'null'
-            description: events to get
             title: Event
-          description: events to get
         - name: argument_filters
           in: query
           required: false
@@ -5251,11 +5253,7 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "deliveryId":
-              0    "token": "0x0000000000000000000000000000000000000000"}```'
             title: Argument Filters
-          description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "deliveryId":
-            0    "token": "0x0000000000000000000000000000000000000000"}```'
       responses:
         '200':
           description: Successful Response
@@ -5436,10 +5434,10 @@ paths:
           schema:
             allOf:
               - $ref: '#/components/schemas/OrderType'
-            description: Order type to be executed by the Orderer. If "buy" is selected,
+            description: Order type to be executed by the Orderer. If 'buy' is selected,
               the sell order book will be returned.
             title: Order Type
-          description: Order type to be executed by the Orderer. If "buy" is selected,
+          description: Order type to be executed by the Orderer. If 'buy' is selected,
             the sell order book will be returned.
         - name: account_address
           in: query
@@ -5576,10 +5574,10 @@ paths:
           schema:
             allOf:
               - $ref: '#/components/schemas/OrderType'
-            description: Order type to be executed by the Orderer. If "buy" is selected,
+            description: Order type to be executed by the Orderer. If 'buy' is selected,
               the sell order book will be returned.
             title: Order Type
-          description: Order type to be executed by the Orderer. If "buy" is selected,
+          description: Order type to be executed by the Orderer. If 'buy' is selected,
             the sell order book will be returned.
         - name: account_address
           in: query
@@ -6117,6 +6115,27 @@ components:
         - earliest
         - pending
       title: BlockIdentifier
+    CompanyInfo:
+      properties:
+        address:
+          type: string
+          title: Address
+        corporate_name:
+          type: string
+          title: Corporate Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        homepage:
+          type: string
+          title: Homepage
+      type: object
+      required:
+        - address
+        - corporate_name
+        - rsa_publickey
+        - homepage
+      title: CompanyInfo
     CompleteAgreementSet_RetrieveCouponTokenResponse_:
       properties:
         token:
@@ -6724,7 +6743,7 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllAdminTokensResponse]
-    GenericSuccessResponse_ListAllCompanyInfoResponse_:
+    GenericSuccessResponse_ListAllCompaniesResponse_:
       properties:
         meta:
           allOf:
@@ -6733,12 +6752,12 @@ components:
             - code: 200
               message: OK
         data:
-          $ref: '#/components/schemas/ListAllCompanyInfoResponse'
+          $ref: '#/components/schemas/ListAllCompaniesResponse'
       type: object
       required:
         - meta
         - data
-      title: GenericSuccessResponse[ListAllCompanyInfoResponse]
+      title: GenericSuccessResponse[ListAllCompaniesResponse]
     GenericSuccessResponse_ListAllCompanyTokensResponse_:
       properties:
         meta:
@@ -7789,11 +7808,11 @@ components:
         $ref: '#/components/schemas/RetrieveAdminTokenResponse'
       type: array
       title: ListAllAdminTokensResponse
-    ListAllCompanyInfoResponse:
+    ListAllCompaniesResponse:
       items:
-        $ref: '#/components/schemas/RetrieveCompanyInfoResponse'
+        $ref: '#/components/schemas/CompanyInfo'
       type: array
-      title: ListAllCompanyInfoResponse
+      title: ListAllCompaniesResponse
     ListAllCompanyTokensResponse:
       items:
         anyOf:
@@ -9117,12 +9136,18 @@ components:
         homepage:
           type: string
           title: Homepage
+        in_use_personal_info_addresses:
+          items:
+            type: string
+          type: array
+          title: In Use Personal Info Addresses
       type: object
       required:
         - address
         - corporate_name
         - rsa_publickey
         - homepage
+        - in_use_personal_info_addresses
       title: RetrieveCompanyInfoResponse
     RetrieveCouponTokenResponse:
       properties:
@@ -10404,6 +10429,7 @@ components:
         - 0
         - 1
       title: SortOrder
+      description: 'sort order(0: ASC, 1: DESC)'
     StraightBondPositionWithDetail:
       properties:
         balance:
@@ -10718,6 +10744,9 @@ components:
             - $ref: '#/components/schemas/TokenType'
           examples:
             - IbetStraightBond
+        owner_address:
+          type: string
+          title: Owner Address
         name:
           type: string
           title: Name
@@ -10730,6 +10759,7 @@ components:
       type: object
       required:
         - token_template
+        - owner_address
         - name
         - status
         - transferable

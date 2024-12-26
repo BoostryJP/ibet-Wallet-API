@@ -18,18 +18,17 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 
 from app.model.db import NotificationType
 from app.model.schema.base import (
+    BasePaginationQuery,
+    EthereumAddress,
     ResultSet,
     SortOrder,
     TokenType,
-    ValidatedEthereumAddress,
 )
 
 ############################
@@ -47,31 +46,25 @@ class NotificationsSortItem(StrEnum):
     created = "created"
 
 
-@dataclass
-class NotificationsQuery:
-    offset: Annotated[Optional[int], Query(description="start position", ge=0)] = None
-    limit: Annotated[Optional[int], Query(description="number of set", ge=0)] = None
-    address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="account address")
-    ] = None
-    notification_type: Annotated[Optional[NotificationType], Query()] = None
-    priority: Annotated[Optional[int], Query(ge=0, le=2)] = None
-    sort_item: Annotated[
-        Optional[NotificationsSortItem], Query(description="sort item")
-    ] = NotificationsSortItem.created
-    sort_order: Annotated[
-        Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
+class NotificationsQuery(BasePaginationQuery):
+    address: Optional[EthereumAddress] = Field(None, description="account address")
+    notification_type: Optional[NotificationType] = Field(None)
+    priority: Optional[int] = Field(None, ge=0, le=2)
+    sort_item: Optional[NotificationsSortItem] = Field(
+        NotificationsSortItem.created, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        SortOrder.ASC, description=SortOrder.__doc__
+    )
 
 
 class NotificationReadRequest(BaseModel):
-    address: ValidatedEthereumAddress
+    address: EthereumAddress
     is_read: bool
 
 
-@dataclass
-class NotificationsCountQuery:
-    address: Annotated[ValidatedEthereumAddress, Query(default=...)]
+class NotificationsCountQuery(BaseModel):
+    address: EthereumAddress = Field()
 
 
 class UpdateNotificationRequest(BaseModel):
@@ -85,9 +78,9 @@ class UpdateNotificationRequest(BaseModel):
 ############################
 class NotificationMetainfo(BaseModel):
     company_name: str
-    token_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
     token_name: str
-    exchange_address: ValidatedEthereumAddress
+    exchange_address: EthereumAddress
     token_type: TokenType
 
 
@@ -102,7 +95,7 @@ class Notification(BaseModel):
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
     metainfo: NotificationMetainfo | dict
-    account_address: ValidatedEthereumAddress
+    account_address: EthereumAddress
     sort_id: int
     created: str = Field(description="datetime of create")
 
@@ -127,4 +120,4 @@ class NotificationUpdateResponse(BaseModel):
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
     metainfo: NotificationMetainfo | dict
-    account_address: ValidatedEthereumAddress
+    account_address: EthereumAddress

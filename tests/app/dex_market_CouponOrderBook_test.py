@@ -1558,19 +1558,19 @@ class TestDEXMarketCouponOrderBook:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "token_address"],
                     "msg": "Field required",
                     "type": "missing",
                 },
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "exchange_agent_address"],
                     "msg": "Field required",
                     "type": "missing",
                 },
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "order_type"],
                     "msg": "Field required",
                     "type": "missing",

@@ -19,8 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
+from typing import Literal
 from zoneinfo import ZoneInfo
 
+from pydantic import BaseModel
 from sqlalchemy import JSON, BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -36,6 +38,14 @@ class IDXTransferSourceEventType(StrEnum):
 
     TRANSFER = "Transfer"
     UNLOCK = "Unlock"
+
+
+class DataMessage(BaseModel):
+    message: Literal[
+        "garnishment",
+        "inheritance",
+        "force_unlock",
+    ]
 
 
 class IDXTransfer(Base):
@@ -58,7 +68,17 @@ class IDXTransfer(Base):
     # Source Event (IDXTransferSourceEventType)
     source_event: Mapped[str] = mapped_column(String(50), nullable=False)
     # Data
+    #   source_event = "Transfer"
+    #     => None
+    #   source_event = "Unlock"
+    #     =>  DataMessage
     data: Mapped[dict | None] = mapped_column(JSON)
+    # Message
+    #   source_event = "Transfer"
+    #     => None
+    #   source_event = "Unlock"
+    #     => "force_unlock", "garnishment" or "inheritance"
+    message: Mapped[str | None] = mapped_column(String(50), index=True)
 
     @staticmethod
     def format_timestamp(_datetime: datetime) -> str:
@@ -87,6 +107,7 @@ class IDXTransfer(Base):
             "value": self.value,
             "source_event": self.source_event,
             "data": self.data,
+            "message": self.message,
             "created": self.format_timestamp(self.created),
         }
 
@@ -99,6 +120,7 @@ class IDXTransfer(Base):
         "value": int,
         "source_event": str,
         "data": dict,
+        "message": str,
     }
     FIELDS.update(Base.FIELDS)
 

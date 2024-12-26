@@ -18,10 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC, datetime
-from typing import Optional, Sequence
+from typing import Annotated, Optional, Sequence
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Path, Query
 from sqlalchemy import desc, func, select, update
 
 from app import log
@@ -56,7 +56,7 @@ router = APIRouter(prefix="/Notifications", tags=["user_notification"])
 )
 async def list_all_notifications(
     async_session: DBAsyncSession,
-    request_query: NotificationsQuery = Depends(),
+    request_query: Annotated[NotificationsQuery, Query()],
 ):
     """
     Returns notifications filtered by given query.
@@ -71,7 +71,7 @@ async def list_all_notifications(
 
     stmt = select(Notification)
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(Notification).order_by(None)
     )
 
     # Search Filter
@@ -82,7 +82,7 @@ async def list_all_notifications(
     if priority is not None:
         stmt = stmt.where(Notification.priority == priority)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(Notification).order_by(None)
     )
 
     # Sort
@@ -171,7 +171,7 @@ async def read_all_notifications(
 )
 async def count_notifications(
     async_session: DBAsyncSession,
-    request_query: NotificationsCountQuery = Depends(),
+    request_query: Annotated[NotificationsCountQuery, Query()],
 ):
     """
     Returns count of notifications filtered by given query.
@@ -207,7 +207,7 @@ async def count_notifications(
 async def update_notification(
     async_session: DBAsyncSession,
     data: UpdateNotificationRequest,
-    notification_id: str = Path(description="Notification id"),
+    notification_id: Annotated[str, Path(description="Notification id")],
 ):
     """
     Registers given notification as read.
@@ -248,7 +248,7 @@ async def update_notification(
 )
 async def delete_notification(
     async_session: DBAsyncSession,
-    notification_id: str = Path(description="Notification id"),
+    notification_id: Annotated[str, Path(description="Notification id")],
 ):
     """
     Deletes given notification.

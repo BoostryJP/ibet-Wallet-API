@@ -18,11 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import IntEnum, StrEnum
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field, RootModel, StrictStr, field_validator
-from pydantic.dataclasses import dataclass
 
 ############################
 # COMMON
@@ -60,9 +58,8 @@ class BlockIdentifier(StrEnum):
     pending = "pending"
 
 
-@dataclass
-class GetTransactionCountQuery:
-    block_identifier: Annotated[Optional[BlockIdentifier], Query()] = None
+class GetTransactionCountQuery(BaseModel):
+    block_identifier: Optional[BlockIdentifier] = Field(None)
 
 
 class SendRawTransactionRequest(BaseModel):
@@ -71,14 +68,9 @@ class SendRawTransactionRequest(BaseModel):
     )
 
 
-@dataclass
-class WaitForTransactionReceiptQuery:
-    transaction_hash: Annotated[
-        StrictStr, Query(default=..., description="transaction hash")
-    ]
-    timeout: Annotated[
-        Optional[int], Query(description="Timeout value", ge=1, le=30)
-    ] = 5
+class WaitForTransactionReceiptQuery(BaseModel):
+    transaction_hash: StrictStr = Field(..., description="transaction hash")
+    timeout: Optional[int] = Field(5, description="timeout value", ge=1, le=30)
 
 
 ############################

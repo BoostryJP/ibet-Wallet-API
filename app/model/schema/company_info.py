@@ -19,35 +19,48 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Optional, Union
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, Field, RootModel
 
-from app.model.schema.base import ValidatedEthereumAddress
+from app.model.schema.base import EthereumAddress
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 from app.model.schema.token_share import RetrieveShareTokenResponse
 
+
 ############################
 # COMMON
 ############################
-
-
-############################
-# REQUEST
-############################
-
-
-############################
-# RESPONSE
-############################
-class RetrieveCompanyInfoResponse(BaseModel):
-    address: ValidatedEthereumAddress
+class CompanyInfo(BaseModel):
+    address: EthereumAddress
     corporate_name: str
     rsa_publickey: str
     homepage: str
 
 
-class ListAllCompanyInfoResponse(RootModel[list[RetrieveCompanyInfoResponse]]):
+############################
+# REQUEST
+############################
+class ListAllCompaniesQuery(BaseModel):
+    include_private_listing: Optional[bool] = Field(
+        False, description="include private listing token issuers"
+    )
+
+
+class ListAllCompanyTokensQuery(BaseModel):
+    include_private_listing: Optional[bool] = Field(
+        False, description="include private listing token issuers"
+    )
+
+
+############################
+# RESPONSE
+############################
+class RetrieveCompanyInfoResponse(CompanyInfo):
+    in_use_personal_info_addresses: list[str]
+
+
+class ListAllCompaniesResponse(RootModel[list[CompanyInfo]]):
     pass
 
 
@@ -67,9 +80,9 @@ class ListAllCompanyTokensResponse(
 
 
 class CompanyToken(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
     token_template: str
-    owner_address: ValidatedEthereumAddress
+    owner_address: EthereumAddress
     rsa_publickey: str
     name: str
     symbol: str

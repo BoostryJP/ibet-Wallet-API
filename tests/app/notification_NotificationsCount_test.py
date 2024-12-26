@@ -158,7 +158,7 @@ class TestNotificationCount:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "address"],
                     "msg": "Field required",
                     "type": "missing",

@@ -17,9 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import logging
 from unittest import mock
 from unittest.mock import ANY, MagicMock, patch
 
+import pytest
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -28,7 +30,7 @@ from web3.datastructures import AttributeDict
 from web3.exceptions import Web3RPCError
 from web3.middleware import ExtraDataToPOAMiddleware
 
-from app import config
+from app import config, log
 from app.contracts import Contract
 from app.model.db import ExecutableContract, Listing, Node
 from tests.account_config import eth_account
@@ -72,6 +74,17 @@ def executable_contract_token(session, contract):
     executable_contract = ExecutableContract()
     executable_contract.contract_address = contract["address"]
     session.add(executable_contract)
+
+
+@pytest.fixture(scope="function")
+def caplog(caplog: pytest.LogCaptureFixture):
+    LOG = log.get_logger()
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+    yield caplog
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 async def mock_normal_txpool_status():
@@ -304,7 +317,9 @@ class TestEthSendRawTransactionNoWait:
 
     # <Normal_3>
     # nonce too low
-    def test_normal_3(self, client: TestClient, session: Session):
+    def test_normal_3(
+        self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         with mock.patch(
             "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
@@ -397,9 +412,22 @@ class TestEthSendRawTransactionNoWait:
                 {"id": 1, "status": 3, "transaction_hash": ANY}
             ]
 
+            assert (
+                caplog.record_tuples.count(
+                    (
+                        log.LOG.name,
+                        logging.WARNING,
+                        "Sent transaction nonce is too low: {'code': -32000, 'message': 'nonce too low'}",
+                    )
+                )
+                == 1
+            )
+
     # <Normal_4>
     # already known
-    def test_normal_4(self, client: TestClient, session: Session):
+    def test_normal_4(
+        self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         with mock.patch(
             "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
         ):
@@ -491,6 +519,17 @@ class TestEthSendRawTransactionNoWait:
             assert resp.json()["data"] == [
                 {"id": 1, "status": 4, "transaction_hash": ANY}
             ]
+
+            assert (
+                caplog.record_tuples.count(
+                    (
+                        log.LOG.name,
+                        logging.WARNING,
+                        "Sent transaction has been already known: {'code': -32000, 'message': 'already known'}",
+                    )
+                )
+                == 1
+            )
 
     ###########################################################################
     # Error

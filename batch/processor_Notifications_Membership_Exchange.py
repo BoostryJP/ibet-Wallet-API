@@ -147,7 +147,7 @@ class Watcher:
             await db_session.commit()
 
         except ServiceUnavailable:
-            LOG.warning("An external service was unavailable")
+            LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as err:  # Exceptionが発生した場合は処理を継続
@@ -603,7 +603,7 @@ async def main():
             )
             [task.result() for task in tasks]
         except ExceptionGroup as e:
-            LOG.error(e)
+            LOG.error(e.exceptions)
 
         elapsed_time = time.time() - start_time
         LOG.info("<LOOP> finished in {} secs".format(elapsed_time))

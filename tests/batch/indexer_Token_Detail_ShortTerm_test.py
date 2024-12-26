@@ -928,6 +928,6 @@ class TestProcessor:
             (LOG.name, logging.INFO, "Service started successfully")
         )
         assert 1 == caplog.record_tuples.count(
-            (LOG.name, logging.WARNING, "An external service was unavailable")
+            (LOG.name, 25, "An external service was unavailable")
         )
         caplog.clear()

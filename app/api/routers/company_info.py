@@ -17,11 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Callable, Optional, Sequence
+from typing import Annotated, Callable, Sequence
 
 from eth_utils import to_checksum_address
 from fastapi import APIRouter, Path, Query
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, distinct, select
+from sqlalchemy.orm import aliased
 
 from app import config, log
 from app.contracts import AsyncContract
@@ -36,15 +37,17 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema import (
-    ListAllCompanyInfoResponse,
+    ListAllCompaniesQuery,
+    ListAllCompaniesResponse,
+    ListAllCompanyTokensQuery,
     ListAllCompanyTokensResponse,
     RetrieveCompanyInfoResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.company_list import CompanyList
 from app.utils.docs_utils import get_routers_responses
@@ -61,15 +64,13 @@ router = APIRouter(prefix="/Companies", tags=["company_info"])
 @router.get(
     "",
     summary="Issuer Information List",
-    operation_id="Companies",
-    response_model=GenericSuccessResponse[ListAllCompanyInfoResponse],
+    operation_id="ListAllCompanies",
+    response_model=GenericSuccessResponse[ListAllCompaniesResponse],
     responses=get_routers_responses(),
 )
 async def list_all_companies(
     async_session: DBAsyncSession,
-    include_private_listing: Optional[bool] = Query(
-        default=False, description="include private listing token issuers"
-    ),
+    request_query: Annotated[ListAllCompaniesQuery, Query()],
 ):
     """
     Returns a list of issuer information.
@@ -80,7 +81,7 @@ async def list_all_companies(
     company_list = [company.json() for company in _company_list.all()]
 
     # Get the token listed
-    if include_private_listing:
+    if request_query.include_private_listing:
         available_tokens: Sequence[tuple[Listing, str, str, str, str]] = (
             await async_session.execute(
                 select(
@@ -155,7 +156,7 @@ async def list_all_companies(
             )
             listing_owner_set.add(owner_address)
         except Exception as e:
-            LOG.warning(e)
+            LOG.notice(e)
 
     has_listing_owner_function = has_listing_owner_function_creator(listing_owner_set)
     filtered_company_list = filter(has_listing_owner_function, company_list)
@@ -171,23 +172,54 @@ async def list_all_companies(
 @router.get(
     "/{eth_address}",
     summary="Issuer Information",
-    operation_id="Company",
+    operation_id="RetrieveCompanyInfo",
     response_model=GenericSuccessResponse[RetrieveCompanyInfoResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
-async def retrieve_company(
-    eth_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Issuer address")
-    ],
+async def retrieve_company_info(
+    async_session: DBAsyncSession,
+    eth_address: Annotated[EthereumAddress, Path(description="Issuer address")],
 ):
     """
     Returns given issuer information.
     """
+    # Retrieve the company information linked to the issuer.
     company = await CompanyList.get_find(to_checksum_address(eth_address))
     if company.address == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
 
-    return json_response({**SuccessResponse.default(), "data": company.json()})
+    # Retrieve the personal information address linked to the issuer.
+    token_all = aliased(
+        (
+            select(
+                IDXBondToken.personal_info_address.label("personal_info_address")
+            ).where(
+                and_(
+                    IDXBondToken.owner_address == eth_address,
+                    IDXBondToken.personal_info_address != None,
+                )
+            )
+        )
+        .union_all(
+            select(
+                IDXShareToken.personal_info_address.label("personal_info_address")
+            ).where(
+                and_(
+                    IDXShareToken.owner_address == eth_address,
+                    IDXShareToken.personal_info_address != None,
+                )
+            )
+        )
+        .subquery()
+    )
+
+    _personal_info_list = (
+        await async_session.scalars(select(distinct(token_all.c.personal_info_address)))
+    ).all()
+    resp = company.json()
+    resp["in_use_personal_info_addresses"] = _personal_info_list
+
+    return json_response({**SuccessResponse.default(), "data": resp})
 
 
 # ------------------------------
@@ -196,18 +228,14 @@ async def retrieve_company(
 @router.get(
     "/{eth_address}/Tokens",
     summary="List of tokens issued by issuer",
-    operation_id="",
+    operation_id="ListAllCompanyTokens",
     response_model=GenericSuccessResponse[ListAllCompanyTokensResponse],
     responses=get_routers_responses(),
 )
-async def retrieve_company_tokens(
+async def list_all_company_tokens(
     async_session: DBAsyncSession,
-    eth_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Issuer address")
-    ],
-    include_private_listing: Optional[bool] = Query(
-        default=False, description="include private listing token issuers"
-    ),
+    eth_address: Annotated[EthereumAddress, Path(description="Issuer address")],
+    request_query: Annotated[ListAllCompanyTokensQuery, Query()],
 ):
     """
     Returns a list of tokens issued by given issuer.
@@ -218,7 +246,7 @@ async def retrieve_company_tokens(
     )
 
     # Get the token listed
-    if include_private_listing:
+    if request_query.include_private_listing:
         available_list: Sequence[Listing] = (
             await async_session.scalars(
                 select(Listing)

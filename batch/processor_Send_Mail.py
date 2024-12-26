@@ -52,7 +52,7 @@ class Processor:
                             and mail.to_email.split("@")[1]
                             not in config.ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST
                         ):
-                            LOG.warning(
+                            LOG.notice(
                                 f"Destination address is not allowed to send: id={mail.id}"
                             )
                             continue
@@ -68,7 +68,7 @@ class Processor:
                                 )
                             )
                         ):
-                            LOG.warning(
+                            LOG.notice(
                                 f"Destination address is not allowed to send: id={mail.id}"
                             )
                             continue

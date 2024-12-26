@@ -40,7 +40,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-class TestCompanyInfoCompanyTokenList:
+class TestListAllCompanyTokens:
     # テスト対象API
     apiurl = "/Companies/{eth_address}/Tokens"
 

@@ -125,7 +125,7 @@ class TestProcessorSendMail:
         assert 1 == caplog.record_tuples.count(
             (
                 LOG.name,
-                logging.WARNING,
+                25,
                 "Destination address is not allowed to send: id=1",
             )
         )
@@ -159,7 +159,7 @@ class TestProcessorSendMail:
         assert 1 == caplog.record_tuples.count(
             (
                 LOG.name,
-                logging.WARNING,
+                25,
                 "Destination address is not allowed to send: id=1",
             )
         )
@@ -202,7 +202,7 @@ class TestProcessorSendMail:
     # SMTP_POLICY setting
     @pytest.mark.parametrize(
         "policy",
-        ["SMTP", "SMTPUTF8", "HTTP", "hoge"],
+        ["", "SMTPUTF8", "HTTP"],
     )
     def test_normal_6(self, policy, processor, session, caplog, monkeypatch):
         # Prepare data

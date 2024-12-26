@@ -17,6 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from unittest import mock
+from unittest.mock import MagicMock
+
 from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -25,6 +28,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -169,6 +173,10 @@ class TestTokenTokenStatus:
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
+    ###########################################################################
+    # Normal
+    ###########################################################################
+
     # ＜正常系1＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = True）
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
@@ -202,6 +210,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -246,6 +255,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -290,6 +300,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -331,6 +342,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -375,6 +387,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -419,6 +432,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -457,6 +471,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -498,6 +513,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -539,6 +555,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -577,6 +594,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": True,
         }
@@ -618,6 +636,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
+            "owner_address": issuer["account_address"],
             "status": False,
             "transferable": True,
         }
@@ -659,6 +678,7 @@ class TestTokenTokenStatus:
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
+            "owner_address": issuer["account_address"],
             "status": True,
             "transferable": False,
         }
@@ -667,9 +687,13 @@ class TestTokenTokenStatus:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # ＜エラー系1＞
-    #   無効なコントラクトアドレス（不正な形式）
-    #   -> 400エラー
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # <Error_1>
+    # Invalid token address
+    # -> 400
     def test_error_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address="0xabcd")
 
@@ -691,9 +715,9 @@ class TestTokenTokenStatus:
             ],
         }
 
-    # ＜エラー系2＞
-    #   無効なコントラクトアドレス（TokenInterfaceを継承しているが譲渡可否を持たないコントラクト）
-    #   -> 404エラー
+    # <Error_2>
+    # Contract not exists
+    # -> 404
     def test_error_2(self, client: TestClient, session: Session, shared_contract):
         share_exchange = shared_contract["IbetShareExchange"]
 
@@ -712,4 +736,44 @@ class TestTokenTokenStatus:
             "code": 30,
             "message": "Data Not Exists",
             "description": "token_address: " + share_exchange["address"],
+        }
+
+    # <Error_3>
+    # ServiceUnavailable
+    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account["issuer"]
+
+        # TokenListコントラクト
+        token_list = TestTokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
+
+        # データ準備：債券新規発行
+        exchange_address = to_checksum_address(
+            shared_contract["IbetStraightBondExchange"]["address"]
+        )
+        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        attribute = TestTokenTokenStatus.bond_token_attribute(
+            exchange_address, personal_info
+        )
+        bond_token = issue_bond_token(issuer, attribute)
+        register_bond_list(issuer, bond_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestTokenTokenStatus.list_token(session, bond_token)
+        session.commit()
+
+        with mock.patch(
+            "web3.contract.async_contract.AsyncContractFunction.call",
+            MagicMock(side_effect=ServiceUnavailable()),
+        ):
+            apiurl = self.apiurl_base.format(contract_address=bond_token["address"])
+            query_string = ""
+            resp = client.get(apiurl, params=query_string)
+
+        assert resp.status_code == 503
+        assert resp.json()["meta"] == {
+            "code": 503,
+            "message": "Service Unavailable",
+            "description": "Service is temporarily unavailable",
         }

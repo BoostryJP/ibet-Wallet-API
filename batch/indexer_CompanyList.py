@@ -91,15 +91,13 @@ class Processor:
                     or not isinstance(rsa_publickey, str)
                     or not isinstance(homepage, str)
                 ):
-                    LOG.warning(f"type error: index={i}")
+                    LOG.notice(f"Invalid type: index={i}")
                     continue
                 if address and corporate_name and rsa_publickey:
                     try:
                         address = to_checksum_address(address)
                     except ValueError:
-                        LOG.warning(
-                            f"invalid address error: index={i} address={address}"
-                        )
+                        LOG.notice(f"Invalid address: index={i} address={address}")
                         continue
                     try:
                         await self.__sink_on_company(
@@ -110,12 +108,10 @@ class Processor:
                             homepage=homepage,
                         )
                     except IntegrityError:
-                        LOG.warning(
-                            f"duplicate address error: index={i} address={address}"
-                        )
+                        LOG.notice(f"Duplicate address: index={i} address={address}")
                         continue
                 else:
-                    LOG.warning(f"required error: index={i}")
+                    LOG.notice(f"Missing required field: index={i}")
                     continue
 
             await db_session.commit()
@@ -151,7 +147,7 @@ async def main():
         try:
             await processor.process()
         except ServiceUnavailable:
-            LOG.warning("An external service was unavailable")
+            LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors

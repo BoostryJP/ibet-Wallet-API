@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Annotated
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,9 +38,9 @@ from app.model.schema import (
     TokenAddress,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
-    ValidatedEthereumAddress,
 )
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
@@ -586,7 +586,7 @@ class MembershipOrderList(BaseOrderList):
         self,
         async_session: DBAsyncSession,
         req: Request,
-        request_query: ListAllOrderListQuery = Depends(),
+        request_query: Annotated[ListAllOrderListQuery, Query()],
     ):
         if (
             config.MEMBERSHIP_TOKEN_ENABLED is False
@@ -674,7 +674,7 @@ class CouponOrderList(BaseOrderList):
         self,
         async_session: DBAsyncSession,
         req: Request,
-        request_query: ListAllOrderListQuery = Depends(),
+        request_query: Annotated[ListAllOrderListQuery, Query()],
     ):
         if (
             config.COUPON_TOKEN_ENABLED is False
@@ -762,10 +762,8 @@ class OrderList(BaseOrderList):
         self,
         async_session: DBAsyncSession,
         req: Request,
-        token_address: Annotated[
-            ValidatedEthereumAddress, Path(description="Token address")
-        ],
-        request_query: ListAllOrderListQuery = Depends(),
+        token_address: Annotated[EthereumAddress, Path(description="Token address")],
+        request_query: Annotated[ListAllOrderListQuery, Query()],
     ):
         order_list = []
         settlement_list = []

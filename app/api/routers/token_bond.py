@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated, Sequence
 
-from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
@@ -38,12 +38,13 @@ from app.model.schema import (
     ListAllStraightBondTokensQuery,
     ListAllStraightBondTokensResponse,
     RetrieveStraightBondTokenResponse,
+    StraightBondTokensQuery,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -63,14 +64,7 @@ router = APIRouter(prefix="/Token/StraightBond", tags=["token_info"])
 async def list_all_straight_bond_tokens(
     async_session: DBAsyncSession,
     req: Request,
-    address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ],
-    request_query: ListAllStraightBondTokensQuery = Depends(),
+    request_query: Annotated[ListAllStraightBondTokensQuery, Query()],
 ):
     """
     [StraightBond]Returns a detail list of tokens.
@@ -90,10 +84,10 @@ async def list_all_straight_bond_tokens(
         .join(Listing, Listing.token_address == IDXBondToken.token_address)
         .where(Listing.is_public == True)
     )
-    if len(address_list):
-        stmt = stmt.where(IDXBondToken.token_address.in_(address_list))
+    if len(request_query.address_list):
+        stmt = stmt.where(IDXBondToken.token_address.in_(request_query.address_list))
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -134,7 +128,7 @@ async def list_all_straight_bond_tokens(
     if request_query.is_redeemed is not None:
         stmt = stmt.where(IDXBondToken.is_redeemed == request_query.is_redeemed)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
@@ -182,7 +176,7 @@ async def list_all_straight_bond_tokens(
 async def list_all_straight_bond_token_addresses(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllStraightBondTokensQuery = Depends(),
+    request_query: Annotated[StraightBondTokensQuery, Query()],
 ):
     """
     [StraightBond]Returns a list of token addresses.
@@ -203,7 +197,7 @@ async def list_all_straight_bond_token_addresses(
         .where(Listing.is_public == True)
     )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -244,7 +238,7 @@ async def list_all_straight_bond_token_addresses(
     if request_query.is_redeemed is not None:
         stmt = stmt.where(IDXBondToken.is_redeemed == request_query.is_redeemed)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
@@ -293,9 +287,7 @@ async def list_all_straight_bond_token_addresses(
 async def retrieve_straight_bond_token(
     async_session: DBAsyncSession,
     req: Request,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     [StraightBond]Returns the details of the token.
@@ -332,7 +324,7 @@ async def retrieve_straight_bond_token(
             async_session=async_session, token_address=token_address
         )
     except ServiceUnavailable as e:
-        LOG.warning(e)
+        LOG.notice(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)

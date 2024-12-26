@@ -17,10 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Any, Dict, Sequence, Tuple
+from typing import Annotated, Any, Dict, Sequence, Tuple
 
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Path, Query
 from sqlalchemy import and_, desc, func, select
 from starlette.requests import Request
 from web3.contract.contract import ContractFunction
@@ -67,7 +67,7 @@ router = APIRouter(prefix="/NodeInfo", tags=["node_info"])
 async def list_block_data(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListBlockDataQuery = Depends(),
+    request_query: Annotated[ListBlockDataQuery, Query()],
 ):
     """
     Returns a list of block data within the specified block number range.
@@ -125,7 +125,7 @@ async def list_block_data(
         stmt = stmt.where(IDXBlockData.number <= to_block_number)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(IDXBlockData).order_by(None)
     )
 
     # Sort
@@ -134,17 +134,21 @@ async def list_block_data(
     else:
         stmt = stmt.order_by(desc(IDXBlockData.number))
 
+    if (
+        await async_session.scalar(
+            stmt.with_only_columns(func.count())
+            .select_from(IDXBlockData)
+            .order_by(None)
+        )
+        > BLOCK_RESPONSE_LIMIT
+    ):
+        raise ResponseLimitExceededError("Search results exceed the limit")
+
     # Pagination
     if limit is not None:
         stmt = stmt.limit(limit)
     if offset is not None:
         stmt = stmt.offset(offset)
-
-    if (
-        await async_session.scalar(select(func.count()).select_from(stmt.subquery()))
-        > BLOCK_RESPONSE_LIMIT
-    ):
-        raise ResponseLimitExceededError("Search results exceed the limit")
 
     block_data_tmp: Sequence[IDXBlockData] = (await async_session.scalars(stmt)).all()
 
@@ -186,7 +190,7 @@ async def list_block_data(
 async def get_block_data(
     async_session: DBAsyncSession,
     req: Request,
-    block_number: int = Path(description="Block number", ge=0),
+    block_number: Annotated[int, Path(description="Block number", ge=0)],
 ):
     """
     Returns block data in the specified block number.
@@ -242,7 +246,7 @@ async def get_block_data(
 async def list_tx_data(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListTxDataQuery = Depends(),
+    request_query: Annotated[ListTxDataQuery, Query()],
 ):
     """
     Returns a list of transactions by various search parameters.
@@ -269,23 +273,25 @@ async def list_tx_data(
         stmt = stmt.where(IDXTxData.to_address == to_checksum_address(to_address))
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).select_from(IDXTxData).order_by(None)
     )
 
     # Sort
     stmt = stmt.order_by(desc(IDXTxData.created))
+
+    if (
+        await async_session.scalar(
+            stmt.with_only_columns(func.count()).select_from(IDXTxData).order_by(None)
+        )
+        > TX_RESPONSE_LIMIT
+    ):
+        raise ResponseLimitExceededError("Search results exceed the limit")
 
     # Pagination
     if limit is not None:
         stmt = stmt.limit(limit)
     if offset is not None:
         stmt = stmt.offset(offset)
-
-    if (
-        await async_session.scalar(select(func.count()).select_from(stmt.subquery()))
-        > TX_RESPONSE_LIMIT
-    ):
-        raise ResponseLimitExceededError("Search results exceed the limit")
 
     tx_data_tmp: Sequence[IDXTxData] = (await async_session.scalars(stmt)).all()
 
@@ -325,7 +331,7 @@ async def list_tx_data(
 async def get_tx_data(
     async_session: DBAsyncSession,
     req: Request,
-    hash: str = Path(description="Transaction hash"),
+    hash: Annotated[str, Path(description="Transaction hash")],
 ):
     """
     Searching for the transaction by transaction hash

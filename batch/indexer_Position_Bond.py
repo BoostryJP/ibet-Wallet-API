@@ -1688,7 +1688,7 @@ async def main():
         try:
             await processor.sync_new_logs()
         except ServiceUnavailable:
-            LOG.warning("An external service was unavailable")
+            LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:

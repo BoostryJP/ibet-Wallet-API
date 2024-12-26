@@ -17,4 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-__version__ = "24.12.0"
+import logging
+
+NOTICE = 25  # Set the log level to a number between info (20) and warning (30).
+
+
+class SystemLogger(logging.Logger):
+    def __init__(self, name, level=logging.NOTSET):
+        super().__init__(name, level)
+        logging.addLevelName(NOTICE, "NOTICE")
+
+    def notice(self, msg, *args, **kwargs):
+        if self.isEnabledFor(NOTICE):
+            self._log(NOTICE, msg, args, **kwargs)

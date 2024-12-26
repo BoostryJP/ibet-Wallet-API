@@ -152,13 +152,13 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "account_address"],
                     "msg": "Field required",
                     "type": "missing",
                 },
                 {
-                    "input": None,
+                    "input": {},
                     "loc": ["query", "owner_address"],
                     "msg": "Field required",
                     "type": "missing",

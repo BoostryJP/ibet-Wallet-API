@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import timezone
 from typing import Annotated, Optional, Sequence
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Path, Query
 from pydantic import UUID4
 from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
 from sqlalchemy.orm import aliased
@@ -58,9 +58,9 @@ from app.model.schema import (
     TransferHistoriesResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
-    ValidatedEthereumAddress,
     ValueOperator,
 )
 from app.utils.asyncio_utils import SemaphoreTaskGroup
@@ -79,31 +79,32 @@ router = APIRouter(prefix="/Token", tags=["token_info"])
     summary="Token Status",
     operation_id="TokenStatus",
     response_model=GenericSuccessResponse[TokenStatusResponse],
-    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+    responses=get_routers_responses(
+        DataNotExistsError, InvalidParameterError, ServiceUnavailable
+    ),
 )
 async def get_token_status(
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns status of given token.
     """
-    # TokenList-Contractへの接続
-    list_contract = AsyncContract.get_contract(
-        "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
-    )
-
-    # TokenList-Contractからトークンの情報を取得する
-    token = await AsyncContract.call_function(
-        contract=list_contract,
-        function_name="getTokenByAddress",
-        args=(token_address,),
-        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
-    )
-
-    token_template = token[1]
     try:
+        # TokenList-Contractへの接続
+        list_contract = AsyncContract.get_contract(
+            "TokenList", str(config.TOKEN_LIST_CONTRACT_ADDRESS)
+        )
+
+        # TokenList-Contractからトークンの情報を取得する
+        token = await AsyncContract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+        )
+        token_template = token[1]
+        owner_address = token[2]
+
         # Token-Contractへの接続
         token_contract = AsyncContract.get_contract(token_template, token_address)
         tasks = await SemaphoreTaskGroup.run(
@@ -119,15 +120,14 @@ async def get_token_status(
             max_concurrency=3,
         )
         name, status, transferable = [task.result() for task in tasks]
-    except* ServiceUnavailable as e:
-        LOG.warning(e)
-        raise DataNotExistsError("token_address: %s" % token_address)
-    except* Exception as e:
-        LOG.error(e)
+    except* ServiceUnavailable:
+        raise ServiceUnavailable("Service is temporarily unavailable") from None
+    except* Exception:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     response_json = {
         "token_template": token_template,
+        "owner_address": owner_address,
         "name": name,
         "status": status,
         "transferable": transferable,
@@ -144,10 +144,8 @@ async def get_token_status(
 )
 async def get_token_holders(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: ListAllTokenHoldersQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListAllTokenHoldersQuery, Query()],
 ):
     """
     Returns a list of token holders for a given token.
@@ -208,7 +206,9 @@ async def get_token_holders(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     if request_query.exclude_owner is True:
@@ -282,7 +282,9 @@ async def get_token_holders(
                 stmt = stmt.where(IDXLockedPosition.value <= request_query.locked)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     # Pagination
@@ -337,9 +339,7 @@ async def get_token_holders(
 async def search_token_holders(
     async_session: DBAsyncSession,
     data: SearchTokenHoldersRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns a list of token holders for a given token using detailed search query.
@@ -390,7 +390,9 @@ async def search_token_holders(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     if data.exclude_owner is True:
@@ -446,7 +448,9 @@ async def search_token_holders(
                 stmt = stmt.where(IDXLockedPosition.value <= data.locked)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     # Sort
@@ -532,10 +536,8 @@ async def search_token_holders(
 )
 async def get_token_holders_count(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: RetrieveTokenHoldersCountQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[RetrieveTokenHoldersCountQuery, Query()],
 ):
     """
     Returns count of token holders for a given token.
@@ -596,7 +598,9 @@ async def get_token_holders_count(
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
     _count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
 
     resp_body = {"count": _count}
@@ -614,9 +618,7 @@ async def get_token_holders_count(
 async def create_token_holders_collection(
     async_session: DBAsyncSession,
     data: CreateTokenHoldersCollectionRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Enqueues task of collecting token holders for a given block number.
@@ -699,9 +701,7 @@ async def create_token_holders_collection(
 )
 async def get_token_holders_collection(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
     list_id: UUID4 = Path(
         description="Unique id to be assigned to each token holder list."
         "This must be Version4 UUID.",
@@ -768,10 +768,8 @@ async def get_token_holders_collection(
 )
 async def list_all_transfer_histories(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: ListAllTransferHistoryQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListAllTransferHistoryQuery, Query()],
 ):
     """
     Returns a list of transfer histories for a given token.
@@ -808,8 +806,9 @@ async def list_all_transfer_histories(
                 to_address_tag.account_tag == request_query.account_tag,
             )
         )
+
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if request_query.source_event is not None:
@@ -846,7 +845,7 @@ async def list_all_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= request_query.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Pagination
@@ -880,9 +879,7 @@ async def list_all_transfer_histories(
 async def search_transfer_histories(
     async_session: DBAsyncSession,
     data: SearchTransferHistoryRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns a list of transfer histories for a given token using detailed search query.
@@ -906,7 +903,7 @@ async def search_transfer_histories(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if data.source_event is not None:
@@ -939,7 +936,7 @@ async def search_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= data.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     def _order(_order):
@@ -1015,10 +1012,8 @@ async def search_transfer_histories(
 )
 async def list_all_transfer_approval_histories(
     async_session: DBAsyncSession,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
-    request_query: ListAllTransferApprovalHistoryQuery = Depends(),
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListAllTransferApprovalHistoryQuery, Query()],
 ):
     """
     Returns a list of transfer approval histories for a given token.
@@ -1058,7 +1053,7 @@ async def list_all_transfer_approval_histories(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if request_query.from_address is not None:
@@ -1081,7 +1076,7 @@ async def list_all_transfer_approval_histories(
                 stmt = stmt.where(IDXTransferApproval.value <= request_query.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Pagination
@@ -1120,9 +1115,7 @@ async def list_all_transfer_approval_histories(
 async def search_transfer_approval_histories(
     async_session: DBAsyncSession,
     data: SearchTransferApprovalHistoryRequest,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     Returns a list of transfer approval histories for a given token using detailed search query.
@@ -1152,7 +1145,7 @@ async def search_transfer_approval_histories(
             )
         )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if data.application_datetime_from is not None:
@@ -1213,7 +1206,7 @@ async def search_transfer_approval_histories(
                 stmt = stmt.where(IDXTransferApproval.value <= data.value)
 
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     def _order(_order):

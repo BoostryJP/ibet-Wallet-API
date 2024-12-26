@@ -18,15 +18,18 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import logging
+from typing import cast
 
 from app import config
+from logger import SystemLogger
 
+logging.setLoggerClass(SystemLogger)
 logging.basicConfig(level=config.LOG_LEVEL)
-LOG = logging.getLogger("ibet_wallet_app")
+LOG = cast(SystemLogger, logging.getLogger("ibet_wallet_app"))
 LOG.propagate = False
+
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
-
 logging.getLogger("web3.manager.RequestManager").propagate = False
 logging.getLogger("web3.manager.RequestManager").addHandler(logging.NullHandler())
 

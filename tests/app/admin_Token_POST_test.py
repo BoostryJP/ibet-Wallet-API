@@ -113,11 +113,7 @@ class TestAdminTokenPOST:
                 "code": 88,
                 "description": [
                     {
-                        "input": '{"is_public": false, '
-                        '"max_holding_quantity": 200, '
-                        '"max_sell_amount": 25000, '
-                        '"owner_address": '
-                        '"0x34C987DDe783EfbFe1E573727165E6c15D660590"}',
+                        "input": '{"is_public":false,"max_holding_quantity":200,"max_sell_amount":25000,"owner_address":"0x34C987DDe783EfbFe1E573727165E6c15D660590"}',
                         "loc": ["body"],
                         "msg": "Input should be a valid dictionary or "
                         "object to extract fields from",

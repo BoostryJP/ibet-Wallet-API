@@ -18,12 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-from typing import Any
+from typing import Annotated, Any
 
 import httpx
 from eth_account import Account
 from eth_utils import to_checksum_address
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Path, Query
 from hexbytes import HexBytes
 from rlp import decode
 from sqlalchemy import select
@@ -50,7 +50,11 @@ from app.model.schema import (
     WaitForTransactionReceiptQuery,
     WaitForTransactionReceiptResponse,
 )
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.model.schema.base import (
+    EthereumAddress,
+    GenericSuccessResponse,
+    SuccessResponse,
+)
 from app.utils.contract_error_code import error_code_msg
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -114,7 +118,8 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
     responses=get_routers_responses(InvalidParameterError),
 )
 async def get_transaction_count(
-    eth_address: str, query: GetTransactionCountQuery = Depends()
+    eth_address: Annotated[EthereumAddress, Path(description="ethereum address")],
+    query: Annotated[GetTransactionCountQuery, Query()],
 ):
     """
     Returns nonce counts of given ethereum address.
@@ -166,7 +171,7 @@ async def send_raw_transaction(
             raw_tx = decode(HexBytes(raw_tx_hex))
             to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
-            LOG.warning(f"RLP decoding failed: {err}")
+            LOG.notice(f"RLP decoding failed: {err}")
             continue
 
         listed_token = (
@@ -190,7 +195,7 @@ async def send_raw_transaction(
                         contract_name=token_attribute[1], address=to_contract_address
                     )
                 except Exception as err:
-                    LOG.warning(f"Could not get token status: {err}")
+                    LOG.notice(f"Could not get token status: {err}")
                     continue
                 if (
                     await AsyncContract.call_function(
@@ -292,7 +297,7 @@ async def send_raw_transaction(
                         "error_msg": message,
                     }
                 )
-                LOG.warning(
+                LOG.notice(
                     f"Contract revert detected: code: {str(code)} message: {message}"
                 )
                 continue
@@ -320,7 +325,7 @@ async def send_raw_transaction(
             result.append(
                 {"id": i + 1, "status": status, "transaction_hash": tx_hash.to_0x_hex()}
             )
-            LOG.warning(f"Transaction receipt timeout: {time_exhausted_err}")
+            LOG.notice(f"Transaction receipt timeout: {time_exhausted_err}")
             continue
         except Exception as err:
             result.append(
@@ -371,7 +376,7 @@ async def send_raw_transaction_no_wait(
             raw_tx = decode(HexBytes(raw_tx_hex))
             to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
         except Exception as err:
-            LOG.warning(f"RLP decoding failed: {err}")
+            LOG.notice(f"RLP decoding failed: {err}")
             continue
 
         listed_token = (
@@ -396,7 +401,7 @@ async def send_raw_transaction_no_wait(
                         contract_name=token_attribute[1], address=to_contract_address
                     )
                 except Exception as err:
-                    LOG.warning(f"Could not get token status: {err}")
+                    LOG.notice(f"Could not get token status: {err}")
                     continue
                 if (
                     await AsyncContract.call_function(
@@ -497,7 +502,7 @@ async def send_raw_transaction_no_wait(
     responses=get_routers_responses(DataNotExistsError),
 )
 async def wait_for_transaction_receipt(
-    query: WaitForTransactionReceiptQuery = Depends(),
+    query: Annotated[WaitForTransactionReceiptQuery, Query()],
 ):
     """
     Waits for transaction receipt returned.

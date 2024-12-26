@@ -24,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Sequence
 
 from eth_utils import to_checksum_address
+from pydantic import ValidationError
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +35,7 @@ from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
+    DataMessage,
     IDXTransfer,
     IDXTransferBlockNumber,
     IDXTransferSourceEventType,
@@ -174,10 +176,20 @@ class Processor:
         if data_str is not None:
             try:
                 data = json.loads(data_str)
+                validated_data = DataMessage(**data)
+                message = validated_data.message
+            except ValidationError:
+                data = {}
+                message = None
+            except json.JSONDecodeError:
+                data = {}
+                message = None
             except:
                 data = {}
+                message = None
         else:
             data = None
+            message = None
         transfer = IDXTransfer()
         transfer.transaction_hash = transaction_hash
         transfer.token_address = token_address
@@ -188,6 +200,7 @@ class Processor:
         transfer.modified = event_created
         transfer.source_event = source_event.value
         transfer.data = data
+        transfer.message = message
         db_session.add(transfer)
 
     @staticmethod
@@ -476,7 +489,7 @@ async def main():
             await processor.sync_new_logs()
             LOG.debug("Processed")
         except ServiceUnavailable:
-            LOG.warning("An external service was unavailable")
+            LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:

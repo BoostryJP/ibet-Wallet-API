@@ -17,13 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Optional
+from typing import Optional
 
-from fastapi import Query
 from pydantic import BaseModel, Field, NonNegativeInt, RootModel
-from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ResultSet, SortOrder, ValidatedEthereumAddress
+from app.model.schema.base import (
+    BasePaginationQuery,
+    EthereumAddress,
+    ResultSet,
+    SortOrder,
+)
 
 
 ############################
@@ -65,8 +68,8 @@ class TxData(BaseModel):
     block_hash: str
     block_number: NonNegativeInt
     transaction_index: NonNegativeInt
-    from_address: ValidatedEthereumAddress
-    to_address: Optional[ValidatedEthereumAddress]
+    from_address: EthereumAddress
+    to_address: Optional[EthereumAddress]
 
 
 class TxDataDetail(BaseModel):
@@ -74,8 +77,8 @@ class TxDataDetail(BaseModel):
     block_hash: str
     block_number: NonNegativeInt
     transaction_index: NonNegativeInt
-    from_address: ValidatedEthereumAddress
-    to_address: Optional[ValidatedEthereumAddress]
+    from_address: EthereumAddress
+    to_address: Optional[EthereumAddress]
     contract_name: Optional[str]
     contract_function: Optional[str]
     contract_parameters: Optional[dict]
@@ -88,38 +91,18 @@ class TxDataDetail(BaseModel):
 ############################
 # REQUEST
 ############################
-@dataclass
-class ListBlockDataQuery:
-    offset: Annotated[Optional[NonNegativeInt], Query(description="start position")] = (
-        None
+class ListBlockDataQuery(BasePaginationQuery):
+    from_block_number: Optional[NonNegativeInt] = Field(None)
+    to_block_number: Optional[NonNegativeInt] = Field(None)
+    sort_order: Optional[SortOrder] = Field(
+        SortOrder.ASC, description=SortOrder.__doc__
     )
-    limit: Annotated[Optional[NonNegativeInt], Query(description="number of set")] = (
-        None
-    )
-    from_block_number: Annotated[Optional[NonNegativeInt], Query()] = None
-    to_block_number: Annotated[Optional[NonNegativeInt], Query()] = None
-    sort_order: Annotated[
-        Optional[SortOrder], Query(description="sort order(0: ASC, 1: DESC)")
-    ] = SortOrder.ASC
 
 
-@dataclass
-class ListTxDataQuery:
-    offset: Annotated[Optional[NonNegativeInt], Query(description="start position")] = (
-        None
-    )
-    limit: Annotated[Optional[NonNegativeInt], Query(description="number of set")] = (
-        None
-    )
-    block_number: Annotated[
-        Optional[NonNegativeInt], Query(description="block number")
-    ] = None
-    from_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="tx from")
-    ] = None
-    to_address: Annotated[
-        Optional[ValidatedEthereumAddress], Query(description="tx to")
-    ] = None
+class ListTxDataQuery(BasePaginationQuery):
+    block_number: Optional[NonNegativeInt] = Field(None, description="block number")
+    from_address: Optional[EthereumAddress] = Field(None, description="tx from")
+    to_address: Optional[EthereumAddress] = Field(None, description="tx to")
 
 
 ############################

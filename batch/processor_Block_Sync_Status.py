@@ -167,7 +167,7 @@ class Processor:
         old_data = history.peek_oldest()
         elapsed_time = data["time"] - old_data["time"]
         generated_block_count = data["block_number"] - old_data["block_number"]
-        generated_block_count_threshold = (elapsed_time / EXPECTED_BLOCKS_PER_SEC) * (
+        generated_block_count_threshold = (elapsed_time * EXPECTED_BLOCKS_PER_SEC) * (
             config.BLOCK_GENERATION_SPEED_THRESHOLD / 100
         )  # count of block generation theoretical value
         if generated_block_count < generated_block_count_threshold:
@@ -198,7 +198,7 @@ class Processor:
         else:
             if not is_synced:
                 # If the same previous processing status, log output with WARING level.
-                LOG.warning(f"{endpoint_uri} Block synchronization is down: %s", errors)
+                LOG.notice(f"{endpoint_uri} Block synchronization is down: %s", errors)
 
     def __web3_errors(self, db_session: Session, endpoint_uri: str):
         try:

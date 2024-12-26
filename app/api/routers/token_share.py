@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated, Sequence
 
-from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
 
 from app import config, log
@@ -38,12 +38,13 @@ from app.model.schema import (
     ListAllShareTokensQuery,
     ListAllShareTokensResponse,
     RetrieveShareTokenResponse,
+    ShareTokensQuery,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -63,14 +64,7 @@ router = APIRouter(prefix="/Token/Share", tags=["token_info"])
 async def list_all_share_tokens(
     async_session: DBAsyncSession,
     req: Request,
-    address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(
-            default_factory=list,
-            description="list of token address (**this affects total number**)",
-        ),
-    ],
-    request_query: ListAllShareTokensQuery = Depends(),
+    request_query: Annotated[ListAllShareTokensQuery, Query()],
 ):
     """
     [Share]Returns a detail list of tokens.
@@ -90,10 +84,10 @@ async def list_all_share_tokens(
         .join(Listing, Listing.token_address == IDXShareToken.token_address)
         .where(Listing.is_public == True)
     )
-    if len(address_list):
-        stmt = stmt.where(IDXShareToken.token_address.in_(address_list))
+    if len(request_query.address_list):
+        stmt = stmt.where(IDXShareToken.token_address.in_(request_query.address_list))
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -134,7 +128,7 @@ async def list_all_share_tokens(
     if request_query.is_canceled is not None:
         stmt = stmt.where(IDXShareToken.is_canceled == request_query.is_canceled)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
@@ -182,7 +176,7 @@ async def list_all_share_tokens(
 async def list_all_share_token_addresses(
     async_session: DBAsyncSession,
     req: Request,
-    request_query: ListAllShareTokensQuery = Depends(),
+    request_query: Annotated[ShareTokensQuery, Query()],
 ):
     """
     [Share]Returns a list of token addresses.
@@ -203,7 +197,7 @@ async def list_all_share_token_addresses(
         .where(Listing.is_public == True)
     )
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     # Search Filter
@@ -244,7 +238,7 @@ async def list_all_share_token_addresses(
     if request_query.is_canceled is not None:
         stmt = stmt.where(IDXShareToken.is_canceled == request_query.is_canceled)
     count = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        stmt.with_only_columns(func.count()).order_by(None)
     )
 
     if sort_item == "created":
@@ -291,9 +285,7 @@ async def list_all_share_token_addresses(
 async def retrieve_share_token(
     async_session: DBAsyncSession,
     req: Request,
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="Token address")
-    ],
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
 ):
     """
     [Share]Returns the details of the token.
@@ -330,7 +322,7 @@ async def retrieve_share_token(
             async_session=async_session, token_address=token_address
         )
     except ServiceUnavailable as e:
-        LOG.warning(e)
+        LOG.notice(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)

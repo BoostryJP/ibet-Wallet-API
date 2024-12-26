@@ -17,13 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
-from fastapi import Query
 from pydantic import BaseModel, Field
-from pydantic.dataclasses import dataclass
 
-from app.model.schema.base import ValidatedEthereumAddress
+from app.model.schema.base import EthereumAddress
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
@@ -35,23 +33,20 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 ############################
 # REQUEST
 ############################
-@dataclass
-class ListAllOrderListQuery:
-    account_address_list: Annotated[
-        list[ValidatedEthereumAddress],
-        Query(default_factory=list, description="Account address list"),
-    ]
-    include_canceled_items: Annotated[
-        Optional[bool],
-        Query(description="Whether to include canceled orders or canceled agreements."),
-    ] = None
+class ListAllOrderListQuery(BaseModel):
+    account_address_list: list[EthereumAddress] = Field(
+        default_factory=list, description="Account address list"
+    )
+    include_canceled_items: Optional[bool] = Field(
+        None, description="Whether to include canceled orders or canceled agreements."
+    )
 
 
 ############################
 # RESPONSE
 ############################
 class TokenAddress(BaseModel):
-    token_address: ValidatedEthereumAddress
+    token_address: EthereumAddress
 
 
 class Order(BaseModel):
@@ -79,7 +74,7 @@ class OrderSet(BaseModel, Generic[TokenModel]):
 
 
 class Agreement(BaseModel):
-    exchange_address: ValidatedEthereumAddress = Field(description="exchange address")
+    exchange_address: EthereumAddress = Field(description="exchange address")
     order_id: int
     agreement_id: int
     amount: int

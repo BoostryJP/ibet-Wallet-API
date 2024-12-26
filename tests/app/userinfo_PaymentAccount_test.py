@@ -124,7 +124,7 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {"agent_address": agent["account_address"]},
                     "loc": ["query", "account_address"],
                     "msg": "Field required",
                     "type": "missing",
@@ -178,7 +178,7 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
-                    "input": None,
+                    "input": {"account_address": trader},
                     "loc": ["query", "agent_address"],
                     "msg": "Field required",
                     "type": "missing",

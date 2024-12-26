@@ -18,14 +18,14 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from .base import (
+    BasePaginationQuery,
     EmailStr,
+    EthereumAddress,
     GenericSuccessResponse,
     ResultSet,
-    ResultSetQuery,
     SortOrder,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
     ValidatedNaiveUTCDatetime,
     ValueOperator,
 )

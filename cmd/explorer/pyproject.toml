@@ -1,18 +1,16 @@
-[tool.poetry]
+[project]
 name = "ibet-wallet-api-explorer"
 version = "0.1.0"
 description = "ibet-Wallet-API Terminal UI for Block Chain Explorer"
-authors = ["BOOSTRY Co., Ltd. <dev@boostry.co.jp>"]
-readme = "README.md"
-packages = [
-    { include = "src" },
+authors = [
+    {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},
 ]
+readme = "README.md"
+requires-python = "==3.12.2"
+dependencies = []
 
-[tool.poetry.dependencies]
-python = "3.12.2"
-
-[tool.poetry.scripts]
-ibet-explorer = "src.main:app"
+[project.scripts]
+ibet-explorer = "main:app"
 
 [tool.mypy]
 python_version = "3.12"
@@ -20,6 +18,6 @@ no_strict_optional = true
 ignore_missing_imports = true
 check_untyped_defs = true
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["*"]

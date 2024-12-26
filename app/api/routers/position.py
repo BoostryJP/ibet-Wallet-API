@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from decimal import Decimal
 from typing import Annotated, Sequence, Type, Union
 
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.functions import sum as sum_
@@ -74,10 +74,10 @@ from app.model.schema import (
     TokenPositionsResponse,
 )
 from app.model.schema.base import (
+    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
-    ValidatedEthereumAddress,
 )
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
@@ -190,9 +190,10 @@ class BasePosition:
             )
             .order_by(Listing.id)
         )
-
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
         count = total
         if limit is not None:
@@ -516,7 +517,7 @@ class BasePosition:
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -639,7 +640,7 @@ class BasePositionShare(BasePosition):
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -744,7 +745,7 @@ class BasePositionStraightBond(BasePosition):
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -786,9 +787,10 @@ class BasePositionMembership(BasePosition):
             )
             .order_by(Listing.id)
         )
-
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
         count = total
         if limit is not None:
@@ -906,8 +908,11 @@ class BasePositionCoupon(BasePosition):
         )
 
         total = await async_session.scalar(
-            select(func.count()).select_from(stmt.subquery())
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
+
         count = total
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -1044,7 +1049,7 @@ class BasePositionCoupon(BasePosition):
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.warning(e)
+            LOG.notice(e)
             return None
         except Exception as e:
             LOG.error(e)
@@ -1070,9 +1075,9 @@ class GetPositionList:
         async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
+            EthereumAddress, Path(description="account address")
         ],
-        request_query: ListAllPositionQuery = Depends(),
+        request_query: Annotated[ListAllPositionQuery, Query()],
     ):
         return await self.base_position().get_list(
             req, request_query, async_session, account_address
@@ -1090,12 +1095,10 @@ class GetPosition:
         async_session: DBAsyncSession,
         req: Request,
         account_address: Annotated[
-            ValidatedEthereumAddress, Path(description="account address")
+            EthereumAddress, Path(description="account address")
         ],
-        token_address: Annotated[
-            ValidatedEthereumAddress, Path(description="token address")
-        ],
-        request_query: GetPositionQuery = Depends(),
+        token_address: Annotated[EthereumAddress, Path(description="token address")],
+        request_query: Annotated[GetPositionQuery, Query()],
     ):
         return await self.base_position().get_one(
             req, request_query, async_session, account_address, token_address
@@ -1285,12 +1288,8 @@ async def retrieve_coupon_position_by_token_address(
 async def list_all_coupon_consumptions(
     async_session: DBAsyncSession,
     req: Request,
-    account_address: Annotated[
-        ValidatedEthereumAddress, Path(description="account address")
-    ],
-    token_address: Annotated[
-        ValidatedEthereumAddress, Path(description="token_address")
-    ],
+    account_address: Annotated[EthereumAddress, Path(description="account address")],
+    token_address: Annotated[EthereumAddress, Path(description="token_address")],
 ):
     """
     [Coupon]Returns a list of consumption for a given account address.
@@ -1339,10 +1338,8 @@ async def list_all_coupon_consumptions(
 )
 async def list_all_token_position(
     async_session: DBAsyncSession,
-    account_address: Annotated[
-        ValidatedEthereumAddress, Path(description="account address")
-    ],
-    request_query: ListAllTokenPositionQuery = Depends(),
+    account_address: Annotated[EthereumAddress, Path(description="account address")],
+    request_query: Annotated[ListAllTokenPositionQuery, Query()],
 ):
     """
     Returns a list of token positions.
@@ -1487,8 +1484,11 @@ async def list_all_token_position(
     )
 
     total = await async_session.scalar(
-        select(func.count()).select_from(stmt.subquery())
+        select(func.count()).select_from(
+            stmt.with_only_columns(1).order_by(None).subquery()
+        )
     )
+
     count = total
 
     if limit is not None:

@@ -19,12 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 
 import logging
 import sys
+from typing import cast
 
 from app import config
+from logger import SystemLogger
 
 
 def get_logger(process_name: str = None):
-    LOG = logging.getLogger("ibet_wallet_batch")
+    logging.setLoggerClass(SystemLogger)
+    LOG = cast(SystemLogger, logging.getLogger("ibet_wallet_batch"))
     LOG.propagate = False
     stream_handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
