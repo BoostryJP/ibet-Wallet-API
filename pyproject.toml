@@ -1,6 +1,6 @@
 [project]
 name = "ibet-Wallet-API"
-version = "24.12"
+version = "25.3"
 description = "RPC services that provides utility functions for building a wallet system on ibet-Network."
 authors = [
     {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},

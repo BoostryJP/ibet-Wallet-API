@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet system
     on ibet network
-  version: 24.12.0
+  version: 25.3.0
 paths:
   /:
     get:
@@ -3430,21 +3430,17 @@ paths:
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/ListAllLockSortItem'
+            $ref: '#/components/schemas/ListAllLockSortItem'
             description: sort item
             default: token_address
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -3589,21 +3585,17 @@ paths:
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/ListAllLockedSortItem'
+            $ref: '#/components/schemas/ListAllLockedSortItem'
             description: sort item
             default: token_address
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -3740,21 +3732,17 @@ paths:
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/LockEventSortItem'
+            $ref: '#/components/schemas/LockEventSortItem'
             description: sort item
             default: block_timestamp
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 1
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -3842,21 +3830,17 @@ paths:
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/ListAllLockedSortItem'
+            $ref: '#/components/schemas/ListAllLockedSortItem'
             description: sort item
             default: token_address
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -3993,21 +3977,17 @@ paths:
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/LockEventSortItem'
+            $ref: '#/components/schemas/LockEventSortItem'
             description: sort item
             default: block_timestamp
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 1
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -5432,11 +5412,9 @@ paths:
           in: query
           required: true
           schema:
-            allOf:
-              - $ref: '#/components/schemas/OrderType'
+            $ref: '#/components/schemas/OrderType'
             description: Order type to be executed by the Orderer. If 'buy' is selected,
               the sell order book will be returned.
-            title: Order Type
           description: Order type to be executed by the Orderer. If 'buy' is selected,
             the sell order book will be returned.
         - name: account_address
@@ -5572,11 +5550,9 @@ paths:
           in: query
           required: true
           schema:
-            allOf:
-              - $ref: '#/components/schemas/OrderType'
+            $ref: '#/components/schemas/OrderType'
             description: Order type to be executed by the Orderer. If 'buy' is selected,
               the sell order book will be returned.
-            title: Order Type
           description: Order type to be executed by the Orderer. If 'buy' is selected,
             the sell order book will be returned.
         - name: account_address
@@ -6105,8 +6081,7 @@ components:
         - block_data
       title: BlockDataListResponse
     BlockDataResponse:
-      allOf:
-        - $ref: '#/components/schemas/BlockDataDetail'
+      $ref: '#/components/schemas/BlockDataDetail'
       title: BlockDataResponse
     BlockIdentifier:
       type: string
@@ -6270,8 +6245,7 @@ components:
           type: integer
           title: Used
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+          $ref: '#/components/schemas/RetrieveCouponTokenResponse'
           description: set when include_token_details=false or null
       type: object
       required:
@@ -6343,8 +6317,7 @@ components:
           examples:
             - cfd83622-34dc-4efe-a68b-2cc275d3d824
         status:
-          allOf:
-            - $ref: '#/components/schemas/TokenHoldersCollectionBatchStatus'
+          $ref: '#/components/schemas/TokenHoldersCollectionBatchStatus'
           description: status code of batch job
       type: object
       required:
@@ -6383,6 +6356,19 @@ components:
       required:
         - meta
       title: DataConflictErrorResponse
+    DataMessage:
+      properties:
+        message:
+          type: string
+          enum:
+            - garnishment
+            - inheritance
+            - force_unlock
+          title: Message
+      type: object
+      required:
+        - message
+      title: DataMessage
     DataNotExistsErrorMetainfo:
       properties:
         code:
@@ -6534,8 +6520,7 @@ components:
     GenericSuccessResponse_ABI_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6549,8 +6534,7 @@ components:
     GenericSuccessResponse_Any_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6564,8 +6548,7 @@ components:
     GenericSuccessResponse_BlockDataListResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6579,8 +6562,7 @@ components:
     GenericSuccessResponse_BlockDataResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6594,8 +6576,7 @@ components:
     GenericSuccessResponse_CouponPositionWithDetail_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6609,8 +6590,7 @@ components:
     GenericSuccessResponse_CouponPositionsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6624,8 +6604,7 @@ components:
     GenericSuccessResponse_CreateTokenHoldersCollectionResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6639,8 +6618,7 @@ components:
     GenericSuccessResponse_E2EMessageEncryptionKeyResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6654,8 +6632,7 @@ components:
     GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveShareTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6670,8 +6647,7 @@ components:
     GenericSuccessResponse_GenericSecurityTokenPositionsResponse_RetrieveStraightBondTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6686,8 +6662,7 @@ components:
     GenericSuccessResponse_GetAdminTokenTypeResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6701,8 +6676,7 @@ components:
     GenericSuccessResponse_GetBlockSyncStatusResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6716,8 +6690,7 @@ components:
     GenericSuccessResponse_GetNodeInfoResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6731,8 +6704,7 @@ components:
     GenericSuccessResponse_ListAllAdminTokensResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6746,8 +6718,7 @@ components:
     GenericSuccessResponse_ListAllCompaniesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6761,8 +6732,7 @@ components:
     GenericSuccessResponse_ListAllCompanyTokensResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6776,8 +6746,7 @@ components:
     GenericSuccessResponse_ListAllCouponConsumptionsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6791,8 +6760,7 @@ components:
     GenericSuccessResponse_ListAllCouponTokenAddressesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6806,8 +6774,7 @@ components:
     GenericSuccessResponse_ListAllCouponTokensResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6821,8 +6788,7 @@ components:
     GenericSuccessResponse_ListAllEventsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6836,8 +6802,7 @@ components:
     GenericSuccessResponse_ListAllLastPriceResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6851,8 +6816,7 @@ components:
     GenericSuccessResponse_ListAllLockEventsResponse_RetrieveShareTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6866,8 +6830,7 @@ components:
     GenericSuccessResponse_ListAllLockEventsResponse_RetrieveStraightBondTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6882,8 +6845,7 @@ components:
     GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveShareTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6898,8 +6860,7 @@ components:
     GenericSuccessResponse_ListAllLockedPositionResponse_RetrieveStraightBondTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6914,8 +6875,7 @@ components:
     GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6929,8 +6889,7 @@ components:
     GenericSuccessResponse_ListAllMembershipTokensResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6944,8 +6903,7 @@ components:
     GenericSuccessResponse_ListAllOrderBookItemResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6959,8 +6917,7 @@ components:
     GenericSuccessResponse_ListAllOrderListResponse_RetrieveCouponTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6974,8 +6931,7 @@ components:
     GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -6990,8 +6946,7 @@ components:
     GenericSuccessResponse_ListAllOrderListResponse_TokenAddress__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7005,8 +6960,7 @@ components:
     GenericSuccessResponse_ListAllShareTokenAddressesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7020,8 +6974,7 @@ components:
     GenericSuccessResponse_ListAllShareTokensResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7035,8 +6988,7 @@ components:
     GenericSuccessResponse_ListAllStraightBondTokenAddressesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7050,8 +7002,7 @@ components:
     GenericSuccessResponse_ListAllStraightBondTokensResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7065,8 +7016,7 @@ components:
     GenericSuccessResponse_ListAllTicksResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7080,8 +7030,7 @@ components:
     GenericSuccessResponse_ListAllTokenLockResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7095,8 +7044,7 @@ components:
     GenericSuccessResponse_MembershipPositionWithDetail_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7110,8 +7058,7 @@ components:
     GenericSuccessResponse_MembershipPositionsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7125,8 +7072,7 @@ components:
     GenericSuccessResponse_NotificationUpdateResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7140,8 +7086,7 @@ components:
     GenericSuccessResponse_NotificationsCountResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7155,8 +7100,7 @@ components:
     GenericSuccessResponse_NotificationsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7170,8 +7114,7 @@ components:
     GenericSuccessResponse_RetrieveAdminTokenResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7185,8 +7128,7 @@ components:
     GenericSuccessResponse_RetrieveAgreementDetailResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7200,8 +7142,7 @@ components:
     GenericSuccessResponse_RetrieveCompanyInfoResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7215,8 +7156,7 @@ components:
     GenericSuccessResponse_RetrieveCouponTokenResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7230,8 +7170,7 @@ components:
     GenericSuccessResponse_RetrieveMembershipTokenResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7245,8 +7184,7 @@ components:
     GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7260,8 +7198,7 @@ components:
     GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7275,8 +7212,7 @@ components:
     GenericSuccessResponse_RetrieveShareTokenResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7290,8 +7226,7 @@ components:
     GenericSuccessResponse_RetrieveStraightBondTokenResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7305,8 +7240,7 @@ components:
     GenericSuccessResponse_RetrieveTokenLockCountResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7320,8 +7254,7 @@ components:
     GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveShareTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7336,8 +7269,7 @@ components:
     GenericSuccessResponse_SecurityTokenPositionWithDetail_RetrieveStraightBondTokenResponse__:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7352,8 +7284,7 @@ components:
     GenericSuccessResponse_SendRawTransactionsNoWaitResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7367,8 +7298,7 @@ components:
     GenericSuccessResponse_SendRawTransactionsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7382,8 +7312,7 @@ components:
     GenericSuccessResponse_TokenHoldersCollectionResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7397,8 +7326,7 @@ components:
     GenericSuccessResponse_TokenHoldersCountResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7412,8 +7340,7 @@ components:
     GenericSuccessResponse_TokenHoldersResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7427,8 +7354,7 @@ components:
     GenericSuccessResponse_TokenPositionsResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7442,8 +7368,7 @@ components:
     GenericSuccessResponse_TokenStatusResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7457,8 +7382,7 @@ components:
     GenericSuccessResponse_TransactionCountResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7472,8 +7396,7 @@ components:
     GenericSuccessResponse_TransferApprovalHistoriesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7487,8 +7410,7 @@ components:
     GenericSuccessResponse_TransferHistoriesResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7502,8 +7424,7 @@ components:
     GenericSuccessResponse_TxDataListResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7517,8 +7438,7 @@ components:
     GenericSuccessResponse_TxDataResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -7532,8 +7452,7 @@ components:
     GenericSuccessResponse_WaitForTransactionReceiptResponse_:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -8135,8 +8054,7 @@ components:
     LockEvent:
       properties:
         category:
-          allOf:
-            - $ref: '#/components/schemas/LockEventCategory'
+          $ref: '#/components/schemas/LockEventCategory'
           description: history item category
         transaction_hash:
           type: string
@@ -8209,8 +8127,7 @@ components:
     LockEventWithTokenDetail_RetrieveShareTokenResponse_:
       properties:
         category:
-          allOf:
-            - $ref: '#/components/schemas/LockEventCategory'
+          $ref: '#/components/schemas/LockEventCategory'
           description: history item category
         transaction_hash:
           type: string
@@ -8254,8 +8171,7 @@ components:
           title: Block Timestamp
           description: block_timestamp when Lock log was emitted (local_timezone)
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+          $ref: '#/components/schemas/RetrieveShareTokenResponse'
           description: Token information
       type: object
       required:
@@ -8273,8 +8189,7 @@ components:
     LockEventWithTokenDetail_RetrieveStraightBondTokenResponse_:
       properties:
         category:
-          allOf:
-            - $ref: '#/components/schemas/LockEventCategory'
+          $ref: '#/components/schemas/LockEventCategory'
           description: history item category
         transaction_hash:
           type: string
@@ -8318,8 +8233,7 @@ components:
           title: Block Timestamp
           description: block_timestamp when Lock log was emitted (local_timezone)
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+          $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
           description: Token information
       type: object
       required:
@@ -8370,8 +8284,7 @@ components:
           type: integer
           title: Value
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+          $ref: '#/components/schemas/RetrieveShareTokenResponse'
           description: Token information
       type: object
       required:
@@ -8396,8 +8309,7 @@ components:
           type: integer
           title: Value
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+          $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
           description: Token information
       type: object
       required:
@@ -8454,8 +8366,7 @@ components:
           type: integer
           title: Exchange Commitment
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+          $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
           description: set when include_token_details=true
       type: object
       required:
@@ -8531,8 +8442,7 @@ components:
     Notification:
       properties:
         notification_type:
-          allOf:
-            - $ref: '#/components/schemas/NotificationType'
+          $ref: '#/components/schemas/NotificationType'
           examples:
             - NewOrder
         id:
@@ -8654,8 +8564,7 @@ components:
     NotificationUpdateResponse:
       properties:
         notification_type:
-          allOf:
-            - $ref: '#/components/schemas/NotificationType'
+          $ref: '#/components/schemas/NotificationType'
           examples:
             - NewOrder
         id:
@@ -9358,8 +9267,7 @@ components:
           type: string
           title: Agent Address
         approval_status:
-          allOf:
-            - $ref: '#/components/schemas/ApprovalStatus'
+          $ref: '#/components/schemas/ApprovalStatus'
           description: approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))
       type: object
       required:
@@ -10251,8 +10159,7 @@ components:
           examples:
             - 1
         status:
-          allOf:
-            - $ref: '#/components/schemas/SendRawTransactionStatus'
+          $ref: '#/components/schemas/SendRawTransactionStatus'
           description: execution failure:0, execution success:1
           examples:
             - 1
@@ -10289,8 +10196,7 @@ components:
           examples:
             - 1
         status:
-          allOf:
-            - $ref: '#/components/schemas/SendRawTransactionStatus'
+          $ref: '#/components/schemas/SendRawTransactionStatus'
           description: execution failure:0, execution success:1, execution success(pending
             transaction):2
           examples:
@@ -10394,8 +10300,7 @@ components:
           title: Locked
           description: set when enable_index=true
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+          $ref: '#/components/schemas/RetrieveShareTokenResponse'
           description: set when include_token_details=true
       type: object
       required:
@@ -10451,8 +10356,7 @@ components:
           title: Locked
           description: set when enable_index=true
         token:
-          allOf:
-            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+          $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
           description: set when include_token_details=true
       type: object
       required:
@@ -10500,8 +10404,7 @@ components:
     SuccessResponse:
       properties:
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
+          $ref: '#/components/schemas/Success200MetaModel'
           examples:
             - code: 200
               message: OK
@@ -10740,8 +10643,7 @@ components:
     TokenStatusResponse:
       properties:
         token_template:
-          allOf:
-            - $ref: '#/components/schemas/TokenType'
+          $ref: '#/components/schemas/TokenType'
           examples:
             - IbetStraightBond
         owner_address:
@@ -10891,7 +10793,9 @@ components:
           $ref: '#/components/schemas/ResultSet'
         transfer_history:
           items:
-            $ref: '#/components/schemas/TransferHistory'
+            anyOf:
+              - $ref: '#/components/schemas/TransferHistory'
+              - $ref: '#/components/schemas/UnlockTransferHistory'
           type: array
           title: Transfer History
           description: Transfer history
@@ -10922,20 +10826,28 @@ components:
           type: integer
           title: Value
           description: Transfer quantity
-        source_event:
-          allOf:
-            - $ref: '#/components/schemas/TransferSourceEvent'
-          description: Source Event
         data:
-          anyOf:
-            - type: object
-            - type: 'null'
+          type: 'null'
           title: Data
           description: Event data
+        message:
+          anyOf:
+            - type: string
+              enum:
+                - garnishment
+                - inheritance
+                - force_unlock
+            - type: 'null'
+          title: Message
         created:
           type: string
           title: Created
           description: block_timestamp when Transfer log was emitted (local timezone)
+        source_event:
+          type: string
+          const: Transfer
+          title: Source Event
+          description: Source Event
       type: object
       required:
         - transaction_hash
@@ -10943,9 +10855,10 @@ components:
         - from_address
         - to_address
         - value
-        - source_event
         - data
+        - message
         - created
+        - source_event
       title: TransferHistory
     TransferSourceEvent:
       type: string
@@ -11074,9 +10987,66 @@ components:
         - tx_data
       title: TxDataListResponse
     TxDataResponse:
-      allOf:
-        - $ref: '#/components/schemas/TxDataDetail'
+      $ref: '#/components/schemas/TxDataDetail'
       title: TxDataResponse
+    UnlockTransferHistory:
+      properties:
+        transaction_hash:
+          type: string
+          title: Transaction Hash
+          description: Transaction hash
+        token_address:
+          type: string
+          title: Token Address
+          description: Token address
+        from_address:
+          type: string
+          title: From Address
+          description: Account address of transfer source
+        to_address:
+          type: string
+          title: To Address
+          description: Account address of transfer destination
+        value:
+          type: integer
+          title: Value
+          description: Transfer quantity
+        data:
+          anyOf:
+            - $ref: '#/components/schemas/DataMessage'
+            - type: object
+          title: Data
+          description: Event data
+        message:
+          anyOf:
+            - type: string
+              enum:
+                - garnishment
+                - inheritance
+                - force_unlock
+            - type: 'null'
+          title: Message
+        created:
+          type: string
+          title: Created
+          description: block_timestamp when Transfer log was emitted (local timezone)
+        source_event:
+          type: string
+          const: Unlock
+          title: Source Event
+          description: Source Event
+      type: object
+      required:
+        - transaction_hash
+        - token_address
+        - from_address
+        - to_address
+        - value
+        - data
+        - message
+        - created
+        - source_event
+      title: UnlockTransferHistory
     UpdateAdminTokenRequest:
       properties:
         is_public:
