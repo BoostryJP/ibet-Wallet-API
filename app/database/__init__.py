@@ -82,8 +82,8 @@ def get_batch_async_engine(uri: str):
 
 # Create Engine
 engine = get_engine(config.DATABASE_URL)
-async_engine = get_async_engine(get_async_uri(config.DATABASE_URL))
-batch_async_engine = get_batch_async_engine(get_async_uri(config.DATABASE_URL))
+async_engine = get_async_engine(get_async_uri(config.ASYNC_DATABASE_URL))
+batch_async_engine = get_batch_async_engine(get_async_uri(config.ASYNC_DATABASE_URL))
 
 
 # Create Session Mapker
