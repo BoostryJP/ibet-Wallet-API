@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import logging
 import uuid
 from unittest import mock
@@ -25,7 +24,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import and_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
 from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
@@ -111,6 +110,7 @@ def processor(test_module, session):
     LOG.setLevel(default_log_level)
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     issuer = eth_account["issuer"]
     user1 = eth_account["user1"]
@@ -121,15 +121,15 @@ class TestProcessor:
     target_process_name = "INDEXER-TOKEN_HOLDERS"
 
     @staticmethod
-    def listing_token(token_address, session):
+    async def listing_token(token_address, async_session):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
-        session.add(_listing)
-        session.commit()
+        async_session.add(_listing)
+        await async_session.commit()
 
     @staticmethod
     def issue_token_bond(
@@ -272,11 +272,11 @@ class TestProcessor:
     # - IssueFrom
     # - RedeemFrom
     # - Lock
-    def test_normal_1(
+    async def test_normal_1(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -290,7 +290,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
         # User1 and trader must register personal information before they receive token.
@@ -403,8 +403,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -419,27 +419,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 6000
         assert user1_record.locked_balance == 0
@@ -449,9 +453,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -471,11 +477,11 @@ class TestProcessor:
     #   - ApproveTransfer
     # - Lock
     # - Unlock
-    def test_normal_2(
+    async def test_normal_2(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -489,7 +495,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
@@ -572,8 +578,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         bond_set_transfer_approval_required(self.issuer, token, False)
@@ -589,27 +595,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 15000
         assert user1_record.locked_balance == 0
@@ -619,9 +629,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -634,11 +646,11 @@ class TestProcessor:
     # Events
     # - ApplyForTransfer - pending
     # - Escrow - pending
-    def test_normal_3(
+    async def test_normal_3(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -652,7 +664,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
@@ -720,8 +732,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         bond_set_transfer_approval_required(self.issuer, token, False)
@@ -737,27 +749,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 17000
         assert trader_record.hold_balance == 13000
@@ -765,9 +781,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -785,11 +803,11 @@ class TestProcessor:
     # - IssueFrom
     # - RedeemFrom
     # - Lock
-    def test_normal_4(
+    async def test_normal_4(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -803,7 +821,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetShare", token["address"])
 
@@ -901,8 +919,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -917,27 +935,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
@@ -947,9 +969,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -969,11 +993,11 @@ class TestProcessor:
     #   - ApproveTransfer
     # - Lock
     # - Unlock
-    def test_normal_5(
+    async def test_normal_5(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -987,7 +1011,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -1070,8 +1094,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         share_set_transfer_approval_required(self.issuer, token, False)
@@ -1087,27 +1111,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 15000
         assert user1_record.locked_balance == 0
@@ -1117,9 +1145,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1132,11 +1162,11 @@ class TestProcessor:
     # Events
     # - ApplyForTransfer - pending
     # - Escrow - pending
-    def test_normal_6(
+    async def test_normal_6(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1150,7 +1180,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -1218,8 +1248,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         share_set_transfer_approval_required(self.issuer, token, False)
@@ -1235,27 +1265,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
 
         assert user1_record.hold_balance == 17000
@@ -1266,9 +1300,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1283,11 +1319,11 @@ class TestProcessor:
     # - Exchange
     #   - MakeOrder/CancelOrder/ForceCancelOrder/TakeOrder
     #   - CancelAgreement/ConfirmAgreement
-    def test_normal_7(
+    async def test_normal_7(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1298,7 +1334,7 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, exchange["address"], token_list_contract
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetCoupon", token["address"])
 
@@ -1352,8 +1388,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -1368,27 +1404,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
 
         assert user1_record.hold_balance == 10000
@@ -1399,9 +1439,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1415,11 +1457,11 @@ class TestProcessor:
     # - Escrow
     #   - CreateEscrow
     #   - FinishEscrow
-    def test_normal_8(
+    async def test_normal_8(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1430,7 +1472,7 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, escrow_contract.address, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetCoupon", token["address"])
@@ -1488,8 +1530,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -1504,27 +1546,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
 
         assert user1_record.hold_balance == 11000
@@ -1535,9 +1581,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1550,11 +1598,11 @@ class TestProcessor:
     # Events
     # - Escrow - pending
     # - Consume
-    def test_normal_9(
+    async def test_normal_9(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1565,7 +1613,7 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, escrow_contract.address, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetCoupon", token["address"])
@@ -1624,8 +1672,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -1640,27 +1688,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
 
         assert user1_record.hold_balance == 7000
@@ -1671,9 +1723,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1688,11 +1742,11 @@ class TestProcessor:
     # - Exchange
     #   - MakeOrder/CancelOrder/ForceCancelOrder/TakeOrder
     #   - CancelAgreement/ConfirmAgreement
-    def test_normal_10(
+    async def test_normal_10(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1703,7 +1757,7 @@ class TestProcessor:
         token = self.issue_token_membership(
             self.issuer, exchange["address"], token_list_contract
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetMembership", token["address"])
 
@@ -1757,8 +1811,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -1773,27 +1827,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
@@ -1803,9 +1861,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1819,11 +1879,11 @@ class TestProcessor:
     # - Escrow
     #   - CreateEscrow
     #   - FinishEscrow
-    def test_normal_11(
+    async def test_normal_11(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1834,7 +1894,7 @@ class TestProcessor:
         token = self.issue_token_membership(
             self.issuer, escrow_contract.address, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetMembership", token["address"])
@@ -1890,8 +1950,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -1906,27 +1966,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
 
         assert user1_record.hold_balance == 11000
@@ -1937,9 +2001,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -1951,11 +2017,11 @@ class TestProcessor:
     # Membership
     # Events
     # - Escrow - pending
-    def test_normal_12(
+    async def test_normal_12(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -1966,7 +2032,7 @@ class TestProcessor:
         token = self.issue_token_membership(
             self.issuer, escrow_contract.address, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetMembership", token["address"])
@@ -2022,8 +2088,8 @@ class TestProcessor:
         target_token_holders_list = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         transfer_token(
@@ -2038,27 +2104,31 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
 
         assert user1_record.hold_balance == 7000
@@ -2069,9 +2139,11 @@ class TestProcessor:
         assert (
             len(
                 list(
-                    session.scalars(
-                        select(TokenHolder).where(
-                            TokenHolder.holder_list == target_token_holders_list.id
+                    (
+                        await async_session.scalars(
+                            select(TokenHolder).where(
+                                TokenHolder.holder_list == target_token_holders_list.id
+                            )
                         )
                     ).all()
                 )
@@ -2082,11 +2154,11 @@ class TestProcessor:
     # <Normal_13>
     # StraightBond
     # Use checkpoint.
-    def test_normal_13(
+    async def test_normal_13(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2100,7 +2172,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
@@ -2133,33 +2205,37 @@ class TestProcessor:
         target_token_holders_list1 = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list1)
-        session.commit()
+        async_session.add(target_token_holders_list1)
+        await async_session.commit()
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list1.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list1.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list1.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list1.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 20000
         assert user1_record.locked_balance == 0
@@ -2208,33 +2284,37 @@ class TestProcessor:
         target_token_holders_list2 = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list2)
-        session.commit()
+        async_session.add(target_token_holders_list2)
+        await async_session.commit()
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list2.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list2.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list2.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list2.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
@@ -2284,33 +2364,37 @@ class TestProcessor:
         target_token_holders_list3 = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list3)
-        session.commit()
+        async_session.add(target_token_holders_list3)
+        await async_session.commit()
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list3.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list3.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list3.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list3.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record.hold_balance == 6000
         assert user1_record.locked_balance == 0
@@ -2320,11 +2404,11 @@ class TestProcessor:
     # <Normal_14>
     # StraightBond
     # Batch does not index former holder who has no balance at the target block number.
-    def test_normal_14(
+    async def test_normal_14(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2338,7 +2422,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
@@ -2377,17 +2461,17 @@ class TestProcessor:
         target_token_holders_list1 = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list1)
-        session.flush()
+        async_session.add(target_token_holders_list1)
+        await async_session.flush()
 
         former_holder = TokenHolder()
         former_holder.holder_list = target_token_holders_list1.id
         former_holder.hold_balance = 0
         former_holder.locked_balance = 0
         former_holder.account_address = "former holder"
-        session.add(former_holder)
+        async_session.add(former_holder)
 
-        session.commit()
+        await async_session.commit()
 
         # Issuer transfers issued token to users again to proceed block_number.
         transfer_token(
@@ -2407,41 +2491,45 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        user1_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list1.id,
-                    TokenHolder.account_address == self.user1["account_address"],
+        user1_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list1.id,
+                        TokenHolder.account_address == self.user1["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
-        trader_record: TokenHolder = session.scalars(
-            select(TokenHolder)
-            .where(
-                and_(
-                    TokenHolder.holder_list == target_token_holders_list1.id,
-                    TokenHolder.account_address == self.trader["account_address"],
+        trader_record: TokenHolder = (
+            await async_session.scalars(
+                select(TokenHolder)
+                .where(
+                    and_(
+                        TokenHolder.holder_list == target_token_holders_list1.id,
+                        TokenHolder.account_address == self.trader["account_address"],
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert user1_record is None
         assert trader_record is None
 
-        assert len(session.scalars(select(TokenHolder)).all()) == 0
+        assert len((await async_session.scalars(select(TokenHolder))).all()) == 0
 
     # <Normal_15>
     # StraightBond
     # Jobs are queued and pending jobs are to be processed one by one.
-    def test_normal_15(
+    async def test_normal_15(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         caplog,
         block_number: None,
     ):
@@ -2453,12 +2541,12 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
         assert 2 == caplog.record_tuples.count(
             (LOG.name, logging.DEBUG, "There are no pending collect batch")
         )
@@ -2470,7 +2558,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
@@ -2481,8 +2569,8 @@ class TestProcessor:
         target_token_holders_list1 = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list1)
-        session.commit()
+        async_session.add(target_token_holders_list1)
+        await async_session.commit()
         transfer_token(
             token_contract,
             self.issuer["account_address"],
@@ -2498,21 +2586,21 @@ class TestProcessor:
         target_token_holders_list2 = self.token_holders_list(
             token, web3.eth.block_number
         )
-        session.add(target_token_holders_list2)
-        session.commit()
+        async_session.add(target_token_holders_list2)
+        await async_session.commit()
 
         caplog.clear()
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
         assert 1 == caplog.record_tuples.count(
             (
@@ -2535,11 +2623,11 @@ class TestProcessor:
     # <Normal_16>
     # When stored checkpoint is 9,999,999 and current block number is 19,999,999,
     # then processor should call "__process_all" method 10 times.
-    def test_normal_16(
+    async def test_normal_16(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         caplog: pytest.LogCaptureFixture,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2554,17 +2642,17 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         # Insert collection record with above token and checkpoint block number
         target_token_holders_list = self.token_holders_list(token, current_block_number)
-        session.add(target_token_holders_list)
+        async_session.add(target_token_holders_list)
         completed_token_holders_list = self.token_holders_list(
             token, checkpoint_block_number, status=TokenHolderBatchStatus.DONE
         )
-        session.add(completed_token_holders_list)
-        session.commit()
+        async_session.add(completed_token_holders_list)
+        await async_session.commit()
 
         # Setting current block number to 19,999,999
         with mock.patch(
@@ -2572,7 +2660,7 @@ class TestProcessor:
             token_list_contract["address"],
         ):
             # Setting stored index to 9,999,999
-            asyncio.run(processor.collect())
+            await processor.collect()
             # Then processor call "__process_all" method 10 times.
             assert 1 == caplog.record_tuples.count(
                 (LOG.name, logging.INFO, "process from=10000000, to=10999999")
@@ -2605,11 +2693,14 @@ class TestProcessor:
                 (LOG.name, logging.INFO, "process from=19000000, to=19999999")
             )
 
-            session.rollback()
-            processed_list = session.scalars(
-                select(TokenHoldersList)
-                .where(TokenHoldersList.id == target_token_holders_list.id)
-                .limit(1)
+            async_session.expunge_all()
+            await async_session.rollback()
+            processed_list = (
+                await async_session.scalars(
+                    select(TokenHoldersList)
+                    .where(TokenHoldersList.id == target_token_holders_list.id)
+                    .limit(1)
+                )
             ).first()
             assert processed_list.block_number == 19999999
             assert processed_list.batch_status == TokenHolderBatchStatus.DONE.value
@@ -2620,11 +2711,11 @@ class TestProcessor:
 
     # <Error_1>
     # There is no target token holders list id with batch_status PENDING.
-    def test_error_1(
+    async def test_error_1(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         caplog,
         block_number: None,
     ):
@@ -2634,7 +2725,7 @@ class TestProcessor:
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.DEBUG, "There are no pending collect batch")
@@ -2643,11 +2734,11 @@ class TestProcessor:
     # <Error_2>
     # There is target token holders list id with batch_status PENDING.
     # And target token is not contained in "TokenList" contract.
-    def test_error_2(
+    async def test_error_2(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         caplog,
         block_number: None,
     ):
@@ -2660,15 +2751,15 @@ class TestProcessor:
         target_token_holders_list.list_id = str(uuid.uuid4())
         target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = 1000
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         # Debug message should be shown that points out token contract must be listed.
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
         assert 1 == caplog.record_tuples.count(
             (
                 LOG.name,
@@ -2680,10 +2771,12 @@ class TestProcessor:
         # Batch status of token holders list expects to be "ERROR"
         error_record_num = len(
             list(
-                session.scalars(
-                    select(TokenHoldersList).where(
-                        TokenHoldersList.batch_status
-                        == TokenHolderBatchStatus.FAILED.value
+                (
+                    await async_session.scalars(
+                        select(TokenHoldersList).where(
+                            TokenHoldersList.batch_status
+                            == TokenHolderBatchStatus.FAILED.value
+                        )
                     )
                 ).all()
             )
@@ -2696,11 +2789,11 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    def test_error_3(
+    async def test_error_3(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         caplog,
         block_number: None,
     ):
@@ -2715,7 +2808,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
@@ -2737,28 +2830,30 @@ class TestProcessor:
         block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, block_number)
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         with mock.patch(
             "batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS",
             token_list_contract["address"],
         ):
-            asyncio.run(processor.collect())
-        _records = session.scalars(
-            select(TokenHolder).where(
-                TokenHolder.holder_list == target_token_holders_list.id
+            await processor.collect()
+        _records = (
+            await async_session.scalars(
+                select(TokenHolder).where(
+                    TokenHolder.holder_list == target_token_holders_list.id
+                )
             )
         ).all()
         assert len(_records) == 0
 
     # <Error_4>
     # Failed to get Logs because of blockchain(ServiceUnavailable).
-    def test_error_4(
+    async def test_error_4(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         caplog,
         block_number: None,
     ):
@@ -2773,7 +2868,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
@@ -2795,8 +2890,8 @@ class TestProcessor:
         block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, block_number)
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         with (
             mock.patch(
@@ -2808,11 +2903,13 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        _records = session.scalars(
-            select(TokenHolder).where(
-                TokenHolder.holder_list == target_token_holders_list.id
+        _records = (
+            await async_session.scalars(
+                select(TokenHolder).where(
+                    TokenHolder.holder_list == target_token_holders_list.id
+                )
             )
         ).all()
         assert len(_records) == 0
@@ -2830,8 +2927,8 @@ class TestProcessor:
         block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, block_number)
-        session.add(target_token_holders_list)
-        session.commit()
+        async_session.add(target_token_holders_list)
+        await async_session.commit()
 
         with (
             mock.patch(
@@ -2843,12 +2940,14 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.collect())
+            await processor.collect()
 
-        session.rollback()
-        _records = session.scalars(
-            select(TokenHolder).where(
-                TokenHolder.holder_list == target_token_holders_list.id
+        await async_session.rollback()
+        _records = (
+            await async_session.scalars(
+                select(TokenHolder).where(
+                    TokenHolder.holder_list == target_token_holders_list.id
+                )
             )
         ).all()
         assert len(_records) == 0

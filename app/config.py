@@ -107,6 +107,7 @@ else:
         or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
     )
 DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
+ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 DB_ECHO = True if CONFIG["database"]["echo"] == "yes" else False
 DATABASE_TYPE = "postgresql" if DATABASE_URL.startswith("postgresql") else "mysql"
 DATABASE_SCHEMA = os.environ.get("DATABASE_SCHEMA")
