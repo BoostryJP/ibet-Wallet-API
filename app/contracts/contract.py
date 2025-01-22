@@ -23,6 +23,7 @@ from typing import Type, TypeVar
 from eth_utils import to_checksum_address
 from web3 import contract
 from web3.contract import Contract as Web3Contract
+from web3.contract.async_contract import AsyncContractEvents
 from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
@@ -121,6 +122,20 @@ class Contract:
                 raise exc
 
         return result
+
+
+class AsyncContractEventsView:
+    def __init__(self, address: str, contract_events: AsyncContractEvents) -> None:
+        self._address = address
+        self._events = contract_events
+
+    @property
+    def address(self) -> str:
+        return self._address
+
+    @property
+    def events(self) -> AsyncContractEvents:
+        return self._events
 
 
 class AsyncContract:

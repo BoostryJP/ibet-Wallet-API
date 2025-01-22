@@ -28,11 +28,11 @@ from pydantic import ValidationError
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
+from app.contracts.contract import AsyncContractEventsView
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
@@ -68,7 +68,7 @@ class Processor:
 
             def __init__(
                 self,
-                token_contract: Web3AsyncContract,
+                token_contract: AsyncContractEventsView,
                 skip_timestamp: Optional[datetime],
                 skip_block: Optional[int],
             ):
@@ -83,7 +83,7 @@ class Processor:
 
         def append(
             self,
-            token_contract: Web3AsyncContract,
+            token_contract: AsyncContractEventsView,
             skip_timestamp: Optional[datetime],
             skip_block: Optional[int],
         ):
@@ -101,7 +101,7 @@ class Processor:
 
     # On memory cache
     token_type_cache: dict[str, TokenType]
-    token_contract_cache: dict[str, Web3AsyncContract]
+    token_contract_cache: dict[str, AsyncContractEventsView]
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
@@ -297,10 +297,15 @@ class Processor:
                 token_contract = AsyncContract.get_contract(
                     token_type, listed_token.token_address
                 )
-                self.token_contract_cache[listed_token.token_address] = token_contract
+                self.token_contract_cache[listed_token.token_address] = (
+                    AsyncContractEventsView(
+                        token_contract.address, token_contract.events
+                    )
+                )
+            token_contract = self.token_contract_cache[listed_token.token_address]
 
             self.token_list.append(
-                self.token_contract_cache[listed_token.token_address],
+                token_contract,
                 skip_timestamp,
                 skip_block_number,
             )
