@@ -18,10 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from typing import TypeVar
+from typing import Type, TypeVar
 
 from eth_utils import to_checksum_address
 from web3 import contract
+from web3.contract import Contract as Web3Contract
 from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
@@ -33,9 +34,10 @@ async_web3 = AsyncWeb3Wrapper()
 
 class Contract:
     cache = {}  # コントラクト情報のキャッシュ
+    factory_map: dict[str, Type[Web3Contract]] = {}
 
-    @staticmethod
-    def get_contract(contract_name: str, address: str):
+    @classmethod
+    def get_contract(cls, contract_name: str, address: str):
         """
         コントラクト取得
 
@@ -50,11 +52,13 @@ class Contract:
             contract_json = json.load(open(contract_file, "r"))
             Contract.cache[contract_name] = contract_json
 
-        contract = web3.eth.contract(
-            address=to_checksum_address(address),
-            abi=contract_json["abi"],
-        )
-        return contract
+        contract_factory = cls.factory_map.get(contract_name)
+        if contract_factory is not None:
+            return contract_factory(address=to_checksum_address(address))
+
+        contract_factory = web3.eth.contract(abi=contract_json["abi"])
+        cls.factory_map[contract_name] = contract_factory
+        return contract_factory(address=to_checksum_address(address))
 
     @staticmethod
     def deploy_contract(contract_name: str, args: list, deployer: str):
@@ -121,9 +125,10 @@ class Contract:
 
 class AsyncContract:
     cache = {}  # コントラクト情報のキャッシュ
+    factory_map: dict[str, Type[Web3AsyncContract]] = {}
 
-    @staticmethod
-    def get_contract(contract_name: str, address: str) -> Web3AsyncContract:
+    @classmethod
+    def get_contract(cls, contract_name: str, address: str) -> Web3AsyncContract:
         """
         コントラクト取得
 
@@ -138,11 +143,13 @@ class AsyncContract:
             contract_json = json.load(open(contract_file, "r"))
             AsyncContract.cache[contract_name] = contract_json
 
-        contract = async_web3.eth.contract(
-            address=to_checksum_address(address),
-            abi=contract_json["abi"],
-        )
-        return contract
+        contract_factory = cls.factory_map.get(contract_name)
+        if contract_factory is not None:
+            return contract_factory(address=to_checksum_address(address))
+
+        contract_factory = async_web3.eth.contract(abi=contract_json["abi"])
+        cls.factory_map[contract_name] = contract_factory
+        return contract_factory(address=to_checksum_address(address))
 
     @staticmethod
     async def deploy_contract(contract_name: str, args: list, deployer: str):
