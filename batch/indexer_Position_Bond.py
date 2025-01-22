@@ -148,9 +148,9 @@ class Processor:
     exchange_list: TargetExchangeList
 
     # On memory cache
-    token_type_cache: dict[str, TokenType]
-    token_contract_cache: dict[str, Web3AsyncContract]
-    token_tradable_exchange_address_cache: dict[str, str]
+    token_type_cache: dict[str, TokenType] = {}
+    token_contract_cache: dict[str, Web3AsyncContract] = {}
+    token_tradable_exchange_address_cache: dict[str, str] = {}
 
     def __init__(self):
         self.token_list = self.TargetTokenList()

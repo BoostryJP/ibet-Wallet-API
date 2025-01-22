@@ -173,10 +173,10 @@ class Processor:
     exchange_list: TargetExchangeList
 
     # On memory cache
-    token_type_cache: dict[str, TokenType]
-    token_contract_cache: dict[str, AsyncContractEventsView]
-    token_tradable_exchange_address_cache: dict[str, str]
-    exchange_contract_cache: dict[str, AsyncContractEventsView]
+    token_type_cache: dict[str, TokenType] = {}
+    token_contract_cache: dict[str, AsyncContractEventsView] = {}
+    token_tradable_exchange_address_cache: dict[str, str] = {}
+    exchange_contract_cache: dict[str, AsyncContractEventsView] = {}
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
@@ -216,33 +216,27 @@ class Processor:
                 token_type == TokenType.IbetShare
                 or token_type == TokenType.IbetStraightBond
             ):
-                # Reuse token contract cache
+                # Reuse token/exchange contract cache
                 if listed_token.token_address not in self.token_contract_cache:
                     token_contract = AsyncContract.get_contract(
                         contract_name="IbetSecurityTokenInterface",
                         address=listed_token.token_address,
                     )
-                    self.token_contract_cache[listed_token.token_address] = (
-                        AsyncContractEventsView(
-                            token_contract.address, token_contract.events
-                        )
-                    )
-                token_contract = self.token_contract_cache[listed_token.token_address]
-
-                # Reuse tradable exchange address cache
-                if (
-                    listed_token.token_address
-                    not in self.token_tradable_exchange_address_cache
-                ):
                     tradable_exchange_address = await AsyncContract.call_function(
                         contract=token_contract,
                         function_name="tradableExchange",
                         args=(),
                         default_returns=ZERO_ADDRESS,
                     )
+                    self.token_contract_cache[listed_token.token_address] = (
+                        AsyncContractEventsView(
+                            token_contract.address, token_contract.events
+                        )
+                    )
                     self.token_tradable_exchange_address_cache[
                         listed_token.token_address
                     ] = tradable_exchange_address
+                token_contract = self.token_contract_cache[listed_token.token_address]
                 tradable_exchange_address = self.token_tradable_exchange_address_cache[
                     listed_token.token_address
                 ]

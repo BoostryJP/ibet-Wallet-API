@@ -100,8 +100,8 @@ class Processor:
     token_list: TargetTokenList
 
     # On memory cache
-    token_type_cache: dict[str, TokenType]
-    token_contract_cache: dict[str, AsyncContractEventsView]
+    token_type_cache: dict[str, TokenType] = {}
+    token_contract_cache: dict[str, AsyncContractEventsView] = {}
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
