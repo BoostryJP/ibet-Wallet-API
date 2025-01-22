@@ -25,6 +25,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
 
 from app.config import (
@@ -70,7 +71,11 @@ token_list = TokenList(list_contract, TokenType.IbetMembership)
 # Watcher
 class Watcher:
     def __init__(
-        self, contract, filter_name: str, filter_params: dict, notification_type: str
+        self,
+        contract: Web3AsyncContract,
+        filter_name: str,
+        filter_params: dict,
+        notification_type: str,
     ):
         self.contract = contract
         self.filter_name = filter_name

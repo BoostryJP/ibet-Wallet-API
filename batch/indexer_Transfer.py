@@ -28,6 +28,7 @@ from pydantic import ValidationError
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
@@ -67,7 +68,7 @@ class Processor:
 
             def __init__(
                 self,
-                token_contract,
+                token_contract: Web3AsyncContract,
                 skip_timestamp: Optional[datetime],
                 skip_block: Optional[int],
             ):
@@ -82,7 +83,7 @@ class Processor:
 
         def append(
             self,
-            token_contract,
+            token_contract: Web3AsyncContract,
             skip_timestamp: Optional[datetime],
             skip_block: Optional[int],
         ):
@@ -95,7 +96,12 @@ class Processor:
         def __len__(self):
             return len(self.target_token_list)
 
+    # Index target
     token_list: TargetTokenList
+
+    # On memory cache
+    token_type_cache: dict[str, TokenType]
+    token_contract_cache: dict[str, Web3AsyncContract]
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
@@ -198,7 +204,7 @@ class Processor:
         transfer.value = value
         transfer.created = event_created
         transfer.modified = event_created
-        transfer.source_event = source_event.value
+        transfer.source_event = source_event
         transfer.data = data
         transfer.message = message
         db_session.add(transfer)
@@ -272,43 +278,32 @@ class Processor:
             await db_session.scalars(select(Listing))
         ).all()
         for listed_token in listed_tokens:
-            token_info = await AsyncContract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(listed_token.token_address,),
-                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
-            )
+            # Reuse token type cache
+            if listed_token.token_address not in self.token_type_cache:
+                token_info = await AsyncContract.call_function(
+                    contract=list_contract,
+                    function_name="getTokenByAddress",
+                    args=(listed_token.token_address,),
+                    default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
+                )
+                self.token_type_cache[listed_token.token_address] = token_info[1]
+            token_type = self.token_type_cache[listed_token.token_address]
+
             skip_timestamp, skip_block_number = await self.__get_latest_synchronized(
                 db_session, listed_token.token_address
             )
-            if token_info[1] == TokenType.IbetCoupon:
+            # Reuse token contract cache
+            if listed_token.token_address not in self.token_contract_cache:
                 token_contract = AsyncContract.get_contract(
-                    TokenType.IbetCoupon, listed_token.token_address
+                    token_type, listed_token.token_address
                 )
-                self.token_list.append(
-                    token_contract, skip_timestamp, skip_block_number
-                )
-            elif token_info[1] == TokenType.IbetMembership:
-                token_contract = AsyncContract.get_contract(
-                    TokenType.IbetMembership, listed_token.token_address
-                )
-                self.token_list.append(
-                    token_contract, skip_timestamp, skip_block_number
-                )
-            elif token_info[1] == TokenType.IbetStraightBond:
-                token_contract = AsyncContract.get_contract(
-                    TokenType.IbetStraightBond, listed_token.token_address
-                )
-                self.token_list.append(
-                    token_contract, skip_timestamp, skip_block_number
-                )
-            elif token_info[1] == TokenType.IbetShare:
-                token_contract = AsyncContract.get_contract(
-                    TokenType.IbetShare, listed_token.token_address
-                )
-                self.token_list.append(
-                    token_contract, skip_timestamp, skip_block_number
-                )
+                self.token_contract_cache[listed_token.token_address] = token_contract
+
+            self.token_list.append(
+                self.token_contract_cache[listed_token.token_address],
+                skip_timestamp,
+                skip_block_number,
+            )
 
     async def __sync_all(
         self, db_session: AsyncSession, block_from: int, block_to: int
