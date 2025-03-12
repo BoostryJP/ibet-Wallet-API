@@ -35,7 +35,7 @@ from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 
 process_name = "INDEXER-TRANSFER-APPROVAL"
 LOG = log.get_logger(process_name=process_name)
@@ -813,6 +813,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(5)
+        free_malloc()
 
 
 if __name__ == "__main__":

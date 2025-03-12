@@ -17,6 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import ctypes
+from ctypes.util import find_library
+
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -100,6 +103,8 @@ app = FastAPI(
 
 app.openapi = custom_openapi(app)  # type: ignore
 
+libc = ctypes.CDLL(find_library("c"))
+
 
 ###############################################################
 # ROUTER
@@ -108,6 +113,7 @@ app.openapi = custom_openapi(app)  # type: ignore
 
 @app.get("/", tags=["root"])
 def root():
+    libc.malloc_trim(0)
     return {"server": BRAND_NAME}
 
 

@@ -44,7 +44,7 @@ from app.model.db import (
 )
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 
 UTC = timezone(timedelta(hours=0), "UTC")
 
@@ -495,6 +495,7 @@ async def main():
         except Exception:
             LOG.exception("An exception occurred during event synchronization")
         await asyncio.sleep(5)
+        free_malloc()
 
 
 if __name__ == "__main__":
