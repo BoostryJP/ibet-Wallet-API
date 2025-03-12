@@ -361,7 +361,7 @@ class TokenHoldersCollectionHolder(BaseModel):
 class TokenHoldersCollectionResponse(BaseModel):
     status: TokenHoldersCollectionBatchStatus
     holders: list[TokenHoldersCollectionHolder] = Field(
-        description="Token holder list." "This list is excluding token owner address."
+        description="Token holder list.This list is excluding token owner address."
     )
 
 

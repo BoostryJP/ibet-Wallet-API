@@ -187,7 +187,7 @@ class TestProcessor:
         # Issue bond token
         for i in range(2):
             args = {
-                "name": f"テスト債券{str(i+1)}",
+                "name": f"テスト債券{str(i + 1)}",
                 "symbol": "BOND",
                 "totalSupply": 1000000,
                 "tradableExchange": exchange_contract["address"],
