@@ -6,7 +6,7 @@ authors = [
     {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},
 ]
 license = {text = "Apache License, Version 2.0"}
-requires-python = "==3.12.2"
+requires-python = "==3.12.9"
 dependencies = [
     "boto3~=1.35.11",
     "coincurve~=20.0.0",
