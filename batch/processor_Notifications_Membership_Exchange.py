@@ -42,7 +42,7 @@ from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 from batch.lib.token import TokenFactory
 from batch.lib.token_list import TokenList
 
@@ -614,6 +614,7 @@ async def main():
         LOG.info("<LOOP> finished in {} secs".format(elapsed_time))
 
         time.sleep(max(NOTIFICATION_PROCESS_INTERVAL - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

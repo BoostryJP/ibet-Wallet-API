@@ -34,7 +34,7 @@ from app.errors import ServiceUnavailable
 from app.model.db import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 from batch.lib.token_list import TokenList
 
 process_name = "INDEXER-TOKEN_HOLDERS"
@@ -563,6 +563,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(10)
+        free_malloc()
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.config import CHAT_WEBHOOK_URL
 from app.database import BatchAsyncSessionLocal
 from app.model.db import ChatWebhook
-from batch import log
+from batch import free_malloc, log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-CHAT-WEBHOOK")
 
@@ -73,6 +73,7 @@ async def main():
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(30 - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

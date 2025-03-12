@@ -33,7 +33,7 @@ from app.config import COMPANY_LIST_SLEEP_INTERVAL, COMPANY_LIST_URL, REQUEST_TI
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import Company
-from batch import log
+from batch import free_malloc, log
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
@@ -155,6 +155,7 @@ async def main():
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ from app.model.db import (
     Listing,
 )
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 
 local_tz = ZoneInfo(TZ)
 
@@ -529,6 +529,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(1)
+        free_malloc()
 
 
 if __name__ == "__main__":
