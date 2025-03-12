@@ -170,8 +170,8 @@ class TestProcessor:
         # Issue bond token
         for i in range(10):
             args = {
-                "name": f"テスト債券{str(i+1)}",
-                "symbol": f"BOND{str(i+1)}",
+                "name": f"テスト債券{str(i + 1)}",
+                "symbol": f"BOND{str(i + 1)}",
                 "totalSupply": 1000000 + 1,
                 "tradableExchange": exchange_contract["address"],
                 "faceValue": int((i + 1) * 10000),
@@ -191,11 +191,11 @@ class TestProcessor:
                 "redemptionDate": "20191231",
                 "redemptionValue": 10000 + 1,
                 "returnDate": "20191231",
-                "returnAmount": f"商品券をプレゼント{str(i+1)}",
-                "purpose": f"新商品の開発資金として利用。{str(i+1)}",
-                "memo": f"メモ{str(i+1)}",
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "returnAmount": f"商品券をプレゼント{str(i + 1)}",
+                "purpose": f"新商品の開発資金として利用。{str(i + 1)}",
+                "memo": f"メモ{str(i + 1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
                 "personalInfoAddress": personal_info_contract["address"],
                 "transferable": True,
                 "isRedeemed": False,
@@ -220,8 +220,8 @@ class TestProcessor:
         # Issue share token
         for i in range(10):
             args = {
-                "name": f"テスト株式{str(i+1)}",
-                "symbol": f"SHARE{str(i+1)}",
+                "name": f"テスト株式{str(i + 1)}",
+                "symbol": f"SHARE{str(i + 1)}",
                 "tradableExchange": exchange_contract["address"],
                 "personalInfoAddress": personal_info_contract["address"],
                 "issuePrice": int((i + 1) * 1000),
@@ -231,8 +231,8 @@ class TestProcessor:
                 "dividendRecordDate": "20200401",
                 "dividendPaymentDate": "20200502",
                 "cancellationDate": "20200603",
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
                 "memo": "メモ",
                 "transferable": True,
             }
@@ -250,17 +250,17 @@ class TestProcessor:
         # Issue membership token
         for i in range(10):
             args = {
-                "name": f"テスト会員権{str(i+1)}",
-                "symbol": f"MEMBERSHIP{str(i+1)}",
+                "name": f"テスト会員権{str(i + 1)}",
+                "symbol": f"MEMBERSHIP{str(i + 1)}",
                 "initialSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
-                "details": f"詳細{str(i+1)}",
-                "returnDetails": f"リターン詳細{str(i+1)}",
+                "details": f"詳細{str(i + 1)}",
+                "returnDetails": f"リターン詳細{str(i + 1)}",
                 "expirationDate": "20191231",
-                "memo": f"メモ{str(i+1)}",
+                "memo": f"メモ{str(i + 1)}",
                 "transferable": True,
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
             }
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
@@ -276,17 +276,17 @@ class TestProcessor:
         # issue coupon token
         for i in range(10):
             args = {
-                "name": f"テストクーポン{str(i+1)}",
-                "symbol": f"COUPON{str(i+1)}",
+                "name": f"テストクーポン{str(i + 1)}",
+                "symbol": f"COUPON{str(i + 1)}",
                 "totalSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
-                "details": f"クーポン詳細{str(i+1)}",
-                "returnDetails": f"リターン詳細{str(i+1)}",
-                "memo": f"クーポンメモ欄{str(i+1)}",
+                "details": f"クーポン詳細{str(i + 1)}",
+                "returnDetails": f"リターン詳細{str(i + 1)}",
+                "memo": f"クーポンメモ欄{str(i + 1)}",
                 "expirationDate": "20191231",
                 "transferable": True,
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
             }
 
             token = self.issue_token_coupon_with_args(
@@ -387,8 +387,8 @@ class TestProcessor:
         # Issue bond token
         for i in range(5):
             args = {
-                "name": f"テスト債券{str(i+1)}",
-                "symbol": f"BOND{str(i+1)}",
+                "name": f"テスト債券{str(i + 1)}",
+                "symbol": f"BOND{str(i + 1)}",
                 "totalSupply": 1000000 + 1,
                 "tradableExchange": exchange_contract["address"],
                 "faceValue": int(10000),
@@ -408,11 +408,11 @@ class TestProcessor:
                 "redemptionDate": "20191231",
                 "redemptionValue": 10000 + 1,
                 "returnDate": "20191231",
-                "returnAmount": f"商品券をプレゼント{str(i+1)}",
-                "purpose": f"新商品の開発資金として利用。{str(i+1)}",
-                "memo": f"メモ{str(i+1)}",
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "returnAmount": f"商品券をプレゼント{str(i + 1)}",
+                "purpose": f"新商品の開発資金として利用。{str(i + 1)}",
+                "memo": f"メモ{str(i + 1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
                 "personalInfoAddress": personal_info_contract["address"],
                 "transferable": True,
                 "isRedeemed": False,
@@ -517,8 +517,8 @@ class TestProcessor:
         # Issue bond token
         for i in range(5):
             args = {
-                "name": f"テスト株式{str(i+1)}",
-                "symbol": f"SHARE{str(i+1)}",
+                "name": f"テスト株式{str(i + 1)}",
+                "symbol": f"SHARE{str(i + 1)}",
                 "tradableExchange": exchange_contract["address"],
                 "personalInfoAddress": personal_info_contract["address"],
                 "issuePrice": int((i + 1) * 1000),
@@ -528,8 +528,8 @@ class TestProcessor:
                 "dividendRecordDate": "20200401",
                 "dividendPaymentDate": "20200502",
                 "cancellationDate": "20200603",
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
                 "memo": "メモ",
                 "transferable": True,
             }
@@ -623,17 +623,17 @@ class TestProcessor:
         # Issue bond token
         for i in range(5):
             args = {
-                "name": f"テスト会員権{str(i+1)}",
-                "symbol": f"MEMBERSHIP{str(i+1)}",
+                "name": f"テスト会員権{str(i + 1)}",
+                "symbol": f"MEMBERSHIP{str(i + 1)}",
                 "initialSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
-                "details": f"詳細{str(i+1)}",
-                "returnDetails": f"リターン詳細{str(i+1)}",
+                "details": f"詳細{str(i + 1)}",
+                "returnDetails": f"リターン詳細{str(i + 1)}",
                 "expirationDate": "20191231",
-                "memo": f"メモ{str(i+1)}",
+                "memo": f"メモ{str(i + 1)}",
                 "transferable": True,
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
             }
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
@@ -666,17 +666,17 @@ class TestProcessor:
         # issue coupon token
         for i in range(5):
             args = {
-                "name": f"テストクーポン{str(i+1)}",
-                "symbol": f"COUPON{str(i+1)}",
+                "name": f"テストクーポン{str(i + 1)}",
+                "symbol": f"COUPON{str(i + 1)}",
                 "totalSupply": int((i + 1) * 1000000),
                 "tradableExchange": exchange_contract["address"],
-                "details": f"クーポン詳細{str(i+1)}",
-                "returnDetails": f"リターン詳細{str(i+1)}",
-                "memo": f"クーポンメモ欄{str(i+1)}",
+                "details": f"クーポン詳細{str(i + 1)}",
+                "returnDetails": f"リターン詳細{str(i + 1)}",
+                "memo": f"クーポンメモ欄{str(i + 1)}",
                 "expirationDate": "20191231",
                 "transferable": True,
-                "contactInformation": f"問い合わせ先{str(i+1)}",
-                "privacyPolicy": f"プライバシーポリシー{str(i+1)}",
+                "contactInformation": f"問い合わせ先{str(i + 1)}",
+                "privacyPolicy": f"プライバシーポリシー{str(i + 1)}",
             }
 
             token = self.issue_token_coupon_with_args(

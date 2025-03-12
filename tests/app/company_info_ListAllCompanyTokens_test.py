@@ -729,8 +729,7 @@ class TestListAllCompanyTokens:
                 {
                     "input": "test",
                     "loc": ["query", "include_private_listing"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
+                    "msg": "Input should be a valid boolean, unable to interpret input",
                     "type": "bool_parsing",
                 }
             ],

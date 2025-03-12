@@ -218,7 +218,7 @@ class TestDEXMarketGetAgreement:
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange["address"]
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
+        query_string = f"order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange['address']}"
         resp = client.get(self.apiurl, params=query_string)
 
         assumed_body = {
@@ -252,7 +252,7 @@ class TestDEXMarketGetAgreement:
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange["address"]
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
+        query_string = f"order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange['address']}"
         resp = client.get(self.apiurl, params=query_string)
 
         assumed_body = {
@@ -387,7 +387,7 @@ class TestDEXMarketGetAgreement:
 
         query_string = (
             f"order_id={not_exist_order_id}&agreement_id={not_exist_agreement_id}&"
-            f'exchange_address={exchange["address"]}'
+            f"exchange_address={exchange['address']}"
         )
         resp = client.get(self.apiurl, params=query_string)
 

@@ -268,7 +268,7 @@ def downgrade():
                 account_address = position[1]
                 op.get_bind().execute(
                     sa.text(
-                        f"UPDATE position SET id = {i+1} WHERE token_address = '{token_address}' AND account_address = '{account_address}';"
+                        f"UPDATE position SET id = {i + 1} WHERE token_address = '{token_address}' AND account_address = '{account_address}';"
                     )
                 )
 
@@ -335,7 +335,7 @@ def downgrade():
                 contract_address = executable_contract[0]
                 op.get_bind().execute(
                     sa.text(
-                        f"UPDATE executable_contract SET id = {i+1} WHERE contract_address = '{contract_address}';"
+                        f"UPDATE executable_contract SET id = {i + 1} WHERE contract_address = '{contract_address}';"
                     )
                 )
     op.drop_constraint(
@@ -408,7 +408,7 @@ def downgrade():
                 exchange_address = idx_position_bond_block_number_table[1]
                 op.get_bind().execute(
                     sa.text(
-                        f"UPDATE idx_position_bond_block_number SET id = {i+1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
+                        f"UPDATE idx_position_bond_block_number SET id = {i + 1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
                     )
                 )
     op.drop_constraint(
@@ -473,7 +473,7 @@ def downgrade():
                 exchange_address = idx_position_share_block_number_table[1]
                 op.get_bind().execute(
                     sa.text(
-                        f"UPDATE idx_position_share_block_number SET id = {i+1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
+                        f"UPDATE idx_position_share_block_number SET id = {i + 1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
                     )
                 )
     op.drop_constraint(
@@ -538,7 +538,7 @@ def downgrade():
                 exchange_address = idx_position_coupon_block_number_table[1]
                 op.get_bind().execute(
                     sa.text(
-                        f"UPDATE idx_position_coupon_block_number SET id = {i+1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
+                        f"UPDATE idx_position_coupon_block_number SET id = {i + 1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
                     )
                 )
     op.drop_constraint(
@@ -605,7 +605,7 @@ def downgrade():
                 exchange_address = idx_position_membership_block_number_table[1]
                 op.get_bind().execute(
                     sa.text(
-                        f"UPDATE idx_position_membership_block_number SET id = {i+1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
+                        f"UPDATE idx_position_membership_block_number SET id = {i + 1} WHERE token_address = '{token_address}' AND exchange_address = '{exchange_address}';"
                     )
                 )
     op.drop_constraint(

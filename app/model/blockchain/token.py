@@ -184,7 +184,7 @@ class BondToken(TokenBase):
 
         interest_payment_date_list = token_model.interest_payment_date
         for i, d in enumerate(interest_payment_date_list):
-            setattr(token_obj, f"interest_payment_date{str(i+1)}", d)
+            setattr(token_obj, f"interest_payment_date{str(i + 1)}", d)
 
         return token_obj
 

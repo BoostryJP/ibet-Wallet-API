@@ -94,10 +94,10 @@ class TestChatWebhook:
                 "message": "Invalid Parameter",
                 "description": [
                     {
-                        "ctx": {"error": "expected ident at line 1 column " "2"},
+                        "ctx": {"error": "expected ident at line 1 column 2"},
                         "input": "text",
                         "loc": ["body", "message"],
-                        "msg": "Invalid JSON: expected ident at line 1 " "column 2",
+                        "msg": "Invalid JSON: expected ident at line 1 column 2",
                         "type": "json_invalid",
                     }
                 ],
