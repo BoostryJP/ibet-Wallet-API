@@ -150,13 +150,13 @@ async def main():
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors
             LOG.exception("An exception occurred during event synchronization")
+        free_malloc()
 
         elapsed_time = time.time() - start_time
         time_to_sleep = max(config.TOKEN_CACHE_REFRESH_INTERVAL - elapsed_time, 0)
         if time_to_sleep == 0:
             LOG.debug("Processing is delayed")
         await asyncio.sleep(time_to_sleep)
-        free_malloc()
 
 
 if __name__ == "__main__":

@@ -250,10 +250,10 @@ def main():
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:  # Unexpected errors
             LOG.exception(ex)
+        free_malloc()
 
         elapsed_time = time.time() - start_time
         time.sleep(max(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL - elapsed_time, 0))
-        free_malloc()
 
 
 if __name__ == "__main__":

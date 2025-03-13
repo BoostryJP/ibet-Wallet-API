@@ -494,8 +494,9 @@ async def main():
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:
             LOG.exception("An exception occurred during event synchronization")
-        await asyncio.sleep(5)
         free_malloc()
+
+        await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
