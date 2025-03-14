@@ -49,15 +49,18 @@ class Processor:
         LOG.info("Syncing company list")
 
         # Get from COMPANY_LIST_URL
+        client = AsyncClient()
         try:
-            async with AsyncClient() as client:
-                _resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
-            if _resp.status_code != 200:
-                raise Exception(f"status code={_resp.status_code}")
-            company_list_json = _resp.json()
+            resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
+            if resp.status_code != 200:
+                raise Exception(f"status code={resp.status_code}")
+            company_list_json = resp.json()
+            await resp.aclose()
         except Exception:
             LOG.exception("Failed to get company list")
             return
+        finally:
+            await client.aclose()
 
         # Check the difference from the previous cycle
         _resp_digest = hashlib.sha256(
