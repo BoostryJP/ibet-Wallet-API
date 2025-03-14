@@ -24,7 +24,7 @@ import sys
 import time
 
 from eth_utils import to_checksum_address
-from httpx import AsyncClient
+from httpx import AsyncClient, create_ssl_context
 from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,6 +37,7 @@ from batch import free_malloc, log
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
+ssl_context = create_ssl_context()
 
 
 class Processor:
@@ -50,12 +51,11 @@ class Processor:
 
         # Get from COMPANY_LIST_URL
         try:
-            async with AsyncClient() as client:
+            async with AsyncClient(verify=ssl_context) as client:
                 _resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
             if _resp.status_code != 200:
                 raise Exception(f"status code={_resp.status_code}")
             company_list_json = _resp.json()
-            _resp = None
         except Exception:
             LOG.exception("Failed to get company list")
             return
