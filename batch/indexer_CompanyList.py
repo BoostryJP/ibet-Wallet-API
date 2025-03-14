@@ -52,6 +52,7 @@ class Processor:
         try:
             async with AsyncClient() as client:
                 _resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
+                await client.aclose()
             if _resp.status_code != 200:
                 raise Exception(f"status code={_resp.status_code}")
             company_list_json = _resp.json()
