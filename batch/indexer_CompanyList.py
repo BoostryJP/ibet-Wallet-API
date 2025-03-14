@@ -56,7 +56,7 @@ class Processor:
             if _resp.status_code != 200:
                 raise Exception(f"status code={_resp.status_code}")
             company_list_json = _resp.json()
-            _resp.close()
+            await _resp.aclose()
         except Exception:
             LOG.exception("Failed to get company list")
             return
