@@ -30,7 +30,7 @@ from app.model.db import (
     IDXBondToken,
     IDXLockedPosition,
     IDXPosition,
-    IDXTokenListItem,
+    IDXTokenListRegister,
     Listing,
 )
 from tests.account_config import eth_account
@@ -255,7 +255,7 @@ class TestPositionStraightBond:
         idx_token.require_personal_info_registered = True
         idx_token.transfer_approval_required = False
         session.add(idx_token)
-        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item = IDXTokenListRegister()
         idx_token_list_item.token_address = token_address
         idx_token_list_item.token_template = "IbetStraightBond"
         idx_token_list_item.owner_address = TestPositionStraightBond.issuer[

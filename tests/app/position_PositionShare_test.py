@@ -27,7 +27,7 @@ from app.model.db import (
     IDXLockedPosition,
     IDXPosition,
     IDXShareToken,
-    IDXTokenListItem,
+    IDXTokenListRegister,
     Listing,
 )
 from tests.account_config import eth_account
@@ -254,7 +254,7 @@ class TestPositionShare:
         idx_token.max_holding_quantity = 1
         idx_token.max_sell_amount = 1000
         session.add(idx_token)
-        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item = IDXTokenListRegister()
         idx_token_list_item.token_address = token_address
         idx_token_list_item.token_template = "IbetShare"
         idx_token_list_item.owner_address = TestPositionShare.issuer["account_address"]

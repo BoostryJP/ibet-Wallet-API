@@ -23,10 +23,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.model.db.base import Base
 
 
-class IDXTokenListItem(Base):
-    """Token List Items (INDEX)"""
+class IDXTokenListRegister(Base):
+    """Token List Register Event (INDEX)"""
 
-    __tablename__ = "token_list"
+    __tablename__ = "token_list_register"
 
     # Token Address
     token_address: Mapped[str] = mapped_column(String(42), primary_key=True)

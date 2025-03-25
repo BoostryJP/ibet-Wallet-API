@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from pydantic import UUID4, BaseModel, Field, StrictStr
 
@@ -42,9 +42,40 @@ class TransferSourceEvent(StrEnum):
     Unlock = "Unlock"
 
 
+class TokenBase(BaseModel):
+    token_address: EthereumAddress
+    key_manager: list[str]
+
+
+class IbetBondToken(TokenBase):
+    token_template: Literal["ibetBond"]
+    product_type: Literal[1]
+
+
+class IbetShareToken(TokenBase):
+    token_template: Literal["ibetShare"]
+    product_type: Literal[1, 2, 3, 4, 5]
+
+
 ############################
 # REQUEST
 ############################
+class ListAllTokensSortItem(StrEnum):
+    token_address = "token_address"
+
+
+class ListAllTokensQuery(BasePaginationQuery):
+    token_template: Literal["ibetBond", "ibetShare"] = Field(
+        None, description="Token template"
+    )
+    sort_item: ListAllTokensSortItem = Field(
+        default=ListAllTokensSortItem.token_address, description="sort item"
+    )
+    sort_order: Optional[SortOrder] = Field(
+        default=SortOrder.ASC, description="sort order"
+    )
+
+
 class CreateTokenHoldersCollectionRequest(BaseModel):
     list_id: UUID4 = Field(
         description="Unique id to be assigned to each token holder list."
@@ -299,6 +330,11 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
 ############################
 # RESPONSE
 ############################
+class ListAllTokensResponse(BaseModel):
+    result_set: ResultSet
+    tokens: list[Union[IbetBondToken, IbetShareToken]]
+
+
 class TokenTemplateResponse(BaseModel):
     token_template: TokenType = Field(examples=["IbetStraightBond"])
 
