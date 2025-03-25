@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet system
     on ibet network
-  version: 25.3.0
+  version: 25.6.0
 paths:
   /:
     get:
