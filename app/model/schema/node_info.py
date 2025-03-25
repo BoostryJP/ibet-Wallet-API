@@ -60,5 +60,5 @@ class GetNodeInfoResponse(BaseModel):
 class GetBlockSyncStatusResponse(BaseModel):
     is_synced: bool = Field(..., description="block sync status")
     latest_block_number: Optional[int] = Field(
-        ..., description="latest block number (returns null if is_synced is " "false)"
+        ..., description="latest block number (returns null if is_synced is false)"
     )

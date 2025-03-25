@@ -47,7 +47,7 @@ from app.model.db import (
     Listing,
 )
 from app.model.schema.base import TokenType
-from batch import log
+from batch import free_malloc, log
 
 process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
 LOG = log.get_logger(process_name=process_name)
@@ -171,6 +171,7 @@ async def main():
         if time_to_sleep == 0:
             LOG.debug("Processing is delayed")
         await asyncio.sleep(time_to_sleep)
+        free_malloc()
 
 
 if __name__ == "__main__":

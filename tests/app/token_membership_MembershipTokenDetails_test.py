@@ -343,6 +343,6 @@ class TestTokenMembershipTokenDetails:
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 30,
-            "description": f'token_address: {token["address"]}',
+            "description": f"token_address: {token['address']}",
             "message": "Data Not Exists",
         }

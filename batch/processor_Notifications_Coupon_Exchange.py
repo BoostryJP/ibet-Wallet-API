@@ -25,6 +25,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
 
 from app.config import (
@@ -41,7 +42,7 @@ from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 from batch.lib.token import TokenFactory
 from batch.lib.token_list import TokenList
 
@@ -70,7 +71,11 @@ token_list = TokenList(list_contract, TokenType.IbetCoupon)
 # Watcher
 class Watcher:
     def __init__(
-        self, contract, filter_name: str, filter_params: dict, notification_type: str
+        self,
+        contract: Web3AsyncContract,
+        filter_name: str,
+        filter_params: dict,
+        notification_type: str,
     ):
         self.contract = contract
         self.filter_name = filter_name
@@ -600,6 +605,7 @@ async def main():
         LOG.info("<LOOP> finished in {} secs".format(elapsed_time))
 
         time.sleep(max(NOTIFICATION_PROCESS_INTERVAL - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

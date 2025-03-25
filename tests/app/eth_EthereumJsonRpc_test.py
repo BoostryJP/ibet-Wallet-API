@@ -145,7 +145,7 @@ class TestEthereumJsonRpc:
                     "ctx": {"error": {}},
                     "input": "invalid_method",
                     "loc": ["body", "method"],
-                    "msg": "Value error, The method invalid_method is not " "available",
+                    "msg": "Value error, The method invalid_method is not available",
                     "type": "value_error",
                 }
             ],

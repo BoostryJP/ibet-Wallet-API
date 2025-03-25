@@ -211,7 +211,7 @@ class TestSendEmail:
                         "ctx": {"error": {}},
                         "input": "test_data:*?.txt",
                         "loc": ["body", "file_name"],
-                        "msg": "Value error, File name has invalid " "character.",
+                        "msg": "Value error, File name has invalid character.",
                         "type": "value_error",
                     },
                 ],
@@ -243,8 +243,7 @@ class TestSendEmail:
                             "to_emails": ["test@example.com"],
                         },
                         "loc": ["body"],
-                        "msg": "Value error, File content should be posted "
-                        "with name.",
+                        "msg": "Value error, File content should be posted with name.",
                         "type": "value_error",
                     }
                 ],
@@ -273,7 +272,7 @@ class TestSendEmail:
                         "ctx": {"error": {}},
                         "input": ["test1@example.com", "test1@example.com"],
                         "loc": ["body", "to_emails"],
-                        "msg": "Value error, Each to_emails should be " "unique value",
+                        "msg": "Value error, Each to_emails should be unique value",
                         "type": "value_error",
                     }
                 ],

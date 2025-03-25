@@ -1251,8 +1251,7 @@ class TestDEXOrderListMembership:
                 {
                     "input": "test",
                     "loc": ["query", "include_canceled_items"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
+                    "msg": "Input should be a valid boolean, unable to interpret input",
                     "type": "bool_parsing",
                 }
             ],
@@ -1940,8 +1939,7 @@ class TestDEXOrderListCoupon:
                 {
                     "input": "test",
                     "loc": ["query", "include_canceled_items"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
+                    "msg": "Input should be a valid boolean, unable to interpret input",
                     "type": "bool_parsing",
                 }
             ],

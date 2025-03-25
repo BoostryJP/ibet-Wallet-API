@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 from importlib import reload
 from unittest import mock
 from unittest.mock import MagicMock
@@ -93,6 +92,7 @@ def issue_token(issuer, exchange_contract_address, token_list):
     return token
 
 
+@pytest.mark.asyncio
 class TestWatchCouponNewOrder:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -103,8 +103,8 @@ class TestWatchCouponNewOrder:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponNewOrder")
 
@@ -123,13 +123,15 @@ class TestWatchCouponNewOrder:
         )
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 0
@@ -155,24 +157,26 @@ class TestWatchCouponNewOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.NEW_ORDER,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.NEW_ORDER,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponNewOrder")
 
@@ -190,16 +194,20 @@ class TestWatchCouponNewOrder:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -253,24 +261,26 @@ class TestWatchCouponNewOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.NEW_ORDER,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.NEW_ORDER,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponNewOrder")
 
@@ -280,18 +290,20 @@ class TestWatchCouponNewOrder:
         # Not Create Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -305,26 +317,29 @@ class TestWatchCouponNewOrder:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponNewOrder")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponCancelOrder:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -335,8 +350,8 @@ class TestWatchCouponCancelOrder:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponCancelOrder")
 
@@ -358,13 +373,15 @@ class TestWatchCouponCancelOrder:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
@@ -390,24 +407,26 @@ class TestWatchCouponCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.CANCEL_ORDER,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.CANCEL_ORDER,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponCancelOrder")
 
@@ -429,13 +448,15 @@ class TestWatchCouponCancelOrder:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 2)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -489,24 +510,26 @@ class TestWatchCouponCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.CANCEL_ORDER,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.CANCEL_ORDER,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponCancelOrder")
 
@@ -527,18 +550,20 @@ class TestWatchCouponCancelOrder:
         # Not Cancel Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -552,26 +577,29 @@ class TestWatchCouponCancelOrder:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponCancelOrder")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponForceCancelOrder:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -582,8 +610,8 @@ class TestWatchCouponForceCancelOrder:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponForceCancelOrder"
@@ -619,13 +647,15 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
@@ -653,24 +683,26 @@ class TestWatchCouponForceCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.FORCE_CANCEL_ORDER,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.FORCE_CANCEL_ORDER,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponForceCancelOrder"
@@ -718,13 +750,15 @@ class TestWatchCouponForceCancelOrder:
         )
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -782,24 +816,26 @@ class TestWatchCouponForceCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.FORCE_CANCEL_ORDER,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.FORCE_CANCEL_ORDER,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponForceCancelOrder"
@@ -831,18 +867,20 @@ class TestWatchCouponForceCancelOrder:
 
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -856,26 +894,29 @@ class TestWatchCouponForceCancelOrder:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponForceCancelOrder")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponBuyAgreement:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -887,8 +928,8 @@ class TestWatchCouponBuyAgreement:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponBuyAgreement")
 
@@ -910,13 +951,15 @@ class TestWatchCouponBuyAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
@@ -943,24 +986,26 @@ class TestWatchCouponBuyAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.BUY_AGREEMENT,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.BUY_AGREEMENT,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponBuyAgreement")
 
@@ -983,13 +1028,15 @@ class TestWatchCouponBuyAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -1045,24 +1092,26 @@ class TestWatchCouponBuyAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.BUY_AGREEMENT,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.BUY_AGREEMENT,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponBuyAgreement")
 
@@ -1083,18 +1132,20 @@ class TestWatchCouponBuyAgreement:
         # Not Buy Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -1108,26 +1159,29 @@ class TestWatchCouponBuyAgreement:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponBuyAgreement")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponSellAgreement:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -1139,8 +1193,8 @@ class TestWatchCouponSellAgreement:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponSellAgreement")
 
@@ -1162,13 +1216,15 @@ class TestWatchCouponSellAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
@@ -1195,24 +1251,26 @@ class TestWatchCouponSellAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.SELL_AGREEMENT,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.SELL_AGREEMENT,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponSellAgreement")
 
@@ -1235,12 +1293,14 @@ class TestWatchCouponSellAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -1294,24 +1354,26 @@ class TestWatchCouponSellAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.SELL_AGREEMENT,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.SELL_AGREEMENT,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponSellAgreement")
 
@@ -1332,18 +1394,20 @@ class TestWatchCouponSellAgreement:
         # Not Buy Order
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -1357,26 +1421,29 @@ class TestWatchCouponSellAgreement:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponSellAgreement")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponBuySettlementOK:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -1388,8 +1455,8 @@ class TestWatchCouponBuySettlementOK:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementOK"
@@ -1416,13 +1483,15 @@ class TestWatchCouponBuySettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 1
@@ -1451,24 +1520,26 @@ class TestWatchCouponBuySettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.BUY_SETTLEMENT_OK,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.BUY_SETTLEMENT_OK,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementOK"
@@ -1497,13 +1568,15 @@ class TestWatchCouponBuySettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -1563,24 +1636,26 @@ class TestWatchCouponBuySettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.BUY_SETTLEMENT_OK,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.BUY_SETTLEMENT_OK,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementOK"
@@ -1606,18 +1681,20 @@ class TestWatchCouponBuySettlementOK:
         # Not Confirm Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -1631,26 +1708,29 @@ class TestWatchCouponBuySettlementOK:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponBuySettlementOK")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponSellSettlementOK:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -1662,8 +1742,8 @@ class TestWatchCouponSellSettlementOK:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementOK"
@@ -1690,13 +1770,15 @@ class TestWatchCouponSellSettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 2
@@ -1725,24 +1807,26 @@ class TestWatchCouponSellSettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.SELL_SETTLEMENT_OK,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.SELL_SETTLEMENT_OK,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementOK"
@@ -1771,13 +1855,15 @@ class TestWatchCouponSellSettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -1837,24 +1923,26 @@ class TestWatchCouponSellSettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.SELL_SETTLEMENT_OK,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.SELL_SETTLEMENT_OK,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementOK"
@@ -1880,18 +1968,20 @@ class TestWatchCouponSellSettlementOK:
         # Not Confirm Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -1905,26 +1995,29 @@ class TestWatchCouponSellSettlementOK:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponSellSettlementOK")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponBuySettlementNG:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -1936,8 +2029,8 @@ class TestWatchCouponBuySettlementNG:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementNG"
@@ -1964,13 +2057,15 @@ class TestWatchCouponBuySettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
@@ -1999,24 +2094,26 @@ class TestWatchCouponBuySettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.BUY_SETTLEMENT_NG,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.BUY_SETTLEMENT_NG,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementNG"
@@ -2045,13 +2142,15 @@ class TestWatchCouponBuySettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -2111,24 +2210,26 @@ class TestWatchCouponBuySettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.BUY_SETTLEMENT_NG,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.BUY_SETTLEMENT_NG,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementNG"
@@ -2154,18 +2255,20 @@ class TestWatchCouponBuySettlementNG:
         # Not Cancel Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -2179,26 +2282,29 @@ class TestWatchCouponBuySettlementNG:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponBuySettlementNG")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None
 
 
+@pytest.mark.asyncio
 class TestWatchCouponSellSettlementNG:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -2210,8 +2316,8 @@ class TestWatchCouponSellSettlementNG:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementNG"
@@ -2238,13 +2344,15 @@ class TestWatchCouponSellSettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
@@ -2273,24 +2381,26 @@ class TestWatchCouponSellSettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.SELL_SETTLEMENT_NG,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.SELL_SETTLEMENT_NG,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_2(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementNG"
@@ -2319,13 +2429,15 @@ class TestWatchCouponSellSettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification_list = session.scalars(
-            select(Notification).order_by(Notification.created)
+        _notification_list = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created)
+            )
         ).all()
         assert len(_notification_list) == 2
 
@@ -2385,24 +2497,26 @@ class TestWatchCouponSellSettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = session.scalars(
-            select(NotificationBlockNumber)
-            .where(
-                and_(
-                    NotificationBlockNumber.notification_type
-                    == NotificationType.SELL_SETTLEMENT_NG,
-                    NotificationBlockNumber.contract_address
-                    == exchange_contract_address,
+        _notification_block_number: NotificationBlockNumber = (
+            await async_session.scalars(
+                select(NotificationBlockNumber)
+                .where(
+                    and_(
+                        NotificationBlockNumber.notification_type
+                        == NotificationType.SELL_SETTLEMENT_NG,
+                        NotificationBlockNumber.contract_address
+                        == exchange_contract_address,
+                    )
                 )
+                .limit(1)
             )
-            .limit(1)
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_normal_3(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementNG"
@@ -2428,18 +2542,20 @@ class TestWatchCouponSellSettlementNG:
         # Not Cancel Agreement
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
 
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number.latest_block_number == block_number
 
@@ -2453,21 +2569,23 @@ class TestWatchCouponSellSettlementNG:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=Exception()),
     )
-    def test_error_1(
-        self, watcher_factory, session, shared_contract, mocked_company_list
+    async def test_error_1(
+        self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
         watcher, _ = watcher_factory("WatchCouponSellSettlementNG")
 
         # Run target process
-        asyncio.run(watcher.loop())
+        await watcher.loop()
 
         # Assertion
-        _notification = session.scalars(
-            select(Notification).order_by(Notification.created).limit(1)
+        _notification = (
+            await async_session.scalars(
+                select(Notification).order_by(Notification.created).limit(1)
+            )
         ).first()
         assert _notification is None
 
-        _notification_block_number = session.scalars(
-            select(NotificationBlockNumber).limit(1)
+        _notification_block_number = (
+            await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
         assert _notification_block_number is None

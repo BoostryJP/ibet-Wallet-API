@@ -30,7 +30,7 @@ from web3.types import RPCEndpoint, RPCResponse
 from app import config
 from app.config import EXPECTED_BLOCKS_PER_SEC
 from app.model.db import Node
-from batch import log
+from batch import free_malloc, log
 
 LOG = log.get_logger(process_name="PROCESSOR-BLOCK_SYNC_STATUS")
 
@@ -253,6 +253,7 @@ def main():
 
         elapsed_time = time.time() - start_time
         time.sleep(max(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

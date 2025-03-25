@@ -23,8 +23,9 @@ import json
 import sys
 import time
 
+import aiohttp
+from aiohttp import ClientTimeout
 from eth_utils import to_checksum_address
-from httpx import AsyncClient
 from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +34,7 @@ from app.config import COMPANY_LIST_SLEEP_INTERVAL, COMPANY_LIST_URL, REQUEST_TI
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import Company
-from batch import log
+from batch import free_malloc, log
 
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
@@ -50,11 +51,16 @@ class Processor:
 
         # Get from COMPANY_LIST_URL
         try:
-            async with AsyncClient() as client:
-                _resp = await client.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
-            if _resp.status_code != 200:
-                raise Exception(f"status code={_resp.status_code}")
-            company_list_json = _resp.json()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    COMPANY_LIST_URL,
+                    timeout=ClientTimeout(
+                        connect=REQUEST_TIMEOUT[0], total=REQUEST_TIMEOUT[1]
+                    ),
+                ) as response:
+                    if response.status != 200:
+                        raise Exception(f"status code={response.status}")
+                    company_list_json = await response.json()
         except Exception:
             LOG.exception("Failed to get company list")
             return
@@ -155,6 +161,7 @@ async def main():
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

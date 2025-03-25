@@ -29,12 +29,13 @@ from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
+from app.contracts.contract import AsyncContractEventsView
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 
 process_name = "INDEXER-TRANSFER-APPROVAL"
 LOG = log.get_logger(process_name=process_name)
@@ -73,7 +74,10 @@ class Processor:
             """
 
             def __init__(
-                self, token_contract, exchange_address: str, block_number: int
+                self,
+                token_contract: AsyncContractEventsView,
+                exchange_address: str,
+                block_number: int,
             ):
                 self.token_contract = token_contract
                 self.exchange_address = exchange_address
@@ -85,7 +89,12 @@ class Processor:
         def __init__(self):
             self.target_token_list = []
 
-        def append(self, token_contract, exchange_address: str, block_number: int):
+        def append(
+            self,
+            token_contract: AsyncContractEventsView,
+            exchange_address: str,
+            block_number: int,
+        ):
             is_duplicate = False
             for i, t in enumerate(self.target_token_list):
                 if t.token_contract.address == token_contract.address:
@@ -122,7 +131,10 @@ class Processor:
             """
 
             def __init__(
-                self, exchange_contract, exchange_address: str, block_number: int
+                self,
+                exchange_contract: AsyncContractEventsView,
+                exchange_address: str,
+                block_number: int,
             ):
                 self.exchange_contract = exchange_contract
                 self.exchange_address = exchange_address
@@ -134,7 +146,12 @@ class Processor:
         def __init__(self):
             self.target_exchange_list = []
 
-        def append(self, exchange_contract, exchange_address: str, block_number: int):
+        def append(
+            self,
+            exchange_contract: AsyncContractEventsView,
+            exchange_address: str,
+            block_number: int,
+        ):
             is_duplicate = False
             for i, e in enumerate(self.target_exchange_list):
                 if e.exchange_address == exchange_address:
@@ -151,8 +168,15 @@ class Processor:
         def __iter__(self):
             return iter(self.target_exchange_list)
 
+    # Index target
     token_list: TargetTokenList
     exchange_list: TargetExchangeList
+
+    # On memory cache
+    token_type_cache: dict[str, TokenType] = {}
+    token_contract_cache: dict[str, AsyncContractEventsView] = {}
+    token_tradable_exchange_address_cache: dict[str, str] = {}
+    exchange_contract_cache: dict[str, AsyncContractEventsView] = {}
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
@@ -176,29 +200,47 @@ class Processor:
             await db_session.scalars(select(Listing))
         ).all()
 
-        _exchange_list_tmp = []
         for listed_token in listed_tokens:
-            token_info = await AsyncContract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(listed_token.token_address,),
-                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
-            )
-            token_type = token_info[1]
+            # Reuse token type cache
+            if listed_token.token_address not in self.token_type_cache:
+                token_info = await AsyncContract.call_function(
+                    contract=list_contract,
+                    function_name="getTokenByAddress",
+                    args=(listed_token.token_address,),
+                    default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
+                )
+                self.token_type_cache[listed_token.token_address] = token_info[1]
+            token_type = self.token_type_cache[listed_token.token_address]
+
             if (
                 token_type == TokenType.IbetShare
                 or token_type == TokenType.IbetStraightBond
             ):
-                token_contract = AsyncContract.get_contract(
-                    contract_name="IbetSecurityTokenInterface",
-                    address=listed_token.token_address,
-                )
-                tradable_exchange_address = await AsyncContract.call_function(
-                    contract=token_contract,
-                    function_name="tradableExchange",
-                    args=(),
-                    default_returns=ZERO_ADDRESS,
-                )
+                # Reuse token/exchange contract cache
+                if listed_token.token_address not in self.token_contract_cache:
+                    token_contract = AsyncContract.get_contract(
+                        contract_name="IbetSecurityTokenInterface",
+                        address=listed_token.token_address,
+                    )
+                    tradable_exchange_address = await AsyncContract.call_function(
+                        contract=token_contract,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS,
+                    )
+                    self.token_contract_cache[listed_token.token_address] = (
+                        AsyncContractEventsView(
+                            token_contract.address, token_contract.events
+                        )
+                    )
+                    self.token_tradable_exchange_address_cache[
+                        listed_token.token_address
+                    ] = tradable_exchange_address
+                token_contract = self.token_contract_cache[listed_token.token_address]
+                tradable_exchange_address = self.token_tradable_exchange_address_cache[
+                    listed_token.token_address
+                ]
+
                 synced_block_number = (
                     await self.__get_idx_transfer_approval_block_number(
                         db_session=db_session,
@@ -214,10 +256,24 @@ class Processor:
                     if tradable_exchange_address not in [
                         e.exchange_address for e in self.exchange_list
                     ]:
-                        exchange_contract = AsyncContract.get_contract(
-                            contract_name="IbetSecurityTokenEscrow",
-                            address=tradable_exchange_address,
-                        )
+                        # Reuse exchange contract cache
+                        if (
+                            tradable_exchange_address
+                            not in self.exchange_contract_cache
+                        ):
+                            exchange_contract = AsyncContract.get_contract(
+                                contract_name="IbetSecurityTokenEscrow",
+                                address=tradable_exchange_address,
+                            )
+                            self.exchange_contract_cache[tradable_exchange_address] = (
+                                AsyncContractEventsView(
+                                    exchange_contract.address, exchange_contract.events
+                                )
+                            )
+                        exchange_contract = self.exchange_contract_cache[
+                            tradable_exchange_address
+                        ]
+
                         self.exchange_list.append(
                             exchange_contract, tradable_exchange_address, block_from
                         )
@@ -757,6 +813,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(5)
+        free_malloc()
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ from typing import TypedDict
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
+from pytest_asyncio import is_async_test
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -242,7 +243,7 @@ def shared_contract(
     }
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def async_db_engine():
     if async_engine.name != "mysql":
         async with async_engine.begin() as conn:
@@ -275,7 +276,7 @@ def db_engine():
 
 
 # テーブル上のレコード削除
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function", loop_scope="session")
 async def async_db(async_db_engine):
     # Create DB session
     db = AsyncSessionLocal()
@@ -388,7 +389,7 @@ def session(db: Session):
     yield db
 
 
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function", loop_scope="session")
 async def async_session(async_db):
     yield async_db
 
@@ -453,3 +454,11 @@ def ibet_exchange_contract(payment_gateway_address) -> DeployedContract:
     )
 
     return {"address": contract_address, "abi": abi}
+
+
+# async test で使用するイベントループの固定化
+def pytest_collection_modifyitems(items):
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(loop_scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)

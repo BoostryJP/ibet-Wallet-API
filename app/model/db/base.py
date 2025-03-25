@@ -21,7 +21,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, create_engine
 from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
-from sqlalchemy.orm import Mapped, declarative_base, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app import config, log
 from app.utils import alchemy
@@ -40,7 +40,7 @@ def naive_utcnow():
     return aware_utcnow().replace(tzinfo=None)
 
 
-class BaseModel(object):
+class Base(DeclarativeBase):
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
         created: Mapped[datetime | None] = mapped_column(
@@ -73,6 +73,3 @@ class BaseModel(object):
         "created": alchemy.datetime_to_timestamp,
         "modified": alchemy.datetime_to_timestamp,
     }
-
-
-Base = declarative_base(cls=BaseModel)

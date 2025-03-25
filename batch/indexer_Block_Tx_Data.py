@@ -32,7 +32,7 @@ from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import IDXBlockData, IDXBlockDataBlockNumber, IDXTxData
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 
 process_name = "INDEXER-BLOCK_TX_DATA"
 LOG = log.get_logger(process_name=process_name)
@@ -161,6 +161,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(5)
+        free_malloc()
 
 
 if __name__ == "__main__":

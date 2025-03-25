@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 from app import config
 from app.model.db import Mail
 from app.model.mail import File, Mail as SMTPMail
-from batch import log
+from batch import free_malloc, log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
 
@@ -109,6 +109,7 @@ def main():
 
         elapsed_time = time.time() - start_time
         time.sleep(max(30 - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

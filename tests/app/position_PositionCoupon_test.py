@@ -1439,8 +1439,7 @@ class TestPositionCoupon:
                 {
                     "input": "test",
                     "loc": ["query", "include_token_details"],
-                    "msg": "Input should be a valid boolean, unable to interpret "
-                    "input",
+                    "msg": "Input should be a valid boolean, unable to interpret input",
                     "type": "bool_parsing",
                 },
             ],

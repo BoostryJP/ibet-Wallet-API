@@ -28,6 +28,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
 from web3.types import LogReceipt
 
@@ -46,7 +47,7 @@ from app.model.db import (
 from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import log
+from batch import free_malloc, log
 
 UTC = timezone(timedelta(hours=0), "UTC")
 
@@ -142,8 +143,14 @@ class Processor:
         def __iter__(self):
             return iter(self.target_exchange_list)
 
+    # Index target
     token_list: TargetTokenList
     exchange_list: TargetExchangeList
+
+    # On memory cache
+    token_type_cache: dict[str, TokenType] = {}
+    token_contract_cache: dict[str, Web3AsyncContract] = {}
+    token_tradable_exchange_address_cache: dict[str, str] = {}
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
@@ -228,25 +235,48 @@ class Processor:
             await db_session.scalars(select(Listing))
         ).all()
 
-        _exchange_list_tmp = []
         for listed_token in listed_tokens:
-            token_info = await AsyncContract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(listed_token.token_address,),
-                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
-            )
-            if token_info[1] == TokenType.IbetStraightBond:
-                token_contract = AsyncContract.get_contract(
-                    contract_name=TokenType.IbetStraightBond,
-                    address=listed_token.token_address,
+            # Reuse token type cache
+            if listed_token.token_address not in self.token_type_cache:
+                token_info = await AsyncContract.call_function(
+                    contract=list_contract,
+                    function_name="getTokenByAddress",
+                    args=(listed_token.token_address,),
+                    default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
                 )
-                tradable_exchange_address = await AsyncContract.call_function(
-                    contract=token_contract,
-                    function_name="tradableExchange",
-                    args=(),
-                    default_returns=ZERO_ADDRESS,
-                )
+                self.token_type_cache[listed_token.token_address] = token_info[1]
+            token_type = self.token_type_cache[listed_token.token_address]
+
+            if token_type == TokenType.IbetStraightBond:
+                # Reuse token contract cache
+                if listed_token.token_address not in self.token_contract_cache:
+                    token_contract = AsyncContract.get_contract(
+                        contract_name=TokenType.IbetStraightBond,
+                        address=listed_token.token_address,
+                    )
+                    self.token_contract_cache[listed_token.token_address] = (
+                        token_contract
+                    )
+                token_contract = self.token_contract_cache[listed_token.token_address]
+
+                # Reuse tradable exchange address cache
+                if (
+                    listed_token.token_address
+                    not in self.token_tradable_exchange_address_cache
+                ):
+                    tradable_exchange_address = await AsyncContract.call_function(
+                        contract=token_contract,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS,
+                    )
+                    self.token_tradable_exchange_address_cache[
+                        listed_token.token_address
+                    ] = tradable_exchange_address
+                tradable_exchange_address = self.token_tradable_exchange_address_cache[
+                    listed_token.token_address
+                ]
+
                 synced_block_number = await self.__get_idx_position_block_number(
                     db_session=db_session,
                     token_address=listed_token.token_address,
@@ -1695,6 +1725,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         await asyncio.sleep(10)
+        free_malloc()
 
 
 if __name__ == "__main__":

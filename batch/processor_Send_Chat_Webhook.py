@@ -22,14 +22,14 @@ import sys
 import time
 from typing import Sequence
 
-import httpx
+import aiohttp
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import CHAT_WEBHOOK_URL
 from app.database import BatchAsyncSessionLocal
 from app.model.db import ChatWebhook
-from batch import log
+from batch import free_malloc, log
 
 LOG = log.get_logger(process_name="PROCESSOR-SEND-CHAT-WEBHOOK")
 
@@ -46,8 +46,8 @@ class Processor:
 
                 for hook in hook_list:
                     try:
-                        async with httpx.AsyncClient() as client:
-                            await client.post(CHAT_WEBHOOK_URL, json=hook.message)
+                        async with aiohttp.ClientSession() as session:
+                            await session.post(CHAT_WEBHOOK_URL, json=hook.message)
                     except Exception:
                         LOG.exception("Failed to send chat webhook")
                     finally:
@@ -73,6 +73,7 @@ async def main():
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(30 - elapsed_time, 0))
+        free_malloc()
 
 
 if __name__ == "__main__":

@@ -381,6 +381,6 @@ class TestTokenShareTokenDetails:
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 30,
-            "description": f'token_address: {bond_token["address"]}',
+            "description": f"token_address: {bond_token['address']}",
             "message": "Data Not Exists",
         }

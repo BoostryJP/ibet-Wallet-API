@@ -25,6 +25,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventNotFound
@@ -59,7 +60,7 @@ def test_module(shared_contract):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(test_module, async_session):
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -83,6 +84,7 @@ def main_func(test_module):
     LOG.setLevel(default_log_level)
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     issuer = eth_account["issuer"]
     user1 = eth_account["user1"]
@@ -91,15 +93,15 @@ class TestProcessor:
     agent = eth_account["agent"]
 
     @staticmethod
-    def listing_token(token_address, session):
+    async def listing_token(token_address, async_session):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
         _listing.max_holding_quantity = 1000000
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
-        session.add(_listing)
-        session.commit()
+        async_session.add(_listing)
+        await async_session.commit()
 
     @staticmethod
     def issue_token_bond_with_args(issuer, token_list, args):
@@ -139,34 +141,34 @@ class TestProcessor:
 
     # <Normal_1>
     # no token is listed
-    def test_normal_1(
+    async def test_normal_1(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # assertion
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
         assert len(_token_list) == 0
 
     # <Normal_2>
     # Multiple token is listed
-    def test_normal_2(
+    async def test_normal_2(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -179,13 +181,13 @@ class TestProcessor:
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         # Issue bond token
         for i in range(2):
             args = {
-                "name": f"テスト債券{str(i+1)}",
+                "name": f"テスト債券{str(i + 1)}",
                 "symbol": "BOND",
                 "totalSupply": 1000000,
                 "tradableExchange": exchange_contract["address"],
@@ -222,7 +224,7 @@ class TestProcessor:
             token = self.issue_token_bond_with_args(
                 self.issuer, token_list_contract, args
             )
-            self.listing_token(token["address"], session)
+            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
                     "token_address": token["address"],
@@ -253,7 +255,7 @@ class TestProcessor:
             token = self.issue_token_share_with_args(
                 self.issuer, token_list_contract, args
             )
-            self.listing_token(token["address"], session)
+            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
                     "token_address": token["address"],
@@ -280,7 +282,7 @@ class TestProcessor:
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
             )
-            self.listing_token(token["address"], session)
+            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
                     "token_address": token["address"],
@@ -308,7 +310,7 @@ class TestProcessor:
             token = self.issue_token_coupon_with_args(
                 self.issuer, token_list_contract, args
             )
-            self.listing_token(token["address"], session)
+            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
                     "token_address": token["address"],
@@ -363,14 +365,18 @@ class TestProcessor:
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # assertion
         for _expect_dict in _token_expected_list:
-            token_list_item: IDXTokenListItem = session.scalars(
-                select(IDXTokenListItem)
-                .where(IDXTokenListItem.token_address == _expect_dict["token_address"])
-                .limit(1)
+            token_list_item: IDXTokenListItem = (
+                await async_session.scalars(
+                    select(IDXTokenListItem)
+                    .where(
+                        IDXTokenListItem.token_address == _expect_dict["token_address"]
+                    )
+                    .limit(1)
+                )
             ).first()
 
             assert token_list_item.token_template == _expect_dict["token_template"]
@@ -379,11 +385,11 @@ class TestProcessor:
     # <Normal_3_1>
     # When processed block_number is not stored and current block number is 9,999,999,
     # then processor should call "__sync_register" method 10 times.
-    def test_normal_3_1(
+    async def test_normal_3_1(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -405,13 +411,15 @@ class TestProcessor:
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
                 __sync_register_mock.return_value = None
-                asyncio.run(processor.process())
+                await processor.process()
 
                 # Then processor calls "__sync_register" method 10 times.
                 assert __sync_register_mock.call_count == 10
 
-                idx_token_list_block_number: IDXTokenListBlockNumber = session.scalars(
-                    select(IDXTokenListBlockNumber).limit(1)
+                idx_token_list_block_number: IDXTokenListBlockNumber = (
+                    await async_session.scalars(
+                        select(IDXTokenListBlockNumber).limit(1)
+                    )
                 ).first()
                 assert (
                     idx_token_list_block_number.latest_block_number
@@ -456,7 +464,7 @@ class TestProcessor:
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
                 __sync_register_mock.return_value = None
-                asyncio.run(processor.process())
+                await processor.process()
 
                 # Then processor does not call "__sync_register" method.
                 assert __sync_register_mock.call_count == 0
@@ -464,11 +472,11 @@ class TestProcessor:
     # <Normal_3_2>
     # When processed block_number is 9,999,999 and current block number is 19,999,999,
     # then processor should call "__sync_register" method 10 times.
-    def test_normal_3_2(
+    async def test_normal_3_2(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -482,8 +490,8 @@ class TestProcessor:
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = latest_block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         current_block_number = 20000000 - 1
         block_number_mock = AsyncMock()
@@ -497,13 +505,16 @@ class TestProcessor:
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
                 __sync_register_mock.return_value = None
-                asyncio.run(processor.process())
+                await processor.process()
 
+                async_session.expunge_all()
                 # Then processor calls "__sync_register" method 10 times.
                 assert __sync_register_mock.call_count == 10
 
-                idx_token_list_block_number: IDXTokenListBlockNumber = session.scalars(
-                    select(IDXTokenListBlockNumber).limit(1)
+                idx_token_list_block_number: IDXTokenListBlockNumber = (
+                    await async_session.scalars(
+                        select(IDXTokenListBlockNumber).limit(1)
+                    )
                 ).first()
                 assert (
                     idx_token_list_block_number.latest_block_number
@@ -548,7 +559,7 @@ class TestProcessor:
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
                 __sync_register_mock.return_value = None
-                asyncio.run(processor.process())
+                await processor.process()
 
                 # Then processor does not call "__sync_register" method.
                 assert __sync_register_mock.call_count == 0
@@ -556,11 +567,11 @@ class TestProcessor:
     # <Normal_3_3>
     # When processed block_number is 19,999,999 and current block number is 19,999,999,
     # then processor should not call "__sync_register" method.
-    def test_normal_3_3(
+    async def test_normal_3_3(
         self,
         processor: Processor,
         shared_contract,
-        session: Session,
+        async_session: AsyncSession,
         block_number: None,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -574,8 +585,8 @@ class TestProcessor:
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = latest_block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         current_block_number = 20000000 - 1
         block_number_mock = AsyncMock()
@@ -589,7 +600,7 @@ class TestProcessor:
                 Processor, "_Processor__sync_register", return_value=mock_lib
             ) as __sync_register_mock:
                 __sync_register_mock.return_value = None
-                asyncio.run(processor.process())
+                await processor.process()
 
                 # Then processor does not call "__sync_register" method.
                 assert __sync_register_mock.call_count == 0
@@ -607,7 +618,7 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    def test_error_1(self, processor: Processor, shared_contract, session):
+    async def test_error_1(self, processor: Processor, shared_contract, async_session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -615,8 +626,8 @@ class TestProcessor:
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         args = {
             "name": "テストクーポン",
@@ -634,16 +645,17 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
-        _token_list_block_number: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber)
+        async_session.expunge_all()
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list_block_number: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber))
         ).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
@@ -652,28 +664,31 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         block_number_current = web3.eth.block_number
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
-        session.rollback()
+        async_session.expunge_all()
+        await async_session.rollback()
         # Assertion
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
-        _token_list_block_number: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list_block_number: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
         assert _token_list_block_number.latest_block_number == block_number_current
 
     # <Error_2_1>: ServiceUnavailable occurs in __sync_xx method.
-    def test_error_2_1(self, processor: Processor, shared_contract, session):
+    async def test_error_2_1(
+        self, processor: Processor, shared_contract, async_session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -681,8 +696,8 @@ class TestProcessor:
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         args = {
             "name": "テストクーポン",
@@ -700,10 +715,10 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
-        _token_list_block_number_bf: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        _token_list_block_number_bf: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
         # Expect that process() raises ServiceUnavailable.
         with (
@@ -713,13 +728,13 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.process())
+            await processor.process()
 
-        session.rollback()
+        await async_session.rollback()
         # Assertion
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -730,11 +745,11 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
-        session.rollback()
-        _token_list_block_number_bf: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        await async_session.rollback()
+        _token_list_block_number_bf: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
 
         # Expect that process() raises ServiceUnavailable.
@@ -745,13 +760,13 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.process())
+            await processor.process()
 
         # Assertion
-        session.rollback()
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        await async_session.rollback()
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -760,7 +775,9 @@ class TestProcessor:
         )
 
     # <Error_2_2>: SQLAlchemyError occurs in "process".
-    def test_error_2_2(self, processor: Processor, shared_contract, session):
+    async def test_error_2_2(
+        self, processor: Processor, shared_contract, async_session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -768,8 +785,8 @@ class TestProcessor:
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
         _token_list_block_number.contract_address = token_list_contract["address"]
-        session.add(_token_list_block_number)
-        session.commit()
+        async_session.add(_token_list_block_number)
+        await async_session.commit()
 
         args = {
             "name": "テストクーポン",
@@ -787,19 +804,19 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         # Expect that process() raises SQLAlchemyError.
         with (
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.process())
+            await processor.process()
 
         # Assertion
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -810,22 +827,22 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
-        session.rollback()
+        await async_session.rollback()
 
         # Expect that process() raises SQLAlchemyError.
         with (
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.process())
+            await processor.process()
 
         # Assertion
-        session.rollback()
-        _token_list = session.scalars(select(IDXTokenListItem)).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = session.scalars(
-            select(IDXTokenListBlockNumber).limit(1)
+        await async_session.rollback()
+        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list_block_number_af: IDXTokenListBlockNumber = (
+            await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
         assert len(_token_list) == 0
         assert (
@@ -834,7 +851,7 @@ class TestProcessor:
         )
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    def test_error_3(self, main_func, shared_contract, session, caplog):
+    async def test_error_3(self, main_func, shared_contract, async_session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -855,7 +872,7 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        self.listing_token(token["address"], session)
+        await self.listing_token(token["address"], async_session)
 
         # Mocking time.sleep to break mainloop
         asyncio_mock = MagicMock(wraps=asyncio)
@@ -871,7 +888,7 @@ class TestProcessor:
             pytest.raises(TypeError),
         ):
             # Expect that process() raises ServiceUnavailable and handled in mainloop.
-            asyncio.run(main_func())
+            await main_func()
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.INFO, "Service started successfully")
