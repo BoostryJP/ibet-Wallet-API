@@ -35,7 +35,7 @@ from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.blockchain.token import TokenClassTypes
-from app.model.db import IDXTokenListRegister, Listing
+from app.model.db import IDXTokenListItem, Listing
 from app.model.schema.base import TokenType
 from batch import free_malloc, log
 
@@ -106,10 +106,10 @@ class Processor:
                 await local_session.scalars(
                     select(Listing)
                     .join(
-                        IDXTokenListRegister,
-                        IDXTokenListRegister.token_address == Listing.token_address,
+                        IDXTokenListItem,
+                        IDXTokenListItem.token_address == Listing.token_address,
                     )
-                    .where(IDXTokenListRegister.token_template == token_type.template)
+                    .where(IDXTokenListItem.token_template == token_type.template)
                     .order_by(Listing.id)
                 )
             ).all()

@@ -29,7 +29,7 @@ import requests
 from sqlalchemy import select
 
 from app.model.db import Company
-from batch.indexer_Company_List import LOG, Processor
+from batch.indexer_CompanyList import LOG, Processor
 
 
 @pytest.fixture(scope="function")

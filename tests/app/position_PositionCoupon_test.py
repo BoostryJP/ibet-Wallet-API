@@ -30,7 +30,7 @@ from app.model.db import (
     IDXConsumeCoupon,
     IDXCouponToken,
     IDXPosition,
-    IDXTokenListRegister,
+    IDXTokenListItem,
     IDXTransfer,
     IDXTransferSourceEventType,
     Listing,
@@ -205,7 +205,7 @@ class TestPositionCoupon:
         idx_token.contact_information = "問い合わせ先"
         idx_token.privacy_policy = "プライバシーポリシー"
         session.add(idx_token)
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token_address
         idx_token_list_item.token_template = "IbetCoupon"
         idx_token_list_item.owner_address = TestPositionCoupon.issuer["account_address"]

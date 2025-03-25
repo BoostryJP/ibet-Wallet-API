@@ -40,7 +40,7 @@ from .idx_token import (
     IDXTokenInstance,
     IDXTokenModel,
 )
-from .idx_token_list_register import IDXTokenListBlockNumber, IDXTokenListRegister
+from .idx_token_list import IDXTokenListBlockNumber, IDXTokenListItem
 from .idx_transfer import (
     DataMessage,
     IDXTransfer,
@@ -53,6 +53,5 @@ from .listing import Listing
 from .messaging import ChatWebhook, Mail
 from .node import Node
 from .notification import Notification, NotificationBlockNumber, NotificationType
-from .token_list import TokenList
 from .tokenholders import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from .user_info import AccountTag
