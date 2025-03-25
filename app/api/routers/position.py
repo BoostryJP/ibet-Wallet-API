@@ -50,7 +50,7 @@ from app.model.db import (
     IDXPosition,
     IDXShareToken,
     IDXTokenInstance,
-    IDXTokenListItem,
+    IDXTokenListRegister,
     IDXTokenModel,
     IDXTransfer,
     Listing,
@@ -1372,7 +1372,7 @@ async def list_all_token_position(
 
     query_target = [
         Listing.token_address,
-        IDXTokenListItem.token_template,
+        IDXTokenListRegister.token_template,
         IDXPosition,
         func.sum(IDXLockedPosition.value),
         func.sum(IDXConsumeCoupon.amount),
@@ -1383,7 +1383,7 @@ async def list_all_token_position(
     ]
     group_by_columns = [
         Listing.id,
-        IDXTokenListItem.token_address,
+        IDXTokenListRegister.token_address,
         IDXPosition.token_address,
         IDXPosition.account_address,
         IDXLockedPosition.token_address,
@@ -1394,30 +1394,30 @@ async def list_all_token_position(
     if include_bond_token:
         group_by_columns.append(IDXBondToken.token_address)
         token_type_filter.append(
-            IDXTokenListItem.token_template == TokenType.IbetStraightBond.value
+            IDXTokenListRegister.token_template == TokenType.IbetStraightBond.value
         )
     if include_share_token:
         group_by_columns.append(IDXShareToken.token_address)
         token_type_filter.append(
-            IDXTokenListItem.token_template == TokenType.IbetShare.value
+            IDXTokenListRegister.token_template == TokenType.IbetShare.value
         )
     if include_coupon_token:
         group_by_columns.append(IDXCouponToken.token_address)
         token_type_filter.append(
-            IDXTokenListItem.token_template == TokenType.IbetCoupon.value
+            IDXTokenListRegister.token_template == TokenType.IbetCoupon.value
         )
     if include_membership_token:
         group_by_columns.append(IDXMembershipToken.token_address)
         token_type_filter.append(
-            IDXTokenListItem.token_template == TokenType.IbetMembership.value
+            IDXTokenListRegister.token_template == TokenType.IbetMembership.value
         )
 
     stmt = (
         select(*query_target)
         .join(
-            IDXTokenListItem,
+            IDXTokenListRegister,
             and_(
-                IDXTokenListItem.token_address == Listing.token_address,
+                IDXTokenListRegister.token_address == Listing.token_address,
                 or_(*token_type_filter),
             ),
         )

@@ -11,6 +11,7 @@ The list of environment variables that can be set for this system is as follows.
 | WEB3_HTTP_PROVIDER      | False    | Web3 provider                            | http://localhost:8545                    | http://localhost:8545                                     |
 | COMPANY_LIST_URL        | True     | Company list URL                         | https://dummy-company-list.boostry.co.jp | --                                                        |
 | COMPANY_LIST_LOCAL_MODE | False    | Using the local mode of the company list | 0 (not using) / 1 (using)                | 0                                                         |
+| TOKEN_LIST_URL          | True     | Token list URL                           | https://dummy-token-list.boostry.co.jp   | --                                                        |
 | DATABASE_URL            | False    | Database URL                             | postgresql://xxxx:xxxx@yyyy:5432/zzzz    | postgresql://ethuser:ethpass@localhost:5432/ethcache      |
 | TEST_DATABASE_URL       | False    | Test database URL (for development use)  | postgresql://xxxx:xxxx@yyyy:5432/zzzz    | postgresql://ethuser:ethpass@localhost:5432/ethcache_test |
 | APP_LOGFILE             | False    | Output location for application logs     | /some/directory                          | /dev/stdout (standard output)                             |
