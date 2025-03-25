@@ -39,7 +39,7 @@ from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
-    IDXTokenListRegister,
+    IDXTokenListItem,
     Listing,
     Notification,
     NotificationBlockNumber,
@@ -93,11 +93,11 @@ class Watcher:
     @staticmethod
     async def _get_token_all_list(db_session: AsyncSession):
         _tokens = []
-        registered_tokens: Sequence[IDXTokenListRegister] = (
+        registered_tokens: Sequence[IDXTokenListItem] = (
             await db_session.scalars(
-                select(IDXTokenListRegister).join(
+                select(IDXTokenListItem).join(
                     Listing,
-                    and_(Listing.token_address == IDXTokenListRegister.token_address),
+                    and_(Listing.token_address == IDXTokenListItem.token_address),
                 )
             )
         ).all()

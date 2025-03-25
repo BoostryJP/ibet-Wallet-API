@@ -22,7 +22,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import IDXTokenListRegister, IDXTxData
+from app.model.db import IDXTokenListItem, IDXTxData
 
 
 class TestGetTxData:
@@ -63,7 +63,7 @@ class TestGetTxData:
 
     @staticmethod
     def insert_token_list(session, token_info):
-        token = IDXTokenListRegister()
+        token = IDXTokenListItem()
         token.token_address = token_info.get("token_address")
         token.token_template = token_info.get("token_template")
         session.add(token)

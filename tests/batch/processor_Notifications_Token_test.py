@@ -33,7 +33,7 @@ from web3.types import RPCEndpoint
 
 from app import config
 from app.model.db import (
-    IDXTokenListRegister,
+    IDXTokenListItem,
     Listing,
     Notification,
     NotificationBlockNumber,
@@ -185,7 +185,7 @@ class TestWatchTransfer:
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader, 100)
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
@@ -257,7 +257,7 @@ class TestWatchTransfer:
         transfer_coupon_token(self.issuer, token, self.trader, 100)
         transfer_coupon_token(self.issuer, token, self.trader2, 200)
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
@@ -359,7 +359,7 @@ class TestWatchTransfer:
             self.issuer, exchange_contract, token_list_contract, async_session
         )
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
@@ -409,7 +409,7 @@ class TestWatchTransfer:
             invoker=self.issuer, exchange=exchange_contract, token=token, amount=100
         )
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
@@ -495,7 +495,7 @@ class TestWatchTransfer:
             self.issuer, exchange_contract, token_list_contract, async_session
         )
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
@@ -555,7 +555,7 @@ class TestWatchApplyForTransfer:
 
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -640,7 +640,7 @@ class TestWatchApplyForTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -762,7 +762,7 @@ class TestWatchApplyForTransfer:
         transfer_share_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -825,7 +825,7 @@ class TestWatchApplyForTransfer:
         # Transfer
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -886,7 +886,7 @@ class TestWatchApproveTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -975,7 +975,7 @@ class TestWatchApproveTransfer:
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA1")
         share_approve_transfer(self.issuer, token, 1, "TEST_DATA2")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1095,7 +1095,7 @@ class TestWatchApproveTransfer:
         transfer_share_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1159,7 +1159,7 @@ class TestWatchApproveTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA1")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1220,7 +1220,7 @@ class TestWatchCancelTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1307,7 +1307,7 @@ class TestWatchCancelTransfer:
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA1")
         share_cancel_transfer(self.issuer, token, 1, "TEST_DATA2")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1427,7 +1427,7 @@ class TestWatchCancelTransfer:
         share_apply_for_transfer(self.trader, token_1, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token_1, self.trader2, 20, "TEST_DATA2")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token_1["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1453,7 +1453,7 @@ class TestWatchCancelTransfer:
         share_cancel_transfer(self.issuer, token_2, 0, "TEST_DATA1")
         share_cancel_transfer(self.issuer, token_2, 1, "TEST_DATA2")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token_2["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1626,7 +1626,7 @@ class TestWatchCancelTransfer:
         transfer_share_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
@@ -1690,7 +1690,7 @@ class TestWatchCancelTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA1")
 
-        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item = IDXTokenListItem()
         idx_token_list_item.token_address = token["address"]
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"

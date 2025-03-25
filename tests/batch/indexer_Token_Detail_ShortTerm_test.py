@@ -40,7 +40,7 @@ from app.model.db import (
     IDXCouponToken as CouponTokenModel,
     IDXMembershipToken as MembershipTokenModel,
     IDXShareToken as ShareTokenModel,
-    IDXTokenListRegister,
+    IDXTokenListItem,
     Listing,
 )
 from batch import indexer_Token_Detail_ShortTerm
@@ -108,7 +108,7 @@ class TestProcessor:
         _listing.owner_address = TestProcessor.issuer["account_address"]
         async_session.add(_listing)
 
-        _idx_token_list_item = IDXTokenListRegister()
+        _idx_token_list_item = IDXTokenListItem()
         _idx_token_list_item.token_address = token_address
         _idx_token_list_item.token_template = token_template
         _idx_token_list_item.owner_address = TestProcessor.issuer["account_address"]

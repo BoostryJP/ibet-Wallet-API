@@ -32,7 +32,7 @@ from app.errors import DataNotExistsError, NotSupportedError, ResponseLimitExcee
 from app.model.db import (
     IDXBlockData,
     IDXBlockDataBlockNumber,
-    IDXTokenListRegister,
+    IDXTokenListItem,
     IDXTxData,
 )
 from app.model.schema import (
@@ -354,8 +354,8 @@ async def get_tx_data(
     contract_parameters: dict | None = None
     token_contract = (
         await async_session.scalars(
-            select(IDXTokenListRegister)
-            .where(IDXTokenListRegister.token_address == tx_data.to_address)
+            select(IDXTokenListItem)
+            .where(IDXTokenListItem.token_address == tx_data.to_address)
             .limit(1)
         )
     ).first()
