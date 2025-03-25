@@ -66,6 +66,14 @@ COMPANY_LIST_SLEEP_INTERVAL = (
     else 3600
 )
 
+# token list
+TOKEN_LIST_URL = os.environ.get("TOKEN_LIST_URL")
+TOKEN_LIST_SLEEP_INTERVAL = (
+    int(os.environ.get("TOKEN_LIST_SLEEP_INTERVAL"))
+    if os.environ.get("TOKEN_LIST_SLEEP_INTERVAL")
+    else 3600
+)
+
 # System timezone for REST API
 TZ = os.environ.get("TZ") or "Asia/Tokyo"
 

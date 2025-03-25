@@ -39,11 +39,14 @@ from app.model.db import (
     TokenHolder,
     TokenHolderBatchStatus,
     TokenHoldersList,
+    TokenList,
 )
 from app.model.schema import (
     CreateTokenHoldersCollectionRequest,
     CreateTokenHoldersCollectionResponse,
     ListAllTokenHoldersQuery,
+    ListAllTokensQuery,
+    ListAllTokensResponse,
     ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
@@ -71,11 +74,73 @@ from app.utils.web3_utils import AsyncWeb3Wrapper
 LOG = log.get_logger()
 async_web3 = AsyncWeb3Wrapper()
 
-router = APIRouter(prefix="/Token", tags=["token_info"])
+router = APIRouter(prefix="", tags=["token_info"])
 
 
 @router.get(
-    "/{token_address}/Status",
+    "/Tokens",
+    summary="List all tokens",
+    operation_id="ListAllTokens",
+    response_model=GenericSuccessResponse[ListAllTokensResponse],
+    responses=get_routers_responses(
+        InvalidParameterError,
+    ),
+)
+async def list_all_tokens(
+    async_session: DBAsyncSession,
+    request_query: Annotated[ListAllTokensQuery, Query()],
+):
+    """
+    Returns all token list item.
+    """
+
+    sort_item = request_query.sort_item
+    sort_order = request_query.sort_order
+    offset = request_query.offset
+    limit = request_query.limit
+
+    stmt = select(TokenList)
+    total = await async_session.scalar(
+        stmt.with_only_columns(func.count()).select_from(TokenList).order_by(None)
+    )
+
+    # Filter
+    if request_query.token_template is not None:
+        stmt = stmt.where(TokenList.token_template == request_query.token_template)
+
+    count = await async_session.scalar(
+        stmt.with_only_columns(func.count()).select_from(TokenList).order_by(None)
+    )
+
+    sort_attr = getattr(TokenList, sort_item, None)
+    if sort_order == 0:  # ASC
+        stmt = stmt.order_by(sort_attr)
+    else:  # DESC
+        stmt = stmt.order_by(desc(sort_attr))
+
+    # Pagination
+    if limit is not None:
+        stmt = stmt.limit(limit)
+    if offset is not None:
+        stmt = stmt.offset(offset)
+
+    _token_list: Sequence[TokenList] = (await async_session.scalars(stmt)).all()
+
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+        },
+        "tokens": [_token.json() for _token in _token_list],
+    }
+
+    return json_response({**SuccessResponse.default(), "data": data})
+
+
+@router.get(
+    "/Token/{token_address}/Status",
     summary="Token Status",
     operation_id="TokenStatus",
     response_model=GenericSuccessResponse[TokenStatusResponse],
@@ -136,7 +201,7 @@ async def get_token_status(
 
 
 @router.get(
-    "/{token_address}/Holders",
+    "/Token/{token_address}/Holders",
     summary="Token holders",
     operation_id="TokenHolders",
     response_model=GenericSuccessResponse[TokenHoldersResponse],
@@ -330,7 +395,7 @@ async def get_token_holders(
 
 
 @router.post(
-    "/{token_address}/Holders/Search",
+    "/Token/{token_address}/Holders/Search",
     summary="Search Token holders",
     operation_id="SearchTokenHolders",
     response_model=GenericSuccessResponse[TokenHoldersResponse],
@@ -528,7 +593,7 @@ async def search_token_holders(
 
 
 @router.get(
-    "/{token_address}/Holders/Count",
+    "/Token/{token_address}/Holders/Count",
     summary="Token holders count",
     operation_id="TokenHoldersCount",
     response_model=GenericSuccessResponse[TokenHoldersCountResponse],
@@ -609,7 +674,7 @@ async def get_token_holders_count(
 
 
 @router.post(
-    "/{token_address}/Holders/Collection",
+    "/Token/{token_address}/Holders/Collection",
     summary="Execute Batch Getting Token Holders At Specific BlockNumber",
     operation_id="TokenHoldersCollection",
     response_model=GenericSuccessResponse[CreateTokenHoldersCollectionResponse],
@@ -693,7 +758,7 @@ async def create_token_holders_collection(
 
 
 @router.get(
-    "/{token_address}/Holders/Collection/{list_id}",
+    "/Token/{token_address}/Holders/Collection/{list_id}",
     summary="Token Holder At Specific BlockNumber",
     operation_id="TokenHoldersList",
     response_model=GenericSuccessResponse[TokenHoldersCollectionResponse],
@@ -760,7 +825,7 @@ async def get_token_holders_collection(
 
 
 @router.get(
-    "/{token_address}/TransferHistory",
+    "/Token/{token_address}/TransferHistory",
     summary="Token Transfer History",
     operation_id="TransferHistory",
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
@@ -870,7 +935,7 @@ async def list_all_transfer_histories(
 
 
 @router.post(
-    "/{token_address}/TransferHistory/Search",
+    "/Token/{token_address}/TransferHistory/Search",
     summary="Search Token Transfer History",
     operation_id="SearchTransferHistory",
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
@@ -1004,7 +1069,7 @@ async def search_transfer_histories(
 
 
 @router.get(
-    "/{token_address}/TransferApprovalHistory",
+    "/Token/{token_address}/TransferApprovalHistory",
     summary="Token Transfer Approval History",
     operation_id="TransferApprovalHistory",
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
@@ -1106,7 +1171,7 @@ async def list_all_transfer_approval_histories(
 
 
 @router.post(
-    "/{token_address}/TransferApprovalHistory/Search",
+    "/Token/{token_address}/TransferApprovalHistory/Search",
     summary="Search Token Transfer Approval History",
     operation_id="SearchTransferApprovalHistory",
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],

@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet system
     on ibet network
-  version: 25.3.0
+  version: 25.6.0
 paths:
   /:
     get:
@@ -2559,6 +2559,82 @@ paths:
                   - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Coupontokendetails
           description: Not Found
+  /Tokens:
+    get:
+      tags:
+        - token_info
+      summary: List all tokens
+      description: Returns all token list item.
+      operationId: ListAllTokens
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: token_template
+          in: query
+          required: false
+          schema:
+            enum:
+              - ibetBond
+              - ibetShare
+            type: string
+            description: Token template
+            title: Token Template
+          description: Token template
+        - name: sort_item
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ListAllTokensSortItem'
+            description: sort item
+            default: token_address
+          description: sort item
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/SortOrder'
+              - type: 'null'
+            description: sort order
+            default: 0
+            title: Sort Order
+          description: sort order
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTokensResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listalltokens
+          description: Bad Request
   /Token/{token_address}/Status:
     get:
       tags:
@@ -7041,6 +7117,20 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllTokenLockResponse]
+    GenericSuccessResponse_ListAllTokensResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListAllTokensResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListAllTokensResponse]
     GenericSuccessResponse_MembershipPositionWithDetail_:
       properties:
         meta:
@@ -7611,6 +7701,31 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    IbetBondToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetBond
+          title: Token Template
+        product_type:
+          type: integer
+          const: 1
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetBondToken
     IbetEscrowEventType:
       type: string
       enum:
@@ -7661,6 +7776,36 @@ components:
         - Transfer
         - Unlock
       title: IbetSecurityTokenInterfaceEventType
+    IbetShareToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetShare
+          title: Token Template
+        product_type:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetShareToken
     InvalidParameterErrorMetainfo:
       properties:
         code:
@@ -8051,6 +8196,27 @@ components:
         - result_set
         - locked_list
       title: ListAllTokenLockResponse
+    ListAllTokensResponse:
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/IbetBondToken'
+              - $ref: '#/components/schemas/IbetShareToken'
+          type: array
+          title: Tokens
+      type: object
+      required:
+        - result_set
+        - tokens
+      title: ListAllTokensResponse
+    ListAllTokensSortItem:
+      type: string
+      enum:
+        - token_address
+      title: ListAllTokensSortItem
     LockEvent:
       properties:
         category:
