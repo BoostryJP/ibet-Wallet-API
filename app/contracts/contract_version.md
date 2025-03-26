@@ -11,11 +11,11 @@
 | IbetMembership.json             | **v24.9.0**  | yes(only for unittest) | yes      |
 | IbetSecurityTokenEscrow.json    | **v22.12.0** | yes(only for unittest) | yes      |
 | IbetSecurityTokenDVP.json       | **v24.9.0**  | yes(only for unittest) | yes      |
-| IbetSecurityTokenInterface.json | **v24.9.0**  | no                     | yes      |
-| IbetShare.json                  | **v24.9.0**  | yes(only for unittest) | yes      |
+| IbetSecurityTokenInterface.json | **v25.6.0**  | no                     | yes      |
+| IbetShare.json                  | **v25.6.0**  | yes(only for unittest) | yes      |
 | IbetStandardToken.json          | **v24.9.0**  | yes(only for unittest) | yes      |
 | IbetStandardTokenInterface.json | **v24.9.0**  | no                     | yes      |
-| IbetStraightBond.json           | **v24.9.0**  | yes(only for unittest) | yes      |
+| IbetStraightBond.json           | **v25.6.0**  | yes(only for unittest) | yes      |
 | Ownable.json                    | **v22.12.0** | yes(only for unittest) | yes      |
 | PaymentGateway.json             | **v22.12.0** | yes(only for unittest) | yes      |
 | PersonalInfo.json               | **v22.12.0** | yes(only for unittest) | yes      |

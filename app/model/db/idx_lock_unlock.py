@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import JSON, BigInteger, DateTime, String
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
@@ -61,6 +61,8 @@ class IDXLock(Base):
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
+    # Force Lock Flag
+    is_force_lock: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     FIELDS = {
         "id": int,
@@ -99,6 +101,7 @@ class IDXLock(Base):
             "value": self.value,
             "data": self.data,
             "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
+            "is_force_lock": self.is_force_lock,
         }
 
 
