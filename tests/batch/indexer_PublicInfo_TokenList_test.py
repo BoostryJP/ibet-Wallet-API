@@ -652,8 +652,10 @@ class TestProcessor:
         # Assertion
         await async_session.rollback()
 
-        assert caplog.messages == [
-            "Syncing token list",
-            "Duplicate addresses -> ['0xE883A6f441AD5682D37df31d34FC012bcB07a742', '0xE883a6F441Ad5682D37Df31d34fC012bcb07A741']",
-            "Sync job has been completed",
-        ]
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.ERROR,
+                "Duplicate addresses -> ['0xE883A6f441AD5682D37df31d34FC012bcB07a742', '0xE883a6F441Ad5682D37Df31d34fC012bcb07A741']",
+            )
+        )

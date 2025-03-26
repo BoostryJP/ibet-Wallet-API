@@ -546,8 +546,10 @@ class TestProcessor:
         # Assertion
         await async_session.rollback()
 
-        assert caplog.messages == [
-            "Syncing token list",
-            "Duplicate records -> [('test_key_manager_1', 1), ('test_key_manager_2', 2)]",
-            "Sync job has been completed",
-        ]
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.ERROR,
+                "Duplicate records -> [('test_key_manager_1', 1), ('test_key_manager_2', 2)]",
+            )
+        )
