@@ -26,7 +26,11 @@ from app.model.db.base import Base
 
 
 class TokenList(Base):
-    """Token List"""
+    """
+    Token List
+
+    - Information on issued tokens and associated institutions (key managers)
+    """
 
     __tablename__ = "token_list"
 
@@ -49,4 +53,30 @@ class TokenList(Base):
             "token_template": self.token_template,
             "key_manager": self.key_manager,
             "product_type": self.product_type,
+        }
+
+
+class PublicAccountList(Base):
+    """
+    Public Account List
+
+    - Public account information of ibet consortium members
+    """
+
+    __tablename__ = "public_account_list"
+
+    # Key Manager
+    key_manager: Mapped[str] = mapped_column(String(20), primary_key=True)
+    # Account Type
+    account_type: Mapped[Literal[1, 2, 3, 4, 5]] = mapped_column(
+        Integer, primary_key=True
+    )
+    # Account Address
+    account_address: Mapped[str | None] = mapped_column(String(42), nullable=False)
+
+    def json(self):
+        return {
+            "key_manager": self.key_manager,
+            "account_type": self.account_type,
+            "account_address": self.account_address,
         }

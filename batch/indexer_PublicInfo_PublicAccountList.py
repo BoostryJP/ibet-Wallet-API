@@ -30,115 +30,119 @@ from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import REQUEST_TIMEOUT, TOKEN_LIST_SLEEP_INTERVAL, TOKEN_LIST_URL
+from app.config import (
+    PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL,
+    PUBLIC_ACCOUNT_LIST_URL,
+    REQUEST_TIMEOUT,
+)
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
-from app.model.db import TokenList
+from app.model.db import PublicAccountList
 from batch import free_malloc, log
 
-process_name = "INDEXER-TOKEN-LIST"
+process_name = "INDEXER-PUBLIC-INFO-PUBLIC-ACCOUNT"
 LOG = log.get_logger(process_name=process_name)
 
 
 class Processor:
-    """Processor for indexing token list"""
+    """Processor for indexing public account list"""
 
     def __init__(self):
-        self.token_list_digest = None
+        self.account_list_digest = None
 
     async def process(self):
         LOG.info("Syncing token list")
 
-        # Get from TOKEN_LIST_URL
+        # Get data from PUBLIC_ACCOUNT_LIST_URL
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    TOKEN_LIST_URL,
+                    PUBLIC_ACCOUNT_LIST_URL,
                     timeout=ClientTimeout(
                         connect=REQUEST_TIMEOUT[0], total=REQUEST_TIMEOUT[1]
                     ),
                 ) as response:
                     if response.status != 200:
                         raise Exception(f"status code={response.status}")
-                    token_list_json = await response.json()
+                    account_list_json = await response.json()
         except Exception:
             LOG.exception("Failed to get token list")
             return
 
         # Check the difference from the previous cycle
-        _resp_digest = hashlib.sha256(json.dumps(token_list_json).encode()).hexdigest()
-        if _resp_digest == self.token_list_digest:
+        _resp_digest = hashlib.sha256(
+            json.dumps(account_list_json).encode()
+        ).hexdigest()
+        if _resp_digest == self.account_list_digest:
             LOG.info("Skip: There are no differences from the previous cycle")
             return
         else:
-            self.token_list_digest = _resp_digest
+            self.account_list_digest = _resp_digest
 
         # Update DB data
         db_session = BatchAsyncSessionLocal()
         try:
-            # Delete all token list from DB
-            await db_session.execute(delete(TokenList))
+            # Delete all account list from DB
+            await db_session.execute(delete(PublicAccountList))
 
             # Insert token list
-            for i, token in enumerate(token_list_json):
-                token_address = token.get("token_address", None)
-                token_template = token.get("token_template", None)
-                key_manager = token.get("key_manager", None)
-                product_type = token.get("product_type", None)
+            for i, _account in enumerate(account_list_json):
+                key_manager = _account.get("key_manager", None)
+                account_type = _account.get("type", None)
+                account_address = _account.get("account_address", None)
 
                 if (
-                    not isinstance(token_address, str)
-                    or not isinstance(token_template, str)
-                    or not isinstance(key_manager, list)
-                    or not isinstance(product_type, int)
+                    not isinstance(key_manager, str)
+                    or not isinstance(account_type, int)
+                    or not isinstance(account_address, str)
                 ):
                     LOG.notice(
-                        f"Invalid type: token_address={token_address}, token_template={token_template}, key_manager={key_manager}, product_type={product_type}"
+                        f"Invalid type: key_manager={key_manager}, type={account_type}, account_address={account_address}"
                     )
                     continue
                 try:
-                    token_address = to_checksum_address(token_address)
+                    account_address = to_checksum_address(account_address)
                 except ValueError:
                     LOG.notice(
-                        f"Invalid address: index={i} token_address={token_address}"
+                        f"Invalid address: index={i} account_address={account_address}"
                     )
                     continue
-                try:
-                    await self.__sink_on_token_list(
-                        db_session=db_session,
-                        token_address=token_address,
-                        token_template=token_template,
-                        key_manager=key_manager,
-                        product_type=product_type,
-                    )
-                except IntegrityError:
-                    LOG.notice(
-                        f"Duplicate address: index={i} token_address={token_address}"
-                    )
-                    continue
+                await self.__sink_on_account_list(
+                    db_session=db_session,
+                    key_manager=key_manager,
+                    account_type=account_type,
+                    account_address=account_address,
+                )
 
             await db_session.commit()
-            await db_session.close()
+        except IntegrityError as err:
+            err_km_list = []
+            for _param in err.params:
+                err_km_list.append(
+                    (_param.get("key_manager"), _param.get("account_type"))
+                )
+            LOG.error(f"Duplicate records -> {sorted(set(err_km_list))}")
+            await db_session.rollback()
         except Exception as e:
             await db_session.rollback()
-            await db_session.close()
             raise e
+        finally:
+            await db_session.close()
+
         LOG.info("Sync job has been completed")
 
     @staticmethod
-    async def __sink_on_token_list(
+    async def __sink_on_account_list(
         db_session: AsyncSession,
-        token_address: str,
-        token_template: str,
-        key_manager: list[str],
-        product_type: int,
+        key_manager: str,
+        account_type: int,
+        account_address: str,
     ):
-        _token_list = TokenList()
-        _token_list.token_address = token_address
-        _token_list.token_template = token_template
-        _token_list.key_manager = key_manager
-        _token_list.product_type = product_type
-        await db_session.merge(_token_list)
+        _account_list = PublicAccountList()
+        _account_list.key_manager = key_manager
+        _account_list.account_type = account_type
+        _account_list.account_address = account_address
+        db_session.add(_account_list)
 
 
 async def main():
@@ -157,7 +161,7 @@ async def main():
             LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
-        await asyncio.sleep(max(TOKEN_LIST_SLEEP_INTERVAL - elapsed_time, 0))
+        await asyncio.sleep(max(PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL - elapsed_time, 0))
         free_malloc()
 
 

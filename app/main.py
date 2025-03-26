@@ -46,6 +46,7 @@ from app.api.routers import (
     notification as routers_notification,
     position as routers_position,
     position_lock as routers_position_lock,
+    public_info as routers_public_info,
     token as routers_token,
     token_bond as routers_token_bond,
     token_coupon as routers_token_coupon,
@@ -71,11 +72,18 @@ LOG = log.get_logger()
 
 tags_metadata = [
     {"name": "root", "description": ""},
+    {
+        "name": "public_info",
+        "description": "Public shared information within the ibet consortium",
+    },
+    {
+        "name": "company_info",
+        "description": "Public information about ibet token issuers",
+    },
     {"name": "admin", "description": "System administration"},
     {"name": "node_info", "description": "Information about blockchain and contracts"},
     {"name": "abi", "description": "Contract ABIs"},
     {"name": "eth_rpc", "description": "Ethereum RPC"},
-    {"name": "company_info", "description": "Company(token issuer) information"},
     {"name": "token_info", "description": "Detailed information for listed tokens"},
     {"name": "user_info", "description": "User information"},
     {"name": "user_position", "description": "User's token balance"},
@@ -117,11 +125,12 @@ def root():
     return {"server": BRAND_NAME}
 
 
+app.include_router(routers_public_info.router)
+app.include_router(routers_company_info.router)
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
 app.include_router(routers_bc_explorer.router)
 app.include_router(routers_contract_abi.router)
-app.include_router(routers_company_info.router)
 app.include_router(routers_user_info.router)
 app.include_router(routers_eth.router)
 app.include_router(routers_token_bond.router)

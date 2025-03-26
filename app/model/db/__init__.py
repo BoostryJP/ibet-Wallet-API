@@ -53,6 +53,6 @@ from .listing import Listing
 from .messaging import ChatWebhook, Mail
 from .node import Node
 from .notification import Notification, NotificationBlockNumber, NotificationType
-from .token_list import TokenList
+from .public_info import PublicAccountList, TokenList
 from .tokenholders import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from .user_info import AccountTag

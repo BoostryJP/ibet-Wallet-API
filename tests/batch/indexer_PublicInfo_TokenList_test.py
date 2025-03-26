@@ -28,7 +28,7 @@ import requests
 from sqlalchemy import select
 
 from app.model.db import TokenList
-from batch.indexer_Token_List import LOG, Processor
+from batch.indexer_PublicInfo_TokenList import LOG, Processor
 
 
 @pytest.fixture(scope="function")
@@ -235,116 +235,10 @@ class TestProcessor:
         assert _token_list[1].product_type == 1
 
     # <Normal_4_1>
-    # Insert SKIP
-    # Invalid type error
-    @mock.patch("aiohttp.client.ClientSession.get")
-    @pytest.mark.parametrize(
-        "invalid_record",
-        [
-            {
-                "token_address": "invalid_address",
-                "token_template": "ibetShare",
-                "key_manager": ["0000000000000", "1111111111111"],
-                "product_type": 1,
-            },  # invalid token_address
-            {
-                "token_address": token_address_5,
-                "token_template": 123,
-                "key_manager": ["0000000000000", "1111111111111"],
-                "product_type": 1,
-            },  # invalid token_template
-            {
-                "token_address": token_address_5,
-                "token_template": 123,
-                "key_manager": "0000000000000",
-                "product_type": 1,
-            },  # invalid key_manager
-            {
-                "token_address": token_address_5,
-                "token_template": 123,
-                "key_manager": "0000000000000",
-                "product_type": 1,
-            },  # invalid product_type
-            {
-                "token_template": "ibetShare",
-                "key_manager": ["0000000000000", "1111111111111"],
-                "product_type": 1,
-            },  # token_address missing
-            {
-                "token_address": token_address_5,
-                "key_manager": ["0000000000000", "1111111111111"],
-                "product_type": 1,
-            },  # token_template missing
-            {
-                "token_address": token_address_5,
-                "token_template": 123,
-                "product_type": 1,
-            },  # key_manager missing
-            {
-                "token_address": token_address_5,
-                "token_template": 123,
-                "key_manager": "0000000000000",
-            },  # product_type missing
-        ],
-    )
-    async def test_normal_4(self, mock_get, processor, async_session, invalid_record):
-        # Prepare data
-        _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_1
-        _token_list_item.token_template = "ibetBond"
-        _token_list_item.key_manager = ["0000000000000"]
-        _token_list_item.product_type = 1
-        async_session.add(_token_list_item)
-        _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_2
-        _token_list_item.token_template = "ibetBond"
-        _token_list_item.key_manager = ["0000000000000"]
-        _token_list_item.product_type = 1
-        async_session.add(_token_list_item)
-        _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_3
-        _token_list_item.token_template = "ibetShare"
-        _token_list_item.key_manager = ["1111111111111"]
-        _token_list_item.product_type = 5
-        async_session.add(_token_list_item)
-        await async_session.commit()
-
-        # Mock
-        mock_get.side_effect = [
-            MockResponse(
-                [
-                    {
-                        "token_address": self.token_address_4,
-                        "token_template": "ibetShare",
-                        "key_manager": ["0000000000000", "1111111111111"],
-                        "product_type": 1,
-                    },
-                    invalid_record,
-                ]
-            )
-        ]
-
-        # Run target process
-        await processor.process()
-
-        # Assertion
-        await async_session.rollback()
-        _token_list: Sequence[TokenList] = (
-            await async_session.scalars(
-                select(TokenList).order_by(TokenList.token_address)
-            )
-        ).all()
-        assert len(_token_list) == 1
-        assert _token_list[0].token_address == self.token_address_4  # checksum address
-        assert _token_list[0].token_template == "ibetShare"
-        assert _token_list[0].key_manager == ["0000000000000", "1111111111111"]
-        assert _token_list[0].product_type == 1
-
-    # <Normal_5_1>
     # There are no differences from last time
     # -> Skip this cycle
     @mock.patch("aiohttp.client.ClientSession.get")
-    async def test_normal_5_1(self, mock_get, processor, async_session, caplog):
+    async def test_normal_4_1(self, mock_get, processor, async_session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -412,10 +306,10 @@ class TestProcessor:
             )
         )
 
-    # <Normal_5_2>
+    # <Normal_4_2>
     # There are differences from the previous cycle
     @mock.patch("aiohttp.client.ClientSession.get")
-    async def test_normal_5_2(self, mock_get, processor, async_session, caplog):
+    async def test_normal_4_2(self, mock_get, processor, async_session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -478,8 +372,7 @@ class TestProcessor:
     ###########################################################################
 
     # <Error_1_1>
-    # API error
-    # Connection error
+    # API error: ConnectionError
     @mock.patch(
         "aiohttp.client.ClientSession.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
@@ -492,17 +385,59 @@ class TestProcessor:
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         async_session.add(_token_list_item)
+        await async_session.commit()
+
+        # Run target process
+        await processor.process()
+
+        # Assertion
+        _token_list: Sequence[TokenList] = (
+            await async_session.scalars(
+                select(TokenList).order_by(TokenList.token_address)
+            )
+        ).all()
+        assert len(_token_list) == 1
+
+    # <Error_1_2>
+    # API error: Not succeed request
+    @mock.patch("aiohttp.client.ClientSession.get")
+    async def test_error_1_2(self, mock_get, processor, async_session):
+        # Prepare data
         _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_2
+        _token_list_item.token_address = self.token_address_1
         _token_list_item.token_template = "ibetBond"
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         async_session.add(_token_list_item)
+        await async_session.commit()
+
+        # Mock
+        mock_get.side_effect = [MockResponse([], 400)]
+
+        # Run target process
+        await processor.process()
+
+        # Assertion
+        _token_list: Sequence[TokenList] = (
+            await async_session.scalars(
+                select(TokenList).order_by(TokenList.token_address)
+            )
+        ).all()
+        assert len(_token_list) == 1
+
+    # <Error_1_3>
+    # API error: JSONDecodeError
+    @mock.patch(
+        "aiohttp.client.ClientSession.get",
+        MagicMock(side_effect=json.decoder.JSONDecodeError),
+    )
+    async def test_error_1_3(self, processor, async_session):
+        # Prepare data
         _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_3
-        _token_list_item.token_template = "ibetShare"
-        _token_list_item.key_manager = ["1111111111111"]
-        _token_list_item.product_type = 5
+        _token_list_item.token_address = self.token_address_1
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
         async_session.add(_token_list_item)
         await async_session.commit()
 
@@ -515,13 +450,62 @@ class TestProcessor:
                 select(TokenList).order_by(TokenList.token_address)
             )
         ).all()
-        assert len(_token_list) == 3
+        assert len(_token_list) == 1
 
-    # <Error_1_2>
-    # API error
-    # not succeed api
+    # <Error_2>
+    # Invalid type error
+    # -> Skip processing
     @mock.patch("aiohttp.client.ClientSession.get")
-    async def test_error_1_2(self, mock_get, processor, async_session):
+    @pytest.mark.parametrize(
+        "invalid_record",
+        [
+            {
+                "token_address": "invalid_address",
+                "token_template": "ibetShare",
+                "key_manager": ["0000000000000", "1111111111111"],
+                "product_type": 1,
+            },  # invalid token_address
+            {
+                "token_address": token_address_5,
+                "token_template": 123,
+                "key_manager": ["0000000000000", "1111111111111"],
+                "product_type": 1,
+            },  # invalid token_template
+            {
+                "token_address": token_address_5,
+                "token_template": 123,
+                "key_manager": "0000000000000",
+                "product_type": 1,
+            },  # invalid key_manager
+            {
+                "token_address": token_address_5,
+                "token_template": 123,
+                "key_manager": "0000000000000",
+                "product_type": 1,
+            },  # invalid product_type
+            {
+                "token_template": "ibetShare",
+                "key_manager": ["0000000000000", "1111111111111"],
+                "product_type": 1,
+            },  # token_address missing
+            {
+                "token_address": token_address_5,
+                "key_manager": ["0000000000000", "1111111111111"],
+                "product_type": 1,
+            },  # token_template missing
+            {
+                "token_address": token_address_5,
+                "token_template": 123,
+                "product_type": 1,
+            },  # key_manager missing
+            {
+                "token_address": token_address_5,
+                "token_template": 123,
+                "key_manager": "0000000000000",
+            },  # product_type missing
+        ],
+    )
+    async def test_error_2(self, mock_get, processor, async_session, invalid_record):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -544,60 +528,38 @@ class TestProcessor:
         await async_session.commit()
 
         # Mock
-        mock_get.side_effect = [MockResponse([], 400)]
+        mock_get.side_effect = [
+            MockResponse(
+                [
+                    {
+                        "token_address": self.token_address_4,
+                        "token_template": "ibetShare",
+                        "key_manager": ["0000000000000", "1111111111111"],
+                        "product_type": 1,
+                    },
+                    invalid_record,
+                ]
+            )
+        ]
 
         # Run target process
         await processor.process()
 
         # Assertion
+        await async_session.rollback()
         _token_list: Sequence[TokenList] = (
             await async_session.scalars(
                 select(TokenList).order_by(TokenList.token_address)
             )
         ).all()
-        assert len(_token_list) == 3
-
-    # <Error_2>
-    # not decode response
-    @mock.patch(
-        "aiohttp.client.ClientSession.get",
-        MagicMock(side_effect=json.decoder.JSONDecodeError),
-    )
-    async def test_error_2(self, processor, async_session):
-        # Prepare data
-        _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_1
-        _token_list_item.token_template = "ibetBond"
-        _token_list_item.key_manager = ["0000000000000"]
-        _token_list_item.product_type = 1
-        async_session.add(_token_list_item)
-        _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_2
-        _token_list_item.token_template = "ibetBond"
-        _token_list_item.key_manager = ["0000000000000"]
-        _token_list_item.product_type = 1
-        async_session.add(_token_list_item)
-        _token_list_item = TokenList()
-        _token_list_item.token_address = self.token_address_3
-        _token_list_item.token_template = "ibetShare"
-        _token_list_item.key_manager = ["1111111111111"]
-        _token_list_item.product_type = 5
-        async_session.add(_token_list_item)
-        await async_session.commit()
-
-        # Run target process
-        await processor.process()
-
-        # Assertion
-        _token_list: Sequence[TokenList] = (
-            await async_session.scalars(
-                select(TokenList).order_by(TokenList.token_address)
-            )
-        ).all()
-        assert len(_token_list) == 3
+        assert len(_token_list) == 1
+        assert _token_list[0].token_address == self.token_address_4  # checksum address
+        assert _token_list[0].token_template == "ibetShare"
+        assert _token_list[0].key_manager == ["0000000000000", "1111111111111"]
+        assert _token_list[0].product_type == 1
 
     # <Error_3>
-    # other error
+    # Other error
     @mock.patch("aiohttp.client.ClientSession.get")
     async def test_error_3(self, mock_get, processor, async_session):
         # Prepare data
@@ -647,3 +609,51 @@ class TestProcessor:
             )
         ).all()
         assert len(_token_list) == 3
+
+    # <Error_4>
+    # Integrity error
+    @mock.patch("aiohttp.client.ClientSession.get")
+    async def test_error_4(self, mock_get, processor, async_session, caplog):
+        # Mock
+        mock_get.side_effect = [
+            MockResponse(
+                [
+                    {
+                        "token_address": self.token_address_1,
+                        "token_template": "ibetBond",
+                        "key_manager": ["0000000000000", "1111111111111"],
+                        "product_type": 1,
+                    },
+                    {
+                        "token_address": self.token_address_2,
+                        "token_template": "ibetShare",
+                        "key_manager": ["2222222222222"],
+                        "product_type": 1,
+                    },
+                    {
+                        "token_address": self.token_address_1,
+                        "token_template": "ibetBond",
+                        "key_manager": ["0000000000000", "1111111111111"],
+                        "product_type": 1,
+                    },
+                    {
+                        "token_address": self.token_address_2,
+                        "token_template": "ibetShare",
+                        "key_manager": ["2222222222222"],
+                        "product_type": 1,
+                    },
+                ]
+            )
+        ]
+
+        # Run target process
+        await processor.process()
+
+        # Assertion
+        await async_session.rollback()
+
+        assert caplog.messages == [
+            "Syncing token list",
+            "Duplicate addresses -> ['0xE883A6f441AD5682D37df31d34FC012bcB07a742', '0xE883a6F441Ad5682D37Df31d34fC012bcb07A741']",
+            "Sync job has been completed",
+        ]
