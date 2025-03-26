@@ -27,7 +27,7 @@ import aiohttp
 from aiohttp import ClientTimeout
 from eth_utils import to_checksum_address
 from sqlalchemy import delete
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import (
@@ -51,7 +51,7 @@ class Processor:
         self.account_list_digest = None
 
     async def process(self):
-        LOG.info("Syncing token list")
+        LOG.info("Syncing public account list")
 
         # Get data from PUBLIC_ACCOUNT_LIST_URL
         try:
@@ -66,7 +66,7 @@ class Processor:
                         raise Exception(f"status code={response.status}")
                     account_list_json = await response.json()
         except Exception:
-            LOG.exception("Failed to get token list")
+            LOG.exception("Failed to get public account list")
             return
 
         # Check the difference from the previous cycle
@@ -85,7 +85,7 @@ class Processor:
             # Delete all account list from DB
             await db_session.execute(delete(PublicAccountList))
 
-            # Insert token list
+            # Insert account list
             for i, _account in enumerate(account_list_json):
                 key_manager = _account.get("key_manager", None)
                 account_type = _account.get("type", None)
@@ -115,14 +115,6 @@ class Processor:
                 )
 
             await db_session.commit()
-        except IntegrityError as err:
-            err_km_list = []
-            for _param in err.params:
-                err_km_list.append(
-                    (_param.get("key_manager"), _param.get("account_type"))
-                )
-            LOG.error(f"Duplicate records -> {sorted(set(err_km_list))}")
-            await db_session.rollback()
         except Exception as e:
             await db_session.rollback()
             raise e
@@ -142,7 +134,7 @@ class Processor:
         _account_list.key_manager = key_manager
         _account_list.account_type = account_type
         _account_list.account_address = account_address
-        db_session.add(_account_list)
+        await db_session.merge(_account_list)
 
 
 async def main():
@@ -158,7 +150,7 @@ async def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during event synchronization")
+            LOG.exception("An exception occurred during processing")
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL - elapsed_time, 0))

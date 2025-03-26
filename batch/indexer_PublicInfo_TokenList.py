@@ -27,7 +27,7 @@ import aiohttp
 from aiohttp import ClientTimeout
 from eth_utils import to_checksum_address
 from sqlalchemy import delete
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import REQUEST_TIMEOUT, TOKEN_LIST_SLEEP_INTERVAL, TOKEN_LIST_URL
@@ -113,12 +113,6 @@ class Processor:
                 )
 
             await db_session.commit()
-        except IntegrityError as err:
-            err_address_list = []
-            for _param in err.params:
-                err_address_list.append(_param.get("token_address"))
-            LOG.error(f"Duplicate addresses -> {sorted(set(err_address_list))}")
-            await db_session.rollback()
         except Exception as e:
             await db_session.rollback()
             raise e
@@ -140,7 +134,7 @@ class Processor:
         _token_list.token_template = token_template
         _token_list.key_manager = key_manager
         _token_list.product_type = product_type
-        db_session.add(_token_list)
+        await db_session.merge(_token_list)
 
 
 async def main():
@@ -156,7 +150,7 @@ async def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during event synchronization")
+            LOG.exception("An exception occurred during processing")
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(TOKEN_LIST_SLEEP_INTERVAL - elapsed_time, 0))
