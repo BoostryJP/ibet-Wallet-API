@@ -1,7 +1,7 @@
 """v25_6_0_feature_1605
 
 Revision ID: f8faa777c5f2
-Revises: 95f5a9de7153
+Revises: 47a75034ce29
 Create Date: 2025-03-26 16:22:49.191603
 
 """
@@ -16,7 +16,7 @@ from app.model.db import IDXLock
 
 # revision identifiers, used by Alembic.
 revision = "f8faa777c5f2"
-down_revision = "95f5a9de7153"
+down_revision = "47a75034ce29"
 branch_labels = None
 depends_on = None
 
