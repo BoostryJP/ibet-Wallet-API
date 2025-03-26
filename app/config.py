@@ -55,7 +55,7 @@ else:
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
 
-# Issuing companies list
+# [CompanyInfo] Company List
 COMPANY_LIST_URL = os.environ.get("COMPANY_LIST_URL")
 COMPANY_LIST_LOCAL_MODE = (
     True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
@@ -66,11 +66,21 @@ COMPANY_LIST_SLEEP_INTERVAL = (
     else 3600
 )
 
-# token list
+# [PublicInfo] Token List
+# - Considering the need for timely information updates,
+#   the SLEEP interval is set to 10 minutes by default.
 TOKEN_LIST_URL = os.environ.get("TOKEN_LIST_URL")
 TOKEN_LIST_SLEEP_INTERVAL = (
     int(os.environ.get("TOKEN_LIST_SLEEP_INTERVAL"))
     if os.environ.get("TOKEN_LIST_SLEEP_INTERVAL")
+    else 600
+)
+
+# [PublicInfo] Public Account List
+PUBLIC_ACCOUNT_LIST_URL = os.environ.get("PUBLIC_ACCOUNT_LIST_URL")
+PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL = (
+    int(os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL"))
+    if os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL")
     else 3600
 )
 

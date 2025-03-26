@@ -14,6 +14,267 @@ paths:
       responses:
         '200':
           description: Successful Response
+  /PublicInfo/Tokens:
+    get:
+      tags:
+        - public_info
+      summary: Information on issued tokens and associated institutions (key managers)
+      description: List issued tokens and associated institutions (key managers)
+      operationId: ListAllPublicListedTokens
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: token_template
+          in: query
+          required: false
+          schema:
+            enum:
+              - ibetBond
+              - ibetShare
+            type: string
+            description: Token template
+            title: Token Template
+          description: Token template
+        - name: sort_item
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ListAllPublicListedTokensSortItem'
+            description: sort item
+            default: token_address
+          description: sort item
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/SortOrder'
+              - type: 'null'
+            description: sort order
+            default: 0
+            title: Sort Order
+          description: sort order
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllPublicListedTokensResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listallpubliclistedtokens
+          description: Bad Request
+  /PublicInfo/PublicAccounts:
+    get:
+      tags:
+        - public_info
+      summary: Public account information of ibet consortium members
+      description: List public accounts of ibet consortium members
+      operationId: ListAllPublicAccounts
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: key_manager
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: Key manager
+            title: Key Manager
+          description: Key manager
+        - name: sort_item
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ListAllPublicAccountsSortItem'
+            description: sort item
+            default: key_manager
+          description: sort item
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/SortOrder'
+              - type: 'null'
+            description: sort order
+            default: 0
+            title: Sort Order
+          description: sort order
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllPublicAccountsResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listallpublicaccounts
+          description: Bad Request
+  /Companies:
+    get:
+      tags:
+        - company_info
+      summary: Issuer Information List
+      description: Returns a list of issuer information.
+      operationId: ListAllCompanies
+      parameters:
+        - name: include_private_listing
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: include private listing token issuers
+            default: false
+            title: Include Private Listing
+          description: include private listing token issuers
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompaniesResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+          description: Bad Request
+  /Companies/{eth_address}:
+    get:
+      tags:
+        - company_info
+      summary: Issuer Information
+      description: Returns given issuer information.
+      operationId: RetrieveCompanyInfo
+      parameters:
+        - name: eth_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Issuer address
+            title: Eth Address
+          description: Issuer address
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Retrievecompanyinfo
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
+  /Companies/{eth_address}/Tokens:
+    get:
+      tags:
+        - company_info
+      summary: List of tokens issued by issuer
+      description: Returns a list of tokens issued by given issuer.
+      operationId: ListAllCompanyTokens
+      parameters:
+        - name: eth_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Issuer address
+            title: Eth Address
+          description: Issuer address
+        - name: include_private_listing
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: include private listing token issuers
+            default: false
+            title: Include Private Listing
+          description: include private listing token issuers
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+          description: Bad Request
   /Admin/Tokens:
     get:
       tags:
@@ -580,116 +841,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /Companies:
-    get:
-      tags:
-        - company_info
-      summary: Issuer Information List
-      description: Returns a list of issuer information.
-      operationId: ListAllCompanies
-      parameters:
-        - name: include_private_listing
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include private listing token issuers
-            default: false
-            title: Include Private Listing
-          description: include private listing token issuers
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompaniesResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-  /Companies/{eth_address}:
-    get:
-      tags:
-        - company_info
-      summary: Issuer Information
-      description: Returns given issuer information.
-      operationId: RetrieveCompanyInfo
-      parameters:
-        - name: eth_address
-          in: path
-          required: true
-          schema:
-            type: string
-            description: Issuer address
-            title: Eth Address
-          description: Issuer address
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Retrievecompanyinfo
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataNotExistsErrorResponse'
-          description: Not Found
-  /Companies/{eth_address}/Tokens:
-    get:
-      tags:
-        - company_info
-      summary: List of tokens issued by issuer
-      description: Returns a list of tokens issued by given issuer.
-      operationId: ListAllCompanyTokens
-      parameters:
-        - name: eth_address
-          in: path
-          required: true
-          schema:
-            type: string
-            description: Issuer address
-            title: Eth Address
-          description: Issuer address
-        - name: include_private_listing
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include private listing token issuers
-            default: false
-            title: Include Private Listing
-          description: include private listing token issuers
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
   /User/Tag:
     post:
       tags:
@@ -2559,82 +2710,6 @@ paths:
                   - $ref: '#/components/schemas/NotSupportedErrorResponse'
                 title: Response 404 Coupontokendetails
           description: Not Found
-  /Tokens:
-    get:
-      tags:
-        - token_info
-      summary: List all tokens
-      description: Returns all token list item.
-      operationId: ListAllTokens
-      parameters:
-        - name: offset
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: Offset for pagination
-            title: Offset
-          description: Offset for pagination
-        - name: limit
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: integer
-                minimum: 0
-              - type: 'null'
-            description: Limit for pagination
-            title: Limit
-          description: Limit for pagination
-        - name: token_template
-          in: query
-          required: false
-          schema:
-            enum:
-              - ibetBond
-              - ibetShare
-            type: string
-            description: Token template
-            title: Token Template
-          description: Token template
-        - name: sort_item
-          in: query
-          required: false
-          schema:
-            $ref: '#/components/schemas/ListAllTokensSortItem'
-            description: sort item
-            default: token_address
-          description: sort item
-        - name: sort_order
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
-            description: sort order
-            default: 0
-            title: Sort Order
-          description: sort order
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTokensResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Listalltokens
-          description: Bad Request
   /Token/{token_address}/Status:
     get:
       tags:
@@ -7033,6 +7108,34 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllOrderListResponse[TokenAddress]]
+    GenericSuccessResponse_ListAllPublicAccountsResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListAllPublicAccountsResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListAllPublicAccountsResponse]
+    GenericSuccessResponse_ListAllPublicListedTokensResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListAllPublicListedTokensResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListAllPublicListedTokensResponse]
     GenericSuccessResponse_ListAllShareTokenAddressesResponse_:
       properties:
         meta:
@@ -7117,20 +7220,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllTokenLockResponse]
-    GenericSuccessResponse_ListAllTokensResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllTokensResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[ListAllTokensResponse]
     GenericSuccessResponse_MembershipPositionWithDetail_:
       properties:
         meta:
@@ -8121,6 +8210,47 @@ components:
         - settlement_list
         - complete_list
       title: ListAllOrderListResponse[TokenAddress]
+    ListAllPublicAccountsResponse:
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        accounts:
+          items:
+            $ref: '#/components/schemas/PublicAccount'
+          type: array
+          title: Accounts
+      type: object
+      required:
+        - result_set
+        - accounts
+      title: ListAllPublicAccountsResponse
+    ListAllPublicAccountsSortItem:
+      type: string
+      enum:
+        - key_manager
+        - account_address
+      title: ListAllPublicAccountsSortItem
+    ListAllPublicListedTokensResponse:
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/IbetBondToken'
+              - $ref: '#/components/schemas/IbetShareToken'
+          type: array
+          title: Tokens
+      type: object
+      required:
+        - result_set
+        - tokens
+      title: ListAllPublicListedTokensResponse
+    ListAllPublicListedTokensSortItem:
+      type: string
+      enum:
+        - token_address
+      title: ListAllPublicListedTokensSortItem
     ListAllShareTokenAddressesResponse:
       properties:
         result_set:
@@ -8196,27 +8326,6 @@ components:
         - result_set
         - locked_list
       title: ListAllTokenLockResponse
-    ListAllTokensResponse:
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        tokens:
-          items:
-            anyOf:
-              - $ref: '#/components/schemas/IbetBondToken'
-              - $ref: '#/components/schemas/IbetShareToken'
-          type: array
-          title: Tokens
-      type: object
-      required:
-        - result_set
-        - tokens
-      title: ListAllTokensResponse
-    ListAllTokensSortItem:
-      type: string
-      enum:
-        - token_address
-      title: ListAllTokensSortItem
     LockEvent:
       properties:
         category:
@@ -8929,6 +9038,29 @@ components:
         - buy
         - sell
       title: OrderType
+    PublicAccount:
+      properties:
+        key_manager:
+          type: string
+          title: Key Manager
+        account_type:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+          title: Account Type
+        account_address:
+          type: string
+          title: Account Address
+      type: object
+      required:
+        - key_manager
+        - account_type
+        - account_address
+      title: PublicAccount
     RegisterAdminTokenRequest:
       properties:
         contract_address:
@@ -11320,6 +11452,10 @@ components:
 tags:
   - name: root
     description: ''
+  - name: public_info
+    description: Public shared information within the ibet consortium
+  - name: company_info
+    description: Public information about ibet token issuers
   - name: admin
     description: System administration
   - name: node_info
@@ -11328,8 +11464,6 @@ tags:
     description: Contract ABIs
   - name: eth_rpc
     description: Ethereum RPC
-  - name: company_info
-    description: Company(token issuer) information
   - name: token_info
     description: Detailed information for listed tokens
   - name: user_info

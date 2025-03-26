@@ -23,13 +23,13 @@ from sqlalchemy.orm import Session
 from app.model.db import TokenList
 
 
-class TestTokenListAllTokens:
+class TestListAllPublicListedTokens:
     """
-    Test Case for token.ListAllTokens
+    Test Case for token.ListAllPublicListedTokens
     """
 
-    # テスト対象API
-    api_url = "/Tokens"
+    # Test API
+    api_url = "/PublicInfo/Tokens"
 
     ###########################################################################
     # Normal
@@ -43,7 +43,7 @@ class TestTokenListAllTokens:
 
     # ＜Normal_1＞
     # 0 Record
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session):
         resp = client.get(self.api_url, params={})
 
         assert resp.status_code == 200
@@ -54,8 +54,8 @@ class TestTokenListAllTokens:
         }
 
     # ＜Normal_2＞
-    # Multiple Record
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    # Multiple Records
+    def test_normal_2(self, client: TestClient, session: Session):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -63,18 +63,21 @@ class TestTokenListAllTokens:
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         session.add(_token_list_item)
+
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_2
         _token_list_item.token_template = "ibetBond"
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         session.add(_token_list_item)
+
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_3
         _token_list_item.token_template = "ibetShare"
         _token_list_item.key_manager = ["1111111111111"]
         _token_list_item.product_type = 5
         session.add(_token_list_item)
+
         session.commit()
 
         resp = client.get(self.api_url, params={})

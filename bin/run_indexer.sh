@@ -57,7 +57,8 @@ if [ "${resp}" -ne 200 ]; then
   echo -n "[WARNING] Could not access to TOKEN_LIST_URL, " >&2
   echo "please confirm TOKEN_LIST_URL, which response code is ${resp}" >&2
 fi
-python batch/indexer_Token_List.py &
+python batch/indexer_PublicInfo_TokenList.py &
+python batch/indexer_PublicInfo_PublicAccountList.py &
 
 
 python batch/indexer_Transfer.py &

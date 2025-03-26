@@ -39,14 +39,11 @@ from app.model.db import (
     TokenHolder,
     TokenHolderBatchStatus,
     TokenHoldersList,
-    TokenList,
 )
 from app.model.schema import (
     CreateTokenHoldersCollectionRequest,
     CreateTokenHoldersCollectionResponse,
     ListAllTokenHoldersQuery,
-    ListAllTokensQuery,
-    ListAllTokensResponse,
     ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
@@ -75,68 +72,6 @@ LOG = log.get_logger()
 async_web3 = AsyncWeb3Wrapper()
 
 router = APIRouter(prefix="", tags=["token_info"])
-
-
-@router.get(
-    "/Tokens",
-    summary="List all tokens",
-    operation_id="ListAllTokens",
-    response_model=GenericSuccessResponse[ListAllTokensResponse],
-    responses=get_routers_responses(
-        InvalidParameterError,
-    ),
-)
-async def list_all_tokens(
-    async_session: DBAsyncSession,
-    request_query: Annotated[ListAllTokensQuery, Query()],
-):
-    """
-    Returns all token list item.
-    """
-
-    sort_item = request_query.sort_item
-    sort_order = request_query.sort_order
-    offset = request_query.offset
-    limit = request_query.limit
-
-    stmt = select(TokenList)
-    total = await async_session.scalar(
-        stmt.with_only_columns(func.count()).select_from(TokenList).order_by(None)
-    )
-
-    # Filter
-    if request_query.token_template is not None:
-        stmt = stmt.where(TokenList.token_template == request_query.token_template)
-
-    count = await async_session.scalar(
-        stmt.with_only_columns(func.count()).select_from(TokenList).order_by(None)
-    )
-
-    sort_attr = getattr(TokenList, sort_item, None)
-    if sort_order == 0:  # ASC
-        stmt = stmt.order_by(sort_attr)
-    else:  # DESC
-        stmt = stmt.order_by(desc(sort_attr))
-
-    # Pagination
-    if limit is not None:
-        stmt = stmt.limit(limit)
-    if offset is not None:
-        stmt = stmt.offset(offset)
-
-    _token_list: Sequence[TokenList] = (await async_session.scalars(stmt)).all()
-
-    data = {
-        "result_set": {
-            "count": count,
-            "offset": offset,
-            "limit": limit,
-            "total": total,
-        },
-        "tokens": [_token.json() for _token in _token_list],
-    }
-
-    return json_response({**SuccessResponse.default(), "data": data})
 
 
 @router.get(

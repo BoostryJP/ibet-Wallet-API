@@ -27,7 +27,7 @@ import aiohttp
 from aiohttp import ClientTimeout
 from eth_utils import to_checksum_address
 from sqlalchemy import delete
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import REQUEST_TIMEOUT, TOKEN_LIST_SLEEP_INTERVAL, TOKEN_LIST_URL
@@ -36,7 +36,7 @@ from app.errors import ServiceUnavailable
 from app.model.db import TokenList
 from batch import free_malloc, log
 
-process_name = "INDEXER-TOKEN-LIST"
+process_name = "INDEXER-PUBLIC-INFO-TOKEN-LIST"
 LOG = log.get_logger(process_name=process_name)
 
 
@@ -103,26 +103,22 @@ class Processor:
                         f"Invalid address: index={i} token_address={token_address}"
                     )
                     continue
-                try:
-                    await self.__sink_on_token_list(
-                        db_session=db_session,
-                        token_address=token_address,
-                        token_template=token_template,
-                        key_manager=key_manager,
-                        product_type=product_type,
-                    )
-                except IntegrityError:
-                    LOG.notice(
-                        f"Duplicate address: index={i} token_address={token_address}"
-                    )
-                    continue
+
+                await self.__sink_on_token_list(
+                    db_session=db_session,
+                    token_address=token_address,
+                    token_template=token_template,
+                    key_manager=key_manager,
+                    product_type=product_type,
+                )
 
             await db_session.commit()
-            await db_session.close()
         except Exception as e:
             await db_session.rollback()
-            await db_session.close()
             raise e
+        finally:
+            await db_session.close()
+
         LOG.info("Sync job has been completed")
 
     @staticmethod
@@ -154,7 +150,7 @@ async def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during event synchronization")
+            LOG.exception("An exception occurred during processing")
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(TOKEN_LIST_SLEEP_INTERVAL - elapsed_time, 0))
