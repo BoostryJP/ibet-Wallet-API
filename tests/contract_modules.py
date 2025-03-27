@@ -285,6 +285,22 @@ def bond_lock(invoker, token, lock_address: str, amount: int, data_str: str = ""
     )
 
 
+# BONDトークン：資産強制ロック
+def bond_force_lock(
+    invoker,
+    token,
+    lock_address: str,
+    account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.forceLock(
+        lock_address, account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
 # BONDトークン：資産アンロック
 def bond_unlock(
     invoker, token, target: str, recipient: str, amount: int, data_str: str = ""
@@ -489,6 +505,22 @@ def share_lock(invoker, token, lock_address: str, amount: int, data_str: str = "
     TokenContract.functions.lock(lock_address, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
+
+
+# SHAREトークン：資産強制ロック
+def share_force_lock(
+    invoker,
+    token,
+    lock_address: str,
+    account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.forceLock(
+        lock_address, account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
 
 
 # SHAREトークン：資産アンロック
