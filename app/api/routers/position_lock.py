@@ -213,6 +213,7 @@ class ListAllLockEvent:
             literal(value=LockEventCategory.Lock.value, type_=String).label(
                 "history_category"
             ),
+            IDXLock.is_force_lock.label("is_force_lock"),
             IDXLock.transaction_hash.label("transaction_hash"),
             IDXLock.msg_sender.label("msg_sender"),
             IDXLock.token_address.label("token_address_alias"),
@@ -227,6 +228,7 @@ class ListAllLockEvent:
             literal(value=LockEventCategory.Unlock.value, type_=String).label(
                 "history_category"
             ),
+            null().label("is_force_lock"),
             IDXUnlock.transaction_hash.label("transaction_hash"),
             IDXUnlock.msg_sender.label("msg_sender"),
             IDXUnlock.token_address.label("token_address_alias"),
@@ -311,21 +313,22 @@ class ListAllLockEvent:
         for lock_event in lock_events:
             event_data = {
                 "category": lock_event[0],
-                "transaction_hash": lock_event[1],
-                "msg_sender": lock_event[2],
-                "token_address": lock_event[3],
-                "lock_address": lock_event[4],
-                "account_address": lock_event[5],
-                "recipient_address": lock_event[6],
-                "value": lock_event[7],
-                "data": lock_event[8],
-                "block_timestamp": lock_event[9]
+                "is_force_lock": lock_event[1],
+                "transaction_hash": lock_event[2],
+                "msg_sender": lock_event[3],
+                "token_address": lock_event[4],
+                "lock_address": lock_event[5],
+                "account_address": lock_event[6],
+                "recipient_address": lock_event[7],
+                "value": lock_event[8],
+                "data": lock_event[9],
+                "block_timestamp": lock_event[10]
                 .replace(tzinfo=UTC)
                 .astimezone(local_tz),
             }
             if request_query.include_token_details is True:
                 event_data["token"] = self.token_model.from_model(
-                    lock_event[10]
+                    lock_event[11]
                 ).__dict__
             resp_data.append(event_data)
 
