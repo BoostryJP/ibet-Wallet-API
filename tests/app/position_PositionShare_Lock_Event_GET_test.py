@@ -282,7 +282,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -295,7 +295,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -308,7 +308,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -321,7 +321,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -378,7 +378,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             }
         ]
         if get_params.get("include_token_details") is True:
@@ -482,7 +482,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -495,7 +495,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -508,7 +508,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -521,7 +521,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -534,7 +534,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -547,7 +547,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -560,7 +560,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -573,7 +573,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -632,7 +632,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -645,7 +645,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -658,7 +658,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -671,7 +671,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -739,7 +739,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -752,7 +752,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -765,7 +765,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -778,7 +778,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -791,7 +791,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -804,7 +804,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -817,7 +817,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -830,7 +830,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -887,7 +887,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -944,7 +944,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -957,7 +957,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -1014,7 +1014,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             }
         ]
         if get_params.get("include_token_details") is True:
@@ -1075,7 +1075,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             }
         ]
         if get_params.get("include_token_details") is True:
@@ -1136,7 +1136,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             }
         ]
         if get_params.get("include_token_details") is True:
@@ -1193,7 +1193,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1206,7 +1206,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -1267,7 +1267,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1280,7 +1280,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1293,7 +1293,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1306,7 +1306,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -1319,7 +1319,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -1332,7 +1332,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -1345,7 +1345,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_2,
@@ -1358,7 +1358,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -1415,7 +1415,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1428,7 +1428,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1441,7 +1441,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1454,7 +1454,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -1511,7 +1511,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1524,7 +1524,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1537,7 +1537,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1550,7 +1550,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -1607,7 +1607,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1620,7 +1620,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1633,7 +1633,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1646,7 +1646,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:
@@ -1703,7 +1703,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1716,7 +1716,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "3"},
                 "value": 3,
                 "category": LockEventCategory.Lock,
-                "is_force_lock": False,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1729,7 +1729,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "1"},
                 "value": 1,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
             {
                 "token_address": self.token_1,
@@ -1742,7 +1742,7 @@ class TestPositionShareLockEvent:
                 "data": {"message": "2"},
                 "value": 2,
                 "category": LockEventCategory.Unlock,
-                "is_force_lock": None,
+                "is_forced": False,
             },
         ]
         if get_params.get("include_token_details") is True:

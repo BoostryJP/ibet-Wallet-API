@@ -61,8 +61,8 @@ class IDXLock(Base):
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
-    # Force Lock Flag
-    is_force_lock: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Whether the lock is forced or not
+    is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     FIELDS = {
         "id": int,
@@ -75,6 +75,7 @@ class IDXLock(Base):
         "value": int,
         "data": dict,
         "block_timestamp": datetime,
+        "is_forced": bool,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -101,7 +102,7 @@ class IDXLock(Base):
             "value": self.value,
             "data": self.data,
             "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
-            "is_force_lock": self.is_force_lock,
+            "is_forced": self.is_forced,
         }
 
 
@@ -140,6 +141,8 @@ class IDXUnlock(Base):
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
+    # Whether the unlock is forced or not
+    is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     FIELDS = {
         "id": int,
@@ -153,6 +156,7 @@ class IDXUnlock(Base):
         "value": int,
         "data": dict,
         "block_timestamp": datetime,
+        "is_forced": bool,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -180,4 +184,5 @@ class IDXUnlock(Base):
             "value": self.value,
             "data": self.data,
             "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
+            "is_forced": self.is_forced,
         }

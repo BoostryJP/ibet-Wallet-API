@@ -7861,9 +7861,11 @@ components:
         - ChangeTransferApprovalRequired
         - Issue
         - Lock
+        - ForceLock
+        - Unlock
+        - ForceUnlock
         - Redeem
         - Transfer
-        - Unlock
       title: IbetSecurityTokenInterfaceEventType
     IbetShareToken:
       properties:
@@ -8331,6 +8333,10 @@ components:
         category:
           $ref: '#/components/schemas/LockEventCategory'
           description: history item category
+        is_forced:
+          type: boolean
+          title: Is Forced
+          description: Set to `True` for force lock/unlock events
         transaction_hash:
           type: string
           title: Transaction Hash
@@ -8375,6 +8381,7 @@ components:
       type: object
       required:
         - category
+        - is_forced
         - transaction_hash
         - msg_sender
         - token_address
@@ -8404,6 +8411,10 @@ components:
         category:
           $ref: '#/components/schemas/LockEventCategory'
           description: history item category
+        is_forced:
+          type: boolean
+          title: Is Forced
+          description: Set to `True` for force lock/unlock events
         transaction_hash:
           type: string
           title: Transaction Hash
@@ -8451,6 +8462,7 @@ components:
       type: object
       required:
         - category
+        - is_forced
         - transaction_hash
         - msg_sender
         - token_address
@@ -8466,6 +8478,10 @@ components:
         category:
           $ref: '#/components/schemas/LockEventCategory'
           description: history item category
+        is_forced:
+          type: boolean
+          title: Is Forced
+          description: Set to `True` for force lock/unlock events
         transaction_hash:
           type: string
           title: Transaction Hash
@@ -8513,6 +8529,7 @@ components:
       type: object
       required:
         - category
+        - is_forced
         - transaction_hash
         - msg_sender
         - token_address
@@ -8835,6 +8852,8 @@ components:
         - ApplyForTransfer
         - ApproveTransfer
         - CancelTransfer
+        - ForceLock
+        - ForceUnlock
       title: NotificationType
     NotificationUpdateResponse:
       properties:
@@ -11163,6 +11182,7 @@ components:
       enum:
         - Transfer
         - Unlock
+        - ForceUnlock
       title: TransferSourceEvent
     TxData:
       properties:
@@ -11330,7 +11350,9 @@ components:
           description: block_timestamp when Transfer log was emitted (local timezone)
         source_event:
           type: string
-          const: Unlock
+          enum:
+            - Unlock
+            - ForceUnlock
           title: Source Event
           description: Source Event
       type: object

@@ -12,7 +12,7 @@ from sqlalchemy import update
 
 
 from app.database import get_db_schema
-from app.model.db import IDXLock
+from app.model.db import IDXLock, IDXUnlock
 
 # revision identifiers, used by Alembic.
 revision = "f8faa777c5f2"
@@ -26,13 +26,27 @@ def upgrade():
 
     op.add_column(
         "lock",
-        sa.Column("is_force_lock", sa.Boolean(), nullable=True),
+        sa.Column("is_forced", sa.Boolean(), nullable=True),
         schema=get_db_schema(),
     )
-    op.get_bind().execute(update(IDXLock).values(is_force_lock=False))
+    op.get_bind().execute(update(IDXLock).values(is_forced=False))
     op.alter_column(
         "lock",
-        "is_force_lock",
+        "is_forced",
+        existing_type=sa.Boolean(),
+        nullable=False,
+        schema=get_db_schema(),
+    )
+
+    op.add_column(
+        "unlock",
+        sa.Column("is_forced", sa.Boolean(), nullable=True),
+        schema=get_db_schema(),
+    )
+    op.get_bind().execute(update(IDXUnlock).values(is_forced=False))
+    op.alter_column(
+        "unlock",
+        "is_forced",
         existing_type=sa.Boolean(),
         nullable=False,
         schema=get_db_schema(),
@@ -42,4 +56,5 @@ def upgrade():
 def downgrade():
     connection = op.get_bind()
 
-    op.drop_column("lock", "is_force_lock", schema=get_db_schema())
+    op.drop_column("lock", "is_forced", schema=get_db_schema())
+    op.drop_column("unlock", "is_forced", schema=get_db_schema())

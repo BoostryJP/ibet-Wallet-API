@@ -42,6 +42,7 @@ from tests.contract_modules import (
     bond_approve_transfer,
     bond_cancel_transfer,
     bond_force_lock,
+    bond_force_unlock,
     bond_issue_from,
     bond_lock,
     bond_redeem_from,
@@ -78,6 +79,7 @@ from tests.contract_modules import (
     share_approve_transfer,
     share_cancel_transfer,
     share_force_lock,
+    share_force_unlock,
     share_issue_from,
     share_lock,
     share_redeem_from,
@@ -480,6 +482,7 @@ class TestProcessor:
     # - Lock
     # - ForceLock
     # - Unlock
+    # - ForceUnlock
     async def test_normal_2(
         self,
         processor: Processor,
@@ -582,7 +585,17 @@ class TestProcessor:
             token,
             self.trader["account_address"],
             self.user1["account_address"],
-            2000,
+            1000,
+        )
+        # user1: 15000 trader: (hold: 14000, locked: 2000)
+
+        bond_force_unlock(
+            self.issuer,
+            token,
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            self.user1["account_address"],
+            1000,
         )
         # user1: 15000 trader: (hold: 14000, locked: 1000)
 
@@ -1006,6 +1019,7 @@ class TestProcessor:
     # - Lock
     # - ForceLock
     # - Unlock
+    # - ForceUnlock
     async def test_normal_5(
         self,
         processor: Processor,
@@ -1108,7 +1122,17 @@ class TestProcessor:
             token,
             self.trader["account_address"],
             self.user1["account_address"],
-            2000,
+            1000,
+        )
+        # user1: 15000 trader: (hold: 14000, locked: 2000)
+
+        share_force_unlock(
+            self.issuer,
+            token,
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            self.user1["account_address"],
+            1000,
         )
         # user1: 15000 trader: (hold: 14000, locked: 1000)
 

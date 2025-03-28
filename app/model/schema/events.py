@@ -196,9 +196,11 @@ class IbetSecurityTokenInterfaceEventType(StrEnum):
     ChangeTransferApprovalRequired = "ChangeTransferApprovalRequired"
     Issue = "Issue"
     Lock = "Lock"
+    ForceLock = "ForceLock"
+    Unlock = "Unlock"
+    ForceUnlock = "ForceUnlock"
     Redeem = "Redeem"
     Transfer = "Transfer"
-    Unlock = "Unlock"
 
 
 class IbetSecurityTokenInterfaceEventsQuery(BaseModel):
