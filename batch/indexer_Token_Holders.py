@@ -259,6 +259,7 @@ class Processor:
             await self.__process_lock(block_from, block_to)
             await self.__process_force_lock(block_from, block_to)
             await self.__process_unlock(block_from, block_to)
+            await self.__process_force_unlock(block_from, block_to)
         if self.token_template == TokenType.IbetCoupon:
             await self.__process_consume(block_from, block_to)
 
@@ -525,6 +526,39 @@ class Processor:
         try:
             # Get "Unlock" events from token contract
             events = await self.token_contract.events.Unlock.get_logs(
+                from_block=block_from, to_block=block_to
+            )
+        except ABIEventNotFound:
+            events = []
+        try:
+            for event in events:
+                args = event["args"]
+                account_address = args.get("accountAddress", ZERO_ADDRESS)
+                recipient_address = args.get("recipientAddress", ZERO_ADDRESS)
+                amount = args.get("value")
+                if amount is not None and amount <= sys.maxsize:
+                    self.balance_book.store(
+                        account_address=account_address, locked=-amount
+                    )
+                    self.balance_book.store(
+                        account_address=recipient_address, amount=+amount
+                    )
+        except Exception:
+            raise
+
+    async def __process_force_unlock(self, block_from: int, block_to: int):
+        """Process ForceUnlock Event
+
+        - The process of updating Hold-Balance data by capturing the following events
+        - `Unlock` event on Token contracts
+
+        :param block_from: From block
+        :param block_to: To block
+        :return: None
+        """
+        try:
+            # Get "ForceUnlock" events from token contract
+            events = await self.token_contract.events.ForceUnlock.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:

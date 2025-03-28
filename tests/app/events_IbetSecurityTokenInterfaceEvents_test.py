@@ -1204,7 +1204,7 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Error_1
     # InvalidParameterError
-    # null value not allowed
+    # - null value not allowed
     def test_error_1(self, client: TestClient, session: Session, shared_contract):
         self.setup_data(session, shared_contract)
 
@@ -1236,7 +1236,7 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Error_2
     # InvalidParameterError
-    # from_block, to_block: min value
+    # - from_block, to_block: min value
     def test_error_2(self, client: TestClient, session: Session, shared_contract):
         self.setup_data(session, shared_contract)
 
@@ -1269,10 +1269,10 @@ class TestEventsIbetSecurityTokenInterface:
             "message": "Invalid Parameter",
         }
 
-    # Error_3_1
+    # Error_3
     # InvalidParameterError
-    # event: unallowed value
-    def test_error_3_1(self, client: TestClient, session: Session, shared_contract):
+    # - Invalid event
+    def test_error_3(self, client: TestClient, session: Session, shared_contract):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1290,33 +1290,23 @@ class TestEventsIbetSecurityTokenInterface:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {
-                        "expected": "'Allot', 'ApplyForOffering', "
-                        "'ApplyForTransfer', 'ApproveTransfer', "
-                        "'CancelTransfer', "
-                        "'ChangeOfferingStatus', 'ChangeStatus', "
-                        "'ChangeTransferApprovalRequired', "
-                        "'Issue', 'Lock', 'Redeem', 'Transfer' "
-                        "or 'Unlock'"
-                    },
-                    "input": "invalid",
-                    "loc": ["query", "event"],
-                    "msg": "Input should be 'Allot', 'ApplyForOffering', "
-                    "'ApplyForTransfer', 'ApproveTransfer', "
-                    "'CancelTransfer', 'ChangeOfferingStatus', "
-                    "'ChangeStatus', 'ChangeTransferApprovalRequired', "
-                    "'Issue', 'Lock', 'Redeem', 'Transfer' or 'Unlock'",
                     "type": "enum",
+                    "loc": ["query", "event"],
+                    "msg": "Input should be 'Allot', 'ApplyForOffering', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ChangeOfferingStatus', 'ChangeStatus', 'ChangeTransferApprovalRequired', 'Issue', 'Lock', 'ForceLock', 'Unlock', 'ForceUnlock', 'Redeem' or 'Transfer'",
+                    "input": "invalid",
+                    "ctx": {
+                        "expected": "'Allot', 'ApplyForOffering', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ChangeOfferingStatus', 'ChangeStatus', 'ChangeTransferApprovalRequired', 'Issue', 'Lock', 'ForceLock', 'Unlock', 'ForceUnlock', 'Redeem' or 'Transfer'"
+                    },
                 }
             ],
-            "message": "Invalid Parameter",
         }
 
     # Error_4
     # InvalidParameterError
-    # to_block must be greater than or equal to the from_block
+    # - to_block must be greater than or equal to the from_block
     def test_error_4(self, client: TestClient, session: Session, shared_contract):
         self.setup_data(session, shared_contract)
 
@@ -1351,7 +1341,7 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Error_5
     # RequestBlockRangeLimitExceededError
-    # block range must be less than or equal to 10000
+    # - block range must be less than or equal to 10000
     def test_error_5(self, client: TestClient, session: Session, shared_contract):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)

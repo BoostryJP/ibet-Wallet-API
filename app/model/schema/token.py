@@ -40,6 +40,7 @@ from app.model.schema.base import (
 class TransferSourceEvent(StrEnum):
     Transfer = "Transfer"
     Unlock = "Unlock"
+    ForceUnlock = "ForceUnlock"
 
 
 ############################
@@ -405,9 +406,9 @@ class DataMessage(BaseModel):
 
 
 class UnlockTransferHistory(TransferHistoryBase):
-    source_event: Literal[TransferSourceEvent.Unlock] = Field(
-        description="Source Event"
-    )
+    source_event: Literal[
+        TransferSourceEvent.Unlock, TransferSourceEvent.ForceUnlock
+    ] = Field(description="Source Event")
     data: DataMessage | dict = Field(description="Event data")
 
 

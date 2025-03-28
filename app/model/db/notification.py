@@ -196,10 +196,13 @@ class NotificationType(StrEnum):
     SELL_AGREEMENT = "SellAgreement"
     SELL_SETTLEMENT_OK = "SellSettlementOK"
     SELL_SETTLEMENT_NG = "SellSettlementNG"
+
     TRANSFER = "Transfer"
     APPLY_FOR_TRANSFER = "ApplyForTransfer"
     APPROVE_TRANSFER = "ApproveTransfer"
     CANCEL_TRANSFER = "CancelTransfer"
+    FORCE_LOCK = "ForceLock"
+    FORCE_UNLOCK = "ForceUnlock"
 
 
 class NotificationBlockNumber(Base):

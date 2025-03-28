@@ -153,9 +153,7 @@ class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
 
 class LockEvent(BaseModel):
     category: LockEventCategory = Field(description="history item category")
-    is_force_lock: Optional[bool] = Field(
-        description="Set to `True` for force lock events"
-    )
+    is_forced: bool = Field(description="Set to `True` for force lock/unlock events")
     transaction_hash: str = Field(description="Transaction hash")
     msg_sender: Optional[EthereumAddress] = Field(..., description="Message sender")
     token_address: EthereumAddress = Field(description="Token address")
