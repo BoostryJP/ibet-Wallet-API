@@ -46,6 +46,7 @@ from app.model.schema import (
     GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
     RegisterAdminTokenRequest,
+    RegisterTokenResponse,
     RetrieveAdminTokenResponse,
     UpdateAdminTokenRequest,
 )
@@ -58,11 +59,10 @@ LOG = log.get_logger()
 
 router = APIRouter(prefix="/Admin", tags=["admin"])
 
+
 # ------------------------------
 # [管理]取扱トークン登録/一覧取得
 # ------------------------------
-
-
 @router.get(
     "/Tokens",
     summary="List All Listed Tokens",
@@ -86,7 +86,7 @@ async def list_all_admin_tokens(async_session: DBAsyncSession):
     "/Tokens",
     summary="List a Token",
     operation_id="TokensPOST",
-    response_model=SuccessResponse,
+    response_model=GenericSuccessResponse[RegisterTokenResponse],
     responses=get_routers_responses(DataConflictError, InvalidParameterError),
 )
 async def register_admin_token(
@@ -155,17 +155,17 @@ async def register_admin_token(
 
     token_type = token[1]
     # Fetch token detail data to store cache
-    if token_type == TokenType.IbetCoupon:
-        token_obj = await CouponToken.get(async_session, contract_address)
-        await async_session.merge(token_obj.to_model())
-    elif token_type == TokenType.IbetMembership:
-        token_obj = await MembershipToken.get(async_session, contract_address)
+    if token_type == TokenType.IbetShare:
+        token_obj = await ShareToken.get(async_session, contract_address)
         await async_session.merge(token_obj.to_model())
     elif token_type == TokenType.IbetStraightBond:
         token_obj = await BondToken.get(async_session, contract_address)
         await async_session.merge(token_obj.to_model())
-    elif token_type == TokenType.IbetShare:
-        token_obj = await ShareToken.get(async_session, contract_address)
+    elif token_type == TokenType.IbetMembership:
+        token_obj = await MembershipToken.get(async_session, contract_address)
+        await async_session.merge(token_obj.to_model())
+    else:  # token_type == TokenType.IbetCoupon:
+        token_obj = await CouponToken.get(async_session, contract_address)
         await async_session.merge(token_obj.to_model())
 
     (
@@ -189,14 +189,13 @@ async def register_admin_token(
     await async_session.merge(position)
     await async_session.commit()
 
-    return json_response(SuccessResponse.default())
+    _data = {"token": token_obj.__dict__}
+    return json_response({**SuccessResponse.default(), "data": _data})
 
 
 # ------------------------------
 # [管理]取扱トークン種別
 # ------------------------------
-
-
 @router.get(
     "/Tokens/Type",
     summary="Available status by token type",
@@ -220,8 +219,6 @@ async def get_admin_token_type():
 # ------------------------------
 # [管理]取扱トークン情報取得/更新
 # ------------------------------
-
-
 @router.get(
     "/Tokens/{token_address}",
     summary="Retrieve a Listed Token",

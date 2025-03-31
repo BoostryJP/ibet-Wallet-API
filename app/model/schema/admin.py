@@ -21,7 +21,13 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, RootModel
 
-from app.model.schema.base import EthereumAddress
+from app.model.schema.base import (
+    BondToken,
+    CouponToken,
+    EthereumAddress,
+    MembershipToken,
+    ShareToken,
+)
 
 ############################
 # COMMON
@@ -64,6 +70,10 @@ class RetrieveAdminTokenResponse(BaseModel):
 
 class ListAllAdminTokensResponse(RootModel[list[RetrieveAdminTokenResponse]]):
     pass
+
+
+class RegisterTokenResponse(BaseModel):
+    token: BondToken | ShareToken | MembershipToken | CouponToken
 
 
 class GetAdminTokenTypeResponse(BaseModel):

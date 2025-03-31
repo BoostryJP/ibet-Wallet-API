@@ -145,6 +145,54 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "token": {
+                "token_address": bond_token["address"],
+                "token_template": "IbetStraightBond",
+                "owner_address": issuer["account_address"],
+                "company_name": "",
+                "rsa_publickey": "",
+                "name": "テスト債券",
+                "symbol": "BOND",
+                "total_supply": 1000000,
+                "tradable_exchange": exchange_address,
+                "contact_information": "問い合わせ先",
+                "privacy_policy": "プライバシーポリシー",
+                "status": True,
+                "max_holding_quantity": 100,
+                "max_sell_amount": 50000,
+                "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
+                "transferable": True,
+                "is_offering": False,
+                "transfer_approval_required": False,
+                "face_value": 10000,
+                "face_value_currency": "JPY",
+                "interest_rate": 0.0602,
+                "interest_payment_date1": "0101",
+                "interest_payment_date2": "0201",
+                "interest_payment_date3": "0301",
+                "interest_payment_date4": "0401",
+                "interest_payment_date5": "0501",
+                "interest_payment_date6": "0601",
+                "interest_payment_date7": "0701",
+                "interest_payment_date8": "0801",
+                "interest_payment_date9": "0901",
+                "interest_payment_date10": "1001",
+                "interest_payment_date11": "1101",
+                "interest_payment_date12": "1201",
+                "interest_payment_currency": "JPY",
+                "redemption_date": "20191231",
+                "redemption_value": 10000,
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
+                "return_date": "20191231",
+                "return_amount": "商品券をプレゼント",
+                "purpose": "新商品の開発資金として利用。",
+                "memo": "メモ",
+                "is_redeemed": False,
+            }
+        }
 
         listing: Listing = session.scalars(
             select(Listing)
@@ -210,6 +258,54 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "token": {
+                "token_address": bond_token["address"],
+                "token_template": "IbetStraightBond",
+                "owner_address": issuer["account_address"],
+                "company_name": "",
+                "rsa_publickey": "",
+                "name": "テスト債券",
+                "symbol": "BOND",
+                "total_supply": 1000000,
+                "tradable_exchange": exchange_address,
+                "contact_information": "問い合わせ先",
+                "privacy_policy": "プライバシーポリシー",
+                "status": True,
+                "max_holding_quantity": None,
+                "max_sell_amount": None,
+                "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
+                "transferable": True,
+                "is_offering": False,
+                "transfer_approval_required": False,
+                "face_value": 10000,
+                "face_value_currency": "JPY",
+                "interest_rate": 0.0602,
+                "interest_payment_date1": "0101",
+                "interest_payment_date2": "0201",
+                "interest_payment_date3": "0301",
+                "interest_payment_date4": "0401",
+                "interest_payment_date5": "0501",
+                "interest_payment_date6": "0601",
+                "interest_payment_date7": "0701",
+                "interest_payment_date8": "0801",
+                "interest_payment_date9": "0901",
+                "interest_payment_date10": "1001",
+                "interest_payment_date11": "1101",
+                "interest_payment_date12": "1201",
+                "interest_payment_currency": "JPY",
+                "redemption_date": "20191231",
+                "redemption_value": 10000,
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
+                "return_date": "20191231",
+                "return_amount": "商品券をプレゼント",
+                "purpose": "新商品の開発資金として利用。",
+                "memo": "メモ",
+                "is_redeemed": False,
+            }
+        }
 
         listing: Listing = session.scalars(
             select(Listing)
@@ -267,6 +363,54 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "token": {
+                "token_address": bond_token["address"],
+                "token_template": "IbetStraightBond",
+                "owner_address": issuer["account_address"],
+                "company_name": "",
+                "rsa_publickey": "",
+                "name": "テスト債券",
+                "symbol": "BOND",
+                "total_supply": 1000000,
+                "tradable_exchange": exchange_address,
+                "contact_information": "問い合わせ先",
+                "privacy_policy": "プライバシーポリシー",
+                "status": True,
+                "max_holding_quantity": None,
+                "max_sell_amount": None,
+                "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
+                "transferable": True,
+                "is_offering": False,
+                "transfer_approval_required": False,
+                "face_value": 10000,
+                "face_value_currency": "JPY",
+                "interest_rate": 0.0602,
+                "interest_payment_date1": "0101",
+                "interest_payment_date2": "0201",
+                "interest_payment_date3": "0301",
+                "interest_payment_date4": "0401",
+                "interest_payment_date5": "0501",
+                "interest_payment_date6": "0601",
+                "interest_payment_date7": "0701",
+                "interest_payment_date8": "0801",
+                "interest_payment_date9": "0901",
+                "interest_payment_date10": "1001",
+                "interest_payment_date11": "1101",
+                "interest_payment_date12": "1201",
+                "interest_payment_currency": "JPY",
+                "redemption_date": "20191231",
+                "redemption_value": 10000,
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
+                "return_date": "20191231",
+                "return_amount": "商品券をプレゼント",
+                "purpose": "新商品の開発資金として利用。",
+                "memo": "メモ",
+                "is_redeemed": False,
+            }
+        }
 
         listing: Listing = session.scalars(
             select(Listing)

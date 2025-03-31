@@ -21,6 +21,7 @@ from .admin import (
     GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
     RegisterAdminTokenRequest,
+    RegisterTokenResponse,
     RetrieveAdminTokenResponse,
     UpdateAdminTokenRequest,
 )

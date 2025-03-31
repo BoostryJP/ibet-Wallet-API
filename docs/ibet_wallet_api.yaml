@@ -307,7 +307,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/GenericSuccessResponse_RegisterTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -6241,6 +6241,220 @@ components:
         - earliest
         - pending
       title: BlockIdentifier
+    BondToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetStraightBond
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        personal_info_address:
+          type: string
+          title: Personal Info Address
+        require_personal_info_registered:
+          type: boolean
+          title: Require Personal Info Registered
+        transferable:
+          type: boolean
+          title: Transferable
+        is_offering:
+          type: boolean
+          title: Is Offering
+        transfer_approval_required:
+          type: boolean
+          title: Transfer Approval Required
+        face_value:
+          type: integer
+          title: Face Value
+        face_value_currency:
+          type: string
+          title: Face Value Currency
+        interest_rate:
+          type: number
+          title: Interest Rate
+        interest_payment_date1:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date1
+        interest_payment_date2:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date2
+        interest_payment_date3:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date3
+        interest_payment_date4:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date4
+        interest_payment_date5:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date5
+        interest_payment_date6:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date6
+        interest_payment_date7:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date7
+        interest_payment_date8:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date8
+        interest_payment_date9:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date9
+        interest_payment_date10:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date10
+        interest_payment_date11:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date11
+        interest_payment_date12:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date12
+        interest_payment_currency:
+          type: string
+          title: Interest Payment Currency
+        redemption_date:
+          type: string
+          title: Redemption Date
+        redemption_value:
+          type: integer
+          title: Redemption Value
+        redemption_value_currency:
+          type: string
+          title: Redemption Value Currency
+        base_fx_rate:
+          type: number
+          title: Base Fx Rate
+        return_date:
+          type: string
+          title: Return Date
+        return_amount:
+          type: string
+          title: Return Amount
+        purpose:
+          type: string
+          title: Purpose
+        memo:
+          type: string
+          title: Memo
+        is_redeemed:
+          type: boolean
+          title: Is Redeemed
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - personal_info_address
+        - require_personal_info_registered
+        - transferable
+        - is_offering
+        - transfer_approval_required
+        - face_value
+        - face_value_currency
+        - interest_rate
+        - interest_payment_date1
+        - interest_payment_date2
+        - interest_payment_date3
+        - interest_payment_date4
+        - interest_payment_date5
+        - interest_payment_date6
+        - interest_payment_date7
+        - interest_payment_date8
+        - interest_payment_date9
+        - interest_payment_date10
+        - interest_payment_date11
+        - interest_payment_date12
+        - interest_payment_currency
+        - redemption_date
+        - redemption_value
+        - redemption_value_currency
+        - base_fx_rate
+        - return_date
+        - return_amount
+        - purpose
+        - memo
+        - is_redeemed
+      title: BondToken
     CompanyInfo:
       properties:
         address:
@@ -6342,19 +6556,6 @@ components:
         - block_timestamp
         - value
       title: CouponConsumption
-    CouponImage:
-      properties:
-        id:
-          type: integer
-          title: Id
-        url:
-          type: string
-          title: Url
-      type: object
-      required:
-        - id
-        - url
-      title: CouponImage
     CouponPositionWithAddress:
       properties:
         balance:
@@ -6424,6 +6625,106 @@ components:
         - result_set
         - positions
       title: CouponPositionsResponse
+    CouponToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetCoupon
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        details:
+          type: string
+          title: Details
+        return_details:
+          type: string
+          title: Return Details
+        expiration_date:
+          type: string
+          title: Expiration Date
+        memo:
+          type: string
+          title: Memo
+        transferable:
+          type: boolean
+          title: Transferable
+        initial_offering_status:
+          type: boolean
+          title: Initial Offering Status
+        image_url:
+          items:
+            $ref: '#/components/schemas/TokenImage'
+          type: array
+          title: Image Url
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - details
+        - return_details
+        - expiration_date
+        - memo
+        - transferable
+        - initial_offering_status
+        - image_url
+      title: CouponToken
     CouponTokensSortItem:
       type: string
       enum:
@@ -6552,29 +6853,6 @@ components:
       required:
         - meta
       title: DataNotExistsErrorResponse
-    DividendInformation:
-      properties:
-        dividends:
-          type: number
-          title: Dividends
-          examples:
-            - 999.9999999999999
-        dividend_record_date:
-          type: string
-          title: Dividend Record Date
-          examples:
-            - '20200909'
-        dividend_payment_date:
-          type: string
-          title: Dividend Payment Date
-          examples:
-            - '20201001'
-      type: object
-      required:
-        - dividends
-        - dividend_record_date
-        - dividend_payment_date
-      title: DividendInformation
     E2EMessageEncryptionKeyResponse:
       properties:
         key:
@@ -7290,6 +7568,20 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[NotificationsResponse]
+    GenericSuccessResponse_RegisterTokenResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/RegisterTokenResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[RegisterTokenResponse]
     GenericSuccessResponse_RetrieveAdminTokenResponse_:
       properties:
         meta:
@@ -8002,7 +8294,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+            $ref: '#/components/schemas/CouponToken'
           type: array
           title: Tokens
       type: object
@@ -8130,7 +8422,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+            $ref: '#/components/schemas/MembershipToken'
           type: array
           title: Tokens
       type: object
@@ -8273,7 +8565,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveShareTokenResponse'
+            $ref: '#/components/schemas/ShareToken'
           type: array
           title: Tokens
       type: object
@@ -8301,7 +8593,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            $ref: '#/components/schemas/BondToken'
           type: array
           title: Tokens
       type: object
@@ -8611,19 +8903,6 @@ components:
         - value
         - token
       title: LockedWithTokenDetail[RetrieveStraightBondTokenResponse]
-    MembershipImage:
-      properties:
-        id:
-          type: integer
-          title: Id
-        url:
-          type: string
-          title: Url
-      type: object
-      required:
-        - id
-        - url
-      title: MembershipImage
     MembershipPositionWithAddress:
       properties:
         balance:
@@ -8685,6 +8964,106 @@ components:
         - result_set
         - positions
       title: MembershipPositionsResponse
+    MembershipToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetMembership
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        details:
+          type: string
+          title: Details
+        return_details:
+          type: string
+          title: Return Details
+        expiration_date:
+          type: string
+          title: Expiration Date
+        memo:
+          type: string
+          title: Memo
+        transferable:
+          type: boolean
+          title: Transferable
+        initial_offering_status:
+          type: boolean
+          title: Initial Offering Status
+        image_url:
+          items:
+            $ref: '#/components/schemas/TokenImage'
+          type: array
+          title: Image Url
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - details
+        - return_details
+        - expiration_date
+        - memo
+        - transferable
+        - initial_offering_status
+        - image_url
+      title: MembershipToken
     MembershipTokensSortItem:
       type: string
       enum:
@@ -9109,6 +9488,19 @@ components:
         - contract_address
         - is_public
       title: RegisterAdminTokenRequest
+    RegisterTokenResponse:
+      properties:
+        token:
+          anyOf:
+            - $ref: '#/components/schemas/BondToken'
+            - $ref: '#/components/schemas/ShareToken'
+            - $ref: '#/components/schemas/MembershipToken'
+            - $ref: '#/components/schemas/CouponToken'
+          title: Token
+      type: object
+      required:
+        - token
+      title: RegisterTokenResponse
     RequestBlockRangeLimitExceededErrorMetainfo:
       properties:
         code:
@@ -9376,204 +9768,10 @@ components:
         - in_use_personal_info_addresses
       title: RetrieveCompanyInfoResponse
     RetrieveCouponTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetCoupon
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        details:
-          type: string
-          title: Details
-        return_details:
-          type: string
-          title: Return Details
-        expiration_date:
-          type: string
-          title: Expiration Date
-        memo:
-          type: string
-          title: Memo
-        transferable:
-          type: boolean
-          title: Transferable
-        initial_offering_status:
-          type: boolean
-          title: Initial Offering Status
-        image_url:
-          items:
-            $ref: '#/components/schemas/CouponImage'
-          type: array
-          title: Image Url
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - details
-        - return_details
-        - expiration_date
-        - memo
-        - transferable
-        - initial_offering_status
-        - image_url
+      $ref: '#/components/schemas/CouponToken'
       title: RetrieveCouponTokenResponse
     RetrieveMembershipTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetMembership
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        details:
-          type: string
-          title: Details
-        return_details:
-          type: string
-          title: Return Details
-        expiration_date:
-          type: string
-          title: Expiration Date
-        memo:
-          type: string
-          title: Memo
-        transferable:
-          type: boolean
-          title: Transferable
-        initial_offering_status:
-          type: boolean
-          title: Initial Offering Status
-        image_url:
-          items:
-            $ref: '#/components/schemas/MembershipImage'
-          type: array
-          title: Image Url
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - details
-        - return_details
-        - expiration_date
-        - memo
-        - transferable
-        - initial_offering_status
-        - image_url
+      $ref: '#/components/schemas/MembershipToken'
       title: RetrieveMembershipTokenResponse
     RetrievePaymentAccountRegistrationStatusResponse:
       properties:
@@ -9611,331 +9809,10 @@ components:
         - registered
       title: RetrievePersonalInfoRegistrationStatusResponse
     RetrieveShareTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetShare
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        personal_info_address:
-          type: string
-          title: Personal Info Address
-        require_personal_info_registered:
-          type: boolean
-          title: Require Personal Info Registered
-        transferable:
-          type: boolean
-          title: Transferable
-        is_offering:
-          type: boolean
-          title: Is Offering
-        transfer_approval_required:
-          type: boolean
-          title: Transfer Approval Required
-        issue_price:
-          type: integer
-          title: Issue Price
-        cancellation_date:
-          type: string
-          title: Cancellation Date
-        memo:
-          type: string
-          title: Memo
-        principal_value:
-          type: integer
-          title: Principal Value
-        is_canceled:
-          type: boolean
-          title: Is Canceled
-        dividend_information:
-          $ref: '#/components/schemas/DividendInformation'
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - personal_info_address
-        - require_personal_info_registered
-        - transferable
-        - is_offering
-        - transfer_approval_required
-        - issue_price
-        - cancellation_date
-        - memo
-        - principal_value
-        - is_canceled
-        - dividend_information
+      $ref: '#/components/schemas/ShareToken'
       title: RetrieveShareTokenResponse
     RetrieveStraightBondTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetStraightBond
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        personal_info_address:
-          type: string
-          title: Personal Info Address
-        require_personal_info_registered:
-          type: boolean
-          title: Require Personal Info Registered
-        transferable:
-          type: boolean
-          title: Transferable
-        is_offering:
-          type: boolean
-          title: Is Offering
-        transfer_approval_required:
-          type: boolean
-          title: Transfer Approval Required
-        face_value:
-          type: integer
-          title: Face Value
-        face_value_currency:
-          type: string
-          title: Face Value Currency
-        interest_rate:
-          type: number
-          title: Interest Rate
-        interest_payment_date1:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date1
-        interest_payment_date2:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date2
-        interest_payment_date3:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date3
-        interest_payment_date4:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date4
-        interest_payment_date5:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date5
-        interest_payment_date6:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date6
-        interest_payment_date7:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date7
-        interest_payment_date8:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date8
-        interest_payment_date9:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date9
-        interest_payment_date10:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date10
-        interest_payment_date11:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date11
-        interest_payment_date12:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date12
-        interest_payment_currency:
-          type: string
-          title: Interest Payment Currency
-        redemption_date:
-          type: string
-          title: Redemption Date
-        redemption_value:
-          type: integer
-          title: Redemption Value
-        redemption_value_currency:
-          type: string
-          title: Redemption Value Currency
-        base_fx_rate:
-          type: number
-          title: Base Fx Rate
-        return_date:
-          type: string
-          title: Return Date
-        return_amount:
-          type: string
-          title: Return Amount
-        purpose:
-          type: string
-          title: Purpose
-        memo:
-          type: string
-          title: Memo
-        is_redeemed:
-          type: boolean
-          title: Is Redeemed
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - personal_info_address
-        - require_personal_info_registered
-        - transferable
-        - is_offering
-        - transfer_approval_required
-        - face_value
-        - face_value_currency
-        - interest_rate
-        - interest_payment_date1
-        - interest_payment_date2
-        - interest_payment_date3
-        - interest_payment_date4
-        - interest_payment_date5
-        - interest_payment_date6
-        - interest_payment_date7
-        - interest_payment_date8
-        - interest_payment_date9
-        - interest_payment_date10
-        - interest_payment_date11
-        - interest_payment_date12
-        - interest_payment_currency
-        - redemption_date
-        - redemption_value
-        - redemption_value_currency
-        - base_fx_rate
-        - return_date
-        - return_amount
-        - purpose
-        - memo
-        - is_redeemed
+      $ref: '#/components/schemas/BondToken'
       title: RetrieveStraightBondTokenResponse
     RetrieveTokenLockCountResponse:
       properties:
@@ -10596,6 +10473,29 @@ components:
       required:
         - meta
       title: ServiceUnavailableResponse
+    ShareDividendInformation:
+      properties:
+        dividends:
+          type: number
+          title: Dividends
+          examples:
+            - 999.9999999999999
+        dividend_record_date:
+          type: string
+          title: Dividend Record Date
+          examples:
+            - '20200909'
+        dividend_payment_date:
+          type: string
+          title: Dividend Payment Date
+          examples:
+            - '20201001'
+      type: object
+      required:
+        - dividends
+        - dividend_record_date
+        - dividend_payment_date
+      title: ShareDividendInformation
     SharePositionWithDetail:
       properties:
         balance:
@@ -10627,6 +10527,119 @@ components:
         - exchange_commitment
         - token
       title: SharePositionWithDetail
+    ShareToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetShare
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        personal_info_address:
+          type: string
+          title: Personal Info Address
+        require_personal_info_registered:
+          type: boolean
+          title: Require Personal Info Registered
+        transferable:
+          type: boolean
+          title: Transferable
+        is_offering:
+          type: boolean
+          title: Is Offering
+        transfer_approval_required:
+          type: boolean
+          title: Transfer Approval Required
+        issue_price:
+          type: integer
+          title: Issue Price
+        cancellation_date:
+          type: string
+          title: Cancellation Date
+        memo:
+          type: string
+          title: Memo
+        principal_value:
+          type: integer
+          title: Principal Value
+        is_canceled:
+          type: boolean
+          title: Is Canceled
+        dividend_information:
+          $ref: '#/components/schemas/ShareDividendInformation'
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - personal_info_address
+        - require_personal_info_registered
+        - transferable
+        - is_offering
+        - transfer_approval_required
+        - issue_price
+        - cancellation_date
+        - memo
+        - principal_value
+        - is_canceled
+        - dividend_information
+      title: ShareToken
     ShareTokensSortItem:
       type: string
       enum:
@@ -10939,6 +10952,19 @@ components:
         - result_set
         - token_holder_list
       title: TokenHoldersResponse
+    TokenImage:
+      properties:
+        id:
+          type: integer
+          title: Id
+        url:
+          type: string
+          title: Url
+      type: object
+      required:
+        - id
+        - url
+      title: TokenImage
     TokenPositionsResponse:
       properties:
         result_set:

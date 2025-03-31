@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from enum import StrEnum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from app.model.schema.base import (
     BasePaginationQuery,
@@ -28,6 +28,7 @@ from app.model.schema.base import (
     ResultSet,
     SortOrder,
 )
+from app.model.schema.base.base import BondToken
 
 ############################
 # COMMON
@@ -94,56 +95,13 @@ class ListAllStraightBondTokensQuery(StraightBondTokensQuery):
 ############################
 # RESPONSE
 ############################
-class RetrieveStraightBondTokenResponse(BaseModel):
-    token_address: EthereumAddress
-    token_template: str = Field(examples=["IbetStraightBond"])
-    owner_address: EthereumAddress = Field(description="issuer address")
-    company_name: str
-    rsa_publickey: str
-    name: str = Field(description="token name")
-    symbol: str = Field(description="token symbol")
-    total_supply: int
-    tradable_exchange: EthereumAddress
-    contact_information: str
-    privacy_policy: str
-    status: bool
-    max_holding_quantity: Optional[int]
-    max_sell_amount: Optional[int]
-    personal_info_address: EthereumAddress
-    require_personal_info_registered: bool
-    transferable: bool
-    is_offering: bool
-    transfer_approval_required: bool
-    face_value: int
-    face_value_currency: str
-    interest_rate: float
-    interest_payment_date1: Optional[str]
-    interest_payment_date2: Optional[str]
-    interest_payment_date3: Optional[str]
-    interest_payment_date4: Optional[str]
-    interest_payment_date5: Optional[str]
-    interest_payment_date6: Optional[str]
-    interest_payment_date7: Optional[str]
-    interest_payment_date8: Optional[str]
-    interest_payment_date9: Optional[str]
-    interest_payment_date10: Optional[str]
-    interest_payment_date11: Optional[str]
-    interest_payment_date12: Optional[str]
-    interest_payment_currency: str
-    redemption_date: str
-    redemption_value: int
-    redemption_value_currency: str
-    base_fx_rate: float
-    return_date: str
-    return_amount: str
-    purpose: str
-    memo: str
-    is_redeemed: bool
+class RetrieveStraightBondTokenResponse(RootModel[BondToken]):
+    pass
 
 
 class ListAllStraightBondTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[RetrieveStraightBondTokenResponse]
+    tokens: list[BondToken]
 
 
 class ListAllStraightBondTokenAddressesResponse(BaseModel):
