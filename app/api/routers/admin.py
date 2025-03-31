@@ -157,9 +157,9 @@ async def register_admin_token(
     # Fetch token detail data to store cache
     if token_type == TokenType.IbetShare:
         token_obj = await ShareToken.get(async_session, contract_address)
+        await async_session.merge(token_obj.to_model())
     elif token_type == TokenType.IbetStraightBond:
         token_obj = await BondToken.get(async_session, contract_address)
-        await async_session.merge(token_obj.to_model())
         await async_session.merge(token_obj.to_model())
     elif token_type == TokenType.IbetMembership:
         token_obj = await MembershipToken.get(async_session, contract_address)
