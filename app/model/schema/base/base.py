@@ -33,23 +33,9 @@ from pydantic import (
 
 from app.validator import ethereum_address_validator
 
-
 ############################
 # COMMON
 ############################
-class TokenType(StrEnum):
-    IbetStraightBond = "IbetStraightBond"
-    IbetShare = "IbetShare"
-    IbetMembership = "IbetMembership"
-    IbetCoupon = "IbetCoupon"
-
-
-class ValueOperator(IntEnum):
-    EQUAL = 0
-    GTE = 1
-    LTE = 2
-
-
 EmailStr = constr(
     pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$", max_length=100
 )
@@ -57,6 +43,153 @@ EmailStr = constr(
 EthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
 
 NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
+
+
+class TokenType(StrEnum):
+    IbetStraightBond = "IbetStraightBond"
+    IbetShare = "IbetShare"
+    IbetMembership = "IbetMembership"
+    IbetCoupon = "IbetCoupon"
+
+
+class TokenImage(BaseModel):
+    id: int
+    url: str
+
+
+class BondToken(BaseModel):
+    token_address: EthereumAddress
+    token_template: str = Field(examples=["IbetStraightBond"])
+    owner_address: EthereumAddress = Field(description="issuer address")
+    company_name: str
+    rsa_publickey: str
+    name: str = Field(description="token name")
+    symbol: str = Field(description="token symbol")
+    total_supply: int
+    tradable_exchange: EthereumAddress
+    contact_information: str
+    privacy_policy: str
+    status: bool
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
+    personal_info_address: EthereumAddress
+    require_personal_info_registered: bool
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
+    face_value: int
+    face_value_currency: str
+    interest_rate: float
+    interest_payment_date1: Optional[str]
+    interest_payment_date2: Optional[str]
+    interest_payment_date3: Optional[str]
+    interest_payment_date4: Optional[str]
+    interest_payment_date5: Optional[str]
+    interest_payment_date6: Optional[str]
+    interest_payment_date7: Optional[str]
+    interest_payment_date8: Optional[str]
+    interest_payment_date9: Optional[str]
+    interest_payment_date10: Optional[str]
+    interest_payment_date11: Optional[str]
+    interest_payment_date12: Optional[str]
+    interest_payment_currency: str
+    redemption_date: str
+    redemption_value: int
+    redemption_value_currency: str
+    base_fx_rate: float
+    return_date: str
+    return_amount: str
+    purpose: str
+    memo: str
+    is_redeemed: bool
+
+
+class ShareDividendInformation(BaseModel):
+    dividends: float = Field(examples=[999.9999999999999])
+    dividend_record_date: str = Field(examples=["20200909"])
+    dividend_payment_date: str = Field(examples=["20201001"])
+
+
+class ShareToken(BaseModel):
+    token_address: EthereumAddress
+    token_template: str = Field(examples=["IbetShare"])
+    owner_address: EthereumAddress = Field(description="issuer address")
+    company_name: str
+    rsa_publickey: str
+    name: str = Field(description="token name")
+    symbol: str = Field(description="token symbol")
+    total_supply: int
+    tradable_exchange: EthereumAddress
+    contact_information: str
+    privacy_policy: str
+    status: bool
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
+    personal_info_address: str
+    require_personal_info_registered: bool
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
+    issue_price: int
+    cancellation_date: str
+    memo: str
+    principal_value: int
+    is_canceled: bool
+    dividend_information: ShareDividendInformation
+
+
+class MembershipToken(BaseModel):
+    token_address: EthereumAddress
+    token_template: str = Field(examples=["IbetMembership"])
+    owner_address: EthereumAddress = Field(description="issuer address")
+    company_name: str
+    rsa_publickey: str
+    name: str = Field(description="token name")
+    symbol: str = Field(description="token symbol")
+    total_supply: int
+    tradable_exchange: EthereumAddress
+    contact_information: str
+    privacy_policy: str
+    status: bool
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
+    details: str
+    return_details: str
+    expiration_date: str
+    memo: str
+    transferable: bool
+    initial_offering_status: bool
+    image_url: list[TokenImage]
+
+
+class CouponToken(BaseModel):
+    token_address: EthereumAddress
+    token_template: str = Field(examples=["IbetCoupon"])
+    owner_address: EthereumAddress = Field(description="issuer address")
+    company_name: str
+    rsa_publickey: str
+    name: str = Field(description="token name")
+    symbol: str = Field(description="token symbol")
+    total_supply: int
+    tradable_exchange: EthereumAddress
+    contact_information: str
+    privacy_policy: str
+    status: bool
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
+    details: str
+    return_details: str
+    expiration_date: str
+    memo: str
+    transferable: bool
+    initial_offering_status: bool
+    image_url: list[TokenImage]
+
+
+class ValueOperator(IntEnum):
+    EQUAL = 0
+    GTE = 1
+    LTE = 2
 
 
 def naive_utc_datetime_validator(value: Any) -> NaiveUTCDatetime | None:

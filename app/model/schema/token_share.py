@@ -20,12 +20,13 @@ SPDX-License-Identifier: Apache-2.0
 from enum import StrEnum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from app.model.schema.base import (
     BasePaginationQuery,
     EthereumAddress,
     ResultSet,
+    ShareToken,
     SortOrder,
 )
 
@@ -94,43 +95,13 @@ class ListAllShareTokensQuery(ShareTokensQuery):
 ############################
 # RESPONSE
 ############################
-class DividendInformation(BaseModel):
-    dividends: float = Field(examples=[999.9999999999999])
-    dividend_record_date: str = Field(examples=["20200909"])
-    dividend_payment_date: str = Field(examples=["20201001"])
-
-
-class RetrieveShareTokenResponse(BaseModel):
-    token_address: EthereumAddress
-    token_template: str = Field(examples=["IbetShare"])
-    owner_address: EthereumAddress = Field(description="issuer address")
-    company_name: str
-    rsa_publickey: str
-    name: str = Field(description="token name")
-    symbol: str = Field(description="token symbol")
-    total_supply: int
-    tradable_exchange: EthereumAddress
-    contact_information: str
-    privacy_policy: str
-    status: bool
-    max_holding_quantity: Optional[int]
-    max_sell_amount: Optional[int]
-    personal_info_address: str
-    require_personal_info_registered: bool
-    transferable: bool
-    is_offering: bool
-    transfer_approval_required: bool
-    issue_price: int
-    cancellation_date: str
-    memo: str
-    principal_value: int
-    is_canceled: bool
-    dividend_information: DividendInformation
+class RetrieveShareTokenResponse(RootModel[ShareToken]):
+    pass
 
 
 class ListAllShareTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[RetrieveShareTokenResponse]
+    tokens: list[ShareToken]
 
 
 class ListAllShareTokenAddressesResponse(BaseModel):
