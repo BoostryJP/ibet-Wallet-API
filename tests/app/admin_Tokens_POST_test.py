@@ -37,18 +37,8 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestAdminTokensPOST:
-    # テスト対象API
+    # Test API
     apiurl = "/Admin/Tokens"
-
-    token_param_1 = {
-        "is_public": True,
-        "max_holding_quantity": 100,
-        "max_sell_amount": 50000,
-    }
-
-    token_param_2 = {
-        "is_public": True,
-    }
 
     @staticmethod
     def bond_token_attribute(exchange_address, personal_info_address):
@@ -117,12 +107,12 @@ class TestAdminTokensPOST:
     # Normal
     ###########################################################################
 
-    # <Normal_1>
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
-        # テスト用発行体アカウント
+    # <Normal_1_1>
+    # Normal request
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Prepare data
         config.BOND_TOKEN_ENABLED = True
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
@@ -137,12 +127,16 @@ class TestAdminTokensPOST:
 
         register_bond_list(issuer, bond_token, token_list)
 
-        request_params = self.token_param_1
-        request_params["contract_address"] = bond_token["address"]
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+        # Call API
+        req_params = {
+            "is_public": True,
+            "max_holding_quantity": 100,
+            "max_sell_amount": 50000,
+            "contract_address": bond_token["address"],
+        }
+        resp = client.post(self.apiurl, json=req_params)
 
+        # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
@@ -196,46 +190,39 @@ class TestAdminTokensPOST:
 
         listing: Listing = session.scalars(
             select(Listing)
-            .where(Listing.token_address == self.token_param_1["contract_address"])
+            .where(Listing.token_address == req_params["contract_address"])
             .limit(1)
         ).first()
-        assert listing.token_address == self.token_param_1["contract_address"]
-        assert listing.is_public == self.token_param_1["is_public"]
-        assert (
-            listing.max_holding_quantity == self.token_param_1["max_holding_quantity"]
-        )
-        assert listing.max_sell_amount == self.token_param_1["max_sell_amount"]
+        assert listing.token_address == req_params["contract_address"]
+        assert listing.is_public == req_params["is_public"]
+        assert listing.max_holding_quantity == req_params["max_holding_quantity"]
+        assert listing.max_sell_amount == req_params["max_sell_amount"]
         assert listing.owner_address == issuer["account_address"]
 
         executable_contract: ExecutableContract = session.scalars(
             select(ExecutableContract)
             .where(
-                ExecutableContract.contract_address
-                == self.token_param_1["contract_address"]
+                ExecutableContract.contract_address == req_params["contract_address"]
             )
             .limit(1)
         ).first()
-        assert (
-            executable_contract.contract_address
-            == self.token_param_1["contract_address"]
-        )
+        assert executable_contract.contract_address == req_params["contract_address"]
 
         bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
-        assert bond.token_address == self.token_param_1["contract_address"]
+        assert bond.token_address == req_params["contract_address"]
         assert bond.owner_address == issuer["account_address"]
 
         position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
-        assert position.token_address == self.token_param_1["contract_address"]
+        assert position.token_address == req_params["contract_address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
-    # <Normal_2>
-    # 任意設定項目なし
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        # テスト用発行体アカウント
+    # <Normal_1_2>
+    # No settings for optional items
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Prepare data
         config.BOND_TOKEN_ENABLED = True
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
@@ -250,12 +237,14 @@ class TestAdminTokensPOST:
 
         register_bond_list(issuer, bond_token, token_list)
 
-        request_params = self.token_param_2
-        request_params["contract_address"] = bond_token["address"]
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+        # Call API
+        req_params = {
+            "is_public": True,
+            "contract_address": bond_token["address"],
+        }
+        resp = client.post(self.apiurl, json=req_params)
 
+        # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
@@ -313,7 +302,7 @@ class TestAdminTokensPOST:
             .limit(1)
         ).first()
         assert listing.token_address == bond_token["address"]
-        assert listing.is_public == self.token_param_2["is_public"]
+        assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
@@ -327,13 +316,12 @@ class TestAdminTokensPOST:
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
-    # <Normal_3>
-    # Position data has already indexed
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
-        # テスト用発行体アカウント
+    # <Normal_2>
+    # If balance data already exists, it will be overwritten.
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Prepare data
         config.BOND_TOKEN_ENABLED = True
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
@@ -355,12 +343,14 @@ class TestAdminTokensPOST:
         session.add(bf_position)
         session.commit()
 
-        request_params = self.token_param_2
-        request_params["contract_address"] = bond_token["address"]
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+        # Call API
+        req_params = {
+            "is_public": True,
+            "contract_address": bond_token["address"],
+        }
+        resp = client.post(self.apiurl, json=req_params)
 
+        # Assertion
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
@@ -418,7 +408,7 @@ class TestAdminTokensPOST:
             .limit(1)
         ).first()
         assert listing.token_address == bond_token["address"]
-        assert listing.is_public == self.token_param_2["is_public"]
+        assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
@@ -432,30 +422,102 @@ class TestAdminTokensPOST:
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
+    # <Normal_3>
+    # skip_conflict_error = True
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        issuer = eth_account["issuer"]
+
+        # Prepare data
+        config.BOND_TOKEN_ENABLED = True
+        token_list = TestAdminTokensPOST.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
+        exchange_address = to_checksum_address(
+            shared_contract["IbetStraightBondExchange"]["address"]
+        )
+        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        attribute = TestAdminTokensPOST.bond_token_attribute(
+            exchange_address, personal_info
+        )
+        bond_token = issue_bond_token(issuer, attribute)
+
+        register_bond_list(issuer, bond_token, token_list)
+
+        token = {
+            "token_address": bond_token["address"],
+            "is_public": True,
+            "max_holding_quantity": 100,
+            "max_sell_amount": 50000,
+        }
+        self.insert_listing_data(session, token)
+        session.commit()
+
+        # Call API
+        req_params = {
+            "is_public": True,
+            "contract_address": bond_token["address"],
+            "skip_conflict_error": True,
+        }
+        resp = client.post(self.apiurl, json=req_params)
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "token": {
+                "token_address": bond_token["address"],
+                "token_template": "IbetStraightBond",
+                "owner_address": issuer["account_address"],
+                "company_name": "",
+                "rsa_publickey": "",
+                "name": "テスト債券",
+                "symbol": "BOND",
+                "total_supply": 1000000,
+                "tradable_exchange": exchange_address,
+                "contact_information": "問い合わせ先",
+                "privacy_policy": "プライバシーポリシー",
+                "status": True,
+                "max_holding_quantity": 100,
+                "max_sell_amount": 50000,
+                "personal_info_address": personal_info,
+                "require_personal_info_registered": True,
+                "transferable": True,
+                "is_offering": False,
+                "transfer_approval_required": False,
+                "face_value": 10000,
+                "face_value_currency": "JPY",
+                "interest_rate": 0.0602,
+                "interest_payment_date1": "0101",
+                "interest_payment_date2": "0201",
+                "interest_payment_date3": "0301",
+                "interest_payment_date4": "0401",
+                "interest_payment_date5": "0501",
+                "interest_payment_date6": "0601",
+                "interest_payment_date7": "0701",
+                "interest_payment_date8": "0801",
+                "interest_payment_date9": "0901",
+                "interest_payment_date10": "1001",
+                "interest_payment_date11": "1101",
+                "interest_payment_date12": "1201",
+                "interest_payment_currency": "JPY",
+                "redemption_date": "20191231",
+                "redemption_value": 10000,
+                "redemption_value_currency": "JPY",
+                "base_fx_rate": 0.0,
+                "return_date": "20191231",
+                "return_amount": "商品券をプレゼント",
+                "purpose": "新商品の開発資金として利用。",
+                "memo": "メモ",
+                "is_redeemed": False,
+            }
+        }
+
     ###########################################################################
     # Error
     ###########################################################################
-
-    # <Error_1>
-    # headersなし
+    # ＜Error_1_1＞
     # 400（InvalidParameterError）
-    def test_error_1(self, client: TestClient, session: Session):
-        request_params = self.token_param_1
-        headers: dict[str, str] = {}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
-
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "description": "contract_address is invalid token address",
-            "message": "Invalid Parameter",
-        }
-
-    # ＜Error_2＞
-    # 入力値なし
-    # 400（InvalidParameterError）
-    def test_error_2(self, client: TestClient, session: Session):
+    # - No input params
+    def test_error_1_1(self, client: TestClient, session: Session):
         request_params: dict[str, str] = {}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -481,10 +543,10 @@ class TestAdminTokensPOST:
             "message": "Invalid Parameter",
         }
 
-    # ＜Error_3_1＞
-    # contract_addressのフォーマット誤り
+    # ＜Error_1_2＞
     # 400（InvalidParameterError）
-    def test_error_3_1(self, client: TestClient, session: Session):
+    # - Invalid contract_address
+    def test_error_1_2(self, client: TestClient, session: Session):
         request_params = {
             "contract_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7",  # アドレスが短い
             "is_public": True,
@@ -510,10 +572,10 @@ class TestAdminTokensPOST:
             ],
         }
 
-    # ＜Error_3_2＞
-    # 入力値の型誤り
+    # ＜Error_1_3＞
     # 400（InvalidParameterError）
-    def test_error_3_2(self, client: TestClient, session: Session):
+    # - Invalid type params
+    def test_error_1_3(self, client: TestClient, session: Session):
         request_params = {
             "contract_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": "Trueee",
@@ -550,10 +612,10 @@ class TestAdminTokensPOST:
             ],
         }
 
-    # ＜Error_3_3＞
-    # 最小値チェック
+    # ＜Error_1_4＞
     # 400（InvalidParameterError）
-    def test_error_3_3(self, client: TestClient, session: Session):
+    # - Validation error
+    def test_error_1_4(self, client: TestClient, session: Session):
         request_params = {
             "contract_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -586,13 +648,12 @@ class TestAdminTokensPOST:
             "message": "Invalid Parameter",
         }
 
-    # <Error_4>
-    # 指定のcontract_addressのレコードが listing テーブルに既に登録済
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
-        # テスト用発行体アカウント
+    # <Error_2_1>
+    # DataConflictError (listing)
+    def test_error_2_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Prepare data
         config.BOND_TOKEN_ENABLED = True
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
@@ -614,15 +675,18 @@ class TestAdminTokensPOST:
             "max_sell_amount": 50000,
         }
         self.insert_listing_data(session, token)
-
         session.commit()
 
-        request_params = self.token_param_1
-        request_params["contract_address"] = bond_token["address"]
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+        # Call API
+        req_params = {
+            "is_public": True,
+            "max_holding_quantity": 100,
+            "max_sell_amount": 50000,
+            "contract_address": bond_token["address"],
+        }
+        resp = client.post(self.apiurl, json=req_params)
 
+        # Assertion
         assert resp.status_code == 409
         assert resp.json()["meta"] == {
             "code": 40,
@@ -630,13 +694,12 @@ class TestAdminTokensPOST:
             "description": "contract_address already exist",
         }
 
-    # <Error_5>
-    # 指定のcontract_addressのレコードが executable_contract テーブルに既に登録済
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
-        # テスト用発行体アカウント
+    # <Error_2_2>
+    # DataConflictError (executable_contract)
+    def test_error_2_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Prepare data
         config.BOND_TOKEN_ENABLED = True
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
@@ -655,15 +718,18 @@ class TestAdminTokensPOST:
             "contract_address": bond_token["address"],
         }
         self.insert_executable_contract_data(session, contract)
-
         session.commit()
 
-        request_params = self.token_param_1
-        request_params["contract_address"] = bond_token["address"]
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+        # Call API
+        req_params = {
+            "is_public": True,
+            "max_holding_quantity": 100,
+            "max_sell_amount": 50000,
+            "contract_address": bond_token["address"],
+        }
+        resp = client.post(self.apiurl, json=req_params)
 
+        # Assertion
         assert resp.status_code == 409
         assert resp.json()["meta"] == {
             "code": 40,
@@ -671,16 +737,15 @@ class TestAdminTokensPOST:
             "description": "contract_address already exist",
         }
 
-    # <Error_6>
-    # 指定のcontract_addressが取扱していないtoken_template
-    def test_error_6(self, client: TestClient, session: Session, shared_contract):
-        # 債券トークン取扱無し
-        config.BOND_TOKEN_ENABLED = False
-
-        # テスト用発行体アカウント
+    # <Error_3>
+    # Token is not available
+    def test_error_3(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Bond token is disabled
+        config.BOND_TOKEN_ENABLED = False
+
+        # Prepare data
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
@@ -694,12 +759,16 @@ class TestAdminTokensPOST:
 
         register_bond_list(issuer, bond_token, token_list)
 
-        request_params = self.token_param_1
-        request_params["contract_address"] = bond_token["address"]
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+        # Call API
+        req_params = {
+            "is_public": True,
+            "max_holding_quantity": 100,
+            "max_sell_amount": 50000,
+            "contract_address": bond_token["address"],
+        }
+        resp = client.post(self.apiurl, json=req_params)
 
+        # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
@@ -707,13 +776,12 @@ class TestAdminTokensPOST:
             "description": "contract_address is invalid token address",
         }
 
-    # <Error_7>
-    # 指定のcontract_addressがTokenListに未登録のtoken_address
-    def test_error_7(self, client: TestClient, session: Session, shared_contract):
-        # テスト用発行体アカウント
+    # <Error_4>
+    # The specified `contract_address` is not registered in the TokenList.
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]
 
-        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        # Prepare data
         config.BOND_TOKEN_ENABLED = True
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
@@ -728,15 +796,14 @@ class TestAdminTokensPOST:
 
         register_bond_list(issuer, bond_token, token_list)
 
-        request_params = {
+        # Call API
+        req_params = {
             "contract_address": eth_account["issuer"]["account_address"],
             "is_public": True,
         }
+        resp = client.post(self.apiurl, json=req_params)
 
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
-
+        # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
