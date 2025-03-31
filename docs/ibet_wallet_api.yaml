@@ -292,8 +292,8 @@ paths:
     post:
       tags:
         - admin
-      summary: List a Token
-      description: Registers given token to listing.
+      summary: Add the token to the list
+      description: Add the token to the list
       operationId: TokensPOST
       requestBody:
         content:
@@ -9483,6 +9483,14 @@ components:
             - type: 'null'
           title: Max Sell Amount
           description: Maximum sell amount limit
+        skip_conflict_error:
+          anyOf:
+            - type: boolean
+            - type: 'null'
+          title: Skip Conflict Error
+          description: If set to `True`, a `200` response will be returned instead
+            of a `409` error in case of duplicate data.
+          default: false
       type: object
       required:
         - contract_address

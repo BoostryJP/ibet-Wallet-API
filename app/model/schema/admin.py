@@ -46,6 +46,10 @@ class RegisterAdminTokenRequest(BaseModel):
     max_sell_amount: int | None = Field(
         None, ge=0, description="Maximum sell amount limit"
     )
+    skip_conflict_error: bool | None = Field(
+        False,
+        description="If set to `True`, a `200` response will be returned instead of a `409` error in case of duplicate data.",
+    )
 
 
 class UpdateAdminTokenRequest(BaseModel):
