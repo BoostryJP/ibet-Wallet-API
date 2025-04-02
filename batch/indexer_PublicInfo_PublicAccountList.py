@@ -55,7 +55,7 @@ class Processor:
 
         # Get data from PUBLIC_ACCOUNT_LIST_URL
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(trust_env=True) as session:
                 async with session.get(
                     PUBLIC_ACCOUNT_LIST_URL,
                     timeout=ClientTimeout(

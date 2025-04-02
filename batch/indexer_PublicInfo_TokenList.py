@@ -51,7 +51,7 @@ class Processor:
 
         # Get from TOKEN_LIST_URL
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(trust_env=True) as session:
                 async with session.get(
                     TOKEN_LIST_URL,
                     timeout=ClientTimeout(
