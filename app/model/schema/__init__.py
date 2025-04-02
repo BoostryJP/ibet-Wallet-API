@@ -130,6 +130,7 @@ from .token import (
     ListAllTokenHoldersQuery,
     ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
+    ListTokenTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
     SearchTransferApprovalHistoryRequest,
