@@ -160,6 +160,31 @@ class ListAllTransferHistoryQuery(BasePaginationQuery):
         None, description="source event of transfer"
     )
     data: Optional[str] = Field(None, description="source event data")
+    token_address: Optional[str] = Field(None, description="token address")
+    transaction_hash: Optional[str] = Field(None, description="transaction hash")
+    from_address: Optional[str] = Field(None, description="from address")
+    to_address: Optional[str] = Field(None, description="to address")
+    value: Optional[int] = Field(None, description="value")
+    value_operator: Optional[ValueOperator] = Field(
+        ValueOperator.EQUAL,
+        description="value filter condition(0: equal, 1: greater than, 2: less than)",
+    )
+    created_from: Optional[ValidatedNaiveUTCDatetime] = Field(
+        None, description="created datetime (From)"
+    )
+    created_to: Optional[ValidatedNaiveUTCDatetime] = Field(
+        None, description="created datetime (To)"
+    )
+
+
+class ListTokenTransferHistoryQuery(BasePaginationQuery):
+    account_tag: Optional[str] = Field(
+        None, description="account tag (**this affects total number**)"
+    )
+    source_event: Optional[TransferSourceEvent] = Field(
+        None, description="source event of transfer"
+    )
+    data: Optional[str] = Field(None, description="source event data")
     transaction_hash: Optional[str] = Field(None, description="transaction hash")
     from_address: Optional[str] = Field(None, description="from address")
     to_address: Optional[str] = Field(None, description="to address")

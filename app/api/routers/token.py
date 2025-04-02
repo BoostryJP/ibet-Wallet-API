@@ -46,6 +46,7 @@ from app.model.schema import (
     ListAllTokenHoldersQuery,
     ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
+    ListTokenTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
     SearchTransferApprovalHistoryRequest,
@@ -760,16 +761,124 @@ async def get_token_holders_collection(
 
 
 @router.get(
-    "/Token/{token_address}/TransferHistory",
-    summary="Token Transfer History",
-    operation_id="TransferHistory",
+    "/Token/TransferHistory",
+    summary="List all transfer history",
+    operation_id="ListAllTransferHistory",
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def list_all_transfer_histories(
     async_session: DBAsyncSession,
-    token_address: Annotated[EthereumAddress, Path(description="Token address")],
     request_query: Annotated[ListAllTransferHistoryQuery, Query()],
+):
+    """
+    Returns a list of transfer histories.
+    """
+
+    # Base query
+    from_address_tag = aliased(AccountTag)
+    to_address_tag = aliased(AccountTag)
+    stmt = (
+        select(IDXTransfer)
+        .outerjoin(
+            from_address_tag,
+            IDXTransfer.from_address == from_address_tag.account_address,
+        )
+        .outerjoin(
+            to_address_tag, IDXTransfer.to_address == to_address_tag.account_address
+        )
+        .order_by(IDXTransfer.id)
+    )
+    if request_query.account_tag is not None:
+        stmt = stmt.where(
+            or_(
+                from_address_tag.account_tag == request_query.account_tag,
+                to_address_tag.account_tag == request_query.account_tag,
+            )
+        )
+
+    total = await async_session.scalar(
+        stmt.with_only_columns(func.count()).order_by(None)
+    )
+
+    # Filter
+    if request_query.source_event is not None:
+        stmt = stmt.where(IDXTransfer.source_event == request_query.source_event.value)
+    if request_query.data is not None:
+        stmt = stmt.where(
+            cast(IDXTransfer.data, String).like("%" + request_query.data + "%")
+        )
+    if request_query.token_address is not None:
+        stmt = stmt.where(
+            IDXTransfer.token_address.like("%" + request_query.token_address + "%")
+        )
+    if request_query.transaction_hash is not None:
+        stmt = stmt.where(
+            IDXTransfer.transaction_hash.like(
+                "%" + request_query.transaction_hash + "%"
+            )
+        )
+    if request_query.from_address is not None:
+        stmt = stmt.where(
+            IDXTransfer.from_address.like("%" + request_query.from_address + "%")
+        )
+    if request_query.to_address is not None:
+        stmt = stmt.where(
+            IDXTransfer.to_address.like("%" + request_query.to_address + "%")
+        )
+    if request_query.created_from is not None:
+        stmt = stmt.where(IDXTransfer.created >= request_query.created_from)
+    if request_query.created_to is not None:
+        stmt = stmt.where(IDXTransfer.created <= request_query.created_to)
+    if request_query.value is not None and request_query.value_operator is not None:
+        match request_query.value_operator:
+            case ValueOperator.EQUAL:
+                stmt = stmt.where(IDXTransfer.value == request_query.value)
+            case ValueOperator.GTE:
+                stmt = stmt.where(IDXTransfer.value >= request_query.value)
+            case ValueOperator.LTE:
+                stmt = stmt.where(IDXTransfer.value <= request_query.value)
+
+    count = await async_session.scalar(
+        stmt.with_only_columns(func.count()).order_by(None)
+    )
+
+    # Sort
+    stmt = stmt.order_by(IDXTransfer.id)
+
+    # Pagination
+    if request_query.offset is not None:
+        stmt = stmt.offset(request_query.offset)
+    if request_query.limit is not None:
+        stmt = stmt.limit(request_query.limit)
+
+    transfer_history: Sequence[IDXTransfer] = (await async_session.scalars(stmt)).all()
+
+    resp_data = [transfer_event.json() for transfer_event in transfer_history]
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": request_query.offset,
+            "limit": request_query.limit,
+            "total": total,
+        },
+        "transfer_history": resp_data,
+    }
+
+    return json_response({**SuccessResponse.default(), "data": data})
+
+
+@router.get(
+    "/Token/{token_address}/TransferHistory",
+    summary="List token transfer history",
+    operation_id="ListTokenTransferHistory",
+    response_model=GenericSuccessResponse[TransferHistoriesResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+)
+async def list_token_transfer_histories(
+    async_session: DBAsyncSession,
+    token_address: Annotated[EthereumAddress, Path(description="Token address")],
+    request_query: Annotated[ListTokenTransferHistoryQuery, Query()],
 ):
     """
     Returns a list of transfer histories for a given token.
@@ -783,7 +892,7 @@ async def list_all_transfer_histories(
     if listed_token is None:
         raise DataNotExistsError("token_address: %s" % token_address)
 
-    # Retrieve Transfer Histories
+    # Base query
     from_address_tag = aliased(AccountTag)
     to_address_tag = aliased(AccountTag)
     stmt = (
@@ -799,6 +908,7 @@ async def list_all_transfer_histories(
         .order_by(IDXTransfer.id)
     )
 
+    # Filter
     if request_query.account_tag is not None:
         stmt = stmt.where(
             or_(
@@ -848,11 +958,15 @@ async def list_all_transfer_histories(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
+    # Sort
+    stmt = stmt.order_by(IDXTransfer.id)
+
     # Pagination
     if request_query.offset is not None:
         stmt = stmt.offset(request_query.offset)
     if request_query.limit is not None:
         stmt = stmt.limit(request_query.limit)
+
     transfer_history: Sequence[IDXTransfer] = (await async_session.scalars(stmt)).all()
 
     resp_data = [transfer_event.json() for transfer_event in transfer_history]
@@ -872,7 +986,7 @@ async def list_all_transfer_histories(
 @router.post(
     "/Token/{token_address}/TransferHistory/Search",
     summary="Search Token Transfer History",
-    operation_id="SearchTransferHistory",
+    operation_id="SearchTokenTransferHistory",
     response_model=GenericSuccessResponse[TransferHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
@@ -1006,7 +1120,7 @@ async def search_transfer_histories(
 @router.get(
     "/Token/{token_address}/TransferApprovalHistory",
     summary="Token Transfer Approval History",
-    operation_id="TransferApprovalHistory",
+    operation_id="ListTokenTransferApprovalHistory",
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
@@ -1108,7 +1222,7 @@ async def list_all_transfer_approval_histories(
 @router.post(
     "/Token/{token_address}/TransferApprovalHistory/Search",
     summary="Search Token Transfer Approval History",
-    operation_id="SearchTransferApprovalHistory",
+    operation_id="SearchTokenTransferApprovalHistory",
     response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )

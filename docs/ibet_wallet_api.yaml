@@ -3149,13 +3149,180 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
           description: Not Found
+  /Token/TransferHistory:
+    get:
+      tags:
+        - token_info
+      summary: List all transfer history
+      description: Returns a list of transfer histories.
+      operationId: ListAllTransferHistory
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: account_tag
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: account tag (**this affects total number**)
+            title: Account Tag
+          description: account tag (**this affects total number**)
+        - name: source_event
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/TransferSourceEvent'
+              - type: 'null'
+            description: source event of transfer
+            title: Source Event
+          description: source event of transfer
+        - name: data
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: source event data
+            title: Data
+          description: source event data
+        - name: token_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: token address
+            title: Token Address
+          description: token address
+        - name: transaction_hash
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: transaction hash
+            title: Transaction Hash
+          description: transaction hash
+        - name: from_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: from address
+            title: From Address
+          description: from address
+        - name: to_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: to address
+            title: To Address
+          description: to address
+        - name: value
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: value
+            title: Value
+          description: value
+        - name: value_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
+            default: 0
+            title: Value Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
+        - name: created_from
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (From)
+            title: Created From
+          description: created datetime (From)
+        - name: created_to
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (To)
+            title: Created To
+          description: created datetime (To)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listalltransferhistory
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
   /Token/{token_address}/TransferHistory:
     get:
       tags:
         - token_info
-      summary: Token Transfer History
+      summary: List token transfer history
       description: Returns a list of transfer histories for a given token.
-      operationId: TransferHistory
+      operationId: ListTokenTransferHistory
       parameters:
         - name: token_address
           in: path
@@ -3306,7 +3473,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Transferhistory
+                title: Response 400 Listtokentransferhistory
           description: Bad Request
         '404':
           content:
@@ -3321,7 +3488,7 @@ paths:
       summary: Search Token Transfer History
       description: Returns a list of transfer histories for a given token using detailed
         search query.
-      operationId: SearchTransferHistory
+      operationId: SearchTokenTransferHistory
       parameters:
         - name: token_address
           in: path
@@ -3351,7 +3518,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Searchtransferhistory
+                title: Response 400 Searchtokentransferhistory
           description: Bad Request
         '404':
           content:
@@ -3365,7 +3532,7 @@ paths:
         - token_info
       summary: Token Transfer Approval History
       description: Returns a list of transfer approval histories for a given token.
-      operationId: TransferApprovalHistory
+      operationId: ListTokenTransferApprovalHistory
       parameters:
         - name: token_address
           in: path
@@ -3464,7 +3631,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Transferapprovalhistory
+                title: Response 400 Listtokentransferapprovalhistory
           description: Bad Request
         '404':
           content:
@@ -3479,7 +3646,7 @@ paths:
       summary: Search Token Transfer Approval History
       description: Returns a list of transfer approval histories for a given token
         using detailed search query.
-      operationId: SearchTransferApprovalHistory
+      operationId: SearchTokenTransferApprovalHistory
       parameters:
         - name: token_address
           in: path
@@ -3509,7 +3676,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Searchtransferapprovalhistory
+                title: Response 400 Searchtokentransferapprovalhistory
           description: Bad Request
         '404':
           content:
