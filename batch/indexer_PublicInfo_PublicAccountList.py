@@ -88,16 +88,18 @@ class Processor:
             # Insert account list
             for i, _account in enumerate(account_list_json):
                 key_manager = _account.get("key_manager", None)
+                key_manager_name = _account.get("key_manager_name", None)
                 account_type = _account.get("type", None)
                 account_address = _account.get("account_address", None)
 
                 if (
                     not isinstance(key_manager, str)
+                    or not isinstance(key_manager_name, str)
                     or not isinstance(account_type, int)
                     or not isinstance(account_address, str)
                 ):
                     LOG.notice(
-                        f"Invalid type: key_manager={key_manager}, type={account_type}, account_address={account_address}"
+                        f"Invalid type: key_manager={key_manager}, key_manager_name={key_manager_name}, type={account_type}, account_address={account_address}"
                     )
                     continue
                 try:
@@ -110,6 +112,7 @@ class Processor:
                 await self.__sink_on_account_list(
                     db_session=db_session,
                     key_manager=key_manager,
+                    key_manager_name=key_manager_name,
                     account_type=account_type,
                     account_address=account_address,
                 )
@@ -127,11 +130,13 @@ class Processor:
     async def __sink_on_account_list(
         db_session: AsyncSession,
         key_manager: str,
+        key_manager_name: str,
         account_type: int,
         account_address: str,
     ):
         _account_list = PublicAccountList()
         _account_list.key_manager = key_manager
+        _account_list.key_manager_name = key_manager_name
         _account_list.account_type = account_type
         _account_list.account_address = account_address
         await db_session.merge(_account_list)

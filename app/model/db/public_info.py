@@ -67,16 +67,19 @@ class PublicAccountList(Base):
 
     # Key Manager
     key_manager: Mapped[str] = mapped_column(String(20), primary_key=True)
+    # Key Manager Name
+    key_manager_name: Mapped[str] = mapped_column(String(200), nullable=False)
     # Account Type
     account_type: Mapped[Literal[1, 2, 3, 4, 5]] = mapped_column(
         Integer, primary_key=True
     )
     # Account Address
-    account_address: Mapped[str | None] = mapped_column(String(42), nullable=False)
+    account_address: Mapped[str] = mapped_column(String(42), nullable=False)
 
     def json(self):
         return {
             "key_manager": self.key_manager,
+            "key_manager_name": self.key_manager_name,
             "account_type": self.account_type,
             "account_address": self.account_address,
         }

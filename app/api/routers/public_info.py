@@ -130,6 +130,12 @@ async def list_all_public_accounts(
     # Filter
     if request_query.key_manager is not None:
         stmt = stmt.where(PublicAccountList.key_manager == request_query.key_manager)
+    if request_query.key_manager_name is not None:
+        stmt = stmt.where(
+            PublicAccountList.key_manager_name.like(
+                "%" + request_query.key_manager_name + "%"
+            )
+        )
 
     count = await async_session.scalar(
         stmt.with_only_columns(func.count())
