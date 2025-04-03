@@ -65,9 +65,11 @@ class MockResponse:
 @pytest.mark.asyncio
 class TestProcessor:
     test_key_manager_1 = "test_key_manager_1"
+    test_key_manager_name_1 = "test_key_manager_name_1"
     test_account_address_1 = "0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040f"
 
     test_key_manager_2 = "test_key_manager_2"
+    test_key_manager_name_2 = "test_key_manager_name_2"
     test_account_address_2 = "0x28e0ad30c43B3D55851b881E25586926894de3e9"
 
     ###########################################################################
@@ -81,6 +83,7 @@ class TestProcessor:
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
+        _account_list.key_manager_name = self.test_key_manager_name_1
         _account_list.account_type = 1
         _account_list.account_address = self.test_account_address_1
         async_session.add(_account_list)
@@ -107,6 +110,7 @@ class TestProcessor:
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
+        _account_list.key_manager_name = self.test_key_manager_name_1
         _account_list.account_type = 1
         _account_list.account_address = self.test_account_address_1
         async_session.add(_account_list)
@@ -118,11 +122,13 @@ class TestProcessor:
                 [
                     {
                         "key_manager": self.test_key_manager_1,
+                        "key_manager_name": self.test_key_manager_name_1,
                         "type": 2,
                         "account_address": self.test_account_address_1,
                     },
                     {
                         "key_manager": self.test_key_manager_2,
+                        "key_manager_name": self.test_key_manager_name_2,
                         "type": 3,
                         "account_address": self.test_account_address_2,
                     },
@@ -147,11 +153,13 @@ class TestProcessor:
 
         assert _account_list_af[0].json() == {
             "key_manager": self.test_key_manager_1,
+            "key_manager_name": self.test_key_manager_name_1,
             "account_type": 2,
             "account_address": self.test_account_address_1,
         }
         assert _account_list_af[1].json() == {
             "key_manager": self.test_key_manager_2,
+            "key_manager_name": self.test_key_manager_name_2,
             "account_type": 3,
             "account_address": self.test_account_address_2,
         }
@@ -167,11 +175,13 @@ class TestProcessor:
                 [
                     {
                         "key_manager": self.test_key_manager_1,
+                        "key_manager_name": self.test_key_manager_name_1,
                         "type": 1,
                         "account_address": self.test_account_address_1,
                     },
                     {
                         "key_manager": self.test_key_manager_2,
+                        "key_manager_name": self.test_key_manager_name_2,
                         "type": 2,
                         "account_address": self.test_account_address_2,
                     },
@@ -186,11 +196,13 @@ class TestProcessor:
                 [
                     {
                         "key_manager": self.test_key_manager_1,
+                        "key_manager_name": self.test_key_manager_name_1,
                         "type": 1,
                         "account_address": self.test_account_address_1,
                     },
                     {
                         "key_manager": self.test_key_manager_2,
+                        "key_manager_name": self.test_key_manager_name_2,
                         "type": 2,
                         "account_address": self.test_account_address_2,
                     },
@@ -213,11 +225,13 @@ class TestProcessor:
 
         assert _account_list_af[0].json() == {
             "key_manager": self.test_key_manager_1,
+            "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
         }
         assert _account_list_af[1].json() == {
             "key_manager": self.test_key_manager_2,
+            "key_manager_name": self.test_key_manager_name_2,
             "account_type": 2,
             "account_address": self.test_account_address_2,
         }
@@ -240,11 +254,13 @@ class TestProcessor:
                 [
                     {
                         "key_manager": self.test_key_manager_1,
+                        "key_manager_name": self.test_key_manager_name_1,
                         "type": 1,
                         "account_address": self.test_account_address_1,
                     },
                     {
                         "key_manager": self.test_key_manager_2,
+                        "key_manager_name": self.test_key_manager_name_2,
                         "type": 2,
                         "account_address": self.test_account_address_2,
                     },
@@ -259,6 +275,7 @@ class TestProcessor:
                 [
                     {
                         "key_manager": self.test_key_manager_1,
+                        "key_manager_name": self.test_key_manager_name_1,
                         "type": 1,
                         "account_address": self.test_account_address_1,
                     },
@@ -281,6 +298,7 @@ class TestProcessor:
 
         assert _account_list_af[0].json() == {
             "key_manager": self.test_key_manager_1,
+            "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
         }
@@ -307,6 +325,7 @@ class TestProcessor:
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
+        _account_list.key_manager_name = self.test_key_manager_name_1
         _account_list.account_type = 1
         _account_list.account_address = self.test_account_address_1
         async_session.add(_account_list)
@@ -330,6 +349,7 @@ class TestProcessor:
 
         assert _account_list_af[0].json() == {
             "key_manager": self.test_key_manager_1,
+            "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
         }
@@ -341,6 +361,7 @@ class TestProcessor:
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
+        _account_list.key_manager_name = self.test_key_manager_name_1
         _account_list.account_type = 1
         _account_list.account_address = self.test_account_address_1
         async_session.add(_account_list)
@@ -367,6 +388,7 @@ class TestProcessor:
 
         assert _account_list_af[0].json() == {
             "key_manager": self.test_key_manager_1,
+            "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
         }
@@ -381,6 +403,7 @@ class TestProcessor:
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
+        _account_list.key_manager_name = self.test_key_manager_name_1
         _account_list.account_type = 1
         _account_list.account_address = self.test_account_address_1
         async_session.add(_account_list)
@@ -404,6 +427,7 @@ class TestProcessor:
 
         assert _account_list_af[0].json() == {
             "key_manager": self.test_key_manager_1,
+            "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
         }
@@ -417,34 +441,52 @@ class TestProcessor:
         [
             {
                 "key_manager": 123,  # Invalid key_manager
+                "key_manager_name": test_key_manager_name_1,
                 "type": 1,
                 "account_address": test_account_address_1,
             },
             {
                 "key_manager": test_key_manager_1,
+                "key_manager_name": 123,  # Invalid key_manager_name
+                "type": 1,
+                "account_address": test_account_address_1,
+            },
+            {
+                "key_manager": test_key_manager_1,
+                "key_manager_name": test_key_manager_name_1,
                 "type": "1",  # Invalid type
                 "account_address": test_account_address_1,
             },
             {
                 "key_manager": test_key_manager_1,
+                "key_manager_name": test_key_manager_name_1,
                 "type": 1,
                 "account_address": 123,  # Invalid account_address (Type error)
             },
             {
                 "key_manager": test_key_manager_1,
+                "key_manager_name": test_key_manager_name_1,
                 "type": 1,
                 "account_address": "invalid_address",  # Invalid account_address (Not checksum address)
             },
             {
+                "key_manager_name": test_key_manager_name_1,
                 "type": 1,
                 "account_address": test_account_address_1,
             },  # Missing required fields
             {
                 "key_manager": test_key_manager_1,
+                "type": 1,
                 "account_address": test_account_address_1,
             },  # Missing required fields
             {
                 "key_manager": test_key_manager_1,
+                "key_manager_name": test_key_manager_name_1,
+                "account_address": test_account_address_1,
+            },  # Missing required fields
+            {
+                "key_manager": test_key_manager_1,
+                "key_manager_name": test_key_manager_name_1,
                 "type": 1,
             },  # Missing required fields
         ],
@@ -453,6 +495,7 @@ class TestProcessor:
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
+        _account_list.key_manager_name = self.test_key_manager_name_1
         _account_list.account_type = 1
         _account_list.account_address = self.test_account_address_1
         async_session.add(_account_list)
@@ -485,6 +528,7 @@ class TestProcessor:
                 [
                     {
                         "key_manager": self.test_key_manager_1,
+                        "key_manager_name": self.test_key_manager_name_1,
                         "type": 2,
                         "account_address": self.test_account_address_1,
                     },

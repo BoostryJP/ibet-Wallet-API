@@ -50,6 +50,7 @@ class IbetShareToken(TokenBase):
 
 class PublicAccount(BaseModel):
     key_manager: str
+    key_manager_name: str
     account_type: Literal[1, 2, 3, 4, 5]
     account_address: EthereumAddress
 
@@ -75,11 +76,13 @@ class ListAllPublicListedTokensQuery(BasePaginationQuery):
 
 class ListAllPublicAccountsSortItem(StrEnum):
     key_manager = "key_manager"
+    key_manager_name = "key_manager_name"
     account_address = "account_address"
 
 
 class ListAllPublicAccountsQuery(BasePaginationQuery):
     key_manager: Optional[str] = Field(None, description="Key manager")
+    key_manager_name: Optional[str] = Field(None, description="Key manager name")
     sort_item: ListAllPublicAccountsSortItem = Field(
         default=ListAllPublicAccountsSortItem.key_manager, description="sort item"
     )

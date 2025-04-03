@@ -130,6 +130,16 @@ paths:
             description: Key manager
             title: Key Manager
           description: Key manager
+        - name: key_manager_name
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: Key manager name
+            title: Key Manager Name
+          description: Key manager name
         - name: sort_item
           in: query
           required: false
@@ -8689,6 +8699,7 @@ components:
       type: string
       enum:
         - key_manager
+        - key_manager_name
         - account_address
       title: ListAllPublicAccountsSortItem
     ListAllPublicListedTokensResponse:
@@ -9608,6 +9619,9 @@ components:
         key_manager:
           type: string
           title: Key Manager
+        key_manager_name:
+          type: string
+          title: Key Manager Name
         account_type:
           type: integer
           enum:
@@ -9623,6 +9637,7 @@ components:
       type: object
       required:
         - key_manager
+        - key_manager_name
         - account_type
         - account_address
       title: PublicAccount
