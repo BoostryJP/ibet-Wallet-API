@@ -21,7 +21,7 @@ dependencies = [
     "pydantic[email]~=2.10.3",
     "sqlalchemy[asyncio]<3.0.0,>=2.0.33",
     "uvicorn[standard]~=0.34.0",
-    "web3==7.8.0",
+    "web3==7.5.0",
     "tzdata<2026.0,>=2025.1",
     "alembic<2.0.0,>=1.14.0",
     "aiomysql==0.2.0",
