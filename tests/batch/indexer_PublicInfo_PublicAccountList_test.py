@@ -156,12 +156,14 @@ class TestProcessor:
             "key_manager_name": self.test_key_manager_name_1,
             "account_type": 2,
             "account_address": self.test_account_address_1,
+            "modified": mock.ANY,
         }
         assert _account_list_af[1].json() == {
             "key_manager": self.test_key_manager_2,
             "key_manager_name": self.test_key_manager_name_2,
             "account_type": 3,
             "account_address": self.test_account_address_2,
+            "modified": mock.ANY,
         }
 
     # <Normal_3_1>
@@ -228,12 +230,14 @@ class TestProcessor:
             "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
+            "modified": mock.ANY,
         }
         assert _account_list_af[1].json() == {
             "key_manager": self.test_key_manager_2,
             "key_manager_name": self.test_key_manager_name_2,
             "account_type": 2,
             "account_address": self.test_account_address_2,
+            "modified": mock.ANY,
         }
 
         assert 1 == caplog.record_tuples.count(
@@ -301,6 +305,7 @@ class TestProcessor:
             "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
+            "modified": mock.ANY,
         }
 
         assert 0 == caplog.record_tuples.count(
@@ -352,6 +357,7 @@ class TestProcessor:
             "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
+            "modified": mock.ANY,
         }
 
     # <Error_1_2>
@@ -391,6 +397,7 @@ class TestProcessor:
             "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
+            "modified": mock.ANY,
         }
 
     # <Error_1_3>
@@ -430,6 +437,7 @@ class TestProcessor:
             "key_manager_name": self.test_key_manager_name_1,
             "account_type": 1,
             "account_address": self.test_account_address_1,
+            "modified": mock.ANY,
         }
 
     # <Error_2>

@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from unittest import mock
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -90,12 +92,14 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 1,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_2,
                     "key_manager_name": self.test_key_manager_name_2,
                     "account_type": 2,
                     "account_address": self.test_account_address_2,
+                    "modified": mock.ANY,
                 },
             ],
         }
@@ -134,6 +138,7 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_2,
                     "account_type": 2,
                     "account_address": self.test_account_address_2,
+                    "modified": mock.ANY,
                 },
             ],
         }
@@ -172,6 +177,7 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_2,
                     "account_type": 2,
                     "account_address": self.test_account_address_2,
+                    "modified": mock.ANY,
                 },
             ],
         }
@@ -221,18 +227,21 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_2,
                     "account_type": 2,
                     "account_address": self.test_account_address_2,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_1,
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 1,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_1,
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 2,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
             ],
         }
@@ -283,18 +292,21 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_2,
                     "account_type": 2,
                     "account_address": self.test_account_address_2,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_1,
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 1,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_1,
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 2,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
             ],
         }
@@ -345,18 +357,21 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_2,
                     "account_type": 2,
                     "account_address": self.test_account_address_2,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_1,
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 1,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
                 {
                     "key_manager": self.test_key_manager_1,
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 2,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
             ],
         }
@@ -404,6 +419,7 @@ class TestListAllPublicAccounts:
                     "key_manager_name": self.test_key_manager_name_1,
                     "account_type": 2,
                     "account_address": self.test_account_address_1,
+                    "modified": mock.ANY,
                 },
             ],
         }
