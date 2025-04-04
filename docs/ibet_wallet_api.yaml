@@ -9634,12 +9634,17 @@ components:
         account_address:
           type: string
           title: Account Address
+        modified:
+          type: string
+          title: Modified
+          description: Updated Datetime (local timezone)
       type: object
       required:
         - key_manager
         - key_manager_name
         - account_type
         - account_address
+        - modified
       title: PublicAccount
     RegisterAdminTokenRequest:
       properties:
