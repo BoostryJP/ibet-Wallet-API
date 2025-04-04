@@ -116,7 +116,7 @@ class Processor:
                     self.__web3_errors(
                         db_session=local_session, endpoint_uri=endpoint_uri
                     )
-                    LOG.error(f"Node connection failed: {endpoint_uri}")
+                    LOG.exception(f"Node connection failed: {endpoint_uri}")
                 local_session.commit()
         finally:
             local_session.close()
