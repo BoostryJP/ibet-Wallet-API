@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import logging
 from unittest import mock
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import select
@@ -47,63 +47,56 @@ def caplog(caplog: pytest.LogCaptureFixture):
     LOG.setLevel(default_log_level)
 
 
-@pytest.mark.asyncio
 class TestProcessorSendChatWebhook:
     # Normal_1
     # No unsent hook exists
-    async def test_normal_1(self, processor, async_session, caplog):
+    def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-        ):
-            await processor.process()
-            await async_session.commit()
+        with mock.patch("requests.post", MagicMock(side_effect=None)):
+            processor.process()
+            session.commit()
 
         # Assertion
         assert 0 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     # Normal_2
     # Unsent hook exists
-    async def test_normal_2(self, processor, async_session, caplog):
+    def test_normal_2(self, processor, session, caplog):
         # Prepare data
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title1", "text": "test_text"})
-        async_session.add(hook)
+        session.add(hook)
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title2", "text": "test_text"})
-        async_session.add(hook)
-        await async_session.commit()
+        session.add(hook)
+        session.commit()
 
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-        ):
-            await processor.process()
-            await async_session.commit()
+        with mock.patch("requests.post", MagicMock(side_effect=None)):
+            processor.process()
+            session.commit()
 
         # Assertion
-        assert len((await async_session.scalars(select(ChatWebhook))).all()) == 0
+        assert len((session.scalars(select(ChatWebhook))).all()) == 0
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     # Normal_3
     # Fail to send message -> Skip
-    async def test_normal_3(self, processor, async_session, caplog):
+    def test_normal_3(self, processor, session, caplog):
         # Prepare data
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title", "text": "test_text"})
-        async_session.add(hook)
-        await async_session.commit()
+        session.add(hook)
+        session.commit()
 
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=Exception())
-        ):
-            await processor.process()
-            await async_session.commit()
+        with mock.patch("requests.post", MagicMock(side_effect=Exception())):
+            processor.process()
+            session.commit()
 
         # Assertion
-        assert len((await async_session.scalars(select(ChatWebhook))).all()) == 0
+        assert len((session.scalars(select(ChatWebhook))).all()) == 0
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, logging.ERROR, "Failed to send chat webhook")
@@ -117,25 +110,23 @@ class TestProcessorSendChatWebhook:
 
     # Error_1
     # SQLAlchemyError
-    async def test_error_1(self, processor, async_session, caplog):
+    def test_error_1(self, processor, session, caplog):
         # Prepare data
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title", "text": "test_text"})
-        async_session.add(hook)
-        await async_session.commit()
+        session.add(hook)
+        session.commit()
 
         # Run processor
         with (
-            mock.patch(
-                "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-            ),
+            mock.patch("requests.post", MagicMock(side_effect=None)),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            await processor.process()
-            await async_session.commit()
+            processor.process()
+            session.commit()
 
         # Assertion
-        assert len((await async_session.scalars(select(ChatWebhook))).all()) == 1
+        assert len((session.scalars(select(ChatWebhook))).all()) == 1
 
         assert 0 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
