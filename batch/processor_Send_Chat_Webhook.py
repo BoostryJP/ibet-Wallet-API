@@ -22,7 +22,7 @@ import sys
 import time
 from typing import Sequence
 
-import aiohttp
+import httpx
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -46,8 +46,8 @@ class Processor:
 
                 for hook in hook_list:
                     try:
-                        async with aiohttp.ClientSession(trust_env=True) as session:
-                            await session.post(CHAT_WEBHOOK_URL, json=hook.message)
+                        async with httpx.AsyncClient() as client:
+                            await client.post(CHAT_WEBHOOK_URL, json=hook.message)
                     except Exception:
                         LOG.exception("Failed to send chat webhook")
                     finally:

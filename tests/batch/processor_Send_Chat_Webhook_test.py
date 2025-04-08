@@ -53,9 +53,7 @@ class TestProcessorSendChatWebhook:
     # No unsent hook exists
     async def test_normal_1(self, processor, async_session, caplog):
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-        ):
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)):
             await processor.process()
             await async_session.commit()
 
@@ -75,9 +73,7 @@ class TestProcessorSendChatWebhook:
         await async_session.commit()
 
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-        ):
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)):
             await processor.process()
             await async_session.commit()
 
@@ -96,9 +92,7 @@ class TestProcessorSendChatWebhook:
         await async_session.commit()
 
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=Exception())
-        ):
+        with mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=Exception())):
             await processor.process()
             await async_session.commit()
 
@@ -126,9 +120,7 @@ class TestProcessorSendChatWebhook:
 
         # Run processor
         with (
-            mock.patch(
-                "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-            ),
+            mock.patch("httpx.AsyncClient.post", AsyncMock(side_effect=None)),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
