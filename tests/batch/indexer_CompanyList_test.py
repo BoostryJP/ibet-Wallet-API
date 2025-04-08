@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import json
 import logging
 from typing import Sequence
@@ -64,7 +63,7 @@ class TestProcessor:
 
     # <Normal_1>
     # 0 record
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -91,7 +90,7 @@ class TestProcessor:
         mock_get.side_effect = [MockResponse([])]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         session.rollback()
@@ -102,7 +101,7 @@ class TestProcessor:
 
     # <Normal_2>
     # 1 record
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -140,7 +139,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -157,7 +156,7 @@ class TestProcessor:
 
     # <Normal_3>
     # 2 record
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -200,7 +199,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -226,7 +225,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # address
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_1_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -270,7 +269,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -289,7 +288,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # corporate_name
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_1_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -333,7 +332,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -352,7 +351,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # rsa_publickey
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_1_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -396,7 +395,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -415,7 +414,7 @@ class TestProcessor:
     # Insert SKIP
     # type error
     # homepage
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_1_4(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -459,7 +458,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -478,7 +477,7 @@ class TestProcessor:
     # Insert SKIP
     # required error
     # address
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_2_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -521,7 +520,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -540,7 +539,7 @@ class TestProcessor:
     # Insert SKIP
     # required error
     # corporate_name
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_2_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -583,7 +582,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -602,7 +601,7 @@ class TestProcessor:
     # Insert SKIP
     # required error
     # address
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_2_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -645,7 +644,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -663,7 +662,7 @@ class TestProcessor:
     # <Normal_4_3>
     # Insert SKIP
     # invalid address error
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_4_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -707,7 +706,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -725,7 +724,7 @@ class TestProcessor:
     # <Normal_5_1>
     # There are no differences from last time
     # -> Skip this cycle
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_5_1(self, mock_get, processor, session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
@@ -746,7 +745,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        processor.process()
 
         # Run target process: 2nd time
         mock_get.side_effect = [
@@ -767,7 +766,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -801,7 +800,7 @@ class TestProcessor:
 
     # <Normal_5_2>
     # There are differences from the previous cycle
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_normal_5_2(self, mock_get, processor, session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
@@ -822,7 +821,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        processor.process()
 
         # Run target process: 2nd time
         mock_get.side_effect = [
@@ -837,7 +836,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -869,7 +868,7 @@ class TestProcessor:
     # API error
     # Connection error
     @mock.patch(
-        "httpx.AsyncClient.get",
+        "requests.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
     def test_error_1_1(self, processor, session):
@@ -895,7 +894,7 @@ class TestProcessor:
         session.commit()
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -906,7 +905,7 @@ class TestProcessor:
     # <Error_1_2>
     # API error
     # not succeed api
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_error_1_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -933,7 +932,7 @@ class TestProcessor:
         mock_get.side_effect = [MockResponse([], 400)]
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -943,9 +942,7 @@ class TestProcessor:
 
     # <Error_2>
     # not decode response
-    @mock.patch(
-        "httpx.AsyncClient.get", MagicMock(side_effect=json.decoder.JSONDecodeError)
-    )
+    @mock.patch("requests.get", MagicMock(side_effect=json.decoder.JSONDecodeError))
     def test_error_2(self, processor, session):
         # Prepare data
         _company = Company()
@@ -969,7 +966,7 @@ class TestProcessor:
         session.commit()
 
         # Run target process
-        asyncio.run(processor.process())
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -979,7 +976,7 @@ class TestProcessor:
 
     # <Error_3>
     # other error
-    @mock.patch("httpx.AsyncClient.get")
+    @mock.patch("requests.get")
     def test_error_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
@@ -1019,7 +1016,7 @@ class TestProcessor:
 
         # Run target process
         with pytest.raises(Exception):
-            asyncio.run(processor.process())
+            processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
