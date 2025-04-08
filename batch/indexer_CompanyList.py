@@ -24,7 +24,6 @@ import sys
 import time
 
 import aiohttp
-from aiohttp import ClientTimeout
 from eth_utils import to_checksum_address
 from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -53,10 +52,7 @@ class Processor:
         try:
             async with aiohttp.ClientSession(trust_env=True) as session:
                 async with session.get(
-                    COMPANY_LIST_URL,
-                    timeout=ClientTimeout(
-                        connect=REQUEST_TIMEOUT[0], total=REQUEST_TIMEOUT[1]
-                    ),
+                    COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT
                 ) as response:
                     if response.status != 200:
                         raise Exception(f"status code={response.status}")
