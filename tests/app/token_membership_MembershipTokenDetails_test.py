@@ -26,7 +26,6 @@ from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -36,6 +35,7 @@ from tests.contract_modules import (
     membership_issue,
     membership_register_list,
 )
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)

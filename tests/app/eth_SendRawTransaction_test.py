@@ -32,10 +32,10 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config, log
 from app.api.routers import eth
-from app.contracts import Contract
 from app.model.db import ExecutableContract, Listing, Node
 from tests.account_config import eth_account
 from tests.contract_modules import coupon_register_list, issue_coupon_token
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
