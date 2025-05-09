@@ -31,7 +31,6 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.config import ZERO_ADDRESS
-from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import Listing, TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import LOG, Processor
@@ -90,6 +89,7 @@ from tests.contract_modules import (
     take_sell,
     transfer_token,
 )
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)

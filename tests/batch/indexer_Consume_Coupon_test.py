@@ -24,6 +24,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,16 +49,16 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
+@pytest_asyncio.fixture(scope="session")
+async def test_module(shared_contract):
     indexer_Consume_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
         "address"
     ]
     return indexer_Consume_Coupon
 
 
-@pytest.fixture(scope="function")
-def main_func(test_module):
+@pytest_asyncio.fixture(scope="function")
+async def main_func(test_module):
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -67,13 +68,14 @@ def main_func(test_module):
     LOG.setLevel(default_log_level)
 
 
-@pytest.fixture(scope="function")
-def processor(test_module, session):
+@pytest_asyncio.fixture(scope="function")
+async def processor(test_module, session):
     processor = test_module.Processor()
-    asyncio.run(processor.initial_sync())
+    await processor.initial_sync()
     return processor
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     issuer = eth_account["issuer"]
     trader = eth_account["trader"]
@@ -117,7 +119,7 @@ class TestProcessor:
     # <Normal_1>
     # Single token
     # Single event logs
-    def test_normal_1(self, processor, shared_contract, session):
+    async def test_normal_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -130,7 +132,7 @@ class TestProcessor:
         block_number = web3.eth.block_number
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -149,7 +151,7 @@ class TestProcessor:
     # <Normal_2>
     # Single token
     # Multi event logs
-    def test_normal_2(self, processor, shared_contract, session):
+    async def test_normal_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -165,7 +167,7 @@ class TestProcessor:
         block_number2 = web3.eth.block_number
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -192,7 +194,7 @@ class TestProcessor:
     # <Normal_3>
     # Multi token
     # Multi event logs
-    def test_normal_3(self, processor, shared_contract, session):
+    async def test_normal_3(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -217,7 +219,7 @@ class TestProcessor:
         block_number4 = web3.eth.block_number
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -259,7 +261,7 @@ class TestProcessor:
 
     # <Normal_4>
     # No event logs
-    def test_normal_4(self, processor, shared_contract, session):
+    async def test_normal_4(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -269,7 +271,7 @@ class TestProcessor:
 
         # Not Consume
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -279,7 +281,7 @@ class TestProcessor:
 
     # <Normal_5>
     # Not Listing Token
-    def test_normal_5(self, processor, shared_contract, session):
+    async def test_normal_5(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -290,7 +292,7 @@ class TestProcessor:
         consume_coupon_token(self.issuer, token, 1000)
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -312,7 +314,7 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    def test_error_1_1(self, processor, shared_contract, session):
+    async def test_error_1_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -325,7 +327,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        asyncio.run(processor.initial_sync())
+        await processor.initial_sync()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -340,10 +342,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -355,7 +357,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    def test_error_1_2(self, processor, shared_contract, session):
+    async def test_error_1_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -375,7 +377,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -396,7 +398,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -408,7 +410,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_1(self, processor, shared_contract, session):
+    async def test_error_2_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -428,7 +430,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
             select(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created)
@@ -448,7 +450,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -460,7 +462,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_2(self, processor, shared_contract, session):
+    async def test_error_2_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -476,7 +478,7 @@ class TestProcessor:
             mock.patch.object(AsyncSession, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
 
         # Assertion
         _consume_coupon_list: Sequence[IDXConsumeCoupon] = session.scalars(
@@ -494,7 +496,7 @@ class TestProcessor:
             mock.patch.object(AsyncSession, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -506,7 +508,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    def test_error_3(self, main_func, shared_contract, session, caplog):
+    async def test_error_3(self, main_func, shared_contract, session, caplog):
         # Mocking time.sleep to break mainloop
         asyncio_mock = AsyncMock(wraps=asyncio)
         asyncio_mock.sleep.side_effect = [True, TypeError()]
@@ -524,7 +526,7 @@ class TestProcessor:
             pytest.raises(TypeError),
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            asyncio.run(main_func())
+            await main_func()
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, 25, "An external service was unavailable")

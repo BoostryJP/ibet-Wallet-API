@@ -21,36 +21,23 @@ import json
 from typing import Type, TypeVar
 
 from eth_utils import to_checksum_address
-from web3 import contract
-from web3.contract.async_contract import AsyncContractEvents
-from web3.eth.async_eth import AsyncContract as Web3AsyncContract
+from web3 import Web3, contract
+from web3.contract import Contract as Web3Contract
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
+from web3.middleware import ExtraDataToPOAMiddleware
 
-from app.utils.web3_utils import AsyncWeb3Wrapper
+from app import config
 
-async_web3 = AsyncWeb3Wrapper()
-
-
-class AsyncContractEventsView:
-    def __init__(self, address: str, contract_events: AsyncContractEvents) -> None:
-        self._address = address
-        self._events = contract_events
-
-    @property
-    def address(self) -> str:
-        return self._address
-
-    @property
-    def events(self) -> AsyncContractEvents:
-        return self._events
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-class AsyncContract:
+class Contract:
     cache = {}  # コントラクト情報のキャッシュ
-    factory_map: dict[str, Type[Web3AsyncContract]] = {}
+    factory_map: dict[str, Type[Web3Contract]] = {}
 
     @classmethod
-    def get_contract(cls, contract_name: str, address: str) -> Web3AsyncContract:
+    def get_contract(cls, contract_name: str, address: str):
         """
         コントラクト取得
 
@@ -58,23 +45,23 @@ class AsyncContract:
         :param address: コントラクトアドレス
         :return: コントラクト
         """
-        if contract_name in AsyncContract.cache:
-            contract_json = AsyncContract.cache[contract_name]
+        if contract_name in Contract.cache:
+            contract_json = Contract.cache[contract_name]
         else:
             contract_file = f"app/contracts/json/{contract_name}.json"
             contract_json = json.load(open(contract_file, "r"))
-            AsyncContract.cache[contract_name] = contract_json
+            Contract.cache[contract_name] = contract_json
 
         contract_factory = cls.factory_map.get(contract_name)
         if contract_factory is not None:
             return contract_factory(address=to_checksum_address(address))
 
-        contract_factory = async_web3.eth.contract(abi=contract_json["abi"])
+        contract_factory = web3.eth.contract(abi=contract_json["abi"])
         cls.factory_map[contract_name] = contract_factory
         return contract_factory(address=to_checksum_address(address))
 
     @staticmethod
-    async def deploy_contract(contract_name: str, args: list, deployer: str):
+    def deploy_contract(contract_name: str, args: list, deployer: str):
         """
         コントラクトデプロイ
 
@@ -83,23 +70,23 @@ class AsyncContract:
         :param deployer: デプロイ実行者のアドレス
         :return: コントラクト情報
         """
-        if contract_name in AsyncContract.cache:
-            contract_json = AsyncContract.cache[contract_name]
+        if contract_name in Contract.cache:
+            contract_json = Contract.cache[contract_name]
         else:
             contract_file = f"app/contracts/json/{contract_name}.json"
             contract_json = json.load(open(contract_file, "r"))
-            AsyncContract.cache[contract_name] = contract_json
+            Contract.cache[contract_name] = contract_json
 
-        async_contract = async_web3.eth.contract(
+        contract = web3.eth.contract(
             abi=contract_json["abi"],
             bytecode=contract_json["bytecode"],
             bytecode_runtime=contract_json["deployedBytecode"],
         )
 
-        tx_hash = await async_contract.constructor(*args).transact(
+        tx_hash = contract.constructor(*args).transact(
             {"from": deployer, "gas": 6000000}
         )
-        tx = await async_web3.eth.wait_for_transaction_receipt(tx_hash)
+        tx = web3.eth.wait_for_transaction_receipt(tx_hash)
 
         contract_address = ""
         if tx is not None:
@@ -112,7 +99,7 @@ class AsyncContract:
     T = TypeVar("T")
 
     @staticmethod
-    async def call_function(
+    def call_function(
         contract: contract, function_name: str, args: tuple, default_returns: T = None
     ) -> T:
         """Call contract function
@@ -126,7 +113,7 @@ class AsyncContract:
         _function = getattr(contract.functions, function_name)
 
         try:
-            result = await _function(*args).call()
+            result = _function(*args).call()
         except (BadFunctionCallOutput, ContractLogicError) as exc:
             if default_returns is not None:
                 return default_returns

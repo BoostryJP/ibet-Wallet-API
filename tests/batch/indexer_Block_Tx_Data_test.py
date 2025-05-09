@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import logging
 from typing import Sequence
 from unittest import mock
@@ -65,6 +64,7 @@ def processor(test_module, session):
     return processor
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     @staticmethod
     def set_block_number(session, block_number):
@@ -80,12 +80,12 @@ class TestProcessor:
 
     # Normal_1
     # Skip process: from_block > latest_block
-    def test_normal_1(self, processor, session, caplog):
+    async def test_normal_1(self, processor, session, caplog):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
         # Execute batch processing
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         indexed_block: IDXBlockDataBlockNumber = session.scalars(
@@ -111,7 +111,7 @@ class TestProcessor:
 
     # Normal_2
     # BlockData: Empty block is generated
-    def test_normal_2(self, processor, session, caplog):
+    async def test_normal_2(self, processor, session, caplog):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -120,7 +120,7 @@ class TestProcessor:
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
 
         # Execute batch processing
-        asyncio.run(processor.process())
+        await processor.process()
         after_block_number = web3.eth.block_number
 
         # Assertion: Data
@@ -157,7 +157,7 @@ class TestProcessor:
 
     # Normal_3_1
     # TxData: Contract deployment
-    def test_normal_3_1(self, processor, session, caplog):
+    async def test_normal_3_1(self, processor, session, caplog):
         deployer = eth_account["issuer"]["account_address"]
 
         before_block_number = web3.eth.block_number
@@ -177,7 +177,7 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        asyncio.run(processor.process())
+        await processor.process()
         after_block_number = web3.eth.block_number
 
         # Assertion
@@ -207,7 +207,7 @@ class TestProcessor:
 
     # Normal_3_2
     # TxData: Transaction
-    def test_normal_3_2(self, processor, session, caplog):
+    async def test_normal_3_2(self, processor, session, caplog):
         deployer = eth_account["issuer"]["account_address"]
         to_address = eth_account["user1"]["account_address"]
 
@@ -231,7 +231,7 @@ class TestProcessor:
         )
 
         # Execute batch processing
-        asyncio.run(processor.process())
+        await processor.process()
         after_block_number = web3.eth.block_number
 
         # Assertion
@@ -276,7 +276,7 @@ class TestProcessor:
     ###########################################################################
 
     # Error_1: ServiceUnavailable
-    def test_error_1(self, processor, session):
+    async def test_error_1(self, processor, session):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -288,7 +288,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.process())
+            await processor.process()
 
         # Assertion
         indexed_block: IDXBlockDataBlockNumber = session.scalars(
@@ -309,7 +309,7 @@ class TestProcessor:
         assert len(tx_data) == 0
 
     # Error_2: SQLAlchemyError
-    def test_error_2(self, processor, session):
+    async def test_error_2(self, processor, session):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -321,7 +321,7 @@ class TestProcessor:
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.process())
+            await processor.process()
 
         # Assertion
         indexed_block: IDXBlockDataBlockNumber = session.scalars(

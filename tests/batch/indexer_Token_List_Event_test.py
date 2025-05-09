@@ -32,7 +32,6 @@ from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister, Listing
 from batch import indexer_Token_List_Event
@@ -48,6 +47,7 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
