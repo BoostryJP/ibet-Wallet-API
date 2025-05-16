@@ -43,7 +43,7 @@ class RequestValidationErrorDict(BaseModel):
     type: str
 
 
-class RequestValidationErrorInfo(ErrorInfo):
+class RequestValidationErrorInfo(BaseModel):
     code: int = Field(..., examples=[88])
     message: str = Field(..., examples=["Invalid Parameter"])
     description: list[RequestValidationErrorDict]
@@ -58,7 +58,7 @@ AppErrorType = TypeVar("AppErrorType", bound=AppError)
 
 
 @lru_cache(None)
-def create_error_model(app_error: Type[AppError]):
+def create_error_model(app_error: Type[AppError]) -> Type[ErrorResponse]:
     """
     This function creates Pydantic Model from AppError.
     * create_model() generates a different model each time when called,
@@ -83,10 +83,12 @@ def create_error_model(app_error: Type[AppError]):
         ),
         details=(dict | None, Field(default=None, examples=[None])),
     )
-    return error_model
+    return error_model  # type: ignore
 
 
-def get_routers_responses(*args: Type[AppErrorType]):
+def get_routers_responses(
+    *args: Type[AppErrorType],
+) -> dict[int | str, dict[str, Any]] | None:
     """
     This function returns responses dictionary to be used for openapi document.
     Supposed to be used in router decorator.
@@ -102,7 +104,9 @@ def get_routers_responses(*args: Type[AppErrorType]):
             responses_per_status_code[arg.status_code].append(arg)
 
     # NOTE: set RequestValidationError as default 400 error
-    ret: dict[int, dict] = {400: {"model": RequestValidationErrorResponse}}
+    ret: dict[int | str, dict[str, Any]] = {
+        400: {"model": RequestValidationErrorResponse}
+    }
     for status_code, res in responses_per_status_code.items():
         error_models: list[Type[ErrorResponse]] = []
         for response in res:
@@ -163,13 +167,21 @@ def custom_openapi(app):
 
                     # Remove empty response's contents
                     responses = _get(router, "responses")
-                    for resp in responses.values():
-                        schema = _get(resp, "content", "application/json", "schema")
-                        if schema == {}:
-                            resp.pop("content")
-                        any_of: list | None = _get(schema, "anyOf")
-                        if any_of is not None:
-                            schema["anyOf"] = sorted(any_of, key=lambda x: x["$ref"])
+                    if responses is not None:
+                        for resp in responses.values():
+                            schema = _get(resp, "content", "application/json", "schema")
+                            if schema == {}:
+                                resp.pop("content")
+                            any_of = (
+                                _get(schema, "anyOf") if schema is not None else None
+                            )
+                            if schema is not None and any_of is not None:
+                                schema["anyOf"] = sorted(
+                                    any_of,
+                                    key=lambda x: x.get("$ref", "")
+                                    if isinstance(x, dict)
+                                    else "",
+                                )
 
         return openapi_schema
 
