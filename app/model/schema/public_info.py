@@ -51,7 +51,7 @@ class IbetShareToken(TokenBase):
 class PublicAccount(BaseModel):
     key_manager: str
     key_manager_name: str
-    account_type: Literal[1, 2, 3, 4, 5]
+    account_type: Literal[1, 2, 3]
     account_address: EthereumAddress
     modified: str = Field(..., description="Updated Datetime (local timezone)")
 
