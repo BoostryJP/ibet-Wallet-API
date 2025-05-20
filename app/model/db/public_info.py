@@ -76,9 +76,7 @@ class PublicAccountList(Base):
     # Key Manager Name
     key_manager_name: Mapped[str] = mapped_column(String(200), nullable=False)
     # Account Type
-    account_type: Mapped[Literal[1, 2, 3, 4, 5]] = mapped_column(
-        Integer, primary_key=True
-    )
+    account_type: Mapped[Literal[1, 2, 3]] = mapped_column(Integer, primary_key=True)
     # Account Address
     account_address: Mapped[str] = mapped_column(String(42), nullable=False)
 

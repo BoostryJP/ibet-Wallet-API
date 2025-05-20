@@ -9628,8 +9628,6 @@ components:
             - 1
             - 2
             - 3
-            - 4
-            - 5
           title: Account Type
         account_address:
           type: string
