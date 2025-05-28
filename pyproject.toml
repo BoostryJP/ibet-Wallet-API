@@ -30,6 +30,17 @@ dependencies = [
     "memray<2.0.0,>=1.14.0",
     "py-spy>=0.4.0",
     "asyncpg~=0.30.0",
+    "pyroscope-io>=0.8.11",
+    "pyroscope-otel>=0.4.1",
+    "opentelemetry-sdk>=1.33.0",
+    "opentelemetry-instrumentation-fastapi>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-asyncio>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-asyncpg>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-httpx>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-pika>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-psycopg>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.54b0,<1.0.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.33.1,<2.0.0",
 ]
 
 [tool.uv]

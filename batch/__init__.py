@@ -20,6 +20,11 @@ SPDX-License-Identifier: Apache-2.0
 import ctypes
 from ctypes.util import find_library
 
+from app.utils import o11y
+
+o11y.setup_pyroscope()
+o11y.setup_otel()
+
 libc = ctypes.CDLL(find_library("c"))
 
 

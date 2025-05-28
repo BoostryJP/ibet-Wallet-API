@@ -30,6 +30,9 @@ LOG.propagate = False
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("pyroscope").setLevel(logging.ERROR)
+logging.getLogger("py_spy").setLevel(logging.ERROR)
+logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 logging.getLogger("web3.manager.RequestManager").propagate = False
 logging.getLogger("web3.manager.RequestManager").addHandler(logging.NullHandler())
 
