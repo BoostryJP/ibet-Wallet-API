@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import ctypes
+from contextlib import asynccontextmanager
 from ctypes.util import find_library
 
 from fastapi import FastAPI, Request, status
@@ -55,7 +56,7 @@ from app.api.routers import (
     token_share as routers_token_share,
     user_info as routers_user_info,
 )
-from app.config import BRAND_NAME
+from app.config import BRAND_NAME, PROFILING_MODE
 from app.errors import (
     AppError,
     DataConflictError,
@@ -66,6 +67,7 @@ from app.errors import (
     SuspendedTokenError,
 )
 from app.middleware import ResponseLoggerMiddleware, StripTrailingSlashMiddleware
+from app.utils import o11y
 from app.utils.docs_utils import custom_openapi
 
 LOG = log.get_logger()
@@ -96,6 +98,23 @@ tags_metadata = [
     {"name": "messaging", "description": "Messaging functions with external systems"},
 ]
 
+
+def on_startup():
+    if PROFILING_MODE is True:
+        o11y.setup_pyroscope()
+
+
+async def on_shutdown():
+    pass
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    on_startup()
+    yield
+    await on_shutdown()
+
+
 app = FastAPI(
     title="ibet Wallet API",
     description="RPC services that provides utility tools for building a wallet system on ibet network",
@@ -107,6 +126,7 @@ app = FastAPI(
         "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
     },
     openapi_tags=tags_metadata,
+    lifespan=lifespan,
 )
 
 app.openapi = custom_openapi(app)  # type: ignore
@@ -163,6 +183,8 @@ app.add_middleware(
 app.add_middleware(ResponseLoggerMiddleware)
 app.add_middleware(StripTrailingSlashMiddleware)
 
+if PROFILING_MODE is True:
+    o11y.setup_otel(app=app)
 
 ###############################################################
 # EXCEPTION

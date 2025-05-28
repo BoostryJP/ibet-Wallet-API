@@ -26,6 +26,12 @@ BRAND_NAME = "ibet-Wallet-API"
 ####################################################
 # Basic settings
 ####################################################
+# Run mode
+RUN_MODE = os.environ.get("RUN_MODE")
+
+# Profiling mode
+PROFILING_MODE = True if os.environ.get("PROFILING_MODE") == "1" else False
+
 # Unit test mode
 UNIT_TEST_MODE = True if os.environ.get("UNIT_TEST_MODE") == "1" else False
 
@@ -359,6 +365,11 @@ DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX = os.environ.get(
 # Chat webhook settings
 ####################################################
 CHAT_WEBHOOK_URL = os.environ.get("CHAT_WEBHOOK_URL")
+
+######################################################
+# O11y Settings
+######################################################
+PYROSCOPE_SERVER_URL = os.environ.get("PYROSCOPE_SERVER_URL")
 
 ####################################################
 # Other settings
