@@ -211,7 +211,7 @@ class Processor:
                 )
                 self.token_type_cache[listed_token.token_address] = token_info[1]
             token_type = self.token_type_cache[listed_token.token_address]
-            if token_type is None:
+            if token_type is None or token_type == "":
                 # Skip if token is not listed in the TokenList contract
                 continue
 
