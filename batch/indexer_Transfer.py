@@ -288,6 +288,9 @@ class Processor:
                 )
                 self.token_type_cache[listed_token.token_address] = token_info[1]
             token_type = self.token_type_cache[listed_token.token_address]
+            if token_type is None or token_type == "":
+                # Skip if token is not listed in the TokenList contract
+                continue
 
             skip_timestamp, skip_block_number = await self.__get_latest_synchronized(
                 db_session, listed_token.token_address
