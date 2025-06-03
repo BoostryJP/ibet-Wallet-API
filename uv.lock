@@ -889,7 +889,7 @@ requires-dist = [
     { name = "typer", marker = "extra == 'ibet-explorer'", specifier = "~=0.12.3" },
     { name = "tzdata", specifier = ">=2025.1,<2026.0" },
     { name = "uvicorn", extras = ["standard"], specifier = "~=0.34.0" },
-    { name = "web3", specifier = "==7.8.0" },
+    { name = "web3", specifier = "==7.5.0" },
 ]
 provides-extras = ["ibet-explorer"]
 
@@ -2258,7 +2258,7 @@ wheels = [
 
 [[package]]
 name = "web3"
-version = "7.8.0"
+version = "7.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -2276,9 +2276,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/55/943b2b544afade2f1220e4587bd7e95f8a39465d96e0c6e5029a007c6bec/web3-7.8.0.tar.gz", hash = "sha256:712bc9fd6b1ef6e467ee24c25b581e1951cab2cba17f9f548f12587734f2c857", size = 2188875, upload-time = "2025-02-03T20:51:43.236Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/d8/976781c3e22f1cd46d70c4203e824f33d9de11296c5d78a27f37dbe005c0/web3-7.5.0.tar.gz", hash = "sha256:42477d076c745da05e595e8aec91a3a168d87b09b85b0424181cac69edb9b4a2", size = 2164479, upload-time = "2024-11-06T17:47:20.718Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b0/52/bc4a08811db59392e13bf56ada316517a83b9a6135c20d357c222c80be2d/web3-7.8.0-py3-none-any.whl", hash = "sha256:c8771b3d8772f7104a0462804449beb57d36cef7bd8b411140f95a92fc46b559", size = 1363475, upload-time = "2025-02-03T20:51:40.219Z" },
+    { url = "https://files.pythonhosted.org/packages/df/f1/ac3d3e9021fc73ab2c8ecae2b2e51f6e0642f56f7610678f8c199a631c4c/web3-7.5.0-py3-none-any.whl", hash = "sha256:16fea8ee9c042a60edfdc2388c4d2c0177a9be383c76a4913cf9acb156df1954", size = 1347349, upload-time = "2024-11-06T17:47:17.179Z" },
 ]
 
 [[package]]
