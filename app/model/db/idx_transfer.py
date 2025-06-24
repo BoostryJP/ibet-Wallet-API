@@ -39,6 +39,7 @@ class IDXTransferSourceEventType(StrEnum):
     TRANSFER = "Transfer"
     UNLOCK = "Unlock"
     FORCE_UNLOCK = "ForceUnlock"
+    FORCE_CHANGE_LOCKED_ACCOUNT = "ForceChangeLockedAccount"
 
 
 class DataMessage(BaseModel):

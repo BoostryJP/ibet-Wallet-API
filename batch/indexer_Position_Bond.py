@@ -22,7 +22,7 @@ import json
 import sys
 from datetime import datetime, timedelta, timezone
 from itertools import groupby
-from typing import List, Optional, Sequence
+from typing import List, Literal, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
@@ -300,6 +300,7 @@ class Processor:
         await self.__sync_force_lock(db_session, block_to)
         await self.__sync_unlock(db_session, block_to)
         await self.__sync_force_unlock(db_session, block_to)
+        await self.__sync_force_change_locked_account(db_session, block_to)
         await self.__sync_issue(db_session, block_to)
         await self.__sync_redeem(db_session, block_to)
         await self.__sync_apply_for_transfer(db_session, block_to)
@@ -701,6 +702,112 @@ class Processor:
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events, account_keys=["recipientAddress"]
+                )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
+                    await self.__sink_on_position(
+                        db_session=db_session,
+                        token_address=to_checksum_address(token.address),
+                        account_address=account,
+                        balance=balance,
+                        pending_transfer=pending_transfer,
+                    )
+            except Exception as e:
+                raise e
+
+    async def __sync_force_change_locked_account(
+        self, db_session: AsyncSession, block_to: int
+    ):
+        """Sync ForceChangeLockedAccount Events
+
+        :param db_session: ORM session
+        :param block_to: To block
+        :return: None
+        """
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            try:
+                events = await token.events.ForceChangeLockedAccount.get_logs(
+                    from_block=block_from, to_block=block_to
+                )
+            except ABIEventNotFound:
+                events = []
+            try:
+                lock_map: dict[str, dict[str, Literal[True]]] = {}
+                for event in events:
+                    args = event["args"]
+                    lock_address = args.get("lockAddress", "")
+                    before_account_address = args.get("beforeAccountAddress", "")
+                    after_account_address = args.get("afterAccountAddress", "")
+                    value = args.get("value", 0)
+                    data = args.get("data", "")
+                    event_created = await self.__gen_block_timestamp(event=event)
+                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
+
+                    # Index Unlock event
+                    # - Set after_account as recipient
+                    self.__insert_unlock_idx(
+                        db_session=db_session,
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
+                        msg_sender=msg_sender,
+                        block_number=event["blockNumber"],
+                        token_address=token.address,
+                        lock_address=lock_address,
+                        account_address=before_account_address,
+                        recipient_address=after_account_address,
+                        value=value,
+                        data_str=data,
+                        block_timestamp=event_created,
+                        is_forced=True,
+                    )
+
+                    # Index Lock event
+                    self.__insert_lock_idx(
+                        db_session=db_session,
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
+                        msg_sender=msg_sender,
+                        block_number=event["blockNumber"],
+                        token_address=token.address,
+                        lock_address=lock_address,
+                        account_address=after_account_address,
+                        value=value,
+                        data_str=data,
+                        block_timestamp=event_created,
+                        is_forced=True,
+                    )
+
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][before_account_address] = True
+                    lock_map[lock_address][after_account_address] = True
+
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        # Update Locked Position
+                        value = await self.__get_account_locked_token(
+                            token, lock_address, account_address
+                        )
+                        await self.__sink_on_locked_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value,
+                        )
+            except Exception:
+                pass
+            try:
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["beforeAccountAddress", "afterAccountAddress"],
                 )
                 balances_list = await self.get_bulk_account_balance_token(
                     token=token,
