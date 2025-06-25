@@ -39,7 +39,7 @@ from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
-    IDXTokenListItem,
+    IDXTokenListRegister,
     Listing,
     Notification,
     NotificationBlockNumber,
@@ -93,11 +93,11 @@ class Watcher:
     @staticmethod
     async def _get_token_all_list(db_session: AsyncSession):
         _tokens = []
-        registered_tokens: Sequence[IDXTokenListItem] = (
+        registered_tokens: Sequence[IDXTokenListRegister] = (
             await db_session.scalars(
-                select(IDXTokenListItem).join(
+                select(IDXTokenListRegister).join(
                     Listing,
-                    and_(Listing.token_address == IDXTokenListItem.token_address),
+                    and_(Listing.token_address == IDXTokenListRegister.token_address),
                 )
             )
         ).all()
@@ -433,6 +433,88 @@ class WatchCancelTransfer(Watcher):
             await db_session.merge(notification)
 
 
+class WatchForceLock(Watcher):
+    """Watch ForceLock Event
+
+    - Process for registering a notification when a token is forcibly locked.
+    """
+
+    def __init__(self):
+        super().__init__("ForceLock", {}, NotificationType.FORCE_LOCK)
+
+    async def db_merge(
+        self,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
+    ):
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
+            contract=token_contract, function_name="name", args=(), default_returns=""
+        )
+        for entry in log_entries:
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type,
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = self.notification_type
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            await db_session.merge(notification)
+
+
+class WatchForceUnlock(Watcher):
+    """Watch ForceUnlock Event
+
+    - Process for registering a notification when a token is forcibly unlocked.
+    """
+
+    def __init__(self):
+        super().__init__("ForceUnlock", {}, NotificationType.FORCE_UNLOCK)
+
+    async def db_merge(
+        self,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
+    ):
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
+            contract=token_contract, function_name="name", args=(), default_returns=""
+        )
+        for entry in log_entries:
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type,
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = self.notification_type
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            await db_session.merge(notification)
+
+
 # メイン処理
 async def main():
     watchers = [
@@ -440,6 +522,8 @@ async def main():
         WatchApplyForTransfer(),
         WatchApproveTransfer(),
         WatchCancelTransfer(),
+        WatchForceLock(),
+        WatchForceUnlock(),
     ]
 
     LOG.info("Service started successfully")

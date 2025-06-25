@@ -32,11 +32,10 @@ from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from app.errors import ServiceUnavailable
-from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem, Listing
-from batch import indexer_Token_List
-from batch.indexer_Token_List import LOG, Processor, main
+from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister, Listing
+from batch import indexer_Token_List_Event
+from batch.indexer_Token_List_Event import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
     coupon_register_list,
@@ -48,6 +47,7 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -56,7 +56,7 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 @pytest.fixture(scope="session")
 def test_module(shared_contract):
     config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-    return indexer_Token_List.Processor
+    return indexer_Token_List_Event.Processor
 
 
 @pytest.fixture(scope="function")
@@ -159,7 +159,7 @@ class TestProcessor:
         await processor.process()
 
         # assertion
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         assert len(_token_list) == 0
 
     # <Normal_2>
@@ -369,11 +369,12 @@ class TestProcessor:
 
         # assertion
         for _expect_dict in _token_expected_list:
-            token_list_item: IDXTokenListItem = (
+            token_list_item: IDXTokenListRegister = (
                 await async_session.scalars(
-                    select(IDXTokenListItem)
+                    select(IDXTokenListRegister)
                     .where(
-                        IDXTokenListItem.token_address == _expect_dict["token_address"]
+                        IDXTokenListRegister.token_address
+                        == _expect_dict["token_address"]
                     )
                     .limit(1)
                 )
@@ -653,7 +654,7 @@ class TestProcessor:
 
         # Assertion
         async_session.expunge_all()
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         _token_list_block_number: IDXTokenListBlockNumber = (
             await async_session.scalars(select(IDXTokenListBlockNumber))
         ).first()
@@ -677,7 +678,7 @@ class TestProcessor:
         async_session.expunge_all()
         await async_session.rollback()
         # Assertion
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         _token_list_block_number: IDXTokenListBlockNumber = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
@@ -732,7 +733,7 @@ class TestProcessor:
 
         await async_session.rollback()
         # Assertion
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         _token_list_block_number_af: IDXTokenListBlockNumber = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
@@ -764,7 +765,7 @@ class TestProcessor:
 
         # Assertion
         await async_session.rollback()
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         _token_list_block_number_af: IDXTokenListBlockNumber = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
@@ -814,7 +815,7 @@ class TestProcessor:
             await processor.process()
 
         # Assertion
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         _token_list_block_number_af: IDXTokenListBlockNumber = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
@@ -840,7 +841,7 @@ class TestProcessor:
 
         # Assertion
         await async_session.rollback()
-        _token_list = (await async_session.scalars(select(IDXTokenListItem))).all()
+        _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
         _token_list_block_number_af: IDXTokenListBlockNumber = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
@@ -880,7 +881,7 @@ class TestProcessor:
 
         # Run mainloop once and fail with web3 utils error
         with (
-            mock.patch("batch.indexer_Token_List.asyncio", asyncio_mock),
+            mock.patch("batch.indexer_Token_List_Event.asyncio", asyncio_mock),
             mock.patch(
                 "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
                 MagicMock(side_effect=ServiceUnavailable()),

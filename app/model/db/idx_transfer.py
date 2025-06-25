@@ -38,6 +38,7 @@ class IDXTransferSourceEventType(StrEnum):
 
     TRANSFER = "Transfer"
     UNLOCK = "Unlock"
+    FORCE_UNLOCK = "ForceUnlock"
 
 
 class DataMessage(BaseModel):
@@ -65,8 +66,10 @@ class IDXTransfer(Base):
     to_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Transfer Amount
     value: Mapped[int | None] = mapped_column(BigInteger, index=True)
-    # Source Event (IDXTransferSourceEventType)
-    source_event: Mapped[str] = mapped_column(String(50), nullable=False)
+    # Source Event
+    source_event: Mapped[IDXTransferSourceEventType] = mapped_column(
+        String(50), nullable=False
+    )
     # Data
     #   source_event = "Transfer"
     #     => None

@@ -30,12 +30,12 @@ from app import config
 from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
-from app.model.db import IDXTokenListBlockNumber, IDXTokenListItem
+from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
 from batch import free_malloc, log
 
-process_name = "INDEXER-TOKEN-LIST"
+process_name = "INDEXER-TOKEN-LIST-EVENT"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
@@ -159,10 +159,10 @@ class Processor:
         """
         if token_template not in self.available_token_template_list:
             return
-        idx_token_list: Optional[IDXTokenListItem] = (
+        idx_token_list: Optional[IDXTokenListRegister] = (
             await db_session.scalars(
-                select(IDXTokenListItem)
-                .where(IDXTokenListItem.token_address == token_address)
+                select(IDXTokenListRegister)
+                .where(IDXTokenListRegister.token_address == token_address)
                 .limit(1)
             )
         ).first()
@@ -171,7 +171,7 @@ class Processor:
             idx_token_list.owner_address = owner_address
             await db_session.merge(idx_token_list)
         else:
-            idx_token_list = IDXTokenListItem()
+            idx_token_list = IDXTokenListRegister()
             idx_token_list.token_address = token_address
             idx_token_list.token_template = token_template
             idx_token_list.owner_address = owner_address

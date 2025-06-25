@@ -26,9 +26,9 @@ from sqlalchemy.orm import Session
 from app.model.db import AccountTag, IDXTransfer, IDXTransferSourceEventType, Listing
 
 
-class TestTokenTransferHistory:
+class TestListTokenTransferHistory:
     """
-    Test Case for token.TransferHistory
+    Test Case for token.ListTransferHistory
     """
 
     # テスト対象API
@@ -62,7 +62,7 @@ class TestTokenTransferHistory:
         _transfer.from_address = transfer_event["from_address"]
         _transfer.to_address = transfer_event["to_address"]
         _transfer.value = transfer_event["value"]
-        _transfer.source_event = transfer_source_event.value
+        _transfer.source_event = transfer_source_event
         _transfer.data = transfer_event_data
         _transfer.message = (
             transfer_event_data.get("message")

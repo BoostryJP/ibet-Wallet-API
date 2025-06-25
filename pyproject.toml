@@ -1,6 +1,6 @@
 [project]
 name = "ibet-Wallet-API"
-version = "25.3"
+version = "25.6"
 description = "RPC services that provides utility functions for building a wallet system on ibet-Network."
 authors = [
     {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},
@@ -21,7 +21,7 @@ dependencies = [
     "pydantic[email]~=2.10.3",
     "sqlalchemy[asyncio]<3.0.0,>=2.0.33",
     "uvicorn[standard]~=0.34.0",
-    "web3==7.8.0",
+    "web3==7.5.0",
     "tzdata<2026.0,>=2025.1",
     "alembic<2.0.0,>=1.14.0",
     "aiomysql==0.2.0",
@@ -30,6 +30,17 @@ dependencies = [
     "memray<2.0.0,>=1.14.0",
     "py-spy>=0.4.0",
     "asyncpg~=0.30.0",
+    "pyroscope-io>=0.8.11",
+    "pyroscope-otel>=0.4.1",
+    "opentelemetry-sdk>=1.33.0",
+    "opentelemetry-instrumentation-fastapi>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-asyncio>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-asyncpg>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-httpx>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-pika>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-psycopg>=0.54b0,<1.0.0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.54b0,<1.0.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.33.1,<2.0.0",
 ]
 
 [tool.uv]
@@ -43,7 +54,7 @@ dev-dependencies = [
     "pytest-alembic<1.0.0,>=0.10.7",
     "pytest-freezer<1.0.0,>=0.4.8",
     "textual-dev<2.0.0,>=1.2.1",
-    "pytest-asyncio==0.25.0",
+    "pytest-asyncio==0.26.0",
     "pytest-aiohttp<2.0.0,>=1.0.5",
     "ruamel-yaml<1.0.0,>=0.18.6",
     "pytest-memray<2.0.0,>=1.6.0",

@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import ctypes
+from contextlib import asynccontextmanager
 from ctypes.util import find_library
 
 from fastapi import FastAPI, Request, status
@@ -46,6 +47,7 @@ from app.api.routers import (
     notification as routers_notification,
     position as routers_position,
     position_lock as routers_position_lock,
+    public_info as routers_public_info,
     token as routers_token,
     token_bond as routers_token_bond,
     token_coupon as routers_token_coupon,
@@ -54,7 +56,7 @@ from app.api.routers import (
     token_share as routers_token_share,
     user_info as routers_user_info,
 )
-from app.config import BRAND_NAME
+from app.config import BRAND_NAME, PROFILING_MODE
 from app.errors import (
     AppError,
     DataConflictError,
@@ -65,17 +67,25 @@ from app.errors import (
     SuspendedTokenError,
 )
 from app.middleware import ResponseLoggerMiddleware, StripTrailingSlashMiddleware
+from app.utils import o11y
 from app.utils.docs_utils import custom_openapi
 
 LOG = log.get_logger()
 
 tags_metadata = [
     {"name": "root", "description": ""},
+    {
+        "name": "public_info",
+        "description": "Public shared information within the ibet consortium",
+    },
+    {
+        "name": "company_info",
+        "description": "Public information about ibet token issuers",
+    },
     {"name": "admin", "description": "System administration"},
     {"name": "node_info", "description": "Information about blockchain and contracts"},
     {"name": "abi", "description": "Contract ABIs"},
     {"name": "eth_rpc", "description": "Ethereum RPC"},
-    {"name": "company_info", "description": "Company(token issuer) information"},
     {"name": "token_info", "description": "Detailed information for listed tokens"},
     {"name": "user_info", "description": "User information"},
     {"name": "user_position", "description": "User's token balance"},
@@ -88,17 +98,35 @@ tags_metadata = [
     {"name": "messaging", "description": "Messaging functions with external systems"},
 ]
 
+
+def on_startup():
+    if PROFILING_MODE is True:
+        o11y.setup_pyroscope()
+
+
+async def on_shutdown():
+    pass
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    on_startup()
+    yield
+    await on_shutdown()
+
+
 app = FastAPI(
     title="ibet Wallet API",
     description="RPC services that provides utility tools for building a wallet system on ibet network",
     terms_of_service="",
-    version="25.3.0",
+    version="25.6.0",
     contact={"email": "dev@boostry.co.jp"},
     license_info={
         "name": "Apache 2.0",
         "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
     },
     openapi_tags=tags_metadata,
+    lifespan=lifespan,
 )
 
 app.openapi = custom_openapi(app)  # type: ignore
@@ -117,11 +145,12 @@ def root():
     return {"server": BRAND_NAME}
 
 
+app.include_router(routers_public_info.router)
+app.include_router(routers_company_info.router)
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
 app.include_router(routers_bc_explorer.router)
 app.include_router(routers_contract_abi.router)
-app.include_router(routers_company_info.router)
 app.include_router(routers_user_info.router)
 app.include_router(routers_eth.router)
 app.include_router(routers_token_bond.router)
@@ -154,6 +183,8 @@ app.add_middleware(
 app.add_middleware(ResponseLoggerMiddleware)
 app.add_middleware(StripTrailingSlashMiddleware)
 
+if PROFILING_MODE is True:
+    o11y.setup_otel(app=app)
 
 ###############################################################
 # EXCEPTION

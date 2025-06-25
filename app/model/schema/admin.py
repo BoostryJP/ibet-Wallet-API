@@ -21,7 +21,13 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, RootModel
 
-from app.model.schema.base import EthereumAddress
+from app.model.schema.base import (
+    BondToken,
+    CouponToken,
+    EthereumAddress,
+    MembershipToken,
+    ShareToken,
+)
 
 ############################
 # COMMON
@@ -39,6 +45,10 @@ class RegisterAdminTokenRequest(BaseModel):
     )
     max_sell_amount: int | None = Field(
         None, ge=0, description="Maximum sell amount limit"
+    )
+    skip_conflict_error: bool | None = Field(
+        False,
+        description="If set to `True`, a `200` response will be returned instead of a `409` error in case of duplicate data.",
     )
 
 
@@ -64,6 +74,10 @@ class RetrieveAdminTokenResponse(BaseModel):
 
 class ListAllAdminTokensResponse(RootModel[list[RetrieveAdminTokenResponse]]):
     pass
+
+
+class RegisterTokenResponse(BaseModel):
+    token: BondToken | ShareToken | MembershipToken | CouponToken
 
 
 class GetAdminTokenTypeResponse(BaseModel):

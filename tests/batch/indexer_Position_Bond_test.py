@@ -24,6 +24,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import pytest_asyncio
 from eth_utils import to_checksum_address
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -33,7 +34,6 @@ from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXLock,
@@ -68,6 +68,7 @@ from tests.contract_modules import (
     take_sell,
 )
 from tests.utils import PersonalInfoUtils
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -92,13 +93,14 @@ def main_func(test_module):
     LOG.setLevel(default_log_level)
 
 
-@pytest.fixture(scope="function")
-def processor(test_module, session):
+@pytest_asyncio.fixture(scope="function")
+async def processor(test_module, session):
     processor = test_module.Processor()
-    asyncio.run(processor.initial_sync())
+    await processor.initial_sync()
     return processor
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     issuer = eth_account["issuer"]
     trader = eth_account["trader"]
@@ -168,7 +170,7 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - Transfer
-    def test_normal_1(self, processor, shared_contract, session):
+    async def test_normal_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -194,7 +196,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -247,7 +249,7 @@ class TestProcessor:
     # Single Token
     # Multi event logs
     # - Transfer
-    def test_normal_2(self, processor, shared_contract, session):
+    async def test_normal_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -276,7 +278,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -329,7 +331,7 @@ class TestProcessor:
     # Multi Token
     # Multi event logs
     # - Transfer
-    def test_normal_3(self, processor, shared_contract, session):
+    async def test_normal_3(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -376,7 +378,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -493,11 +495,11 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-    # <Normal_4>
+    # <Normal_4_1>
     # Single Token
     # Single event logs
     # - Lock
-    def test_normal_4(self, processor, shared_contract, session):
+    async def test_normal_4_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -521,7 +523,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -566,6 +568,7 @@ class TestProcessor:
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 1500
         assert _lock1.data == {"message": "locked1"}
+        assert _lock1.is_forced is False
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
         assert _lock2.token_address == token["address"]
@@ -574,13 +577,112 @@ class TestProcessor:
         assert _lock2.account_address == self.issuer["account_address"]
         assert _lock2.value == 1500
         assert _lock2.data == {"message": "locked2"}
+        assert _lock2.is_forced is False
 
-    # <Normal_5>
+    # <Normal_4_2>
     # Single Token
     # Single event logs
-    # - Lock
+    # - ForceLock
+    async def test_normal_4_2(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract,
+        )
+        self.listing_token(token["address"], session)
+
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+        bond_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, token, 3000
+        )
+
+        # ForceLock
+        token_contract.functions.forceLock(
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            1500,
+            '{"message": "force_locked1"}',
+        ).transact({"from": self.issuer["account_address"]})
+        token_contract.functions.forceLock(
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            1500,
+            '{"message": "force_locked2"}',
+        ).transact({"from": self.issuer["account_address"]})
+
+        # Run target process
+        block_number = web3.eth.block_number
+        await processor.sync_new_logs()
+
+        # Assertion
+        _position_list: Sequence[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
+        assert len(_position_list) == 1
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position = _position_list[0]
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 3000
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
+
+        _locked_list: Sequence[IDXLockedPosition] = session.scalars(
+            select(IDXLockedPosition).order_by(IDXLockedPosition.created)
+        ).all()
+        assert len(_locked_list) == 1
+        _locked1 = _locked_list[0]
+        assert _locked1.token_address == token["address"]
+        assert _locked1.lock_address == self.issuer["account_address"]
+        assert _locked1.account_address == self.trader["account_address"]
+        assert _locked1.value == 3000
+
+        _lock_list: Sequence[IDXLock] = session.scalars(
+            select(IDXLock).order_by(IDXLock.id)
+        ).all()
+        assert len(_lock_list) == 2
+        _lock1 = _lock_list[0]
+        assert _lock1.id == 1
+        assert _lock1.token_address == token["address"]
+        assert _lock1.msg_sender == self.issuer["account_address"]
+        assert _lock1.lock_address == self.issuer["account_address"]
+        assert _lock1.account_address == self.trader["account_address"]
+        assert _lock1.value == 1500
+        assert _lock1.data == {"message": "force_locked1"}
+        assert _lock1.is_forced is True
+        _lock2 = _lock_list[1]
+        assert _lock2.id == 2
+        assert _lock2.token_address == token["address"]
+        assert _lock2.msg_sender == self.issuer["account_address"]
+        assert _lock2.lock_address == self.issuer["account_address"]
+        assert _lock2.account_address == self.trader["account_address"]
+        assert _lock2.value == 1500
+        assert _lock2.data == {"message": "force_locked2"}
+        assert _lock2.is_forced is True
+
+    # <Normal_5_1>
+    # Single Token
+    # Single event logs
     # - Unlock
-    def test_normal_5(self, processor, shared_contract, session):
+    async def test_normal_5_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -609,7 +711,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -694,12 +796,134 @@ class TestProcessor:
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
         assert _unlock1.data == {"message": "unlocked1"}
+        assert _unlock1.is_forced is False
+
+    # <Normal_5_2>
+    # Single Token
+    # Single event logs
+    # - ForceUnlock
+    async def test_normal_5_2(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract,
+        )
+        self.listing_token(token["address"], session)
+
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+
+        # Lock
+        token_contract.functions.lock(
+            self.trader["account_address"], 3000, '{"message": "locked1"}'
+        ).transact({"from": self.issuer["account_address"]})
+
+        # ForceUnlock
+        token_contract.functions.forceUnlock(
+            self.trader["account_address"],
+            self.issuer["account_address"],
+            self.trader2["account_address"],
+            100,
+            '{"message": "unlocked1"}',
+        ).transact({"from": self.issuer["account_address"]})
+
+        # Run target process
+        block_number = web3.eth.block_number
+        await processor.sync_new_logs()
+
+        # Assertion
+        _position_list: Sequence[IDXPosition] = session.scalars(
+            select(IDXPosition).order_by(IDXPosition.created)
+        ).all()
+        assert len(_position_list) == 2
+
+        _idx_position_bond_block_number: IDXPositionBondBlockNumber = session.scalars(
+            select(IDXPositionBondBlockNumber)
+            .where(IDXPositionBondBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_bond_block_number.latest_block_number == block_number
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 3000
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
+
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader2["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader2["account_address"]
+        assert _position.balance == 100
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
+
+        _locked_list: Sequence[IDXLockedPosition] = session.scalars(
+            select(IDXLockedPosition).order_by(IDXLockedPosition.created)
+        ).all()
+        assert len(_locked_list) == 1
+        _locked = _locked_list[0]
+        assert _locked.token_address == token["address"]
+        assert _locked.lock_address == self.trader["account_address"]
+        assert _locked.account_address == self.issuer["account_address"]
+        assert _locked.value == 2900
+
+        _lock_list: Sequence[IDXLock] = session.scalars(
+            select(IDXLock).order_by(IDXLock.id)
+        ).all()
+        assert len(_lock_list) == 1
+        _lock1 = _lock_list[0]
+        assert _lock1.id == 1
+        assert _lock1.token_address == token["address"]
+        assert _lock1.msg_sender == self.issuer["account_address"]
+        assert _lock1.lock_address == self.trader["account_address"]
+        assert _lock1.account_address == self.issuer["account_address"]
+        assert _lock1.value == 3000
+        assert _lock1.data == {"message": "locked1"}
+
+        _unlock_list: Sequence[IDXUnlock] = session.scalars(
+            select(IDXUnlock).order_by(IDXUnlock.id)
+        ).all()
+        assert len(_unlock_list) == 1
+        _unlock1 = _unlock_list[0]
+        assert _unlock1.id == 1
+        assert _unlock1.token_address == token["address"]
+        assert _unlock1.msg_sender == self.issuer["account_address"]
+        assert _unlock1.lock_address == self.trader["account_address"]
+        assert _unlock1.account_address == self.issuer["account_address"]
+        assert _unlock1.recipient_address == self.trader2["account_address"]
+        assert _unlock1.value == 100
+        assert _unlock1.data == {"message": "unlocked1"}
+        assert _unlock1.is_forced is True
 
     # <Normal_6>
     # Single Token
     # Single event logs
     # - Issue(add balance)
-    def test_normal_6(self, processor, shared_contract, session):
+    async def test_normal_6(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -719,7 +943,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -745,7 +969,7 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - Redeem
-    def test_normal_7(self, processor, shared_contract, session):
+    async def test_normal_7(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -765,7 +989,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -793,7 +1017,7 @@ class TestProcessor:
     # Single event logs
     # - Transfer
     # - Apply For Transfer
-    def test_normal_8(self, processor, shared_contract, session):
+    async def test_normal_8(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -833,7 +1057,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -888,7 +1112,7 @@ class TestProcessor:
     # - Transfer
     # - Apply For Transfer
     # - Approve
-    def test_normal_9(self, processor, shared_contract, session):
+    async def test_normal_9(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -933,7 +1157,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1005,7 +1229,7 @@ class TestProcessor:
     # - Transfer
     # - Apply For Transfer
     # - Cancel
-    def test_normal_10(self, processor, shared_contract, session):
+    async def test_normal_10(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1050,7 +1274,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1105,7 +1329,7 @@ class TestProcessor:
     # - CreateEscrow
     # - EscrowFinished
     # - CreateEscrow
-    def test_normal_11(self, processor, shared_contract, session):
+    async def test_normal_11(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -1152,7 +1376,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1210,7 +1434,7 @@ class TestProcessor:
     # - MakeOrder
     # - ForceCancelOrder
     # - MakeOrder
-    def test_normal_12(self, processor, shared_contract, session):
+    async def test_normal_12(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -1237,7 +1461,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1268,7 +1492,7 @@ class TestProcessor:
     # - CancelAgreement
     # - MakeOrder
     # - TakeOrder
-    def test_normal_13(self, processor, shared_contract, session):
+    async def test_normal_13(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -1308,7 +1532,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1337,7 +1561,7 @@ class TestProcessor:
     # - DeliveryCanceled
     # - DeliveryFinished
     # - DeliveryAborted
-    def test_normal_14(self, processor, shared_contract, session):
+    async def test_normal_14(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
@@ -1399,7 +1623,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1450,7 +1674,7 @@ class TestProcessor:
 
     # <Normal_15>
     # No event logs
-    def test_normal_15(self, processor, shared_contract, session):
+    async def test_normal_15(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1465,7 +1689,7 @@ class TestProcessor:
         # Not Event
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1483,7 +1707,7 @@ class TestProcessor:
     # <Normal_16>
     # Not listing Token is NOT indexed,
     # and indexed properly after listing
-    def test_normal_16(self, processor, shared_contract, session):
+    async def test_normal_16(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1506,7 +1730,7 @@ class TestProcessor:
         )
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1527,7 +1751,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -1548,7 +1772,7 @@ class TestProcessor:
     # Multi event logs
     # - Transfer
     # Duplicate events to be removed
-    def test_normal_17(self, processor, shared_contract, session):
+    async def test_normal_17(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1588,7 +1812,7 @@ class TestProcessor:
     # <Normal_18>
     # When stored index is 9,999,999 and current block number is 19,999,999,
     # then processor must process "__sync_all" method 10 times.
-    def test_normal_18(self, processor, shared_contract, session):
+    async def test_normal_18(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1625,7 +1849,7 @@ class TestProcessor:
                 session.merge(idx_position_bond_block_number)
                 session.commit()
                 __sync_all_mock.return_value = None
-                asyncio.run(processor.initial_sync())
+                await processor.initial_sync()
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
@@ -1637,7 +1861,7 @@ class TestProcessor:
             ) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
-                asyncio.run(processor.sync_new_logs())
+                await processor.sync_new_logs()
                 # Then processor call "__sync_all" method once.
                 assert __sync_all_mock.call_count == 1
 
@@ -1657,7 +1881,7 @@ class TestProcessor:
             ) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
-                asyncio.run(processor.sync_new_logs())
+                await processor.sync_new_logs()
                 # Then processor call "__sync_all" method 20 times.
                 assert __sync_all_mock.call_count == 20
 
@@ -1666,7 +1890,7 @@ class TestProcessor:
     # Multi event logs
     # - Transfer/Exchange/Lock
     # Skip exchange events which has already been synced
-    def test_normal_19(self, processor, shared_contract, session):
+    async def test_normal_19(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         agent = eth_account["agent"]
@@ -1742,7 +1966,7 @@ class TestProcessor:
 
         # Run target process
         block_number1 = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1769,7 +1993,7 @@ class TestProcessor:
 
         # Run target process
         block_number2 = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         session.rollback()
 
@@ -1831,7 +2055,7 @@ class TestProcessor:
     # Single Token
     # Multi event logs (Over 1000)
     # - Transfer
-    def test_normal_20(self, processor, shared_contract, session):
+    async def test_normal_20(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -1859,7 +2083,7 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1914,7 +2138,7 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    def test_error_1(self, processor, shared_contract, session):
+    async def test_error_1(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1937,7 +2161,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        asyncio.run(processor.initial_sync())
+        await processor.initial_sync()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -1962,10 +2186,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Clear cache in DB session.
         session.rollback()
@@ -1986,7 +2210,7 @@ class TestProcessor:
         )
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_1(self, processor, shared_contract, session, caplog):
+    async def test_error_2_1(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -2017,7 +2241,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
 
         # Clear cache in DB session.
         session.rollback()
@@ -2050,7 +2274,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Clear cache in DB session.
         session.rollback()
@@ -2076,7 +2300,7 @@ class TestProcessor:
         )
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_2(self, processor, shared_contract, session, caplog):
+    async def test_error_2_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -2104,7 +2328,7 @@ class TestProcessor:
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
 
         # Clear cache in DB session.
         session.rollback()
@@ -2134,7 +2358,7 @@ class TestProcessor:
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Clear cache in DB session.
         session.rollback()
@@ -2160,7 +2384,7 @@ class TestProcessor:
         )
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    def test_error_3(self, main_func, shared_contract, session, caplog):
+    async def test_error_3(self, main_func, shared_contract, session, caplog):
         # Mocking time.sleep to break mainloop
         asyncio_mock = AsyncMock(wraps=asyncio)
         asyncio_mock.sleep.side_effect = [True, TypeError()]
@@ -2178,7 +2402,7 @@ class TestProcessor:
             pytest.raises(TypeError),
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            asyncio.run(main_func())
+            await main_func()
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, 25, "An external service was unavailable")

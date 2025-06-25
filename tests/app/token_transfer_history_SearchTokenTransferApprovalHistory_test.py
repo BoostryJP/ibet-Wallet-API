@@ -32,9 +32,9 @@ UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
 
 
-class TestTokenTransferApprovalHistorySearch:
+class TestSearchTokenTransferApprovalHistory:
     """
-    Test Case for token.TransferApprovalHistory.Search
+    Test Case for token.SearchTokenTransferApprovalHistory
     """
 
     # test target API

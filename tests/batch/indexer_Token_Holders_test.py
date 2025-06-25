@@ -31,7 +31,6 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.config import ZERO_ADDRESS
-from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import Listing, TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import LOG, Processor
@@ -41,6 +40,8 @@ from tests.contract_modules import (
     bond_apply_for_transfer,
     bond_approve_transfer,
     bond_cancel_transfer,
+    bond_force_lock,
+    bond_force_unlock,
     bond_issue_from,
     bond_lock,
     bond_redeem_from,
@@ -76,6 +77,8 @@ from tests.contract_modules import (
     share_apply_for_transfer,
     share_approve_transfer,
     share_cancel_transfer,
+    share_force_lock,
+    share_force_unlock,
     share_issue_from,
     share_lock,
     share_redeem_from,
@@ -86,6 +89,7 @@ from tests.contract_modules import (
     take_sell,
     transfer_token,
 )
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -476,7 +480,9 @@ class TestProcessor:
     #   - FinishEscrow
     #   - ApproveTransfer
     # - Lock
+    # - ForceLock
     # - Unlock
+    # - ForceUnlock
     async def test_normal_2(
         self,
         processor: Processor,
@@ -562,7 +568,16 @@ class TestProcessor:
         )
         # user1: 13000 trader: 17000
 
-        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        bond_lock(self.trader, token, self.issuer["account_address"], 1500)
+        # user1: 13000 trader: (hold: 15500, locked: 1500)
+
+        bond_force_lock(
+            self.issuer,
+            token,
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            1500,
+        )
         # user1: 13000 trader: (hold: 14000, locked: 3000)
 
         bond_unlock(
@@ -570,7 +585,17 @@ class TestProcessor:
             token,
             self.trader["account_address"],
             self.user1["account_address"],
-            2000,
+            1000,
+        )
+        # user1: 15000 trader: (hold: 14000, locked: 2000)
+
+        bond_force_unlock(
+            self.issuer,
+            token,
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            self.user1["account_address"],
+            1000,
         )
         # user1: 15000 trader: (hold: 14000, locked: 1000)
 
@@ -992,7 +1017,9 @@ class TestProcessor:
     #   - FinishEscrow
     #   - ApproveTransfer
     # - Lock
+    # - ForceLock
     # - Unlock
+    # - ForceUnlock
     async def test_normal_5(
         self,
         processor: Processor,
@@ -1078,7 +1105,16 @@ class TestProcessor:
         )
         # user1: 13000 trader: 17000
 
-        share_lock(self.trader, token, self.issuer["account_address"], 3000)
+        share_lock(self.trader, token, self.issuer["account_address"], 1500)
+        # user1: 13000 trader: (hold: 15500, locked: 1500)
+
+        share_force_lock(
+            self.issuer,
+            token,
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            1500,
+        )
         # user1: 13000 trader: (hold: 14000, locked: 3000)
 
         share_unlock(
@@ -1086,7 +1122,17 @@ class TestProcessor:
             token,
             self.trader["account_address"],
             self.user1["account_address"],
-            2000,
+            1000,
+        )
+        # user1: 15000 trader: (hold: 14000, locked: 2000)
+
+        share_force_unlock(
+            self.issuer,
+            token,
+            self.issuer["account_address"],
+            self.trader["account_address"],
+            self.user1["account_address"],
+            1000,
         )
         # user1: 15000 trader: (hold: 14000, locked: 1000)
 

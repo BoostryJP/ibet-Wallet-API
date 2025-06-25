@@ -24,6 +24,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -58,9 +59,9 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="function")
-def processor_factory(session, shared_contract):
-    def _processor(membership=False, coupon=False):
+@pytest_asyncio.fixture(scope="function")
+async def processor_factory(session, shared_contract):
+    async def _processor(membership=False, coupon=False):
         # Create exchange contract for each test method.
         exchange_address = {
             "membership": None,
@@ -88,7 +89,7 @@ def processor_factory(session, shared_contract):
             exchange_address["coupon"] = coupon_exchange["address"]
 
         processor = indexer_DEX.Processor()
-        asyncio.run(processor.initial_sync())
+        await processor.initial_sync()
 
         return processor, exchange_address
 
@@ -106,6 +107,7 @@ def main_func(processor_factory):
     LOG.setLevel(default_log_level)
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
@@ -170,8 +172,8 @@ class TestProcessor:
 
     # <Normal_1>
     # - Create Order
-    def test_normal_1(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_1(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -191,7 +193,7 @@ class TestProcessor:
         block_number = web3.eth.block_number
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -222,8 +224,8 @@ class TestProcessor:
     # <Normal_2>
     # - Create Order
     # - Cancel Order
-    def test_normal_2(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_2(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -246,7 +248,7 @@ class TestProcessor:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -277,8 +279,8 @@ class TestProcessor:
     # <Normal_3>
     # - Create Order
     # - Order Agreement(Take buy)
-    def test_normal_3(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_3(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -302,7 +304,7 @@ class TestProcessor:
         block_number2 = web3.eth.block_number
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -349,8 +351,8 @@ class TestProcessor:
     # <Normal_4>
     # - Create Order
     # - Order Agreement(Take sell)
-    def test_normal_4(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_4(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -376,7 +378,7 @@ class TestProcessor:
         block_number2 = web3.eth.block_number
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -424,8 +426,8 @@ class TestProcessor:
     # - Create Order
     # - Order Agreement
     # - Confirm Agreement
-    def test_normal_5(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_5(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -452,7 +454,7 @@ class TestProcessor:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -500,8 +502,8 @@ class TestProcessor:
     # - Create Order
     # - Order Agreement
     # - Cancel Agreement
-    def test_normal_6(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_6(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -528,7 +530,7 @@ class TestProcessor:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -577,8 +579,10 @@ class TestProcessor:
     # - Create Order
     # - Order Agreement
     # - Confirm Agreement
-    def test_normal_7(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True, coupon=True)
+    async def test_normal_7(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(
+            membership=True, coupon=True
+        )
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -644,7 +648,7 @@ class TestProcessor:
         )
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -721,8 +725,8 @@ class TestProcessor:
 
     # <Normal_8>
     # Not Listing Token
-    def test_normal_8(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_normal_8(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -740,7 +744,7 @@ class TestProcessor:
         )
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -754,8 +758,8 @@ class TestProcessor:
 
     # <Normal_9>
     # Unset Exchange Address
-    def test_normal_9(self, processor_factory, shared_contract, session):
-        processor, _exchange_address = processor_factory()
+    async def test_normal_9(self, processor_factory, shared_contract, session):
+        processor, _exchange_address = await processor_factory()
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -769,7 +773,7 @@ class TestProcessor:
         self.listing_token(coupon_token["address"], session)
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -783,11 +787,11 @@ class TestProcessor:
 
     # <Normal_10>
     # No event logs
-    def test_normal_10(self, processor_factory, shared_contract, session):
-        processor, _ = processor_factory()
+    async def test_normal_10(self, processor_factory, shared_contract, session):
+        processor, _ = await processor_factory()
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -813,8 +817,8 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    def test_error_1_1(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_error_1_1(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -834,7 +838,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        asyncio.run(processor.initial_sync())
+        await processor.initial_sync()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -859,10 +863,10 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
 
         # Run target process
-        asyncio.run(processor.sync_new_logs())
+        await processor.sync_new_logs()
         # Assertion
         session.rollback()
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -877,8 +881,8 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    def test_error_1_2(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_error_1_2(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -905,7 +909,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -935,7 +939,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -951,8 +955,8 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_1(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_error_2_1(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -979,7 +983,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
             select(IDXOrder).order_by(IDXOrder.created)
@@ -1008,7 +1012,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -1024,8 +1028,8 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_2(self, processor_factory, shared_contract, session):
-        processor, exchange_address = processor_factory(membership=True)
+    async def test_error_2_2(self, processor_factory, shared_contract, session):
+        processor, exchange_address = await processor_factory(membership=True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1049,7 +1053,7 @@ class TestProcessor:
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.initial_sync())
+            await processor.initial_sync()
 
         # Assertion
         _order_list: Sequence[IDXOrder] = session.scalars(
@@ -1076,7 +1080,7 @@ class TestProcessor:
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            asyncio.run(processor.sync_new_logs())
+            await processor.sync_new_logs()
 
         # Assertion
         session.rollback()
@@ -1092,7 +1096,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    def test_error_3(
+    async def test_error_3(
         self, main_func, processor_factory, shared_contract, session, caplog
     ):
         # Mocking time.sleep to break mainloop
@@ -1110,7 +1114,7 @@ class TestProcessor:
             pytest.raises(TypeError),
         ):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            asyncio.run(main_func())
+            await main_func()
 
         assert 1 == caplog.record_tuples.count(
             (LOG.name, 25, "An external service was unavailable")

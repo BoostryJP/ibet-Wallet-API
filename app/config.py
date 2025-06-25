@@ -26,6 +26,12 @@ BRAND_NAME = "ibet-Wallet-API"
 ####################################################
 # Basic settings
 ####################################################
+# Run mode
+RUN_MODE = os.environ.get("RUN_MODE")
+
+# Profiling mode
+PROFILING_MODE = True if os.environ.get("PROFILING_MODE") == "1" else False
+
 # Unit test mode
 UNIT_TEST_MODE = True if os.environ.get("UNIT_TEST_MODE") == "1" else False
 
@@ -55,7 +61,7 @@ else:
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
 
-# Issuing companies list
+# [CompanyInfo] Company List
 COMPANY_LIST_URL = os.environ.get("COMPANY_LIST_URL")
 COMPANY_LIST_LOCAL_MODE = (
     True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
@@ -63,6 +69,24 @@ COMPANY_LIST_LOCAL_MODE = (
 COMPANY_LIST_SLEEP_INTERVAL = (
     int(os.environ.get("COMPANY_LIST_SLEEP_INTERVAL"))
     if os.environ.get("COMPANY_LIST_SLEEP_INTERVAL")
+    else 3600
+)
+
+# [PublicInfo] Token List
+# - Considering the need for timely information updates,
+#   the SLEEP interval is set to 10 minutes by default.
+TOKEN_LIST_URL = os.environ.get("TOKEN_LIST_URL")
+TOKEN_LIST_SLEEP_INTERVAL = (
+    int(os.environ.get("TOKEN_LIST_SLEEP_INTERVAL"))
+    if os.environ.get("TOKEN_LIST_SLEEP_INTERVAL")
+    else 600
+)
+
+# [PublicInfo] Public Account List
+PUBLIC_ACCOUNT_LIST_URL = os.environ.get("PUBLIC_ACCOUNT_LIST_URL")
+PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL = (
+    int(os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL"))
+    if os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL")
     else 3600
 )
 
@@ -341,6 +365,11 @@ DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX = os.environ.get(
 # Chat webhook settings
 ####################################################
 CHAT_WEBHOOK_URL = os.environ.get("CHAT_WEBHOOK_URL")
+
+######################################################
+# O11y Settings
+######################################################
+PYROSCOPE_SERVER_URL = os.environ.get("PYROSCOPE_SERVER_URL")
 
 ####################################################
 # Other settings

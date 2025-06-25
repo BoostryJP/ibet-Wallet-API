@@ -3,20 +3,22 @@
 The list of environment variables that can be set for this system is as follows.
 
 ## Basic Settings
-| Variable Name           | Required | Details                                  | Example                                  | Default                                                   | 
-|-------------------------|----------|------------------------------------------|------------------------------------------|-----------------------------------------------------------|
-| APP_ENV                 | False    | Running environment                      | local / dev / live                       | local                                                     | 
-| NETWORK                 | False    | Running network                          | IBET / IBETFIN                           | IBET                                                      |
-| WEB3_CHAINID            | False    | Blockchain network ID                    | 1010032                                  | IBET: 1500002, IBETFIN: 1010032                           |
-| WEB3_HTTP_PROVIDER      | False    | Web3 provider                            | http://localhost:8545                    | http://localhost:8545                                     |
-| COMPANY_LIST_URL        | True     | Company list URL                         | https://dummy-company-list.boostry.co.jp | --                                                        |
-| COMPANY_LIST_LOCAL_MODE | False    | Using the local mode of the company list | 0 (not using) / 1 (using)                | 0                                                         |
-| DATABASE_URL            | False    | Database URL                             | postgresql://xxxx:xxxx@yyyy:5432/zzzz    | postgresql://ethuser:ethpass@localhost:5432/ethcache      |
-| TEST_DATABASE_URL       | False    | Test database URL (for development use)  | postgresql://xxxx:xxxx@yyyy:5432/zzzz    | postgresql://ethuser:ethpass@localhost:5432/ethcache_test |
-| APP_LOGFILE             | False    | Output location for application logs     | /some/directory                          | /dev/stdout (standard output)                             |
-| ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                          | /dev/stdout (standard output)                             |
-| TZ                      | False    | Time Zone                                | Europe/Berlin                            | Asia/Tokyo                                                |
-| DEFAULT_CURRENCY        | False    | Default currency code                    | EUR                                      | JPY                                                       | 
+| Variable Name           | Required | Details                                  | Example                                         | Default                                                   | 
+|-------------------------|----------|------------------------------------------|-------------------------------------------------|-----------------------------------------------------------|
+| APP_ENV                 | False    | Running environment                      | local / dev / live                              | local                                                     | 
+| NETWORK                 | False    | Running network                          | IBET / IBETFIN                                  | IBET                                                      |
+| WEB3_CHAINID            | False    | Blockchain network ID                    | 1010032                                         | IBET: 1500002, IBETFIN: 1010032                           |
+| WEB3_HTTP_PROVIDER      | False    | Web3 provider                            | http://localhost:8545                           | http://localhost:8545                                     |
+| COMPANY_LIST_URL        | True     | Company list URL                         | https://dummy-company-list.boostry.co.jp        | --                                                        |
+| COMPANY_LIST_LOCAL_MODE | False    | Using the local mode of the company list | 0 (not using) / 1 (using)                       | 0                                                         |
+| TOKEN_LIST_URL          | True     | Token list URL                           | https://dummy-token-list.boostry.co.jp          | --                                                        |
+| PUBLIC_ACCOUNT_LIST_URL | True     | Public account list URL                  | https://dummy-public-account-list.boostry.co.jp | --                                                        |
+| DATABASE_URL            | False    | Database URL                             | postgresql://xxxx:xxxx@yyyy:5432/zzzz           | postgresql://ethuser:ethpass@localhost:5432/ethcache      |
+| TEST_DATABASE_URL       | False    | Test database URL (for development use)  | postgresql://xxxx:xxxx@yyyy:5432/zzzz           | postgresql://ethuser:ethpass@localhost:5432/ethcache_test |
+| APP_LOGFILE             | False    | Output location for application logs     | /some/directory                                 | /dev/stdout (standard output)                             |
+| ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                                 | /dev/stdout (standard output)                             |
+| TZ                      | False    | Time Zone                                | Europe/Berlin                                   | Asia/Tokyo                                                |
+| DEFAULT_CURRENCY        | False    | Default currency code                    | EUR                                             | JPY                                                       | 
 
 
 ## API Server Settings

@@ -525,71 +525,55 @@ class TestNotificationsGet:
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
+            "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "type": "greater_than_equal",
                     "loc": ["query", "offset"],
                     "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
+                    "input": "-1",
+                    "ctx": {"ge": 0},
                 },
                 {
-                    "ctx": {"ge": 0},
-                    "input": "-1",
+                    "type": "greater_than_equal",
                     "loc": ["query", "limit"],
                     "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
-                },
-                {
-                    "ctx": {
-                        "expected": "'NewOrder', 'NewOrderCounterpart', "
-                        "'CancelOrder', "
-                        "'CancelOrderCounterpart', "
-                        "'ForceCancelOrder', 'BuyAgreement', "
-                        "'BuySettlementOK', 'BuySettlementNG', "
-                        "'SellAgreement', 'SellSettlementOK', "
-                        "'SellSettlementNG', 'Transfer', "
-                        "'ApplyForTransfer', 'ApproveTransfer' "
-                        "or 'CancelTransfer'"
-                    },
-                    "input": "hoge",
-                    "loc": ["query", "notification_type"],
-                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', "
-                    "'CancelOrder', 'CancelOrderCounterpart', "
-                    "'ForceCancelOrder', 'BuyAgreement', "
-                    "'BuySettlementOK', 'BuySettlementNG', "
-                    "'SellAgreement', 'SellSettlementOK', "
-                    "'SellSettlementNG', 'Transfer', 'ApplyForTransfer', "
-                    "'ApproveTransfer' or 'CancelTransfer'",
-                    "type": "enum",
-                },
-                {
-                    "ctx": {"ge": 0},
                     "input": "-1",
+                    "ctx": {"ge": 0},
+                },
+                {
+                    "type": "enum",
+                    "loc": ["query", "notification_type"],
+                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock' or 'ForceUnlock'",
+                    "input": "hoge",
+                    "ctx": {
+                        "expected": "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock' or 'ForceUnlock'"
+                    },
+                },
+                {
+                    "type": "greater_than_equal",
                     "loc": ["query", "priority"],
                     "msg": "Input should be greater than or equal to 0",
-                    "type": "greater_than_equal",
-                },
-                {
-                    "ctx": {
-                        "expected": "'notification_type', 'priority', "
-                        "'block_timestamp' or 'created'"
-                    },
-                    "input": "fuga",
-                    "loc": ["query", "sort_item"],
-                    "msg": "Input should be 'notification_type', 'priority', "
-                    "'block_timestamp' or 'created'",
-                    "type": "enum",
-                },
-                {
-                    "ctx": {"expected": "0 or 1"},
                     "input": "-1",
+                    "ctx": {"ge": 0},
+                },
+                {
+                    "type": "enum",
+                    "loc": ["query", "sort_item"],
+                    "msg": "Input should be 'notification_type', 'priority', 'block_timestamp' or 'created'",
+                    "input": "fuga",
+                    "ctx": {
+                        "expected": "'notification_type', 'priority', 'block_timestamp' or 'created'"
+                    },
+                },
+                {
+                    "type": "enum",
                     "loc": ["query", "sort_order"],
                     "msg": "Input should be 0 or 1",
-                    "type": "enum",
+                    "input": "-1",
+                    "ctx": {"expected": "0 or 1"},
                 },
             ],
-            "message": "Invalid Parameter",
         }
 
     # <Error_2>

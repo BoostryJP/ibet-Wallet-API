@@ -20,11 +20,12 @@ SPDX-License-Identifier: Apache-2.0
 from enum import StrEnum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from app.model.schema.base import (
     BasePaginationQuery,
     EthereumAddress,
+    MembershipToken,
     ResultSet,
     SortOrder,
 )
@@ -80,38 +81,13 @@ class ListAllMembershipTokensQuery(MembershipTokensQuery):
 ############################
 # RESPONSE
 ############################
-class MembershipImage(BaseModel):
-    id: int
-    url: str
-
-
-class RetrieveMembershipTokenResponse(BaseModel):
-    token_address: EthereumAddress
-    token_template: str = Field(examples=["IbetMembership"])
-    owner_address: EthereumAddress = Field(description="issuer address")
-    company_name: str
-    rsa_publickey: str
-    name: str = Field(description="token name")
-    symbol: str = Field(description="token symbol")
-    total_supply: int
-    tradable_exchange: EthereumAddress
-    contact_information: str
-    privacy_policy: str
-    status: bool
-    max_holding_quantity: Optional[int]
-    max_sell_amount: Optional[int]
-    details: str
-    return_details: str
-    expiration_date: str
-    memo: str
-    transferable: bool
-    initial_offering_status: bool
-    image_url: list[MembershipImage]
+class RetrieveMembershipTokenResponse(RootModel[MembershipToken]):
+    pass
 
 
 class ListAllMembershipTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[RetrieveMembershipTokenResponse]
+    tokens: list[MembershipToken]
 
 
 class ListAllMembershipTokenAddressesResponse(BaseModel):

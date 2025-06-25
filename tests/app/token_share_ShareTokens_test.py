@@ -27,12 +27,12 @@ from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
-from app.model.db import IDXTokenListItem, Listing
+from app.model.db import IDXTokenListRegister, Listing
 from batch import indexer_Token_Detail
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
 from tests.contract_modules import issue_share_token, register_share_list
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -100,7 +100,7 @@ class TestTokenShareTokens:
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
-        token_list_item = IDXTokenListItem()
+        token_list_item = IDXTokenListRegister()
         token_list_item.token_address = token["address"]
         token_list_item.token_template = "IbetShare"
         token_list_item.owner_address = ""

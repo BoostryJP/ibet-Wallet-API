@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import json
 import logging
 from typing import Sequence
@@ -29,7 +28,7 @@ import requests
 from sqlalchemy import select
 
 from app.model.db import Company
-from batch.indexer_CompanyList import LOG, Processor
+from batch.indexer_Company_List import LOG, Processor
 
 
 @pytest.fixture(scope="function")
@@ -63,6 +62,7 @@ class MockResponse:
         return self.data
 
 
+@pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################
     # Normal Case
@@ -71,7 +71,7 @@ class TestProcessor:
     # <Normal_1>
     # 0 record
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_1(self, mock_get, processor, session):
+    async def test_normal_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -97,7 +97,7 @@ class TestProcessor:
         mock_get.side_effect = [MockResponse([])]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         session.rollback()
@@ -109,7 +109,7 @@ class TestProcessor:
     # <Normal_2>
     # 1 record
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_2(self, mock_get, processor, session):
+    async def test_normal_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -146,7 +146,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -164,7 +164,7 @@ class TestProcessor:
     # <Normal_3>
     # 2 record
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_3(self, mock_get, processor, session):
+    async def test_normal_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -206,7 +206,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -233,7 +233,7 @@ class TestProcessor:
     # type error
     # address
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_1_1(self, mock_get, processor, session):
+    async def test_normal_4_1_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -276,7 +276,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -296,7 +296,7 @@ class TestProcessor:
     # type error
     # corporate_name
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_1_2(self, mock_get, processor, session):
+    async def test_normal_4_1_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -339,7 +339,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -359,7 +359,7 @@ class TestProcessor:
     # type error
     # rsa_publickey
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_1_3(self, mock_get, processor, session):
+    async def test_normal_4_1_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -402,7 +402,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -422,7 +422,7 @@ class TestProcessor:
     # type error
     # homepage
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_1_4(self, mock_get, processor, session):
+    async def test_normal_4_1_4(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -465,7 +465,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -485,7 +485,7 @@ class TestProcessor:
     # required error
     # address
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_2_1(self, mock_get, processor, session):
+    async def test_normal_4_2_1(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -527,7 +527,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -547,7 +547,7 @@ class TestProcessor:
     # required error
     # corporate_name
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_2_2(self, mock_get, processor, session):
+    async def test_normal_4_2_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -589,7 +589,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -609,7 +609,7 @@ class TestProcessor:
     # required error
     # address
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_2_3(self, mock_get, processor, session):
+    async def test_normal_4_2_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -651,7 +651,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -670,7 +670,7 @@ class TestProcessor:
     # Insert SKIP
     # invalid address error
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_4_3(self, mock_get, processor, session):
+    async def test_normal_4_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -713,7 +713,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -732,7 +732,7 @@ class TestProcessor:
     # There are no differences from last time
     # -> Skip this cycle
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_5_1(self, mock_get, processor, session, caplog):
+    async def test_normal_5_1(self, mock_get, processor, session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -752,7 +752,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Run target process: 2nd time
         mock_get.side_effect = [
@@ -773,7 +773,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -808,7 +808,7 @@ class TestProcessor:
     # <Normal_5_2>
     # There are differences from the previous cycle
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_normal_5_2(self, mock_get, processor, session, caplog):
+    async def test_normal_5_2(self, mock_get, processor, session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -828,7 +828,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Run target process: 2nd time
         mock_get.side_effect = [
@@ -843,7 +843,7 @@ class TestProcessor:
                 ]
             )
         ]
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -878,7 +878,7 @@ class TestProcessor:
         "aiohttp.client.ClientSession.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
-    def test_error_1_1(self, processor, session):
+    async def test_error_1_1(self, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -901,7 +901,7 @@ class TestProcessor:
         session.commit()
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -913,7 +913,7 @@ class TestProcessor:
     # API error
     # not succeed api
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_error_1_2(self, mock_get, processor, session):
+    async def test_error_1_2(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -939,7 +939,7 @@ class TestProcessor:
         mock_get.side_effect = [MockResponse([], 400)]
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -953,7 +953,7 @@ class TestProcessor:
         "aiohttp.client.ClientSession.get",
         MagicMock(side_effect=json.decoder.JSONDecodeError),
     )
-    def test_error_2(self, processor, session):
+    async def test_error_2(self, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -976,7 +976,7 @@ class TestProcessor:
         session.commit()
 
         # Run target process
-        asyncio.run(processor.process())
+        await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
@@ -987,7 +987,7 @@ class TestProcessor:
     # <Error_3>
     # other error
     @mock.patch("aiohttp.client.ClientSession.get")
-    def test_error_3(self, mock_get, processor, session):
+    async def test_error_3(self, mock_get, processor, session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -1026,7 +1026,7 @@ class TestProcessor:
 
         # Run target process
         with pytest.raises(Exception):
-            asyncio.run(processor.process())
+            await processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(

@@ -52,6 +52,7 @@ from tests.contract_modules import (
     membership_register_list,
     register_bond_list,
     register_share_list,
+    share_force_unlock,
     share_lock,
     share_unlock,
     transfer_bond_token,
@@ -230,6 +231,7 @@ class TestProcessor:
     # Single event logs
     #  - Transfer
     #  - Unlock
+    #  - ForceUnlock
     async def test_normal_1_1(self, processor, shared_contract, async_session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -256,7 +258,7 @@ class TestProcessor:
         )
         block_number_1 = web3.eth.block_number
 
-        # emit "Unlock"
+        # emit "Unlock", "ForceUnlock"
         # - target: trader1
         # - recipient: trader2
         share_lock(
@@ -266,15 +268,31 @@ class TestProcessor:
             amount=50000,
             data_str=json.dumps({"message": "garnishment"}),
         )
+
         share_unlock(
             invoker=self.trader2,
             token=share_token,
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
-            amount=50000,
-            data_str=json.dumps({"invalid_message": "invalid_value"}),
+            amount=30000,
+            data_str=json.dumps(
+                {"invalid_message": "invalid_value"}
+            ),  # invalid message format
         )
         block_number_2 = web3.eth.block_number
+
+        share_force_unlock(
+            invoker=self.issuer,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            target=self.trader["account_address"],
+            recipient=self.trader2["account_address"],
+            amount=20000,
+            data_str=json.dumps(
+                {"invalid_message": "invalid_value"}
+            ),  # invalid message format
+        )
+        block_number_3 = web3.eth.block_number
 
         # Execute batch processing
         await processor.sync_new_logs()
@@ -285,7 +303,7 @@ class TestProcessor:
                 select(IDXTransfer).order_by(IDXTransfer.created)
             )
         ).all()
-        assert len(idx_transfer_list) == 2
+        assert len(idx_transfer_list) == 3
 
         block1 = web3.eth.get_block(block_number_1)
         idx_transfer: IDXTransfer = idx_transfer_list[0]
@@ -295,7 +313,7 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 100000
-        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER
         assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
@@ -307,8 +325,22 @@ class TestProcessor:
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
-        assert idx_transfer.value == 50000
-        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
+        assert idx_transfer.value == 30000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK
+        assert idx_transfer.data == {}
+        assert idx_transfer.message is None
+        assert idx_transfer.created is not None
+        assert idx_transfer.modified is not None
+
+        block3 = web3.eth.get_block(block_number_3)
+        idx_transfer: IDXTransfer = idx_transfer_list[2]
+        assert idx_transfer.id == 3
+        assert idx_transfer.transaction_hash == block3["transactions"][0].to_0x_hex()
+        assert idx_transfer.token_address == share_token["address"]
+        assert idx_transfer.from_address == self.trader["account_address"]
+        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.value == 20000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.FORCE_UNLOCK
         assert idx_transfer.data == {}
         assert idx_transfer.message is None
         assert idx_transfer.created is not None
@@ -324,12 +356,12 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        assert idx_block_number.latest_block_number == block_number_2
+        assert idx_block_number.latest_block_number == block_number_3
 
     # <Normal_1_2>
     # IbetShare
     # Single event logs
-    # - Unlock: Data is not registered because "from" and "to" are the same
+    # - Unlock/ForceUnlock: Data is not registered because "from" and "to" are the same
     async def test_normal_1_2(self, processor, shared_contract, async_session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -355,7 +387,7 @@ class TestProcessor:
             amount=100000,
         )
 
-        # emit "Unlock"
+        # emit "Unlock"/"ForceUnlock"
         # - target: trader1
         # - recipient: trader1
         share_lock(
@@ -370,7 +402,16 @@ class TestProcessor:
             token=share_token,
             target=self.trader["account_address"],
             recipient=self.trader["account_address"],
-            amount=50000,
+            amount=30000,
+            data_str=json.dumps({"message": "inheritance"}),
+        )
+        share_force_unlock(
+            invoker=self.issuer,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            target=self.trader["account_address"],
+            recipient=self.trader["account_address"],
+            amount=20000,
             data_str=json.dumps({"message": "force_unlock"}),
         )
         block_number = web3.eth.block_number
@@ -382,6 +423,13 @@ class TestProcessor:
         idx_transfer_list = (
             await async_session.scalars(
                 select(IDXTransfer).where(IDXTransfer.source_event == "Unlock")
+            )
+        ).all()
+        assert len(idx_transfer_list) == 0
+
+        idx_transfer_list = (
+            await async_session.scalars(
+                select(IDXTransfer).where(IDXTransfer.source_event == "ForceUnlock")
             )
         ).all()
         assert len(idx_transfer_list) == 0
@@ -403,6 +451,7 @@ class TestProcessor:
     # Multi event logs
     # - Transfer(twice)
     # - Unlock(twice)
+    # - ForceUnlock(twice)
     async def test_normal_2(self, processor, shared_contract, async_session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -444,7 +493,7 @@ class TestProcessor:
         )
         block_number_2 = web3.eth.block_number
 
-        # emit "Unlock"
+        # emit "Unlock"/"ForceUnlock"
         share_lock(
             invoker=self.trader,
             token=share_token,
@@ -457,20 +506,39 @@ class TestProcessor:
             token=share_token,
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
-            amount=50000,
-            data_str=json.dumps({"message": "force_unlock"}),
+            amount=30000,
+            data_str=json.dumps({"message": "inheritance"}),
         )
         block_number_3 = web3.eth.block_number
-
         share_unlock(
             invoker=self.trader2,
             token=share_token,
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
-            amount=50000,
-            data_str=json.dumps({"message": "force_unlock"}),
+            amount=30000,
+            data_str=json.dumps({"message": "inheritance"}),
         )
         block_number_4 = web3.eth.block_number
+        share_force_unlock(
+            invoker=self.issuer,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            target=self.trader["account_address"],
+            recipient=self.trader2["account_address"],
+            amount=20000,
+            data_str=json.dumps({"message": "force_unlock"}),
+        )
+        block_number_5 = web3.eth.block_number
+        share_force_unlock(
+            invoker=self.issuer,
+            token=share_token,
+            lock_address=self.trader2["account_address"],
+            target=self.trader["account_address"],
+            recipient=self.trader2["account_address"],
+            amount=20000,
+            data_str=json.dumps({"message": "force_unlock"}),
+        )
+        block_number_6 = web3.eth.block_number
 
         # Execute batch processing
         await processor.sync_new_logs()
@@ -481,7 +549,7 @@ class TestProcessor:
                 select(IDXTransfer).order_by(IDXTransfer.created)
             )
         ).all()
-        assert len(idx_transfer_list) == 4
+        assert len(idx_transfer_list) == 6
 
         block = web3.eth.get_block(block_number_1)
         idx_transfer = idx_transfer_list[0]
@@ -491,7 +559,7 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 100000
-        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER
         assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
@@ -504,7 +572,7 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 200000
-        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER
         assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
@@ -516,10 +584,10 @@ class TestProcessor:
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
-        assert idx_transfer.value == 50000
-        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
-        assert idx_transfer.data == {"message": "force_unlock"}
-        assert idx_transfer.message == "force_unlock"
+        assert idx_transfer.value == 30000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK
+        assert idx_transfer.data == {"message": "inheritance"}
+        assert idx_transfer.message == "inheritance"
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -530,8 +598,36 @@ class TestProcessor:
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
-        assert idx_transfer.value == 50000
-        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
+        assert idx_transfer.value == 30000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK
+        assert idx_transfer.data == {"message": "inheritance"}
+        assert idx_transfer.message == "inheritance"
+        assert idx_transfer.created is not None
+        assert idx_transfer.modified is not None
+
+        block = web3.eth.get_block(block_number_5)
+        idx_transfer = idx_transfer_list[4]
+        assert idx_transfer.id == 5
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.token_address == share_token["address"]
+        assert idx_transfer.from_address == self.trader["account_address"]
+        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.value == 20000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.FORCE_UNLOCK
+        assert idx_transfer.data == {"message": "force_unlock"}
+        assert idx_transfer.message == "force_unlock"
+        assert idx_transfer.created is not None
+        assert idx_transfer.modified is not None
+
+        block = web3.eth.get_block(block_number_6)
+        idx_transfer = idx_transfer_list[5]
+        assert idx_transfer.id == 6
+        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.token_address == share_token["address"]
+        assert idx_transfer.from_address == self.trader["account_address"]
+        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.value == 20000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.FORCE_UNLOCK
         assert idx_transfer.data == {"message": "force_unlock"}
         assert idx_transfer.message == "force_unlock"
         assert idx_transfer.created is not None
@@ -546,7 +642,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        assert idx_block_number.latest_block_number == block_number_4
+        assert idx_block_number.latest_block_number == block_number_6
 
     # <Normal_3>
     # IbetStraightBond, IbetMembership, IbetCoupon
@@ -774,7 +870,7 @@ class TestProcessor:
         ).first()
         assert idx_block_number.latest_block_number == block_number_1
 
-        assert 2 == caplog.record_tuples.count(
+        assert 3 == caplog.record_tuples.count(
             (
                 LOG.name,
                 logging.DEBUG,
@@ -880,7 +976,7 @@ class TestProcessor:
         ).first()
         assert idx_block_number.latest_block_number == block_number_2
 
-        assert 2 == caplog.record_tuples.count(
+        assert 3 == caplog.record_tuples.count(
             (
                 LOG.name,
                 logging.DEBUG,
@@ -993,7 +1089,7 @@ class TestProcessor:
         ).first()
         assert idx_block_number.latest_block_number == block_number_2
 
-        assert 2 == caplog.record_tuples.count(
+        assert 3 == caplog.record_tuples.count(
             (
                 LOG.name,
                 logging.DEBUG,
@@ -1124,7 +1220,7 @@ class TestProcessor:
         ).first()
         assert idx_block_number.latest_block_number == block_number
 
-        assert 2 == caplog.record_tuples.count(
+        assert 3 == caplog.record_tuples.count(
             (
                 LOG.name,
                 logging.DEBUG,

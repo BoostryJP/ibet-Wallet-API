@@ -24,9 +24,9 @@ from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from tests.account_config import eth_account
 from tests.conftest import DeployedContract, UnitTestAccount
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -285,6 +285,22 @@ def bond_lock(invoker, token, lock_address: str, amount: int, data_str: str = ""
     )
 
 
+# BONDトークン：資産強制ロック
+def bond_force_lock(
+    invoker,
+    token,
+    lock_address: str,
+    account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.forceLock(
+        lock_address, account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
 # BONDトークン：資産アンロック
 def bond_unlock(
     invoker, token, target: str, recipient: str, amount: int, data_str: str = ""
@@ -294,6 +310,23 @@ def bond_unlock(
     TokenContract.functions.unlock(target, recipient, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
+
+
+# BONDトークン：資産強制アンロック
+def bond_force_unlock(
+    invoker,
+    token,
+    lock_address: str,
+    target: str,
+    recipient: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.forceUnlock(
+        lock_address, target, recipient, amount, data_str
+    ).transact({"from": invoker["account_address"]})
 
 
 # BONDトークン：追加発行
@@ -491,6 +524,22 @@ def share_lock(invoker, token, lock_address: str, amount: int, data_str: str = "
     )
 
 
+# SHAREトークン：資産強制ロック
+def share_force_lock(
+    invoker,
+    token,
+    lock_address: str,
+    account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.forceLock(
+        lock_address, account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
 # SHAREトークン：資産アンロック
 def share_unlock(
     invoker, token, target: str, recipient: str, amount: int, data_str: str = ""
@@ -501,6 +550,24 @@ def share_unlock(
     TokenContract.functions.unlock(target, recipient, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
+
+
+# SHAREトークン：資産強制アンロック
+def share_force_unlock(
+    invoker,
+    token,
+    lock_address: str,
+    target: str,
+    recipient: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.forceUnlock(
+        lock_address, target, recipient, amount, data_str
+    ).transact({"from": invoker["account_address"]})
 
 
 # SHAREトークン：追加発行

@@ -27,6 +27,11 @@ from logger import SystemLogger
 
 def get_logger(process_name: str = None):
     logging.setLoggerClass(SystemLogger)
+
+    logging.getLogger("pyroscope").setLevel(logging.ERROR)
+    logging.getLogger("py_spy").setLevel(logging.ERROR)
+    logging.getLogger("opentelemetry").setLevel(logging.ERROR)
+
     LOG = cast(SystemLogger, logging.getLogger("ibet_wallet_batch"))
     LOG.propagate = False
     stream_handler = logging.StreamHandler(sys.stdout)

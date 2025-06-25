@@ -21,6 +21,7 @@ from .admin import (
     GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
     RegisterAdminTokenRequest,
+    RegisterTokenResponse,
     RetrieveAdminTokenResponse,
     UpdateAdminTokenRequest,
 )
@@ -116,12 +117,20 @@ from .position import (
     SecurityTokenPositionWithDetail,
     TokenPositionsResponse,
 )
+from .public_info import (
+    ListAllPublicAccountsQuery,
+    ListAllPublicAccountsResponse,
+    ListAllPublicAccountsSortItem,
+    ListAllPublicListedTokensQuery,
+    ListAllPublicListedTokensResponse,
+)
 from .token import (
     CreateTokenHoldersCollectionRequest,
     CreateTokenHoldersCollectionResponse,
     ListAllTokenHoldersQuery,
     ListAllTransferApprovalHistoryQuery,
     ListAllTransferHistoryQuery,
+    ListTokenTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
     SearchTransferApprovalHistoryRequest,

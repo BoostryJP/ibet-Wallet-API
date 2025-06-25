@@ -46,6 +46,7 @@ from app.model.schema import (
     GetAdminTokenTypeResponse,
     ListAllAdminTokensResponse,
     RegisterAdminTokenRequest,
+    RegisterTokenResponse,
     RetrieveAdminTokenResponse,
     UpdateAdminTokenRequest,
 )
@@ -58,11 +59,10 @@ LOG = log.get_logger()
 
 router = APIRouter(prefix="/Admin", tags=["admin"])
 
+
 # ------------------------------
 # [管理]取扱トークン登録/一覧取得
 # ------------------------------
-
-
 @router.get(
     "/Tokens",
     summary="List All Listed Tokens",
@@ -84,28 +84,31 @@ async def list_all_admin_tokens(async_session: DBAsyncSession):
 
 @router.post(
     "/Tokens",
-    summary="List a Token",
+    summary="Add the token to the list",
     operation_id="TokensPOST",
-    response_model=SuccessResponse,
+    response_model=GenericSuccessResponse[RegisterTokenResponse],
     responses=get_routers_responses(DataConflictError, InvalidParameterError),
 )
 async def register_admin_token(
     async_session: DBAsyncSession, data: RegisterAdminTokenRequest
 ):
     """
-    Registers given token to listing.
+    Add the token to the list
     """
     contract_address = data.contract_address
 
-    # 既存レコードの存在チェック
+    # Checking for conflicts
+    conflict_err = False
     _listing = (
         await async_session.scalars(
             select(Listing).where(Listing.token_address == contract_address).limit(1)
         )
     ).first()
-
     if _listing is not None:
-        raise DataConflictError(description="contract_address already exist")
+        if data.skip_conflict_error is False:
+            raise DataConflictError(description="contract_address already exist")
+        else:
+            conflict_err = True
 
     _executable_contract = (
         await async_session.scalars(
@@ -115,9 +118,12 @@ async def register_admin_token(
         )
     ).first()
     if _executable_contract is not None:
-        raise DataConflictError(description="contract_address already exist")
+        if data.skip_conflict_error is False:
+            raise DataConflictError(description="contract_address already exist")
+        else:
+            conflict_err = True
 
-    # token情報をTokenListコントラクトから取得
+    # Retrieve token information from the TokenList contract.
     list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
     )
@@ -128,75 +134,78 @@ async def register_admin_token(
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
 
-    # contract_addressの有効性チェック
-    if token[1] is None or token[1] not in available_token_template():
+    # Check whether the token is valid.
+    token_type = token[1]
+    if token_type is None or token_type not in available_token_template():
         raise InvalidParameterError(
             description="contract_address is invalid token address"
         )
 
+    # Insert token contract data.
     owner_address = token[2]
+    if conflict_err is False:
+        listing = Listing(
+            token_address=contract_address,
+            is_public=data.is_public,
+            max_holding_quantity=data.max_holding_quantity,
+            max_sell_amount=data.max_sell_amount,
+            owner_address=owner_address,
+        )
+        async_session.add(listing)
+        executable_contract = ExecutableContract(contract_address=contract_address)
+        async_session.add(executable_contract)
 
-    # 新規レコードの登録
-    is_public = data.is_public
-    max_holding_quantity = data.max_holding_quantity
-    max_sell_amount = data.max_sell_amount
+    token_obj = await __fetch_token_details(async_session, token_type, contract_address)
 
-    listing = Listing(
-        token_address=contract_address,
-        is_public=is_public,
-        max_holding_quantity=max_holding_quantity,
-        max_sell_amount=max_sell_amount,
-        owner_address=owner_address,
-    )
-    async_session.add(listing)
-
-    executable_contract = ExecutableContract(contract_address=contract_address)
-    async_session.add(executable_contract)
-
-    token_type = token[1]
-    # Fetch token detail data to store cache
-    if token_type == TokenType.IbetCoupon:
-        token_obj = await CouponToken.get(async_session, contract_address)
-        await async_session.merge(token_obj.to_model())
-    elif token_type == TokenType.IbetMembership:
-        token_obj = await MembershipToken.get(async_session, contract_address)
-        await async_session.merge(token_obj.to_model())
-    elif token_type == TokenType.IbetStraightBond:
-        token_obj = await BondToken.get(async_session, contract_address)
-        await async_session.merge(token_obj.to_model())
-    elif token_type == TokenType.IbetShare:
-        token_obj = await ShareToken.get(async_session, contract_address)
+    if conflict_err is False:
+        # Register token cache
         await async_session.merge(token_obj.to_model())
 
-    (
-        balance,
-        pending_transfer,
-        exchange_balance,
-        exchange_commitment,
-    ) = await get_account_balance_all(
-        token_template=token_type,
-        token_address=contract_address,
-        account_address=owner_address,
-    )
-    position = IDXPosition(
-        token_address=contract_address,
-        account_address=owner_address,
-        balance=balance or 0,
-        pending_transfer=pending_transfer or 0,
-        exchange_balance=exchange_balance or 0,
-        exchange_commitment=exchange_commitment or 0,
-    )
-    await async_session.merge(position)
+        # Register the issuer balance
+        (
+            balance,
+            pending_transfer,
+            exchange_balance,
+            exchange_commitment,
+        ) = await get_account_balance_all(
+            token_template=token_type,
+            token_address=contract_address,
+            account_address=owner_address,
+        )
+        position = IDXPosition(
+            token_address=contract_address,
+            account_address=owner_address,
+            balance=balance or 0,
+            pending_transfer=pending_transfer or 0,
+            exchange_balance=exchange_balance or 0,
+            exchange_commitment=exchange_commitment or 0,
+        )
+        await async_session.merge(position)
+
     await async_session.commit()
 
-    return json_response(SuccessResponse.default())
+    _data = {"token": token_obj.__dict__}
+    return json_response({**SuccessResponse.default(), "data": _data})
+
+
+async def __fetch_token_details(
+    async_session: DBAsyncSession, token_type: TokenType, contract_address: str
+):
+    """Fetch token details"""
+    if token_type == TokenType.IbetShare:
+        token_obj = await ShareToken.get(async_session, contract_address)
+    elif token_type == TokenType.IbetStraightBond:
+        token_obj = await BondToken.get(async_session, contract_address)
+    elif token_type == TokenType.IbetMembership:
+        token_obj = await MembershipToken.get(async_session, contract_address)
+    else:  # token_type == TokenType.IbetCoupon:
+        token_obj = await CouponToken.get(async_session, contract_address)
+    return token_obj
 
 
 # ------------------------------
 # [管理]取扱トークン種別
 # ------------------------------
-
-
 @router.get(
     "/Tokens/Type",
     summary="Available status by token type",
@@ -220,8 +229,6 @@ async def get_admin_token_type():
 # ------------------------------
 # [管理]取扱トークン情報取得/更新
 # ------------------------------
-
-
 @router.get(
     "/Tokens/{token_address}",
     summary="Retrieve a Listed Token",

@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet system
     on ibet network
-  version: 25.3.0
+  version: 25.6.0
 paths:
   /:
     get:
@@ -14,6 +14,277 @@ paths:
       responses:
         '200':
           description: Successful Response
+  /PublicInfo/Tokens:
+    get:
+      tags:
+        - public_info
+      summary: Information on issued tokens and associated institutions (key managers)
+      description: List issued tokens and associated institutions (key managers)
+      operationId: ListAllPublicListedTokens
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: token_template
+          in: query
+          required: false
+          schema:
+            enum:
+              - ibetBond
+              - ibetShare
+            type: string
+            description: Token template
+            title: Token Template
+          description: Token template
+        - name: sort_item
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ListAllPublicListedTokensSortItem'
+            description: sort item
+            default: token_address
+          description: sort item
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/SortOrder'
+              - type: 'null'
+            description: sort order
+            default: 0
+            title: Sort Order
+          description: sort order
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllPublicListedTokensResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listallpubliclistedtokens
+          description: Bad Request
+  /PublicInfo/PublicAccounts:
+    get:
+      tags:
+        - public_info
+      summary: Public account information of ibet consortium members
+      description: List public accounts of ibet consortium members
+      operationId: ListAllPublicAccounts
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: key_manager
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: Key manager
+            title: Key Manager
+          description: Key manager
+        - name: key_manager_name
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: Key manager name
+            title: Key Manager Name
+          description: Key manager name
+        - name: sort_item
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ListAllPublicAccountsSortItem'
+            description: sort item
+            default: key_manager
+          description: sort item
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/SortOrder'
+              - type: 'null'
+            description: sort order
+            default: 0
+            title: Sort Order
+          description: sort order
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllPublicAccountsResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listallpublicaccounts
+          description: Bad Request
+  /Companies:
+    get:
+      tags:
+        - company_info
+      summary: Issuer Information List
+      description: Returns a list of issuer information.
+      operationId: ListAllCompanies
+      parameters:
+        - name: include_private_listing
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: include private listing token issuers
+            default: false
+            title: Include Private Listing
+          description: include private listing token issuers
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompaniesResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+          description: Bad Request
+  /Companies/{eth_address}:
+    get:
+      tags:
+        - company_info
+      summary: Issuer Information
+      description: Returns given issuer information.
+      operationId: RetrieveCompanyInfo
+      parameters:
+        - name: eth_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Issuer address
+            title: Eth Address
+          description: Issuer address
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Retrievecompanyinfo
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
+  /Companies/{eth_address}/Tokens:
+    get:
+      tags:
+        - company_info
+      summary: List of tokens issued by issuer
+      description: Returns a list of tokens issued by given issuer.
+      operationId: ListAllCompanyTokens
+      parameters:
+        - name: eth_address
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Issuer address
+            title: Eth Address
+          description: Issuer address
+        - name: include_private_listing
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: boolean
+              - type: 'null'
+            description: include private listing token issuers
+            default: false
+            title: Include Private Listing
+          description: include private listing token issuers
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+          description: Bad Request
   /Admin/Tokens:
     get:
       tags:
@@ -31,8 +302,8 @@ paths:
     post:
       tags:
         - admin
-      summary: List a Token
-      description: Registers given token to listing.
+      summary: Add the token to the list
+      description: Add the token to the list
       operationId: TokensPOST
       requestBody:
         content:
@@ -46,7 +317,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/GenericSuccessResponse_RegisterTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -580,116 +851,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /Companies:
-    get:
-      tags:
-        - company_info
-      summary: Issuer Information List
-      description: Returns a list of issuer information.
-      operationId: ListAllCompanies
-      parameters:
-        - name: include_private_listing
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include private listing token issuers
-            default: false
-            title: Include Private Listing
-          description: include private listing token issuers
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompaniesResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-  /Companies/{eth_address}:
-    get:
-      tags:
-        - company_info
-      summary: Issuer Information
-      description: Returns given issuer information.
-      operationId: RetrieveCompanyInfo
-      parameters:
-        - name: eth_address
-          in: path
-          required: true
-          schema:
-            type: string
-            description: Issuer address
-            title: Eth Address
-          description: Issuer address
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Retrievecompanyinfo
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataNotExistsErrorResponse'
-          description: Not Found
-  /Companies/{eth_address}/Tokens:
-    get:
-      tags:
-        - company_info
-      summary: List of tokens issued by issuer
-      description: Returns a list of tokens issued by given issuer.
-      operationId: ListAllCompanyTokens
-      parameters:
-        - name: eth_address
-          in: path
-          required: true
-          schema:
-            type: string
-            description: Issuer address
-            title: Eth Address
-          description: Issuer address
-        - name: include_private_listing
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: include private listing token issuers
-            default: false
-            title: Include Private Listing
-          description: include private listing token issuers
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
   /User/Tag:
     post:
       tags:
@@ -2998,13 +3159,180 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
           description: Not Found
+  /Token/TransferHistory:
+    get:
+      tags:
+        - token_info
+      summary: List all transfer history
+      description: Returns a list of transfer histories.
+      operationId: ListAllTransferHistory
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: account_tag
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: account tag (**this affects total number**)
+            title: Account Tag
+          description: account tag (**this affects total number**)
+        - name: source_event
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/TransferSourceEvent'
+              - type: 'null'
+            description: source event of transfer
+            title: Source Event
+          description: source event of transfer
+        - name: data
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: source event data
+            title: Data
+          description: source event data
+        - name: token_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: token address
+            title: Token Address
+          description: token address
+        - name: transaction_hash
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: transaction hash
+            title: Transaction Hash
+          description: transaction hash
+        - name: from_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: from address
+            title: From Address
+          description: from address
+        - name: to_address
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: to address
+            title: To Address
+          description: to address
+        - name: value
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            description: value
+            title: Value
+          description: value
+        - name: value_operator
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/ValueOperator'
+              - type: 'null'
+            description: 'value filter condition(0: equal, 1: greater than, 2: less
+              than)'
+            default: 0
+            title: Value Operator
+          description: 'value filter condition(0: equal, 1: greater than, 2: less
+            than)'
+        - name: created_from
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (From)
+            title: Created From
+          description: created datetime (From)
+        - name: created_to
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            description: created datetime (To)
+            title: Created To
+          description: created datetime (To)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listalltransferhistory
+          description: Bad Request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+          description: Not Found
   /Token/{token_address}/TransferHistory:
     get:
       tags:
         - token_info
-      summary: Token Transfer History
+      summary: List token transfer history
       description: Returns a list of transfer histories for a given token.
-      operationId: TransferHistory
+      operationId: ListTokenTransferHistory
       parameters:
         - name: token_address
           in: path
@@ -3155,7 +3483,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Transferhistory
+                title: Response 400 Listtokentransferhistory
           description: Bad Request
         '404':
           content:
@@ -3170,7 +3498,7 @@ paths:
       summary: Search Token Transfer History
       description: Returns a list of transfer histories for a given token using detailed
         search query.
-      operationId: SearchTransferHistory
+      operationId: SearchTokenTransferHistory
       parameters:
         - name: token_address
           in: path
@@ -3200,7 +3528,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Searchtransferhistory
+                title: Response 400 Searchtokentransferhistory
           description: Bad Request
         '404':
           content:
@@ -3214,7 +3542,7 @@ paths:
         - token_info
       summary: Token Transfer Approval History
       description: Returns a list of transfer approval histories for a given token.
-      operationId: TransferApprovalHistory
+      operationId: ListTokenTransferApprovalHistory
       parameters:
         - name: token_address
           in: path
@@ -3313,7 +3641,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Transferapprovalhistory
+                title: Response 400 Listtokentransferapprovalhistory
           description: Bad Request
         '404':
           content:
@@ -3328,7 +3656,7 @@ paths:
       summary: Search Token Transfer Approval History
       description: Returns a list of transfer approval histories for a given token
         using detailed search query.
-      operationId: SearchTransferApprovalHistory
+      operationId: SearchTokenTransferApprovalHistory
       parameters:
         - name: token_address
           in: path
@@ -3358,7 +3686,7 @@ paths:
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Searchtransferapprovalhistory
+                title: Response 400 Searchtokentransferapprovalhistory
           description: Bad Request
         '404':
           content:
@@ -6090,6 +6418,220 @@ components:
         - earliest
         - pending
       title: BlockIdentifier
+    BondToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetStraightBond
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        personal_info_address:
+          type: string
+          title: Personal Info Address
+        require_personal_info_registered:
+          type: boolean
+          title: Require Personal Info Registered
+        transferable:
+          type: boolean
+          title: Transferable
+        is_offering:
+          type: boolean
+          title: Is Offering
+        transfer_approval_required:
+          type: boolean
+          title: Transfer Approval Required
+        face_value:
+          type: integer
+          title: Face Value
+        face_value_currency:
+          type: string
+          title: Face Value Currency
+        interest_rate:
+          type: number
+          title: Interest Rate
+        interest_payment_date1:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date1
+        interest_payment_date2:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date2
+        interest_payment_date3:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date3
+        interest_payment_date4:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date4
+        interest_payment_date5:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date5
+        interest_payment_date6:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date6
+        interest_payment_date7:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date7
+        interest_payment_date8:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date8
+        interest_payment_date9:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date9
+        interest_payment_date10:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date10
+        interest_payment_date11:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date11
+        interest_payment_date12:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Interest Payment Date12
+        interest_payment_currency:
+          type: string
+          title: Interest Payment Currency
+        redemption_date:
+          type: string
+          title: Redemption Date
+        redemption_value:
+          type: integer
+          title: Redemption Value
+        redemption_value_currency:
+          type: string
+          title: Redemption Value Currency
+        base_fx_rate:
+          type: number
+          title: Base Fx Rate
+        return_date:
+          type: string
+          title: Return Date
+        return_amount:
+          type: string
+          title: Return Amount
+        purpose:
+          type: string
+          title: Purpose
+        memo:
+          type: string
+          title: Memo
+        is_redeemed:
+          type: boolean
+          title: Is Redeemed
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - personal_info_address
+        - require_personal_info_registered
+        - transferable
+        - is_offering
+        - transfer_approval_required
+        - face_value
+        - face_value_currency
+        - interest_rate
+        - interest_payment_date1
+        - interest_payment_date2
+        - interest_payment_date3
+        - interest_payment_date4
+        - interest_payment_date5
+        - interest_payment_date6
+        - interest_payment_date7
+        - interest_payment_date8
+        - interest_payment_date9
+        - interest_payment_date10
+        - interest_payment_date11
+        - interest_payment_date12
+        - interest_payment_currency
+        - redemption_date
+        - redemption_value
+        - redemption_value_currency
+        - base_fx_rate
+        - return_date
+        - return_amount
+        - purpose
+        - memo
+        - is_redeemed
+      title: BondToken
     CompanyInfo:
       properties:
         address:
@@ -6191,19 +6733,6 @@ components:
         - block_timestamp
         - value
       title: CouponConsumption
-    CouponImage:
-      properties:
-        id:
-          type: integer
-          title: Id
-        url:
-          type: string
-          title: Url
-      type: object
-      required:
-        - id
-        - url
-      title: CouponImage
     CouponPositionWithAddress:
       properties:
         balance:
@@ -6273,6 +6802,106 @@ components:
         - result_set
         - positions
       title: CouponPositionsResponse
+    CouponToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetCoupon
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        details:
+          type: string
+          title: Details
+        return_details:
+          type: string
+          title: Return Details
+        expiration_date:
+          type: string
+          title: Expiration Date
+        memo:
+          type: string
+          title: Memo
+        transferable:
+          type: boolean
+          title: Transferable
+        initial_offering_status:
+          type: boolean
+          title: Initial Offering Status
+        image_url:
+          items:
+            $ref: '#/components/schemas/TokenImage'
+          type: array
+          title: Image Url
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - details
+        - return_details
+        - expiration_date
+        - memo
+        - transferable
+        - initial_offering_status
+        - image_url
+      title: CouponToken
     CouponTokensSortItem:
       type: string
       enum:
@@ -6401,29 +7030,6 @@ components:
       required:
         - meta
       title: DataNotExistsErrorResponse
-    DividendInformation:
-      properties:
-        dividends:
-          type: number
-          title: Dividends
-          examples:
-            - 999.9999999999999
-        dividend_record_date:
-          type: string
-          title: Dividend Record Date
-          examples:
-            - '20200909'
-        dividend_payment_date:
-          type: string
-          title: Dividend Payment Date
-          examples:
-            - '20201001'
-      type: object
-      required:
-        - dividends
-        - dividend_record_date
-        - dividend_payment_date
-      title: DividendInformation
     E2EMessageEncryptionKeyResponse:
       properties:
         key:
@@ -6957,6 +7563,34 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllOrderListResponse[TokenAddress]]
+    GenericSuccessResponse_ListAllPublicAccountsResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListAllPublicAccountsResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListAllPublicAccountsResponse]
+    GenericSuccessResponse_ListAllPublicListedTokensResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListAllPublicListedTokensResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListAllPublicListedTokensResponse]
     GenericSuccessResponse_ListAllShareTokenAddressesResponse_:
       properties:
         meta:
@@ -7111,6 +7745,20 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[NotificationsResponse]
+    GenericSuccessResponse_RegisterTokenResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/RegisterTokenResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[RegisterTokenResponse]
     GenericSuccessResponse_RetrieveAdminTokenResponse_:
       properties:
         meta:
@@ -7611,6 +8259,31 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    IbetBondToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetBond
+          title: Token Template
+        product_type:
+          type: integer
+          const: 1
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetBondToken
     IbetEscrowEventType:
       type: string
       enum:
@@ -7657,10 +8330,42 @@ components:
         - ChangeTransferApprovalRequired
         - Issue
         - Lock
+        - ForceLock
+        - Unlock
+        - ForceUnlock
         - Redeem
         - Transfer
-        - Unlock
       title: IbetSecurityTokenInterfaceEventType
+    IbetShareToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetShare
+          title: Token Template
+        product_type:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetShareToken
     InvalidParameterErrorMetainfo:
       properties:
         code:
@@ -7766,7 +8471,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+            $ref: '#/components/schemas/CouponToken'
           type: array
           title: Tokens
       type: object
@@ -7894,7 +8599,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+            $ref: '#/components/schemas/MembershipToken'
           type: array
           title: Tokens
       type: object
@@ -7976,6 +8681,48 @@ components:
         - settlement_list
         - complete_list
       title: ListAllOrderListResponse[TokenAddress]
+    ListAllPublicAccountsResponse:
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        accounts:
+          items:
+            $ref: '#/components/schemas/PublicAccount'
+          type: array
+          title: Accounts
+      type: object
+      required:
+        - result_set
+        - accounts
+      title: ListAllPublicAccountsResponse
+    ListAllPublicAccountsSortItem:
+      type: string
+      enum:
+        - key_manager
+        - key_manager_name
+        - account_address
+      title: ListAllPublicAccountsSortItem
+    ListAllPublicListedTokensResponse:
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/IbetBondToken'
+              - $ref: '#/components/schemas/IbetShareToken'
+          type: array
+          title: Tokens
+      type: object
+      required:
+        - result_set
+        - tokens
+      title: ListAllPublicListedTokensResponse
+    ListAllPublicListedTokensSortItem:
+      type: string
+      enum:
+        - token_address
+      title: ListAllPublicListedTokensSortItem
     ListAllShareTokenAddressesResponse:
       properties:
         result_set:
@@ -7996,7 +8743,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveShareTokenResponse'
+            $ref: '#/components/schemas/ShareToken'
           type: array
           title: Tokens
       type: object
@@ -8024,7 +8771,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         tokens:
           items:
-            $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            $ref: '#/components/schemas/BondToken'
           type: array
           title: Tokens
       type: object
@@ -8056,6 +8803,10 @@ components:
         category:
           $ref: '#/components/schemas/LockEventCategory'
           description: history item category
+        is_forced:
+          type: boolean
+          title: Is Forced
+          description: Set to `True` for force lock/unlock events
         transaction_hash:
           type: string
           title: Transaction Hash
@@ -8100,6 +8851,7 @@ components:
       type: object
       required:
         - category
+        - is_forced
         - transaction_hash
         - msg_sender
         - token_address
@@ -8129,6 +8881,10 @@ components:
         category:
           $ref: '#/components/schemas/LockEventCategory'
           description: history item category
+        is_forced:
+          type: boolean
+          title: Is Forced
+          description: Set to `True` for force lock/unlock events
         transaction_hash:
           type: string
           title: Transaction Hash
@@ -8176,6 +8932,7 @@ components:
       type: object
       required:
         - category
+        - is_forced
         - transaction_hash
         - msg_sender
         - token_address
@@ -8191,6 +8948,10 @@ components:
         category:
           $ref: '#/components/schemas/LockEventCategory'
           description: history item category
+        is_forced:
+          type: boolean
+          title: Is Forced
+          description: Set to `True` for force lock/unlock events
         transaction_hash:
           type: string
           title: Transaction Hash
@@ -8238,6 +8999,7 @@ components:
       type: object
       required:
         - category
+        - is_forced
         - transaction_hash
         - msg_sender
         - token_address
@@ -8319,19 +9081,6 @@ components:
         - value
         - token
       title: LockedWithTokenDetail[RetrieveStraightBondTokenResponse]
-    MembershipImage:
-      properties:
-        id:
-          type: integer
-          title: Id
-        url:
-          type: string
-          title: Url
-      type: object
-      required:
-        - id
-        - url
-      title: MembershipImage
     MembershipPositionWithAddress:
       properties:
         balance:
@@ -8393,6 +9142,106 @@ components:
         - result_set
         - positions
       title: MembershipPositionsResponse
+    MembershipToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetMembership
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        details:
+          type: string
+          title: Details
+        return_details:
+          type: string
+          title: Return Details
+        expiration_date:
+          type: string
+          title: Expiration Date
+        memo:
+          type: string
+          title: Memo
+        transferable:
+          type: boolean
+          title: Transferable
+        initial_offering_status:
+          type: boolean
+          title: Initial Offering Status
+        image_url:
+          items:
+            $ref: '#/components/schemas/TokenImage'
+          type: array
+          title: Image Url
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - details
+        - return_details
+        - expiration_date
+        - memo
+        - transferable
+        - initial_offering_status
+        - image_url
+      title: MembershipToken
     MembershipTokensSortItem:
       type: string
       enum:
@@ -8560,6 +9409,8 @@ components:
         - ApplyForTransfer
         - ApproveTransfer
         - CancelTransfer
+        - ForceLock
+        - ForceUnlock
       title: NotificationType
     NotificationUpdateResponse:
       properties:
@@ -8763,6 +9614,37 @@ components:
         - buy
         - sell
       title: OrderType
+    PublicAccount:
+      properties:
+        key_manager:
+          type: string
+          title: Key Manager
+        key_manager_name:
+          type: string
+          title: Key Manager Name
+        account_type:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+          title: Account Type
+        account_address:
+          type: string
+          title: Account Address
+        modified:
+          type: string
+          title: Modified
+          description: Updated Datetime (local timezone)
+      type: object
+      required:
+        - key_manager
+        - key_manager_name
+        - account_type
+        - account_address
+        - modified
+      title: PublicAccount
     RegisterAdminTokenRequest:
       properties:
         contract_address:
@@ -8787,11 +9669,32 @@ components:
             - type: 'null'
           title: Max Sell Amount
           description: Maximum sell amount limit
+        skip_conflict_error:
+          anyOf:
+            - type: boolean
+            - type: 'null'
+          title: Skip Conflict Error
+          description: If set to `True`, a `200` response will be returned instead
+            of a `409` error in case of duplicate data.
+          default: false
       type: object
       required:
         - contract_address
         - is_public
       title: RegisterAdminTokenRequest
+    RegisterTokenResponse:
+      properties:
+        token:
+          anyOf:
+            - $ref: '#/components/schemas/BondToken'
+            - $ref: '#/components/schemas/ShareToken'
+            - $ref: '#/components/schemas/MembershipToken'
+            - $ref: '#/components/schemas/CouponToken'
+          title: Token
+      type: object
+      required:
+        - token
+      title: RegisterTokenResponse
     RequestBlockRangeLimitExceededErrorMetainfo:
       properties:
         code:
@@ -9059,204 +9962,10 @@ components:
         - in_use_personal_info_addresses
       title: RetrieveCompanyInfoResponse
     RetrieveCouponTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetCoupon
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        details:
-          type: string
-          title: Details
-        return_details:
-          type: string
-          title: Return Details
-        expiration_date:
-          type: string
-          title: Expiration Date
-        memo:
-          type: string
-          title: Memo
-        transferable:
-          type: boolean
-          title: Transferable
-        initial_offering_status:
-          type: boolean
-          title: Initial Offering Status
-        image_url:
-          items:
-            $ref: '#/components/schemas/CouponImage'
-          type: array
-          title: Image Url
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - details
-        - return_details
-        - expiration_date
-        - memo
-        - transferable
-        - initial_offering_status
-        - image_url
+      $ref: '#/components/schemas/CouponToken'
       title: RetrieveCouponTokenResponse
     RetrieveMembershipTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetMembership
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        details:
-          type: string
-          title: Details
-        return_details:
-          type: string
-          title: Return Details
-        expiration_date:
-          type: string
-          title: Expiration Date
-        memo:
-          type: string
-          title: Memo
-        transferable:
-          type: boolean
-          title: Transferable
-        initial_offering_status:
-          type: boolean
-          title: Initial Offering Status
-        image_url:
-          items:
-            $ref: '#/components/schemas/MembershipImage'
-          type: array
-          title: Image Url
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - details
-        - return_details
-        - expiration_date
-        - memo
-        - transferable
-        - initial_offering_status
-        - image_url
+      $ref: '#/components/schemas/MembershipToken'
       title: RetrieveMembershipTokenResponse
     RetrievePaymentAccountRegistrationStatusResponse:
       properties:
@@ -9294,331 +10003,10 @@ components:
         - registered
       title: RetrievePersonalInfoRegistrationStatusResponse
     RetrieveShareTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetShare
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        personal_info_address:
-          type: string
-          title: Personal Info Address
-        require_personal_info_registered:
-          type: boolean
-          title: Require Personal Info Registered
-        transferable:
-          type: boolean
-          title: Transferable
-        is_offering:
-          type: boolean
-          title: Is Offering
-        transfer_approval_required:
-          type: boolean
-          title: Transfer Approval Required
-        issue_price:
-          type: integer
-          title: Issue Price
-        cancellation_date:
-          type: string
-          title: Cancellation Date
-        memo:
-          type: string
-          title: Memo
-        principal_value:
-          type: integer
-          title: Principal Value
-        is_canceled:
-          type: boolean
-          title: Is Canceled
-        dividend_information:
-          $ref: '#/components/schemas/DividendInformation'
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - personal_info_address
-        - require_personal_info_registered
-        - transferable
-        - is_offering
-        - transfer_approval_required
-        - issue_price
-        - cancellation_date
-        - memo
-        - principal_value
-        - is_canceled
-        - dividend_information
+      $ref: '#/components/schemas/ShareToken'
       title: RetrieveShareTokenResponse
     RetrieveStraightBondTokenResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        token_template:
-          type: string
-          title: Token Template
-          examples:
-            - IbetStraightBond
-        owner_address:
-          type: string
-          title: Owner Address
-          description: issuer address
-        company_name:
-          type: string
-          title: Company Name
-        rsa_publickey:
-          type: string
-          title: Rsa Publickey
-        name:
-          type: string
-          title: Name
-          description: token name
-        symbol:
-          type: string
-          title: Symbol
-          description: token symbol
-        total_supply:
-          type: integer
-          title: Total Supply
-        tradable_exchange:
-          type: string
-          title: Tradable Exchange
-        contact_information:
-          type: string
-          title: Contact Information
-        privacy_policy:
-          type: string
-          title: Privacy Policy
-        status:
-          type: boolean
-          title: Status
-        max_holding_quantity:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Holding Quantity
-        max_sell_amount:
-          anyOf:
-            - type: integer
-            - type: 'null'
-          title: Max Sell Amount
-        personal_info_address:
-          type: string
-          title: Personal Info Address
-        require_personal_info_registered:
-          type: boolean
-          title: Require Personal Info Registered
-        transferable:
-          type: boolean
-          title: Transferable
-        is_offering:
-          type: boolean
-          title: Is Offering
-        transfer_approval_required:
-          type: boolean
-          title: Transfer Approval Required
-        face_value:
-          type: integer
-          title: Face Value
-        face_value_currency:
-          type: string
-          title: Face Value Currency
-        interest_rate:
-          type: number
-          title: Interest Rate
-        interest_payment_date1:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date1
-        interest_payment_date2:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date2
-        interest_payment_date3:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date3
-        interest_payment_date4:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date4
-        interest_payment_date5:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date5
-        interest_payment_date6:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date6
-        interest_payment_date7:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date7
-        interest_payment_date8:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date8
-        interest_payment_date9:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date9
-        interest_payment_date10:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date10
-        interest_payment_date11:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date11
-        interest_payment_date12:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Interest Payment Date12
-        interest_payment_currency:
-          type: string
-          title: Interest Payment Currency
-        redemption_date:
-          type: string
-          title: Redemption Date
-        redemption_value:
-          type: integer
-          title: Redemption Value
-        redemption_value_currency:
-          type: string
-          title: Redemption Value Currency
-        base_fx_rate:
-          type: number
-          title: Base Fx Rate
-        return_date:
-          type: string
-          title: Return Date
-        return_amount:
-          type: string
-          title: Return Amount
-        purpose:
-          type: string
-          title: Purpose
-        memo:
-          type: string
-          title: Memo
-        is_redeemed:
-          type: boolean
-          title: Is Redeemed
-      type: object
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - max_holding_quantity
-        - max_sell_amount
-        - personal_info_address
-        - require_personal_info_registered
-        - transferable
-        - is_offering
-        - transfer_approval_required
-        - face_value
-        - face_value_currency
-        - interest_rate
-        - interest_payment_date1
-        - interest_payment_date2
-        - interest_payment_date3
-        - interest_payment_date4
-        - interest_payment_date5
-        - interest_payment_date6
-        - interest_payment_date7
-        - interest_payment_date8
-        - interest_payment_date9
-        - interest_payment_date10
-        - interest_payment_date11
-        - interest_payment_date12
-        - interest_payment_currency
-        - redemption_date
-        - redemption_value
-        - redemption_value_currency
-        - base_fx_rate
-        - return_date
-        - return_amount
-        - purpose
-        - memo
-        - is_redeemed
+      $ref: '#/components/schemas/BondToken'
       title: RetrieveStraightBondTokenResponse
     RetrieveTokenLockCountResponse:
       properties:
@@ -10279,6 +10667,29 @@ components:
       required:
         - meta
       title: ServiceUnavailableResponse
+    ShareDividendInformation:
+      properties:
+        dividends:
+          type: number
+          title: Dividends
+          examples:
+            - 999.9999999999999
+        dividend_record_date:
+          type: string
+          title: Dividend Record Date
+          examples:
+            - '20200909'
+        dividend_payment_date:
+          type: string
+          title: Dividend Payment Date
+          examples:
+            - '20201001'
+      type: object
+      required:
+        - dividends
+        - dividend_record_date
+        - dividend_payment_date
+      title: ShareDividendInformation
     SharePositionWithDetail:
       properties:
         balance:
@@ -10310,6 +10721,119 @@ components:
         - exchange_commitment
         - token
       title: SharePositionWithDetail
+    ShareToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        token_template:
+          type: string
+          title: Token Template
+          examples:
+            - IbetShare
+        owner_address:
+          type: string
+          title: Owner Address
+          description: issuer address
+        company_name:
+          type: string
+          title: Company Name
+        rsa_publickey:
+          type: string
+          title: Rsa Publickey
+        name:
+          type: string
+          title: Name
+          description: token name
+        symbol:
+          type: string
+          title: Symbol
+          description: token symbol
+        total_supply:
+          type: integer
+          title: Total Supply
+        tradable_exchange:
+          type: string
+          title: Tradable Exchange
+        contact_information:
+          type: string
+          title: Contact Information
+        privacy_policy:
+          type: string
+          title: Privacy Policy
+        status:
+          type: boolean
+          title: Status
+        max_holding_quantity:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Holding Quantity
+        max_sell_amount:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Max Sell Amount
+        personal_info_address:
+          type: string
+          title: Personal Info Address
+        require_personal_info_registered:
+          type: boolean
+          title: Require Personal Info Registered
+        transferable:
+          type: boolean
+          title: Transferable
+        is_offering:
+          type: boolean
+          title: Is Offering
+        transfer_approval_required:
+          type: boolean
+          title: Transfer Approval Required
+        issue_price:
+          type: integer
+          title: Issue Price
+        cancellation_date:
+          type: string
+          title: Cancellation Date
+        memo:
+          type: string
+          title: Memo
+        principal_value:
+          type: integer
+          title: Principal Value
+        is_canceled:
+          type: boolean
+          title: Is Canceled
+        dividend_information:
+          $ref: '#/components/schemas/ShareDividendInformation'
+      type: object
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
+        - status
+        - max_holding_quantity
+        - max_sell_amount
+        - personal_info_address
+        - require_personal_info_registered
+        - transferable
+        - is_offering
+        - transfer_approval_required
+        - issue_price
+        - cancellation_date
+        - memo
+        - principal_value
+        - is_canceled
+        - dividend_information
+      title: ShareToken
     ShareTokensSortItem:
       type: string
       enum:
@@ -10622,6 +11146,19 @@ components:
         - result_set
         - token_holder_list
       title: TokenHoldersResponse
+    TokenImage:
+      properties:
+        id:
+          type: integer
+          title: Id
+        url:
+          type: string
+          title: Url
+      type: object
+      required:
+        - id
+        - url
+      title: TokenImage
     TokenPositionsResponse:
       properties:
         result_set:
@@ -10865,6 +11402,7 @@ components:
       enum:
         - Transfer
         - Unlock
+        - ForceUnlock
       title: TransferSourceEvent
     TxData:
       properties:
@@ -11032,7 +11570,9 @@ components:
           description: block_timestamp when Transfer log was emitted (local timezone)
         source_event:
           type: string
-          const: Unlock
+          enum:
+            - Unlock
+            - ForceUnlock
           title: Source Event
           description: Source Event
       type: object
@@ -11154,6 +11694,10 @@ components:
 tags:
   - name: root
     description: ''
+  - name: public_info
+    description: Public shared information within the ibet consortium
+  - name: company_info
+    description: Public information about ibet token issuers
   - name: admin
     description: System administration
   - name: node_info
@@ -11162,8 +11706,6 @@ tags:
     description: Contract ABIs
   - name: eth_rpc
     description: Ethereum RPC
-  - name: company_info
-    description: Company(token issuer) information
   - name: token_info
     description: Detailed information for listed tokens
   - name: user_info

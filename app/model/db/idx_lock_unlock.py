@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import JSON, BigInteger, DateTime, String
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
@@ -61,6 +61,8 @@ class IDXLock(Base):
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
+    # Whether the lock is forced or not
+    is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     FIELDS = {
         "id": int,
@@ -73,6 +75,7 @@ class IDXLock(Base):
         "value": int,
         "data": dict,
         "block_timestamp": datetime,
+        "is_forced": bool,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -99,6 +102,7 @@ class IDXLock(Base):
             "value": self.value,
             "data": self.data,
             "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
+            "is_forced": self.is_forced,
         }
 
 
@@ -137,6 +141,8 @@ class IDXUnlock(Base):
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
+    # Whether the unlock is forced or not
+    is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     FIELDS = {
         "id": int,
@@ -150,6 +156,7 @@ class IDXUnlock(Base):
         "value": int,
         "data": dict,
         "block_timestamp": datetime,
+        "is_forced": bool,
     }
     FIELDS.update(Base.FIELDS)
 
@@ -177,4 +184,5 @@ class IDXUnlock(Base):
             "value": self.value,
             "data": self.data,
             "block_timestamp": self.replace_to_local_tz(self.block_timestamp),
+            "is_forced": self.is_forced,
         }

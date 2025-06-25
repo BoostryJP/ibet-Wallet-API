@@ -25,12 +25,11 @@ from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from app.model.db import (
     IDXBondToken,
     IDXLockedPosition,
     IDXPosition,
-    IDXTokenListItem,
+    IDXTokenListRegister,
     Listing,
 )
 from tests.account_config import eth_account
@@ -42,6 +41,7 @@ from tests.contract_modules import (
     transfer_bond_token,
 )
 from tests.utils import PersonalInfoUtils
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -255,7 +255,7 @@ class TestPositionStraightBond:
         idx_token.require_personal_info_registered = True
         idx_token.transfer_approval_required = False
         session.add(idx_token)
-        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item = IDXTokenListRegister()
         idx_token_list_item.token_address = token_address
         idx_token_list_item.token_template = "IbetStraightBond"
         idx_token_list_item.owner_address = TestPositionStraightBond.issuer[

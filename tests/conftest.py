@@ -27,12 +27,11 @@ from pytest_asyncio import is_async_test
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.eth import Contract as Web3Contract
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import ChecksumAddress, RPCEndpoint
 
 from app import config
-from app.contracts import Contract
 from app.database import (
     AsyncSessionLocal,
     SessionLocal,
@@ -46,6 +45,7 @@ from app.model.db import Notification
 from app.model.db.base import Base
 from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)

@@ -246,6 +246,9 @@ class Processor:
                 )
                 self.token_type_cache[listed_token.token_address] = token_info[1]
             token_type = self.token_type_cache[listed_token.token_address]
+            if token_type is None or token_type == "":
+                # Skip if token is not listed in the TokenList contract
+                continue
 
             if token_type == TokenType.IbetStraightBond:
                 # Reuse token contract cache
@@ -294,7 +297,9 @@ class Processor:
 
         await self.__sync_transfer(db_session, block_to)
         await self.__sync_lock(db_session, block_to)
+        await self.__sync_force_lock(db_session, block_to)
         await self.__sync_unlock(db_session, block_to)
+        await self.__sync_force_unlock(db_session, block_to)
         await self.__sync_issue(db_session, block_to)
         await self.__sync_redeem(db_session, block_to)
         await self.__sync_apply_for_transfer(db_session, block_to)
@@ -461,6 +466,89 @@ class Processor:
             except Exception as e:
                 raise e
 
+    async def __sync_force_lock(self, db_session: AsyncSession, block_to: int):
+        """Sync Force Lock Events
+
+        :param db_session: ORM session
+        :param block_to: To block
+        :return: None
+        """
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            try:
+                events = await token.events.ForceLock.get_logs(
+                    from_block=block_from, to_block=block_to
+                )
+            except ABIEventNotFound:
+                events = []
+            try:
+                lock_map: dict[str, dict[str, True]] = {}
+                for event in events:
+                    args = event["args"]
+                    account_address = args.get("accountAddress", "")
+                    lock_address = args.get("lockAddress", "")
+                    value = args.get("value", 0)
+                    data = args.get("data", "")
+                    event_created = await self.__gen_block_timestamp(event=event)
+                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
+
+                    # Index Lock event
+                    self.__insert_lock_idx(
+                        db_session=db_session,
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
+                        msg_sender=msg_sender,
+                        block_number=event["blockNumber"],
+                        token_address=token.address,
+                        lock_address=lock_address,
+                        account_address=account_address,
+                        value=value,
+                        data_str=data,
+                        block_timestamp=event_created,
+                        is_forced=True,
+                    )
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][account_address] = True
+
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        # Update Locked Position
+                        value = await self.__get_account_locked_token(
+                            token, lock_address, account_address
+                        )
+                        await self.__sink_on_locked_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value,
+                        )
+            except Exception:
+                pass
+            try:
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events, account_keys=["accountAddress"]
+                )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
+                    await self.__sink_on_position(
+                        db_session=db_session,
+                        token_address=to_checksum_address(token.address),
+                        account_address=account,
+                        balance=balance,
+                        pending_transfer=pending_transfer,
+                    )
+            except Exception as e:
+                raise e
+
     async def __sync_unlock(self, db_session: AsyncSession, block_to: int):
         """Sync Unlock Events
 
@@ -505,6 +593,91 @@ class Processor:
                         value=value,
                         data_str=data,
                         block_timestamp=event_created,
+                    )
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][account_address] = True
+
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        # Update Locked Position
+                        value = await self.__get_account_locked_token(
+                            token, lock_address, account_address
+                        )
+                        await self.__sink_on_locked_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value,
+                        )
+            except Exception:
+                pass
+            try:
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events, account_keys=["recipientAddress"]
+                )
+                balances_list = await self.get_bulk_account_balance_token(
+                    token=token,
+                    accounts=accounts_filtered,
+                )
+                for balances in balances_list:
+                    (account, balance, pending_transfer) = balances
+                    await self.__sink_on_position(
+                        db_session=db_session,
+                        token_address=to_checksum_address(token.address),
+                        account_address=account,
+                        balance=balance,
+                        pending_transfer=pending_transfer,
+                    )
+            except Exception as e:
+                raise e
+
+    async def __sync_force_unlock(self, db_session: AsyncSession, block_to: int):
+        """Sync ForceUnlock Events
+
+        :param db_session: ORM session
+        :param block_to: To block
+        :return: None
+        """
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            try:
+                events = await token.events.ForceUnlock.get_logs(
+                    from_block=block_from, to_block=block_to
+                )
+            except ABIEventNotFound:
+                events = []
+            try:
+                lock_map: dict[str, dict[str, True]] = {}
+                for event in events:
+                    args = event["args"]
+                    account_address = args.get("accountAddress", "")
+                    lock_address = args.get("lockAddress", "")
+                    recipient_address = args.get("recipientAddress", "")
+                    value = args.get("value", 0)
+                    data = args.get("data", "")
+                    event_created = await self.__gen_block_timestamp(event=event)
+                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    msg_sender = tx["from"]
+
+                    # Index Unlock event
+                    self.__insert_unlock_idx(
+                        db_session=db_session,
+                        transaction_hash=event["transactionHash"].to_0x_hex(),
+                        msg_sender=msg_sender,
+                        block_number=event["blockNumber"],
+                        token_address=token.address,
+                        lock_address=lock_address,
+                        account_address=account_address,
+                        recipient_address=recipient_address,
+                        value=value,
+                        data_str=data,
+                        block_timestamp=event_created,
+                        is_forced=True,
                     )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
@@ -1454,6 +1627,7 @@ class Processor:
         value: int,
         data_str: str,
         block_timestamp: datetime,
+        is_forced: bool = False,
     ):
         """Registry Lock data in DB
 
@@ -1465,6 +1639,7 @@ class Processor:
         :param value: amount
         :param data_str: data string
         :param block_timestamp: block timestamp
+        :param is_forced: Whether the lock is forced or not
         :return: None
         """
         try:
@@ -1481,6 +1656,7 @@ class Processor:
         lock.value = value
         lock.data = data
         lock.block_timestamp = block_timestamp
+        lock.is_forced = is_forced
         db_session.add(lock)
 
     @staticmethod
@@ -1496,6 +1672,7 @@ class Processor:
         value: int,
         data_str: str,
         block_timestamp: datetime,
+        is_forced: bool = False,
     ):
         """Registry Unlock data in DB
 
@@ -1508,6 +1685,7 @@ class Processor:
         :param value: amount
         :param data_str: data string
         :param block_timestamp: block timestamp
+        :param is_forced: Whether the unlock is forced or not
         :return: None
         """
         try:
@@ -1525,6 +1703,7 @@ class Processor:
         unlock.value = value
         unlock.data = data
         unlock.block_timestamp = block_timestamp
+        unlock.is_forced = is_forced
         db_session.add(unlock)
 
     @staticmethod

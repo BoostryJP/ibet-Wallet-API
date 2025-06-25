@@ -32,7 +32,6 @@ from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
 from app.model.db import (
@@ -40,7 +39,7 @@ from app.model.db import (
     IDXCouponToken as CouponTokenModel,
     IDXMembershipToken as MembershipTokenModel,
     IDXShareToken as ShareTokenModel,
-    IDXTokenListItem,
+    IDXTokenListRegister,
     Listing,
 )
 from batch import indexer_Token_Detail_ShortTerm
@@ -56,6 +55,7 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -108,7 +108,7 @@ class TestProcessor:
         _listing.owner_address = TestProcessor.issuer["account_address"]
         async_session.add(_listing)
 
-        _idx_token_list_item = IDXTokenListItem()
+        _idx_token_list_item = IDXTokenListRegister()
         _idx_token_list_item.token_address = token_address
         _idx_token_list_item.token_template = token_template
         _idx_token_list_item.owner_address = TestProcessor.issuer["account_address"]

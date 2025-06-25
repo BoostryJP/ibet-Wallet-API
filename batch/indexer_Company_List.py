@@ -27,7 +27,7 @@ import aiohttp
 from aiohttp import ClientTimeout
 from eth_utils import to_checksum_address
 from sqlalchemy import delete
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import COMPANY_LIST_SLEEP_INTERVAL, COMPANY_LIST_URL, REQUEST_TIMEOUT
@@ -51,7 +51,7 @@ class Processor:
 
         # Get from COMPANY_LIST_URL
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(trust_env=True) as session:
                 async with session.get(
                     COMPANY_LIST_URL,
                     timeout=ClientTimeout(
@@ -105,27 +105,23 @@ class Processor:
                     except ValueError:
                         LOG.notice(f"Invalid address: index={i} address={address}")
                         continue
-                    try:
-                        await self.__sink_on_company(
-                            db_session=db_session,
-                            address=to_checksum_address(address),
-                            corporate_name=corporate_name,
-                            rsa_publickey=rsa_publickey,
-                            homepage=homepage,
-                        )
-                    except IntegrityError:
-                        LOG.notice(f"Duplicate address: index={i} address={address}")
-                        continue
+                    await self.__sink_on_company(
+                        db_session=db_session,
+                        address=to_checksum_address(address),
+                        corporate_name=corporate_name,
+                        rsa_publickey=rsa_publickey,
+                        homepage=homepage,
+                    )
                 else:
                     LOG.notice(f"Missing required field: index={i}")
                     continue
 
             await db_session.commit()
-            await db_session.close()
         except Exception as e:
             await db_session.rollback()
-            await db_session.close()
             raise e
+        finally:
+            await db_session.close()
         LOG.info("Sync job has been completed")
 
     @staticmethod
@@ -157,7 +153,7 @@ async def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during event synchronization")
+            LOG.exception("An exception occurred during processing")
 
         elapsed_time = time.time() - start_time
         await asyncio.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))

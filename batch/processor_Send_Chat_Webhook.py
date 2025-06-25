@@ -46,7 +46,7 @@ class Processor:
 
                 for hook in hook_list:
                     try:
-                        async with aiohttp.ClientSession() as session:
+                        async with aiohttp.ClientSession(trust_env=True) as session:
                             await session.post(CHAT_WEBHOOK_URL, json=hook.message)
                     except Exception:
                         LOG.exception("Failed to send chat webhook")
