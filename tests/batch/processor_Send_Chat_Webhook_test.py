@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import logging
 from unittest import mock
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import select
@@ -53,10 +53,8 @@ class TestProcessorSendChatWebhook:
     # No unsent hook exists
     async def test_normal_1(self, processor, async_session, caplog):
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-        ):
-            await processor.process()
+        with mock.patch("requests.post", MagicMock(side_effect=None)):
+            processor.process()
             await async_session.commit()
 
         # Assertion
@@ -75,10 +73,8 @@ class TestProcessorSendChatWebhook:
         await async_session.commit()
 
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-        ):
-            await processor.process()
+        with mock.patch("requests.post", MagicMock(side_effect=None)):
+            processor.process()
             await async_session.commit()
 
         # Assertion
@@ -96,10 +92,8 @@ class TestProcessorSendChatWebhook:
         await async_session.commit()
 
         # Run processor
-        with mock.patch(
-            "aiohttp.client.ClientSession.post", AsyncMock(side_effect=Exception())
-        ):
-            await processor.process()
+        with mock.patch("requests.post", MagicMock(side_effect=Exception())):
+            processor.process()
             await async_session.commit()
 
         # Assertion
@@ -126,13 +120,11 @@ class TestProcessorSendChatWebhook:
 
         # Run processor
         with (
-            mock.patch(
-                "aiohttp.client.ClientSession.post", AsyncMock(side_effect=None)
-            ),
+            mock.patch("requests.post", MagicMock(side_effect=None)),
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            await processor.process()
+            processor.process()
             await async_session.commit()
 
         # Assertion
