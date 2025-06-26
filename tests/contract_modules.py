@@ -329,6 +329,23 @@ def bond_force_unlock(
     ).transact({"from": invoker["account_address"]})
 
 
+# BONDトークン：資産ロック元強制変更
+def bond_force_change_locked_account(
+    invoker,
+    token,
+    lock_address: str,
+    before_account_address: str,
+    after_account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.forceChangeLockedAccount(
+        lock_address, before_account_address, after_account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
 # BONDトークン：追加発行
 def bond_issue_from(
     invoker, token, target: str, amount: int, lock_address: str = config.ZERO_ADDRESS
@@ -567,6 +584,23 @@ def share_force_unlock(
     TokenContract = Contract.get_contract("IbetShare", token["address"])
     TokenContract.functions.forceUnlock(
         lock_address, target, recipient, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
+# SHAREトークン：資産ロック元強制変更
+def share_force_change_locked_account(
+    invoker,
+    token,
+    lock_address: str,
+    before_account_address: str,
+    after_account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.forceChangeLockedAccount(
+        lock_address, before_account_address, after_account_address, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
 
