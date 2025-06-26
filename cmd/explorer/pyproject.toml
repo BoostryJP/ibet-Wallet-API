@@ -6,8 +6,11 @@ authors = [
     {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},
 ]
 readme = "README.md"
-requires-python = "==3.12.2"
-dependencies = []
+requires-python = "==3.12.9"
+dependencies = [
+    "aiohttp>=3.12.13",
+    "async-cache>=1.1.1",
+]
 
 [project.scripts]
 ibet-explorer = "main:app"

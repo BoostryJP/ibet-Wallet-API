@@ -50,15 +50,9 @@ def caplog(caplog: pytest.LogCaptureFixture):
 class MockResponse:
     def __init__(self, data: object, status_code: int = 200):
         self.data = data
-        self.status = status_code
+        self.status_code = status_code
 
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
-
-    async def __aenter__(self):
-        return self
-
-    async def json(self) -> object:
+    def json(self) -> object:
         return self.data
 
 
@@ -76,7 +70,7 @@ class TestProcessor:
 
     # <Normal_1>
     # 0 record
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_normal_1(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -103,7 +97,7 @@ class TestProcessor:
         mock_get.side_effect = [MockResponse([])]
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         await async_session.rollback()
@@ -116,7 +110,7 @@ class TestProcessor:
 
     # <Normal_2>
     # 1 record
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_normal_2(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -154,7 +148,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         await async_session.rollback()
@@ -171,7 +165,7 @@ class TestProcessor:
 
     # <Normal_3>
     # 2 record
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_normal_3(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -215,7 +209,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         await async_session.rollback()
@@ -237,7 +231,7 @@ class TestProcessor:
     # <Normal_4_1>
     # There are no differences from last time
     # -> Skip this cycle
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_normal_4_1(self, mock_get, processor, async_session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
@@ -258,7 +252,7 @@ class TestProcessor:
                 ]
             )
         ]
-        await processor.process()
+        processor.process()
 
         # Run target process: 2nd time
         mock_get.side_effect = [
@@ -279,7 +273,7 @@ class TestProcessor:
                 ]
             )
         ]
-        await processor.process()
+        processor.process()
 
         # Assertion
         await async_session.rollback()
@@ -308,7 +302,7 @@ class TestProcessor:
 
     # <Normal_4_2>
     # There are differences from the previous cycle
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_normal_4_2(self, mock_get, processor, async_session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
@@ -329,7 +323,7 @@ class TestProcessor:
                 ]
             )
         ]
-        await processor.process()
+        processor.process()
 
         # Run target process: 2nd time
         mock_get.side_effect = [
@@ -344,7 +338,7 @@ class TestProcessor:
                 ]
             )
         ]
-        await processor.process()
+        processor.process()
 
         # Assertion
         await async_session.rollback()
@@ -374,7 +368,7 @@ class TestProcessor:
     # <Error_1_1>
     # API error: ConnectionError
     @mock.patch(
-        "aiohttp.client.ClientSession.get",
+        "requests.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
     async def test_error_1_1(self, processor, async_session):
@@ -388,7 +382,7 @@ class TestProcessor:
         await async_session.commit()
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         _token_list: Sequence[TokenList] = (
@@ -400,7 +394,7 @@ class TestProcessor:
 
     # <Error_1_2>
     # API error: Not succeed request
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_error_1_2(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -415,7 +409,7 @@ class TestProcessor:
         mock_get.side_effect = [MockResponse([], 400)]
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         _token_list: Sequence[TokenList] = (
@@ -428,7 +422,7 @@ class TestProcessor:
     # <Error_1_3>
     # API error: JSONDecodeError
     @mock.patch(
-        "aiohttp.client.ClientSession.get",
+        "requests.get",
         MagicMock(side_effect=json.decoder.JSONDecodeError),
     )
     async def test_error_1_3(self, processor, async_session):
@@ -442,7 +436,7 @@ class TestProcessor:
         await async_session.commit()
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         _token_list: Sequence[TokenList] = (
@@ -455,7 +449,7 @@ class TestProcessor:
     # <Error_2>
     # Invalid type error
     # -> Skip processing
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     @pytest.mark.parametrize(
         "invalid_record",
         [
@@ -543,7 +537,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        await processor.process()
+        processor.process()
 
         # Assertion
         await async_session.rollback()
@@ -560,7 +554,7 @@ class TestProcessor:
 
     # <Error_3>
     # Other error
-    @mock.patch("aiohttp.client.ClientSession.get")
+    @mock.patch("requests.get")
     async def test_error_3(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -600,7 +594,7 @@ class TestProcessor:
 
         # Run target process
         with pytest.raises(Exception):
-            await processor.process()
+            processor.process()
 
         # Assertion
         _token_list: Sequence[TokenList] = (
