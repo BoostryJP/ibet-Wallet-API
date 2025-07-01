@@ -568,7 +568,7 @@ class TestProcessor:
             target=self.trader["account_address"],
             recipient=self.trader2["account_address"],
             amount=10000,
-            data_str=json.dumps({"message": "force_unlock"}),
+            data_str=json.dumps({"message": "ibet_wst_bridge"}),
         )
         block_number_6 = web3.eth.block_number
         share_force_change_locked_account(
@@ -578,7 +578,7 @@ class TestProcessor:
             before_account_address=self.trader["account_address"],
             after_account_address=self.trader2["account_address"],
             amount=10000,
-            data_str=json.dumps({"message": "force_change"}),
+            data_str=json.dumps({"message": "ibet_wst_bridge"}),
         )
         block_number_7 = web3.eth.block_number
         share_force_change_locked_account(
@@ -588,7 +588,7 @@ class TestProcessor:
             before_account_address=self.trader["account_address"],
             after_account_address=self.trader2["account_address"],
             amount=10000,
-            data_str="",
+            data_str=json.dumps({"message": "ibet_wst_bridge"}),
         )
         block_number_8 = web3.eth.block_number
 
@@ -680,8 +680,8 @@ class TestProcessor:
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 10000
         assert idx_transfer.source_event == IDXTransferSourceEventType.FORCE_UNLOCK
-        assert idx_transfer.data == {"message": "force_unlock"}
-        assert idx_transfer.message == "force_unlock"
+        assert idx_transfer.data == {"message": "ibet_wst_bridge"}
+        assert idx_transfer.message == "ibet_wst_bridge"
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -697,8 +697,8 @@ class TestProcessor:
             idx_transfer.source_event
             == IDXTransferSourceEventType.FORCE_CHANGE_LOCKED_ACCOUNT
         )
-        assert idx_transfer.data == {}
-        assert idx_transfer.message is None
+        assert idx_transfer.data == {"message": "ibet_wst_bridge"}
+        assert idx_transfer.message == "ibet_wst_bridge"
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -714,8 +714,8 @@ class TestProcessor:
             idx_transfer.source_event
             == IDXTransferSourceEventType.FORCE_CHANGE_LOCKED_ACCOUNT
         )
-        assert idx_transfer.data == {}
-        assert idx_transfer.message is None
+        assert idx_transfer.data == {"message": "ibet_wst_bridge"}
+        assert idx_transfer.message == "ibet_wst_bridge"
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 

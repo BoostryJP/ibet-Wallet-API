@@ -407,6 +407,7 @@ class TransferHistoryBase(BaseModel):
             "garnishment",
             "inheritance",
             "force_unlock",
+            "ibet_wst_bridge",
         ]
         | None
     )
@@ -427,6 +428,7 @@ class DataMessage(BaseModel):
         "garnishment",
         "inheritance",
         "force_unlock",
+        "ibet_wst_bridge",
     ]
 
 
