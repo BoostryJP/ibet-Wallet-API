@@ -41,6 +41,8 @@ class TransferSourceEvent(StrEnum):
     Transfer = "Transfer"
     Unlock = "Unlock"
     ForceUnlock = "ForceUnlock"
+    ForceChangeLockedAccount = "ForceChangeLockedAccount"
+    Reallocation = "Reallocation"
 
 
 ############################
@@ -417,13 +419,13 @@ class TransferHistoryBase(BaseModel):
 
 
 class TransferHistory(TransferHistoryBase):
-    source_event: Literal[TransferSourceEvent.Transfer] = Field(
-        description="Source Event"
-    )
+    source_event: Literal[
+        TransferSourceEvent.Transfer, TransferSourceEvent.Reallocation
+    ] = Field(description="Source Event")
     data: None = Field(description="Event data")
 
 
-class DataMessage(BaseModel):
+class TransferDataMessage(BaseModel):
     message: Literal[
         "garnishment",
         "inheritance",
@@ -432,16 +434,18 @@ class DataMessage(BaseModel):
     ]
 
 
-class UnlockTransferHistory(TransferHistoryBase):
+class TransferWithMessage(TransferHistoryBase):
     source_event: Literal[
-        TransferSourceEvent.Unlock, TransferSourceEvent.ForceUnlock
+        TransferSourceEvent.Unlock,
+        TransferSourceEvent.ForceUnlock,
+        TransferSourceEvent.ForceChangeLockedAccount,
     ] = Field(description="Source Event")
-    data: DataMessage | dict = Field(description="Event data")
+    data: TransferDataMessage | dict = Field(description="Event data")
 
 
 class TransferHistoriesResponse(BaseModel):
     result_set: ResultSet
-    transfer_history: list[TransferHistory | UnlockTransferHistory] = Field(
+    transfer_history: list[TransferHistory | TransferWithMessage] = Field(
         description="Transfer history"
     )
 

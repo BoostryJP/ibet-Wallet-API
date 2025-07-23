@@ -473,6 +473,29 @@ def transfer_share_token(
     )
 
 
+# SHAREトークン：移管
+def reallocate_share_token(
+    invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    tx = TokenContract.functions.transfer(
+        to["account_address"], amount
+    ).build_transaction(
+        {
+            "from": invoker["account_address"],
+            "gas": 6000000,
+            "gasPrice": 0,
+        }
+    )
+    marker = b"\xc0\xff\xee\x00"
+    annotation_data = json.dumps(
+        {"purpose": "Reallocation"}, separators=(",", ":")
+    ).encode("utf-8")
+    tx["data"] += marker.hex() + annotation_data.hex()
+    web3.eth.send_transaction(tx)
+
+
 # SHAREトークン：無効化
 def invalidate_share_token(invoker, token):
     web3.eth.default_account = invoker["account_address"]

@@ -50,6 +50,7 @@ from tests.contract_modules import (
     issue_share_token,
     membership_issue,
     membership_register_list,
+    reallocate_share_token,
     register_bond_list,
     register_share_list,
     share_force_change_locked_account,
@@ -234,6 +235,7 @@ class TestProcessor:
     #  - Unlock
     #  - ForceUnlock
     #  - ForceChangeLockedAccount
+    #  - Reallocation
     async def test_normal_1_1(self, processor, shared_contract, async_session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -247,6 +249,11 @@ class TestProcessor:
         await self.listing_token(share_token["address"], async_session)
         PersonalInfoUtils.register(
             self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"],
+        )
+        PersonalInfoUtils.register(
+            self.trader2["account_address"],
             personal_info_contract_address,
             self.issuer["account_address"],
         )
@@ -308,6 +315,15 @@ class TestProcessor:
         )
         block_number_4 = web3.eth.block_number
 
+        # emit "Reallocation"
+        reallocate_share_token(
+            invoker=self.trader,
+            to=self.trader2,
+            token=share_token,
+            amount=10000,
+        )
+        block_number_5 = web3.eth.block_number
+
         # Execute batch processing
         await processor.sync_new_logs()
 
@@ -317,7 +333,7 @@ class TestProcessor:
                 select(IDXTransfer).order_by(IDXTransfer.created)
             )
         ).all()
-        assert len(idx_transfer_list) == 4
+        assert len(idx_transfer_list) == 5
 
         block1 = web3.eth.get_block(block_number_1)
         idx_transfer: IDXTransfer = idx_transfer_list[0]
@@ -332,9 +348,23 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        block2 = web3.eth.get_block(block_number_2)
+        block5 = web3.eth.get_block(block_number_5)
         idx_transfer: IDXTransfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
+        assert idx_transfer.transaction_hash == block5["transactions"][0].to_0x_hex()
+        assert idx_transfer.token_address == share_token["address"]
+        assert idx_transfer.from_address == self.trader["account_address"]
+        assert idx_transfer.to_address == self.trader2["account_address"]
+        assert idx_transfer.value == 10000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.REALLOCATION
+        assert idx_transfer.data is None
+        assert idx_transfer.message is None
+        assert idx_transfer.created is not None
+        assert idx_transfer.modified is not None
+
+        block2 = web3.eth.get_block(block_number_2)
+        idx_transfer: IDXTransfer = idx_transfer_list[2]
+        assert idx_transfer.id == 3
         assert idx_transfer.transaction_hash == block2["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
@@ -347,8 +377,8 @@ class TestProcessor:
         assert idx_transfer.modified is not None
 
         block3 = web3.eth.get_block(block_number_3)
-        idx_transfer: IDXTransfer = idx_transfer_list[2]
-        assert idx_transfer.id == 3
+        idx_transfer: IDXTransfer = idx_transfer_list[3]
+        assert idx_transfer.id == 4
         assert idx_transfer.transaction_hash == block3["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
@@ -361,8 +391,8 @@ class TestProcessor:
         assert idx_transfer.modified is not None
 
         block4 = web3.eth.get_block(block_number_4)
-        idx_transfer: IDXTransfer = idx_transfer_list[3]
-        assert idx_transfer.id == 4
+        idx_transfer: IDXTransfer = idx_transfer_list[4]
+        assert idx_transfer.id == 5
         assert idx_transfer.transaction_hash == block4["transactions"][0].to_0x_hex()
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
@@ -387,7 +417,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        assert idx_block_number.latest_block_number == block_number_4
+        assert idx_block_number.latest_block_number == block_number_5
 
     # <Normal_1_2>
     # IbetShare
