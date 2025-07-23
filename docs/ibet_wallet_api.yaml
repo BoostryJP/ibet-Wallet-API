@@ -6995,19 +6995,6 @@ components:
       required:
         - meta
       title: DataConflictErrorResponse
-    DataMessage:
-      properties:
-        message:
-          type: string
-          enum:
-            - garnishment
-            - inheritance
-            - force_unlock
-          title: Message
-      type: object
-      required:
-        - message
-      title: DataMessage
     DataNotExistsErrorMetainfo:
       properties:
         code:
@@ -7097,66 +7084,6 @@ components:
         - block_timestamp
         - log_index
       title: Event
-    ForceChangeLockedAccountTransferHistory:
-      properties:
-        transaction_hash:
-          type: string
-          title: Transaction Hash
-          description: Transaction hash
-        token_address:
-          type: string
-          title: Token Address
-          description: Token address
-        from_address:
-          type: string
-          title: From Address
-          description: Account address of transfer source
-        to_address:
-          type: string
-          title: To Address
-          description: Account address of transfer destination
-        value:
-          type: integer
-          title: Value
-          description: Transfer quantity
-        data:
-          anyOf:
-            - $ref: '#/components/schemas/IbetWSTBridgeDataMessage'
-            - type: object
-          title: Data
-          description: Event data
-        message:
-          anyOf:
-            - type: string
-              enum:
-                - garnishment
-                - inheritance
-                - force_unlock
-                - ibet_wst_bridge
-            - type: 'null'
-          title: Message
-        created:
-          type: string
-          title: Created
-          description: block_timestamp when Transfer log was emitted (local 
-            timezone)
-        source_event:
-          type: string
-          const: ForceChangeLockedAccount
-          title: Source Event
-          description: Source Event
-      type: object
-      required:
-        - transaction_hash
-        - token_address
-        - from_address
-        - to_address
-        - value
-        - data
-        - message
-        - created
-        - source_event
-      title: ForceChangeLockedAccountTransferHistory
     GenericSecurityTokenPositionsResponse_RetrieveShareTokenResponse_:
       properties:
         result_set:
@@ -8441,16 +8368,6 @@ components:
         - token_template
         - product_type
       title: IbetShareToken
-    IbetWSTBridgeDataMessage:
-      properties:
-        message:
-          type: string
-          const: ibet_wst_bridge
-          title: Message
-      type: object
-      required:
-        - message
-      title: IbetWSTBridgeDataMessage
     InvalidParameterErrorMetainfo:
       properties:
         code:
@@ -11414,6 +11331,20 @@ components:
         - cancelled
         - transfer_approved
       title: TransferApprovalHistory
+    TransferDataMessage:
+      properties:
+        message:
+          type: string
+          enum:
+            - garnishment
+            - inheritance
+            - force_unlock
+            - ibet_wst_bridge
+          title: Message
+      type: object
+      required:
+        - message
+      title: TransferDataMessage
     TransferHistoriesResponse:
       properties:
         result_set:
@@ -11422,8 +11353,7 @@ components:
           items:
             anyOf:
               - $ref: '#/components/schemas/TransferHistory'
-              - $ref: '#/components/schemas/UnlockTransferHistory'
-              - $ref: '#/components/schemas/ForceChangeLockedAccountTransferHistory'
+              - $ref: '#/components/schemas/TransferWithMessage'
           type: array
           title: Transfer History
           description: Transfer history
@@ -11501,6 +11431,69 @@ components:
         - ForceChangeLockedAccount
         - Reallocation
       title: TransferSourceEvent
+    TransferWithMessage:
+      properties:
+        transaction_hash:
+          type: string
+          title: Transaction Hash
+          description: Transaction hash
+        token_address:
+          type: string
+          title: Token Address
+          description: Token address
+        from_address:
+          type: string
+          title: From Address
+          description: Account address of transfer source
+        to_address:
+          type: string
+          title: To Address
+          description: Account address of transfer destination
+        value:
+          type: integer
+          title: Value
+          description: Transfer quantity
+        data:
+          anyOf:
+            - $ref: '#/components/schemas/TransferDataMessage'
+            - type: object
+          title: Data
+          description: Event data
+        message:
+          anyOf:
+            - type: string
+              enum:
+                - garnishment
+                - inheritance
+                - force_unlock
+                - ibet_wst_bridge
+            - type: 'null'
+          title: Message
+        created:
+          type: string
+          title: Created
+          description: block_timestamp when Transfer log was emitted (local 
+            timezone)
+        source_event:
+          type: string
+          enum:
+            - Unlock
+            - ForceUnlock
+            - ForceChangeLockedAccount
+          title: Source Event
+          description: Source Event
+      type: object
+      required:
+        - transaction_hash
+        - token_address
+        - from_address
+        - to_address
+        - value
+        - data
+        - message
+        - created
+        - source_event
+      title: TransferWithMessage
     TxData:
       properties:
         hash:
@@ -11624,68 +11617,6 @@ components:
     TxDataResponse:
       $ref: '#/components/schemas/TxDataDetail'
       title: TxDataResponse
-    UnlockTransferHistory:
-      properties:
-        transaction_hash:
-          type: string
-          title: Transaction Hash
-          description: Transaction hash
-        token_address:
-          type: string
-          title: Token Address
-          description: Token address
-        from_address:
-          type: string
-          title: From Address
-          description: Account address of transfer source
-        to_address:
-          type: string
-          title: To Address
-          description: Account address of transfer destination
-        value:
-          type: integer
-          title: Value
-          description: Transfer quantity
-        data:
-          anyOf:
-            - $ref: '#/components/schemas/DataMessage'
-            - type: object
-          title: Data
-          description: Event data
-        message:
-          anyOf:
-            - type: string
-              enum:
-                - garnishment
-                - inheritance
-                - force_unlock
-                - ibet_wst_bridge
-            - type: 'null'
-          title: Message
-        created:
-          type: string
-          title: Created
-          description: block_timestamp when Transfer log was emitted (local 
-            timezone)
-        source_event:
-          type: string
-          enum:
-            - Unlock
-            - ForceUnlock
-          title: Source Event
-          description: Source Event
-      type: object
-      required:
-        - transaction_hash
-        - token_address
-        - from_address
-        - to_address
-        - value
-        - data
-        - message
-        - created
-        - source_event
-      title: UnlockTransferHistory
     UpdateAdminTokenRequest:
       properties:
         is_public:
