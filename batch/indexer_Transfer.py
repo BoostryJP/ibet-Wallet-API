@@ -24,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Sequence
 
 from eth_utils import to_checksum_address
+from hexbytes import HexBytes
 from pydantic import ValidationError
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -376,14 +377,31 @@ class Processor:
                                 f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}"
                             )
                             continue
+
+                        # Judge whether the transfer is a reallocation
+                        transaction_hash = event["transactionHash"].to_0x_hex()
+                        is_reallocation = False
+                        tx = await async_web3.eth.get_transaction(transaction_hash)
+                        tx_data: HexBytes | None = tx.get("input")
+                        # Check if the transaction data contains the reallocation marker("c0ffee00")
+                        if "c0ffee00" in tx_data.hex():
+                            try:
+                                raw_call_data = tx_data.hex().split("c0ffee00", 1)[1]
+                                call_data = json.loads(bytes.fromhex(raw_call_data))
+                                if call_data.get("purpose") == "Reallocation":
+                                    is_reallocation = True
+                            except (ValueError, json.JSONDecodeError):
+                                pass
                         self.__insert_idx(
                             db_session=db_session,
-                            transaction_hash=event["transactionHash"].to_0x_hex(),
+                            transaction_hash=transaction_hash,
                             token_address=to_checksum_address(token.address),
                             from_account_address=args.get("from", ZERO_ADDRESS),
                             to_account_address=args.get("to", ZERO_ADDRESS),
                             value=value,
-                            source_event=IDXTransferSourceEventType.TRANSFER,
+                            source_event=IDXTransferSourceEventType.REALLOCATION
+                            if is_reallocation is True
+                            else IDXTransferSourceEventType.TRANSFER,
                             data_str=None,
                             event_created=event_created,
                         )

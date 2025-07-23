@@ -41,6 +41,8 @@ class TransferSourceEvent(StrEnum):
     Transfer = "Transfer"
     Unlock = "Unlock"
     ForceUnlock = "ForceUnlock"
+    ForceChangeLockedAccount = "ForceChangeLockedAccount"
+    Reallocation = "Reallocation"
 
 
 ############################
@@ -417,9 +419,9 @@ class TransferHistoryBase(BaseModel):
 
 
 class TransferHistory(TransferHistoryBase):
-    source_event: Literal[TransferSourceEvent.Transfer] = Field(
-        description="Source Event"
-    )
+    source_event: Literal[
+        TransferSourceEvent.Transfer, TransferSourceEvent.Reallocation
+    ] = Field(description="Source Event")
     data: None = Field(description="Event data")
 
 
@@ -428,22 +430,35 @@ class DataMessage(BaseModel):
         "garnishment",
         "inheritance",
         "force_unlock",
-        "ibet_wst_bridge",
     ]
+
+
+class IbetWSTBridgeDataMessage(BaseModel):
+    message: Literal["ibet_wst_bridge",]
 
 
 class UnlockTransferHistory(TransferHistoryBase):
     source_event: Literal[
-        TransferSourceEvent.Unlock, TransferSourceEvent.ForceUnlock
+        TransferSourceEvent.Unlock,
+        TransferSourceEvent.ForceUnlock,
     ] = Field(description="Source Event")
     data: DataMessage | dict = Field(description="Event data")
 
 
+class ForceChangeLockedAccountTransferHistory(TransferHistoryBase):
+    source_event: Literal[TransferSourceEvent.ForceChangeLockedAccount,] = Field(
+        description="Source Event"
+    )
+    data: IbetWSTBridgeDataMessage | dict = Field(description="Event data")
+
+
 class TransferHistoriesResponse(BaseModel):
     result_set: ResultSet
-    transfer_history: list[TransferHistory | UnlockTransferHistory] = Field(
-        description="Transfer history"
-    )
+    transfer_history: list[
+        TransferHistory
+        | UnlockTransferHistory
+        | ForceChangeLockedAccountTransferHistory
+    ] = Field(description="Transfer history")
 
 
 class TransferApprovalHistory(BaseModel):
