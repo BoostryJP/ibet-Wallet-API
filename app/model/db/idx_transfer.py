@@ -43,10 +43,9 @@ class IDXTransferSourceEventType(StrEnum):
     REALLOCATION = "Reallocation"
 
 
-class DataMessage(BaseModel):
+class TransferDataMessage(BaseModel):
     message: Literal[
         "garnishment",
-        "inheritance",
         "force_unlock",
         "ibet_wst_bridge",
     ]

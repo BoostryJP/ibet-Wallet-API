@@ -39,6 +39,7 @@ REVISION_23_9: Final = "1f0ac8015f2f"
 REVISION_23_12: Final = "f6f13d28bb48"
 REVISION_24_3: Final = "3d3b90fda898"
 REVISION_24_6: Final = "418af51b07b5"
+REVISION_25_6: Final = "9a28ed8d4afd"
 
 REVISION_UP_TO_1_8 = [REVISION_22_3]
 REVISION_UP_TO_22_6 = REVISION_UP_TO_1_8 + [REVISION_22_6]
@@ -925,3 +926,81 @@ class TestMigrationsUpgrade:
             else:
                 assert share_tokens[0].require_personal_info_registered is True
                 assert share_tokens[1].require_personal_info_registered is True
+
+    def test_upgrade_v25_6(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        # 1. Migrate to v25.6 initial
+        alembic_runner.migrate_up_to(REVISION_25_6)
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # 2. Insert test record
+        idx_transfer = meta.tables.get("transfer")
+        stmt1 = insert(idx_transfer).values(
+            id=1,
+            transaction_hash="test1",
+            token_address="test1",
+            from_address="test1",
+            to_address="test1",
+            value=1,
+            source_event="Unlock",
+            data={"message": "inheritance"},
+            message="inheritance",
+        )
+
+        idx_lock = meta.tables.get("lock")
+        stmt2 = insert(idx_lock).values(
+            id=1,
+            transaction_hash="test1",
+            msg_sender="test1",
+            block_number=1,
+            token_address="test1",
+            lock_address="test1",
+            account_address="test1",
+            value=1,
+            data={"message": "inheritance"},
+            block_timestamp=datetime(2025, 7, 23, 0, 0, 0),
+            is_forced=False,
+        )
+
+        idx_unlock = meta.tables.get("unlock")
+        stmt3 = insert(idx_unlock).values(
+            id=1,
+            transaction_hash="test1",
+            msg_sender="test1",
+            block_number=1,
+            token_address="test1",
+            lock_address="test1",
+            account_address="test1",
+            recipient_address="test1",
+            value=1,
+            data={"message": "inheritance"},
+            block_timestamp=datetime(2025, 7, 23, 0, 0, 0),
+            is_forced=False,
+        )
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        # 3. Run to head
+        alembic_runner.migrate_up_to("head")
+
+        with engine.connect() as conn:
+            transfers = conn.execute(
+                text("SELECT * FROM transfer ORDER BY created ASC")
+            )
+            transfers = list(transfers)
+            assert transfers[0].data == {}
+            assert transfers[0].message is None
+
+            locks = conn.execute(text("SELECT * FROM lock ORDER BY created ASC"))
+            locks = list(locks)
+            assert locks[0].data == {}
+
+            unlocks = conn.execute(text("SELECT * FROM unlock ORDER BY created ASC"))
+            unlocks = list(unlocks)
+            assert unlocks[0].data == {}

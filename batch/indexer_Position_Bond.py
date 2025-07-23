@@ -43,6 +43,8 @@ from app.model.db import (
     IDXPositionBondBlockNumber,
     IDXUnlock,
     Listing,
+    LockDataMessage,
+    UnlockDataMessage,
 )
 from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
@@ -1751,6 +1753,7 @@ class Processor:
         """
         try:
             data = json.loads(data_str)
+            LockDataMessage.model_validate(data)
         except Exception:
             data = {}
         lock = IDXLock()
@@ -1797,6 +1800,7 @@ class Processor:
         """
         try:
             data = json.loads(data_str)
+            UnlockDataMessage.model_validate(data)
         except:
             data = {}
         unlock = IDXUnlock()

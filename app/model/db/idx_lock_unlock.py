@@ -18,8 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime, timedelta, timezone
+from enum import StrEnum
 from zoneinfo import ZoneInfo
 
+from pydantic import BaseModel
 from sqlalchemy import JSON, BigInteger, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,6 +30,26 @@ from app.model.db.base import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
+
+
+class LockMessage(StrEnum):
+    garnishment = "garnishment"
+    force_lock = "force_lock"
+    ibet_wst_bridge = "ibet_wst_bridge"
+
+
+class LockDataMessage(BaseModel):
+    message: LockMessage
+
+
+class UnlockMessage(StrEnum):
+    garnishment = "garnishment"
+    force_unlock = "force_unlock"
+    ibet_wst_bridge = "ibet_wst_bridge"
+
+
+class UnlockDataMessage(BaseModel):
+    message: UnlockMessage
 
 
 class IDXLock(Base):
@@ -55,7 +77,7 @@ class IDXLock(Base):
     account_address: Mapped[str] = mapped_column(String(42), index=True, nullable=False)
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
-    # Data
+    # Data(LockDataMessage)
     data: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Lock Datetime
     block_timestamp: Mapped[datetime] = mapped_column(
@@ -135,7 +157,7 @@ class IDXUnlock(Base):
     )
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
-    # Data
+    # Data(UnlockDataMessage)
     data: Mapped[dict] = mapped_column(JSON, nullable=False)
     # Lock Datetime
     block_timestamp: Mapped[datetime] = mapped_column(

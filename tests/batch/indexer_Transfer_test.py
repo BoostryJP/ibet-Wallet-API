@@ -668,8 +668,8 @@ class TestProcessor:
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 30000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK
-        assert idx_transfer.data == {"message": "inheritance"}
-        assert idx_transfer.message == "inheritance"
+        assert idx_transfer.data == {}
+        assert idx_transfer.message is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -682,8 +682,8 @@ class TestProcessor:
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 30000
         assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK
-        assert idx_transfer.data == {"message": "inheritance"}
-        assert idx_transfer.message == "inheritance"
+        assert idx_transfer.data == {}
+        assert idx_transfer.message is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 

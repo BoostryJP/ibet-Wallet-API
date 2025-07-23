@@ -37,11 +37,11 @@ from app.contracts.contract import AsyncContractEventsView
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
 from app.model.db import (
-    DataMessage,
     IDXTransfer,
     IDXTransferBlockNumber,
     IDXTransferSourceEventType,
     Listing,
+    TransferDataMessage,
 )
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
@@ -183,7 +183,7 @@ class Processor:
         if data_str is not None:
             try:
                 data = json.loads(data_str)
-                validated_data = DataMessage(**data)
+                validated_data = TransferDataMessage(**data)
                 message = validated_data.message
             except ValidationError:
                 data = {}
