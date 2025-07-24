@@ -515,10 +515,13 @@ class TestProcessor:
 
         # Lock
         token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "locked1"}'
+            self.trader["account_address"], 1500, '{"message": "garnishment"}'
         ).transact({"from": self.issuer["account_address"]})
         token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "locked2"}'
+            self.trader["account_address"], 1500, '{"message": "ibet_wst_bridge"}'
+        ).transact({"from": self.issuer["account_address"]})
+        token_contract.functions.lock(
+            self.trader["account_address"], 1500, '{"message": "inheritance"}'
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -541,7 +544,7 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 3000
+        assert _position.balance == 1000000 - 4500
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
@@ -554,12 +557,12 @@ class TestProcessor:
         assert _locked1.token_address == token["address"]
         assert _locked1.lock_address == self.trader["account_address"]
         assert _locked1.account_address == self.issuer["account_address"]
-        assert _locked1.value == 3000
+        assert _locked1.value == 4500
 
         _lock_list: Sequence[IDXLock] = session.scalars(
             select(IDXLock).order_by(IDXLock.id)
         ).all()
-        assert len(_lock_list) == 2
+        assert len(_lock_list) == 3
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
         assert _lock1.token_address == token["address"]
@@ -567,7 +570,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 1500
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
         assert _lock1.is_forced is False
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
@@ -576,8 +579,17 @@ class TestProcessor:
         assert _lock2.lock_address == self.trader["account_address"]
         assert _lock2.account_address == self.issuer["account_address"]
         assert _lock2.value == 1500
-        assert _lock2.data == {"message": "locked2"}
+        assert _lock2.data == {"message": "ibet_wst_bridge"}
         assert _lock2.is_forced is False
+        _lock3 = _lock_list[2]
+        assert _lock3.id == 3
+        assert _lock3.token_address == token["address"]
+        assert _lock3.msg_sender == self.issuer["account_address"]
+        assert _lock3.lock_address == self.trader["account_address"]
+        assert _lock3.account_address == self.issuer["account_address"]
+        assert _lock3.value == 1500
+        assert _lock3.data == {}
+        assert _lock3.is_forced is False
 
     # <Normal_4_2>
     # Single Token
@@ -611,13 +623,13 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader["account_address"],
             1500,
-            '{"message": "force_locked1"}',
+            '{"message": "force_lock"}',
         ).transact({"from": self.issuer["account_address"]})
         token_contract.functions.forceLock(
             self.issuer["account_address"],
             self.trader["account_address"],
             1500,
-            '{"message": "force_locked2"}',
+            '{"message": "force_lock"}',
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -666,7 +678,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.issuer["account_address"]
         assert _lock1.account_address == self.trader["account_address"]
         assert _lock1.value == 1500
-        assert _lock1.data == {"message": "force_locked1"}
+        assert _lock1.data == {"message": "force_lock"}
         assert _lock1.is_forced is True
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
@@ -675,7 +687,7 @@ class TestProcessor:
         assert _lock2.lock_address == self.issuer["account_address"]
         assert _lock2.account_address == self.trader["account_address"]
         assert _lock2.value == 1500
-        assert _lock2.data == {"message": "force_locked2"}
+        assert _lock2.data == {"message": "force_lock"}
         assert _lock2.is_forced is True
 
     # <Normal_5_1>
@@ -698,7 +710,7 @@ class TestProcessor:
 
         # Lock
         token_contract.functions.lock(
-            self.trader["account_address"], 3000, '{"message": "locked1"}'
+            self.trader["account_address"], 3000, '{"message": "garnishment"}'
         ).transact({"from": self.issuer["account_address"]})
 
         # Unlock
@@ -706,7 +718,7 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
-            '{"message": "unlocked1"}',
+            '{"message": "garnishment"}',
         ).transact({"from": self.trader["account_address"]})
 
         # Run target process
@@ -781,7 +793,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 3000
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
 
         _unlock_list: Sequence[IDXUnlock] = session.scalars(
             select(IDXUnlock).order_by(IDXUnlock.id)
@@ -795,7 +807,7 @@ class TestProcessor:
         assert _unlock1.account_address == self.issuer["account_address"]
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
-        assert _unlock1.data == {"message": "unlocked1"}
+        assert _unlock1.data == {"message": "garnishment"}
         assert _unlock1.is_forced is False
 
     # <Normal_5_2>
@@ -818,7 +830,7 @@ class TestProcessor:
 
         # Lock
         token_contract.functions.lock(
-            self.trader["account_address"], 3000, '{"message": "locked1"}'
+            self.trader["account_address"], 3000, '{"message": "garnishment"}'
         ).transact({"from": self.issuer["account_address"]})
 
         # ForceUnlock
@@ -827,7 +839,7 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
-            '{"message": "unlocked1"}',
+            '{"message": "garnishment"}',
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -902,7 +914,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 3000
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
 
         _unlock_list: Sequence[IDXUnlock] = session.scalars(
             select(IDXUnlock).order_by(IDXUnlock.id)
@@ -916,7 +928,7 @@ class TestProcessor:
         assert _unlock1.account_address == self.issuer["account_address"]
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
-        assert _unlock1.data == {"message": "unlocked1"}
+        assert _unlock1.data == {"message": "garnishment"}
         assert _unlock1.is_forced is True
 
     # <Normal_5_3>
@@ -954,7 +966,7 @@ class TestProcessor:
         token_contract.functions.lock(
             self.issuer["account_address"],  # lock address
             3000,
-            '{"message": "locked1"}',
+            '{"message": "garnishment"}',
         ).transact({"from": self.trader["account_address"]})
 
         # ForceChangeLockedAccount
@@ -963,7 +975,7 @@ class TestProcessor:
             self.trader["account_address"],  # before account address
             self.trader2["account_address"],  # after account address
             100,
-            '{"message": "force_changed"}',
+            '{"message": "ibet_wst_bridge"}',
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
@@ -1026,7 +1038,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.issuer["account_address"]
         assert _lock1.account_address == self.trader["account_address"]
         assert _lock1.value == 3000
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
         assert _lock2.token_address == token["address"]
@@ -1034,7 +1046,7 @@ class TestProcessor:
         assert _lock2.lock_address == self.issuer["account_address"]
         assert _lock2.account_address == self.trader2["account_address"]
         assert _lock2.value == 100
-        assert _lock2.data == {"message": "force_changed"}
+        assert _lock2.data == {"message": "ibet_wst_bridge"}
 
         _unlock_list: Sequence[IDXUnlock] = session.scalars(
             select(IDXUnlock).order_by(IDXUnlock.id)
@@ -1048,7 +1060,7 @@ class TestProcessor:
         assert _unlock1.account_address == self.trader["account_address"]
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
-        assert _unlock1.data == {"message": "force_changed"}
+        assert _unlock1.data == {"message": "ibet_wst_bridge"}
         assert _unlock1.is_forced is True
 
     # <Normal_6>
