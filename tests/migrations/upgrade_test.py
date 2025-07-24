@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import importlib
+import json
 import logging
 from datetime import datetime
 from typing import Final
@@ -994,13 +995,22 @@ class TestMigrationsUpgrade:
                 text("SELECT * FROM transfer ORDER BY created ASC")
             )
             transfers = list(transfers)
-            assert transfers[0].data == {}
+            if engine.name == "mysql":
+                assert json.loads(transfers[0].data) == {}
+            else:
+                assert transfers[0].data == {}
             assert transfers[0].message is None
 
-            locks = conn.execute(text("SELECT * FROM lock ORDER BY created ASC"))
+            locks = conn.execute(text("SELECT * FROM `lock` ORDER BY created ASC"))
             locks = list(locks)
-            assert locks[0].data == {}
+            if engine.name == "mysql":
+                assert json.loads(locks[0].data) == {}
+            else:
+                assert locks[0].data == {}
 
-            unlocks = conn.execute(text("SELECT * FROM unlock ORDER BY created ASC"))
+            unlocks = conn.execute(text("SELECT * FROM `unlock` ORDER BY created ASC"))
             unlocks = list(unlocks)
-            assert unlocks[0].data == {}
+            if engine.name == "mysql":
+                assert json.loads(unlocks[0].data) == {}
+            else:
+                assert unlocks[0].data == {}
