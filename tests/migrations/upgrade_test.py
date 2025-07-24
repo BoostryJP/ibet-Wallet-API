@@ -1001,16 +1001,24 @@ class TestMigrationsUpgrade:
                 assert transfers[0].data == {}
             assert transfers[0].message is None
 
-            locks = conn.execute(text("SELECT * FROM `lock` ORDER BY created ASC"))
-            locks = list(locks)
             if engine.name == "mysql":
+                locks = conn.execute(text("SELECT * FROM `lock` ORDER BY created ASC"))
+                locks = list(locks)
                 assert json.loads(locks[0].data) == {}
             else:
+                locks = conn.execute(text("SELECT * FROM lock ORDER BY created ASC"))
+                locks = list(locks)
                 assert locks[0].data == {}
 
-            unlocks = conn.execute(text("SELECT * FROM `unlock` ORDER BY created ASC"))
-            unlocks = list(unlocks)
             if engine.name == "mysql":
+                unlocks = conn.execute(
+                    text("SELECT * FROM `unlock` ORDER BY created ASC")
+                )
+                unlocks = list(unlocks)
                 assert json.loads(unlocks[0].data) == {}
             else:
+                unlocks = conn.execute(
+                    text("SELECT * FROM unlock ORDER BY created ASC")
+                )
+                unlocks = list(unlocks)
                 assert unlocks[0].data == {}
