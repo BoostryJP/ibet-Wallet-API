@@ -544,10 +544,10 @@ class TestNotificationsGet:
                 {
                     "type": "enum",
                     "loc": ["query", "notification_type"],
-                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock' or 'ForceUnlock'",
+                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock', 'ForceUnlock', 'ChangeToRedeemed' or 'ChangeToCanceled'",
                     "input": "hoge",
                     "ctx": {
-                        "expected": "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock' or 'ForceUnlock'"
+                        "expected": "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock', 'ForceUnlock', 'ChangeToRedeemed' or 'ChangeToCanceled'"
                     },
                 },
                 {
