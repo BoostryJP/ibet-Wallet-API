@@ -45,6 +45,7 @@ from app.model.db import (
     NotificationBlockNumber,
     NotificationType,
 )
+from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
 from app.utils.web3_utils import AsyncWeb3Wrapper
@@ -70,10 +71,21 @@ token_list = TokenList(list_contract)
 class Watcher:
     contract_cache: dict[str, Web3AsyncContract] = {}
 
-    def __init__(self, filter_name: str, filter_params: dict, notification_type: str):
+    def __init__(
+        self,
+        filter_name: str,
+        filter_params: dict,
+        notification_type: str,
+        token_type_list: list[TokenType] = None,
+        skip_past_data_on_initial_sync: bool = False,
+    ):
+        if token_type_list is None:
+            token_type_list = list([])
         self.filter_name = filter_name
         self.filter_params = filter_params
         self.notification_type = notification_type
+        self.token_type_list = token_type_list
+        self.skip_past_data_on_initial_sync = skip_past_data_on_initial_sync
 
     @staticmethod
     def _gen_notification_id(entry, option_type=0):
@@ -91,15 +103,19 @@ class Watcher:
         ).replace(tzinfo=None)
 
     @staticmethod
-    async def _get_token_all_list(db_session: AsyncSession):
+    async def _get_token_all_list(
+        db_session: AsyncSession, token_type_list: list[TokenType]
+    ):
         _tokens = []
+
+        stmt = select(IDXTokenListRegister).join(
+            Listing,
+            and_(Listing.token_address == IDXTokenListRegister.token_address),
+        )
+        if len(token_type_list) != 0:
+            stmt = stmt.where(IDXTokenListRegister.token_template.in_(token_type_list))
         registered_tokens: Sequence[IDXTokenListRegister] = (
-            await db_session.scalars(
-                select(IDXTokenListRegister).join(
-                    Listing,
-                    and_(Listing.token_address == IDXTokenListRegister.token_address),
-                )
-            )
+            await db_session.scalars(stmt)
         ).all()
         for registered_token in registered_tokens:
             _tokens.append(
@@ -126,7 +142,9 @@ class Watcher:
 
         try:
             # Get listed tokens
-            _token_list = await self._get_token_all_list(db_session)
+            _token_list = await self._get_token_all_list(
+                db_session, self.token_type_list
+            )
             latest_block_number = await async_web3.eth.block_number
 
             for _token in _token_list:
@@ -136,6 +154,8 @@ class Watcher:
                         db_session=db_session,
                         contract_address=_token["token"].token_address,
                         notification_type=self.notification_type,
+                        latest_block_number=latest_block_number,
+                        skip_past_data_on_initial_sync=self.skip_past_data_on_initial_sync,
                     )
                     + 1
                 )
@@ -210,7 +230,11 @@ class Watcher:
 
     @staticmethod
     async def __get_synchronized_block_number(
-        db_session: AsyncSession, contract_address: str, notification_type: str
+        db_session: AsyncSession,
+        contract_address: str,
+        notification_type: str,
+        latest_block_number: int,
+        skip_past_data_on_initial_sync: bool,
     ):
         """Get latest synchronized blockNumber"""
         notification_block_number: NotificationBlockNumber | None = (
@@ -222,6 +246,8 @@ class Watcher:
             )
         ).first()
         if notification_block_number is None:
+            if skip_past_data_on_initial_sync is True:
+                return latest_block_number - 1
             return -1
         else:
             return notification_block_number.latest_block_number
@@ -515,6 +541,100 @@ class WatchForceUnlock(Watcher):
             await db_session.merge(notification)
 
 
+class WatchChangeToRedeemed(Watcher):
+    """Watch ChangeToRedeemed Event for Bond Token
+
+    - Process for registering a notification when a token status is changed to redeemed.
+    """
+
+    def __init__(self):
+        super().__init__(
+            filter_name="ChangeToRedeemed",
+            filter_params={},
+            notification_type=NotificationType.CHANGE_TO_REDEEMED,
+            token_type_list=[TokenType.IbetStraightBond],
+            skip_past_data_on_initial_sync=True,
+        )
+
+    async def db_merge(
+        self,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
+    ):
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
+            contract=token_contract, function_name="name", args=(), default_returns=""
+        )
+        for entry in log_entries:
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type,
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = self.notification_type
+            notification.priority = 0
+            notification.address = None
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            await db_session.merge(notification)
+
+
+class WatchChangeToCanceled(Watcher):
+    """Watch ChangeToCanceled Event for Share Token
+
+    - Process for registering a notification when a token status is changed to canceled.
+    """
+
+    def __init__(self):
+        super().__init__(
+            filter_name="ChangeToCanceled",
+            filter_params={},
+            notification_type=NotificationType.CHANGE_TO_CANCELED,
+            token_type_list=[TokenType.IbetShare],
+            skip_past_data_on_initial_sync=True,
+        )
+
+    async def db_merge(
+        self,
+        db_session: AsyncSession,
+        token_contract: Web3AsyncContract,
+        token_type: str,
+        log_entries: list[EventData],
+        token_owner_address: str,
+    ):
+        company_list = await CompanyList.get()
+        token_name = await AsyncContract.call_function(
+            contract=token_contract, function_name="name", args=(), default_returns=""
+        )
+        for entry in log_entries:
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type,
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = self.notification_type
+            notification.priority = 0
+            notification.address = None
+            notification.block_timestamp = await self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            await db_session.merge(notification)
+
+
 # メイン処理
 async def main():
     watchers = [
@@ -524,6 +644,8 @@ async def main():
         WatchCancelTransfer(),
         WatchForceLock(),
         WatchForceUnlock(),
+        WatchChangeToRedeemed(),
+        WatchChangeToCanceled(),
     ]
 
     LOG.info("Service started successfully")

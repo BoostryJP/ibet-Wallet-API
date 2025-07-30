@@ -203,6 +203,8 @@ class NotificationType(StrEnum):
     CANCEL_TRANSFER = "CancelTransfer"
     FORCE_LOCK = "ForceLock"
     FORCE_UNLOCK = "ForceUnlock"
+    CHANGE_TO_REDEEMED = "ChangeToRedeemed"
+    CHANGE_TO_CANCELED = "ChangeToCanceled"
 
 
 class NotificationBlockNumber(Base):

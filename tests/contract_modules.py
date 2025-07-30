@@ -381,6 +381,15 @@ def bond_set_tradable_exchange(invoker, token, exchange_address: str):
     )
 
 
+# BONDトークン：償還状態に変更
+def bond_change_to_redeemed(invoker, token):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.changeToRedeemed().transact(
+        {"from": invoker["account_address"]}
+    )
+
+
 ###############################################################
 # Share Token
 ###############################################################
@@ -661,6 +670,15 @@ def share_set_tradable_exchange(invoker, token, exchange_address: str):
 
     TokenContract = Contract.get_contract("IbetShare", token["address"])
     TokenContract.functions.setTradableExchange(exchange_address).transact(
+        {"from": invoker["account_address"]}
+    )
+
+
+# SHAREトークン：消却状態に変更
+def share_change_to_canceled(invoker, token):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.changeToCanceled().transact(
         {"from": invoker["account_address"]}
     )
 
