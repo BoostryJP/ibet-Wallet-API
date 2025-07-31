@@ -9416,6 +9416,8 @@ components:
         - CancelTransfer
         - ForceLock
         - ForceUnlock
+        - ChangeToRedeemed
+        - ChangeToCanceled
       title: NotificationType
     NotificationUpdateResponse:
       properties:

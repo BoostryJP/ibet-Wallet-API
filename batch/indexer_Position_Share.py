@@ -1857,7 +1857,7 @@ class Processor:
                 position.exchange_commitment = exchange_commitment
             await db_session.merge(position)
         elif any(
-            value is not None and value > 0
+            value is not None
             for value in [
                 balance,
                 pending_transfer,
