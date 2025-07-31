@@ -3428,7 +3428,7 @@ class TestWatchWatchTransferableAttribute:
     # <Error_1>
     # Error occur
     @mock.patch(
-        "web3.eth.async_eth.AsyncEth.get_logs",
+        "app.model.blockchain.token.ShareToken.get",
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
