@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -47,6 +47,9 @@ class NotificationsSortItem(StrEnum):
 
 
 class NotificationsQuery(BasePaginationQuery):
+    notification_category: Optional[Literal["event_log", "attribute_change"]] = Field(
+        None
+    )
     address: Optional[EthereumAddress] = Field(None, description="account address")
     notification_type: Optional[NotificationType] = Field(None)
     priority: Optional[int] = Field(None, ge=0, le=2)
@@ -85,8 +88,9 @@ class NotificationMetainfo(BaseModel):
 
 
 class Notification(BaseModel):
-    notification_type: NotificationType = Field(examples=[NotificationType.NEW_ORDER])
+    notification_category: Literal["event_log", "attribute_change"]
     id: str = Field(examples=["0x00000373ca8600000000000000"])
+    notification_type: NotificationType = Field(examples=[NotificationType.NEW_ORDER])
     priority: int
     block_timestamp: str = Field(description="block timestamp")
     is_read: bool
