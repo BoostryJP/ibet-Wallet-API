@@ -236,6 +236,7 @@ class WatchCouponNewOrder(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = self.notification_type
             notification.priority = 0
@@ -276,6 +277,7 @@ class WatchCouponCancelOrder(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = self.notification_type
             notification.priority = 0
@@ -319,6 +321,7 @@ class WatchCouponForceCancelOrder(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = self.notification_type
             notification.priority = 2
@@ -359,6 +362,7 @@ class WatchCouponBuyAgreement(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = self.notification_type
             notification.priority = 1
@@ -399,6 +403,7 @@ class WatchCouponSellAgreement(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = self.notification_type
             notification.priority = 2
@@ -439,6 +444,7 @@ class WatchCouponBuySettlementOK(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = self.notification_type
             notification.priority = 1
@@ -482,6 +488,7 @@ class WatchCouponSellSettlementOK(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = self.notification_type
             notification.priority = 1
@@ -522,6 +529,7 @@ class WatchCouponBuySettlementNG(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = self.notification_type
             notification.priority = 2
@@ -565,6 +573,7 @@ class WatchCouponSellSettlementNG(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = self.notification_type
             notification.priority = 2

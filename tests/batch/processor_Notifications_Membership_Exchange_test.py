@@ -133,6 +133,7 @@ class TestWatchMembershipNewOrder:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 0
         )
@@ -204,6 +205,7 @@ class TestWatchMembershipNewOrder:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 0, 0
         )
@@ -229,6 +231,7 @@ class TestWatchMembershipNewOrder:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 0
         )
@@ -374,6 +377,7 @@ class TestWatchMembershipCancelOrder:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
         )
@@ -451,6 +455,7 @@ class TestWatchMembershipCancelOrder:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 1, 0
         )
@@ -476,6 +481,7 @@ class TestWatchMembershipCancelOrder:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
         )
@@ -646,6 +652,7 @@ class TestWatchMembershipForceCancelOrder:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
         )
@@ -752,6 +759,7 @@ class TestWatchMembershipForceCancelOrder:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 1, 0
         )
@@ -779,6 +787,7 @@ class TestWatchMembershipForceCancelOrder:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
         )
@@ -948,6 +957,7 @@ class TestWatchMembershipBuyAgreement:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
         )
@@ -1027,6 +1037,7 @@ class TestWatchMembershipBuyAgreement:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 0, 1
         )
@@ -1053,6 +1064,7 @@ class TestWatchMembershipBuyAgreement:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
         )
@@ -1210,6 +1222,7 @@ class TestWatchMembershipSellAgreement:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
         )
@@ -1289,6 +1302,7 @@ class TestWatchMembershipSellAgreement:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 0, 2
         )
@@ -1315,6 +1329,7 @@ class TestWatchMembershipSellAgreement:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
         )
@@ -1475,6 +1490,7 @@ class TestWatchMembershipBuySettlementOK:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 1
         )
@@ -1560,6 +1576,7 @@ class TestWatchMembershipBuySettlementOK:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 1, 1
         )
@@ -1588,6 +1605,7 @@ class TestWatchMembershipBuySettlementOK:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 1
         )
@@ -1753,6 +1771,7 @@ class TestWatchMembershipSellSettlementOK:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 2
         )
@@ -1838,6 +1857,7 @@ class TestWatchMembershipSellSettlementOK:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 1, 2
         )
@@ -1866,6 +1886,7 @@ class TestWatchMembershipSellSettlementOK:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 2
         )
@@ -2031,6 +2052,7 @@ class TestWatchMembershipBuySettlementNG:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
         )
@@ -2116,6 +2138,7 @@ class TestWatchMembershipBuySettlementNG:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 0, 1
         )
@@ -2144,6 +2167,7 @@ class TestWatchMembershipBuySettlementNG:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
         )
@@ -2309,6 +2333,7 @@ class TestWatchMembershipSellSettlementNG:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
         )
@@ -2394,6 +2419,7 @@ class TestWatchMembershipSellSettlementNG:
         assert len(_notification_list) == 2
 
         _notification = _notification_list[0]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number - 1, 0, 0, 2
         )
@@ -2422,6 +2448,7 @@ class TestWatchMembershipSellSettlementNG:
         }
 
         _notification = _notification_list[1]
+        assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
         )
