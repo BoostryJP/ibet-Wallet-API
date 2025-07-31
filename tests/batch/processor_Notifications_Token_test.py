@@ -3434,7 +3434,7 @@ class TestWatchWatchTransferableAttribute:
     async def test_error_1(
         self, watcher_factory, async_session, shared_contract, mocked_company_list
     ):
-        watcher = watcher_factory("WatchChangeToCanceled")
+        watcher = watcher_factory("WatchTransferableAttribute")
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
