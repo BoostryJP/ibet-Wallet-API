@@ -5045,6 +5045,17 @@ paths:
             description: Limit for pagination
             title: Limit
           description: Limit for pagination
+        - name: notification_category
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - enum:
+                  - event_log
+                  - attribute_change
+                type: string
+              - type: 'null'
+            title: Notification Category
         - name: address
           in: query
           required: false
@@ -9295,15 +9306,21 @@ components:
       title: NotSupportedErrorResponse
     Notification:
       properties:
-        notification_type:
-          $ref: '#/components/schemas/NotificationType'
-          examples:
-            - NewOrder
+        notification_category:
+          type: string
+          enum:
+            - event_log
+            - attribute_change
+          title: Notification Category
         id:
           type: string
           title: Id
           examples:
             - '0x00000373ca8600000000000000'
+        notification_type:
+          $ref: '#/components/schemas/NotificationType'
+          examples:
+            - NewOrder
         priority:
           type: integer
           title: Priority
@@ -9345,8 +9362,9 @@ components:
           description: datetime of create
       type: object
       required:
-        - notification_type
+        - notification_category
         - id
+        - notification_type
         - priority
         - block_timestamp
         - is_read
@@ -9418,6 +9436,7 @@ components:
         - ForceUnlock
         - ChangeToRedeemed
         - ChangeToCanceled
+        - TransferableChanged
       title: NotificationType
     NotificationUpdateResponse:
       properties:
