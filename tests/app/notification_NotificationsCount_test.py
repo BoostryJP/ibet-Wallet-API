@@ -33,6 +33,7 @@ class TestNotificationCount:
 
     def _insert_test_data(self, session):
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = "SampleNotification1"
         n.priority = 1
@@ -51,6 +52,7 @@ class TestNotificationCount:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034000000000000000"
         n.notification_type = "SampleNotification2"
         n.priority = 1
@@ -67,6 +69,7 @@ class TestNotificationCount:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011034000000000000000"
         n.notification_type = "SampleNotification3"
         n.priority = 2
@@ -83,6 +86,7 @@ class TestNotificationCount:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011032000000000000000"
         n.notification_type = "SampleNotification4"
         n.priority = 1
@@ -99,6 +103,7 @@ class TestNotificationCount:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000001034000000000000000"
         n.notification_type = "SampleNotification5"
         n.priority = 0

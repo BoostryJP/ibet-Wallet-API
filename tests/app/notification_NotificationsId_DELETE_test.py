@@ -36,6 +36,7 @@ class TestNotificationsIdDELETE:
 
     def _insert_test_data(self, session):
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = "NewOrder"
         n.priority = 1
@@ -55,6 +56,7 @@ class TestNotificationsIdDELETE:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034000000000000000"
         n.notification_type = "NewOrderCounterpart"
         n.priority = 1
@@ -72,6 +74,7 @@ class TestNotificationsIdDELETE:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011034000000000000000"
         n.notification_type = "NewOrder"
         n.priority = 2
@@ -89,6 +92,7 @@ class TestNotificationsIdDELETE:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011032000000000000000"
         n.notification_type = "NewOrderCounterpart"
         n.priority = 1
@@ -106,6 +110,7 @@ class TestNotificationsIdDELETE:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000001034000000000000000"
         n.notification_type = "NewOrder"
         n.priority = 0

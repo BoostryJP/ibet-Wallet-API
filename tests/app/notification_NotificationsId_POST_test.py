@@ -38,6 +38,7 @@ class TestNotificationsIdPOST:
         self.session = session  # HACK: updateでcommitされてしまう対策
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = NotificationType.NEW_ORDER
         n.priority = 1
@@ -56,6 +57,7 @@ class TestNotificationsIdPOST:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034000000000000000"
         n.notification_type = NotificationType.APPROVE_TRANSFER
         n.priority = 1
@@ -72,6 +74,7 @@ class TestNotificationsIdPOST:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011034000000000000000"
         n.notification_type = NotificationType.APPLY_FOR_TRANSFER
         n.priority = 2
@@ -88,6 +91,7 @@ class TestNotificationsIdPOST:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011032000000000000000"
         n.notification_type = NotificationType.BUY_AGREEMENT
         n.priority = 1
@@ -104,6 +108,7 @@ class TestNotificationsIdPOST:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = NotificationType.BUY_SETTLEMENT_NG
         n.notification_type = "SampleNotification5"
         n.priority = 0

@@ -52,7 +52,12 @@ from .idx_tx_data import IDXTxData
 from .listing import Listing
 from .messaging import ChatWebhook, Mail
 from .node import Node
-from .notification import Notification, NotificationBlockNumber, NotificationType
+from .notification import (
+    Notification,
+    NotificationAttributeValue,
+    NotificationBlockNumber,
+    NotificationType,
+)
 from .public_info import PublicAccountList, TokenList
 from .tokenholders import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from .user_info import AccountTag
