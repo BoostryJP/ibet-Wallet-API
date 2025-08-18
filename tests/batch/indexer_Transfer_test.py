@@ -28,7 +28,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
-from web3.exceptions import ABIEventNotFound
+from web3.exceptions import ABIEventNotFound, TransactionNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import RPCEndpoint
 
@@ -236,7 +236,10 @@ class TestProcessor:
     #  - ForceUnlock
     #  - ForceChangeLockedAccount
     #  - Reallocation
-    async def test_normal_1_1(self, processor, shared_contract, async_session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_1_1(
+        self, processor, shared_contract, async_session, is_old_token
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -325,7 +328,14 @@ class TestProcessor:
         block_number_5 = web3.eth.block_number
 
         # Execute batch processing
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         idx_transfer_list = (

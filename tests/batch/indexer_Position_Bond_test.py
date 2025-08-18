@@ -30,7 +30,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.exceptions import ABIEventNotFound
+from web3.exceptions import ABIEventNotFound, TransactionNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -499,7 +499,8 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - Lock
-    async def test_normal_4_1(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_4_1(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -526,7 +527,14 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -595,7 +603,8 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - ForceLock
-    async def test_normal_4_2(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_4_2(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -634,7 +643,14 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_issuer: IDXPosition = session.scalars(
@@ -705,7 +721,8 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - Unlock
-    async def test_normal_5_1(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_5_1(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -734,7 +751,14 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -825,7 +849,8 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - ForceUnlock
-    async def test_normal_5_2(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_5_2(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -855,7 +880,14 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -946,7 +978,8 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - ForceChangeLockedAccount
-    async def test_normal_5_3(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_5_3(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -989,7 +1022,14 @@ class TestProcessor:
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_issuer: IDXPosition = session.scalars(
