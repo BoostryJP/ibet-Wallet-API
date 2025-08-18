@@ -414,7 +414,9 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = await self.__gen_block_timestamp(event=event)
-                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    tx = await AsyncContract.get_transaction(
+                        event["transactionHash"], event["blockNumber"]
+                    )
                     msg_sender = tx["from"]
 
                     # Index Lock event
@@ -496,7 +498,9 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = await self.__gen_block_timestamp(event=event)
-                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    tx = await AsyncContract.get_transaction(
+                        event["transactionHash"], event["blockNumber"]
+                    )
                     msg_sender = tx["from"]
 
                     # Index Lock event
@@ -580,7 +584,9 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = await self.__gen_block_timestamp(event=event)
-                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    tx = await AsyncContract.get_transaction(
+                        event["transactionHash"], event["blockNumber"]
+                    )
                     msg_sender = tx["from"]
 
                     # Index Unlock event
@@ -664,7 +670,9 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = await self.__gen_block_timestamp(event=event)
-                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    tx = await AsyncContract.get_transaction(
+                        event["transactionHash"], event["blockNumber"]
+                    )
                     msg_sender = tx["from"]
 
                     # Index Unlock event
@@ -751,7 +759,9 @@ class Processor:
                     value = args.get("value", 0)
                     data = args.get("data", "")
                     event_created = await self.__gen_block_timestamp(event=event)
-                    tx = await async_web3.eth.get_transaction(event["transactionHash"])
+                    tx = await AsyncContract.get_transaction(
+                        event["transactionHash"], event["blockNumber"]
+                    )
                     msg_sender = tx["from"]
 
                     # Index Unlock event

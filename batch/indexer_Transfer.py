@@ -381,7 +381,9 @@ class Processor:
                         # Judge whether the transfer is a reallocation
                         transaction_hash = event["transactionHash"].to_0x_hex()
                         is_reallocation = False
-                        tx = await async_web3.eth.get_transaction(transaction_hash)
+                        tx = await AsyncContract.get_transaction(
+                            event["transactionHash"], event["blockNumber"]
+                        )
                         tx_data: HexBytes | None = tx.get("input")
                         # Check if the transaction data contains the reallocation marker("c0ffee00")
                         if "c0ffee00" in tx_data.hex():
