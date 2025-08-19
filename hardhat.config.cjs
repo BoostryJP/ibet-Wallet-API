@@ -2,6 +2,8 @@
 module.exports = {
   networks: {
     hardhat: {
+      type: "http",
+      url: "http://localhost:8545",
       chainId: 2017,
       gasPrice: 0,
       blockGasLimit: 800000000,
