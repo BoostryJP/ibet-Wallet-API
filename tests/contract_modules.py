@@ -502,7 +502,7 @@ def reallocate_share_token(
         {"purpose": "Reallocation"}, separators=(",", ":")
     ).encode("utf-8")
     tx["data"] += marker.hex() + annotation_data.hex()
-    web3.eth.send_transaction(tx)
+    web3.eth.send_transaction({"from": tx["from"], "to": tx["to"], "data": tx["data"]})
 
 
 # SHAREトークン：無効化

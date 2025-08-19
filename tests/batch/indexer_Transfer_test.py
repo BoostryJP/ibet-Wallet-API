@@ -339,9 +339,7 @@ class TestProcessor:
 
         # Assertion
         idx_transfer_list = (
-            await async_session.scalars(
-                select(IDXTransfer).order_by(IDXTransfer.created)
-            )
+            await async_session.scalars(select(IDXTransfer).order_by(IDXTransfer.id))
         ).all()
         assert len(idx_transfer_list) == 5
 
