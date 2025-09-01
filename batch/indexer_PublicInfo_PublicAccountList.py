@@ -28,6 +28,7 @@ from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.session import Session
+from urllib3 import Retry
 
 from app.config import (
     DATABASE_URL,
@@ -56,7 +57,11 @@ class Processor:
 
         # Get data from PUBLIC_ACCOUNT_LIST_URL
         try:
-            _resp = requests.get(PUBLIC_ACCOUNT_LIST_URL, timeout=REQUEST_TIMEOUT)
+            _resp = requests.get(
+                PUBLIC_ACCOUNT_LIST_URL,
+                timeout=REQUEST_TIMEOUT,
+                retry=Retry(total=3, allowed_methods=["GET"]),
+            )
             if _resp.status_code != 200:
                 raise Exception(f"status code={_resp.status_code}")
             account_list_json = _resp.json()
