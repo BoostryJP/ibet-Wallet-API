@@ -70,7 +70,7 @@ class TestProcessor:
 
     # <Normal_1>
     # 0 record
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_normal_1(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -110,7 +110,7 @@ class TestProcessor:
 
     # <Normal_2>
     # 1 record
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_normal_2(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -165,7 +165,7 @@ class TestProcessor:
 
     # <Normal_3>
     # 2 record
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_normal_3(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -231,7 +231,7 @@ class TestProcessor:
     # <Normal_4_1>
     # There are no differences from last time
     # -> Skip this cycle
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_normal_4_1(self, mock_get, processor, async_session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
@@ -302,7 +302,7 @@ class TestProcessor:
 
     # <Normal_4_2>
     # There are differences from the previous cycle
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_normal_4_2(self, mock_get, processor, async_session, caplog):
         # Run target process: 1st time
         mock_get.side_effect = [
@@ -368,7 +368,7 @@ class TestProcessor:
     # <Error_1_1>
     # API error: ConnectionError
     @mock.patch(
-        "requests.get",
+        "requests.Session.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
     async def test_error_1_1(self, processor, async_session):
@@ -394,7 +394,7 @@ class TestProcessor:
 
     # <Error_1_2>
     # API error: Not succeed request
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_error_1_2(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
@@ -422,7 +422,7 @@ class TestProcessor:
     # <Error_1_3>
     # API error: JSONDecodeError
     @mock.patch(
-        "requests.get",
+        "requests.Session.get",
         MagicMock(side_effect=json.decoder.JSONDecodeError),
     )
     async def test_error_1_3(self, processor, async_session):
@@ -449,7 +449,7 @@ class TestProcessor:
     # <Error_2>
     # Invalid type error
     # -> Skip processing
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     @pytest.mark.parametrize(
         "invalid_record",
         [
@@ -554,7 +554,7 @@ class TestProcessor:
 
     # <Error_3>
     # Other error
-    @mock.patch("requests.get")
+    @mock.patch("requests.Session.get")
     async def test_error_3(self, mock_get, processor, async_session):
         # Prepare data
         _token_list_item = TokenList()
