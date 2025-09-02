@@ -24,10 +24,12 @@ import time
 
 import requests
 from eth_utils import to_checksum_address
+from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.session import Session
+from urllib3 import Retry
 
 from app.config import (
     COMPANY_LIST_SLEEP_INTERVAL,
@@ -56,10 +58,17 @@ class Processor:
 
         # Get from COMPANY_LIST_URL
         try:
-            _resp = requests.get(COMPANY_LIST_URL, timeout=REQUEST_TIMEOUT)
-            if _resp.status_code != 200:
-                raise Exception(f"status code={_resp.status_code}")
-            company_list_json = _resp.json()
+            with requests.Session() as session:
+                adapter = HTTPAdapter(max_retries=Retry(3, allowed_methods=["GET"]))
+                session.mount("http://", adapter)
+                session.mount("https://", adapter)
+                _resp = session.get(
+                    url=COMPANY_LIST_URL,
+                    timeout=REQUEST_TIMEOUT,
+                )
+                if _resp.status_code != 200:
+                    raise Exception(f"status code={_resp.status_code}")
+                company_list_json = _resp.json()
         except Exception:
             LOG.exception("Failed to get company list")
             return
