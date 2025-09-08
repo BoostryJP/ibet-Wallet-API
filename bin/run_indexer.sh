@@ -58,6 +58,19 @@ if [ "${resp}" -ne 200 ]; then
   echo "please confirm TOKEN_LIST_URL, which response code is ${resp}" >&2
 fi
 python batch/indexer_PublicInfo_TokenList.py &
+
+
+# check PUBLIC_ACCOUNT_LIST_URL
+if [ -z "${PUBLIC_ACCOUNT_LIST_URL:-}" ]; then
+  echo -n '[ERROR] Please ensure that the environment variable PUBLIC_ACCOUNT_LIST_URL is set.' >&2
+  exit 1
+fi
+# check PUBLIC_ACCOUNT_LIST_URL available
+resp=$(curl "${PUBLIC_ACCOUNT_LIST_URL}" -o /dev/null -w '%{http_code}\n' -s)
+if [ "${resp}" -ne 200 ]; then
+  echo -n "[WARNING] Could not access to PUBLIC_ACCOUNT_LIST_URL, " >&2
+  echo "please confirm PUBLIC_ACCOUNT_LIST_URL, which response code is ${resp}" >&2
+fi
 python batch/indexer_PublicInfo_PublicAccountList.py &
 
 
