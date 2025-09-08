@@ -52,6 +52,8 @@ paths:
             enum:
               - ibetBond
               - ibetShare
+              - ibetMembership
+              - ibetCoupon
             type: string
             description: Token template
             title: Token Template
