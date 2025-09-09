@@ -78,6 +78,20 @@ class TestListAllPublicListedTokens:
         _token_list_item.product_type = 5
         session.add(_token_list_item)
 
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_4
+        _token_list_item.token_template = "ibetMembership"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_5
+        _token_list_item.token_template = "ibetCoupon"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
         session.commit()
 
         resp = client.get(self.api_url, params={})
@@ -85,7 +99,7 @@ class TestListAllPublicListedTokens:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
-            "result_set": {"count": 3, "limit": None, "offset": None, "total": 3},
+            "result_set": {"count": 5, "limit": None, "offset": None, "total": 5},
             "tokens": [
                 {
                     "key_manager": ["0000000000000"],
@@ -105,6 +119,18 @@ class TestListAllPublicListedTokens:
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
                 },
+                {
+                    "key_manager": [],
+                    "product_type": 1,
+                    "token_address": self.token_address_4,
+                    "token_template": "ibetMembership",
+                },
+                {
+                    "key_manager": [],
+                    "product_type": 1,
+                    "token_address": self.token_address_5,
+                    "token_template": "ibetCoupon",
+                },
             ],
         }
 
@@ -122,18 +148,35 @@ class TestListAllPublicListedTokens:
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         session.add(_token_list_item)
+
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_2
         _token_list_item.token_template = "ibetBond"
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         session.add(_token_list_item)
+
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_3
         _token_list_item.token_template = "ibetShare"
         _token_list_item.key_manager = ["1111111111111"]
         _token_list_item.product_type = 5
         session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_4
+        _token_list_item.token_template = "ibetMembership"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_5
+        _token_list_item.token_template = "ibetCoupon"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
         session.commit()
 
         resp = client.get(self.api_url, params={"token_template": "ibetBond"})
@@ -141,7 +184,7 @@ class TestListAllPublicListedTokens:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
-            "result_set": {"count": 2, "limit": None, "offset": None, "total": 3},
+            "result_set": {"count": 2, "limit": None, "offset": None, "total": 5},
             "tokens": [
                 {
                     "key_manager": ["0000000000000"],
@@ -172,18 +215,35 @@ class TestListAllPublicListedTokens:
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         session.add(_token_list_item)
+
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_2
         _token_list_item.token_template = "ibetBond"
         _token_list_item.key_manager = ["0000000000000"]
         _token_list_item.product_type = 1
         session.add(_token_list_item)
+
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_3
         _token_list_item.token_template = "ibetShare"
         _token_list_item.key_manager = ["1111111111111"]
         _token_list_item.product_type = 5
         session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_4
+        _token_list_item.token_template = "ibetMembership"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_5
+        _token_list_item.token_template = "ibetCoupon"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
         session.commit()
 
         resp = client.get(self.api_url, params={"token_template": "ibetShare"})
@@ -191,13 +251,135 @@ class TestListAllPublicListedTokens:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
-            "result_set": {"count": 1, "limit": None, "offset": None, "total": 3},
+            "result_set": {"count": 1, "limit": None, "offset": None, "total": 5},
             "tokens": [
                 {
                     "key_manager": ["1111111111111"],
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
+                },
+            ],
+        }
+
+    # ＜Normal_3_3＞
+    # Filter: token_template (ibetMembership)
+    def test_normal_3_3(
+        self,
+        client: TestClient,
+        session: Session,
+    ):
+        # Prepare data
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_1
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_2
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_3
+        _token_list_item.token_template = "ibetShare"
+        _token_list_item.key_manager = ["1111111111111"]
+        _token_list_item.product_type = 5
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_4
+        _token_list_item.token_template = "ibetMembership"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_5
+        _token_list_item.token_template = "ibetCoupon"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        session.commit()
+
+        resp = client.get(self.api_url, params={"token_template": "ibetMembership"})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "result_set": {"count": 1, "limit": None, "offset": None, "total": 5},
+            "tokens": [
+                {
+                    "key_manager": [],
+                    "product_type": 1,
+                    "token_address": self.token_address_4,
+                    "token_template": "ibetMembership",
+                },
+            ],
+        }
+
+    # ＜Normal_3_4＞
+    # Filter: token_template (ibetCoupon)
+    def test_normal_3_4(
+        self,
+        client: TestClient,
+        session: Session,
+    ):
+        # Prepare data
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_1
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_2
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_3
+        _token_list_item.token_template = "ibetShare"
+        _token_list_item.key_manager = ["1111111111111"]
+        _token_list_item.product_type = 5
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_4
+        _token_list_item.token_template = "ibetMembership"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_5
+        _token_list_item.token_template = "ibetCoupon"
+        _token_list_item.key_manager = []
+        _token_list_item.product_type = 1
+        session.add(_token_list_item)
+
+        session.commit()
+
+        resp = client.get(self.api_url, params={"token_template": "ibetCoupon"})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "result_set": {"count": 1, "limit": None, "offset": None, "total": 5},
+            "tokens": [
+                {
+                    "key_manager": [],
+                    "product_type": 1,
+                    "token_address": self.token_address_5,
+                    "token_template": "ibetCoupon",
                 },
             ],
         }
@@ -306,11 +488,13 @@ class TestListAllPublicListedTokens:
             "message": "Invalid Parameter",
             "description": [
                 {
-                    "ctx": {"expected": "'ibetBond' or 'ibetShare'"},
-                    "input": "invalid_value",
-                    "loc": ["query", "token_template"],
-                    "msg": "Input should be 'ibetBond' or 'ibetShare'",
                     "type": "literal_error",
+                    "loc": ["query", "token_template"],
+                    "msg": "Input should be 'ibetBond', 'ibetShare', 'ibetMembership' or 'ibetCoupon'",
+                    "input": "invalid_value",
+                    "ctx": {
+                        "expected": "'ibetBond', 'ibetShare', 'ibetMembership' or 'ibetCoupon'"
+                    },
                 }
             ],
         }
