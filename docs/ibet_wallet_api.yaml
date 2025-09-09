@@ -52,6 +52,8 @@ paths:
             enum:
               - ibetBond
               - ibetShare
+              - ibetMembership
+              - ibetCoupon
             type: string
             description: Token template
             title: Token Template
@@ -8297,6 +8299,31 @@ components:
         - token_template
         - product_type
       title: IbetBondToken
+    IbetCouponToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetCoupon
+          title: Token Template
+        product_type:
+          type: integer
+          const: 1
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetCouponToken
     IbetEscrowEventType:
       type: string
       enum:
@@ -8306,6 +8333,31 @@ components:
         - EscrowCanceled
         - EscrowFinished
       title: IbetEscrowEventType
+    IbetMembershipToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetMembership
+          title: Token Template
+        product_type:
+          type: integer
+          const: 1
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetMembershipToken
     IbetSecurityTokenDVPEventType:
       type: string
       enum:
@@ -8724,6 +8776,8 @@ components:
             anyOf:
               - $ref: '#/components/schemas/IbetBondToken'
               - $ref: '#/components/schemas/IbetShareToken'
+              - $ref: '#/components/schemas/IbetMembershipToken'
+              - $ref: '#/components/schemas/IbetCouponToken'
           type: array
           title: Tokens
       type: object
