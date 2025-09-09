@@ -48,6 +48,16 @@ class IbetShareToken(TokenBase):
     product_type: Literal[1, 2, 3, 4, 5]
 
 
+class IbetMembershipToken(TokenBase):
+    token_template: Literal["ibetMembership"]
+    product_type: Literal[1]
+
+
+class IbetCouponToken(TokenBase):
+    token_template: Literal["ibetCoupon"]
+    product_type: Literal[1]
+
+
 class PublicAccount(BaseModel):
     key_manager: str
     key_manager_name: str
@@ -64,8 +74,8 @@ class ListAllPublicListedTokensSortItem(StrEnum):
 
 
 class ListAllPublicListedTokensQuery(BasePaginationQuery):
-    token_template: Literal["ibetBond", "ibetShare"] = Field(
-        None, description="Token template"
+    token_template: Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"] = (
+        Field(None, description="Token template")
     )
     sort_item: ListAllPublicListedTokensSortItem = Field(
         default=ListAllPublicListedTokensSortItem.token_address, description="sort item"
@@ -97,7 +107,9 @@ class ListAllPublicAccountsQuery(BasePaginationQuery):
 ############################
 class ListAllPublicListedTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[Union[IbetBondToken, IbetShareToken]]
+    tokens: list[
+        Union[IbetBondToken, IbetShareToken, IbetMembershipToken, IbetCouponToken]
+    ]
 
 
 class ListAllPublicAccountsResponse(BaseModel):

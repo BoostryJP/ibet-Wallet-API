@@ -43,9 +43,9 @@ class TokenList(Base):
     # Token Address
     token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Token Template
-    token_template: Mapped[Literal["ibetBond", "ibetShare"]] = mapped_column(
-        String(50), nullable=False
-    )
+    token_template: Mapped[
+        Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"]
+    ] = mapped_column(String(50), nullable=False)
     # Key Manager
     key_manager: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     # Product Type
