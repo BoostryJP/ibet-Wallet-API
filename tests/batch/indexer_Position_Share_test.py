@@ -30,7 +30,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.exceptions import ABIEventNotFound
+from web3.exceptions import ABIEventNotFound, TransactionNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -481,7 +481,8 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - Lock
-    async def test_normal_4_1(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_4_1(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -497,15 +498,25 @@ class TestProcessor:
 
         # Lock
         token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "locked1"}'
+            self.trader["account_address"], 1500, '{"message": "garnishment"}'
         ).transact({"from": self.issuer["account_address"]})
         token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "locked2"}'
+            self.trader["account_address"], 1500, '{"message": "ibet_wst_bridge"}'
+        ).transact({"from": self.issuer["account_address"]})
+        token_contract.functions.lock(
+            self.trader["account_address"], 1500, '{"message": "inheritance"}'
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -523,7 +534,7 @@ class TestProcessor:
         _position = _position_list[0]
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 3000
+        assert _position.balance == 1000000 - 4500
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
@@ -537,10 +548,10 @@ class TestProcessor:
         assert _locked1.token_address == token["address"]
         assert _locked1.lock_address == self.trader["account_address"]
         assert _locked1.account_address == self.issuer["account_address"]
-        assert _locked1.value == 3000
+        assert _locked1.value == 4500
 
         _lock_list = session.scalars(select(IDXLock).order_by(IDXLock.id)).all()
-        assert len(_lock_list) == 2
+        assert len(_lock_list) == 3
 
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
@@ -548,7 +559,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 1500
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
         assert _lock1.is_forced is False
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
@@ -556,14 +567,23 @@ class TestProcessor:
         assert _lock2.lock_address == self.trader["account_address"]
         assert _lock2.account_address == self.issuer["account_address"]
         assert _lock2.value == 1500
-        assert _lock2.data == {"message": "locked2"}
+        assert _lock2.data == {"message": "ibet_wst_bridge"}
         assert _lock2.is_forced is False
+        _lock3 = _lock_list[2]
+        assert _lock3.id == 3
+        assert _lock3.token_address == token["address"]
+        assert _lock3.lock_address == self.trader["account_address"]
+        assert _lock3.account_address == self.issuer["account_address"]
+        assert _lock3.value == 1500
+        assert _lock3.data == {}
+        assert _lock3.is_forced is False
 
     # <Normal_4_2>
     # Single Token
     # Single event logs
     # - ForceLock
-    async def test_normal_4_2(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_4_2(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -591,24 +611,50 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader["account_address"],
             1500,
-            '{"message": "force_locked1"}',
+            '{"message": "force_lock"}',
         ).transact({"from": self.issuer["account_address"]})
         token_contract.functions.forceLock(
             self.issuer["account_address"],
             self.trader["account_address"],
             1500,
-            '{"message": "force_locked2"}',
+            '{"message": "force_lock"}',
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 1
+        _position_issuer: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.account_address == self.issuer["account_address"])
+            .limit(1)
+        ).first()
+        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.account_address == self.issuer["account_address"]
+        assert _position_issuer.balance == 1000000 - 3000
+        assert _position_issuer.pending_transfer == 0
+        assert _position_issuer.exchange_balance == 0
+        assert _position_issuer.exchange_commitment == 0
+
+        _position_trader: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.account_address == self.trader["account_address"])
+            .limit(1)
+        ).first()
+        assert _position_trader.token_address == token["address"]
+        assert _position_trader.account_address == self.trader["account_address"]
+        assert _position_trader.balance == 0
+        assert _position_trader.pending_transfer == 0
+        assert _position_trader.exchange_balance == 0
+        assert _position_trader.exchange_commitment == 0
 
         _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
             select(IDXPositionShareBlockNumber)
@@ -616,14 +662,6 @@ class TestProcessor:
             .limit(1)
         ).first()
         assert _idx_position_share_block_number.latest_block_number == block_number
-
-        _position = _position_list[0]
-        assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 3000
-        assert _position.pending_transfer == 0
-        assert _position.exchange_balance == 0
-        assert _position.exchange_commitment == 0
 
         _locked_list: Sequence[IDXLockedPosition] = session.scalars(
             select(IDXLockedPosition).order_by(IDXLockedPosition.created)
@@ -646,7 +684,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.issuer["account_address"]
         assert _lock1.account_address == self.trader["account_address"]
         assert _lock1.value == 1500
-        assert _lock1.data == {"message": "force_locked1"}
+        assert _lock1.data == {"message": "force_lock"}
         assert _lock1.is_forced is True
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
@@ -655,14 +693,15 @@ class TestProcessor:
         assert _lock2.lock_address == self.issuer["account_address"]
         assert _lock2.account_address == self.trader["account_address"]
         assert _lock2.value == 1500
-        assert _lock2.data == {"message": "force_locked2"}
+        assert _lock2.data == {"message": "force_lock"}
         assert _lock2.is_forced is True
 
     # <Normal_5_1>
     # Single Token
     # Single event logs
     # - Unlock
-    async def test_normal_5_1(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_5_1(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -678,7 +717,7 @@ class TestProcessor:
 
         # Lock
         token_contract.functions.lock(
-            self.trader["account_address"], 3000, '{"message": "locked1"}'
+            self.trader["account_address"], 3000, '{"message": "garnishment"}'
         ).transact({"from": self.issuer["account_address"]})
 
         # Unlock
@@ -686,12 +725,19 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
-            '{"message": "unlocked1"}',
+            '{"message": "garnishment"}',
         ).transact({"from": self.trader["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -759,7 +805,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 3000
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
 
         _unlock_list = session.scalars(select(IDXUnlock).order_by(IDXUnlock.id)).all()
         assert len(_unlock_list) == 1
@@ -771,14 +817,15 @@ class TestProcessor:
         assert _unlock1.account_address == self.issuer["account_address"]
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
-        assert _unlock1.data == {"message": "unlocked1"}
+        assert _unlock1.data == {"message": "garnishment"}
         assert _unlock1.is_forced is False
 
     # <Normal_5_2>
     # Single Token
     # Single event logs
     # - ForceUnlock
-    async def test_normal_5_2(self, processor, shared_contract, session):
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_5_2(self, processor, shared_contract, session, is_old_token):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -794,7 +841,7 @@ class TestProcessor:
 
         # Lock
         token_contract.functions.lock(
-            self.trader["account_address"], 3000, '{"message": "locked1"}'
+            self.trader["account_address"], 3000, '{"message": "garnishment"}'
         ).transact({"from": self.issuer["account_address"]})
 
         # Unlock
@@ -803,12 +850,19 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
-            '{"message": "unlocked1"}',
+            '{"message": "garnishment"}',
         ).transact({"from": self.issuer["account_address"]})
 
         # Run target process
         block_number = web3.eth.block_number
-        await processor.sync_new_logs()
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -876,7 +930,7 @@ class TestProcessor:
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 3000
-        assert _lock1.data == {"message": "locked1"}
+        assert _lock1.data == {"message": "garnishment"}
 
         _unlock_list = session.scalars(select(IDXUnlock).order_by(IDXUnlock.id)).all()
         assert len(_unlock_list) == 1
@@ -888,7 +942,169 @@ class TestProcessor:
         assert _unlock1.account_address == self.issuer["account_address"]
         assert _unlock1.recipient_address == self.trader2["account_address"]
         assert _unlock1.value == 100
-        assert _unlock1.data == {"message": "unlocked1"}
+        assert _unlock1.data == {"message": "garnishment"}
+        assert _unlock1.is_forced is True
+
+    # <Normal_5_3>
+    # Single Token
+    # Single event logs
+    # - ForceChangeLockedAccount
+    @pytest.mark.parametrize("is_old_token", [False, True])
+    async def test_normal_5_3(self, processor, shared_contract, session, is_old_token):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_share(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract,
+        )
+        self.listing_token(token["address"], session)
+
+        token_contract = Contract.get_contract("IbetShare", token["address"])
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, token, 3000
+        )
+
+        # Lock
+        token_contract.functions.lock(
+            self.issuer["account_address"],  # lock address
+            3000,
+            '{"message": "garnishment"}',
+        ).transact({"from": self.trader["account_address"]})
+
+        # ForceChangeLockedAccount
+        token_contract.functions.forceChangeLockedAccount(
+            self.issuer["account_address"],  # lock address
+            self.trader["account_address"],  # before account address
+            self.trader2["account_address"],  # after account address
+            100,
+            '{"message": "ibet_wst_bridge"}',
+        ).transact({"from": self.issuer["account_address"]})
+
+        # Run target process
+        block_number = web3.eth.block_number
+        if is_old_token:
+            with mock.patch(
+                "web3.eth.async_eth.AsyncEth.get_transaction",
+                MagicMock(side_effect=TransactionNotFound(message="")),
+            ):
+                await processor.sync_new_logs()
+        else:
+            await processor.sync_new_logs()
+
+        # Assertion
+        _position_issuer: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.issuer["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.account_address == self.issuer["account_address"]
+        assert _position_issuer.balance == 1000000 - 3000
+        assert _position_issuer.pending_transfer == 0
+        assert _position_issuer.exchange_balance == 0
+        assert _position_issuer.exchange_commitment == 0
+
+        _position_trader_1: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position_trader_1.token_address == token["address"]
+        assert _position_trader_1.account_address == self.trader["account_address"]
+        assert _position_trader_1.balance == 0
+        assert _position_trader_1.pending_transfer == 0
+        assert _position_trader_1.exchange_balance == 0
+        assert _position_trader_1.exchange_commitment == 0
+
+        _position_trader_2: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(
+                and_(
+                    IDXPosition.token_address == token["address"],
+                    IDXPosition.account_address == self.trader2["account_address"],
+                )
+            )
+            .limit(1)
+        ).first()
+        assert _position_trader_2.token_address == token["address"]
+        assert _position_trader_2.account_address == self.trader2["account_address"]
+        assert _position_trader_2.balance == 0
+        assert _position_trader_2.pending_transfer == 0
+        assert _position_trader_2.exchange_balance == 0
+        assert _position_trader_2.exchange_commitment == 0
+
+        _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
+            select(IDXPositionShareBlockNumber)
+            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_share_block_number.latest_block_number == block_number
+
+        _locked_list = session.scalars(
+            select(IDXLockedPosition).order_by(IDXLockedPosition.created)
+        ).all()
+        assert len(_locked_list) == 2
+        _locked = _locked_list[0]
+        assert _locked.token_address == token["address"]
+        assert _locked.lock_address == self.issuer["account_address"]
+        assert _locked.account_address == self.trader["account_address"]
+        assert _locked.value == 2900
+        _locked = _locked_list[1]
+        assert _locked.token_address == token["address"]
+        assert _locked.lock_address == self.issuer["account_address"]
+        assert _locked.account_address == self.trader2["account_address"]
+        assert _locked.value == 100
+
+        _lock_list = session.scalars(select(IDXLock).order_by(IDXLock.id)).all()
+        assert len(_lock_list) == 2
+        _lock1 = _lock_list[0]
+        assert _lock1.id == 1
+        assert _lock1.token_address == token["address"]
+        assert _lock1.msg_sender == self.trader["account_address"]
+        assert _lock1.lock_address == self.issuer["account_address"]
+        assert _lock1.account_address == self.trader["account_address"]
+        assert _lock1.value == 3000
+        assert _lock1.data == {"message": "garnishment"}
+        _lock2 = _lock_list[1]
+        assert _lock2.id == 2
+        assert _lock2.token_address == token["address"]
+        assert _lock2.msg_sender == self.issuer["account_address"]
+        assert _lock2.lock_address == self.issuer["account_address"]
+        assert _lock2.account_address == self.trader2["account_address"]
+        assert _lock2.value == 100
+        assert _lock2.data == {"message": "ibet_wst_bridge"}
+
+        _unlock_list = session.scalars(select(IDXUnlock).order_by(IDXUnlock.id)).all()
+        assert len(_unlock_list) == 1
+        _unlock1 = _unlock_list[0]
+        assert _unlock1.id == 1
+        assert _unlock1.token_address == token["address"]
+        assert _unlock1.msg_sender == self.issuer["account_address"]
+        assert _unlock1.lock_address == self.issuer["account_address"]
+        assert _unlock1.account_address == self.trader["account_address"]
+        assert _unlock1.recipient_address == self.trader2["account_address"]
+        assert _unlock1.value == 100
+        assert _unlock1.data == {"message": "ibet_wst_bridge"}
         assert _unlock1.is_forced is True
 
     # <Normal_6>
@@ -988,7 +1204,6 @@ class TestProcessor:
     # <Normal_8>
     # Single Token
     # Single event logs
-    # - Transfer
     # - Apply For Transfer
     async def test_normal_8(self, processor, shared_contract, session):
         # Issue Token
@@ -1083,9 +1298,7 @@ class TestProcessor:
     # <Normal_9>
     # Single Token
     # Single event logs
-    # - Transfer
-    # - Apply For Transfer
-    # - Approve
+    # - Approve Transfer
     async def test_normal_9(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1200,9 +1413,7 @@ class TestProcessor:
     # <Normal_10>
     # Single Token
     # Single event logs
-    # - Transfer
-    # - Apply For Transfer
-    # - Cancel
+    # - Cancel Transfer
     async def test_normal_10(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1438,10 +1649,17 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 1
+        _position_issuer: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.account_address == self.issuer["account_address"])
+            .limit(1)
+        ).first()
+        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.account_address == self.issuer["account_address"]
+        assert _position_issuer.balance == 1000000 - 10000 + 111 + 222
+        assert _position_issuer.pending_transfer == 0
+        assert _position_issuer.exchange_balance == 10000 - 111 - 222 - 333
+        assert _position_issuer.exchange_commitment == 333
 
         _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
             select(IDXPositionShareBlockNumber)
@@ -1449,14 +1667,6 @@ class TestProcessor:
             .limit(1)
         ).first()
         assert _idx_position_share_block_number.latest_block_number == block_number
-
-        _position: IDXPosition = _position_list[0]
-        assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 10000 + 111 + 222
-        assert _position.pending_transfer == 0
-        assert _position.exchange_balance == 10000 - 111 - 222 - 333
-        assert _position.exchange_commitment == 333
 
     # <Normal_13>
     # Single Token
@@ -1510,10 +1720,17 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 1
+        _position_issuer: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.account_address == self.issuer["account_address"])
+            .limit(1)
+        ).first()
+        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.account_address == self.issuer["account_address"]
+        assert _position_issuer.balance == 1000000 - 10000 + 55
+        assert _position_issuer.pending_transfer == 0
+        assert _position_issuer.exchange_balance == 10000 - 55 - 66
+        assert _position_issuer.exchange_commitment == 66
 
         _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
             select(IDXPositionShareBlockNumber)
@@ -1521,14 +1738,6 @@ class TestProcessor:
             .limit(1)
         ).first()
         assert _idx_position_share_block_number.latest_block_number == block_number
-
-        _position: IDXPosition = _position_list[0]
-        assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 10000 + 55
-        assert _position.pending_transfer == 0
-        assert _position.exchange_balance == 10000 - 55 - 66
-        assert _position.exchange_commitment == 66
 
     # <Normal_14>
     # Single Token
@@ -1602,19 +1811,7 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 2
-
-        _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
-            select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
-            .limit(1)
-        ).first()
-        assert _idx_position_share_block_number.latest_block_number == block_number
-
-        _position: IDXPosition = session.scalars(
+        _position_issuer: IDXPosition = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -1624,14 +1821,14 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
-        assert _position.token_address == token["address"]
-        assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 10000
-        assert _position.pending_transfer == 0
-        assert _position.exchange_balance == 10000 - 200
-        assert _position.exchange_commitment == 0
+        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.account_address == self.issuer["account_address"]
+        assert _position_issuer.balance == 1000000 - 10000
+        assert _position_issuer.pending_transfer == 0
+        assert _position_issuer.exchange_balance == 10000 - 200
+        assert _position_issuer.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position_trader: IDXPosition = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -1641,12 +1838,19 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
-        assert _position.token_address == token["address"]
-        assert _position.account_address == self.trader["account_address"]
-        assert _position.balance == 0
-        assert _position.pending_transfer == 0
-        assert _position.exchange_balance == 200
-        assert _position.exchange_commitment == 0
+        assert _position_trader.token_address == token["address"]
+        assert _position_trader.account_address == self.trader["account_address"]
+        assert _position_trader.balance == 0
+        assert _position_trader.pending_transfer == 0
+        assert _position_trader.exchange_balance == 200
+        assert _position_trader.exchange_commitment == 0
+
+        _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
+            select(IDXPositionShareBlockNumber)
+            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_15>
     # No event logs
@@ -1946,10 +2150,17 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 1
+        _position_issuer: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.account_address == self.issuer["account_address"])
+            .limit(1)
+        ).first()
+        assert _position_issuer.token_address == token1["address"]
+        assert _position_issuer.account_address == self.issuer["account_address"]
+        assert _position_issuer.balance == 1000000 - 10000 + 55 - 100
+        assert _position_issuer.pending_transfer == 0
+        assert _position_issuer.exchange_balance == 10000 - 55 - 66
+        assert _position_issuer.exchange_commitment == 66
 
         _idx_position_share_block_number: IDXPositionShareBlockNumber = session.scalars(
             select(IDXPositionShareBlockNumber)
@@ -1957,14 +2168,6 @@ class TestProcessor:
             .limit(1)
         ).first()
         assert _idx_position_share_block_number.latest_block_number == block_number1
-
-        _position: IDXPosition = _position_list[0]
-        assert _position.token_address == token1["address"]
-        assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 10000 + 55 - 100
-        assert _position.pending_transfer == 0
-        assert _position.exchange_balance == 10000 - 55 - 66
-        assert _position.exchange_commitment == 66
 
         # Token2 Listing
         self.listing_token(token2["address"], session)
@@ -1974,11 +2177,8 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         session.rollback()
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 2
 
+        # Assertion
         _idx_position_share_block_number1: IDXPositionShareBlockNumber = (
             session.scalars(
                 select(IDXPositionShareBlockNumber)

@@ -35,6 +35,7 @@ class TestNotificationsGet:
 
     def _insert_test_data(self, session):
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = "NewOrder"
         n.priority = 1
@@ -54,6 +55,7 @@ class TestNotificationsGet:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000021034000000000000000"
         n.notification_type = "NewOrderCounterpart"
         n.priority = 1
@@ -71,6 +73,7 @@ class TestNotificationsGet:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011034000000000000000"
         n.notification_type = "NewOrder"
         n.priority = 2
@@ -88,6 +91,7 @@ class TestNotificationsGet:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000011032000000000000000"
         n.notification_type = "NewOrderCounterpart"
         n.priority = 1
@@ -105,6 +109,7 @@ class TestNotificationsGet:
         session.add(n)
 
         n = Notification()
+        n.notification_category = "event_log"
         n.notification_id = "0x00000001034000000000000000"
         n.notification_type = "NewOrder"
         n.priority = 0
@@ -140,6 +145,7 @@ class TestNotificationsGet:
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000021034300000000000000",
                     "sort_id": 1,
@@ -157,6 +163,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 15:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrderCounterpart",
                     "id": "0x00000021034000000000000000",
                     "sort_id": 2,
@@ -174,6 +181,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 16:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000011034000000000000000",
                     "sort_id": 3,
@@ -191,6 +199,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 17:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrderCounterpart",
                     "id": "0x00000011032000000000000000",
                     "sort_id": 4,
@@ -208,6 +217,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 18:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000001034000000000000000",
                     "sort_id": 5,
@@ -252,6 +262,7 @@ class TestNotificationsGet:
             "result_set": {"count": 5, "offset": 1, "limit": 2, "total": 5},
             "notifications": [
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrderCounterpart",
                     "id": "0x00000021034000000000000000",
                     "sort_id": 2,
@@ -269,6 +280,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 16:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000011034000000000000000",
                     "sort_id": 3,
@@ -332,6 +344,7 @@ class TestNotificationsGet:
                 "address": self.address,
                 "notification_type": "NewOrder",
                 "priority": 2,
+                "notification_category": "event_log",
             },
         )
 
@@ -339,6 +352,7 @@ class TestNotificationsGet:
             "result_set": {"count": 1, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000011034000000000000000",
                     "sort_id": 1,
@@ -410,6 +424,7 @@ class TestNotificationsGet:
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000011034000000000000000",
                     "sort_id": 1,
@@ -427,6 +442,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 17:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000021034300000000000000",
                     "sort_id": 2,
@@ -444,6 +460,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 15:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrderCounterpart",
                     "id": "0x00000021034000000000000000",
                     "sort_id": 3,
@@ -461,6 +478,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 16:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrderCounterpart",
                     "id": "0x00000011032000000000000000",
                     "sort_id": 4,
@@ -478,6 +496,7 @@ class TestNotificationsGet:
                     "created": "2022/01/01 18:20:30",
                 },
                 {
+                    "notification_category": "event_log",
                     "notification_type": "NewOrder",
                     "id": "0x00000001034000000000000000",
                     "sort_id": 5,
@@ -544,10 +563,10 @@ class TestNotificationsGet:
                 {
                     "type": "enum",
                     "loc": ["query", "notification_type"],
-                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock' or 'ForceUnlock'",
+                    "msg": "Input should be 'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock', 'ForceUnlock', 'ChangeToRedeemed', 'ChangeToCanceled' or 'TransferableChanged'",
                     "input": "hoge",
                     "ctx": {
-                        "expected": "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock' or 'ForceUnlock'"
+                        "expected": "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', 'CancelOrderCounterpart', 'ForceCancelOrder', 'BuyAgreement', 'BuySettlementOK', 'BuySettlementNG', 'SellAgreement', 'SellSettlementOK', 'SellSettlementNG', 'Transfer', 'ApplyForTransfer', 'ApproveTransfer', 'CancelTransfer', 'ForceLock', 'ForceUnlock', 'ChangeToRedeemed', 'ChangeToCanceled' or 'TransferableChanged'"
                     },
                 },
                 {

@@ -17,27 +17,34 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import hashlib
 import json
 import sys
 import time
 
-import aiohttp
-from aiohttp import ClientTimeout
+import requests
 from eth_utils import to_checksum_address
+from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
+from sqlalchemy.engine.create import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.session import Session
+from urllib3 import Retry
 
-from app.config import REQUEST_TIMEOUT, TOKEN_LIST_SLEEP_INTERVAL, TOKEN_LIST_URL
-from app.database import BatchAsyncSessionLocal
+from app.config import (
+    DATABASE_URL,
+    REQUEST_TIMEOUT,
+    TOKEN_LIST_SLEEP_INTERVAL,
+    TOKEN_LIST_URL,
+)
 from app.errors import ServiceUnavailable
 from app.model.db import TokenList
 from batch import free_malloc, log
 
 process_name = "INDEXER-PUBLIC-INFO-TOKEN-LIST"
 LOG = log.get_logger(process_name=process_name)
+
+db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
@@ -46,21 +53,22 @@ class Processor:
     def __init__(self):
         self.token_list_digest = None
 
-    async def process(self):
+    def process(self):
         LOG.info("Syncing token list")
 
         # Get from TOKEN_LIST_URL
         try:
-            async with aiohttp.ClientSession(trust_env=True) as session:
-                async with session.get(
-                    TOKEN_LIST_URL,
-                    timeout=ClientTimeout(
-                        connect=REQUEST_TIMEOUT[0], total=REQUEST_TIMEOUT[1]
-                    ),
-                ) as response:
-                    if response.status != 200:
-                        raise Exception(f"status code={response.status}")
-                    token_list_json = await response.json()
+            with requests.Session() as session:
+                adapter = HTTPAdapter(max_retries=Retry(3, allowed_methods=["GET"]))
+                session.mount("http://", adapter)
+                session.mount("https://", adapter)
+                _resp = session.get(
+                    url=TOKEN_LIST_URL,
+                    timeout=REQUEST_TIMEOUT,
+                )
+                if _resp.status_code != 200:
+                    raise Exception(f"status code={_resp.status_code}")
+                token_list_json = _resp.json()
         except Exception:
             LOG.exception("Failed to get token list")
             return
@@ -74,10 +82,10 @@ class Processor:
             self.token_list_digest = _resp_digest
 
         # Update DB data
-        db_session = BatchAsyncSessionLocal()
+        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
             # Delete all token list from DB
-            await db_session.execute(delete(TokenList))
+            db_session.execute(delete(TokenList))
 
             # Insert token list
             for i, token in enumerate(token_list_json):
@@ -104,7 +112,7 @@ class Processor:
                     )
                     continue
 
-                await self.__sink_on_token_list(
+                self.__sink_on_token_list(
                     db_session=db_session,
                     token_address=token_address,
                     token_template=token_template,
@@ -112,18 +120,18 @@ class Processor:
                     product_type=product_type,
                 )
 
-            await db_session.commit()
+            db_session.commit()
         except Exception as e:
-            await db_session.rollback()
+            db_session.rollback()
             raise e
         finally:
-            await db_session.close()
+            db_session.close()
 
         LOG.info("Sync job has been completed")
 
     @staticmethod
-    async def __sink_on_token_list(
-        db_session: AsyncSession,
+    def __sink_on_token_list(
+        db_session: Session,
         token_address: str,
         token_template: str,
         key_manager: list[str],
@@ -134,17 +142,17 @@ class Processor:
         _token_list.token_template = token_template
         _token_list.key_manager = key_manager
         _token_list.product_type = product_type
-        await db_session.merge(_token_list)
+        db_session.merge(_token_list)
 
 
-async def main():
+def main():
     LOG.info("Service started successfully")
     processor = Processor()
     while True:
         start_time = time.time()
 
         try:
-            await processor.process()
+            processor.process()
         except ServiceUnavailable:
             LOG.notice("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -153,12 +161,12 @@ async def main():
             LOG.exception("An exception occurred during processing")
 
         elapsed_time = time.time() - start_time
-        await asyncio.sleep(max(TOKEN_LIST_SLEEP_INTERVAL - elapsed_time, 0))
+        time.sleep(max(TOKEN_LIST_SLEEP_INTERVAL - elapsed_time, 0))
         free_malloc()
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
     except KeyboardInterrupt:
         sys.exit(1)

@@ -18,13 +18,19 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from typing import Type, TypeVar
+from typing import Any, Never, Type, TypeVar
 
 from eth_utils import to_checksum_address
+from hexbytes import HexBytes
 from web3 import contract
 from web3.contract.async_contract import AsyncContractEvents
 from web3.eth.async_eth import AsyncContract as Web3AsyncContract
-from web3.exceptions import BadFunctionCallOutput, ContractLogicError
+from web3.exceptions import (
+    BadFunctionCallOutput,
+    ContractLogicError,
+    TransactionNotFound,
+)
+from web3.types import BlockIdentifier, TxData
 
 from app.utils.web3_utils import AsyncWeb3Wrapper
 
@@ -134,3 +140,25 @@ class AsyncContract:
                 raise exc
 
         return result
+
+    @staticmethod
+    async def get_transaction(
+        transaction_hash: HexBytes, block_number: BlockIdentifier
+    ) -> TxData | dict[Any, Never]:
+        """Get transaction
+
+        :param transaction_hash: Transaction hash
+        :param block_number: Block number
+        :return: Return the transaction data or empty dict
+        """
+        tx = {}
+        try:
+            tx = await async_web3.eth.get_transaction(transaction_hash)
+        except TransactionNotFound:
+            # Retrieve transaction from block data when node has pruned old transaction
+            block = await async_web3.eth.get_block(block_number, full_transactions=True)
+            for transaction in block.get("transactions", []):
+                if transaction.get("hash") == transaction_hash:
+                    tx = transaction
+                    break
+        return tx

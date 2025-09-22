@@ -61,6 +61,7 @@ async def list_all_notifications(
     """
     Returns notifications filtered by given query.
     """
+    notification_category = request_query.notification_category
     address = request_query.address
     notification_type = request_query.notification_type
     priority = request_query.priority
@@ -75,6 +76,8 @@ async def list_all_notifications(
     )
 
     # Search Filter
+    if notification_category is not None:
+        stmt = stmt.where(Notification.notification_category == notification_category)
     if address is not None:
         stmt = stmt.where(Notification.address == to_checksum_address(address))
     if notification_type is not None:

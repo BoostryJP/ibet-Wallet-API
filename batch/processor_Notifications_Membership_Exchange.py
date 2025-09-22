@@ -236,6 +236,7 @@ class WatchMembershipNewOrder(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = self.notification_type
             notification.priority = 0
@@ -279,6 +280,7 @@ class WatchMembershipCancelOrder(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = self.notification_type
             notification.priority = 0
@@ -322,6 +324,7 @@ class WatchMembershipForceCancelOrder(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = self.notification_type
             notification.priority = 2
@@ -362,6 +365,7 @@ class WatchMembershipBuyAgreement(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = self.notification_type
             notification.priority = 1
@@ -402,6 +406,7 @@ class WatchMembershipSellAgreement(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = self.notification_type
             notification.priority = 2
@@ -445,6 +450,7 @@ class WatchMembershipBuySettlementOK(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = self.notification_type
             notification.priority = 1
@@ -488,6 +494,7 @@ class WatchMembershipSellSettlementOK(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = self.notification_type
             notification.priority = 1
@@ -531,6 +538,7 @@ class WatchMembershipBuySettlementNG(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = self.notification_type
             notification.priority = 2
@@ -574,6 +582,7 @@ class WatchMembershipSellSettlementNG(Watcher):
             }
 
             notification = Notification()
+            notification.notification_category = "event_log"
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = self.notification_type
             notification.priority = 2

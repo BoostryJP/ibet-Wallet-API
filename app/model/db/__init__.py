@@ -22,7 +22,7 @@ from .executable_contract import ExecutableContract
 from .idx_agreement import AgreementStatus, IDXAgreement
 from .idx_block_data import IDXBlockData, IDXBlockDataBlockNumber
 from .idx_consume_coupon import IDXConsumeCoupon
-from .idx_lock_unlock import IDXLock, IDXUnlock
+from .idx_lock_unlock import IDXLock, IDXUnlock, LockDataMessage, UnlockDataMessage
 from .idx_order import IDXOrder
 from .idx_position import (
     IDXLockedPosition,
@@ -42,17 +42,22 @@ from .idx_token import (
 )
 from .idx_token_list_register import IDXTokenListBlockNumber, IDXTokenListRegister
 from .idx_transfer import (
-    DataMessage,
     IDXTransfer,
     IDXTransferBlockNumber,
     IDXTransferSourceEventType,
+    TransferDataMessage,
 )
 from .idx_transfer_approval import IDXTransferApproval, IDXTransferApprovalBlockNumber
 from .idx_tx_data import IDXTxData
 from .listing import Listing
 from .messaging import ChatWebhook, Mail
 from .node import Node
-from .notification import Notification, NotificationBlockNumber, NotificationType
+from .notification import (
+    Notification,
+    NotificationAttributeValue,
+    NotificationBlockNumber,
+    NotificationType,
+)
 from .public_info import PublicAccountList, TokenList
 from .tokenholders import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from .user_info import AccountTag

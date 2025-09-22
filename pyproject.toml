@@ -1,6 +1,6 @@
 [project]
 name = "ibet-Wallet-API"
-version = "25.6"
+version = "25.9"
 description = "RPC services that provides utility functions for building a wallet system on ibet-Network."
 authors = [
     {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},
@@ -12,7 +12,7 @@ dependencies = [
     "coincurve~=21.0.0",
     "eth-keyfile~=0.9.1",
     "eth-utils~=5.2.0",
-    "fastapi~=0.115.0",
+    "fastapi~=0.116.1",
     "gunicorn~=23.0.0",
     "hexbytes~=1.3.0",
     "orjson~=3.10.3",
@@ -26,7 +26,6 @@ dependencies = [
     "alembic<2.0.0,>=1.14.0",
     "aiomysql==0.2.0",
     "httpx~=0.28.0",
-    "aiohttp~=3.10.10",
     "memray<2.0.0,>=1.14.0",
     "py-spy>=0.4.0",
     "asyncpg~=0.30.0",
@@ -41,6 +40,7 @@ dependencies = [
     "opentelemetry-instrumentation-psycopg>=0.54b0,<1.0.0",
     "opentelemetry-instrumentation-sqlalchemy>=0.54b0,<1.0.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.33.1,<2.0.0",
+    "requests>=2.32.3",
 ]
 
 [tool.uv]
@@ -66,6 +66,8 @@ ibet-explorer = [
     "textual~=0.44.1",
     "async-cache~=1.1.1",
     "typer~=0.12.3",
+    "aiohttp~=3.12.13",
+    "async-cache==1.1.1",
 ]
 
 [tool.uv.sources]

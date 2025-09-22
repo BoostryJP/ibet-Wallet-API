@@ -28,7 +28,7 @@ from hexbytes import HexBytes
 from rlp import decode
 from sqlalchemy import select
 from web3.exceptions import ContractLogicError, TimeExhausted, Web3RPCError
-from web3.types import TxReceipt
+from web3.types import BlockIdentifier, TxReceipt
 
 from app import config, log
 from app.contracts import AsyncContract
@@ -286,7 +286,7 @@ async def send_raw_transaction(
             )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
-                err_msg = await inspect_tx_failure(tx_hash)
+                err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
                 code, message = error_code_msg(err_msg)
                 result.append(
                     {
@@ -518,7 +518,7 @@ async def wait_for_transaction_receipt(
         )
         if tx["status"] == 0:
             # Inspect reason of transaction fail.
-            err_msg = await inspect_tx_failure(transaction_hash)
+            err_msg = await inspect_tx_failure(transaction_hash, tx["blockNumber"])
             code, message = error_code_msg(err_msg)
             result["status"] = 0
             result["error_code"] = code
@@ -531,8 +531,8 @@ async def wait_for_transaction_receipt(
     return json_response({**SuccessResponse.default(), "data": result})
 
 
-async def inspect_tx_failure(tx_hash: HexBytes) -> str:
-    tx = await async_web3.eth.get_transaction(tx_hash)
+async def inspect_tx_failure(tx_hash: HexBytes, block_number: BlockIdentifier) -> str:
+    tx = await AsyncContract.get_transaction(tx_hash, block_number)
 
     # build a new transaction to replay:
     replay_tx = {

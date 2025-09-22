@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: ibet Wallet API
-  description: RPC services that provides utility tools for building a wallet system
-    on ibet network
-  version: 25.6.0
+  description: RPC services that provides utility tools for building a wallet 
+    system on ibet network
+  version: 25.9.0
 paths:
   /:
     get:
@@ -18,7 +18,8 @@ paths:
     get:
       tags:
         - public_info
-      summary: Information on issued tokens and associated institutions (key managers)
+      summary: Information on issued tokens and associated institutions (key 
+        managers)
       description: List issued tokens and associated institutions (key managers)
       operationId: ListAllPublicListedTokens
       parameters:
@@ -51,6 +52,8 @@ paths:
             enum:
               - ibetBond
               - ibetShare
+              - ibetMembership
+              - ibetCoupon
             type: string
             description: Token template
             title: Token Template
@@ -1070,7 +1073,8 @@ paths:
       tags:
         - eth_rpc
       summary: Send signed transaction
-      description: Sends raw transaction without waiting for transaction receipt.
+      description: Sends raw transaction without waiting for transaction 
+        receipt.
       operationId: SendRawTransactionNoWait
       requestBody:
         content:
@@ -2965,8 +2969,8 @@ paths:
       tags:
         - token_info
       summary: Search Token holders
-      description: Returns a list of token holders for a given token using detailed
-        search query.
+      description: Returns a list of token holders for a given token using 
+        detailed search query.
       operationId: SearchTokenHolders
       parameters:
         - name: token_address
@@ -3069,7 +3073,8 @@ paths:
       tags:
         - token_info
       summary: Execute Batch Getting Token Holders At Specific BlockNumber
-      description: Enqueues task of collecting token holders for a given block number.
+      description: Enqueues task of collecting token holders for a given block 
+        number.
       operationId: TokenHoldersCollection
       parameters:
         - name: token_address
@@ -3130,13 +3135,13 @@ paths:
           schema:
             type: string
             format: uuid
-            description: Unique id to be assigned to each token holder list.This must
-              be Version4 UUID.
+            description: Unique id to be assigned to each token holder list.This
+              must be Version4 UUID.
             examples:
               - cfd83622-34dc-4efe-a68b-2cc275d3d824
             title: List Id
-          description: Unique id to be assigned to each token holder list.This must
-            be Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This 
+            must be Version4 UUID.
       responses:
         '200':
           description: Successful Response
@@ -3496,8 +3501,8 @@ paths:
       tags:
         - token_info
       summary: Search Token Transfer History
-      description: Returns a list of transfer histories for a given token using detailed
-        search query.
+      description: Returns a list of transfer histories for a given token using 
+        detailed search query.
       operationId: SearchTokenTransferHistory
       parameters:
         - name: token_address
@@ -3541,7 +3546,8 @@ paths:
       tags:
         - token_info
       summary: Token Transfer Approval History
-      description: Returns a list of transfer approval histories for a given token.
+      description: Returns a list of transfer approval histories for a given 
+        token.
       operationId: ListTokenTransferApprovalHistory
       parameters:
         - name: token_address
@@ -3654,8 +3660,8 @@ paths:
       tags:
         - token_info
       summary: Search Token Transfer Approval History
-      description: Returns a list of transfer approval histories for a given token
-        using detailed search query.
+      description: Returns a list of transfer approval histories for a given 
+        token using detailed search query.
       operationId: SearchTokenTransferApprovalHistory
       parameters:
         - name: token_address
@@ -5041,6 +5047,17 @@ paths:
             description: Limit for pagination
             title: Limit
           description: Limit for pagination
+        - name: notification_category
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - enum:
+                  - event_log
+                  - attribute_change
+                type: string
+              - type: 'null'
+            title: Notification Category
         - name: address
           in: query
           required: false
@@ -5237,8 +5254,8 @@ paths:
       tags:
         - messaging
       summary: Retrieve message encryption key
-      description: Returns encryption key for use in e2e messaging for given account
-        address.
+      description: Returns encryption key for use in e2e messaging for given 
+        account address.
       operationId: EncryptionKey
       parameters:
         - name: account_address
@@ -5741,10 +5758,10 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/OrderType'
-            description: Order type to be executed by the Orderer. If 'buy' is selected,
-              the sell order book will be returned.
-          description: Order type to be executed by the Orderer. If 'buy' is selected,
-            the sell order book will be returned.
+            description: Order type to be executed by the Orderer. If 'buy' is 
+              selected, the sell order book will be returned.
+          description: Order type to be executed by the Orderer. If 'buy' is 
+            selected, the sell order book will be returned.
         - name: account_address
           in: query
           required: false
@@ -5752,11 +5769,11 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: Orderer's account address. Orders from the given address
-              will not be included in the response.
+            description: Orderer's account address. Orders from the given 
+              address will not be included in the response.
             title: Account Address
-          description: Orderer's account address. Orders from the given address will
-            not be included in the response.
+          description: Orderer's account address. Orders from the given address 
+            will not be included in the response.
       responses:
         '200':
           description: Successful Response
@@ -5879,10 +5896,10 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/OrderType'
-            description: Order type to be executed by the Orderer. If 'buy' is selected,
-              the sell order book will be returned.
-          description: Order type to be executed by the Orderer. If 'buy' is selected,
-            the sell order book will be returned.
+            description: Order type to be executed by the Orderer. If 'buy' is 
+              selected, the sell order book will be returned.
+          description: Order type to be executed by the Orderer. If 'buy' is 
+            selected, the sell order book will be returned.
         - name: account_address
           in: query
           required: false
@@ -5890,11 +5907,11 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: Orderer's account address. Orders from the given address
-              will not be included in the response.
+            description: Orderer's account address. Orders from the given 
+              address will not be included in the response.
             title: Account Address
-          description: Orderer's account address. Orders from the given address will
-            not be included in the response.
+          description: Orderer's account address. Orders from the given address 
+            will not be included in the response.
       responses:
         '200':
           description: Successful Response
@@ -6013,9 +6030,11 @@ paths:
             anyOf:
               - type: boolean
               - type: 'null'
-            description: Whether to include canceled orders or canceled agreements.
+            description: Whether to include canceled orders or canceled 
+              agreements.
             title: Include Canceled Items
-          description: Whether to include canceled orders or canceled agreements.
+          description: Whether to include canceled orders or canceled 
+            agreements.
       responses:
         '200':
           description: Successful Response
@@ -6060,9 +6079,11 @@ paths:
             anyOf:
               - type: boolean
               - type: 'null'
-            description: Whether to include canceled orders or canceled agreements.
+            description: Whether to include canceled orders or canceled 
+              agreements.
             title: Include Canceled Items
-          description: Whether to include canceled orders or canceled agreements.
+          description: Whether to include canceled orders or canceled 
+            agreements.
       responses:
         '200':
           description: Successful Response
@@ -6115,9 +6136,11 @@ paths:
             anyOf:
               - type: boolean
               - type: 'null'
-            description: Whether to include canceled orders or canceled agreements.
+            description: Whether to include canceled orders or canceled 
+              agreements.
             title: Include Canceled Items
-          description: Whether to include canceled orders or canceled agreements.
+          description: Whether to include canceled orders or canceled 
+            agreements.
       responses:
         '200':
           description: Successful Response
@@ -6922,8 +6945,8 @@ components:
           type: string
           format: uuid4
           title: List Id
-          description: Unique id to be assigned to each token holder list.This must
-            be Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This 
+            must be Version4 UUID.
           examples:
             - cfd83622-34dc-4efe-a68b-2cc275d3d824
         block_number:
@@ -6941,8 +6964,8 @@ components:
           type: string
           format: uuid4
           title: List Id
-          description: Unique id to be assigned to each token holder list.This must
-            be Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This 
+            must be Version4 UUID.
           examples:
             - cfd83622-34dc-4efe-a68b-2cc275d3d824
         status:
@@ -6985,19 +7008,6 @@ components:
       required:
         - meta
       title: DataConflictErrorResponse
-    DataMessage:
-      properties:
-        message:
-          type: string
-          enum:
-            - garnishment
-            - inheritance
-            - force_unlock
-          title: Message
-      type: object
-      required:
-        - message
-      title: DataMessage
     DataNotExistsErrorMetainfo:
       properties:
         code:
@@ -7122,7 +7132,8 @@ components:
       required:
         - result_set
         - positions
-      title: GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]
+      title: 
+        GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]
     GenericSuccessResponse_ABI_:
       properties:
         meta:
@@ -7432,7 +7443,8 @@ components:
       required:
         - meta
         - data
-      title: GenericSuccessResponse[ListAllLockEventsResponse[RetrieveShareTokenResponse]]
+      title: 
+        GenericSuccessResponse[ListAllLockEventsResponse[RetrieveShareTokenResponse]]
     GenericSuccessResponse_ListAllLockEventsResponse_RetrieveStraightBondTokenResponse__:
       properties:
         meta:
@@ -7533,7 +7545,8 @@ components:
       required:
         - meta
         - data
-      title: GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]]
+      title: 
+        GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]]
     GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__:
       properties:
         meta:
@@ -7842,7 +7855,8 @@ components:
       required:
         - meta
         - data
-      title: GenericSuccessResponse[RetrievePaymentAccountRegistrationStatusResponse]
+      title: 
+        GenericSuccessResponse[RetrievePaymentAccountRegistrationStatusResponse]
     GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_:
       properties:
         meta:
@@ -7856,7 +7870,8 @@ components:
       required:
         - meta
         - data
-      title: GenericSuccessResponse[RetrievePersonalInfoRegistrationStatusResponse]
+      title: 
+        GenericSuccessResponse[RetrievePersonalInfoRegistrationStatusResponse]
     GenericSuccessResponse_RetrieveShareTokenResponse_:
       properties:
         meta:
@@ -8284,6 +8299,31 @@ components:
         - token_template
         - product_type
       title: IbetBondToken
+    IbetCouponToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetCoupon
+          title: Token Template
+        product_type:
+          type: integer
+          const: 1
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetCouponToken
     IbetEscrowEventType:
       type: string
       enum:
@@ -8293,6 +8333,31 @@ components:
         - EscrowCanceled
         - EscrowFinished
       title: IbetEscrowEventType
+    IbetMembershipToken:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        key_manager:
+          items:
+            type: string
+          type: array
+          title: Key Manager
+        token_template:
+          type: string
+          const: ibetMembership
+          title: Token Template
+        product_type:
+          type: integer
+          const: 1
+          title: Product Type
+      type: object
+      required:
+        - token_address
+        - key_manager
+        - token_template
+        - product_type
+      title: IbetMembershipToken
     IbetSecurityTokenDVPEventType:
       type: string
       enum:
@@ -8711,6 +8776,8 @@ components:
             anyOf:
               - $ref: '#/components/schemas/IbetBondToken'
               - $ref: '#/components/schemas/IbetShareToken'
+              - $ref: '#/components/schemas/IbetMembershipToken'
+              - $ref: '#/components/schemas/IbetCouponToken'
           type: array
           title: Tokens
       type: object
@@ -8847,7 +8914,8 @@ components:
           type: string
           format: date-time
           title: Block Timestamp
-          description: block_timestamp when Lock log was emitted (local_timezone)
+          description: block_timestamp when Lock log was emitted 
+            (local_timezone)
       type: object
       required:
         - category
@@ -8925,7 +8993,8 @@ components:
           type: string
           format: date-time
           title: Block Timestamp
-          description: block_timestamp when Lock log was emitted (local_timezone)
+          description: block_timestamp when Lock log was emitted 
+            (local_timezone)
         token:
           $ref: '#/components/schemas/RetrieveShareTokenResponse'
           description: Token information
@@ -8992,7 +9061,8 @@ components:
           type: string
           format: date-time
           title: Block Timestamp
-          description: block_timestamp when Lock log was emitted (local_timezone)
+          description: block_timestamp when Lock log was emitted 
+            (local_timezone)
         token:
           $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
           description: Token information
@@ -9290,15 +9360,21 @@ components:
       title: NotSupportedErrorResponse
     Notification:
       properties:
-        notification_type:
-          $ref: '#/components/schemas/NotificationType'
-          examples:
-            - NewOrder
+        notification_category:
+          type: string
+          enum:
+            - event_log
+            - attribute_change
+          title: Notification Category
         id:
           type: string
           title: Id
           examples:
             - '0x00000373ca8600000000000000'
+        notification_type:
+          $ref: '#/components/schemas/NotificationType'
+          examples:
+            - NewOrder
         priority:
           type: integer
           title: Priority
@@ -9340,8 +9416,9 @@ components:
           description: datetime of create
       type: object
       required:
-        - notification_type
+        - notification_category
         - id
+        - notification_type
         - priority
         - block_timestamp
         - is_read
@@ -9411,6 +9488,9 @@ components:
         - CancelTransfer
         - ForceLock
         - ForceUnlock
+        - ChangeToRedeemed
+        - ChangeToCanceled
+        - TransferableChanged
       title: NotificationType
     NotificationUpdateResponse:
       properties:
@@ -9674,8 +9754,8 @@ components:
             - type: boolean
             - type: 'null'
           title: Skip Conflict Error
-          description: If set to `True`, a `200` response will be returned instead
-            of a `409` error in case of duplicate data.
+          description: If set to `True`, a `200` response will be returned 
+            instead of a `409` error in case of duplicate data.
           default: false
       type: object
       required:
@@ -10585,8 +10665,8 @@ components:
             - 1
         status:
           $ref: '#/components/schemas/SendRawTransactionStatus'
-          description: execution failure:0, execution success:1, execution success(pending
-            transaction):2
+          description: execution failure:0, execution success:1, execution 
+            success(pending transaction):2
           examples:
             - 1
         transaction_hash:
@@ -11097,7 +11177,8 @@ components:
         hold_balance:
           type: integer
           title: Hold Balance
-          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked.
+          description: Amount of balance.This includes 
+            balance/pending_transfer/exchange_balance/exchange_commitment/locked.
         locked_balance:
           type: integer
           title: Locked Balance
@@ -11117,7 +11198,8 @@ components:
             $ref: '#/components/schemas/TokenHoldersCollectionHolder'
           type: array
           title: Holders
-          description: Token holder list.This list is excluding token owner address.
+          description: Token holder list.This list is excluding token owner 
+            address.
       type: object
       required:
         - status
@@ -11324,6 +11406,20 @@ components:
         - cancelled
         - transfer_approved
       title: TransferApprovalHistory
+    TransferDataMessage:
+      properties:
+        message:
+          type: string
+          enum:
+            - garnishment
+            - inheritance
+            - force_unlock
+            - ibet_wst_bridge
+          title: Message
+      type: object
+      required:
+        - message
+      title: TransferDataMessage
     TransferHistoriesResponse:
       properties:
         result_set:
@@ -11332,7 +11428,7 @@ components:
           items:
             anyOf:
               - $ref: '#/components/schemas/TransferHistory'
-              - $ref: '#/components/schemas/UnlockTransferHistory'
+              - $ref: '#/components/schemas/TransferWithMessage'
           type: array
           title: Transfer History
           description: Transfer history
@@ -11374,15 +11470,19 @@ components:
                 - garnishment
                 - inheritance
                 - force_unlock
+                - ibet_wst_bridge
             - type: 'null'
           title: Message
         created:
           type: string
           title: Created
-          description: block_timestamp when Transfer log was emitted (local timezone)
+          description: block_timestamp when Transfer log was emitted (local 
+            timezone)
         source_event:
           type: string
-          const: Transfer
+          enum:
+            - Transfer
+            - Reallocation
           title: Source Event
           description: Source Event
       type: object
@@ -11403,7 +11503,72 @@ components:
         - Transfer
         - Unlock
         - ForceUnlock
+        - ForceChangeLockedAccount
+        - Reallocation
       title: TransferSourceEvent
+    TransferWithMessage:
+      properties:
+        transaction_hash:
+          type: string
+          title: Transaction Hash
+          description: Transaction hash
+        token_address:
+          type: string
+          title: Token Address
+          description: Token address
+        from_address:
+          type: string
+          title: From Address
+          description: Account address of transfer source
+        to_address:
+          type: string
+          title: To Address
+          description: Account address of transfer destination
+        value:
+          type: integer
+          title: Value
+          description: Transfer quantity
+        data:
+          anyOf:
+            - $ref: '#/components/schemas/TransferDataMessage'
+            - type: object
+          title: Data
+          description: Event data
+        message:
+          anyOf:
+            - type: string
+              enum:
+                - garnishment
+                - inheritance
+                - force_unlock
+                - ibet_wst_bridge
+            - type: 'null'
+          title: Message
+        created:
+          type: string
+          title: Created
+          description: block_timestamp when Transfer log was emitted (local 
+            timezone)
+        source_event:
+          type: string
+          enum:
+            - Unlock
+            - ForceUnlock
+            - ForceChangeLockedAccount
+          title: Source Event
+          description: Source Event
+      type: object
+      required:
+        - transaction_hash
+        - token_address
+        - from_address
+        - to_address
+        - value
+        - data
+        - message
+        - created
+        - source_event
+      title: TransferWithMessage
     TxData:
       properties:
         hash:
@@ -11527,66 +11692,6 @@ components:
     TxDataResponse:
       $ref: '#/components/schemas/TxDataDetail'
       title: TxDataResponse
-    UnlockTransferHistory:
-      properties:
-        transaction_hash:
-          type: string
-          title: Transaction Hash
-          description: Transaction hash
-        token_address:
-          type: string
-          title: Token Address
-          description: Token address
-        from_address:
-          type: string
-          title: From Address
-          description: Account address of transfer source
-        to_address:
-          type: string
-          title: To Address
-          description: Account address of transfer destination
-        value:
-          type: integer
-          title: Value
-          description: Transfer quantity
-        data:
-          anyOf:
-            - $ref: '#/components/schemas/DataMessage'
-            - type: object
-          title: Data
-          description: Event data
-        message:
-          anyOf:
-            - type: string
-              enum:
-                - garnishment
-                - inheritance
-                - force_unlock
-            - type: 'null'
-          title: Message
-        created:
-          type: string
-          title: Created
-          description: block_timestamp when Transfer log was emitted (local timezone)
-        source_event:
-          type: string
-          enum:
-            - Unlock
-            - ForceUnlock
-          title: Source Event
-          description: Source Event
-      type: object
-      required:
-        - transaction_hash
-        - token_address
-        - from_address
-        - to_address
-        - value
-        - data
-        - message
-        - created
-        - source_event
-      title: UnlockTransferHistory
     UpdateAdminTokenRequest:
       properties:
         is_public:
@@ -11717,6 +11822,7 @@ tags:
   - name: contract_log
     description: Contract event logs
   - name: dex
-    description: Trade related functions on IbetExchange (Only for utility tokens)
+    description: Trade related functions on IbetExchange (Only for utility 
+      tokens)
   - name: messaging
     description: Messaging functions with external systems

@@ -329,6 +329,23 @@ def bond_force_unlock(
     ).transact({"from": invoker["account_address"]})
 
 
+# BONDトークン：資産ロック元強制変更
+def bond_force_change_locked_account(
+    invoker,
+    token,
+    lock_address: str,
+    before_account_address: str,
+    after_account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.forceChangeLockedAccount(
+        lock_address, before_account_address, after_account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
 # BONDトークン：追加発行
 def bond_issue_from(
     invoker, token, target: str, amount: int, lock_address: str = config.ZERO_ADDRESS
@@ -360,6 +377,15 @@ def bond_set_tradable_exchange(invoker, token, exchange_address: str):
     web3.eth.default_account = invoker["account_address"]
     TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
     TokenContract.functions.setTradableExchange(exchange_address).transact(
+        {"from": invoker["account_address"]}
+    )
+
+
+# BONDトークン：償還状態に変更
+def bond_change_to_redeemed(invoker, token):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
+    TokenContract.functions.changeToRedeemed().transact(
         {"from": invoker["account_address"]}
     )
 
@@ -454,6 +480,29 @@ def transfer_share_token(
     TokenContract.functions.transfer(to["account_address"], amount).transact(
         {"from": invoker["account_address"]}
     )
+
+
+# SHAREトークン：移管
+def reallocate_share_token(
+    invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    tx = TokenContract.functions.transfer(
+        to["account_address"], amount
+    ).build_transaction(
+        {
+            "from": invoker["account_address"],
+            "gas": 6000000,
+            "gasPrice": 0,
+        }
+    )
+    marker = b"\xc0\xff\xee\x00"
+    annotation_data = json.dumps(
+        {"purpose": "Reallocation"}, separators=(",", ":")
+    ).encode("utf-8")
+    tx["data"] += marker.hex() + annotation_data.hex()
+    web3.eth.send_transaction(tx)
 
 
 # SHAREトークン：無効化
@@ -570,6 +619,23 @@ def share_force_unlock(
     ).transact({"from": invoker["account_address"]})
 
 
+# SHAREトークン：資産ロック元強制変更
+def share_force_change_locked_account(
+    invoker,
+    token,
+    lock_address: str,
+    before_account_address: str,
+    after_account_address: str,
+    amount: int,
+    data_str: str = "",
+):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.forceChangeLockedAccount(
+        lock_address, before_account_address, after_account_address, amount, data_str
+    ).transact({"from": invoker["account_address"]})
+
+
 # SHAREトークン：追加発行
 def share_issue_from(
     invoker, token, target: str, amount: int, lock_address: str = config.ZERO_ADDRESS
@@ -604,6 +670,15 @@ def share_set_tradable_exchange(invoker, token, exchange_address: str):
 
     TokenContract = Contract.get_contract("IbetShare", token["address"])
     TokenContract.functions.setTradableExchange(exchange_address).transact(
+        {"from": invoker["account_address"]}
+    )
+
+
+# SHAREトークン：消却状態に変更
+def share_change_to_canceled(invoker, token):
+    web3.eth.default_account = invoker["account_address"]
+    TokenContract = Contract.get_contract("IbetShare", token["address"])
+    TokenContract.functions.changeToCanceled().transact(
         {"from": invoker["account_address"]}
     )
 

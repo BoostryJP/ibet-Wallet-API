@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import sys
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
 from sqlalchemy import (
     JSON,
@@ -63,13 +64,29 @@ class Notification(Base):
             autoincrement=True,
         )
 
+    # 通知分類
+    notification_category: Mapped[Literal["event_log", "attribute_change"]] = (
+        mapped_column(
+            String(20),
+            primary_key=True,
+        )
+    )
+
     # 通知ID
-    # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex> | <optionType>
+    # Spec: 0x | <field1> | <field2> | <field3> | <optionType>
     #   ( | は文字列連結 )
-    #   <blockNumber>: blockNumberをhexstringで表現したもの。12桁
-    #   <transactionIndex>: transactionIndex（block内でのトランザクションの採番）をhexstringで表現したもの。6桁
-    #   <logIndex>: logIndex（transaction内でのログの採番）をhexstringで表現したもの。6桁
-    #   <optionType>: blockNumber, transactionIndex, logIndexが等しいが、通知としては複数にしたい場合に使用する識別子。2桁(デフォルトは00)
+    #
+    #   notification_category = "event_log" の場合
+    #     <field1> = <blockNumber>: blockNumberをhexstringで表現したもの。12桁
+    #     <field2> = <transactionIndex>: transactionIndex（block内でのトランザクションの採番）をhexstringで表現したもの。6桁
+    #     <field3> = <logIndex>: logIndex（transaction内でのログの採番）をhexstringで表現したもの。6桁
+    #     <optionType>: blockNumber, transactionIndex, logIndexが等しいが、通知としては複数にしたい場合に使用する識別子。2桁(デフォルトは00)
+    #
+    #   notification_category = "attribute_change" の場合
+    #     <field1> = <timestamp>: ミリ秒タイムスタンプをhexstringで表現したもの。12桁
+    #     <field2> = <contractId>: コントラクトアドレス。40桁
+    #     <field3> = <attributeId>: 属性名のkeccak256ハッシュ先頭8文字。8桁
+    #     <optionType>: 同一のコントラクト・属性で複数通知にする場合の識別子。2桁(デフォルトは00)
     notification_id: Mapped[str] = mapped_column(String(256), primary_key=True)
 
     # 通知タイプ(例：BuySettlementOK, BuyAgreementなど)
@@ -122,6 +139,7 @@ class Notification(Base):
 
     def json(self):
         return {
+            "notification_category": self.notification_category,
             "notification_type": self.notification_type,
             "id": self.notification_id,
             "priority": self.priority,
@@ -185,6 +203,7 @@ Index(
 
 
 class NotificationType(StrEnum):
+    # Event Log Notification
     NEW_ORDER = "NewOrder"
     NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
     CANCEL_ORDER = "CancelOrder"
@@ -203,6 +222,11 @@ class NotificationType(StrEnum):
     CANCEL_TRANSFER = "CancelTransfer"
     FORCE_LOCK = "ForceLock"
     FORCE_UNLOCK = "ForceUnlock"
+    CHANGE_TO_REDEEMED = "ChangeToRedeemed"
+    CHANGE_TO_CANCELED = "ChangeToCanceled"
+
+    # Attribute Change Notification
+    TRANSFERABLE_CHANGED = "TransferableChanged"
 
 
 class NotificationBlockNumber(Base):
@@ -224,3 +248,16 @@ class NotificationBlockNumber(Base):
     }
 
     FIELDS.update(Base.FIELDS)
+
+
+class NotificationAttributeValue(Base):
+    """Synchronized attribute value for Notification"""
+
+    __tablename__ = "notification_attribute_value"
+
+    # contract address
+    contract_address = mapped_column(String(42), primary_key=True)
+    # attribute key
+    attribute_key = mapped_column(String(256), primary_key=True)
+    # attribute
+    attribute = mapped_column(JSON, nullable=False)

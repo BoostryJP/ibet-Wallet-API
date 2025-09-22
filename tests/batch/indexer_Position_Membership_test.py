@@ -852,10 +852,16 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         # Assertion
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 1
+        _position: IDXPosition = session.scalars(
+            select(IDXPosition)
+            .where(IDXPosition.account_address == self.issuer["account_address"])
+            .limit(1)
+        ).first()
+        assert _position.token_address == token1["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000 + 55
+        assert _position.exchange_balance == 10000 - 55 - 66
+        assert _position.exchange_commitment == 66
 
         _idx_position_coupon_block_number: IDXPositionMembershipBlockNumber = (
             session.scalars(
@@ -868,13 +874,6 @@ class TestProcessor:
         )
         assert _idx_position_coupon_block_number.latest_block_number == block_number1
 
-        _position: IDXPosition = _position_list[0]
-        assert _position.token_address == token1["address"]
-        assert _position.account_address == self.issuer["account_address"]
-        assert _position.balance == 1000000 - 10000 + 55
-        assert _position.exchange_balance == 10000 - 55 - 66
-        assert _position.exchange_commitment == 66
-
         # Token2 Listing
         self.listing_token(token2["address"], session)
 
@@ -883,11 +882,8 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         session.rollback()
-        _position_list: Sequence[IDXPosition] = session.scalars(
-            select(IDXPosition).order_by(IDXPosition.created)
-        ).all()
-        assert len(_position_list) == 2
 
+        # Assertion
         _idx_position_coupon_block_number1: IDXPositionMembershipBlockNumber = (
             session.scalars(
                 select(IDXPositionMembershipBlockNumber)
