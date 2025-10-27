@@ -67,7 +67,7 @@ jobs:
         run: |
           sudo chown runner:docker /home/runner/work/ibet-Wallet-API/ibet-Wallet-API/cov
           sudo chmod 777 /home/runner/work/ibet-Wallet-API/ibet-Wallet-API/cov
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: '.coverage-*'
           path: cov/
@@ -76,7 +76,7 @@ jobs:
         run: docker compose run -w /app/ibet-Wallet-API/cov ibet-wallet-api-postgres bash --login -c 'uv run coverage combine .coverage-*'
       - name: generate coverage xml file
         run: docker compose run -w /app/ibet-Wallet-API ibet-wallet-api-postgres bash --login -c 'uv run coverage xml --data-file=cov/.coverage -o cov/coverage.xml'
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: 'pytest-*'
           path: cov/
