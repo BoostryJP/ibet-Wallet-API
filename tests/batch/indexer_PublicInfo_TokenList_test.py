@@ -57,6 +57,7 @@ class MockResponse:
         return self.data
 
 
+@mock.patch("batch.indexer_PublicInfo_TokenList.TOKEN_LIST_URL", "https://localhost")
 @pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################

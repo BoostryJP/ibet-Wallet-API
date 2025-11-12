@@ -56,6 +56,7 @@ class MockResponse:
         return self.data
 
 
+@mock.patch("batch.indexer_Company_List.COMPANY_LIST_URL", "https://localhost")
 @pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################
@@ -920,9 +921,6 @@ class TestProcessor:
         assert _company.corporate_name == "株式会社テスト3"
         assert _company.rsa_publickey == "RSA-KEY 3"
         assert _company.homepage == "http://test3.com"
-        assert _company.trustee_corporate_name == "受託者株式会社"
-        assert _company.trustee_corporate_number == "1234567890123"
-        assert _company.trustee_corporate_address == "東京都千代田区1-1-1"
         assert _company.trustee_corporate_name == "受託者株式会社"
         assert _company.trustee_corporate_number == "1234567890123"
         assert _company.trustee_corporate_address == "東京都千代田区1-1-1"

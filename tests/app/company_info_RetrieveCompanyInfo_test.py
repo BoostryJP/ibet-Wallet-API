@@ -185,10 +185,6 @@ SDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr
         idx_token.owner_address = issuer_address
         idx_token.token_address = token_2
         idx_token.token_template = "IbetShare"
-        idx_token.face_value_currency = ""  # type: ignore[attr-defined]
-        idx_token.interest_payment_currency = ""  # type: ignore[attr-defined]
-        idx_token.redemption_value_currency = ""  # type: ignore[attr-defined]
-        idx_token.base_fx_rate = 0.0  # type: ignore[attr-defined]
         idx_token.personal_info_address = personal_info_address_2
         session.add(idx_token)
 
