@@ -49,9 +49,7 @@ class TokenList(Base):
     # Key Manager
     key_manager: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     # Product Type
-    product_type: Mapped[Literal[1, 2, 3, 4, 5]] = mapped_column(
-        Integer, nullable=False
-    )
+    product_type: Mapped[int] = mapped_column(Integer, nullable=False)
 
     def json(self):
         return {

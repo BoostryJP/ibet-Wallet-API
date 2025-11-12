@@ -1019,11 +1019,10 @@ class TestProcessor:
         ]
 
         # Run target process
-        with pytest.raises(Exception):
-            processor.process()
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
-        assert len(_company_list) == 3
+        assert len(_company_list) == 1

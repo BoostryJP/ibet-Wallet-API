@@ -593,8 +593,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        with pytest.raises(Exception):
-            processor.process()
+        processor.process()
 
         # Assertion
         _token_list: Sequence[TokenList] = (
@@ -602,4 +601,4 @@ class TestProcessor:
                 select(TokenList).order_by(TokenList.token_address)
             )
         ).all()
-        assert len(_token_list) == 3
+        assert len(_token_list) == 1
