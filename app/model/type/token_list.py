@@ -25,18 +25,18 @@ from pydantic import BaseModel, field_validator
 from app.model.schema.base import EthereumAddress
 
 
-############################
-# COMMON
-############################
 class TokenListItem(BaseModel):
     token_template: Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"]
     product_type: int
     token_address: EthereumAddress
     key_manager: list[str]
+    issuer_address: EthereumAddress | None = None
 
-    @field_validator("token_address")
+    @field_validator("token_address", "issuer_address")
     @classmethod
-    def convert_to_checksum(cls, value: EthereumAddress) -> EthereumAddress:
+    def convert_to_checksum(
+        cls, value: EthereumAddress | None
+    ) -> EthereumAddress | None:
         if value is None:
             return value
         return to_checksum_address(value)

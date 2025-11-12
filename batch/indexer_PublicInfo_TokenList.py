@@ -21,7 +21,6 @@ import hashlib
 import json
 import sys
 import time
-from typing import Literal
 
 import requests
 from pydantic import ValidationError
@@ -100,17 +99,9 @@ class Processor:
                     LOG.notice(f"Invalid token data: index={i} token={token}")
                     continue
 
-                token_address = token_list_item.token_address
-                token_template = token_list_item.token_template
-                key_manager = token_list_item.key_manager
-                product_type = token_list_item.product_type
-
                 self.__sink_on_token_list(
                     db_session=db_session,
-                    token_address=token_address,
-                    token_template=token_template,
-                    key_manager=key_manager,
-                    product_type=product_type,
+                    token_list_item=token_list_item,
                 )
 
             db_session.commit()
@@ -125,18 +116,14 @@ class Processor:
     @staticmethod
     def __sink_on_token_list(
         db_session: Session,
-        token_address: str,
-        token_template: Literal[
-            "ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"
-        ],
-        key_manager: list[str],
-        product_type: int,
+        token_list_item: TokenListItem,
     ):
         _token_list = TokenList()
-        _token_list.token_address = token_address
-        _token_list.token_template = token_template
-        _token_list.key_manager = key_manager
-        _token_list.product_type = product_type
+        _token_list.token_address = token_list_item.token_address
+        _token_list.token_template = token_list_item.token_template
+        _token_list.key_manager = token_list_item.key_manager
+        _token_list.product_type = token_list_item.product_type
+        _token_list.issuer_address = token_list_item.issuer_address
         db_session.merge(_token_list)
 
 

@@ -30,7 +30,13 @@ LOG = log.get_logger()
 
 
 class CompanyList:
-    DEFAULT = {"address": "", "corporate_name": "", "rsa_publickey": "", "homepage": ""}
+    DEFAULT = {
+        "address": "",
+        "corporate_name": "",
+        "rsa_publickey": "",
+        "homepage": "",
+        "trustee": None,
+    }
 
     @classmethod
     async def get(cls):
@@ -123,12 +129,17 @@ class Company:
     def homepage(self):
         return self.obj.get("homepage")
 
+    @property
+    def trustee(self):
+        return self.obj.get("trustee")
+
     def json(self):
         return {
             "address": self.obj.get("address") or "",
             "corporate_name": self.obj.get("corporate_name") or "",
             "rsa_publickey": self.obj.get("rsa_publickey") or "",
             "homepage": self.obj.get("homepage") or "",
+            "trustee": self.obj.get("trustee"),
         }
 
     def __getitem__(self, key: str):

@@ -21,14 +21,21 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
 from eth_utils.address import to_checksum_address
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.model.schema.base import EthereumAddress
+
+
+class Trustee(BaseModel):
+    corporate_name: str = Field(..., min_length=1, max_length=30)
+    corporate_number: str
+    corporate_address: str = Field(..., min_length=1, max_length=60)
 
 
 class CompanyListItem(BaseModel):
     address: EthereumAddress
     corporate_name: str
+    trustee: Trustee | None = None
     rsa_publickey: str
     homepage: str = ""
 

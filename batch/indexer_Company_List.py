@@ -108,10 +108,7 @@ class Processor:
                 ):
                     self.__sink_on_company(
                         db_session=db_session,
-                        address=company_list_item.address,
-                        corporate_name=company_list_item.corporate_name,
-                        rsa_publickey=company_list_item.rsa_publickey,
-                        homepage=company_list_item.homepage,
+                        company_list_item=company_list_item,
                     )
                 else:
                     LOG.notice(f"Missing required field: index={i}")
@@ -128,16 +125,21 @@ class Processor:
     @staticmethod
     def __sink_on_company(
         db_session: Session,
-        address: str,
-        corporate_name: str,
-        rsa_publickey: str,
-        homepage: str,
+        company_list_item: CompanyListItem,
     ):
         _company = Company()
-        _company.address = address
-        _company.corporate_name = corporate_name
-        _company.rsa_publickey = rsa_publickey
-        _company.homepage = homepage
+        _company.address = company_list_item.address
+        _company.corporate_name = company_list_item.corporate_name
+        _company.rsa_publickey = company_list_item.rsa_publickey
+        _company.homepage = company_list_item.homepage
+        if company_list_item.trustee:
+            _company.trustee_corporate_name = company_list_item.trustee.corporate_name
+            _company.trustee_corporate_number = (
+                company_list_item.trustee.corporate_number
+            )
+            _company.trustee_corporate_address = (
+                company_list_item.trustee.corporate_address
+            )
         db_session.merge(_company)
 
 
