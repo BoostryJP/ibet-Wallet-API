@@ -21,7 +21,14 @@ import configparser
 import os
 from email.policy import HTTP, SMTP, SMTPUTF8
 
+from dotenv import load_dotenv
+
 BRAND_NAME = "ibet-Wallet-API"
+
+######################################################
+# Environment Setup
+######################################################
+load_dotenv()
 
 ####################################################
 # Basic settings
