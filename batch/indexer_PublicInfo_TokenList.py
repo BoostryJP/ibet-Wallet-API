@@ -23,7 +23,7 @@ import sys
 import time
 
 import requests
-from eth_utils import to_checksum_address
+from pydantic import ValidationError
 from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
@@ -39,6 +39,7 @@ from app.config import (
 )
 from app.errors import ServiceUnavailable
 from app.model.db import TokenList
+from app.model.type.token_list import TokenListItem
 from batch import free_malloc, log
 
 process_name = "INDEXER-PUBLIC-INFO-TOKEN-LIST"
@@ -58,6 +59,9 @@ class Processor:
 
         # Get from TOKEN_LIST_URL
         try:
+            if TOKEN_LIST_URL is None:
+                LOG.warning("TOKEN_LIST_URL is not set")
+                return
             with requests.Session() as session:
                 adapter = HTTPAdapter(max_retries=Retry(3, allowed_methods=["GET"]))
                 session.mount("http://", adapter)
@@ -89,35 +93,15 @@ class Processor:
 
             # Insert token list
             for i, token in enumerate(token_list_json):
-                token_address = token.get("token_address", None)
-                token_template = token.get("token_template", None)
-                key_manager = token.get("key_manager", None)
-                product_type = token.get("product_type", None)
-
-                if (
-                    not isinstance(token_address, str)
-                    or not isinstance(token_template, str)
-                    or not isinstance(key_manager, list)
-                    or not isinstance(product_type, int)
-                ):
-                    LOG.notice(
-                        f"Invalid type: token_address={token_address}, token_template={token_template}, key_manager={key_manager}, product_type={product_type}"
-                    )
-                    continue
                 try:
-                    token_address = to_checksum_address(token_address)
-                except ValueError:
-                    LOG.notice(
-                        f"Invalid address: index={i} token_address={token_address}"
-                    )
+                    token_list_item = TokenListItem.model_validate(token)
+                except (ValidationError, ValueError):
+                    LOG.notice(f"Invalid token data: index={i} token={token}")
                     continue
 
                 self.__sink_on_token_list(
                     db_session=db_session,
-                    token_address=token_address,
-                    token_template=token_template,
-                    key_manager=key_manager,
-                    product_type=product_type,
+                    token_list_item=token_list_item,
                 )
 
             db_session.commit()
@@ -132,16 +116,14 @@ class Processor:
     @staticmethod
     def __sink_on_token_list(
         db_session: Session,
-        token_address: str,
-        token_template: str,
-        key_manager: list[str],
-        product_type: int,
+        token_list_item: TokenListItem,
     ):
         _token_list = TokenList()
-        _token_list.token_address = token_address
-        _token_list.token_template = token_template
-        _token_list.key_manager = key_manager
-        _token_list.product_type = product_type
+        _token_list.token_address = token_list_item.token_address
+        _token_list.token_template = token_list_item.token_template
+        _token_list.key_manager = token_list_item.key_manager
+        _token_list.product_type = token_list_item.product_type
+        _token_list.issuer_address = token_list_item.issuer_address
         db_session.merge(_token_list)
 
 

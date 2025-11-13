@@ -40,6 +40,7 @@ class TestListAllPublicListedTokens:
     token_address_3 = "0xe883a6f441AD5682d37dF31D34fc012bCB07A743"
     token_address_4 = "0xe883A6F441AD5682d37dF31d34fc012BcB07a744"
     token_address_5 = "0xe883A6F441AD5682d37df31D34fc012BcB07A745"
+    issuer_address_1 = "0x1234567890aBcDEF1234567890abCDef12345678"
 
     # ＜Normal_1＞
     # 0 Record
@@ -106,30 +107,35 @@ class TestListAllPublicListedTokens:
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",
+                    "issuer_address": None,
                 },
                 {
                     "key_manager": ["0000000000000"],
                     "product_type": 1,
                     "token_address": self.token_address_2,
                     "token_template": "ibetBond",
+                    "issuer_address": None,
                 },
                 {
                     "key_manager": ["1111111111111"],
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
+                    "issuer_address": None,
                 },
                 {
                     "key_manager": [],
                     "product_type": 1,
                     "token_address": self.token_address_4,
                     "token_template": "ibetMembership",
+                    "issuer_address": None,
                 },
                 {
                     "key_manager": [],
                     "product_type": 1,
                     "token_address": self.token_address_5,
                     "token_template": "ibetCoupon",
+                    "issuer_address": None,
                 },
             ],
         }
@@ -191,12 +197,14 @@ class TestListAllPublicListedTokens:
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",
+                    "issuer_address": None,
                 },
                 {
                     "key_manager": ["0000000000000"],
                     "product_type": 1,
                     "token_address": self.token_address_2,
                     "token_template": "ibetBond",
+                    "issuer_address": None,
                 },
             ],
         }
@@ -258,6 +266,7 @@ class TestListAllPublicListedTokens:
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
+                    "issuer_address": None,
                 },
             ],
         }
@@ -319,6 +328,7 @@ class TestListAllPublicListedTokens:
                     "product_type": 1,
                     "token_address": self.token_address_4,
                     "token_template": "ibetMembership",
+                    "issuer_address": None,
                 },
             ],
         }
@@ -380,6 +390,7 @@ class TestListAllPublicListedTokens:
                     "product_type": 1,
                     "token_address": self.token_address_5,
                     "token_template": "ibetCoupon",
+                    "issuer_address": None,
                 },
             ],
         }
@@ -424,6 +435,7 @@ class TestListAllPublicListedTokens:
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
+                    "issuer_address": None,
                 },
             ],
         }
@@ -468,7 +480,42 @@ class TestListAllPublicListedTokens:
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",
+                    "issuer_address": None,
                 },
+            ],
+        }
+
+    # ＜Normal_6＞
+    # issuer_address (not null)
+    def test_normal_6(
+        self,
+        client: TestClient,
+        session: Session,
+    ):
+        # Prepare data
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_1
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        _token_list_item.issuer_address = self.issuer_address_1
+        session.add(_token_list_item)
+        session.commit()
+
+        resp = client.get(self.api_url, params={})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "result_set": {"count": 1, "limit": None, "offset": None, "total": 1},
+            "tokens": [
+                {
+                    "key_manager": ["0000000000000"],
+                    "product_type": 1,
+                    "token_address": self.token_address_1,
+                    "token_template": "ibetBond",
+                    "issuer_address": self.issuer_address_1,
+                }
             ],
         }
 

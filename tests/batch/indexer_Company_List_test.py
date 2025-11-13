@@ -56,6 +56,7 @@ class MockResponse:
         return self.data
 
 
+@mock.patch("batch.indexer_Company_List.COMPANY_LIST_URL", "https://localhost")
 @pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################
@@ -861,6 +862,139 @@ class TestProcessor:
             )
         )
 
+    # <Normal_6_1>
+    # trustee情報あり
+    @mock.patch("requests.Session.get")
+    async def test_normal_6_1(self, mock_get, processor, session):
+        # Prepare data
+        _company = Company()
+        _company.address = "0x01"
+        _company.corporate_name = "dummy1"
+        _company.rsa_publickey = "dummy1"
+        _company.homepage = "dummy1"
+        session.add(_company)
+        _company = Company()
+        _company.address = "0x02"
+        _company.corporate_name = "dummy2"
+        _company.rsa_publickey = "dummy2"
+        _company.homepage = "dummy2"
+        session.add(_company)
+        _company = Company()
+        _company.address = "0x03"
+        _company.corporate_name = "dummy3"
+        _company.rsa_publickey = "dummy3"
+        _company.homepage = "dummy3"
+        session.add(_company)
+        session.commit()
+
+        # Mock
+        mock_get.side_effect = [
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000003",
+                        "corporate_name": "株式会社テスト3",
+                        "rsa_publickey": "RSA-KEY 3",
+                        "homepage": "http://test3.com",
+                        "trustee": {
+                            "corporate_name": "受託者株式会社",
+                            "corporate_number": "1234567890123",
+                            "corporate_address": "東京都千代田区1-1-1",
+                        },
+                    }
+                ]
+            )
+        ]
+
+        # Run target process
+        processor.process()
+
+        # Assertion
+        _company_list: Sequence[Company] = session.scalars(
+            select(Company).order_by(Company.created)
+        ).all()
+        assert len(_company_list) == 1
+        _company = _company_list[0]
+        assert (
+            _company.address == "0x0123456789ABcDeF0123456789AbcdEF00000003"
+        )  # checksum address
+        assert _company.corporate_name == "株式会社テスト3"
+        assert _company.rsa_publickey == "RSA-KEY 3"
+        assert _company.homepage == "http://test3.com"
+        assert _company.trustee_corporate_name == "受託者株式会社"
+        assert _company.trustee_corporate_number == "1234567890123"
+        assert _company.trustee_corporate_address == "東京都千代田区1-1-1"
+
+    # <Normal_6_2>
+    # trustee情報不正 -> Insert SKIP
+    @mock.patch("requests.Session.get")
+    async def test_normal_6_2(self, mock_get, processor, session):
+        # Prepare data
+        _company = Company()
+        _company.address = "0x01"
+        _company.corporate_name = "dummy1"
+        _company.rsa_publickey = "dummy1"
+        _company.homepage = "dummy1"
+        session.add(_company)
+        _company = Company()
+        _company.address = "0x02"
+        _company.corporate_name = "dummy2"
+        _company.rsa_publickey = "dummy2"
+        _company.homepage = "dummy2"
+        session.add(_company)
+        _company = Company()
+        _company.address = "0x03"
+        _company.corporate_name = "dummy3"
+        _company.rsa_publickey = "dummy3"
+        _company.homepage = "dummy3"
+        session.add(_company)
+        session.commit()
+
+        # Mock
+        mock_get.side_effect = [
+            MockResponse(
+                [
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000003",
+                        "corporate_name": "株式会社テスト3",
+                        "rsa_publickey": "RSA-KEY 3",
+                        "homepage": "http://test3.com",
+                        "trustee": {
+                            "corporate_name": "受託者株式会社",
+                            "corporate_number": "1234567890123",
+                            "corporate_address": "東京都千代田区1-1-1",
+                        },
+                    },
+                    {
+                        "address": "0x0123456789abcdef0123456789abcdef00000004",
+                        "corporate_name": "株式会社テスト4",
+                        "rsa_publickey": "RSA-KEY 4",
+                        "homepage": "http://test4.com",
+                        "trustee": {
+                            "corporate_name": "受託者株式会社",
+                            "corporate_number": "1234567890123",
+                        },
+                    },
+                ]
+            )
+        ]
+
+        # Run target process
+        processor.process()
+
+        # Assertion
+        _company_list: Sequence[Company] = session.scalars(
+            select(Company).order_by(Company.created)
+        ).all()
+        assert len(_company_list) == 1
+        _company = _company_list[0]
+        assert (
+            _company.address == "0x0123456789ABcDeF0123456789AbcdEF00000003"
+        )  # checksum address
+        assert _company.corporate_name == "株式会社テスト3"
+        assert _company.rsa_publickey == "RSA-KEY 3"
+        assert _company.homepage == "http://test3.com"
+
     ###########################################################################
     # Error Case
     ###########################################################################
@@ -1019,11 +1153,10 @@ class TestProcessor:
         ]
 
         # Run target process
-        with pytest.raises(Exception):
-            processor.process()
+        processor.process()
 
         # Assertion
         _company_list: Sequence[Company] = session.scalars(
             select(Company).order_by(Company.created)
         ).all()
-        assert len(_company_list) == 3
+        assert len(_company_list) == 1

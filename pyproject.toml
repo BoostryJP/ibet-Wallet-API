@@ -2,10 +2,8 @@
 name = "ibet-Wallet-API"
 version = "25.9"
 description = "RPC services that provides utility functions for building a wallet system on ibet-Network."
-authors = [
-    {name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp"},
-]
-license = {text = "Apache License, Version 2.0"}
+authors = [{ name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp" }]
+license = { text = "Apache License, Version 2.0" }
 requires-python = "==3.12.9"
 dependencies = [
     "boto3~=1.37.0",
@@ -41,6 +39,7 @@ dependencies = [
     "opentelemetry-instrumentation-sqlalchemy>=0.54b0,<1.0.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.33.1,<2.0.0",
     "requests>=2.32.3",
+    "python-dotenv~=1.1.0",
 ]
 
 [tool.uv]
@@ -71,7 +70,7 @@ ibet-explorer = [
 ]
 
 [tool.uv.sources]
-ibet-wallet-api-explorer = { path = "cmd/explorer", editable = true}
+ibet-wallet-api-explorer = { path = "cmd/explorer", editable = true }
 
 [tool.ruff]
 line-length = 88
@@ -113,9 +112,7 @@ combine-as-imports = true
 
 [tool.pytest.ini_options]
 addopts = "-m 'not alembic'"
-markers = [
-    "alembic: tests for alembic",
-]
+markers = ["alembic: tests for alembic"]
 asyncio_default_fixture_loop_scope = "session"
 
 [tool.coverage.run]
@@ -126,5 +123,5 @@ include = [
     "app/model/**/*",
     "app/utils/**/*",
     "batch/**/*",
-    "cmd/**/*"
+    "cmd/**/*",
 ]

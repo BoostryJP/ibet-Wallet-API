@@ -36,6 +36,7 @@ from app.model.schema.base import (
 class TokenBase(BaseModel):
     token_address: EthereumAddress
     key_manager: list[str]
+    issuer_address: EthereumAddress | None
 
 
 class IbetBondToken(TokenBase):
