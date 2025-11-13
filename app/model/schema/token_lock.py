@@ -24,10 +24,10 @@ from pydantic import BaseModel, Field
 
 from app.model.schema.base import (
     BasePaginationQuery,
-    EthereumAddress,
     ResultSet,
     SortOrder,
 )
+from app.model.type import EthereumAddress
 
 
 ############################

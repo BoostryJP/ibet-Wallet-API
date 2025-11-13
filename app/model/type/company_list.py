@@ -23,7 +23,7 @@ from typing import Any
 from eth_utils.address import to_checksum_address
 from pydantic import BaseModel, Field, field_validator
 
-from app.model.schema.base import EthereumAddress
+from app.model.type.base import EthereumAddress
 
 
 class Trustee(BaseModel):

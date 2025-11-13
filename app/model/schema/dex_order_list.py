@@ -21,9 +21,9 @@ from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel, Field
 
-from app.model.schema.base import EthereumAddress
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
+from app.model.type import EthereumAddress
 
 ############################
 # COMMON

@@ -74,11 +74,11 @@ from app.model.schema import (
     TokenPositionsResponse,
 )
 from app.model.schema.base import (
-    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     TokenType,
 )
+from app.model.type import EthereumAddress
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response

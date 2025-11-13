@@ -27,11 +27,10 @@ from pydantic import (
     BaseModel,
     Field,
     NonNegativeInt,
-    WrapValidator,
     constr,
 )
 
-from app.validator import ethereum_address_validator
+from app.model.type.base import EthereumAddress
 
 ############################
 # COMMON
@@ -39,8 +38,6 @@ from app.validator import ethereum_address_validator
 EmailStr = constr(
     pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$", max_length=100
 )
-
-EthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]
 
 NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
 

@@ -26,10 +26,10 @@ from app.contracts import AsyncContract
 from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.schema import E2EMessageEncryptionKeyResponse
 from app.model.schema.base import (
-    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
 )
+from app.model.type import EthereumAddress
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 

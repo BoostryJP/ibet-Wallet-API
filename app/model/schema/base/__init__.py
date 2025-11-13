@@ -22,7 +22,6 @@ from .base import (
     BondToken,
     CouponToken,
     EmailStr,
-    EthereumAddress,
     GenericSuccessResponse,
     MembershipToken,
     ResultSet,
