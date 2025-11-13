@@ -49,6 +49,4 @@ class CompanyListItem(BaseModel):
     @field_validator("address")
     @classmethod
     def convert_to_checksum(cls, value: EthereumAddress) -> EthereumAddress:
-        if value is None:
-            return value
         return to_checksum_address(value)
