@@ -59,11 +59,11 @@ from app.model.schema import (
     TransferHistoriesResponse,
 )
 from app.model.schema.base import (
-    EthereumAddress,
     GenericSuccessResponse,
     SuccessResponse,
     ValueOperator,
 )
+from app.model.type import EthereumAddress
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response

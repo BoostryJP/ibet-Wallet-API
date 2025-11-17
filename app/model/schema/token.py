@@ -25,13 +25,13 @@ from pydantic import UUID4, BaseModel, Field, StrictStr
 
 from app.model.schema.base import (
     BasePaginationQuery,
-    EthereumAddress,
     ResultSet,
     SortOrder,
     TokenType,
     ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
+from app.model.type import EthereumAddress
 
 
 ############################

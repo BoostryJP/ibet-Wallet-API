@@ -1,4 +1,3 @@
-# pyright: reportUnusedImport=false
 """
 Copyright BOOSTRY Co., Ltd.
 
@@ -18,6 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from .base import EthereumAddress
-from .company_list import CompanyListItem
-from .token_list import TokenListItem
+from typing import Annotated
+
+from pydantic import (
+    WrapValidator,
+)
+
+from app.validator import ethereum_address_validator
+
+############################
+# COMMON
+############################
+
+EthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]

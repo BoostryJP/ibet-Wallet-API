@@ -25,11 +25,11 @@ from pydantic import BaseModel, Field
 from app.model.db import NotificationType
 from app.model.schema.base import (
     BasePaginationQuery,
-    EthereumAddress,
     ResultSet,
     SortOrder,
     TokenType,
 )
+from app.model.type import EthereumAddress
 
 ############################
 # COMMON
