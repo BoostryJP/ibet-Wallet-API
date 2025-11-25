@@ -6,13 +6,13 @@ jobs:
     name: 'Build docker image'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-test-image
   lint-ruff:
     name: 'Lint check (ruff)'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: astral-sh/ruff-action@v3
   unit-test:
     name: 'Unit tests'
@@ -27,7 +27,7 @@ jobs:
           'tests/batch/',
         ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-test-image
       - name: build image on compose
         run: docker compose build
@@ -59,7 +59,7 @@ jobs:
       packages: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-test-image
       - name: build image on compose
         run: docker compose build
@@ -115,7 +115,7 @@ jobs:
       matrix:
         db: [postgres, mysql]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-test-image
       - name: run unit test using ${{ matrix.db }}
         run: docker compose run ibet-wallet-api-${{ matrix.db }} bash --login -c "cd /app/ibet-Wallet-API && uv run pytest -vv --test-alembic -m 'alembic'"
