@@ -30,6 +30,7 @@ import boto3
 
 from app.config import (
     AWS_SES_REGION_NAME,
+    SMTP_AUTH_METHOD,
     SMTP_METHOD,
     SMTP_POLICY,
     SMTP_SENDER_EMAIL,
@@ -59,13 +60,20 @@ class Mail:
         html_content: str,
         file: File | None,
     ):
+        if SMTP_SENDER_EMAIL is None:
+            raise RuntimeError("SMTP sender email is not set.")
         self.sender_email = SMTP_SENDER_EMAIL
         self.to_email = to_email
 
         if SMTP_METHOD == 0:  # SMTP server
+            if SMTP_SERVER_HOST is None or SMTP_SERVER_PORT is None:
+                raise RuntimeError("SMTP server host or port is not set.")
             self.server_host = SMTP_SERVER_HOST
             self.server_port = SMTP_SERVER_PORT
-            self.sender_password = SMTP_SENDER_PASSWORD
+            if SMTP_AUTH_METHOD == 0:  # PASSWORD
+                self.sender_password = SMTP_SENDER_PASSWORD
+            elif SMTP_AUTH_METHOD == 1:  # XOAUTH2
+                pass
         elif SMTP_METHOD == 1:  # Amazon SES
             self.aws_region_name = AWS_SES_REGION_NAME
         self.msg = MIMEMultipart("alternative", policy=SMTP_POLICY)
@@ -94,22 +102,46 @@ class Mail:
         if SMTP_METHOD == 0:  # SMTP server
             # Initialize a new smtp client
             if SMTP_SERVER_ENCRYPTION_METHOD == 0:  # STARTTLS
-                smtp_client = smtplib.SMTP(host=self.server_host, port=self.server_port)
+                smtp_client = smtplib.SMTP(
+                    host=self.server_host, port=int(self.server_port)
+                )
                 smtp_client.ehlo()
                 smtp_client.starttls()
                 smtp_client.ehlo()
             elif SMTP_SERVER_ENCRYPTION_METHOD == 1:  # SSL
                 smtp_client = smtplib.SMTP_SSL(
                     host=self.server_host,
-                    port=self.server_port,
+                    port=int(self.server_port),
                     context=ssl.create_default_context(),
                 )
             else:  # NO-ENCRYPT
-                smtp_client = smtplib.SMTP(host=self.server_host, port=self.server_port)
-
+                smtp_client = smtplib.SMTP(
+                    host=self.server_host, port=int(self.server_port)
+                )
             # LOGIN
-            if self.sender_password is not None:
-                smtp_client.login(self.sender_email, self.sender_password)
+            if SMTP_AUTH_METHOD == 0:  # PASSWORD
+                if self.sender_password is not None:
+                    smtp_client.login(self.sender_email, self.sender_password)
+            elif SMTP_AUTH_METHOD == 1:  # XOAUTH2
+                # Get Access Token
+                from app.config import SMTP_PROVIDER
+                from app.model.mail.token_provider import MicrosoftTokenProvider
+
+                match SMTP_PROVIDER:
+                    case "microsoft":
+                        token_provider = MicrosoftTokenProvider()
+                    case _:
+                        raise ValueError(f"Unknown SMTP_PROVIDER: {SMTP_PROVIDER}")
+                access_token = token_provider.get_access_token()
+
+                # Auth
+                import base64
+
+                auth_str = (
+                    f"user={self.sender_email}\x01auth=Bearer {access_token}\x01\x01"
+                )
+                auth_b64 = base64.b64encode(auth_str.encode("utf-8")).decode("utf-8")
+                smtp_client.docmd("AUTH", "XOAUTH2 " + auth_b64)
 
             # Send mail
             try:
