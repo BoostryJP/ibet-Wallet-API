@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import base64
 import mimetypes
 import smtplib
 import ssl
@@ -33,6 +34,7 @@ from app.config import (
     SMTP_AUTH_METHOD,
     SMTP_METHOD,
     SMTP_POLICY,
+    SMTP_PROVIDER,
     SMTP_SENDER_EMAIL,
     SMTP_SENDER_NAME,
     SMTP_SENDER_PASSWORD,
@@ -40,6 +42,7 @@ from app.config import (
     SMTP_SERVER_HOST,
     SMTP_SERVER_PORT,
 )
+from app.model.mail.token_provider import MicrosoftTokenProvider
 
 
 class File:
@@ -124,9 +127,6 @@ class Mail:
                     smtp_client.login(self.sender_email, self.sender_password)
             elif SMTP_AUTH_METHOD == 1:  # XOAUTH2
                 # Get Access Token
-                from app.config import SMTP_PROVIDER
-                from app.model.mail.token_provider import MicrosoftTokenProvider
-
                 match SMTP_PROVIDER:
                     case "microsoft":
                         token_provider = MicrosoftTokenProvider()
@@ -135,8 +135,6 @@ class Mail:
                 access_token = token_provider.get_access_token()
 
                 # Auth
-                import base64
-
                 auth_str = (
                     f"user={self.sender_email}\x01auth=Bearer {access_token}\x01\x01"
                 )

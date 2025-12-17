@@ -47,6 +47,18 @@ def caplog(caplog: pytest.LogCaptureFixture):
     LOG.setLevel(default_log_level)
 
 
+@mock.patch(
+    "app.model.mail.mail.SMTP_SENDER_EMAIL",
+    "test@example.com",
+)
+@mock.patch(
+    "app.model.mail.mail.SMTP_SERVER_HOST",
+    "example.com",
+)
+@mock.patch(
+    "app.model.mail.mail.SMTP_SERVER_PORT",
+    587,
+)
 class TestProcessorSendMail:
     # Normal_1
     # No unsent email exists
