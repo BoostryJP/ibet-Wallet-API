@@ -22,6 +22,18 @@ from unittest.mock import MagicMock, patch
 from app.model.mail import Mail
 
 
+@patch(
+    "app.model.mail.mail.SMTP_SENDER_EMAIL",
+    "test@example.com",
+)
+@patch(
+    "app.model.mail.mail.SMTP_SERVER_HOST",
+    "example.com",
+)
+@patch(
+    "app.model.mail.mail.SMTP_SERVER_PORT",
+    587,
+)
 class TestMailUnit:
     """
     Unit tests for app.model.mail.Mail
@@ -72,9 +84,7 @@ class TestMailUnit:
             patch("app.model.mail.mail.SMTP_SENDER_NAME", "Sender Name"),
             patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@example.com"),
             patch("app.config.SMTP_AUTH_PROVIDER", "microsoft"),
-            patch(
-                "app.model.mail.token_provider.MicrosoftTokenProvider"
-            ) as MockTokenProvider,
+            patch("app.model.mail.mail.MicrosoftTokenProvider") as MockTokenProvider,
             patch("smtplib.SMTP") as mock_smtp_cls,
         ):
             mock_smtp = MagicMock()

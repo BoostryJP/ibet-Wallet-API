@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import abc
+import time
 
 import requests
 from pydantic import BaseModel, ValidationError
@@ -61,8 +62,6 @@ class MicrosoftTokenProvider(TokenProvider):
     _token_expiry: float = 0.0
 
     def get_access_token(self) -> str:
-        import time
-
         # Return cached token if valid (with 60 seconds safety buffer)
         if self._access_token and time.time() < self._token_expiry - 60:
             return self._access_token
