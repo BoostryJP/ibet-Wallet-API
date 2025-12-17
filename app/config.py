@@ -362,7 +362,7 @@ AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
 # SMTP Auth Method (0:PASSWORD, 1:XOAUTH2)
 SMTP_AUTH_METHOD: int = int(os.environ.get("SMTP_AUTH_METHOD", 0))
 # Token Provider (microsoft fixed)
-SMTP_PROVIDER: Literal["microsoft"] = "microsoft"
+SMTP_AUTH_PROVIDER: Literal["microsoft"] = "microsoft"
 
 # Microsoft OAuth settings
 # - Tenant ID: Microsoft Entra ID (Azure AD) Tenant ID

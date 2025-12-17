@@ -71,7 +71,7 @@ class TestMailUnit:
             patch("app.model.mail.mail.SMTP_AUTH_METHOD", 1),
             patch("app.model.mail.mail.SMTP_SENDER_NAME", "Sender Name"),
             patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@example.com"),
-            patch("app.config.SMTP_PROVIDER", "microsoft"),
+            patch("app.config.SMTP_AUTH_PROVIDER", "microsoft"),
             patch(
                 "app.model.mail.token_provider.MicrosoftTokenProvider"
             ) as MockTokenProvider,

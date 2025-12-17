@@ -32,9 +32,9 @@ import boto3
 from app.config import (
     AWS_SES_REGION_NAME,
     SMTP_AUTH_METHOD,
+    SMTP_AUTH_PROVIDER,
     SMTP_METHOD,
     SMTP_POLICY,
-    SMTP_PROVIDER,
     SMTP_SENDER_EMAIL,
     SMTP_SENDER_NAME,
     SMTP_SENDER_PASSWORD,
@@ -127,11 +127,13 @@ class Mail:
                     smtp_client.login(self.sender_email, self.sender_password)
             elif SMTP_AUTH_METHOD == 1:  # XOAUTH2
                 # Get Access Token
-                match SMTP_PROVIDER:
+                match SMTP_AUTH_PROVIDER:
                     case "microsoft":
                         token_provider = MicrosoftTokenProvider()
                     case _:
-                        raise ValueError(f"Unknown SMTP_PROVIDER: {SMTP_PROVIDER}")
+                        raise ValueError(
+                            f"Unknown SMTP_AUTH_PROVIDER: {SMTP_AUTH_PROVIDER}"
+                        )
                 access_token = token_provider.get_access_token()
 
                 # Auth
