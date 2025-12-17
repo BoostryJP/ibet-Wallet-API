@@ -65,66 +65,6 @@ class MicrosoftTokenProvider(TokenProvider):
     _access_token: str | None = None
     _token_expiry: float = 0.0
 
-    @staticmethod
-    def _generate_client_assertion(
-        client_id: str, tenant_id: str, private_key_path: str
-    ) -> str:
-        """
-        Generate JWT Client Assertion signed with the certificate's private key.
-        """
-        try:
-            with open(private_key_path, "rb") as key_file:
-                private_key = serialization.load_pem_private_key(
-                    key_file.read(), password=None
-                )
-        except Exception as e:
-            raise ValueError(f"Failed to load private key from {private_key_path}: {e}")
-
-        if not isinstance(private_key, rsa.RSAPrivateKey):
-            raise ValueError("Private key must be an RSA key")
-
-        # JWT Claims
-        now = time.time()
-        # Header
-        header = {
-            "alg": "RS256",
-            "typ": "JWT",
-            "x5t": None,  # x5t (Thumbprint) is optional but recommended if available.
-        }
-        # Payload
-        payload = {
-            "iss": client_id,
-            "sub": client_id,
-            "aud": f"https://login.microsoftonline.com/{tenant_id}/v2.0/token",
-            "jti": str(uuid.uuid4()),
-            "nbf": int(now),
-            "exp": int(now) + 300,  # 5 minutes expiration
-        }
-
-        # NOTE: Since pyjwt is not guaranteed to be in the environment,
-        # and installing new dependencies might not be desired,
-        # we construct the JWT manually using cryptography for signing.
-        # This is compliant with RFC 7515.
-
-        def b64url_encode(data: bytes) -> str:
-            return base64.urlsafe_b64encode(data).rstrip(b"=").decode("utf-8")
-
-        # 1. Create Signing Input
-        encoded_header = b64url_encode(json.dumps(header).encode("utf-8"))
-        encoded_payload = b64url_encode(json.dumps(payload).encode("utf-8"))
-        signing_input = f"{encoded_header}.{encoded_payload}".encode("utf-8")
-
-        # 2. Sign
-        signature = private_key.sign(
-            signing_input,
-            padding.PKCS1v15(),
-            hashes.SHA256(),
-        )
-
-        # 3. Concatenate
-        encoded_signature = b64url_encode(signature)
-        return f"{encoded_header}.{encoded_payload}.{encoded_signature}"
-
     def get_access_token(self) -> str:
         # Return cached token if valid (with 60 seconds safety buffer)
         if self._access_token and time.time() < self._token_expiry - 60:
