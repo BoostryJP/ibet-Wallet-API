@@ -371,10 +371,6 @@ SMTP_MS_TENANT_ID: str | None = os.environ.get("SMTP_MS_TENANT_ID")
 SMTP_MS_CLIENT_ID: str | None = os.environ.get("SMTP_MS_CLIENT_ID")
 # - Client Secret: Microsoft Entra ID (Azure AD) Client Secret
 SMTP_MS_CLIENT_SECRET: str | None = os.environ.get("SMTP_MS_CLIENT_SECRET")
-# - Client Certificate Path: Microsoft Entra ID (Azure AD) Client Certificate Path
-SMTP_MS_CLIENT_CERT_PATH = os.environ.get(
-    "SMTP_MS_CLIENT_CERT_PATH", "data/smtp_ms_client_certificate.pem"
-)
 
 # Send settings
 ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST = (

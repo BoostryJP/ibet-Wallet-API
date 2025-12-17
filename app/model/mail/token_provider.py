@@ -20,7 +20,6 @@ SPDX-License-Identifier: Apache-2.0
 import abc
 import base64
 import json
-import os
 import time
 import uuid
 
@@ -32,7 +31,6 @@ from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
 from app.config import (
-    SMTP_MS_CLIENT_CERT_PATH,
     SMTP_MS_CLIENT_ID,
     SMTP_MS_CLIENT_SECRET,
     SMTP_MS_TENANT_ID,
@@ -135,9 +133,8 @@ class MicrosoftTokenProvider(TokenProvider):
         tenant_id = SMTP_MS_TENANT_ID
         client_id = SMTP_MS_CLIENT_ID
         client_secret = SMTP_MS_CLIENT_SECRET
-        cert_path = SMTP_MS_CLIENT_CERT_PATH
 
-        if tenant_id is None or client_id is None:
+        if tenant_id is None or client_id is None or (client_secret is None):
             raise ValueError("Missing Microsoft OAuth configuration")
 
         token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
@@ -145,33 +142,9 @@ class MicrosoftTokenProvider(TokenProvider):
         data = {
             "grant_type": "client_credentials",
             "client_id": client_id,
+            "client_secret": client_secret,
             "scope": "https://outlook.office365.com/.default",
         }
-
-        # Determine authentication method: Certificate (Client Assertion) or Secret
-        use_cert_auth = False
-        if cert_path and os.path.exists(cert_path):
-            use_cert_auth = True
-        elif not client_secret:
-            raise ValueError(
-                "Missing Microsoft OAuth configuration: Neither Client Secret nor Certificate is available."
-            )
-
-        if use_cert_auth:
-            try:
-                client_assertion = self._generate_client_assertion(
-                    client_id, tenant_id, cert_path
-                )
-                data["client_assertion_type"] = (
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-                )
-                data["client_assertion"] = client_assertion
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to generate client assertion from certificate: {e}"
-                ) from e
-        else:
-            data["client_secret"] = client_secret
 
         try:
             with requests.Session() as session:
