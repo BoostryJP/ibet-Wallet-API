@@ -40,7 +40,6 @@ class TestMicrosoftTokenProvider:
             patch("app.model.mail.token_provider.SMTP_MS_TENANT_ID", "tenant-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_ID", "client-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_SECRET", "secret-1"),
-            patch("app.model.mail.token_provider.SMTP_MS_REFRESH_TOKEN", "refresh-1"),
             patch("requests.Session.post") as mock_post,
         ):
             mock_response = MagicMock()
@@ -51,7 +50,6 @@ class TestMicrosoftTokenProvider:
                 "expires_in": 3599,
                 "ext_expires_in": 3599,
                 "access_token": "valid_access_token",
-                "refresh_token": "new_refresh_token",
             }
             mock_post.return_value = mock_response
 
@@ -62,6 +60,13 @@ class TestMicrosoftTokenProvider:
 
             # Assert
             assert token == "valid_access_token"
+
+            # Verify request data
+            mock_post.assert_called_once()
+            args, kwargs = mock_post.call_args
+            data = kwargs["data"]
+            assert data["grant_type"] == "client_credentials"
+            assert "refresh_token" not in data
 
     def test_get_access_token_missing_config(self):
         """
@@ -91,7 +96,6 @@ class TestMicrosoftTokenProvider:
             patch("app.model.mail.token_provider.SMTP_MS_TENANT_ID", "tenant-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_ID", "client-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_SECRET", "secret-1"),
-            patch("app.model.mail.token_provider.SMTP_MS_REFRESH_TOKEN", "refresh-1"),
             patch("requests.Session.post") as mock_post,
         ):
             mock_response = MagicMock()
@@ -120,7 +124,6 @@ class TestMicrosoftTokenProvider:
             patch("app.model.mail.token_provider.SMTP_MS_TENANT_ID", "tenant-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_ID", "client-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_SECRET", "secret-1"),
-            patch("app.model.mail.token_provider.SMTP_MS_REFRESH_TOKEN", "refresh-1"),
             patch("requests.Session.post") as mock_post,
         ):
             mock_response = MagicMock()
@@ -148,7 +151,6 @@ class TestMicrosoftTokenProvider:
             patch("app.model.mail.token_provider.SMTP_MS_TENANT_ID", "tenant-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_ID", "client-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_SECRET", "secret-1"),
-            patch("app.model.mail.token_provider.SMTP_MS_REFRESH_TOKEN", "refresh-1"),
             patch("requests.Session.post") as mock_post,
             patch("requests.Session.mount") as mock_mount,
         ):
@@ -213,7 +215,6 @@ class TestMicrosoftTokenProvider:
             patch("app.model.mail.token_provider.SMTP_MS_TENANT_ID", "tenant-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_ID", "client-1"),
             patch("app.model.mail.token_provider.SMTP_MS_CLIENT_SECRET", "secret-1"),
-            patch("app.model.mail.token_provider.SMTP_MS_REFRESH_TOKEN", "refresh-1"),
             patch("requests.Session.post") as mock_post,
         ):
             mock_response = MagicMock()

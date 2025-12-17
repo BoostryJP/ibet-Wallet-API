@@ -107,8 +107,8 @@ SMTP XOAUTH2 (Microsoft)
 |-----------------------|----------|-------------------------|---------|---------|
 | SMTP_MS_TENANT_ID     | True     | Microsoft Entra ID (Azure AD) Tenant ID             |         | --      |
 | SMTP_MS_CLIENT_ID     | True     | Microsoft Entra ID (Azure AD) Client ID             |         | --      |
-| SMTP_MS_CLIENT_SECRET | True     | Microsoft Entra ID (Azure AD) Client Secret         |         | --      |
-| SMTP_MS_REFRESH_TOKEN | True     | OAuth2 Refresh Token (offline_access, SMTP.Send)    |         | --      |
+| SMTP_MS_CLIENT_SECRET | True*    | Microsoft Entra ID (Azure AD) Client Secret (*Required if Client Certificate is unused) |         | --      |
+| SMTP_MS_CLIENT_CERT_PATH | False*   | Path to Client Certificate Private Key (PEM) (*Alternative to Client Secret) |         | data/smtp_ms_client_certificate.pem |
 
 Send settings
 
@@ -146,7 +146,7 @@ Send settings
 | **MICROSOFT OAUTH** | | | | |
 | `SMTP_MS_TENANT_ID` | - | Required | - | |
 | `SMTP_MS_CLIENT_ID` | - | Required | - | |
-| `SMTP_MS_CLIENT_SECRET` | - | Required | - | |
-| `SMTP_MS_REFRESH_TOKEN` | - | Required | - | |
+| `SMTP_MS_CLIENT_SECRET` | - | Required* | - | *Required if Client Certificate is unused |
+| `SMTP_MS_CLIENT_CERT_PATH` | - | Optional* | - | Default: `data/smtp_ms_client_certificate.pem` (*Alternative to Client Secret) |
 | **AMAZON SES** | | | | |
 | `AWS_SES_REGION_NAME` | - | - | Required | |
