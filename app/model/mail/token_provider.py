@@ -18,14 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import abc
-import base64
-import json
 import time
-import uuid
 
 import requests
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from pydantic import BaseModel, ValidationError
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
