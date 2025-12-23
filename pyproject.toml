@@ -43,8 +43,8 @@ dependencies = [
     "cryptography>=45.0.3",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest<9.0.0,>=8.3.2",
     "pytest-cov<6.0.0,>=5.0.0",
     "pytest-order<2.0.0,>=1.2.1",
