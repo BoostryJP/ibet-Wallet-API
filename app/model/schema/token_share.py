@@ -24,11 +24,11 @@ from pydantic import BaseModel, Field, RootModel
 
 from app.model.schema.base import (
     BasePaginationQuery,
-    EthereumAddress,
     ResultSet,
     ShareToken,
     SortOrder,
 )
+from app.model.type import EthereumAddress
 
 ############################
 # COMMON

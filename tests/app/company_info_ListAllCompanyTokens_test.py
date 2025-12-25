@@ -43,6 +43,7 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 class TestListAllCompanyTokens:
     # テスト対象API
     apiurl = "/Companies/{eth_address}/Tokens"
+    RSA_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtestPublicKeyExample\n-----END PUBLIC KEY-----"""
 
     @staticmethod
     def _bond_attribute(exchange_address, personal_info_address):

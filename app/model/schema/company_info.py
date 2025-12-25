@@ -21,11 +21,11 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field, RootModel
 
-from app.model.schema.base import EthereumAddress
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 from app.model.schema.token_share import RetrieveShareTokenResponse
+from app.model.type.company_list import EthereumAddress, Trustee
 
 
 ############################
@@ -34,6 +34,7 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 class CompanyInfo(BaseModel):
     address: EthereumAddress
     corporate_name: str
+    trustee: Trustee | None = None
     rsa_publickey: str
     homepage: str
 

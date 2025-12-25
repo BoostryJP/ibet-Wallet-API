@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-25.9-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-25.12-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -17,7 +17,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ## Dependencies
 - [python3](https://www.python.org/)
-  - Version 3.12
+  - Version 3.13
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 16
   - [MySQL](https://www.mysql.com/) - Version 8.0
@@ -145,17 +145,17 @@ This repository is version controlled using the following flow.
 ibet-Wallet-API is licensed under the Apache License, Version 2.0.
 
 ## EoL policy
-Each major version is supported for one year after release. 
-For example, v22.1 is supported until v23.1 is released. 
+Each major version is supported for one year after release.
+For example, v22.1 is supported until v23.1 is released.
 
-It fixes critical problems, including critical security problems, 
-in supported releases as needed by issuing minor revisions 
+It fixes critical problems, including critical security problems,
+in supported releases as needed by issuing minor revisions
 (for example, v22.1.1, v22.1.2, and so on).
 
 ## Contact information
 
-We are committed to open-sourcing our work to support your use cases. 
-We want to know how you use this library and what problems it helps you to solve. 
+We are committed to open-sourcing our work to support your use cases.
+We want to know how you use this library and what problems it helps you to solve.
 We have two communication channels for you to contact us:
 
 * A [public discussion group](https://github.com/BoostryJP/ibet-Wallet-API/discussions)
@@ -165,8 +165,8 @@ where we will also share our preliminary roadmap, updates, events, and more.
 [dev@boostry.co.jp](mailto:dev@boostry.co.jp)
 where you can reach out to us directly about your use cases and what more we can
 do to help and improve the library.
-  
-Please refrain from sending any sensitive or confidential information. 
+
+Please refrain from sending any sensitive or confidential information.
 If you wish to delete a message you've previously sent, please contact us.
 
 

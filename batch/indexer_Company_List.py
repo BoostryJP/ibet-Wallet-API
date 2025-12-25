@@ -23,7 +23,7 @@ import sys
 import time
 
 import requests
-from eth_utils import to_checksum_address
+from pydantic import ValidationError
 from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
@@ -39,6 +39,7 @@ from app.config import (
 )
 from app.errors import ServiceUnavailable
 from app.model.db import Company
+from app.model.type import CompanyListItem
 from batch import free_malloc, log
 
 process_name = "INDEXER-COMPANY-LIST"
@@ -57,6 +58,9 @@ class Processor:
         LOG.info("Syncing company list")
 
         # Get from COMPANY_LIST_URL
+        if COMPANY_LIST_URL is None:
+            LOG.warning("COMPANY_LIST_URL is not set")
+            return
         try:
             with requests.Session() as session:
                 adapter = HTTPAdapter(max_retries=Retry(3, allowed_methods=["GET"]))
@@ -91,34 +95,20 @@ class Processor:
 
             # Insert company list
             for i, company in enumerate(company_list_json):
-                address = company.get("address", "")
-                corporate_name = company.get("corporate_name", "")
-                rsa_publickey = company.get("rsa_publickey", "")
-                homepage = (
-                    company.get("homepage")
-                    if company.get("homepage") is not None
-                    else ""
-                )
-                if (
-                    not isinstance(address, str)
-                    or not isinstance(corporate_name, str)
-                    or not isinstance(rsa_publickey, str)
-                    or not isinstance(homepage, str)
-                ):
-                    LOG.notice(f"Invalid type: index={i}")
+                try:
+                    company_list_item = CompanyListItem.model_validate(company)  # type: ignore[arg-type]
+                except (ValidationError, ValueError):
+                    LOG.notice(f"Invalid company data: index={i} company={company}")
                     continue
-                if address and corporate_name and rsa_publickey:
-                    try:
-                        address = to_checksum_address(address)
-                    except ValueError:
-                        LOG.notice(f"Invalid address: index={i} address={address}")
-                        continue
+
+                if (
+                    company_list_item.address
+                    and company_list_item.corporate_name
+                    and company_list_item.rsa_publickey
+                ):
                     self.__sink_on_company(
                         db_session=db_session,
-                        address=to_checksum_address(address),
-                        corporate_name=corporate_name,
-                        rsa_publickey=rsa_publickey,
-                        homepage=homepage,
+                        company_list_item=company_list_item,
                     )
                 else:
                     LOG.notice(f"Missing required field: index={i}")
@@ -135,16 +125,21 @@ class Processor:
     @staticmethod
     def __sink_on_company(
         db_session: Session,
-        address: str,
-        corporate_name: str,
-        rsa_publickey: str,
-        homepage: str,
+        company_list_item: CompanyListItem,
     ):
         _company = Company()
-        _company.address = address
-        _company.corporate_name = corporate_name
-        _company.rsa_publickey = rsa_publickey
-        _company.homepage = homepage
+        _company.address = company_list_item.address
+        _company.corporate_name = company_list_item.corporate_name
+        _company.rsa_publickey = company_list_item.rsa_publickey
+        _company.homepage = company_list_item.homepage
+        if company_list_item.trustee:
+            _company.trustee_corporate_name = company_list_item.trustee.corporate_name
+            _company.trustee_corporate_number = (
+                company_list_item.trustee.corporate_number
+            )
+            _company.trustee_corporate_address = (
+                company_list_item.trustee.corporate_address
+            )
         db_session.merge(_company)
 
 

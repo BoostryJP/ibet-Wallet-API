@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-25.9-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-25.12-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -18,7 +18,7 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.12
+  - バージョン 3.13
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 16
   - [MySQL](https://www.mysql.com/) - バージョン 8.0
@@ -150,7 +150,7 @@ ibet-Wallet-API は Apache License, Version 2.0 でライセンスされてい�
 ## 連絡先
 
 私たちは、皆様のユースケースをサポートするために、オープンソースに取り組んでいます。
-私たちは、あなたがこのライブラリをどのように使用し、どのような問題の解決に役立っているかを知りたいと思います。 
+私たちは、あなたがこのライブラリをどのように使用し、どのような問題の解決に役立っているかを知りたいと思います。
 私たちは、2つのコミュニケーション用の手段を用意しています。
 
 * [public discussion group](https://github.com/BoostryJP/ibet-Wallet-API/discussions) では、ロードマップ、アップデート、イベント等を共有します。

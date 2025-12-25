@@ -25,6 +25,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import requests
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
 
 from app.model.db import TokenList
@@ -56,6 +57,7 @@ class MockResponse:
         return self.data
 
 
+@mock.patch("batch.indexer_PublicInfo_TokenList.TOKEN_LIST_URL", "https://localhost")
 @pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################
@@ -67,6 +69,7 @@ class TestProcessor:
     token_address_3 = "0xe883a6f441AD5682d37dF31D34fc012bCB07A743"
     token_address_4 = "0xe883A6F441AD5682d37dF31d34fc012BcB07a744"
     token_address_5 = "0xe883A6F441AD5682d37df31D34fc012BcB07A745"
+    issuer_address_1 = "0xe883a6f441ad5682d37df31d34fc012bcb07a746"
 
     # <Normal_1>
     # 0 record
@@ -227,6 +230,59 @@ class TestProcessor:
         assert _token_list[1].token_template == "ibetBond"
         assert _token_list[1].key_manager == ["0000000000000", "1111111111111"]
         assert _token_list[1].product_type == 1
+
+    # <Normal_issuer_address>
+    # issuer_address is stored as checksum address
+    @mock.patch("requests.Session.get")
+    async def test_normal_issuer_address(self, mock_get, processor, async_session):
+        # Prepare data
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_1
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        async_session.add(_token_list_item)
+        _token_list_item = TokenList()
+        _token_list_item.token_address = self.token_address_2
+        _token_list_item.token_template = "ibetBond"
+        _token_list_item.key_manager = ["0000000000000"]
+        _token_list_item.product_type = 1
+        async_session.add(_token_list_item)
+        await async_session.commit()
+
+        # Mock
+        mock_get.side_effect = [
+            MockResponse(
+                [
+                    {
+                        "token_address": self.token_address_4,
+                        "token_template": "ibetShare",
+                        "key_manager": ["0000000000000", "1111111111111"],
+                        "product_type": 1,
+                        "issuer_address": self.issuer_address_1,
+                    },
+                ]
+            )
+        ]
+
+        # Run target process
+        processor.process()
+
+        # Assertion
+        await async_session.rollback()
+        _token_list: Sequence[TokenList] = (
+            await async_session.scalars(
+                select(TokenList).order_by(TokenList.token_address)
+            )
+        ).all()
+        assert len(_token_list) == 1
+        assert _token_list[0].token_address == self.token_address_4  # checksum address
+        assert _token_list[0].token_template == "ibetShare"
+        assert _token_list[0].key_manager == ["0000000000000", "1111111111111"]
+        assert _token_list[0].product_type == 1
+        assert _token_list[0].issuer_address == to_checksum_address(
+            self.issuer_address_1
+        )
 
     # <Normal_4_1>
     # There are no differences from last time
@@ -593,8 +649,7 @@ class TestProcessor:
         ]
 
         # Run target process
-        with pytest.raises(Exception):
-            processor.process()
+        processor.process()
 
         # Assertion
         _token_list: Sequence[TokenList] = (
@@ -602,4 +657,4 @@ class TestProcessor:
                 select(TokenList).order_by(TokenList.token_address)
             )
         ).all()
-        assert len(_token_list) == 3
+        assert len(_token_list) == 1

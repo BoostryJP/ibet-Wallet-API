@@ -20,8 +20,16 @@ SPDX-License-Identifier: Apache-2.0
 import configparser
 import os
 from email.policy import HTTP, SMTP, SMTPUTF8
+from typing import Literal
+
+from dotenv import load_dotenv
 
 BRAND_NAME = "ibet-Wallet-API"
+
+######################################################
+# Environment Setup
+######################################################
+load_dotenv()
 
 ####################################################
 # Basic settings
@@ -350,6 +358,19 @@ SMTP_SENDER_PASSWORD = os.environ.get("SMTP_SENDER_PASSWORD")
 
 # Amazon SES
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
+
+# SMTP Auth Method (0:PASSWORD, 1:XOAUTH2)
+SMTP_AUTH_METHOD: int = int(os.environ.get("SMTP_AUTH_METHOD", 0))
+# Token Provider (microsoft fixed)
+SMTP_AUTH_PROVIDER: Literal["microsoft"] = "microsoft"
+
+# Microsoft OAuth settings
+# - Tenant ID: Microsoft Entra ID (Azure AD) Tenant ID
+SMTP_MS_TENANT_ID: str | None = os.environ.get("SMTP_MS_TENANT_ID")
+# - Client ID: Microsoft Entra ID (Azure AD) Client ID
+SMTP_MS_CLIENT_ID: str | None = os.environ.get("SMTP_MS_CLIENT_ID")
+# - Client Secret: Microsoft Entra ID (Azure AD) Client Secret
+SMTP_MS_CLIENT_SECRET: str | None = os.environ.get("SMTP_MS_CLIENT_SECRET")
 
 # Send settings
 ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST = (

@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet 
     system on ibet network
-  version: 25.9.0
+  version: 25.12.0
 paths:
   /:
     get:
@@ -6663,6 +6663,10 @@ components:
         corporate_name:
           type: string
           title: Corporate Name
+        trustee:
+          anyOf:
+            - $ref: '#/components/schemas/Trustee'
+            - type: 'null'
         rsa_publickey:
           type: string
           title: Rsa Publickey
@@ -8284,6 +8288,11 @@ components:
             type: string
           type: array
           title: Key Manager
+        issuer_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Issuer Address
         token_template:
           type: string
           const: ibetBond
@@ -8296,6 +8305,7 @@ components:
       required:
         - token_address
         - key_manager
+        - issuer_address
         - token_template
         - product_type
       title: IbetBondToken
@@ -8309,6 +8319,11 @@ components:
             type: string
           type: array
           title: Key Manager
+        issuer_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Issuer Address
         token_template:
           type: string
           const: ibetCoupon
@@ -8321,6 +8336,7 @@ components:
       required:
         - token_address
         - key_manager
+        - issuer_address
         - token_template
         - product_type
       title: IbetCouponToken
@@ -8343,6 +8359,11 @@ components:
             type: string
           type: array
           title: Key Manager
+        issuer_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Issuer Address
         token_template:
           type: string
           const: ibetMembership
@@ -8355,6 +8376,7 @@ components:
       required:
         - token_address
         - key_manager
+        - issuer_address
         - token_template
         - product_type
       title: IbetMembershipToken
@@ -8411,6 +8433,11 @@ components:
             type: string
           type: array
           title: Key Manager
+        issuer_address:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Issuer Address
         token_template:
           type: string
           const: ibetShare
@@ -8428,6 +8455,7 @@ components:
       required:
         - token_address
         - key_manager
+        - issuer_address
         - token_template
         - product_type
       title: IbetShareToken
@@ -10022,6 +10050,10 @@ components:
         corporate_name:
           type: string
           title: Corporate Name
+        trustee:
+          anyOf:
+            - $ref: '#/components/schemas/Trustee'
+            - type: 'null'
         rsa_publickey:
           type: string
           title: Rsa Publickey
@@ -11569,6 +11601,27 @@ components:
         - created
         - source_event
       title: TransferWithMessage
+    Trustee:
+      properties:
+        corporate_name:
+          type: string
+          maxLength: 30
+          minLength: 1
+          title: Corporate Name
+        corporate_number:
+          type: string
+          title: Corporate Number
+        corporate_address:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Corporate Address
+      type: object
+      required:
+        - corporate_name
+        - corporate_number
+        - corporate_address
+      title: Trustee
     TxData:
       properties:
         hash:

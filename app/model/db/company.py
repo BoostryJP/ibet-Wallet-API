@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, String, Text
+from sqlalchemy import CheckConstraint, DateTime, Index, String, Text
 from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -40,6 +40,12 @@ class Company(Base):
     rsa_publickey: Mapped[str | None] = mapped_column(String(2000))
     # Homepage URL
     homepage: Mapped[str | None] = mapped_column(Text)
+    # Trustee Corporate Name
+    trustee_corporate_name: Mapped[str | None] = mapped_column(String(30))
+    # Trustee Corporate Number
+    trustee_corporate_number: Mapped[str | None] = mapped_column(String(20))
+    # Trustee Corporate Address
+    trustee_corporate_address: Mapped[str | None] = mapped_column(String(60))
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
@@ -51,6 +57,11 @@ class Company(Base):
             DateTime, default=naive_utcnow, index=True
         )
     __table_args__ = (
+        CheckConstraint(
+            "((trustee_corporate_name IS NULL AND trustee_corporate_number IS NULL AND trustee_corporate_address IS NULL) "
+            "OR (trustee_corporate_name IS NOT NULL AND trustee_corporate_number IS NOT NULL AND trustee_corporate_address IS NOT NULL))",
+            name="ck_company_trustee_fields_complete",
+        ),
         # Covering Index
         Index(
             "ix_company_covering",
@@ -73,6 +84,13 @@ class Company(Base):
             "corporate_name": self.corporate_name,
             "rsa_publickey": self.rsa_publickey,
             "homepage": self.homepage,
+            "trustee": {
+                "corporate_name": self.trustee_corporate_name,
+                "corporate_number": self.trustee_corporate_number,
+                "corporate_address": self.trustee_corporate_address,
+            }
+            if self.trustee_corporate_name
+            else None,
         }
 
     FIELDS = {

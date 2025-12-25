@@ -24,10 +24,10 @@ from pydantic import BaseModel, Field, RootModel
 from app.model.schema.base import (
     BondToken,
     CouponToken,
-    EthereumAddress,
     MembershipToken,
     ShareToken,
 )
+from app.model.type import EthereumAddress
 
 ############################
 # COMMON

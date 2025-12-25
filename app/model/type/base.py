@@ -17,4 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-__version__ = "25.12.0"
+from typing import Annotated
+
+from pydantic import (
+    WrapValidator,
+)
+
+from app.validator import ethereum_address_validator
+
+############################
+# COMMON
+############################
+
+EthereumAddress = Annotated[str, WrapValidator(ethereum_address_validator)]

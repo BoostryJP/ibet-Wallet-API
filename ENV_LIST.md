@@ -3,9 +3,9 @@
 The list of environment variables that can be set for this system is as follows.
 
 ## Basic Settings
-| Variable Name           | Required | Details                                  | Example                                         | Default                                                   | 
+| Variable Name           | Required | Details                                  | Example                                         | Default                                                   |
 |-------------------------|----------|------------------------------------------|-------------------------------------------------|-----------------------------------------------------------|
-| APP_ENV                 | False    | Running environment                      | local / dev / live                              | local                                                     | 
+| APP_ENV                 | False    | Running environment                      | local / dev / live                              | local                                                     |
 | NETWORK                 | False    | Running network                          | IBET / IBETFIN                                  | IBET                                                      |
 | WEB3_CHAINID            | False    | Blockchain network ID                    | 1010032                                         | IBET: 1500002, IBETFIN: 1010032                           |
 | WEB3_HTTP_PROVIDER      | False    | Web3 provider                            | http://localhost:8545                           | http://localhost:8545                                     |
@@ -18,7 +18,7 @@ The list of environment variables that can be set for this system is as follows.
 | APP_LOGFILE             | False    | Output location for application logs     | /some/directory                                 | /dev/stdout (standard output)                             |
 | ACCESS_LOGFILE          | False    | Output location for access logs          | /some/directory                                 | /dev/stdout (standard output)                             |
 | TZ                      | False    | Time Zone                                | Europe/Berlin                                   | Asia/Tokyo                                                |
-| DEFAULT_CURRENCY        | False    | Default currency code                    | EUR                                             | JPY                                                       | 
+| DEFAULT_CURRENCY        | False    | Default currency code                    | EUR                                             | JPY                                                       |
 
 
 ## API Server Settings
@@ -27,9 +27,9 @@ The following parameters can be set as environment variables as startup paramete
 
 See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.html#commonly-used-arguments) for details.
 
-| Variable Name              | Required | Details                                                                  | Default | 
+| Variable Name              | Required | Details                                                                  | Default |
 |----------------------------|----------|--------------------------------------------------------------------------|---------|
-| WORKER_COUNT               | False    | The number of worker processes.                                          | 2       | 
+| WORKER_COUNT               | False    | The number of worker processes.                                          | 2       |
 | WORKER_TIMEOUT             | False    | Workers silent for more than this many seconds are killed and restarted. | 60      |
 | WORKER_MAX_REQUESTS        | False    | The maximum number of requests a worker will process before restarting.  | 0       |
 | WORKER_MAX_REQUESTS_JITTER | False    | The maximum jitter to add to the max_requests setting.                   | 0       |
@@ -38,7 +38,7 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 ## Settings for each use case
 
 ### Token
-| Variable Name                  | Required | Details                                                            | Example                                    | Default | 
+| Variable Name                  | Required | Details                                                            | Example                                    | Default |
 |--------------------------------|----------|--------------------------------------------------------------------|--------------------------------------------|---------|
 | BOND_TOKEN_ENABLED             | False    | Using ibet Bond token (security token)                             | 0 (not using) / 1 (using)                  | 0       |
 | SHARE_TOKEN_ENABLED            | False    | Using ibet Share token (security token)                            | 0 (not using) / 1 (using)                  | 0       |
@@ -52,19 +52,19 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | TOKEN_SHORT_TERM_CACHE_TTL     | False    | Token attribute data cache (Short-Term) expiration time (seconds)  | 60                                         | 40      |
 
 ### Token Escrow
-| Variable Name                               | Required | Details                                     | Example                                    | Default | 
+| Variable Name                               | Required | Details                                     | Example                                    | Default |
 |---------------------------------------------|----------|---------------------------------------------|--------------------------------------------|---------|
 | IBET_ESCROW_CONTRACT_ADDRESS                | False    | Ibet Escrow contract address                | 0x0000000000000000000000000000000000000000 | --      |
 | IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS | False    | Ibet Security Token Escrow contract address | 0x0000000000000000000000000000000000000000 | --      |
 
 ### Token DVP
 
-| Variable Name                               | Required | Details                                     | Example                                    | Default | 
+| Variable Name                               | Required | Details                                     | Example                                    | Default |
 |---------------------------------------------|----------|---------------------------------------------|--------------------------------------------|---------|
 | IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS    | False    | Ibet Security Token DVP contract address    | 0x0000000000000000000000000000000000000000 | --      |
 
 ### On-chain Exchange (Only for utility tokens)
-| Variable Name                               | Required | Details                                                                  | Example                                    | Default | 
+| Variable Name                               | Required | Details                                                                  | Example                                    | Default |
 |---------------------------------------------|----------|--------------------------------------------------------------------------|--------------------------------------------|---------|
 | PAYMENT_GATEWAY_CONTRACT_ADDRESS            | False    | PaymentGateway contract address                                          | 0x0000000000000000000000000000000000000000 | --      |
 | IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS   | False    | IbetExchange contract address for Membership tokens                      | 0x0000000000000000000000000000000000000000 | --      |
@@ -72,22 +72,23 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | EXCHANGE_NOTIFICATION_ENABLED               | True*    | Use of exchange-related notification (*Set only if you use IbetExchange) | 0 (not using) / 1 (using)                  | --      |
 
 ### Blockchain Explorer
-| Variable Name       | Required | Details                                             | Example                   | Default | 
+| Variable Name       | Required | Details                                             | Example                   | Default |
 |---------------------|----------|-----------------------------------------------------|---------------------------|---------|
 | BC_EXPLORER_ENABLED | False    | Parameter for starting the Blockchain Explorer      | 0 (not using) / 1 (using) | 0       |
 
 ### Email
 Common
 
-| Variable Name                   | Required | Details                                    | Example                         | Default | 
+| Variable Name                   | Required | Details                                    | Example                         | Default |
 |---------------------------------|----------|--------------------------------------------|---------------------------------|---------|
 | SMTP_METHOD                     | False    | Email sending method                       | 0:SMTP server, 1:Amazon SES     | 0       |
+| SMTP_AUTH_METHOD                | False    | Authentication method                      | 0:PASSWORD, 1:XOAUTH2           | 0       |
 | SMTP_SENDER_NAME                | False    | Sender name                                |                                 | --      |
 | SMTP_SENDER_EMAIL               | False    | Sender email address                       | example@example.com             | --      |
 
 SMTP server
 
-| Variable Name                 | Required | Details                                   | Example                         | Default | 
+| Variable Name                 | Required | Details                                   | Example                         | Default |
 |-------------------------------|----------|-------------------------------------------|---------------------------------|---------|
 | SMTP_SERVER_HOST              | False    | SMTP server name                          | smtp.office365.com              | --      |
 | SMTP_SERVER_PORT              | False    | SMTP server port                          | 587                             | --      |
@@ -96,13 +97,21 @@ SMTP server
 
 Amazon SES
 
-| Variable Name       | Required | Details         | Example   | Default | 
+| Variable Name       | Required | Details         | Example   | Default |
 |---------------------|----------|-----------------|-----------|---------|
 | AWS_SES_REGION_NAME | False    | AWS region name | us-east-1 | --      |
 
+SMTP XOAUTH2 (Microsoft)
+
+| Variable Name         | Required | Details                 | Example | Default |
+|-----------------------|----------|-------------------------|---------|---------|
+| SMTP_MS_TENANT_ID     | True     | Microsoft Entra ID (Azure AD) Tenant ID             |         | --      |
+| SMTP_MS_CLIENT_ID     | True     | Microsoft Entra ID (Azure AD) Client ID             |         | --      |
+| SMTP_MS_CLIENT_SECRET | True*    | Microsoft Entra ID (Azure AD) Client Secret (*Required if Client Certificate is unused) |         | --      |
+
 Send settings
 
-| Variable Name                              | Required | Details                                                                         | Example                       | Default | 
+| Variable Name                              | Required | Details                                                                         | Example                       | Default |
 |--------------------------------------------|----------|---------------------------------------------------------------------------------|-------------------------------|---------|
 | ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST      | False    | Domains allowed to send email. Not set if all domains are allowed.              | example.com,example.net       | --      |
 | DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX | False    | Regular expression for destination email addresses that are not allowed to send | ^[a-zA-Z0-9_.+-]+@example.com | --      |
@@ -111,6 +120,31 @@ Send settings
 
 
 ### Chat Webhook
-| Variable Name     | Required | Details          | Example                                                                        | Default | 
+| Variable Name     | Required | Details          | Example                                                                        | Default |
 |-------------------|----------|------------------|--------------------------------------------------------------------------------|---------|
 | CHAT_WEBHOOK_URL  | False    | Chat webhook url | https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  | --      |
+
+
+## Appendix
+
+### Email Configuration Matrix
+
+| Variable / Pattern | SMTP Password | SMTP XOAUTH2 | Amazon SES | Details |
+| :--- | :---: | :---: | :---: | :--- |
+| **BASE SETTINGS** | | | | |
+| `SMTP_METHOD` | `0` | `0` | `1` | 0:SMTP, 1:SES |
+| `SMTP_SENDER_EMAIL` | Required | Required | Required | Sender definition |
+| `SMTP_SENDER_NAME` | Optional | Optional | Optional | Sender display name |
+| **SMTP AUTH** | | | | |
+| `SMTP_AUTH_METHOD` | `0` | `1` | - | 0:Password, 1:XOAUTH2 |
+| **SMTP SERVER** | | | | |
+| `SMTP_SERVER_HOST` | Required | Required | - | e.g. smtp.office365.com |
+| `SMTP_SERVER_PORT` | Required | Required | - | e.g. 587 |
+| `SMTP_SERVER_ENCRYPTION_METHOD`| Optional | Optional | - | 0:STARTTLS (Default), 1:SSL, 2:None |
+| `SMTP_SENDER_PASSWORD` | Required | - | - | For SMTP Auth |
+| **MICROSOFT OAUTH** | | | | |
+| `SMTP_MS_TENANT_ID` | - | Required | - | |
+| `SMTP_MS_CLIENT_ID` | - | Required | - | |
+| `SMTP_MS_CLIENT_SECRET` | - | Required | - | |
+| **AMAZON SES** | | | | |
+| `AWS_SES_REGION_NAME` | - | - | Required | |
