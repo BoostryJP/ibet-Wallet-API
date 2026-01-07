@@ -58,6 +58,7 @@ dev = [
     "pytest-aiohttp<2.0.0,>=1.0.5",
     "ruamel-yaml<1.0.0,>=0.18.6",
     "pytest-memray<2.0.0,>=1.6.0",
+    "pyright>=1.1.407",
 ]
 
 [project.optional-dependencies]
