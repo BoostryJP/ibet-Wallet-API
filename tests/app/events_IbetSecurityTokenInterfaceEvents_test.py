@@ -49,6 +49,7 @@ from tests.contract_modules import (
     register_share_list,
     transfer_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -66,7 +67,7 @@ class TestEventsIbetSecurityTokenInterface:
     apiurl = "/Events/IbetSecurityTokenInterface/{token_address}"
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session) -> None:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -80,8 +81,11 @@ class TestEventsIbetSecurityTokenInterface:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -125,8 +129,11 @@ class TestEventsIbetSecurityTokenInterface:
 
     @staticmethod
     def issue_token_share(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テスト株式",
@@ -161,7 +168,7 @@ class TestEventsIbetSecurityTokenInterface:
     #   - ApproveTransfer
     # - Lock
     # - Unlock
-    def setup_data(self, session: Session, shared_contract):
+    def setup_data(self, session: Session, shared_contract: SharedContract):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -276,7 +283,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_1_1
     # No event
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -295,7 +304,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_1_2
     # event = All
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -445,7 +456,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Normal_1_3
     # event = All(argument_filter: lockAddress)
     # - Events that do not have lockAddress in the event argument will not be returned.
-    def test_normal_1_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -496,7 +509,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_2_1
     # event = Transfer
-    def test_normal_2_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -550,7 +565,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_2_2
     # event = Transfer(argument_filter: from)
-    def test_normal_2_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -585,7 +602,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_2_3
     # event = Transfer(argument_filter: from)
-    def test_normal_2_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -632,7 +651,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_1
     # event = Issue
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -680,7 +701,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_2
     # event = Issue(argument_filter: from)
-    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -731,7 +754,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_3
     # event = Issue(argument_filter: targetAddress)
-    def test_normal_3_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -769,7 +794,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_4
     # event = Issue(argument_filter: lockAddress)
-    def test_normal_3_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -818,7 +845,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_1
     # event = Redeem
-    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -866,7 +895,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_2
     # event = Redeem(argument_filter: from)
-    def test_normal_4_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -917,7 +948,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_3
     # event = Redeem(argument_filter: targetAddress)
-    def test_normal_4_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -955,7 +988,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_4
     # event = Redeem(argument_filter: lockAddress)
-    def test_normal_4_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1004,7 +1039,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_5_1
     # event = Lock
-    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1039,7 +1076,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_5_2
     # event = Lock(argument_filter: accountAddress)
-    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1063,7 +1102,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_5_3
     # event = Lock(argument_filter: lockAddress)
-    def test_normal_5_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1101,7 +1142,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_6_1
     # event = Unlock
-    def test_normal_6_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1137,7 +1180,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_6_2
     # event = Unlock(argument_filter: accountAddress)
-    def test_normal_6_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1161,7 +1206,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_6_3
     # event = Unlock(argument_filter: lockAddress)
-    def test_normal_6_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1205,7 +1252,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_1
     # InvalidParameterError
     # - null value not allowed
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1237,7 +1286,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_2
     # InvalidParameterError
     # - from_block, to_block: min value
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1272,7 +1323,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_3
     # InvalidParameterError
     # - Invalid event
-    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1307,7 +1360,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_4
     # InvalidParameterError
     # - to_block must be greater than or equal to the from_block
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1342,7 +1397,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_5
     # RequestBlockRangeLimitExceededError
     # - block range must be less than or equal to 10000
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 

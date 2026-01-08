@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -27,10 +28,18 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
+from tests.types import SharedContract
 from tests.utils import IbetShareUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+
+
+def _get_block_timestamp(block_number: int) -> int:
+    block = web3.eth.get_block(block_number)
+    timestamp = block.get("timestamp")
+    assert timestamp is not None
+    return timestamp
 
 
 class TestEventsIbetSecurityTokenDVP:
@@ -43,7 +52,9 @@ class TestEventsIbetSecurityTokenDVP:
 
     # Normal_1
     # No event
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
         latest_block_number = web3.eth.block_number
@@ -64,7 +75,9 @@ class TestEventsIbetSecurityTokenDVP:
 
     # Normal_2
     # event = Deposited
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]["account_address"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
@@ -92,7 +105,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract.address, 1000
         ).transact({"from": issuer})
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # Request target API
         resp = client.get(
@@ -124,7 +137,11 @@ class TestEventsIbetSecurityTokenDVP:
         ],
     )
     def test_normal_3(
-        self, enable_filter, client: TestClient, session: Session, shared_contract
+        self,
+        enable_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         issuer = eth_account["issuer"]["account_address"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
@@ -159,10 +176,10 @@ class TestEventsIbetSecurityTokenDVP:
         ).transact({"from": issuer})  # Withdrawn
 
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # request target API
-        params = {
+        params: dict[str, Any] = {
             "from_block": latest_block_number,
             "to_block": latest_block_number,
         }
@@ -197,7 +214,11 @@ class TestEventsIbetSecurityTokenDVP:
         ],
     )
     def test_normal_4(
-        self, enable_filter, client: TestClient, session: Session, shared_contract
+        self,
+        enable_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
@@ -239,11 +260,11 @@ class TestEventsIbetSecurityTokenDVP:
         ).transact({"from": issuer})  # DeliveryCreated
 
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
         latest_delivery_id = dvp_contract.functions.latestDeliveryId().call()
 
         # Request target API
-        params = {
+        params: dict[str, Any] = {
             "from_block": latest_block_number,
             "to_block": latest_block_number,
         }
@@ -286,7 +307,11 @@ class TestEventsIbetSecurityTokenDVP:
         ],
     )
     def test_normal_5(
-        self, enable_filter, client: TestClient, session: Session, shared_contract
+        self,
+        enable_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
@@ -333,11 +358,11 @@ class TestEventsIbetSecurityTokenDVP:
         ).transact({"from": issuer})  # DeliveryCreated
 
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
         latest_delivery_id = dvp_contract.functions.latestDeliveryId().call()
 
         # Request target API
-        params = {
+        params: dict[str, Any] = {
             "from_block": latest_block_number,
             "to_block": latest_block_number,
         }
@@ -379,7 +404,11 @@ class TestEventsIbetSecurityTokenDVP:
         ],
     )
     def test_normal_6(
-        self, enable_filter, client: TestClient, session: Session, shared_contract
+        self,
+        enable_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
@@ -426,11 +455,11 @@ class TestEventsIbetSecurityTokenDVP:
         ).transact({"from": user1})  # DeliveryConfirmed
 
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
         latest_delivery_id = dvp_contract.functions.latestDeliveryId().call()
 
         # request target API
-        params = {
+        params: dict[str, Any] = {
             "from_block": latest_block_number,
             "to_block": latest_block_number,
         }
@@ -472,7 +501,11 @@ class TestEventsIbetSecurityTokenDVP:
         ],
     )
     def test_normal_7(
-        self, enable_filter, client: TestClient, session: Session, shared_contract
+        self,
+        enable_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
@@ -524,11 +557,11 @@ class TestEventsIbetSecurityTokenDVP:
         ).transact({"from": agent})  # DeliveryFinished
 
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
         latest_delivery_id = dvp_contract.functions.latestDeliveryId().call()
 
         # request target API
-        params = {
+        params: dict[str, Any] = {
             "from_block": latest_block_number,
             "to_block": latest_block_number,
         }
@@ -570,7 +603,11 @@ class TestEventsIbetSecurityTokenDVP:
         ],
     )
     def test_normal_8(
-        self, enable_filter, client: TestClient, session: Session, shared_contract
+        self,
+        enable_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
@@ -622,11 +659,11 @@ class TestEventsIbetSecurityTokenDVP:
         ).transact({"from": agent})  # DeliveryFinished
 
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
         latest_delivery_id = dvp_contract.functions.latestDeliveryId().call()
 
         # request target API
-        params = {
+        params: dict[str, Any] = {
             "from_block": latest_block_number,
             "to_block": latest_block_number,
         }
@@ -662,7 +699,9 @@ class TestEventsIbetSecurityTokenDVP:
     # event = Deposited
     # query with filter argument {"token": token_contract.address, "account": issuer}
     # results 1 record.
-    def test_normal_9_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_9_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]["account_address"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
@@ -690,7 +729,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract.address, 1000
         ).transact({"from": issuer})
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # Request target API
         resp = client.get(
@@ -723,7 +762,9 @@ class TestEventsIbetSecurityTokenDVP:
     # event = Deposited
     # query with filter argument {"token": "0x00..0", "account": "0x00..0"}
     # results no record.
-    def test_normal_9_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_9_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]["account_address"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
@@ -751,7 +792,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract.address, 1000
         ).transact({"from": issuer})
         latest_block_number = web3.eth.block_number
-        _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        _latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # Request target API
         resp = client.get(
@@ -776,7 +817,9 @@ class TestEventsIbetSecurityTokenDVP:
 
     # Normal_10_1
     # event = ALL
-    def test_normal_10_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_10_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -807,7 +850,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract.address, 1000
         ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+        block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create delivery
         tx_hash_2 = dvp_contract.functions.createDelivery(
@@ -818,7 +861,7 @@ class TestEventsIbetSecurityTokenDVP:
             "test_data",
         ).transact({"from": issuer})  # DeliveryCreated
         block_number_2 = web3.eth.block_number
-        block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
+        block_timestamp_2 = _get_block_timestamp(block_number_2)
 
         latest_delivery_id = dvp_contract.functions.latestDeliveryId().call()
 
@@ -862,7 +905,9 @@ class TestEventsIbetSecurityTokenDVP:
     # event = ALL
     # query with filter argument {"token": token_contract.address, "account": issuer}
     # - Events other than "Deposited" are not returned because the arguments do not match.
-    def test_normal_10_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_10_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -893,7 +938,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract.address, 1000
         ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+        block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create delivery
         dvp_contract.functions.createDelivery(
@@ -938,7 +983,9 @@ class TestEventsIbetSecurityTokenDVP:
     # Error_1
     # InvalidParameterError
     # null value not allowed
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
 
@@ -969,7 +1016,9 @@ class TestEventsIbetSecurityTokenDVP:
     # Error_2
     # InvalidParameterError
     # from_block, to_block: min value
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
 
@@ -1002,7 +1051,9 @@ class TestEventsIbetSecurityTokenDVP:
     # Error_3
     # InvalidParameterError
     # event: un-allowed value
-    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
         latest_block_number = web3.eth.block_number
@@ -1044,7 +1095,9 @@ class TestEventsIbetSecurityTokenDVP:
     # Error_4
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
         latest_block_number = web3.eth.block_number
@@ -1083,7 +1136,9 @@ class TestEventsIbetSecurityTokenDVP:
     # Error_5
     # RequestBlockRangeLimitExceededError
     # block range must be less than or equal to 10000
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract.address
         latest_block_number = web3.eth.block_number

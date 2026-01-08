@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -39,7 +40,7 @@ class TestAdminTokenPOST:
     }
 
     @staticmethod
-    def insert_listing_data(session: Session, _token):
+    def insert_listing_data(session: Session, _token: dict[str, Any]):
         token = Listing()
         token.token_address = _token["token_address"]
         token.is_public = _token["is_public"]
@@ -49,7 +50,7 @@ class TestAdminTokenPOST:
         session.add(token)
 
     @staticmethod
-    def insert_executable_contract_data(session: Session, _contract):
+    def insert_executable_contract_data(session: Session, _contract: dict[str, Any]):
         contract = ExecutableContract()
         contract.contract_address = _contract["contract_address"]
         session.add(contract)
@@ -83,6 +84,7 @@ class TestAdminTokenPOST:
             .where(Listing.token_address == token["token_address"])
             .limit(1)
         ).first()
+        assert listing is not None
         assert listing.token_address == token["token_address"]
         assert listing.is_public == request_params["is_public"]
         assert listing.max_holding_quantity == request_params["max_holding_quantity"]

@@ -17,10 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 from unittest.mock import MagicMock
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -48,6 +49,7 @@ from tests.contract_modules import (
     untransferable_coupon_token,
     untransferable_share_token,
 )
+from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -63,7 +65,9 @@ class TestTokenTokenStatus:
     apiurl_base = "/Token/{contract_address}/Status"
 
     @staticmethod
-    def bond_token_attribute(exchange_address, personal_info_address):
+    def bond_token_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -100,7 +104,9 @@ class TestTokenTokenStatus:
         return attribute
 
     @staticmethod
-    def share_token_attribute(exchange_address, personal_info_address):
+    def share_token_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
@@ -121,7 +127,7 @@ class TestTokenTokenStatus:
         return attribute
 
     @staticmethod
-    def membership_token_attribute(exchange_address):
+    def membership_token_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -138,7 +144,7 @@ class TestTokenTokenStatus:
         return attribute
 
     @staticmethod
-    def coupon_token_attribute(exchange_address):
+    def coupon_token_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -155,7 +161,7 @@ class TestTokenTokenStatus:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
+    def tokenlist_contract() -> DeployedContract:
         deployer = eth_account["deployer"]
         web3.eth.default_account = deployer["account_address"]
         contract_address, abi = Contract.deploy_contract(
@@ -165,7 +171,7 @@ class TestTokenTokenStatus:
         return {"address": contract_address, "abi": abi}
 
     @staticmethod
-    def list_token(session, token):
+    def list_token(session: Session, token: DeployedContract) -> None:
         listed_token = Listing()
         listed_token.token_address = token["address"]
         listed_token.is_public = True
@@ -179,7 +185,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系1＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -221,7 +229,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系2＞
     #   債券：データ有り（トークン無効化済み）
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -266,7 +276,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系3＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -311,7 +323,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系4＞
     #   株式：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -353,7 +367,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系5＞
     #   株式：データ有り（トークン無効化済み）
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -398,7 +414,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系6＞
     #   株式：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -443,7 +461,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系7＞
     #   会員権：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -482,7 +502,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系8＞
     #   会員権：データ有り（トークン無効化済み）
-    def test_normal_8(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_8(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -524,7 +546,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系9＞
     #   会員権：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_9(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_9(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -566,7 +590,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系10＞
     #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_10(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_10(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -605,7 +631,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系11＞
     #   クーポン：データ有り（トークン無効化済み）
-    def test_normal_11(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_11(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -647,7 +675,9 @@ class TestTokenTokenStatus:
 
     # ＜正常系12＞
     #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_12(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_12(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 
@@ -718,7 +748,9 @@ class TestTokenTokenStatus:
     # <Error_2>
     # Contract not exists
     # -> 404
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         share_exchange = shared_contract["IbetShareExchange"]
 
         # 取扱トークンデータ挿入
@@ -740,7 +772,9 @@ class TestTokenTokenStatus:
 
     # <Error_3>
     # ServiceUnavailable
-    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuer = eth_account["issuer"]
 

@@ -32,6 +32,7 @@ from tests.contract_modules import (
     membership_register_list,
     membership_transfer_to_exchange,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -49,7 +50,11 @@ class TestPositionMembershipContractAddress:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract, token_list_contract):
+    def create_balance_data(
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テスト会員権",
@@ -81,8 +86,11 @@ class TestPositionMembershipContractAddress:
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
     def create_commitment_data(
-        account, exchange_contract, token_list_contract, commitment
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        commitment: int,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionMembershipContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -104,8 +112,11 @@ class TestPositionMembershipContractAddress:
     # balance = 0
     @staticmethod
     def create_non_balance_data(
-        account, to_account, exchange_contract, token_list_contract
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionMembershipContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -119,7 +130,7 @@ class TestPositionMembershipContractAddress:
         return token
 
     @staticmethod
-    def list_token(token_address, session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -133,7 +144,9 @@ class TestPositionMembershipContractAddress:
 
     # <Normal_1>
     # balance: 1000000
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -248,7 +261,9 @@ class TestPositionMembershipContractAddress:
 
     # <Normal_2>
     # balance: 999900, exchange_balance: 100
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -363,7 +378,9 @@ class TestPositionMembershipContractAddress:
 
     # <Normal_3>
     # balance: 0, exchange_balance: 1000000
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -588,7 +605,9 @@ class TestPositionMembershipContractAddress:
 
     # <Error_5>
     # DataNotExistsError: not position
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]

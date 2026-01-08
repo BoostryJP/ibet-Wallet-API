@@ -40,6 +40,7 @@ from tests.contract_modules import (
     register_bond_list,
     transfer_bond_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils import PersonalInfoUtils
 from tests.utils.contract import Contract
 
@@ -59,8 +60,11 @@ class TestPositionStraightBond:
     # balance = 1000000
     @staticmethod
     def create_balance_data(
-        account, exchange_contract, personal_info_contract, token_list_contract
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         issuer_address = TestPositionStraightBond.issuer["account_address"]
 
         # Issue token
@@ -119,12 +123,12 @@ class TestPositionStraightBond:
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
     def create_commitment_data(
-        account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-        commitment,
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        commitment: int,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionStraightBond.create_balance_data(
             account, exchange_contract, personal_info_contract, token_list_contract
@@ -146,12 +150,12 @@ class TestPositionStraightBond:
     # balance = 0
     @staticmethod
     def create_non_balance_data(
-        account,
-        to_account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         issuer_address = TestPositionStraightBond.issuer["account_address"]
 
         # Issue token
@@ -286,7 +290,7 @@ class TestPositionStraightBond:
         session.commit()
 
     @staticmethod
-    def list_token(token_address, session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -300,7 +304,9 @@ class TestPositionStraightBond:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -443,7 +449,9 @@ class TestPositionStraightBond:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -576,7 +584,9 @@ class TestPositionStraightBond:
 
     # <Normal_3>
     # token details
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -672,7 +682,9 @@ class TestPositionStraightBond:
     # <Normal_4>
     # List all positions
     # Indexed: <Normal_1>
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -945,7 +957,9 @@ class TestPositionStraightBond:
     # <Normal_5>
     # Pagination
     # Indexed: <Normal_2>
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -1208,7 +1222,9 @@ class TestPositionStraightBond:
     # <Normal_6>
     # token details
     # Indexed: <Normal_3>
-    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -1311,7 +1327,9 @@ class TestPositionStraightBond:
 
     # <Normal_7>
     # locked amount
-    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]

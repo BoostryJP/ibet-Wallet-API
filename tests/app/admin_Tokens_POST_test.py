@@ -18,8 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
+from typing import Any
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,6 +31,7 @@ from app import config
 from app.model.db import ExecutableContract, IDXBondToken, IDXPosition, Listing
 from tests.account_config import eth_account
 from tests.contract_modules import issue_bond_token, register_bond_list
+from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -41,7 +43,9 @@ class TestAdminTokensPOST:
     apiurl = "/Admin/Tokens"
 
     @staticmethod
-    def bond_token_attribute(exchange_address, personal_info_address):
+    def bond_token_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -78,17 +82,18 @@ class TestAdminTokensPOST:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
+    def tokenlist_contract() -> DeployedContract:
         deployer = eth_account["deployer"]
         web3.eth.default_account = deployer["account_address"]
         contract_address, abi = Contract.deploy_contract(
             "TokenList", [], deployer["account_address"]
         )
 
-        return {"address": contract_address, "abi": abi}
+        contract_address_str = str(contract_address)
+        return {"address": contract_address_str, "abi": abi}
 
     @staticmethod
-    def insert_listing_data(session, _token):
+    def insert_listing_data(session: Session, _token: dict[str, Any]):
         token = Listing()
         token.token_address = _token["token_address"]
         token.is_public = _token["is_public"]
@@ -98,7 +103,7 @@ class TestAdminTokensPOST:
         session.add(token)
 
     @staticmethod
-    def insert_executable_contract_data(session, _contract):
+    def insert_executable_contract_data(session: Session, _contract: dict[str, Any]):
         contract = ExecutableContract()
         contract.contract_address = _contract["contract_address"]
         session.add(contract)
@@ -109,7 +114,9 @@ class TestAdminTokensPOST:
 
     # <Normal_1_1>
     # Normal request
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data
@@ -188,38 +195,44 @@ class TestAdminTokensPOST:
             }
         }
 
-        listing: Listing = session.scalars(
+        listing = session.scalars(
             select(Listing)
             .where(Listing.token_address == req_params["contract_address"])
             .limit(1)
         ).first()
+        assert listing is not None
         assert listing.token_address == req_params["contract_address"]
         assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity == req_params["max_holding_quantity"]
         assert listing.max_sell_amount == req_params["max_sell_amount"]
         assert listing.owner_address == issuer["account_address"]
 
-        executable_contract: ExecutableContract = session.scalars(
+        executable_contract = session.scalars(
             select(ExecutableContract)
             .where(
                 ExecutableContract.contract_address == req_params["contract_address"]
             )
             .limit(1)
         ).first()
+        assert executable_contract is not None
         assert executable_contract.contract_address == req_params["contract_address"]
 
-        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
+        bond = session.scalars(select(IDXBondToken).limit(1)).first()
+        assert bond is not None
         assert bond.token_address == req_params["contract_address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
+        position = session.scalars(select(IDXPosition).limit(1)).first()
+        assert position is not None
         assert position.token_address == req_params["contract_address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
     # <Normal_1_2>
     # No settings for optional items
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data
@@ -296,29 +309,34 @@ class TestAdminTokensPOST:
             }
         }
 
-        listing: Listing = session.scalars(
+        listing = session.scalars(
             select(Listing)
             .where(Listing.token_address == bond_token["address"])
             .limit(1)
         ).first()
+        assert listing is not None
         assert listing.token_address == bond_token["address"]
         assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
+        bond = session.scalars(select(IDXBondToken).limit(1)).first()
+        assert bond is not None
         assert bond.token_address == bond_token["address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
+        position = session.scalars(select(IDXPosition).limit(1)).first()
+        assert position is not None
         assert position.token_address == bond_token["address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
     # <Normal_2>
     # If balance data already exists, it will be overwritten.
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data
@@ -402,29 +420,34 @@ class TestAdminTokensPOST:
             }
         }
 
-        listing: Listing = session.scalars(
+        listing = session.scalars(
             select(Listing)
             .where(Listing.token_address == bond_token["address"])
             .limit(1)
         ).first()
+        assert listing is not None
         assert listing.token_address == bond_token["address"]
         assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond: IDXBondToken = session.scalars(select(IDXBondToken).limit(1)).first()
+        bond = session.scalars(select(IDXBondToken).limit(1)).first()
+        assert bond is not None
         assert bond.token_address == bond_token["address"]
         assert bond.owner_address == issuer["account_address"]
 
-        position: IDXPosition = session.scalars(select(IDXPosition).limit(1)).first()
+        position = session.scalars(select(IDXPosition).limit(1)).first()
+        assert position is not None
         assert position.token_address == bond_token["address"]
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
     # <Normal_3>
     # skip_conflict_error = True
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data
@@ -650,7 +673,9 @@ class TestAdminTokensPOST:
 
     # <Error_2_1>
     # DataConflictError (listing)
-    def test_error_2_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data
@@ -696,7 +721,9 @@ class TestAdminTokensPOST:
 
     # <Error_2_2>
     # DataConflictError (executable_contract)
-    def test_error_2_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data
@@ -739,7 +766,9 @@ class TestAdminTokensPOST:
 
     # <Error_3>
     # Token is not available
-    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Bond token is disabled
@@ -778,7 +807,9 @@ class TestAdminTokensPOST:
 
     # <Error_4>
     # The specified `contract_address` is not registered in the TokenList.
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Prepare data

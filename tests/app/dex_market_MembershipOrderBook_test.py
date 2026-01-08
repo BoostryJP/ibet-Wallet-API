@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import sys
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -31,10 +31,6 @@ from tests.account_config import eth_account
 class TestDEXMarketMembershipOrderBook:
     # テスト対象API
     apiurl = "/DEX/Market/OrderBook/Membership"
-
-    def setup_method(self):
-        # 環境変数設定
-        config.AGENT_ADDRESS = eth_account["agent"]["account_address"]
 
     ###########################################################################
     # Normal

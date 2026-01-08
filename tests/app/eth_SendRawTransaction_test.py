@@ -18,32 +18,51 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import logging
+from typing import Any
 from unittest import mock
 from unittest.mock import ANY, MagicMock
 
 import pytest
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.exceptions import TimeExhausted, Web3RPCError
 from web3.middleware import ExtraDataToPOAMiddleware
+from web3.types import Nonce, TxParams, Wei
 
 from app import config, log
 from app.api.routers import eth
 from app.model.db import ExecutableContract, Listing, Node
 from tests.account_config import eth_account
 from tests.contract_modules import coupon_register_list, issue_coupon_token
+from tests.types import DeployedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
+def _get_abi(token: DeployedContract) -> Any:
+    assert "abi" in token
+    return token["abi"]
+
+
+def _tx_params(from_address: str) -> TxParams:
+    return {"from": from_address, "gas": 6000000, "gasPrice": Wei(0)}
+
+
+def _as_tx_dict(params: TxParams) -> dict[str, Any]:
+    return dict(params)
+
+
 def insert_node_data(
-    session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0
-):
+    session: Session,
+    is_synced: bool,
+    endpoint_uri: str = config.WEB3_HTTP_PROVIDER,
+    priority: int = 0,
+) -> None:
     node = Node()
     node.is_synced = is_synced
     node.endpoint_uri = endpoint_uri
@@ -52,7 +71,7 @@ def insert_node_data(
     session.commit()
 
 
-def tokenlist_contract():
+def tokenlist_contract() -> DeployedContract:
     issuer = eth_account["issuer"]
     web3.eth.default_account = issuer["account_address"]
     contract_address, abi = Contract.deploy_contract(
@@ -62,7 +81,7 @@ def tokenlist_contract():
     return {"address": contract_address, "abi": abi}
 
 
-def listing_token(session, token):
+def listing_token(session: Session, token: DeployedContract) -> None:
     listing = Listing()
     listing.token_address = token["address"]
     listing.is_public = True
@@ -71,7 +90,7 @@ def listing_token(session, token):
     session.add(listing)
 
 
-def executable_contract_token(session, contract):
+def executable_contract_token(session: Session, contract: DeployedContract) -> None:
     executable_contract = ExecutableContract()
     executable_contract.contract_address = contract["address"]
     session.add(executable_contract)
@@ -154,7 +173,7 @@ class TestEthSendRawTransaction:
 
             token_contract_1 = web3.eth.contract(
                 address=to_checksum_address(coupontoken_1["address"]),
-                abi=coupontoken_1["abi"],
+                abi=_get_abi(coupontoken_1),
             )
 
             local_account_1 = web3.eth.account.create()
@@ -163,29 +182,25 @@ class TestEthSendRawTransaction:
             pre_tx = token_contract_1.functions.transfer(
                 to_checksum_address(local_account_1.address), 10
             ).build_transaction(
-                {
-                    "from": to_checksum_address(issuer["account_address"]),
-                    "gas": 6000000,
-                    "gasPrice": 0,
-                }
+                _tx_params(to_checksum_address(issuer["account_address"]))
             )
             web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
-                {
-                    "from": to_checksum_address(local_account_1.address),
-                    "gas": 6000000,
-                    "gasPrice": 0,
-                }
+                _tx_params(to_checksum_address(local_account_1.address))
             )
-            tx["nonce"] = web3.eth.get_transaction_count(
-                to_checksum_address(local_account_1.address)
+            tx["nonce"] = Nonce(
+                web3.eth.get_transaction_count(
+                    to_checksum_address(local_account_1.address)
+                )
             )
-            signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+            signed_tx_1 = web3.eth.account.sign_transaction(
+                _as_tx_dict(tx), local_account_1.key
+            )
 
             session.commit()
 
-            request_params = {
+            request_params: dict[str, Any] = {
                 "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
             }
             headers = {"Content-Type": "application/json"}
@@ -247,7 +262,7 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
@@ -255,30 +270,22 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         token_contract_2 = web3.eth.contract(
             address=to_checksum_address(coupontoken_2["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_2 = web3.eth.account.create()
@@ -286,30 +293,22 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_2.functions.transfer(
             to_checksum_address(local_account_2.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_2.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_2.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_2.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_2.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_2.address))
         )
-        signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.key)
+        signed_tx_2 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_2.key
+        )
 
         session.commit()
 
-        request_params = {
+        request_params: dict[str, Any] = {
             "raw_tx_hex_list": [
                 signed_tx_1.raw_transaction.to_0x_hex(),
                 signed_tx_2.raw_transaction.to_0x_hex(),
@@ -357,7 +356,7 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
@@ -365,30 +364,24 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
@@ -473,7 +466,7 @@ class TestEthSendRawTransaction:
 
             token_contract_1 = web3.eth.contract(
                 address=to_checksum_address(coupontoken_1["address"]),
-                abi=coupontoken_1["abi"],
+                abi=_get_abi(coupontoken_1),
             )
 
             local_account_1 = web3.eth.account.create()
@@ -482,29 +475,25 @@ class TestEthSendRawTransaction:
             pre_tx = token_contract_1.functions.transfer(
                 to_checksum_address(local_account_1.address), 10
             ).build_transaction(
-                {
-                    "from": to_checksum_address(issuer["account_address"]),
-                    "gas": 6000000,
-                    "gasPrice": 0,
-                }
+                _tx_params(to_checksum_address(issuer["account_address"]))
             )
             web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
-                {
-                    "from": to_checksum_address(local_account_1.address),
-                    "gas": 6000000,
-                    "gasPrice": 0,
-                }
+                _tx_params(to_checksum_address(local_account_1.address))
             )
-            tx["nonce"] = web3.eth.get_transaction_count(
-                to_checksum_address(local_account_1.address)
+            tx["nonce"] = Nonce(
+                web3.eth.get_transaction_count(
+                    to_checksum_address(local_account_1.address)
+                )
             )
-            signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+            signed_tx_1 = web3.eth.account.sign_transaction(
+                _as_tx_dict(tx), local_account_1.key
+            )
 
             session.commit()
 
-            request_params = {
+            request_params: dict[str, Any] = {
                 "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
             }
             headers = {"Content-Type": "application/json"}
@@ -581,7 +570,7 @@ class TestEthSendRawTransaction:
 
             token_contract_1 = web3.eth.contract(
                 address=to_checksum_address(coupontoken_1["address"]),
-                abi=coupontoken_1["abi"],
+                abi=_get_abi(coupontoken_1),
             )
 
             local_account_1 = web3.eth.account.create()
@@ -590,29 +579,25 @@ class TestEthSendRawTransaction:
             pre_tx = token_contract_1.functions.transfer(
                 to_checksum_address(local_account_1.address), 10
             ).build_transaction(
-                {
-                    "from": to_checksum_address(issuer["account_address"]),
-                    "gas": 6000000,
-                    "gasPrice": 0,
-                }
+                _tx_params(to_checksum_address(issuer["account_address"]))
             )
             web3.eth.send_transaction(pre_tx)
 
             tx = token_contract_1.functions.consume(10).build_transaction(
-                {
-                    "from": to_checksum_address(local_account_1.address),
-                    "gas": 6000000,
-                    "gasPrice": 0,
-                }
+                _tx_params(to_checksum_address(local_account_1.address))
             )
-            tx["nonce"] = web3.eth.get_transaction_count(
-                to_checksum_address(local_account_1.address)
+            tx["nonce"] = Nonce(
+                web3.eth.get_transaction_count(
+                    to_checksum_address(local_account_1.address)
+                )
             )
-            signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+            signed_tx_1 = web3.eth.account.sign_transaction(
+                _as_tx_dict(tx), local_account_1.key
+            )
 
             session.commit()
 
-            request_params = {
+            request_params: dict[str, Any] = {
                 "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
             }
             headers = {"Content-Type": "application/json"}
@@ -665,9 +650,9 @@ class TestEthSendRawTransaction:
     # -> 400 InvalidParameterError
     def test_error_2(self, client: TestClient, session: Session):
         raw_tx_1 = "some_raw_tx_1"
-        request_params = {"raw_tx_hex_list": raw_tx_1}
+        request_params: dict[str, Any] = {"raw_tx_hex_list": raw_tx_1}
 
-        headers = {}
+        headers: dict[str, str] = {}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
@@ -689,7 +674,7 @@ class TestEthSendRawTransaction:
     # -> 400 InvalidParameterError
     def test_error_3_1(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        request_params = {"raw_tx_hex_list": []}
+        request_params: dict[str, Any] = {"raw_tx_hex_list": []}
 
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -713,7 +698,7 @@ class TestEthSendRawTransaction:
     # No inputs
     # -> 400 InvalidParameterError
     def test_error_3_2(self, client: TestClient, session: Session):
-        request_params = {}
+        request_params: dict[str, Any] = {}
 
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -737,7 +722,7 @@ class TestEthSendRawTransaction:
     # -> 400 InvalidParameterError
     def test_error_4(self, client: TestClient, session: Session):
         raw_tx_1 = "some_raw_tx_1"
-        request_params = {"raw_tx_hex_list": raw_tx_1}
+        request_params: dict[str, Any] = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -762,7 +747,7 @@ class TestEthSendRawTransaction:
     def test_error_5(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         raw_tx_1 = 1234
-        request_params = {"raw_tx_hex_list": [raw_tx_1]}
+        request_params: dict[str, Any] = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -788,7 +773,7 @@ class TestEthSendRawTransaction:
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
 
         raw_tx_1 = "some_raw_tx_1"
-        request_params = {"raw_tx_hex_list": [raw_tx_1]}
+        request_params: dict[str, Any] = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {"Content-Type": "application/json"}
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -830,7 +815,7 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
@@ -838,28 +823,22 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
         with mock.patch(
             "app.utils.web3_utils.AsyncFailOverHTTPProvider.fail_over_mode", True
@@ -910,36 +889,32 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         # ステータス無効化
         pre_tx = token_contract_1.functions.setStatus(False).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(issuer["account_address"]))
         )
         web3.eth.send_transaction(pre_tx)
 
         local_account_1 = web3.eth.account.create()
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -981,24 +956,24 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         resp = client.post(self.apiurl, headers=headers, json=request_params)
@@ -1038,27 +1013,27 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         with mock.patch(
@@ -1111,27 +1086,27 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         with mock.patch(
@@ -1195,27 +1170,27 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         with mock.patch(
@@ -1276,27 +1251,27 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         with mock.patch.object(eth.async_web3.eth, "get_transaction", ConnectionError):
@@ -1339,7 +1314,7 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
@@ -1347,30 +1322,24 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         # waitForTransactionReceiptエラー
@@ -1421,7 +1390,7 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
@@ -1429,26 +1398,18 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         # waitForTransactionReceiptエラー
         mock.patch.object(
@@ -1460,7 +1421,9 @@ class TestEthSendRawTransaction:
             web3.eth.account, "recover_transaction", MagicMock(side_effect=Exception())
         )
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト
@@ -1512,7 +1475,7 @@ class TestEthSendRawTransaction:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
 
         local_account_1 = web3.eth.account.create()
@@ -1520,30 +1483,24 @@ class TestEthSendRawTransaction:
         # テスト用のトランザクション実行前の事前準備
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address), 10
-        ).build_transaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
-        )
+        ).build_transaction(_tx_params(to_checksum_address(issuer["account_address"])))
         web3.eth.send_transaction(pre_tx)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(local_account_1.address))
         )
-        tx["nonce"] = web3.eth.get_transaction_count(
-            to_checksum_address(local_account_1.address)
+        tx["nonce"] = Nonce(
+            web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         )
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
+        signed_tx_1 = web3.eth.account.sign_transaction(
+            _as_tx_dict(tx), local_account_1.key
+        )
 
         session.commit()
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]}
+        request_params: dict[str, Any] = {
+            "raw_tx_hex_list": [signed_tx_1.raw_transaction.to_0x_hex()]
+        }
         headers = {"Content-Type": "application/json"}
 
         # タイムアウト

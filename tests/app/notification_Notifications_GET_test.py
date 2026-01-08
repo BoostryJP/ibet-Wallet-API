@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -33,7 +34,7 @@ class TestNotificationsGet:
 
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         n = Notification()
         n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"
@@ -141,7 +142,7 @@ class TestNotificationsGet:
         # Request target API
         resp = client.get(self.apiurl)
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
@@ -258,7 +259,7 @@ class TestNotificationsGet:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": 1, "limit": 2, "total": 5},
             "notifications": [
                 {
@@ -320,7 +321,7 @@ class TestNotificationsGet:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": 5, "limit": None, "total": 5},
             "notifications": [],
         }
@@ -348,7 +349,7 @@ class TestNotificationsGet:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 1, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {
@@ -394,7 +395,7 @@ class TestNotificationsGet:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 0, "offset": None, "limit": None, "total": 5},
             "notifications": [],
         }
@@ -420,7 +421,7 @@ class TestNotificationsGet:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "notifications": [
                 {

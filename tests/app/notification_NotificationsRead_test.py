@@ -40,7 +40,7 @@ class TestNotificationsRead:
 
     address_3 = "0x6813Eb9362372EEF6200f3b1dbC3f819671cBA69"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         self.session = session  # HACK: updateでcommitされてしまう対策
 
         n = Notification()

@@ -32,6 +32,7 @@ from tests.contract_modules import (
     membership_register_list,
     membership_transfer_to_exchange,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -49,7 +50,11 @@ class TestPositionMembership:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract, token_list_contract):
+    def create_balance_data(
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テスト会員権",
@@ -81,8 +86,11 @@ class TestPositionMembership:
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
     def create_commitment_data(
-        account, exchange_contract, token_list_contract, commitment
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        commitment: int,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionMembership.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -104,8 +112,11 @@ class TestPositionMembership:
     # balance = 0
     @staticmethod
     def create_non_balance_data(
-        account, to_account, exchange_contract, token_list_contract
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionMembership.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -184,7 +195,7 @@ class TestPositionMembership:
         session.commit()
 
     @staticmethod
-    def list_token(token_address, session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -198,7 +209,9 @@ class TestPositionMembership:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -312,7 +325,9 @@ class TestPositionMembership:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -420,7 +435,9 @@ class TestPositionMembership:
 
     # <Normal_3>
     # token details
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -491,7 +508,9 @@ class TestPositionMembership:
     # <Normal_4>
     # List all positions
     # Indexed: <Normal_1>
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -685,7 +704,9 @@ class TestPositionMembership:
     # <Normal_5>
     # Pagination
     # Indexed: <Normal_2>
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetMembershipExchange"]
@@ -872,7 +893,9 @@ class TestPositionMembership:
 
     # <Normal_6>
     # token details
-    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]

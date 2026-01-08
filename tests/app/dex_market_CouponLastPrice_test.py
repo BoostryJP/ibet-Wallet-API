@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -30,6 +32,7 @@ from tests.contract_modules import (
     issue_coupon_token,
     take_buy,
 )
+from tests.types import DeployedContract, SharedContract
 
 
 class TestDEXMarketCouponLastPrice:
@@ -38,7 +41,7 @@ class TestDEXMarketCouponLastPrice:
 
     # 約定イベントの作成
     @staticmethod
-    def generate_agree_event(exchange):
+    def generate_agree_event(exchange: DeployedContract) -> DeployedContract:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -84,10 +87,10 @@ class TestDEXMarketCouponLastPrice:
         )
 
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        request_params = {"address_list": [token_address]}
+        request_params: dict[str, list[str]] = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": "0xe883a6f441ad5682d37df31d34fc012bcb07a740",
                 "last_price": 0,
@@ -100,17 +103,19 @@ class TestDEXMarketCouponLastPrice:
 
     # 正常系2：約定が発生していないトークンアドレスを指定した場合
     #  -> 現在値：0円
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         exchange = shared_contract["IbetCouponExchange"]
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange["address"]
 
-        request_params = {"address_list": [token_address]}
+        request_params: dict[str, list[str]] = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": "0xe883a6f441ad5682d37df31d34fc012bcb07a740",
                 "last_price": 0,
@@ -123,7 +128,9 @@ class TestDEXMarketCouponLastPrice:
 
     # 正常系3：1000円で約定
     #  -> 現在値1000円が返却される
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         exchange = shared_contract["IbetCouponExchange"]
         token = TestDEXMarketCouponLastPrice.generate_agree_event(exchange)
         token_address = token["address"]
@@ -131,10 +138,12 @@ class TestDEXMarketCouponLastPrice:
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange["address"]
 
-        request_params = {"address_list": [token_address]}
+        request_params: dict[str, list[str]] = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [{"token_address": token_address, "last_price": 1000}]
+        assumed_body: list[dict[str, Any]] = [
+            {"token_address": token_address, "last_price": 1000}
+        ]
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

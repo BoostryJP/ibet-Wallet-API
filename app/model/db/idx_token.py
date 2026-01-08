@@ -131,7 +131,7 @@ class IDXBondToken(TokenBase):
     # Interest Rate
     interest_rate: Mapped[float | None] = mapped_column(Float)
     # Interest Payment Date(JSON)
-    interest_payment_date: Mapped[dict | None] = mapped_column(JSON)
+    interest_payment_date: Mapped[list[str] | None] = mapped_column(JSON)
     # Interest Payment Currency
     interest_payment_currency: Mapped[str] = mapped_column(String(3), nullable=False)
     # Redemption Date
@@ -297,7 +297,7 @@ class IDXMembershipToken(TokenBase):
     # NOTE: Short-term cache required
     initial_offering_status: Mapped[bool | None] = mapped_column(Boolean)
     # Image URL(JSON)
-    image_url: Mapped[dict | None] = mapped_column(JSON)
+    image_url: Mapped[list[dict[str, int | str]] | None] = mapped_column(JSON)
 
     FIELDS = {
         "details": str,
@@ -344,7 +344,7 @@ class IDXCouponToken(TokenBase):
     # NOTE: Short-term cache required
     initial_offering_status: Mapped[bool | None] = mapped_column(Boolean)
     # Image URL(JSON)
-    image_url: Mapped[dict | None] = mapped_column(JSON)
+    image_url: Mapped[list[dict[str, int | str]] | None] = mapped_column(JSON)
 
     FIELDS = {
         "details": str,

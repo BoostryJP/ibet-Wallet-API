@@ -34,7 +34,7 @@ class TestNotificationsIdPOST:
 
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         self.session = session  # HACK: updateでcommitされてしまう対策
 
         n = Notification()
@@ -161,11 +161,12 @@ class TestNotificationsIdPOST:
         assert resp.status_code == 200
         assert resp.json()["data"] == assumed_body
 
-        n: Notification = session.scalars(
+        n = session.scalars(
             select(Notification)
             .where(Notification.notification_id == notification_id)
             .limit(1)
         ).first()
+        assert n is not None
         assert n.is_flagged == True
 
     # <Normal_2>
@@ -203,11 +204,12 @@ class TestNotificationsIdPOST:
         assert resp.status_code == 200
         assert resp.json()["data"] == assumed_body
 
-        n: Notification = session.scalars(
+        n = session.scalars(
             select(Notification)
             .where(Notification.notification_id == notification_id)
             .limit(1)
         ).first()
+        assert n is not None
         assert n.is_flagged == False
         assert n.is_read == True
 
@@ -229,11 +231,12 @@ class TestNotificationsIdPOST:
         # Assertion
         assert resp.status_code == 200
 
-        n: Notification = session.scalars(
+        n = session.scalars(
             select(Notification)
             .where(Notification.notification_id == notification_id)
             .limit(1)
         ).first()
+        assert n is not None
         assert n.is_read == False
         assert n.is_flagged == True
         assert n.is_deleted == True
@@ -264,11 +267,12 @@ class TestNotificationsIdPOST:
         # Assertion
         assert resp.status_code == 200
 
-        n: Notification = session.scalars(
+        n = session.scalars(
             select(Notification)
             .where(Notification.notification_id == notification_id)
             .limit(1)
         ).first()
+        assert n is not None
         assert n.is_read == False
         assert n.is_flagged == True
         assert n.is_deleted == False

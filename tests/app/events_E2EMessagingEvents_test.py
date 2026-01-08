@@ -27,10 +27,18 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
+from tests.types import SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+
+
+def _get_block_timestamp(block_number: int) -> int:
+    block = web3.eth.get_block(block_number)
+    timestamp = block.get("timestamp")
+    assert timestamp is not None
+    return timestamp
 
 
 class TestEventsE2EMessaging:
@@ -43,7 +51,9 @@ class TestEventsE2EMessaging:
 
     # Normal_1
     # No event
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -66,7 +76,9 @@ class TestEventsE2EMessaging:
 
     # Normal_2_1
     # event = PublicKeyUpdated
-    def test_normal_2_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -79,7 +91,7 @@ class TestEventsE2EMessaging:
             "test_key", "test_key_type"
         ).transact({"from": user1})
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # request target API
         resp = client.get(
@@ -107,7 +119,9 @@ class TestEventsE2EMessaging:
 
     # Normal_2_2
     # event = Message
-    def test_normal_2_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -121,7 +135,7 @@ class TestEventsE2EMessaging:
             user2, "test_message"
         ).transact({"from": user1})
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # request target API
         resp = client.get(
@@ -154,7 +168,9 @@ class TestEventsE2EMessaging:
 
     # Normal_2_3
     # event = None
-    def test_normal_2_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -167,7 +183,7 @@ class TestEventsE2EMessaging:
             "test_key", "test_key_type"
         ).transact({"from": user1})
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
         # request target API
         resp = client.get(
@@ -191,7 +207,9 @@ class TestEventsE2EMessaging:
 
     # Normal_3_1
     # Multiple events
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -209,8 +227,8 @@ class TestEventsE2EMessaging:
             user2, "test_message"
         ).transact({"from": user1})
         latest_block_number = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(latest_block_number - 1)["timestamp"]
-        block_timestamp_2 = web3.eth.get_block(latest_block_number)["timestamp"]
+        block_timestamp_1 = _get_block_timestamp(latest_block_number - 1)
+        block_timestamp_2 = _get_block_timestamp(latest_block_number)
 
         # request target API
         resp = client.get(
@@ -258,7 +276,9 @@ class TestEventsE2EMessaging:
     # event = PublicKeyUpdated
     # query with filter argument {"who": user1}
     # results 1 record.
-    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -271,7 +291,7 @@ class TestEventsE2EMessaging:
             "test_key", "test_key_type"
         ).transact({"from": user1})
         latest_block_number = web3.eth.block_number
-        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        latest_block_timestamp = _get_block_timestamp(latest_block_number)
         # request target API
         resp = client.get(
             self.apiurl,
@@ -301,7 +321,9 @@ class TestEventsE2EMessaging:
     # event = PublicKeyUpdated
     # query with filter argument {"who": "0x0000000000000000000000000000000000000000"}
     # results no record.
-    def test_normal_4_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -314,7 +336,7 @@ class TestEventsE2EMessaging:
             "test_key", "test_key_type"
         ).transact({"from": user1})
         latest_block_number = web3.eth.block_number
-        _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
+        _latest_block_timestamp = _get_block_timestamp(latest_block_number)
         # request target API
         resp = client.get(
             self.apiurl,
@@ -335,7 +357,9 @@ class TestEventsE2EMessaging:
 
     # Normal_5_1
     # event = ALL
-    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -350,13 +374,13 @@ class TestEventsE2EMessaging:
             user2, "test_message"
         ).transact({"from": user1})  # Message
         block_number_1 = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+        block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         tx_2 = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
         ).transact({"from": user1})  # PublicKeyUpdated
         block_number_2 = web3.eth.block_number
-        block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
+        block_timestamp_2 = _get_block_timestamp(block_number_2)
 
         # request target API
         resp = client.get(
@@ -398,7 +422,9 @@ class TestEventsE2EMessaging:
     # event = ALL
     # query with filter argument {"who": user1}
     # - Events other than "PublicKeyUpdated" are not returned because the arguments do not match.
-    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -413,13 +439,13 @@ class TestEventsE2EMessaging:
             {"from": user1}
         )  # Message
         block_number_1 = web3.eth.block_number
-        web3.eth.get_block(block_number_1)["timestamp"]
+        _get_block_timestamp(block_number_1)
 
         tx_2 = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
         ).transact({"from": user1})  # PublicKeyUpdated
         block_number_2 = web3.eth.block_number
-        block_timestamp_2 = web3.eth.get_block(block_number_2)["timestamp"]
+        block_timestamp_2 = _get_block_timestamp(block_number_2)
 
         # request target API
         resp = client.get(
@@ -452,7 +478,9 @@ class TestEventsE2EMessaging:
     # Error_1
     # InvalidParameterError
     # null value not allowed
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -483,7 +511,9 @@ class TestEventsE2EMessaging:
     # Error_2
     # InvalidParameterError
     # from_block, to_block: min value
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -516,7 +546,9 @@ class TestEventsE2EMessaging:
     # Error_3_1
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number
@@ -550,7 +582,9 @@ class TestEventsE2EMessaging:
     # Error_3_2
     # InvalidParameterError
     # event: unallowed value in filter argument
-    def test_error_3_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number
@@ -577,7 +611,9 @@ class TestEventsE2EMessaging:
     # Error_4
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number
@@ -613,7 +649,9 @@ class TestEventsE2EMessaging:
     # Error_5
     # RequestBlockRangeLimitExceededError
     # block range must be less than or equal to 10000
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number

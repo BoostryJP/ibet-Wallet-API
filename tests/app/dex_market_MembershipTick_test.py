@@ -17,6 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import datetime
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -28,7 +31,7 @@ class TestDEXMarketMembershipTick:
     # テスト対象API
     apiurl = "/DEX/Market/Tick/Membership"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         self.session = session
 
         # Order Record
@@ -66,8 +69,8 @@ class TestDEXMarketMembershipTick:
         a.seller_address = "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb"
         a.amount = 3
         a.status = 1
-        a.settlement_timestamp = "2019-11-13 16:23:14.183706"
-        a.created = "2019-11-13 16:26:14.183706"
+        a.settlement_timestamp = datetime(2019, 11, 13, 16, 23, 14, 183706)
+        a.created = datetime(2019, 11, 13, 16, 26, 14, 183706)
         session.add(a)
 
         a = Agreement()
@@ -79,8 +82,8 @@ class TestDEXMarketMembershipTick:
         a.seller_address = "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb"
         a.amount = 3
         a.status = 1
-        a.settlement_timestamp = "2019-11-13 16:24:14.183706"
-        a.created = "2019-11-13 16:26:14.183706"
+        a.settlement_timestamp = datetime(2019, 11, 13, 16, 24, 14, 183706)
+        a.created = datetime(2019, 11, 13, 16, 26, 14, 183706)
         session.add(a)
 
         # Order Record (other exchange)
@@ -112,7 +115,9 @@ class TestDEXMarketMembershipTick:
         request_params = {"address_list": [token_address]}
         resp = client.get(self.apiurl, params=request_params)
 
-        assumed_body = [{"token_address": token_address, "tick": []}]
+        assumed_body: list[dict[str, Any]] = [
+            {"token_address": token_address, "tick": []}
+        ]
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

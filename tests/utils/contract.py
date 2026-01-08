@@ -18,10 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from typing import Type, TypeVar
+from typing import Any, Type, TypeVar
 
-from eth_utils import to_checksum_address
-from web3 import Web3, contract
+from eth_utils.address import to_checksum_address
+from web3 import Web3
 from web3.contract import Contract as Web3Contract
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 from web3.middleware import ExtraDataToPOAMiddleware
@@ -33,11 +33,11 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class Contract:
-    cache = {}  # コントラクト情報のキャッシュ
+    cache: dict[str, dict[str, Any]] = {}  # コントラクト情報のキャッシュ
     factory_map: dict[str, Type[Web3Contract]] = {}
 
     @classmethod
-    def get_contract(cls, contract_name: str, address: str):
+    def get_contract(cls, contract_name: str, address: str) -> Web3Contract:
         """
         コントラクト取得
 
@@ -54,14 +54,18 @@ class Contract:
 
         contract_factory = cls.factory_map.get(contract_name)
         if contract_factory is not None:
-            return contract_factory(address=to_checksum_address(address))
+            checksum_address = to_checksum_address(address)
+            return contract_factory(address=checksum_address)
 
         contract_factory = web3.eth.contract(abi=contract_json["abi"])
         cls.factory_map[contract_name] = contract_factory
-        return contract_factory(address=to_checksum_address(address))
+        checksum_address = to_checksum_address(address)
+        return contract_factory(address=checksum_address)
 
     @staticmethod
-    def deploy_contract(contract_name: str, args: list, deployer: str):
+    def deploy_contract(
+        contract_name: str, args: list[Any], deployer: str
+    ) -> tuple[str, Any]:
         """
         コントラクトデプロイ
 
@@ -89,10 +93,9 @@ class Contract:
         tx = web3.eth.wait_for_transaction_receipt(tx_hash)
 
         contract_address = ""
-        if tx is not None:
-            # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-            if "contractAddress" in tx.keys():
-                contract_address = tx["contractAddress"]
+        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
+        if "contractAddress" in tx and tx["contractAddress"] is not None:
+            contract_address = tx["contractAddress"]
 
         return contract_address, contract_json["abi"]
 
@@ -100,8 +103,11 @@ class Contract:
 
     @staticmethod
     def call_function(
-        contract: contract, function_name: str, args: tuple, default_returns: T = None
-    ) -> T:
+        contract: Web3Contract,
+        function_name: str,
+        args: tuple[Any, ...],
+        default_returns: T | None = None,
+    ) -> T | None:
         """Call contract function
 
         :param contract: Contract

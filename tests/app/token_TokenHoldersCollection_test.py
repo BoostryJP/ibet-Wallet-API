@@ -43,17 +43,17 @@ from tests.contract_modules import (
     register_personalinfo,
     transfer_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract: SharedContract) -> type[Processor]:
     return Processor
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
-    processor = test_module()
-    return processor
+def processor(test_module: type[Processor], session: Session) -> Processor:
+    return test_module()
 
 
 class TestTokenTokenHoldersCollection:
@@ -75,8 +75,11 @@ class TestTokenTokenHoldersCollection:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -119,7 +122,7 @@ class TestTokenTokenHoldersCollection:
         return token
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session) -> None:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -141,7 +144,7 @@ class TestTokenTokenHoldersCollection:
     def test_normal_1(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -173,13 +176,13 @@ class TestTokenTokenHoldersCollection:
             self.trader["account_address"],
             30000,
         )
-        block_number = web3.eth.block_number
+        current_block_number = web3.eth.block_number
         list_id = str(uuid.uuid4())
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=token["address"])
 
-        request_params = {"block_number": block_number, "list_id": list_id}
+        request_params = {"block_number": current_block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
         resp = client.post(apiurl, headers=headers, json=request_params)
 
@@ -220,7 +223,7 @@ class TestTokenTokenHoldersCollection:
     def test_normal_2(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -249,12 +252,15 @@ class TestTokenTokenHoldersCollection:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         for i, address in enumerate([token1["address"], token2["address"]]):
-            block_number = web3.eth.block_number
+            current_block_number = web3.eth.block_number
             list_id = str(uuid.uuid4())
             # Request target API
             apiurl = self.apiurl_base.format(contract_address=address)
 
-            request_params = {"block_number": block_number - i, "list_id": list_id}
+            request_params = {
+                "block_number": current_block_number - i,
+                "list_id": list_id,
+            }
             headers = {"Content-Type": "application/json"}
             resp = client.post(apiurl, headers=headers, json=request_params)
 
@@ -270,7 +276,7 @@ class TestTokenTokenHoldersCollection:
     def test_normal_3(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -289,7 +295,7 @@ class TestTokenTokenHoldersCollection:
         self.listing_token(token["address"], session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        block_number = web3.eth.block_number
+        current_block_number = web3.eth.block_number
         list_id1 = str(uuid.uuid4())
         list_id2 = str(uuid.uuid4())
 
@@ -297,7 +303,7 @@ class TestTokenTokenHoldersCollection:
             # Request target API
             apiurl = self.apiurl_base.format(contract_address=token["address"])
 
-            request_params = {"block_number": block_number, "list_id": list_id}
+            request_params = {"block_number": current_block_number, "list_id": list_id}
             headers = {"Content-Type": "application/json"}
             resp = client.post(apiurl, headers=headers, json=request_params)
 

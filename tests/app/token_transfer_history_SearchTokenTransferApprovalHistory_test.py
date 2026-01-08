@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import time
 from datetime import datetime, timedelta, timezone
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -47,14 +48,14 @@ class TestSearchTokenTransferApprovalHistory:
     to_address = "0x6431d02363FC69fFD9F69CAa4E05E96d4e79f3da"
 
     @staticmethod
-    def insert_listing(session, listing: dict):
+    def insert_listing(session: Session, listing: dict[str, Any]):
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
         session.add(_listing)
 
     @staticmethod
-    def insert_transfer_approval(session, transfer_approval: dict):
+    def insert_transfer_approval(session: Session, transfer_approval: dict[str, Any]):
         _transfer_approval = IDXTransferApproval()
         _transfer_approval.token_address = transfer_approval["token_address"]
         _transfer_approval.exchange_address = transfer_approval.get("exchange_address")
@@ -103,7 +104,7 @@ class TestSearchTokenTransferApprovalHistory:
         )
 
         # assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 0, "offset": None, "limit": None, "total": 0},
             "transfer_approval_history": [],
         }

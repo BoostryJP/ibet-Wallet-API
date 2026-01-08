@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import config
+from tests.types import SharedContract
 
 
 class TestContractABI:
@@ -30,7 +31,7 @@ class TestContractABI:
     # ＜正常系1＞
     #   普通債券ABI取得
     def test_straightbondabi_normal(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         config.BOND_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + "/StraightBond"
@@ -43,7 +44,7 @@ class TestContractABI:
     # ＜正常系2＞
     #   株式ABI取得
     def test_shareabi_normal(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         config.SHARE_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + "/Share"
@@ -56,7 +57,7 @@ class TestContractABI:
     # ＜正常系3＞
     #   会員権ABI取得
     def test_membershipabi_normal(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + "/Membership"
@@ -69,7 +70,7 @@ class TestContractABI:
     # ＜正常系4＞
     #   クーポンABI取得
     def test_couponabi_normal(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         config.COUPON_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + "/Coupon"
@@ -81,7 +82,9 @@ class TestContractABI:
 
     # ＜異常系1＞
     #   存在しないABI
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         apiurl = self.apiurl_base + "/Unknown"
         resp = client.get(apiurl, params={})
 
@@ -89,7 +92,9 @@ class TestContractABI:
 
     # ＜異常系2＞
     #   普通債券ABI ENABLED=false
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + "/StraightBond"
         resp = client.get(apiurl, params={})
@@ -103,7 +108,9 @@ class TestContractABI:
 
     # ＜異常系3＞
     #   株式ABI ENABLED=false
-    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + "/Share"
         resp = client.get(apiurl, params={})
@@ -117,7 +124,9 @@ class TestContractABI:
 
     # ＜異常系4＞
     #   会員権ABI ENABLED=false
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.MEMBERSHIP_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + "/Membership"
         resp = client.get(apiurl, params={})
@@ -131,7 +140,9 @@ class TestContractABI:
 
     # ＜異常系5＞
     #   クーポンABI ENABLED=false
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + "/Coupon"
         resp = client.get(apiurl, params={})

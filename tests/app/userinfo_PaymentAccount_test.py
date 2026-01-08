@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app import config
 from tests.account_config import eth_account
 from tests.contract_modules import register_payment_gateway
+from tests.types import SharedContract
 
 
 class TestUserInfoPaymentAccount:
@@ -32,7 +33,7 @@ class TestUserInfoPaymentAccount:
     # ＜正常系1＞
     # 通常参照（登録 -> 認可済）
     def test_paymentaccount_normal_1(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         # テスト用アカウント
         trader = eth_account["trader"]
@@ -67,7 +68,7 @@ class TestUserInfoPaymentAccount:
     # ＜正常系2＞
     # 通常参照（登録なし）
     def test_paymentaccount_normal_2(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         # テスト用アカウント（traderは任意のアドレス）
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"

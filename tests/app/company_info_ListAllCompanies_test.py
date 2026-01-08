@@ -17,9 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -45,6 +46,7 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -94,7 +96,7 @@ class TestListAllCompanies:
         address: str,
         homepage: str = "https://www.aaaa.com/jp/",
         trustee: dict[str, str] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         return {
             "address": address,
             "corporate_name": "株式会社DEMO",
@@ -104,7 +106,9 @@ class TestListAllCompanies:
         }
 
     @staticmethod
-    def _bond_attribute(exchange_address, personal_info_address):
+    def _bond_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -141,7 +145,9 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def _share_attribute(exchange_address, personal_info_address):
+    def _share_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
@@ -162,7 +168,7 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def _membership_attribute(exchange_address):
+    def _membership_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -179,7 +185,7 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def _coupon_attribute(exchange_address):
+    def _coupon_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -196,7 +202,7 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
+    def tokenlist_contract() -> DeployedContract:
         deployer = eth_account["deployer"]
         web3.eth.default_account = deployer["account_address"]
         contract_address, abi = Contract.deploy_contract(
@@ -205,7 +211,9 @@ class TestListAllCompanies:
         return {"address": contract_address, "abi": abi}
 
     @staticmethod
-    def list_token(session, token, is_public: bool = True):
+    def list_token(
+        session: Session, token: DeployedContract, is_public: bool = True
+    ) -> None:
         listed_token = Listing()
         listed_token.token_address = token["address"]
         listed_token.is_public = is_public
@@ -214,7 +222,7 @@ class TestListAllCompanies:
         session.add(listed_token)
 
     @staticmethod
-    def store_bond_index_data(session, token_address: str, owner_address: str):
+    def store_bond_index_data(session: Session, token_address: str, owner_address: str):
         idx = IDXBondToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
@@ -225,21 +233,27 @@ class TestListAllCompanies:
         session.add(idx)
 
     @staticmethod
-    def store_share_index_data(session, token_address: str, owner_address: str):
+    def store_share_index_data(
+        session: Session, token_address: str, owner_address: str
+    ):
         idx = IDXShareToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
         session.add(idx)
 
     @staticmethod
-    def store_coupon_index_data(session, token_address: str, owner_address: str):
+    def store_coupon_index_data(
+        session: Session, token_address: str, owner_address: str
+    ):
         idx = IDXCouponToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
         session.add(idx)
 
     @staticmethod
-    def store_membership_index_data(session, token_address: str, owner_address: str):
+    def store_membership_index_data(
+        session: Session, token_address: str, owner_address: str
+    ):
         idx = IDXMembershipToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
@@ -253,7 +267,11 @@ class TestListAllCompanies:
     # 登録済みのトークンアドレスに紐づく会社情報が返却される(ローカルJSON)
     # indexerバッチデータ利用無し
     def test_normal_1_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント
         issuerList = [
@@ -296,7 +314,9 @@ class TestListAllCompanies:
     # indexerバッチデータ利用無し
     @mock.patch("app.config.APP_ENV", "dev")
     @mock.patch("app.config.COMPANY_LIST_LOCAL_MODE", False)
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
         issuerList = [eth_account["issuer"], eth_account["deployer"]]
 
@@ -354,7 +374,7 @@ class TestListAllCompanies:
     @mock.patch("app.config.APP_ENV", "dev")
     @mock.patch("app.config.COMPANY_LIST_LOCAL_MODE", False)
     def test_normal_1_3_company_with_trustee(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
 
@@ -399,7 +419,11 @@ class TestListAllCompanies:
     # <Normal_2>
     # listing対象とcompanylistが突合されず0件リターン
     def test_normal_2(
-        self, client: TestClient, shared_contract, mocked_company_list, session: Session
+        self,
+        client: TestClient,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
+        session: Session,
     ):
         # テスト用アカウント
         issuerList = [eth_account["issuer"], eth_account["deployer"]]
@@ -429,7 +453,11 @@ class TestListAllCompanies:
     # include_private_listing=true
     # indexerバッチデータ利用無し
     def test_normal_3_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
@@ -488,7 +516,11 @@ class TestListAllCompanies:
     # include_private_listing=false
     # indexerバッチデータ利用無し
     def test_normal_3_2(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
@@ -544,7 +576,11 @@ class TestListAllCompanies:
     # 債権トークン
     # indexerバッチデータ利用有り
     def test_normal_4_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
@@ -614,7 +650,11 @@ class TestListAllCompanies:
     # 株式トークン
     # indexerバッチデータ利用有り
     def test_normal_4_2(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
@@ -684,7 +724,11 @@ class TestListAllCompanies:
     # 会員権トークン
     # indexerバッチデータ利用有り
     def test_normal_4_3(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
@@ -750,7 +794,11 @@ class TestListAllCompanies:
     # クーポントークン
     # indexerバッチデータ利用有り
     def test_normal_4_4(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
@@ -820,7 +868,11 @@ class TestListAllCompanies:
     # Invalid Parameter
     # include_private_listing: unallowed value
     def test_error_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト対象API呼び出し
         query_string = "include_private_listing=test"

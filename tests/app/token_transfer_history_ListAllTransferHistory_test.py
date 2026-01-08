@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime, timedelta, timezone
+from typing import Any
 from unittest.mock import ANY
 
 import pytest
@@ -44,7 +45,7 @@ class TestAllTokenTransferHistory:
     account_address_2 = "0x6431d02363FC69fFD9F69CAa4E05E96d4e79f3da"
 
     @staticmethod
-    def insert_listing(session: Session, listing: dict):
+    def insert_listing(session: Session, listing: dict[str, Any]):
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
@@ -53,9 +54,9 @@ class TestAllTokenTransferHistory:
     @staticmethod
     def insert_transfer_event(
         session: Session,
-        transfer_event: dict,
+        transfer_event: dict[str, Any],
         transfer_source_event: IDXTransferSourceEventType = IDXTransferSourceEventType.TRANSFER,
-        transfer_event_data: dict | None = None,
+        transfer_event_data: dict[str, Any] | None = None,
         created: datetime | None = None,
     ):
         _transfer = IDXTransfer()

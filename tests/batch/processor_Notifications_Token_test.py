@@ -43,7 +43,6 @@ from app.model.db import (
     NotificationType,
 )
 from tests.account_config import eth_account
-from tests.conftest import DeployedContract, SharedContract, UnitTestAccount
 from tests.contract_modules import (
     bond_change_to_redeemed,
     coupon_register_list,
@@ -66,6 +65,7 @@ from tests.contract_modules import (
     transfer_share_token,
     untransferable_share_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 if TYPE_CHECKING:
     from batch.processor_Notifications_Token import EventWatcher

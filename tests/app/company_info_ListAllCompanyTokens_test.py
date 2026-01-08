@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -35,6 +37,7 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -46,7 +49,9 @@ class TestListAllCompanyTokens:
     RSA_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtestPublicKeyExample\n-----END PUBLIC KEY-----"""
 
     @staticmethod
-    def _bond_attribute(exchange_address, personal_info_address):
+    def _bond_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -83,7 +88,9 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _share_attribute(exchange_address, personal_info_address):
+    def _share_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
@@ -104,7 +111,7 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _membership_attribute(exchange_address):
+    def _membership_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -121,7 +128,7 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _coupon_attribute(exchange_address):
+    def _coupon_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -138,7 +145,12 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _insert_listing(session, token_address, owner_address, is_public: bool = True):
+    def _insert_listing(
+        session: Session,
+        token_address: str,
+        owner_address: str,
+        is_public: bool = True,
+    ) -> None:
         listing = Listing()
         listing.token_address = token_address
         listing.is_public = is_public
@@ -146,7 +158,7 @@ class TestListAllCompanyTokens:
         session.add(listing)
 
     @staticmethod
-    def _set_env(shared_contract):
+    def _set_env(shared_contract: SharedContract):
         bond_exchange = shared_contract["IbetStraightBondExchange"]
         membership_exchange = shared_contract["IbetMembershipExchange"]
         coupon_exchange = shared_contract["IbetCouponExchange"]
@@ -171,7 +183,9 @@ class TestListAllCompanyTokens:
 
     # Normal_1
     # 債券トークン
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.BOND_TOKEN_ENABLED = True
         bond_exchange, _, _, _, personal_info, _, token_list = self._set_env(
@@ -247,7 +261,9 @@ class TestListAllCompanyTokens:
 
     # Normal_2
     # 株式トークン
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.SHARE_TOKEN_ENABLED = True
         _, _, _, share_exchange, personal_info, _, token_list = self._set_env(
@@ -308,7 +324,9 @@ class TestListAllCompanyTokens:
 
     # Normal_3
     # 会員権トークン
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         _, membership_exchange, _, _, _, _, token_list = self._set_env(shared_contract)
@@ -361,7 +379,9 @@ class TestListAllCompanyTokens:
 
     # Normal_4
     # クーポントークン
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.COUPON_TOKEN_ENABLED = True
         _, _, coupon_exchange, _, _, _, token_list = self._set_env(shared_contract)
@@ -414,7 +434,9 @@ class TestListAllCompanyTokens:
 
     # Normal_5
     # 複数種類のトークン
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # 環境変数設定変更
@@ -522,7 +544,9 @@ class TestListAllCompanyTokens:
 
     # Normal_7_1
     # include_private_listing=true
-    def test_normal_7_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # 環境変数設定変更
@@ -617,7 +641,9 @@ class TestListAllCompanyTokens:
 
     # Normal_7_2
     # include_private_listing=false
-    def test_normal_7_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # 環境変数設定変更
