@@ -17,9 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -35,6 +36,7 @@ from tests.contract_modules import (
     membership_issue,
     membership_register_list,
 )
+from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -50,7 +52,7 @@ class TestTokenMembershipTokenDetails:
     apiurl_base = "/Token/Membership/"  # {contract_address}
 
     @staticmethod
-    def coupon_token_attribute(exchange_address):
+    def coupon_token_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -67,7 +69,7 @@ class TestTokenMembershipTokenDetails:
         return attribute
 
     @staticmethod
-    def membership_token_attribute(exchange_address):
+    def membership_token_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -84,7 +86,7 @@ class TestTokenMembershipTokenDetails:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
+    def tokenlist_contract() -> DeployedContract:
         deployer = eth_account["deployer"]
         web3.eth.default_account = deployer["account_address"]
         contract_address, abi = Contract.deploy_contract(
@@ -93,7 +95,7 @@ class TestTokenMembershipTokenDetails:
         return {"address": contract_address, "abi": abi}
 
     @staticmethod
-    def list_token(session, token):
+    def list_token(session: Session, token: DeployedContract) -> None:
         listed_token = Listing()
         listed_token.token_address = token["address"]
         listed_token.is_public = True
@@ -107,7 +109,9 @@ class TestTokenMembershipTokenDetails:
 
     # Normal_1
     @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -167,7 +171,9 @@ class TestTokenMembershipTokenDetails:
     # Normal_2
     # status = False
     @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -262,7 +268,9 @@ class TestTokenMembershipTokenDetails:
     # Not registered on the list
     # -> 404
     @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
-    def test_error_2(self, client, shared_contract, session):
+    def test_error_2(
+        self, client: TestClient, shared_contract: SharedContract, session: Session
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
@@ -314,7 +322,9 @@ class TestTokenMembershipTokenDetails:
     # Retrieve the token address of other token type
     # -> 404
     @mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", True)
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract

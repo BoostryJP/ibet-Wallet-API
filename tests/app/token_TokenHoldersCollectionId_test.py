@@ -34,7 +34,6 @@ from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-
 from tests.account_config import eth_account
 from tests.contract_modules import (
     bond_lock,
@@ -45,17 +44,17 @@ from tests.contract_modules import (
     register_personalinfo,
     transfer_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 
 @pytest.fixture(scope="session")
-def test_module(shared_contract):
+def test_module(shared_contract: SharedContract) -> type[Processor]:
     return Processor
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
-    processor = test_module()
-    return processor
+def processor(test_module: type[Processor], session: Session) -> Processor:
+    return test_module()
 
 
 class TestTokenTokenHoldersCollectionId:
@@ -76,8 +75,11 @@ class TestTokenTokenHoldersCollectionId:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -120,7 +122,7 @@ class TestTokenTokenHoldersCollectionId:
         return token
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session) -> None:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -142,7 +144,7 @@ class TestTokenTokenHoldersCollectionId:
     def test_normal_1(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -178,7 +180,7 @@ class TestTokenTokenHoldersCollectionId:
     def test_normal_2(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,

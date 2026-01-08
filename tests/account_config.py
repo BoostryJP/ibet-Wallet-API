@@ -17,18 +17,21 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from eth_typing import ChecksumAddress
 from web3 import Web3
 
 from app import config
+from tests.types import UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
 # Account Address
-eth_account = {
-    "deployer": {"account_address": web3.eth.accounts[0], "password": "password"},
-    "issuer": {"account_address": web3.eth.accounts[1], "password": "password"},
-    "agent": {"account_address": web3.eth.accounts[2], "password": "password"},
-    "trader": {"account_address": web3.eth.accounts[3], "password": "password"},
-    "user1": {"account_address": web3.eth.accounts[4], "password": "password"},
-    "user2": {"account_address": web3.eth.accounts[5], "password": "password"},
+accounts: list[ChecksumAddress] = list(web3.eth.accounts)
+eth_account: dict[str, UnitTestAccount] = {
+    "deployer": {"account_address": accounts[0], "password": "password"},
+    "issuer": {"account_address": accounts[1], "password": "password"},
+    "agent": {"account_address": accounts[2], "password": "password"},
+    "trader": {"account_address": accounts[3], "password": "password"},
+    "user1": {"account_address": accounts[4], "password": "password"},
+    "user2": {"account_address": accounts[5], "password": "password"},
 }

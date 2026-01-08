@@ -17,9 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Dict
+from typing import Any
 
+from eth_utils.address import to_checksum_address
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -31,14 +33,15 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 class IbetStandardTokenUtils:
     @staticmethod
-    def issue(tx_from: str, args: Dict):
+    def issue(tx_from: str, args: dict[str, Any]) -> Web3Contract:
         """issue token
 
         :param tx_from: transaction sender
         :param args: deploy args
         :return: Contract
         """
-        web3.eth.default_account = tx_from
+        from_address = to_checksum_address(tx_from)
+        web3.eth.default_account = from_address
         arguments = [
             args["name"],
             args["symbol"],
@@ -48,7 +51,7 @@ class IbetStandardTokenUtils:
             args["privacyPolicy"],
         ]
         contract_address, _ = Contract.deploy_contract(
-            contract_name="IbetStandardToken", args=arguments, deployer=tx_from
+            contract_name="IbetStandardToken", args=arguments, deployer=from_address
         )
         contract = Contract.get_contract(
             contract_name="IbetStandardToken", address=contract_address

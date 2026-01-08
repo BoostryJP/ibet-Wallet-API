@@ -17,13 +17,15 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
+from web3.types import TxParams, Wei
 
 from app import config
 from app.model.db import ExecutableContract, Listing
@@ -33,13 +35,23 @@ from tests.contract_modules import (
     issue_coupon_token,
     transfer_coupon_token,
 )
+from tests.types import DeployedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-def tokenlist_contract():
+def _get_abi(token: DeployedContract) -> Any:
+    assert "abi" in token
+    return token["abi"]
+
+
+def _tx_params(from_address: str) -> TxParams:
+    return {"from": from_address, "gas": 6000000, "gasPrice": Wei(0)}
+
+
+def tokenlist_contract() -> DeployedContract:
     issuer = eth_account["issuer"]
     web3.eth.default_account = issuer["account_address"]
     contract_address, abi = Contract.deploy_contract(
@@ -49,7 +61,7 @@ def tokenlist_contract():
     return {"address": contract_address, "abi": abi}
 
 
-def listing_token(session, token):
+def listing_token(session: Session, token: DeployedContract) -> None:
     listing = Listing()
     listing.token_address = token["address"]
     listing.is_public = True
@@ -58,7 +70,7 @@ def listing_token(session, token):
     session.add(listing)
 
 
-def executable_contract_token(session, contract):
+def executable_contract_token(session: Session, contract: DeployedContract) -> None:
     executable_contract = ExecutableContract()
     executable_contract.contract_address = contract["address"]
     session.add(executable_contract)
@@ -104,17 +116,13 @@ class TestEthWaitForTransactionReceipt:
         # Send a test transaction
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
         user1 = eth_account["user1"]
         transfer_coupon_token(issuer, coupontoken_1, user1, 10)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
-            {
-                "from": to_checksum_address(user1["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(user1["account_address"]))
         )
         tx_hash = web3.eth.send_transaction(tx)
 
@@ -157,18 +165,14 @@ class TestEthWaitForTransactionReceipt:
 
         token_contract_1 = web3.eth.contract(
             address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
+            abi=_get_abi(coupontoken_1),
         )
         user1 = eth_account["user1"]
 
         # Send a test transaction
         # NOTE: Coupon consumption with no balance -> Revert
         tx = token_contract_1.functions.consume(10000).build_transaction(
-            {
-                "from": to_checksum_address(user1["account_address"]),
-                "gas": 6000000,
-                "gasPrice": 0,
-            }
+            _tx_params(to_checksum_address(user1["account_address"]))
         )
         tx_hash = web3.eth.send_transaction(tx)
 

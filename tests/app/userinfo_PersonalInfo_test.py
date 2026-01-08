@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app import config
 from tests.account_config import eth_account
 from tests.contract_modules import register_personalinfo
+from tests.types import SharedContract
 
 
 class TestUserInfoPersonalInfo:
@@ -36,7 +37,9 @@ class TestUserInfoPersonalInfo:
     # Normal_1_1
     # Registered
     # environment variable (default)
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"]
 
@@ -64,7 +67,9 @@ class TestUserInfoPersonalInfo:
     # Normal_1_2
     # Registered
     # query parameter
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"]
 
@@ -95,7 +100,9 @@ class TestUserInfoPersonalInfo:
 
     # Normal_2
     # Not registered
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         issuer = eth_account["issuer"]["account_address"]
 

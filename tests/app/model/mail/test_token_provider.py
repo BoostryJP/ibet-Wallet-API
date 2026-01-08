@@ -63,7 +63,7 @@ class TestMicrosoftTokenProvider:
 
             # Verify request data
             mock_post.assert_called_once()
-            args, kwargs = mock_post.call_args
+            _, kwargs = mock_post.call_args
             data = kwargs["data"]
             assert data["grant_type"] == "client_credentials"
             assert "refresh_token" not in data
@@ -73,8 +73,8 @@ class TestMicrosoftTokenProvider:
         Verify that missing config raises ValueError
         """
         # Ensure cache is empty
-        MicrosoftTokenProvider._access_token = None
-        MicrosoftTokenProvider._token_expiry = 0.0
+        setattr(MicrosoftTokenProvider, "_access_token", None)
+        setattr(MicrosoftTokenProvider, "_token_expiry", 0.0)
 
         with patch("app.model.mail.token_provider.SMTP_MS_TENANT_ID", None):
             provider = MicrosoftTokenProvider()
@@ -88,8 +88,8 @@ class TestMicrosoftTokenProvider:
         Verify that API error raises RuntimeError
         """
         # Ensure cache is empty
-        MicrosoftTokenProvider._access_token = None
-        MicrosoftTokenProvider._token_expiry = 0.0
+        setattr(MicrosoftTokenProvider, "_access_token", None)
+        setattr(MicrosoftTokenProvider, "_token_expiry", 0.0)
 
         # Arrange
         with (
@@ -116,8 +116,8 @@ class TestMicrosoftTokenProvider:
         Verify that invalid response schema raises RuntimeError (wrapping ValidationError)
         """
         # Ensure cache is empty
-        MicrosoftTokenProvider._access_token = None
-        MicrosoftTokenProvider._token_expiry = 0.0
+        setattr(MicrosoftTokenProvider, "_access_token", None)
+        setattr(MicrosoftTokenProvider, "_token_expiry", 0.0)
 
         # Arrange
         with (
@@ -143,8 +143,8 @@ class TestMicrosoftTokenProvider:
         Verify that retries are configured
         """
         # Ensure cache is empty
-        MicrosoftTokenProvider._access_token = None
-        MicrosoftTokenProvider._token_expiry = 0.0
+        setattr(MicrosoftTokenProvider, "_access_token", None)
+        setattr(MicrosoftTokenProvider, "_token_expiry", 0.0)
 
         # Arrange
         with (
@@ -182,8 +182,8 @@ class TestMicrosoftTokenProvider:
 
         # Manually set cache
         future_time = time.time() + 3600
-        MicrosoftTokenProvider._access_token = "cached_token"
-        MicrosoftTokenProvider._token_expiry = future_time
+        setattr(MicrosoftTokenProvider, "_access_token", "cached_token")
+        setattr(MicrosoftTokenProvider, "_token_expiry", future_time)
 
         provider = MicrosoftTokenProvider()
 
@@ -194,8 +194,8 @@ class TestMicrosoftTokenProvider:
             mock_post.assert_not_called()
 
         # Cleanup
-        MicrosoftTokenProvider._access_token = None
-        MicrosoftTokenProvider._token_expiry = 0.0
+        setattr(MicrosoftTokenProvider, "_access_token", None)
+        setattr(MicrosoftTokenProvider, "_token_expiry", 0.0)
 
     def test_get_access_token_cache_renew(self):
         """
@@ -206,8 +206,8 @@ class TestMicrosoftTokenProvider:
 
         # Manually set expired cache
         past_time = time.time() - 3600
-        MicrosoftTokenProvider._access_token = "old_token"
-        MicrosoftTokenProvider._token_expiry = past_time
+        setattr(MicrosoftTokenProvider, "_access_token", "old_token")
+        setattr(MicrosoftTokenProvider, "_token_expiry", past_time)
 
         provider = MicrosoftTokenProvider()
 
@@ -232,9 +232,9 @@ class TestMicrosoftTokenProvider:
             mock_post.assert_called_once()
 
             # Verify cache updated
-            assert MicrosoftTokenProvider._access_token == "new_token"
-            assert MicrosoftTokenProvider._token_expiry > time.time() + 3500
+            assert getattr(MicrosoftTokenProvider, "_access_token") == "new_token"
+            assert getattr(MicrosoftTokenProvider, "_token_expiry") > time.time() + 3500
 
         # Cleanup
-        MicrosoftTokenProvider._access_token = None
-        MicrosoftTokenProvider._token_expiry = 0.0
+        setattr(MicrosoftTokenProvider, "_access_token", None)
+        setattr(MicrosoftTokenProvider, "_token_expiry", 0.0)

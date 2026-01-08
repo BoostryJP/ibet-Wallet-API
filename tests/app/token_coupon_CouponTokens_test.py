@@ -18,9 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
+from typing import Any
 
 import pytest
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -28,28 +29,20 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXTokenListRegister, Listing
-from batch import indexer_Token_Detail
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
 from tests.contract_modules import coupon_register_list, issue_coupon_token
+from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    indexer_Token_Detail.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
-        "address"
-    ]
-    return indexer_Token_Detail
-
-
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(session: Session) -> Processor:
     config.COUPON_TOKEN_ENABLED = True
-    processor = test_module.Processor()
+    processor = Processor()
     return processor
 
 
@@ -62,7 +55,7 @@ class TestTokenCouponTokens:
     apiurl = "/Token/Coupon"
 
     @staticmethod
-    def token_attribute(exchange_address):
+    def token_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -79,7 +72,7 @@ class TestTokenCouponTokens:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
+    def tokenlist_contract() -> DeployedContract:
         deployer = eth_account["deployer"]
         web3.eth.default_account = deployer["account_address"]
         contract_address, abi = Contract.deploy_contract(
@@ -88,7 +81,7 @@ class TestTokenCouponTokens:
         return {"address": contract_address, "abi": abi}
 
     @staticmethod
-    def list_token(session, token):
+    def list_token(session: Session, token: DeployedContract) -> None:
         listed_token = Listing()
         listed_token.token_address = token["address"]
         listed_token.is_public = True
@@ -112,7 +105,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -171,7 +164,7 @@ class TestTokenCouponTokens:
             }
         ]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 1, "offset": None, "limit": None, "total": 1},
             "tokens": tokens,
         }
@@ -186,7 +179,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -203,7 +196,7 @@ class TestTokenCouponTokens:
             shared_contract["IbetCouponExchange"]["address"]
         )
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
@@ -282,7 +275,7 @@ class TestTokenCouponTokens:
             for i in range(1, 4)
         ]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 3, "offset": None, "limit": None, "total": 3},
             "tokens": tokens,
         }
@@ -297,7 +290,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -314,7 +307,7 @@ class TestTokenCouponTokens:
             shared_contract["IbetCouponExchange"]["address"]
         )
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
@@ -395,7 +388,7 @@ class TestTokenCouponTokens:
             for i in range(1, 3)
         ]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": 1, "limit": 2, "total": 5},
             "tokens": tokens,
         }
@@ -410,7 +403,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -427,7 +420,7 @@ class TestTokenCouponTokens:
             shared_contract["IbetCouponExchange"]["address"]
         )
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(
             exchange_address,
@@ -475,7 +468,7 @@ class TestTokenCouponTokens:
         resp = client.get(self.apiurl, params={"offset": 7})
         tokens = []
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": 7, "limit": None, "total": 5},
             "tokens": tokens,
         }
@@ -490,7 +483,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -507,7 +500,7 @@ class TestTokenCouponTokens:
             shared_contract["IbetCouponExchange"]["address"]
         )
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(
             exchange_address,
@@ -596,7 +589,7 @@ class TestTokenCouponTokens:
             for i in range(0, 5)
         ]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "tokens": tokens,
         }
@@ -611,7 +604,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -628,7 +621,7 @@ class TestTokenCouponTokens:
             shared_contract["IbetCouponExchange"]["address"]
         )
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(
             exchange_address,
@@ -687,7 +680,7 @@ class TestTokenCouponTokens:
         for key, value in not_matched_key_value.items():
             resp = client.get(self.apiurl, params={key: value})
 
-            assumed_body = {
+            assumed_body: dict[str, Any] = {
                 "result_set": {"count": 0, "offset": None, "limit": None, "total": 5},
                 "tokens": [],
             }
@@ -702,7 +695,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -719,7 +712,7 @@ class TestTokenCouponTokens:
             shared_contract["IbetCouponExchange"]["address"]
         )
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(
             exchange_address,
@@ -804,7 +797,7 @@ class TestTokenCouponTokens:
             for i in range(0, 5)
         ]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "tokens": list(reversed(tokens)),
         }
@@ -819,7 +812,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = False
@@ -861,7 +854,7 @@ class TestTokenCouponTokens:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True

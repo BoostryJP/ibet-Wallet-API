@@ -1,17 +1,11 @@
 {
-    "strict": [
-        "."
-    ],
-    "exclude": [
-        "app/",
-        "batch/",
-        "cmd/",
-        "docs/",
-        "migrations/",
-        "tests/",
-        ".venv/",
+    "include": [
         "logger.py",
-        "server.py"
+        "server.py",
+        "tests/app/",
+        "tests/utils/",
+        "tests/*.py",
     ],
+    "exclude": [],
     "typeCheckingMode": "strict"
 }

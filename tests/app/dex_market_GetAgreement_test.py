@@ -37,6 +37,7 @@ from tests.contract_modules import (
     share_offer,
     take_buy,
 )
+from tests.types import DeployedContract, SharedContract
 
 
 class TestDEXMarketGetAgreement:
@@ -46,7 +47,11 @@ class TestDEXMarketGetAgreement:
     # 約定イベントの作成（債券）
     # 発行体：Make売、投資家：Take買
     @staticmethod
-    def _generate_agree_event_bond(exchange, personal_info, payment_gateway):
+    def _generate_agree_event_bond(
+        exchange: DeployedContract,
+        personal_info: DeployedContract,
+        payment_gateway: DeployedContract,
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -98,7 +103,9 @@ class TestDEXMarketGetAgreement:
     # 約定イベントの作成（株式）
     # 発行体：Make売、投資家：Take買
     @staticmethod
-    def _generate_agree_event_share(exchange, personal_info):
+    def _generate_agree_event_share(
+        exchange: DeployedContract, personal_info: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -142,7 +149,9 @@ class TestDEXMarketGetAgreement:
     # 約定イベントの作成（会員権）
     # 発行体：Make売、投資家：Take買
     @staticmethod
-    def _generate_agree_event_membership(exchange):
+    def _generate_agree_event_membership(
+        exchange: DeployedContract,
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -174,7 +183,9 @@ class TestDEXMarketGetAgreement:
     # 約定イベントの作成（クーポン）
     # 発行体：Make売、投資家：Take買
     @staticmethod
-    def _generate_agree_event_coupon(exchange):
+    def _generate_agree_event_coupon(
+        exchange: DeployedContract,
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -209,7 +220,9 @@ class TestDEXMarketGetAgreement:
 
     # <Normal_1>
     # Membership
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         exchange = shared_contract["IbetMembershipExchange"]
 
         _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
@@ -243,7 +256,9 @@ class TestDEXMarketGetAgreement:
 
     # <Normal_2>
     # Coupon
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         exchange = shared_contract["IbetCouponExchange"]
 
         _, order_id, agreement_id = self._generate_agree_event_coupon(exchange)
@@ -374,7 +389,9 @@ class TestDEXMarketGetAgreement:
     # Error_4
     # 指定した約定情報が存在しない
     # 400
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         exchange = shared_contract["IbetMembershipExchange"]
 
         _, _order_id, _agreement_id = self._generate_agree_event_membership(exchange)
@@ -401,7 +418,9 @@ class TestDEXMarketGetAgreement:
     # Error_5
     # exchangeアドレスが環境変数の値と異なる
     # 400
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         exchange_address = "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb"
         order_id = 2
         agreement_id = 102

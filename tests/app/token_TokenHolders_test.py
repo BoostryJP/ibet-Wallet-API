@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import datetime
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -46,7 +47,7 @@ class TestTokenTokenHolders:
     lock_address_2 = eth_account["user2"]["account_address"]
 
     @staticmethod
-    def insert_listing(session, listing: dict):
+    def insert_listing(session: Session, listing: dict[str, Any]):
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
@@ -55,7 +56,7 @@ class TestTokenTokenHolders:
         session.commit()
 
     @staticmethod
-    def insert_position(session, position: dict):
+    def insert_position(session: Session, position: dict[str, Any]):
         _position = IDXPosition()
         _position.token_address = position["token_address"]
         _position.account_address = position["account_address"]
@@ -69,7 +70,7 @@ class TestTokenTokenHolders:
         session.commit()
 
     @staticmethod
-    def insert_locked_position(session: Session, locked_position: dict):
+    def insert_locked_position(session: Session, locked_position: dict[str, Any]):
         idx_locked = IDXLockedPosition()
         idx_locked.token_address = locked_position["token_address"]
         idx_locked.lock_address = locked_position["lock_address"]
@@ -97,7 +98,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 0, "count": 0},
             "token_holder_list": [],
         }
@@ -170,7 +171,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 2, "count": 2},
             "token_holder_list": [
                 {
@@ -278,7 +279,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 2, "count": 2},
             "token_holder_list": [
                 {
@@ -364,7 +365,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
 
         # 検証
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 1, "count": 1},
             "token_holder_list": [
                 {
@@ -431,7 +432,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
 
         # 検証
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 1, "count": 1},
             "token_holder_list": [
                 {
@@ -491,7 +492,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params={"account_tag": "test_tag"})
 
         # 検証
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 0, "count": 0},
             "token_holder_list": [],
         }
@@ -571,7 +572,7 @@ class TestTokenTokenHolders:
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 0, "count": 0},
             "token_holder_list": [],
         }
@@ -638,7 +639,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query)
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
             "token_holder_list": [
                 {
@@ -748,7 +749,7 @@ class TestTokenTokenHolders:
         )
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
             "token_holder_list": [
                 {
@@ -858,7 +859,7 @@ class TestTokenTokenHolders:
         )
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
             "token_holder_list": [
                 {
@@ -968,7 +969,7 @@ class TestTokenTokenHolders:
         )
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": None, "total": 2, "count": 1},
             "token_holder_list": [
                 {
@@ -1052,7 +1053,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query)
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": 1, "limit": None, "total": 3, "count": 2},
             "token_holder_list": [
                 {
@@ -1136,7 +1137,7 @@ class TestTokenTokenHolders:
         resp = client.get(apiurl, params=query)
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"offset": None, "limit": 1, "total": 3, "count": 2},
             "token_holder_list": [
                 {

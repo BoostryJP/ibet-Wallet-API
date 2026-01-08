@@ -17,6 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import datetime
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -42,6 +45,7 @@ from tests.contract_modules import (
     register_bond_list,
     take_buy,
 )
+from tests.types import DeployedContract, SharedContract
 from tests.utils import PersonalInfoUtils as pi_utils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -53,7 +57,9 @@ class TestDEXOrderList:
     base_url = "/DEX/OrderList/"
 
     @staticmethod
-    def bond_token_attribute(exchange, personal_info):
+    def bond_token_attribute(
+        exchange: DeployedContract, personal_info: DeployedContract
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -91,7 +97,11 @@ class TestDEXOrderList:
 
     # Emit NewOrder event
     @staticmethod
-    def bond_order_event(bond_exchange, personal_info, token_list):
+    def bond_order_event(
+        bond_exchange: DeployedContract,
+        personal_info: DeployedContract,
+        token_list: DeployedContract,
+    ):
         issuer = eth_account["issuer"]
         attribute = TestDEXOrderList.bond_token_attribute(bond_exchange, personal_info)
         bond_token = issue_bond_token(issuer, attribute)
@@ -104,7 +114,11 @@ class TestDEXOrderList:
 
     # Emit CancelOrder event
     @staticmethod
-    def bond_cancel_order_event(bond_exchange, personal_info, token_list):
+    def bond_cancel_order_event(
+        bond_exchange: DeployedContract,
+        personal_info: DeployedContract,
+        token_list: DeployedContract,
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         attribute = TestDEXOrderList.bond_token_attribute(bond_exchange, personal_info)
         bond_token = issue_bond_token(issuer, attribute)
@@ -118,7 +132,11 @@ class TestDEXOrderList:
 
     # Emit Agree event
     @staticmethod
-    def bond_agreement_event(bond_exchange, personal_info, token_list):
+    def bond_agreement_event(
+        bond_exchange: DeployedContract,
+        personal_info: DeployedContract,
+        token_list: DeployedContract,
+    ):
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -135,7 +153,11 @@ class TestDEXOrderList:
 
     # Emit SettlementOK event
     @staticmethod
-    def bond_settlement_ok_event(bond_exchange, personal_info, token_list):
+    def bond_settlement_ok_event(
+        bond_exchange: DeployedContract,
+        personal_info: DeployedContract,
+        token_list: DeployedContract,
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -161,7 +183,11 @@ class TestDEXOrderList:
 
     # Emit SettlementOK event
     @staticmethod
-    def bond_settlement_ng_event(bond_exchange, personal_info, token_list):
+    def bond_settlement_ng_event(
+        bond_exchange: DeployedContract,
+        personal_info: DeployedContract,
+        token_list: DeployedContract,
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -186,7 +212,7 @@ class TestDEXOrderList:
         return bond_token, order_id, agreement_id
 
     @staticmethod
-    def set_env(shared_contract):
+    def set_env(shared_contract: SharedContract):
         bond_exchange = shared_contract["IbetStraightBondExchange"]
         membership_exchange = shared_contract["IbetMembershipExchange"]
         coupon_exchange = shared_contract["IbetCouponExchange"]
@@ -197,7 +223,6 @@ class TestDEXOrderList:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
             "address"
         ]
@@ -218,7 +243,9 @@ class TestDEXOrderList:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -247,7 +274,7 @@ class TestDEXOrderList:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = False
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         session.commit()
@@ -275,7 +302,9 @@ class TestDEXOrderList:
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -304,7 +333,7 @@ class TestDEXOrderList:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = True
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         session.commit()
@@ -335,7 +364,9 @@ class TestDEXOrderList:
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -364,7 +395,7 @@ class TestDEXOrderList:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = False
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         # add agreement event record
@@ -379,7 +410,7 @@ class TestDEXOrderList:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -410,7 +441,9 @@ class TestDEXOrderList:
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -439,7 +472,7 @@ class TestDEXOrderList:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = False
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         # add agreement event record
@@ -454,8 +487,8 @@ class TestDEXOrderList:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
+        agreement.settlement_timestamp = datetime(2019, 6, 18, 0, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -491,7 +524,9 @@ class TestDEXOrderList:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -520,7 +555,7 @@ class TestDEXOrderList:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = False
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         # add agreement event record
@@ -535,8 +570,8 @@ class TestDEXOrderList:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.CANCELED.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
+        agreement.settlement_timestamp = datetime(2019, 6, 18, 0, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -580,7 +615,9 @@ class TestDEXOrderList:
     # Error_1
     # account_address_list has not a valid address
     # Invalid Parameter
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -621,7 +658,7 @@ class TestDEXOrderListMembership:
     apiurl = "/DEX/OrderList/Membership"
 
     @staticmethod
-    def membership_token_attribute(exchange):
+    def membership_token_attribute(exchange: DeployedContract) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -639,7 +676,9 @@ class TestDEXOrderListMembership:
 
     # Emit NewOrder event
     @staticmethod
-    def order_event(exchange, token_list):
+    def order_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
 
         # issue token
@@ -656,7 +695,9 @@ class TestDEXOrderListMembership:
 
     # Emit CancelOrder event
     @staticmethod
-    def cancel_order_event(exchange, token_list):
+    def cancel_order_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
 
         # issue token
@@ -676,7 +717,9 @@ class TestDEXOrderListMembership:
 
     # Emit Agree event
     @staticmethod
-    def agreement_event(exchange, token_list):
+    def agreement_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -697,7 +740,9 @@ class TestDEXOrderListMembership:
 
     # Emit SettlementOK event
     @staticmethod
-    def settlement_ok_event(exchange, token_list):
+    def settlement_ok_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -722,7 +767,9 @@ class TestDEXOrderListMembership:
 
     # Emit SettlementNG event
     @staticmethod
-    def settlement_ng_event(exchange, token_list):
+    def settlement_ng_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -746,7 +793,7 @@ class TestDEXOrderListMembership:
         return token, order_id, agreement_id
 
     @staticmethod
-    def set_env(shared_contract):
+    def set_env(shared_contract: SharedContract):
         bond_exchange = shared_contract["IbetStraightBondExchange"]
         membership_exchange = shared_contract["IbetMembershipExchange"]
         coupon_exchange = shared_contract["IbetCouponExchange"]
@@ -755,7 +802,6 @@ class TestDEXOrderListMembership:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
             "address"
         ]
@@ -769,7 +815,9 @@ class TestDEXOrderListMembership:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -794,7 +842,7 @@ class TestDEXOrderListMembership:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = False
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         session.commit()
@@ -853,7 +901,9 @@ class TestDEXOrderListMembership:
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -878,7 +928,7 @@ class TestDEXOrderListMembership:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = True
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         session.commit()
@@ -940,7 +990,9 @@ class TestDEXOrderListMembership:
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -963,7 +1015,7 @@ class TestDEXOrderListMembership:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -1023,7 +1075,9 @@ class TestDEXOrderListMembership:
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1046,8 +1100,8 @@ class TestDEXOrderListMembership:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
+        agreement.settlement_timestamp = datetime(2019, 6, 18, 0, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -1112,7 +1166,9 @@ class TestDEXOrderListMembership:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1135,8 +1191,8 @@ class TestDEXOrderListMembership:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.CANCELED.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
+        agreement.settlement_timestamp = datetime(2019, 6, 18, 0, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -1308,7 +1364,7 @@ class TestDEXOrderListCoupon:
     apiurl = "/DEX/OrderList/Coupon"
 
     @staticmethod
-    def coupon_token_attribute(exchange):
+    def coupon_token_attribute(exchange: DeployedContract) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -1326,7 +1382,9 @@ class TestDEXOrderListCoupon:
 
     # Emit NewOrder event
     @staticmethod
-    def order_event(exchange, token_list):
+    def order_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
 
         attribute = TestDEXOrderListCoupon.coupon_token_attribute(exchange)
@@ -1344,7 +1402,9 @@ class TestDEXOrderListCoupon:
 
     # Emit CancelOrder event
     @staticmethod
-    def cancel_order_event(exchange, token_list):
+    def cancel_order_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
 
         attribute = TestDEXOrderListCoupon.coupon_token_attribute(exchange)
@@ -1365,7 +1425,9 @@ class TestDEXOrderListCoupon:
 
     # Emit Agree event
     @staticmethod
-    def agreement_event(exchange, token_list):
+    def agreement_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
 
@@ -1386,7 +1448,9 @@ class TestDEXOrderListCoupon:
 
     # Emit SettlementOK event
     @staticmethod
-    def settlement_ok_event(exchange, token_list):
+    def settlement_ok_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -1411,7 +1475,9 @@ class TestDEXOrderListCoupon:
 
     # Emit SettlementNG event
     @staticmethod
-    def settlement_ng_event(exchange, token_list):
+    def settlement_ng_event(
+        exchange: DeployedContract, token_list: DeployedContract
+    ) -> tuple[DeployedContract, int, int]:
         issuer = eth_account["issuer"]
         trader = eth_account["trader"]
         agent = eth_account["agent"]
@@ -1435,7 +1501,7 @@ class TestDEXOrderListCoupon:
         return token, order_id, agreement_id
 
     @staticmethod
-    def set_env(shared_contract):
+    def set_env(shared_contract: SharedContract):
         bond_exchange = shared_contract["IbetStraightBondExchange"]
         membership_exchange = shared_contract["IbetMembershipExchange"]
         coupon_exchange = shared_contract["IbetCouponExchange"]
@@ -1444,7 +1510,6 @@ class TestDEXOrderListCoupon:
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange[
             "address"
         ]
@@ -1458,7 +1523,9 @@ class TestDEXOrderListCoupon:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -1481,7 +1548,7 @@ class TestDEXOrderListCoupon:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = False
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         session.commit()
@@ -1540,7 +1607,9 @@ class TestDEXOrderListCoupon:
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -1565,7 +1634,7 @@ class TestDEXOrderListCoupon:
         order.amount = 100
         order.agent_address = eth_account["agent"]["account_address"]
         order.is_cancelled = True
-        order.order_timestamp = "2019-06-17 00:00:00"
+        order.order_timestamp = datetime(2019, 6, 17, 0, 0, 0)
         session.add(order)
 
         session.commit()
@@ -1627,7 +1696,9 @@ class TestDEXOrderListCoupon:
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1650,7 +1721,7 @@ class TestDEXOrderListCoupon:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -1710,7 +1781,9 @@ class TestDEXOrderListCoupon:
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1733,8 +1806,8 @@ class TestDEXOrderListCoupon:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
+        agreement.settlement_timestamp = datetime(2019, 6, 18, 0, 0, 0)
         session.add(agreement)
 
         session.commit()
@@ -1799,7 +1872,9 @@ class TestDEXOrderListCoupon:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1822,8 +1897,8 @@ class TestDEXOrderListCoupon:
         agreement.counterpart_address = ""
         agreement.amount = 100
         agreement.status = AgreementStatus.CANCELED.value
-        agreement.agreement_timestamp = "2019-06-17 12:00:00"
-        agreement.settlement_timestamp = "2019-06-18 00:00:00"
+        agreement.agreement_timestamp = datetime(2019, 6, 17, 12, 0, 0)
+        agreement.settlement_timestamp = datetime(2019, 6, 18, 0, 0, 0)
         session.add(agreement)
 
         session.commit()

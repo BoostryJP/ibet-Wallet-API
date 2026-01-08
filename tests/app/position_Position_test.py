@@ -38,6 +38,7 @@ from tests.app.position_PositionCoupon_test import TestPositionCoupon
 from tests.app.position_PositionMembership_test import TestPositionMembership
 from tests.app.position_PositionShare_test import TestPositionShare
 from tests.app.position_PositionStraightBond_test import TestPositionStraightBond
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -102,7 +103,7 @@ class TestPosition:
         session.commit()
 
     @staticmethod
-    def list_token(token_address, session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -247,7 +248,9 @@ class TestPosition:
             "transferable": True,
         }
 
-    def setup_bond(self, session: Session, shared_contract, index=0):
+    def setup_bond(
+        self, session: Session, shared_contract: SharedContract, index: int = 0
+    ) -> None:
         personal_info_contract = shared_contract["PersonalInfo"]
 
         token_non_1 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 0, index, 1)
@@ -433,7 +436,9 @@ class TestPosition:
             config.ZERO_ADDRESS,
         )
 
-    def setup_share(self, session: Session, shared_contract, index=0):
+    def setup_share(
+        self, session: Session, shared_contract: SharedContract, index: int = 0
+    ) -> None:
         token_non_1 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 1, index, 1)
         token_non_2 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 1, index, 2)
         token_non_3 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 1, index, 3)
@@ -645,7 +650,9 @@ class TestPosition:
             config.ZERO_ADDRESS,
         )
 
-    def setup_coupon(self, session: Session, shared_contract, index=0):
+    def setup_coupon(
+        self, session: Session, shared_contract: SharedContract, index: int = 0
+    ) -> None:
         token_non_1 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 2, index, 1)
         token_non_2 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 2, index, 2)
         token_non_3 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 2, index, 3)
@@ -813,7 +820,7 @@ class TestPosition:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
-        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER
         session.add(idx_transfer)
 
         self.create_idx_position(
@@ -825,7 +832,9 @@ class TestPosition:
         self.list_token(token_non_9, session)  # not target
         TestPositionCoupon.create_idx_token(session, token_non_9, config.ZERO_ADDRESS)
 
-    def setup_membership(self, session: Session, shared_contract, index=0):
+    def setup_membership(
+        self, session: Session, shared_contract: SharedContract, index: int = 0
+    ) -> None:
         token_non_1 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 3, index, 1)
         token_non_2 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 3, index, 2)
         token_non_3 = "0x{:010x}{:010x}{:010x}{:010x}".format(9999999999, 3, index, 3)
@@ -942,7 +951,9 @@ class TestPosition:
             session, token_non_6, config.ZERO_ADDRESS
         )
 
-    def setup_data(self, session: Session, shared_contract, index=0):
+    def setup_data(
+        self, session: Session, shared_contract: SharedContract, index: int = 0
+    ) -> None:
         # StraightBond
         self.setup_bond(session=session, shared_contract=shared_contract, index=index)
         # Share
@@ -960,7 +971,9 @@ class TestPosition:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.BOND_TOKEN_ENABLED = True
         config.SHARE_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
@@ -1256,7 +1269,11 @@ class TestPosition:
     # List bond positions
     @pytest.mark.parametrize("query_filter", [True, False])
     def test_normal_2(
-        self, query_filter, client: TestClient, session: Session, shared_contract
+        self,
+        query_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
@@ -1380,7 +1397,11 @@ class TestPosition:
     # List share positions
     @pytest.mark.parametrize("query_filter", [True, False])
     def test_normal_3(
-        self, query_filter, client: TestClient, session: Session, shared_contract
+        self,
+        query_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
@@ -1532,7 +1553,11 @@ class TestPosition:
     # List coupon positions
     @pytest.mark.parametrize("query_filter", [True, False])
     def test_normal_4(
-        self, query_filter, client: TestClient, session: Session, shared_contract
+        self,
+        query_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
@@ -1646,7 +1671,11 @@ class TestPosition:
     # List membership positions
     @pytest.mark.parametrize("query_filter", [True, False])
     def test_normal_5(
-        self, query_filter, client: TestClient, session: Session, shared_contract
+        self,
+        query_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
@@ -1736,7 +1765,11 @@ class TestPosition:
     # List multiple token type positions
     @pytest.mark.parametrize("query_filter", [True, False])
     def test_normal_6(
-        self, query_filter, client: TestClient, session: Session, shared_contract
+        self,
+        query_filter: bool,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
@@ -1960,7 +1993,9 @@ class TestPosition:
 
     # <Normal_7>
     # Pagination
-    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 
@@ -2060,7 +2095,9 @@ class TestPosition:
 
     # <Normal_8>
     # Pagination(over offset)
-    def test_normal_8(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_8(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         token_list_contract = shared_contract["TokenList"]
         self.setup_data(session=session, shared_contract=shared_contract, index=0)
 

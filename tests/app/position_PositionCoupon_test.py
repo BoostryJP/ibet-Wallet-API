@@ -42,6 +42,7 @@ from tests.contract_modules import (
     issue_coupon_token,
     transfer_coupon_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -59,7 +60,11 @@ class TestPositionCoupon:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract, token_list_contract):
+    def create_balance_data(
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         args = {
             "name": "テストクーポン",
@@ -89,8 +94,11 @@ class TestPositionCoupon:
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
     def create_commitment_data(
-        account, exchange_contract, token_list_contract, commitment
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        commitment: int,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionCoupon.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -111,7 +119,12 @@ class TestPositionCoupon:
     # Prepare used data
     # balance = 1000000 - commitment, used = [args used]
     @staticmethod
-    def create_used_data(account, exchange_contract, token_list_contract, used):
+    def create_used_data(
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        used: int,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionCoupon.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -126,8 +139,11 @@ class TestPositionCoupon:
     # balance = 0
     @staticmethod
     def create_non_balance_data(
-        account, to_account, exchange_contract, token_list_contract
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> DeployedContract:
         # Issue token
         token = TestPositionCoupon.create_balance_data(
             account, exchange_contract, token_list_contract
@@ -213,7 +229,7 @@ class TestPositionCoupon:
         session.commit()
 
     @staticmethod
-    def list_token(token_address, session: Session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -227,7 +243,9 @@ class TestPositionCoupon:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetCouponExchange"]
@@ -327,7 +345,7 @@ class TestPositionCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
-        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1,
@@ -410,7 +428,9 @@ class TestPositionCoupon:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetCouponExchange"]
@@ -510,7 +530,7 @@ class TestPositionCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
-        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1,
@@ -564,7 +584,9 @@ class TestPositionCoupon:
 
     # <Normal_3>
     # token details
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -636,7 +658,9 @@ class TestPositionCoupon:
     # <Normal_4>
     # List all positions
     # Indexed: <Normal_1>
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetCouponExchange"]
@@ -863,7 +887,7 @@ class TestPositionCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
-        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER
         session.add(idx_transfer)
 
         token_non = self.create_non_balance_data(
@@ -954,7 +978,9 @@ class TestPositionCoupon:
     # <Normal_5>
     # Pagination
     # Indexed: <Normal_2>
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetCouponExchange"]
@@ -1181,7 +1207,7 @@ class TestPositionCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
-        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER
         session.add(idx_transfer)
 
         token_non = self.create_non_balance_data(
@@ -1243,7 +1269,9 @@ class TestPositionCoupon:
     # <Normal_6>
     # token details
     # Indexed: <Normal_3>
-    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.COUPON_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]

@@ -17,7 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from eth_utils import to_checksum_address
+from typing import Any
+
+from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -45,9 +47,9 @@ class TestGetTxData:
     }
 
     @staticmethod
-    def insert_tx_data(session, tx_data):
+    def insert_tx_data(session: Session, tx_data: dict[str, Any]) -> None:
         tx_model = IDXTxData()
-        tx_model.hash = tx_data.get("hash")
+        tx_model.hash = tx_data["hash"]
         tx_model.block_hash = tx_data.get("block_hash")
         tx_model.block_number = tx_data.get("block_number")
         tx_model.transaction_index = tx_data.get("transaction_index")
@@ -62,9 +64,9 @@ class TestGetTxData:
         session.commit()
 
     @staticmethod
-    def insert_token_list(session, token_info):
+    def insert_token_list(session: Session, token_info: dict[str, Any]) -> None:
         token = IDXTokenListRegister()
-        token.token_address = token_info.get("token_address")
+        token.token_address = token_info["token_address"]
         token.token_template = token_info.get("token_template")
         session.add(token)
         session.commit()
@@ -114,7 +116,7 @@ class TestGetTxData:
         self.insert_tx_data(session, self.tx_data)
 
         token_info = {
-            "token_address": to_checksum_address(self.tx_data.get("to_address")),
+            "token_address": to_checksum_address(str(self.tx_data["to_address"])),
             "token_template": "IbetShare",
         }
         self.insert_token_list(session, token_info)

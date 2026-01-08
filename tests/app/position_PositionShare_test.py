@@ -21,6 +21,7 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from web3.contract import Contract as Web3Contract
 
 from app import config
 from app.model.db import (
@@ -32,6 +33,7 @@ from app.model.db import (
 )
 from tests.account_config import eth_account
 from tests.contract_modules import share_lock, transfer_share_token
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils import IbetShareUtils, PersonalInfoUtils
 
 
@@ -42,14 +44,17 @@ class TestPositionShare:
     issuer = eth_account["issuer"]
     account_1 = eth_account["deployer"]
     account_2 = eth_account["trader"]
-    zero_address = {"address": config.ZERO_ADDRESS}
+    zero_address: DeployedContract = {"address": config.ZERO_ADDRESS, "abi": {}}
 
     # Prepare balance data
     # balance = 1000000
     @staticmethod
     def create_balance_data(
-        account, exchange_contract, personal_info_contract, token_list_contract
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> Web3Contract:
         issuer_address = TestPositionShare.issuer["account_address"]
 
         # Issue token
@@ -94,13 +99,13 @@ class TestPositionShare:
     # balance = 1000000, pending_transfer = [args pending_transfer]
     @staticmethod
     def create_pending_transfer_data(
-        account,
-        to_account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-        pending_transfer,
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        pending_transfer: int,
+    ) -> Web3Contract:
         issuer_address = TestPositionShare.issuer["account_address"]
 
         # Issue token
@@ -130,12 +135,12 @@ class TestPositionShare:
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
     def create_commitment_data(
-        account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-        commitment,
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        commitment: int,
+    ) -> Web3Contract:
         # Issue token
         token = TestPositionShare.create_balance_data(
             account, exchange_contract, personal_info_contract, token_list_contract
@@ -156,12 +161,12 @@ class TestPositionShare:
     # balance = 0
     @staticmethod
     def create_non_balance_data(
-        account,
-        to_account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> Web3Contract:
         issuer_address = TestPositionShare.issuer["account_address"]
 
         # Issue token
@@ -278,7 +283,7 @@ class TestPositionShare:
         session.commit()
 
     @staticmethod
-    def list_token(token_address, session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -292,7 +297,9 @@ class TestPositionShare:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -480,7 +487,9 @@ class TestPositionShare:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -642,7 +651,9 @@ class TestPositionShare:
 
     # <Normal_3>
     # token details
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -723,7 +734,9 @@ class TestPositionShare:
     # <Normal_4>
     # List all positions
     # Indexed: <Normal_1>
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -1051,7 +1064,9 @@ class TestPositionShare:
     # <Normal_5>
     # Pagination
     # Indexed: <Normal_2>
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -1353,7 +1368,9 @@ class TestPositionShare:
     # <Normal_6>
     # token details
     # Indexed: <Normal_3>
-    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -1438,7 +1455,9 @@ class TestPositionShare:
 
     # <Normal_7>
     # locked amount
-    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]

@@ -31,7 +31,7 @@ class TestNotificationCount:
 
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         n = Notification()
         n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"

@@ -17,6 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import datetime
+
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
 from app import config
 from app.model.db import IDXConsumeCoupon
 
@@ -25,7 +30,7 @@ class TestListAllCouponConsumptions:
     # Test API
     apiurl = "/Position/{account_address}/Coupon/{token_address}/Consumptions/"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         self.session = session
         consume_coupon = IDXConsumeCoupon()
         consume_coupon.transaction_hash = (
@@ -34,10 +39,10 @@ class TestListAllCouponConsumptions:
         consume_coupon.token_address = "0xE0C95ECa44f2A1A23C4AfeA84dba62e15A35a69b"
         consume_coupon.account_address = "0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040f"
         consume_coupon.amount = 100
-        consume_coupon.block_timestamp = "2020-01-15 13:56:12.183706"
+        consume_coupon.block_timestamp = datetime(2020, 1, 15, 13, 56, 12, 183706)
         session.add(consume_coupon)
 
-    def _insert_test_data_2(self, session):
+    def _insert_test_data_2(self, session: Session) -> None:
         self.session = session
         consume_coupon = IDXConsumeCoupon()
         consume_coupon.transaction_hash = (
@@ -46,7 +51,7 @@ class TestListAllCouponConsumptions:
         consume_coupon.token_address = "0xE0C95ECa44f2A1A23C4AfeA84dba62e15A35a69b"
         consume_coupon.account_address = "0x28e0ad30c43b3d55851b881e25586926894de3e9"
         consume_coupon.amount = 100
-        consume_coupon.block_timestamp = "2020-01-15 13:56:12.183705"
+        consume_coupon.block_timestamp = datetime(2020, 1, 15, 13, 56, 12, 183705)
         session.add(consume_coupon)
 
     ###########################################################################
@@ -55,7 +60,7 @@ class TestListAllCouponConsumptions:
 
     # Normal_1
     # No record
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
 
         resp = client.get(
@@ -71,7 +76,7 @@ class TestListAllCouponConsumptions:
 
     # Normal_2
     # Multiple records
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
 
         # Prepare test data
@@ -103,7 +108,7 @@ class TestListAllCouponConsumptions:
 
     # Error_1_1
     # Invalid token_address
-    def test_error_1_1(self, client, session):
+    def test_error_1_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
 
         resp = client.get(
@@ -130,7 +135,7 @@ class TestListAllCouponConsumptions:
 
     # Error_1_2
     # Invalid account_address
-    def test_error_1_2(self, client, session):
+    def test_error_1_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
 
         resp = client.get(
@@ -157,7 +162,7 @@ class TestListAllCouponConsumptions:
 
     # Error_2
     # Not Supported Error
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = False
 
         resp = client.get(

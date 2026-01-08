@@ -24,6 +24,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
+from tests.types import SharedContract
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -39,7 +40,9 @@ class TestE2EMessageEncryptionKey:
     ###########################################################################
 
     # Normal_1
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -68,7 +71,9 @@ class TestE2EMessageEncryptionKey:
     # Error_1
     # InvalidParameterError
     # invalid account_address
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -103,7 +108,9 @@ class TestE2EMessageEncryptionKey:
     # Error_2
     # DataNotExistsError
     # encryption key is not registered
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         user = eth_account["deployer"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address

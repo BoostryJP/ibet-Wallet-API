@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -72,7 +73,7 @@ class TestListTxData:
     }
 
     @staticmethod
-    def filter_response_item(tx_data):
+    def filter_response_item(tx_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "hash": tx_data.get("hash"),
             "block_hash": tx_data.get("block_hash"),
@@ -83,9 +84,9 @@ class TestListTxData:
         }
 
     @staticmethod
-    def insert_tx_data(session, tx_data):
+    def insert_tx_data(session: Session, tx_data: dict[str, Any]) -> None:
         tx_model = IDXTxData()
-        tx_model.hash = tx_data.get("hash")
+        tx_model.hash = tx_data["hash"]
         tx_model.block_hash = tx_data.get("block_hash")
         tx_model.block_number = tx_data.get("block_number")
         tx_model.transaction_index = tx_data.get("transaction_index")
