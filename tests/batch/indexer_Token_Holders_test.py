@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import logging
 import uuid
+from collections.abc import Iterator
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -91,25 +92,21 @@ from tests.contract_modules import (
     take_sell,
     transfer_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    return Processor
-
-
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor() -> Iterator[Processor]:
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
     LOG.propagate = True
 
-    processor = test_module()
+    processor = Processor()
     yield processor
 
     LOG.propagate = False
@@ -127,7 +124,7 @@ class TestProcessor:
     target_process_name = "INDEXER-TOKEN_HOLDERS"
 
     @staticmethod
-    async def listing_token(token_address, async_session):
+    async def listing_token(token_address: str, async_session: AsyncSession):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -139,7 +136,10 @@ class TestProcessor:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
     ):
         # Issue token
         args = {
@@ -184,7 +184,10 @@ class TestProcessor:
 
     @staticmethod
     def issue_token_share(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
     ):
         # Issue token
         args = {
@@ -210,7 +213,11 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_coupon(issuer, exchange_contract_address, token_list):
+    def issue_token_coupon(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テストクーポン",
@@ -231,7 +238,11 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_membership(issuer, exchange_contract_address, token_list):
+    def issue_token_membership(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テスト会員権",
@@ -253,8 +264,8 @@ class TestProcessor:
 
     @staticmethod
     def token_holders_list(
-        token,
-        block_number,
+        token: DeployedContract,
+        block_number: int,
         status: TokenHolderBatchStatus = TokenHolderBatchStatus.PENDING,
     ) -> TokenHoldersList:
         target_token_holders_list = TokenHoldersList()
@@ -281,7 +292,7 @@ class TestProcessor:
     async def test_normal_1(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -427,7 +438,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -439,7 +450,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -451,6 +463,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 6000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 41000
@@ -489,7 +502,7 @@ class TestProcessor:
     async def test_normal_2(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -637,7 +650,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -649,7 +662,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -661,6 +675,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 15000
         assert user1_record.locked_balance == 1000
         assert trader_record.hold_balance == 13000
@@ -689,7 +704,7 @@ class TestProcessor:
     async def test_normal_3(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -791,7 +806,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -803,7 +818,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -815,6 +831,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 17000
         assert trader_record.hold_balance == 13000
 
@@ -846,7 +863,7 @@ class TestProcessor:
     async def test_normal_4(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -977,7 +994,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -989,7 +1006,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1001,6 +1019,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 37000
@@ -1039,7 +1058,7 @@ class TestProcessor:
     async def test_normal_5(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -1187,7 +1206,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1199,7 +1218,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1211,6 +1231,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 15000
         assert user1_record.locked_balance == 1000
         assert trader_record.hold_balance == 13000
@@ -1239,7 +1260,7 @@ class TestProcessor:
     async def test_normal_6(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -1341,7 +1362,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1353,7 +1374,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1365,6 +1387,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
 
         assert user1_record.hold_balance == 17000
         assert user1_record.locked_balance == 0
@@ -1396,7 +1419,7 @@ class TestProcessor:
     async def test_normal_7(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -1480,7 +1503,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1492,7 +1515,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1504,6 +1528,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
 
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
@@ -1534,7 +1559,7 @@ class TestProcessor:
     async def test_normal_8(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -1622,7 +1647,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1634,7 +1659,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1646,6 +1672,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
 
         assert user1_record.hold_balance == 11000
         assert user1_record.locked_balance == 0
@@ -1675,7 +1702,7 @@ class TestProcessor:
     async def test_normal_9(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -1764,7 +1791,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1776,7 +1803,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1788,6 +1816,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
 
         assert user1_record.hold_balance == 7000
         assert user1_record.locked_balance == 0
@@ -1819,7 +1848,7 @@ class TestProcessor:
     async def test_normal_10(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -1903,7 +1932,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1915,7 +1944,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -1927,6 +1957,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 20000
@@ -1956,7 +1987,7 @@ class TestProcessor:
     async def test_normal_11(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -2042,7 +2073,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2054,7 +2085,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2066,6 +2098,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
 
         assert user1_record.hold_balance == 11000
         assert user1_record.locked_balance == 0
@@ -2094,7 +2127,7 @@ class TestProcessor:
     async def test_normal_12(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -2180,7 +2213,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2192,7 +2225,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2204,6 +2238,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
 
         assert user1_record.hold_balance == 7000
         assert user1_record.locked_balance == 0
@@ -2231,7 +2266,7 @@ class TestProcessor:
     async def test_normal_13(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -2287,7 +2322,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2299,7 +2334,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2311,6 +2347,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 20000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 0
@@ -2366,7 +2403,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2378,7 +2415,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2390,6 +2428,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 10000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 17000
@@ -2446,7 +2485,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2458,7 +2497,8 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        assert user1_record is not None
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2470,6 +2510,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert trader_record is not None
         assert user1_record.hold_balance == 6000
         assert user1_record.locked_balance == 0
         assert trader_record.hold_balance == 44000
@@ -2481,7 +2522,7 @@ class TestProcessor:
     async def test_normal_14(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -2567,7 +2608,7 @@ class TestProcessor:
         ):
             await processor.collect()
 
-        user1_record: TokenHolder = (
+        user1_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2579,7 +2620,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
-        trader_record: TokenHolder = (
+        trader_record = (
             await async_session.scalars(
                 select(TokenHolder)
                 .where(
@@ -2602,9 +2643,9 @@ class TestProcessor:
     async def test_normal_15(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog,
+        caplog: pytest.LogCaptureFixture,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2700,7 +2741,7 @@ class TestProcessor:
     async def test_normal_16(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -2776,6 +2817,7 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert processed_list is not None
             assert processed_list.block_number == 19999999
             assert processed_list.batch_status == TokenHolderBatchStatus.DONE.value
 
@@ -2788,9 +2830,9 @@ class TestProcessor:
     async def test_error_1(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog,
+        caplog: pytest.LogCaptureFixture,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2811,9 +2853,9 @@ class TestProcessor:
     async def test_error_2(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog,
+        caplog: pytest.LogCaptureFixture,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2866,9 +2908,9 @@ class TestProcessor:
     async def test_error_3(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog,
+        caplog: pytest.LogCaptureFixture,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2901,9 +2943,9 @@ class TestProcessor:
             self.user1, {"address": escrow_contract.address}, token, 10000
         )
 
-        block_number = web3.eth.block_number
+        current_block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, block_number)
+        target_token_holders_list = self.token_holders_list(token, current_block_number)
         async_session.add(target_token_holders_list)
         await async_session.commit()
 
@@ -2926,9 +2968,9 @@ class TestProcessor:
     async def test_error_4(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog,
+        caplog: pytest.LogCaptureFixture,
         block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -2961,9 +3003,9 @@ class TestProcessor:
             self.user1, {"address": escrow_contract.address}, token, 10000
         )
 
-        block_number = web3.eth.block_number
+        current_block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, block_number)
+        target_token_holders_list = self.token_holders_list(token, current_block_number)
         async_session.add(target_token_holders_list)
         await async_session.commit()
 
@@ -2998,9 +3040,9 @@ class TestProcessor:
             self.user1, {"address": escrow_contract.address}, token, 10000
         )
 
-        block_number = web3.eth.block_number
+        current_block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, block_number)
+        target_token_holders_list = self.token_holders_list(token, current_block_number)
         async_session.add(target_token_holders_list)
         await async_session.commit()
 

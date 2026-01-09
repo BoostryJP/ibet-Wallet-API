@@ -18,11 +18,13 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from importlib import reload
+from typing import TYPE_CHECKING, Any, Callable
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import RPCEndpoint
@@ -42,14 +44,24 @@ from tests.contract_modules import (
     make_sell,
     take_buy,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
+
+if TYPE_CHECKING:
+    from batch.processor_Notifications_Coupon_Exchange import Watcher
+
+    WatcherFactory = Callable[[str], tuple[Watcher, str]]
+else:
+    WatcherFactory = Callable[[str], tuple[object, str]]
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def watcher_factory(async_session, shared_contract):
-    def _watcher(cls_name):
+def watcher_factory(
+    async_session: AsyncSession, shared_contract: SharedContract
+) -> WatcherFactory:
+    def _watcher(cls_name: str):
         # Create exchange contract for each test method.
         coupon_exchange = ibet_exchange_contract(
             shared_contract["PaymentGateway"]["address"]
@@ -61,17 +73,20 @@ def watcher_factory(async_session, shared_contract):
         from batch import processor_Notifications_Coupon_Exchange
 
         test_module = reload(processor_Notifications_Coupon_Exchange)
-        test_module.db_session = async_session
+        setattr(test_module, "db_session", async_session)
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
-        watcher.from_block = web3.eth.block_number
         return watcher, coupon_exchange["address"]
 
     return _watcher
 
 
-def issue_token(issuer, exchange_contract_address, token_list):
+def issue_token(
+    issuer: UnitTestAccount,
+    exchange_contract_address: str,
+    token_list: DeployedContract,
+):
     # Issue token
     args = {
         "name": "テストクーポン",
@@ -104,7 +119,11 @@ class TestWatchCouponNewOrder:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponNewOrder")
 
@@ -133,6 +152,7 @@ class TestWatchCouponNewOrder:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 0
@@ -158,7 +178,7 @@ class TestWatchCouponNewOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -172,12 +192,17 @@ class TestWatchCouponNewOrder:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponNewOrder")
 
@@ -264,7 +289,7 @@ class TestWatchCouponNewOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -278,12 +303,17 @@ class TestWatchCouponNewOrder:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponNewOrder")
 
@@ -308,6 +338,7 @@ class TestWatchCouponNewOrder:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -321,7 +352,11 @@ class TestWatchCouponNewOrder:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponNewOrder")
 
@@ -354,7 +389,11 @@ class TestWatchCouponCancelOrder:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponCancelOrder")
 
@@ -386,6 +425,7 @@ class TestWatchCouponCancelOrder:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
@@ -411,7 +451,7 @@ class TestWatchCouponCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -425,12 +465,17 @@ class TestWatchCouponCancelOrder:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponCancelOrder")
 
@@ -516,7 +561,7 @@ class TestWatchCouponCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -530,12 +575,17 @@ class TestWatchCouponCancelOrder:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponCancelOrder")
 
@@ -571,6 +621,7 @@ class TestWatchCouponCancelOrder:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -584,7 +635,11 @@ class TestWatchCouponCancelOrder:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponCancelOrder")
 
@@ -617,7 +672,11 @@ class TestWatchCouponForceCancelOrder:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponForceCancelOrder"
@@ -663,6 +722,7 @@ class TestWatchCouponForceCancelOrder:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 0
@@ -690,7 +750,7 @@ class TestWatchCouponForceCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -704,12 +764,17 @@ class TestWatchCouponForceCancelOrder:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponForceCancelOrder"
@@ -825,7 +890,7 @@ class TestWatchCouponForceCancelOrder:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -839,12 +904,17 @@ class TestWatchCouponForceCancelOrder:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponForceCancelOrder"
@@ -891,6 +961,7 @@ class TestWatchCouponForceCancelOrder:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -904,7 +975,11 @@ class TestWatchCouponForceCancelOrder:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponForceCancelOrder")
 
@@ -938,7 +1013,11 @@ class TestWatchCouponBuyAgreement:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponBuyAgreement")
 
@@ -970,6 +1049,7 @@ class TestWatchCouponBuyAgreement:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
@@ -996,7 +1076,7 @@ class TestWatchCouponBuyAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1010,12 +1090,17 @@ class TestWatchCouponBuyAgreement:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponBuyAgreement")
 
@@ -1104,7 +1189,7 @@ class TestWatchCouponBuyAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1118,12 +1203,17 @@ class TestWatchCouponBuyAgreement:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponBuyAgreement")
 
@@ -1159,6 +1249,7 @@ class TestWatchCouponBuyAgreement:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1172,7 +1263,11 @@ class TestWatchCouponBuyAgreement:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponBuyAgreement")
 
@@ -1206,7 +1301,11 @@ class TestWatchCouponSellAgreement:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponSellAgreement")
 
@@ -1238,6 +1337,7 @@ class TestWatchCouponSellAgreement:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
@@ -1264,7 +1364,7 @@ class TestWatchCouponSellAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1278,12 +1378,17 @@ class TestWatchCouponSellAgreement:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponSellAgreement")
 
@@ -1369,7 +1474,7 @@ class TestWatchCouponSellAgreement:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1383,12 +1488,17 @@ class TestWatchCouponSellAgreement:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory("WatchCouponSellAgreement")
 
@@ -1424,6 +1534,7 @@ class TestWatchCouponSellAgreement:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1437,7 +1548,11 @@ class TestWatchCouponSellAgreement:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponSellAgreement")
 
@@ -1471,7 +1586,11 @@ class TestWatchCouponBuySettlementOK:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementOK"
@@ -1508,6 +1627,7 @@ class TestWatchCouponBuySettlementOK:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 1
@@ -1536,7 +1656,7 @@ class TestWatchCouponBuySettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1550,12 +1670,17 @@ class TestWatchCouponBuySettlementOK:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementOK"
@@ -1654,7 +1779,7 @@ class TestWatchCouponBuySettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1668,12 +1793,17 @@ class TestWatchCouponBuySettlementOK:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementOK"
@@ -1714,6 +1844,7 @@ class TestWatchCouponBuySettlementOK:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1727,7 +1858,11 @@ class TestWatchCouponBuySettlementOK:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponBuySettlementOK")
 
@@ -1761,7 +1896,11 @@ class TestWatchCouponSellSettlementOK:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementOK"
@@ -1798,6 +1937,7 @@ class TestWatchCouponSellSettlementOK:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 1, 2
@@ -1826,7 +1966,7 @@ class TestWatchCouponSellSettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1840,12 +1980,17 @@ class TestWatchCouponSellSettlementOK:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementOK"
@@ -1944,7 +2089,7 @@ class TestWatchCouponSellSettlementOK:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1958,12 +2103,17 @@ class TestWatchCouponSellSettlementOK:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementOK"
@@ -2004,6 +2154,7 @@ class TestWatchCouponSellSettlementOK:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2017,7 +2168,11 @@ class TestWatchCouponSellSettlementOK:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponSellSettlementOK")
 
@@ -2051,7 +2206,11 @@ class TestWatchCouponBuySettlementNG:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementNG"
@@ -2088,6 +2247,7 @@ class TestWatchCouponBuySettlementNG:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 1
@@ -2116,7 +2276,7 @@ class TestWatchCouponBuySettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2130,12 +2290,17 @@ class TestWatchCouponBuySettlementNG:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementNG"
@@ -2234,7 +2399,7 @@ class TestWatchCouponBuySettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2248,12 +2413,17 @@ class TestWatchCouponBuySettlementNG:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponBuySettlementNG"
@@ -2294,6 +2464,7 @@ class TestWatchCouponBuySettlementNG:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2307,7 +2478,11 @@ class TestWatchCouponBuySettlementNG:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponBuySettlementNG")
 
@@ -2341,7 +2516,11 @@ class TestWatchCouponSellSettlementNG:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementNG"
@@ -2378,6 +2557,7 @@ class TestWatchCouponSellSettlementNG:
                 select(Notification).order_by(Notification.created).limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(
             block_number, 0, 0, 2
@@ -2406,7 +2586,7 @@ class TestWatchCouponSellSettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2420,12 +2600,17 @@ class TestWatchCouponSellSettlementNG:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementNG"
@@ -2524,7 +2709,7 @@ class TestWatchCouponSellSettlementNG:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2538,12 +2723,17 @@ class TestWatchCouponSellSettlementNG:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, exchange_contract_address = watcher_factory(
             "WatchCouponSellSettlementNG"
@@ -2584,6 +2774,7 @@ class TestWatchCouponSellSettlementNG:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2597,7 +2788,11 @@ class TestWatchCouponSellSettlementNG:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher, _ = watcher_factory("WatchCouponSellSettlementNG")
 

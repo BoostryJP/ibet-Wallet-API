@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import logging
 from datetime import datetime
+from typing import Awaitable, Callable
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
@@ -27,8 +28,10 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
@@ -36,13 +39,14 @@ from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
 from batch import indexer_TransferApproval
-from batch.indexer_TransferApproval import LOG, main
+from batch.indexer_TransferApproval import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_share_token,
     register_share_list,
     transfer_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils import PersonalInfoUtils
 from tests.utils.contract import Contract
 
@@ -50,16 +54,15 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
+@pytest.fixture(scope="session", autouse=True)
+def test_module(shared_contract: SharedContract):
     indexer_TransferApproval.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
         "address"
     ]
-    return indexer_TransferApproval
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func():
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -70,8 +73,8 @@ def main_func(test_module):
 
 
 @pytest_asyncio.fixture(scope="function", loop_scope="session")
-async def processor(test_module, async_session):
-    processor = test_module.Processor()
+async def processor() -> Processor:
+    processor = Processor()
     await processor.sync_new_logs()
     return processor
 
@@ -85,7 +88,10 @@ class TestProcessor:
 
     @staticmethod
     def issue_token_share(
-        issuer, exchange_contract, personal_info_contract, token_list_contract
+        issuer: UnitTestAccount,
+        exchange_contract: Web3Contract | None,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
     ):
         if exchange_contract is None:
             exchange_contract_address = config.ZERO_ADDRESS
@@ -121,7 +127,7 @@ class TestProcessor:
         return token_contract
 
     @staticmethod
-    async def list_token(async_session, token_address):
+    async def list_token(async_session: AsyncSession, token_address: str):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -130,7 +136,11 @@ class TestProcessor:
         await async_session.commit()
 
     @staticmethod
-    def register_personal_info(account_address, link_address, personal_info_contract):
+    def register_personal_info(
+        account_address: str,
+        link_address: str,
+        personal_info_contract: DeployedContract,
+    ):
         PersonalInfoUtils.register(
             tx_from=account_address,
             personal_info_address=personal_info_contract["address"],
@@ -138,7 +148,7 @@ class TestProcessor:
         )
 
     @staticmethod
-    def set_transfer_approval_required(token_contract, required):
+    def set_transfer_approval_required(token_contract: Web3Contract, required: bool):
         token_contract.functions.setTransferApprovalRequired(required).transact(
             {"from": TestProcessor.issuer["account_address"]}
         )
@@ -150,7 +160,12 @@ class TestProcessor:
     # <Normal_1_1>
     # Single Token
     #  - ApplyForTransfer
-    async def test_normal_1_1(self, processor, shared_contract, async_session):
+    async def test_normal_1_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -225,7 +240,12 @@ class TestProcessor:
     # Single Token
     #  - ApplyForTransfer
     #  - ApproveTransfer
-    async def test_normal_1_2(self, processor, shared_contract, async_session):
+    async def test_normal_1_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -308,7 +328,12 @@ class TestProcessor:
     # Single Token
     #  - ApplyForTransfer
     #  - CancelTransfer
-    async def test_normal_1_3(self, processor, shared_contract, async_session):
+    async def test_normal_1_3(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -386,7 +411,12 @@ class TestProcessor:
     # Multi Token
     #  - ApplyForTransfer
     #  - ApproveTransfer
-    async def test_normal_1_4(self, processor, shared_contract, async_session):
+    async def test_normal_1_4(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -513,7 +543,12 @@ class TestProcessor:
 
     # <Normal_1_5>
     # No event logs
-    async def test_normal_1_5(self, processor, shared_contract, async_session):
+    async def test_normal_1_5(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -563,7 +598,12 @@ class TestProcessor:
 
     # <Normal_1_6>
     # Not listed token
-    async def test_normal_1_6(self, processor, shared_contract, async_session):
+    async def test_normal_1_6(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -619,7 +659,12 @@ class TestProcessor:
     # <Normal_2_1>
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
-    async def test_normal_2_1(self, processor, shared_contract, async_session):
+    async def test_normal_2_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -710,7 +755,12 @@ class TestProcessor:
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
     #  - CancelTransfer
-    async def test_normal_2_2(self, processor, shared_contract, async_session):
+    async def test_normal_2_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -804,7 +854,12 @@ class TestProcessor:
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
     #  - FinishTransfer
-    async def test_normal_2_3(self, processor, shared_contract, async_session):
+    async def test_normal_2_3(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -898,7 +953,12 @@ class TestProcessor:
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
     #  - ApproveTransfer
-    async def test_normal_2_4(self, processor, shared_contract, async_session):
+    async def test_normal_2_4(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -1010,7 +1070,12 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    async def test_error_1_1(self, processor, shared_contract, async_session):
+    async def test_error_1_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1062,13 +1127,14 @@ class TestProcessor:
         ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
                 .limit(1)
             )
         ).first()
+        assert idx_transfer_approval_block_number is not None
         assert (
             idx_transfer_approval_block_number.latest_block_number
             == block_number_current
@@ -1097,20 +1163,26 @@ class TestProcessor:
         ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
                 .limit(1)
             )
         ).first()
+        assert idx_transfer_approval_block_number is not None
         assert (
             idx_transfer_approval_block_number.latest_block_number
             == block_number_current
         )
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    async def test_error_1_2(self, processor, shared_contract, async_session):
+    async def test_error_1_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1168,7 +1240,7 @@ class TestProcessor:
             )
         ).all()
         assert len(_transfer_approval_list) == 0
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
@@ -1203,7 +1275,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
@@ -1213,7 +1285,12 @@ class TestProcessor:
         assert idx_transfer_approval_block_number is None
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_1(self, processor, shared_contract, async_session):
+    async def test_error_2_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1270,7 +1347,7 @@ class TestProcessor:
             )
         ).all()
         assert len(_transfer_approval_list) == 0
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
@@ -1305,7 +1382,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
@@ -1315,7 +1392,12 @@ class TestProcessor:
         assert idx_transfer_approval_block_number is None
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_2(self, processor, shared_contract, async_session):
+    async def test_error_2_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1370,7 +1452,7 @@ class TestProcessor:
             )
         ).all()
         assert len(_transfer_approval_list) == 0
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
@@ -1402,7 +1484,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_approval_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_approval_block_number: IDXTransferApprovalBlockNumber = (
+        idx_transfer_approval_block_number = (
             await async_session.scalars(
                 select(IDXTransferApprovalBlockNumber)
                 .where(IDXTransferApprovalBlockNumber.token_address == token.address)
@@ -1412,7 +1494,13 @@ class TestProcessor:
         assert idx_transfer_approval_block_number is None
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(self, main_func, shared_contract, async_session, caplog):
+    async def test_error_3(
+        self,
+        main_func: Callable[[], Awaitable[None]],
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Mocking time.sleep to break mainloop
         asyncio_mock = AsyncMock(wraps=asyncio)
         asyncio_mock.sleep.side_effect = [True, TypeError()]

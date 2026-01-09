@@ -21,6 +21,7 @@ import asyncio
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Awaitable, Callable, Mapping
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -42,7 +43,6 @@ from app.model.db import (
     IDXTokenListRegister,
     Listing,
 )
-from batch import indexer_Token_Detail_ShortTerm
 from batch.indexer_Token_Detail_ShortTerm import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -55,29 +55,25 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    return indexer_Token_Detail_ShortTerm
-
-
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor() -> Processor:
     config.BOND_TOKEN_ENABLED = True
     config.SHARE_TOKEN_ENABLED = True
     config.MEMBERSHIP_TOKEN_ENABLED = True
     config.COUPON_TOKEN_ENABLED = True
-    processor = test_module.Processor()
+    processor = Processor()
     return processor
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func():
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -99,7 +95,9 @@ class TestProcessor:
     agent = eth_account["agent"]
 
     @staticmethod
-    async def listing_token(token_address, token_template, async_session: AsyncSession):
+    async def listing_token(
+        token_address: str, token_template: str, async_session: AsyncSession
+    ):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -116,33 +114,49 @@ class TestProcessor:
         await async_session.commit()
 
     @staticmethod
-    def issue_token_bond_with_args(issuer, token_list, args):
+    def issue_token_bond_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = issue_bond_token(issuer, args)
+        token = issue_bond_token(issuer, dict(args))
         register_bond_list(issuer, token, token_list)
 
         return token
 
     @staticmethod
-    def issue_token_share_with_args(issuer, token_list, args):
+    def issue_token_share_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = issue_share_token(issuer, args)
+        token = issue_share_token(issuer, dict(args))
         register_share_list(issuer, token, token_list)
 
         return token
 
     @staticmethod
-    def issue_token_coupon_with_args(issuer, token_list, args):
+    def issue_token_coupon_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = issue_coupon_token(issuer, args)
+        token = issue_coupon_token(issuer, dict(args))
         coupon_register_list(issuer, token, token_list)
 
         return token
 
     @staticmethod
-    def issue_token_membership_with_args(issuer, token_list, args):
+    def issue_token_membership_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = membership_issue(issuer, args)
+        token = membership_issue(issuer, dict(args))
         membership_register_list(issuer, token, token_list)
 
         return token
@@ -157,7 +171,7 @@ class TestProcessor:
     async def test_normal_1(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -166,7 +180,7 @@ class TestProcessor:
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        _bond_token_expected_list = []
+        _bond_token_expected_list: list[dict[str, str]] = []
         # Issue bond token
         for i in range(10):
             args = {
@@ -211,12 +225,12 @@ class TestProcessor:
                 token["address"], "IbetStraightBond", async_session
             )
             # Fetch data for cache
-            async_session.add(
-                (await BondToken.get(async_session, token["address"])).to_model()
-            )
+            bond_token = await BondToken.get(async_session, token["address"])
+            assert bond_token is not None
+            async_session.add(bond_token.to_model())
             _bond_token_expected_list.append({"token_address": token["address"]})
 
-        _share_token_expected_list = []
+        _share_token_expected_list: list[dict[str, str]] = []
         # Issue share token
         for i in range(10):
             args = {
@@ -241,12 +255,12 @@ class TestProcessor:
             )
             await self.listing_token(token["address"], "IbetShare", async_session)
             # Fetch data for cache
-            async_session.add(
-                (await ShareToken.get(async_session, token["address"])).to_model()
-            )
+            share_token = await ShareToken.get(async_session, token["address"])
+            assert share_token is not None
+            async_session.add(share_token.to_model())
             _share_token_expected_list.append({"token_address": token["address"]})
 
-        _membership_token_expected_list = []
+        _membership_token_expected_list: list[dict[str, str]] = []
         # Issue membership token
         for i in range(10):
             args = {
@@ -267,12 +281,14 @@ class TestProcessor:
             )
             await self.listing_token(token["address"], "IbetMembership", async_session)
             # Fetch data for cache
-            async_session.add(
-                (await MembershipToken.get(async_session, token["address"])).to_model()
+            membership_token = await MembershipToken.get(
+                async_session, token["address"]
             )
+            assert membership_token is not None
+            async_session.add(membership_token.to_model())
             _membership_token_expected_list.append({"token_address": token["address"]})
 
-        _coupon_token_expected_list = []
+        _coupon_token_expected_list: list[dict[str, str]] = []
         # issue coupon token
         for i in range(10):
             args = {
@@ -294,9 +310,9 @@ class TestProcessor:
             )
             await self.listing_token(token["address"], "IbetCoupon", async_session)
             # Fetch data for cache
-            async_session.add(
-                (await CouponToken.get(async_session, token["address"])).to_model()
-            )
+            coupon_token = await CouponToken.get(async_session, token["address"])
+            assert coupon_token is not None
+            async_session.add(coupon_token.to_model())
             _coupon_token_expected_list.append({"token_address": token["address"]})
 
         await async_session.commit()
@@ -311,7 +327,7 @@ class TestProcessor:
         await async_session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = (
+            _bond_token = (
                 await async_session.scalars(
                     select(BondTokenModel)
                     .where(
@@ -320,10 +336,12 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _bond_token is not None
+            assert _bond_token.short_term_cache_created is not None
             assert _bond_token.short_term_cache_created > current
 
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = (
+            _share_token = (
                 await async_session.scalars(
                     select(ShareTokenModel)
                     .where(
@@ -332,10 +350,12 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _share_token is not None
+            assert _share_token.short_term_cache_created is not None
             assert _share_token.short_term_cache_created > current
 
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = (
+            _membership_token = (
                 await async_session.scalars(
                     select(MembershipTokenModel)
                     .where(
@@ -345,10 +365,12 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _membership_token is not None
+            assert _membership_token.short_term_cache_created is not None
             assert _membership_token.short_term_cache_created > current
 
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = (
+            _coupon_token = (
                 await async_session.scalars(
                     select(CouponTokenModel)
                     .where(
@@ -357,6 +379,8 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _coupon_token is not None
+            assert _coupon_token.short_term_cache_created is not None
             assert _coupon_token.short_term_cache_created > current
 
     # <Normal_2>
@@ -373,7 +397,7 @@ class TestProcessor:
     async def test_normal_2(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -383,7 +407,7 @@ class TestProcessor:
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        _bond_token_expected_list = []
+        _bond_token_expected_list: list[dict[str, str]] = []
         # Issue bond token
         for i in range(5):
             args = {
@@ -428,6 +452,7 @@ class TestProcessor:
                 token["address"], "IbetStraightBond", async_session
             )
             bond_token = await BondToken.get(async_session, token["address"])
+            assert bond_token is not None
             async_session.add(bond_token.to_model())
 
             # Change attributes to occur events
@@ -470,7 +495,7 @@ class TestProcessor:
         await async_session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
-            _bond_token: BondTokenModel = (
+            _bond_token = (
                 await async_session.scalars(
                     select(BondTokenModel)
                     .where(
@@ -479,6 +504,7 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _bond_token is not None
             # Short-Term Cache attributes is updated instantly.
             assert _bond_token.is_redeemed == True
             assert _bond_token.is_offering == False
@@ -503,7 +529,7 @@ class TestProcessor:
     async def test_normal_3(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -513,7 +539,7 @@ class TestProcessor:
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        _share_token_expected_list = []
+        _share_token_expected_list: list[dict[str, str]] = []
         # Issue bond token
         for i in range(5):
             args = {
@@ -541,6 +567,7 @@ class TestProcessor:
             )
             # Fetch data for cache
             share_token = await ShareToken.get(async_session, token["address"])
+            assert share_token is not None
             async_session.add(share_token.to_model())
 
             # Change attributes to occur events
@@ -580,7 +607,7 @@ class TestProcessor:
         await async_session.rollback()
         # assertion
         for _expect_dict in _share_token_expected_list:
-            _share_token: ShareTokenModel = (
+            _share_token = (
                 await async_session.scalars(
                     select(ShareTokenModel)
                     .where(
@@ -589,12 +616,15 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _share_token is not None
             # Short-Term Cache attributes is updated instantly.
             assert _share_token.status == False
             assert _share_token.transfer_approval_required == True
             assert _share_token.is_offering == False
             assert _share_token.is_canceled == True
-            assert _share_token.dividend_information == {
+            dividend_information = _share_token.dividend_information
+            assert dividend_information is not None
+            assert dividend_information == {
                 "dividends": float(Decimal(str(50)) * Decimal("0.0000000000001")),
                 "dividend_record_date": "20200401",
                 "dividend_payment_date": "20200401",
@@ -610,7 +640,7 @@ class TestProcessor:
     async def test_normal_4(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -619,7 +649,7 @@ class TestProcessor:
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        _membership_token_expected_list = []
+        _membership_token_expected_list: list[dict[str, str]] = []
         # Issue bond token
         for i in range(5):
             args = {
@@ -639,9 +669,11 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             await self.listing_token(token["address"], "IbetMembership", async_session)
-            async_session.add(
-                (await MembershipToken.get(async_session, token["address"])).to_model()
+            membership_token = await MembershipToken.get(
+                async_session, token["address"]
             )
+            assert membership_token is not None
+            async_session.add(membership_token.to_model())
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
@@ -662,7 +694,7 @@ class TestProcessor:
             # Fetch data for cache
             _membership_token_expected_list.append({"token_address": token["address"]})
 
-        _coupon_token_expected_list = []
+        _coupon_token_expected_list: list[dict[str, str]] = []
         # issue coupon token
         for i in range(5):
             args = {
@@ -683,9 +715,9 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             await self.listing_token(token["address"], "IbetCoupon", async_session)
-            async_session.add(
-                (await CouponToken.get(async_session, token["address"])).to_model()
-            )
+            coupon_token = await CouponToken.get(async_session, token["address"])
+            assert coupon_token is not None
+            async_session.add(coupon_token.to_model())
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
@@ -713,7 +745,7 @@ class TestProcessor:
         await async_session.rollback()
         # assertion
         for _expect_dict in _membership_token_expected_list:
-            _membership_token: MembershipTokenModel = (
+            _membership_token = (
                 await async_session.scalars(
                     select(MembershipTokenModel)
                     .where(
@@ -723,12 +755,13 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _membership_token is not None
             assert _membership_token.status == False
             assert _membership_token.owner_address == self.agent["account_address"]
 
         # assertion
         for _expect_dict in _coupon_token_expected_list:
-            _coupon_token: CouponTokenModel = (
+            _coupon_token = (
                 await async_session.scalars(
                     select(CouponTokenModel)
                     .where(
@@ -737,6 +770,7 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert _coupon_token is not None
             assert _coupon_token.status == False
             assert _coupon_token.owner_address == self.agent["account_address"]
 
@@ -750,7 +784,10 @@ class TestProcessor:
     # <Error_1_1>: ServiceUnavailable occurs in __sync_xx method.
     @pytest.mark.asyncio
     async def test_error_1_1(
-        self, processor: Processor, shared_contract, async_session
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -773,6 +810,7 @@ class TestProcessor:
         )
         await self.listing_token(token["address"], "IbetCoupon", async_session)
         coupon_data = await CouponToken.get(async_session, token["address"])
+        assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
         await async_session.commit()
@@ -790,13 +828,15 @@ class TestProcessor:
             await processor.process()
 
         # Assertion
-        _coupon_token: CouponTokenModel = (
+        _coupon_token = (
             await async_session.scalars(
                 select(CouponTokenModel)
                 .where(CouponTokenModel.token_address == token["address"])
                 .limit(1)
             )
         ).first()
+        assert _coupon_token is not None
+        assert _coupon_token.short_term_cache_created is not None
         assert _coupon_token.short_term_cache_created < current
 
         token = self.issue_token_coupon_with_args(
@@ -804,6 +844,7 @@ class TestProcessor:
         )
         await self.listing_token(token["address"], "IbetCoupon", async_session)
         coupon_data = await CouponToken.get(async_session, token["address"])
+        assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
         await async_session.commit()
@@ -822,19 +863,24 @@ class TestProcessor:
 
         # Assertion
         await async_session.rollback()
-        _coupon_token: CouponTokenModel = (
+        _coupon_token = (
             await async_session.scalars(
                 select(CouponTokenModel)
                 .where(CouponTokenModel.token_address == token["address"])
                 .limit(1)
             )
         ).first()
+        assert _coupon_token is not None
+        assert _coupon_token.short_term_cache_created is not None
         assert _coupon_token.short_term_cache_created < current
 
     # <Error_1_2>: SQLAlchemyError occurs in "process".
     @pytest.mark.asyncio
     async def test_error_1_2(
-        self, processor: Processor, shared_contract, async_session
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -857,6 +903,7 @@ class TestProcessor:
         )
         await self.listing_token(token["address"], "IbetCoupon", async_session)
         coupon_data = await CouponToken.get(async_session, token["address"])
+        assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
         await async_session.commit()
@@ -871,18 +918,26 @@ class TestProcessor:
             await processor.process()
 
         # Assertion
-        _coupon_token: CouponTokenModel = (
+        _coupon_token = (
             await async_session.scalars(
                 select(CouponTokenModel)
                 .where(CouponTokenModel.token_address == token["address"])
                 .limit(1)
             )
         ).first()
+        assert _coupon_token is not None
+        assert _coupon_token.short_term_cache_created is not None
         assert _coupon_token.short_term_cache_created < current
 
     # <Error_2>: ServiceUnavailable occurs and is handled in mainloop.
     @pytest.mark.asyncio
-    async def test_error_2(self, main_func, shared_contract, async_session, caplog):
+    async def test_error_2(
+        self,
+        main_func: Callable[[], Awaitable[None]],
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -904,6 +959,7 @@ class TestProcessor:
         )
         await self.listing_token(token["address"], "IbetCoupon", async_session)
         coupon_data = await CouponToken.get(async_session, token["address"])
+        assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
         await async_session.commit()

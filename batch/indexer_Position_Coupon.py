@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 from itertools import groupby
-from typing import List, Optional, Sequence
+from typing import List, Mapping, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
@@ -960,8 +960,9 @@ class Processor:
 
     @staticmethod
     def remove_duplicate_event_by_token_account_desc(
-        events: List, account_keys: List[str]
-    ) -> List[str]:
+        events: Sequence[Mapping[str, Mapping[str, str]]],
+        account_keys: Sequence[str],
+    ) -> list[str]:
         """Remove duplicate account from event list.
         Events that have same account key will be removed.
 

@@ -22,7 +22,7 @@ import json
 import sys
 from datetime import datetime, timedelta, timezone
 from itertools import groupby
-from typing import List, Literal, Optional, Sequence
+from typing import List, Literal, Mapping, Optional, Sequence
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
@@ -1926,8 +1926,9 @@ class Processor:
 
     @staticmethod
     def remove_duplicate_event_by_token_account_desc(
-        events: List, account_keys: List[str]
-    ) -> List[str]:
+        events: Sequence[Mapping[str, Mapping[str, str]]],
+        account_keys: Sequence[str],
+    ) -> list[str]:
         """Remove duplicate account from event list.
         Events that have same account key will be removed.
 

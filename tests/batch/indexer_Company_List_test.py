@@ -26,13 +26,14 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.model.db import Company
 from batch.indexer_Company_List import LOG, Processor
 
 
 @pytest.fixture(scope="function")
-def processor(session):
+def processor():
     return Processor()
 
 
@@ -66,7 +67,9 @@ class TestProcessor:
     # <Normal_1>
     # 0 record
     @mock.patch("requests.Session.get")
-    async def test_normal_1(self, mock_get, processor, session):
+    async def test_normal_1(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -104,7 +107,9 @@ class TestProcessor:
     # <Normal_2>
     # 1 record
     @mock.patch("requests.Session.get")
-    async def test_normal_2(self, mock_get, processor, session):
+    async def test_normal_2(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -159,7 +164,9 @@ class TestProcessor:
     # <Normal_3>
     # 2 record
     @mock.patch("requests.Session.get")
-    async def test_normal_3(self, mock_get, processor, session):
+    async def test_normal_3(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -228,7 +235,9 @@ class TestProcessor:
     # type error
     # address
     @mock.patch("requests.Session.get")
-    async def test_normal_4_1_1(self, mock_get, processor, session):
+    async def test_normal_4_1_1(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -291,7 +300,9 @@ class TestProcessor:
     # type error
     # corporate_name
     @mock.patch("requests.Session.get")
-    async def test_normal_4_1_2(self, mock_get, processor, session):
+    async def test_normal_4_1_2(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -354,7 +365,9 @@ class TestProcessor:
     # type error
     # rsa_publickey
     @mock.patch("requests.Session.get")
-    async def test_normal_4_1_3(self, mock_get, processor, session):
+    async def test_normal_4_1_3(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -417,7 +430,9 @@ class TestProcessor:
     # type error
     # homepage
     @mock.patch("requests.Session.get")
-    async def test_normal_4_1_4(self, mock_get, processor, session):
+    async def test_normal_4_1_4(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -480,7 +495,9 @@ class TestProcessor:
     # required error
     # address
     @mock.patch("requests.Session.get")
-    async def test_normal_4_2_1(self, mock_get, processor, session):
+    async def test_normal_4_2_1(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -542,7 +559,9 @@ class TestProcessor:
     # required error
     # corporate_name
     @mock.patch("requests.Session.get")
-    async def test_normal_4_2_2(self, mock_get, processor, session):
+    async def test_normal_4_2_2(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -604,7 +623,9 @@ class TestProcessor:
     # required error
     # address
     @mock.patch("requests.Session.get")
-    async def test_normal_4_2_3(self, mock_get, processor, session):
+    async def test_normal_4_2_3(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -665,7 +686,9 @@ class TestProcessor:
     # Insert SKIP
     # invalid address error
     @mock.patch("requests.Session.get")
-    async def test_normal_4_3(self, mock_get, processor, session):
+    async def test_normal_4_3(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -727,7 +750,13 @@ class TestProcessor:
     # There are no differences from last time
     # -> Skip this cycle
     @mock.patch("requests.Session.get")
-    async def test_normal_5_1(self, mock_get, processor, session, caplog):
+    async def test_normal_5_1(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -803,7 +832,13 @@ class TestProcessor:
     # <Normal_5_2>
     # There are differences from the previous cycle
     @mock.patch("requests.Session.get")
-    async def test_normal_5_2(self, mock_get, processor, session, caplog):
+    async def test_normal_5_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -865,7 +900,9 @@ class TestProcessor:
     # <Normal_6_1>
     # trustee情報あり
     @mock.patch("requests.Session.get")
-    async def test_normal_6_1(self, mock_get, processor, session):
+    async def test_normal_6_1(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -928,7 +965,9 @@ class TestProcessor:
     # <Normal_6_2>
     # trustee情報不正 -> Insert SKIP
     @mock.patch("requests.Session.get")
-    async def test_normal_6_2(self, mock_get, processor, session):
+    async def test_normal_6_2(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -1006,7 +1045,7 @@ class TestProcessor:
         "requests.Session.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
-    async def test_error_1_1(self, processor, session):
+    async def test_error_1_1(self, processor: Processor, session: Session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -1041,7 +1080,9 @@ class TestProcessor:
     # API error
     # not succeed api
     @mock.patch("requests.Session.get")
-    async def test_error_1_2(self, mock_get, processor, session):
+    async def test_error_1_2(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -1081,7 +1122,7 @@ class TestProcessor:
         "requests.Session.get",
         MagicMock(side_effect=json.decoder.JSONDecodeError),
     )
-    async def test_error_2(self, processor, session):
+    async def test_error_2(self, processor: Processor, session: Session):
         # Prepare data
         _company = Company()
         _company.address = "0x01"
@@ -1115,7 +1156,9 @@ class TestProcessor:
     # <Error_3>
     # other error
     @mock.patch("requests.Session.get")
-    async def test_error_3(self, mock_get, processor, session):
+    async def test_error_3(
+        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+    ):
         # Prepare data
         _company = Company()
         _company.address = "0x01"

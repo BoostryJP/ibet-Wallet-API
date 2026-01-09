@@ -26,13 +26,14 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.model.db import PublicAccountList
 from batch.indexer_PublicInfo_PublicAccountList import LOG, Processor
 
 
 @pytest.fixture(scope="function")
-def processor(session):
+def processor():
     return Processor()
 
 
@@ -73,7 +74,12 @@ class TestProcessor:
     # <Normal_1>
     # 0 record
     @mock.patch("requests.Session.get")
-    async def test_normal_1(self, mock_get, processor, async_session):
+    async def test_normal_1(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
@@ -100,7 +106,12 @@ class TestProcessor:
     # <Normal_2>
     # Multiple records
     @mock.patch("requests.Session.get")
-    async def test_normal_2(self, mock_get, processor, async_session):
+    async def test_normal_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
@@ -164,7 +175,13 @@ class TestProcessor:
     # There are no differences from last time
     # -> Skip this cycle
     @mock.patch("requests.Session.get")
-    async def test_normal_3_1(self, mock_get, processor, async_session, caplog):
+    async def test_normal_3_1(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -245,7 +262,13 @@ class TestProcessor:
     # <Normal_3_2>
     # There are differences from last time
     @mock.patch("requests.Session.get")
-    async def test_normal_3_2(self, mock_get, processor, async_session, caplog):
+    async def test_normal_3_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -320,7 +343,7 @@ class TestProcessor:
         "requests.Session.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
-    async def test_error_1_1(self, processor, async_session):
+    async def test_error_1_1(self, processor: Processor, async_session: AsyncSession):
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
@@ -357,7 +380,12 @@ class TestProcessor:
     # <Error_1_2>
     # API error: Not succeed request
     @mock.patch("requests.Session.get")
-    async def test_error_1_2(self, mock_get, processor, async_session):
+    async def test_error_1_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
@@ -400,7 +428,7 @@ class TestProcessor:
         "requests.Session.get",
         MagicMock(side_effect=json.decoder.JSONDecodeError),
     )
-    async def test_error_1_3(self, processor, async_session):
+    async def test_error_1_3(self, processor: Processor, async_session: AsyncSession):
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
@@ -493,7 +521,13 @@ class TestProcessor:
             },  # Missing required fields
         ],
     )
-    async def test_error_2(self, mock_get, processor, async_session, invalid_record):
+    async def test_error_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+        invalid_record: dict[str, object],
+    ):
         # Prepare data
         _account_list = PublicAccountList()
         _account_list.key_manager = self.test_key_manager_1
@@ -523,7 +557,12 @@ class TestProcessor:
     # <Error_3>
     # Other error
     @mock.patch("requests.Session.get")
-    async def test_error_3(self, mock_get, processor, async_session):
+    async def test_error_3(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Mock
         mock_get.side_effect = [
             MockResponse(

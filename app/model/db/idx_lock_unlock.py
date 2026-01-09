@@ -78,7 +78,7 @@ class IDXLock(Base):
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     # Data(LockDataMessage)
-    data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    data: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     # Lock Datetime
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
@@ -158,7 +158,7 @@ class IDXUnlock(Base):
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     # Data(UnlockDataMessage)
-    data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    data: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     # Lock Datetime
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False

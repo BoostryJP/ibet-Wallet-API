@@ -19,24 +19,26 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-from typing import Sequence
+from typing import Awaitable, Callable, Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+from hexbytes import HexBytes
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
+from web3.types import BlockData
 
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import AgreementStatus, IDXAgreement, IDXOrder, Listing
 from batch import indexer_DEX
-from batch.indexer_DEX import LOG, main
+from batch.indexer_DEX import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.conftest import ibet_exchange_contract
 from tests.contract_modules import (
@@ -54,16 +56,35 @@ from tests.contract_modules import (
     take_buy,
     take_sell,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
+def _block_tx_hash(block: BlockData) -> str:
+    transactions = block.get("transactions")
+    assert isinstance(transactions, list)
+    assert len(transactions) > 0
+    tx_hash = transactions[0]
+    assert isinstance(tx_hash, HexBytes)
+    return tx_hash.to_0x_hex()
+
+
+def _require_address(address: str | None) -> str:
+    assert address is not None
+    return address
+
+
 @pytest_asyncio.fixture(scope="function")
-async def processor_factory(session, shared_contract):
-    async def _processor(membership=False, coupon=False):
+async def processor_factory(
+    session: Session, shared_contract: SharedContract
+) -> Callable[[bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]]:
+    async def _processor(
+        membership: bool = False, coupon: bool = False
+    ) -> tuple[Processor, dict[str, str | None]]:
         # Create exchange contract for each test method.
-        exchange_address = {
+        exchange_address: dict[str, str | None] = {
             "membership": None,
             "coupon": None,
         }
@@ -97,7 +118,11 @@ async def processor_factory(session, shared_contract):
 
 
 @pytest.fixture(scope="function")
-def main_func(processor_factory):
+def main_func(
+    processor_factory: Callable[
+        [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+    ],
+):
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -114,7 +139,11 @@ class TestProcessor:
     trader = eth_account["trader"]
 
     @staticmethod
-    def issue_token_membership(issuer, exchange_contract_address, token_list):
+    def issue_token_membership(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テスト会員権",
@@ -135,7 +164,11 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_coupon(issuer, exchange_contract_address, token_list):
+    def issue_token_coupon(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テストクーポン",
@@ -156,7 +189,7 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -172,12 +205,19 @@ class TestProcessor:
 
     # <Normal_1>
     # - Create Order
-    async def test_normal_1(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_1(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -203,7 +243,7 @@ class TestProcessor:
 
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -224,12 +264,19 @@ class TestProcessor:
     # <Normal_2>
     # - Create Order
     # - Cancel Order
-    async def test_normal_2(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_2(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -258,7 +305,7 @@ class TestProcessor:
 
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -279,12 +326,19 @@ class TestProcessor:
     # <Normal_3>
     # - Create Order
     # - Order Agreement(Take buy)
-    async def test_normal_3(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_3(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -315,7 +369,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -335,7 +389,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert _agreement.transaction_hash == _block_tx_hash(block2)
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -351,12 +405,19 @@ class TestProcessor:
     # <Normal_4>
     # - Create Order
     # - Order Agreement(Take sell)
-    async def test_normal_4(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_4(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -389,7 +450,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -409,7 +470,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert _agreement.transaction_hash == _block_tx_hash(block2)
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -426,12 +487,19 @@ class TestProcessor:
     # - Create Order
     # - Order Agreement
     # - Confirm Agreement
-    async def test_normal_5(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_5(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -465,7 +533,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -485,7 +553,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert _agreement.transaction_hash == _block_tx_hash(block2)
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -502,12 +570,19 @@ class TestProcessor:
     # - Create Order
     # - Order Agreement
     # - Cancel Agreement
-    async def test_normal_6(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_6(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -541,7 +616,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{exchange_contract_address}_1"
@@ -561,7 +636,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert _agreement.transaction_hash == _block_tx_hash(block2)
         assert _agreement.exchange_address == exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -579,15 +654,22 @@ class TestProcessor:
     # - Create Order
     # - Order Agreement
     # - Confirm Agreement
-    async def test_normal_7(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(
-            membership=True, coupon=True
-        )
+    async def test_normal_7(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, True)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        membership_exchange_contract_address = exchange_address["membership"]
-        coupon_exchange_contract_address = exchange_address["coupon"]
+        membership_exchange_contract_address = _require_address(
+            exchange_address["membership"]
+        )
+        coupon_exchange_contract_address = _require_address(exchange_address["coupon"])
 
         membership_token = self.issue_token_membership(
             self.issuer, membership_exchange_contract_address, token_list_contract
@@ -659,7 +741,7 @@ class TestProcessor:
         block = web3.eth.get_block(membership_block_number)
         _order = _order_list[0]
         assert _order.id == 1
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == membership_token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{membership_exchange_contract_address}_1"
@@ -675,7 +757,7 @@ class TestProcessor:
         block = web3.eth.get_block(coupon_block_number)
         _order = _order_list[1]
         assert _order.id == 2
-        assert _order.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _order.transaction_hash == _block_tx_hash(block)
         assert _order.token_address == coupon_token["address"]
         assert _order.order_id == 1
         assert _order.unique_order_id == f"{coupon_exchange_contract_address}_1"
@@ -695,7 +777,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(membership_block_number2)
         _agreement = _agreement_list[0]
-        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert _agreement.transaction_hash == _block_tx_hash(block2)
         assert _agreement.exchange_address == membership_exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -710,7 +792,7 @@ class TestProcessor:
 
         block2 = web3.eth.get_block(coupon_block_number2)
         _agreement = _agreement_list[1]
-        assert _agreement.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert _agreement.transaction_hash == _block_tx_hash(block2)
         assert _agreement.exchange_address == coupon_exchange_contract_address
         assert _agreement.order_id == 1
         assert _agreement.agreement_id == 1
@@ -725,12 +807,19 @@ class TestProcessor:
 
     # <Normal_8>
     # Not Listing Token
-    async def test_normal_8(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_normal_8(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -758,8 +847,15 @@ class TestProcessor:
 
     # <Normal_9>
     # Unset Exchange Address
-    async def test_normal_9(self, processor_factory, shared_contract, session):
-        processor, _exchange_address = await processor_factory()
+    async def test_normal_9(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, _exchange_address = await processor_factory(False, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -787,8 +883,15 @@ class TestProcessor:
 
     # <Normal_10>
     # No event logs
-    async def test_normal_10(self, processor_factory, shared_contract, session):
-        processor, _ = await processor_factory()
+    async def test_normal_10(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, _ = await processor_factory(False, False)
 
         # Run target process
         await processor.sync_new_logs()
@@ -817,12 +920,19 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    async def test_error_1_1(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_error_1_1(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -881,12 +991,19 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    async def test_error_1_2(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_error_1_2(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -955,12 +1072,19 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_1(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_error_2_1(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -1028,12 +1152,19 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_2(self, processor_factory, shared_contract, session):
-        processor, exchange_address = await processor_factory(membership=True)
+    async def test_error_2_2(
+        self,
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+    ):
+        processor, exchange_address = await processor_factory(True, False)
 
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = exchange_address["membership"]
+        exchange_contract_address = _require_address(exchange_address["membership"])
         token = self.issue_token_membership(
             self.issuer, exchange_contract_address, token_list_contract
         )
@@ -1097,7 +1228,14 @@ class TestProcessor:
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     async def test_error_3(
-        self, main_func, processor_factory, shared_contract, session, caplog
+        self,
+        main_func: Callable[[], Awaitable[None]],
+        processor_factory: Callable[
+            [bool, bool], Awaitable[tuple[Processor, dict[str, str | None]]]
+        ],
+        shared_contract: SharedContract,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
     ):
         # Mocking time.sleep to break mainloop
         asyncio_mock = AsyncMock(wraps=asyncio)

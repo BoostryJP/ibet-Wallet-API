@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 import time
-from typing import Any
+from typing import Any, TypedDict
 
 from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -78,9 +78,15 @@ class RingBuffer:
         return self._buffer[self._next]
 
 
+class NodeInfo(TypedDict):
+    priority: int
+    web3: AsyncWeb3
+    history: RingBuffer
+
+
 class Processor:
     def __init__(self):
-        self.node_info = {}
+        self.node_info: dict[str, NodeInfo] = {}
 
     async def initial_setup(self):
         local_session = self.__get_db_session()
@@ -131,8 +137,6 @@ class Processor:
     async def __set_node_info(
         self, db_session: AsyncSession, endpoint_uri: str, priority: int
     ):
-        self.node_info[endpoint_uri] = {"priority": priority}
-
         web3 = AsyncWeb3(
             AsyncHTTPProvider(
                 endpoint_uri,
@@ -142,7 +146,14 @@ class Processor:
         )
         web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
         web3.middleware_onion.add(CustomWeb3ExceptionMiddleware)
-        self.node_info[endpoint_uri]["web3"] = web3
+        self.node_info[endpoint_uri] = {
+            "priority": priority,
+            "web3": web3,
+            "history": RingBuffer(
+                config.BLOCK_SYNC_STATUS_CALC_PERIOD,
+                {"time": time.time(), "block_number": 0},
+            ),
+        }
 
         # Get block number
         try:
@@ -162,7 +173,11 @@ class Processor:
 
         data = {"time": block["timestamp"], "block_number": block["number"]}
         history = RingBuffer(config.BLOCK_SYNC_STATUS_CALC_PERIOD, data)
-        self.node_info[endpoint_uri]["history"] = history
+        self.node_info[endpoint_uri] = {
+            "priority": priority,
+            "web3": web3,
+            "history": history,
+        }
 
     async def __process(self, db_session: AsyncSession, endpoint_uri: str):
         is_synced = True

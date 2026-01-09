@@ -19,13 +19,13 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-from typing import Sequence
+from typing import Awaitable, Callable, Mapping, Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -55,22 +55,22 @@ from tests.contract_modules import (
     membership_transfer_to_exchange,
     take_sell,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
+@pytest.fixture(scope="session", autouse=True)
+def test_module(shared_contract: SharedContract):
     indexer_Position_Membership.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract[
         "TokenList"
     ]["address"]
-    return indexer_Position_Membership
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func():
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -81,8 +81,8 @@ def main_func(test_module):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def processor(test_module, session):
-    processor = test_module.Processor()
+async def processor() -> Processor:
+    processor = Processor()
     await processor.initial_sync()
     return processor
 
@@ -94,7 +94,11 @@ class TestProcessor:
     trader2 = eth_account["agent"]
 
     @staticmethod
-    def issue_token_membership(issuer, exchange_contract_address, token_list):
+    def issue_token_membership(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テスト会員権",
@@ -115,7 +119,7 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -133,7 +137,9 @@ class TestProcessor:
     # Single Token
     # Single event logs
     # - Transfer
-    async def test_normal_1(self, processor, shared_contract, session):
+    async def test_normal_1(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -156,18 +162,15 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 2
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -177,6 +180,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
@@ -184,7 +188,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -194,6 +198,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -205,7 +210,9 @@ class TestProcessor:
     # Single Token
     # Multi event logs
     # - Transfer
-    async def test_normal_2(self, processor, shared_contract, session):
+    async def test_normal_2(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -231,18 +238,15 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 3
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -252,6 +256,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -259,7 +264,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -269,6 +274,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -276,7 +282,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -286,6 +292,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
@@ -297,7 +304,9 @@ class TestProcessor:
     # Multi Token
     # Multi event logs
     # - Transfer
-    async def test_normal_3(self, processor, shared_contract, session):
+    async def test_normal_3(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -333,18 +342,15 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 6
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -354,6 +360,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
@@ -361,7 +368,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -371,6 +378,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -378,7 +386,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -388,6 +396,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
@@ -395,7 +404,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -405,6 +414,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 5000
@@ -412,7 +422,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -422,6 +432,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
@@ -429,7 +440,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -439,6 +450,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 5000 - 3000
@@ -452,7 +464,9 @@ class TestProcessor:
     # Exchange
     # - Transfer
     # - Commitment
-    async def test_normal_4(self, processor, shared_contract, session):
+    async def test_normal_4(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         membership_exchange = shared_contract["IbetMembershipExchange"]
@@ -494,15 +508,12 @@ class TestProcessor:
         assert _position.exchange_balance == 10000 - 111 - 222 - 333
         assert _position.exchange_commitment == 333
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_5>
@@ -511,7 +522,9 @@ class TestProcessor:
     # Escrow
     # - Transfer
     # - Commitment
-    async def test_normal_5(self, processor, shared_contract, session):
+    async def test_normal_5(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetEscrow"]
@@ -556,18 +569,15 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 2
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -577,6 +587,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
@@ -584,7 +595,7 @@ class TestProcessor:
         assert _position.exchange_balance == 10000 - 200 - 300
         assert _position.exchange_commitment == 300
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -594,6 +605,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 0
@@ -603,7 +615,9 @@ class TestProcessor:
 
     # <Normal_6>
     # No event logs
-    async def test_normal_6(self, processor, shared_contract, session):
+    async def test_normal_6(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -622,21 +636,20 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 0
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_7>
     # Not listing Token is NOT indexed,
     # and indexed properly after listing
-    async def test_normal_7(self, processor, shared_contract, session):
+    async def test_normal_7(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -657,10 +670,10 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 0
 
-        _idx_position_membership_block_number: Sequence[
+        _idx_position_membership_block_numbers: Sequence[
             IDXPositionMembershipBlockNumber
         ] = session.scalars(select(IDXPositionMembershipBlockNumber)).all()
-        assert len(_idx_position_membership_block_number) == 0
+        assert len(_idx_position_membership_block_numbers) == 0
 
         # Listing
         self.listing_token(token["address"], session)
@@ -675,15 +688,12 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 2
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_8>
@@ -691,7 +701,9 @@ class TestProcessor:
     # Multi event logs
     # - Transfer
     # Duplicate events to be removed
-    async def test_normal_8(self, processor, shared_contract, session):
+    async def test_normal_8(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -699,7 +711,7 @@ class TestProcessor:
         )
         self.listing_token(token["address"], session)
         from_block = web3.eth.block_number
-        for i in range(0, 5):
+        for _ in range(0, 5):
             # Transfer
             membership_transfer_to_exchange(
                 self.issuer, {"address": self.trader["account_address"]}, token, 10000
@@ -707,9 +719,10 @@ class TestProcessor:
         to_block = web3.eth.block_number
 
         # Get events for token address
-        events = Contract.get_contract(
-            "IbetMembership", token["address"]
-        ).events.Transfer.get_logs(from_block=from_block, to_block=to_block)
+        contract = Contract.get_contract("IbetMembership", token["address"])
+        events: list[Mapping[str, Mapping[str, str]]] = (
+            contract.events.Transfer.get_logs(from_block=from_block, to_block=to_block)
+        )
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5
         filtered_events = processor.remove_duplicate_event_by_token_account_desc(
@@ -720,7 +733,9 @@ class TestProcessor:
     # <Normal_9>
     # When stored index is 9,999,999 and current block number is 19,999,999,
     # then processor must process "__sync_all" method 10 times.
-    async def test_normal_9(self, processor, shared_contract, session):
+    async def test_normal_9(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetEscrow"]
         current_block_number = 20000000 - 1
@@ -794,7 +809,9 @@ class TestProcessor:
     # Multi event logs
     # - Transfer/Exchange
     # Skip exchange events which has already been synced
-    async def test_normal_10(self, processor, shared_contract, session):
+    async def test_normal_10(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetCouponExchange"]
         agent = eth_account["agent"]
@@ -852,26 +869,24 @@ class TestProcessor:
         await processor.sync_new_logs()
 
         # Assertion
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(IDXPosition.account_address == self.issuer["account_address"])
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token1["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 + 55
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
 
-        _idx_position_coupon_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token1["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_coupon_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token1["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_coupon_block_number is not None
         assert _idx_position_coupon_block_number.latest_block_number == block_number1
 
         # Token2 Listing
@@ -884,29 +899,23 @@ class TestProcessor:
         session.rollback()
 
         # Assertion
-        _idx_position_coupon_block_number1: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token1["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_coupon_block_number1 = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token1["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_coupon_block_number1 is not None
         assert _idx_position_coupon_block_number1.latest_block_number == block_number2
 
-        _idx_position_coupon_block_number2: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token2["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_coupon_block_number2 = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token2["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_coupon_block_number2 is not None
         assert _idx_position_coupon_block_number2.latest_block_number == block_number2
 
-        _position1: IDXPosition = session.scalars(
+        _position1 = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -916,13 +925,14 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position1 is not None
         assert _position1.token_address == token1["address"]
         assert _position1.account_address == self.issuer["account_address"]
         assert _position1.balance == 1000000 - 10000 + 55
         assert _position1.exchange_balance == 10000 - 55 - 66
         assert _position1.exchange_commitment == 66
 
-        _position2: IDXPosition = session.scalars(
+        _position2 = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -932,6 +942,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position2 is not None
         assert _position2.token_address == token2["address"]
         assert _position2.account_address == self.issuer["account_address"]
         assert _position2.balance == 1000000 - 10000 + 55
@@ -942,7 +953,9 @@ class TestProcessor:
     # Single Token
     # Multi event logs (Over 1000)
     # - Transfer
-    async def test_normal_11(self, processor, shared_contract, session):
+    async def test_normal_11(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -969,18 +982,15 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 1001
 
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert _idx_position_membership_block_number.latest_block_number == block_number
 
-        _position: IDXPosition = session.scalars(
+        _position = session.scalars(
             select(IDXPosition)
             .where(
                 and_(
@@ -990,6 +1000,7 @@ class TestProcessor:
             )
             .limit(1)
         ).first()
+        assert _position is not None
         assert _position.token_address == token["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 1001
@@ -997,7 +1008,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _positions: list[IDXPosition] = session.scalars(
+        _positions: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).where(
                 and_(
                     IDXPosition.token_address == token["address"],
@@ -1021,7 +1032,9 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    async def test_error_1(self, processor, shared_contract, session):
+    async def test_error_1(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -1044,15 +1057,12 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert (
             _idx_position_membership_block_number.latest_block_number
             == block_number_current
@@ -1078,22 +1088,25 @@ class TestProcessor:
         ).all()
         assert len(_position_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
-        _idx_position_membership_block_number: IDXPositionMembershipBlockNumber = (
-            session.scalars(
-                select(IDXPositionMembershipBlockNumber)
-                .where(
-                    IDXPositionMembershipBlockNumber.token_address == token["address"]
-                )
-                .limit(1)
-            ).first()
-        )
+        _idx_position_membership_block_number = session.scalars(
+            select(IDXPositionMembershipBlockNumber)
+            .where(IDXPositionMembershipBlockNumber.token_address == token["address"])
+            .limit(1)
+        ).first()
+        assert _idx_position_membership_block_number is not None
         assert (
             _idx_position_membership_block_number.latest_block_number
             == block_number_current
         )
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_1(self, processor, shared_contract, session, caplog):
+    async def test_error_2_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -1172,7 +1185,13 @@ class TestProcessor:
         )
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_2(self, processor, shared_contract, session, caplog):
+    async def test_error_2_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_membership(
@@ -1246,7 +1265,13 @@ class TestProcessor:
         )
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(self, main_func, shared_contract, session, caplog):
+    async def test_error_3(
+        self,
+        main_func: Callable[[], Awaitable[None]],
+        shared_contract: SharedContract,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Mocking time.sleep to break mainloop
         asyncio_mock = AsyncMock(wraps=asyncio)
         asyncio_mock.sleep.side_effect = [True, TypeError()]

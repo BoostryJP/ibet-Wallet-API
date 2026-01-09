@@ -17,8 +17,14 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3.middleware.formatting import FormattingMiddlewareBuilder
+class AlembicConfig:
+    def set_main_option(self, name: str, value: str) -> None: ...
 
-# NOTE: The correct type is likely FormattingMiddlewareBuilder,
-# but `type` is used here to avoid a type error when passing it to `web3.middleware_onion.inject`.
-ExtraDataToPOAMiddleware: type[FormattingMiddlewareBuilder]
+class Config:
+    alembic_config: AlembicConfig
+
+class MigrationContext:
+    config: Config
+
+    def migrate_up_to(self, revision: str) -> str | None: ...
+    def migrate_down_to(self, revision: str) -> str | None: ...

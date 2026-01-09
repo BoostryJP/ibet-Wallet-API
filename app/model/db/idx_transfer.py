@@ -77,7 +77,7 @@ class IDXTransfer(Base):
     #     => None
     #   source_event = "Unlock", "ForceUnlock", "ForceChangeLockedAccount"
     #     =>  DataMessage
-    data: Mapped[dict | None] = mapped_column(JSON)
+    data: Mapped[dict[str, object] | None] = mapped_column(JSON)
     # Message
     #   source_event = "Transfer", "Reallocation"
     #     => None

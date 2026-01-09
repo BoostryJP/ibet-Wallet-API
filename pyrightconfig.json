@@ -2,9 +2,7 @@
     "include": [
         "logger.py",
         "server.py",
-        "tests/app/",
-        "tests/utils/",
-        "tests/*.py",
+        "tests/",
     ],
     "exclude": [],
     "typeCheckingMode": "strict"

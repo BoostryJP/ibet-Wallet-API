@@ -17,8 +17,26 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3.middleware.formatting import FormattingMiddlewareBuilder
+from typing import Any, Callable, Protocol, TypeVar, overload
 
-# NOTE: The correct type is likely FormattingMiddlewareBuilder,
-# but `type` is used here to avoid a type error when passing it to `web3.middleware_onion.inject`.
-ExtraDataToPOAMiddleware: type[FormattingMiddlewareBuilder]
+class Response(Protocol):
+    content: bytes
+
+class HttpSession(Protocol):
+    def get(self, url: str, **kwargs: Any) -> Response: ...
+    def post(self, url: str, **kwargs: Any) -> Response: ...
+
+class TaskSet:
+    client: HttpSession
+
+class HttpLocust:
+    task_set: type[TaskSet]
+    min_wait: int
+    max_wait: int
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+@overload
+def task(weight: int = ...) -> Callable[[F], F]: ...
+@overload
+def task(func: F) -> F: ...

@@ -21,6 +21,7 @@ import json
 from typing import Any, Type, TypeVar
 
 from eth_utils.address import to_checksum_address
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import Contract as Web3Contract
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
@@ -87,8 +88,8 @@ class Contract:
             bytecode_runtime=contract_json["deployedBytecode"],
         )
 
-        tx_hash = contract.constructor(*args).transact(
-            {"from": deployer, "gas": 6000000}
+        tx_hash = HexBytes(
+            contract.constructor(*args).transact({"from": deployer, "gas": 6000000})
         )
         tx = web3.eth.wait_for_transaction_receipt(tx_hash)
 

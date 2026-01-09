@@ -27,13 +27,14 @@ import pytest
 import requests
 from eth_utils.address import to_checksum_address
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.model.db import TokenList
 from batch.indexer_PublicInfo_TokenList import LOG, Processor
 
 
 @pytest.fixture(scope="function")
-def processor(session):
+def processor():
     return Processor()
 
 
@@ -74,7 +75,12 @@ class TestProcessor:
     # <Normal_1>
     # 0 record
     @mock.patch("requests.Session.get")
-    async def test_normal_1(self, mock_get, processor, async_session):
+    async def test_normal_1(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -114,7 +120,12 @@ class TestProcessor:
     # <Normal_2>
     # 1 record
     @mock.patch("requests.Session.get")
-    async def test_normal_2(self, mock_get, processor, async_session):
+    async def test_normal_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -169,7 +180,12 @@ class TestProcessor:
     # <Normal_3>
     # 2 record
     @mock.patch("requests.Session.get")
-    async def test_normal_3(self, mock_get, processor, async_session):
+    async def test_normal_3(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -234,7 +250,12 @@ class TestProcessor:
     # <Normal_issuer_address>
     # issuer_address is stored as checksum address
     @mock.patch("requests.Session.get")
-    async def test_normal_issuer_address(self, mock_get, processor, async_session):
+    async def test_normal_issuer_address(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -288,7 +309,13 @@ class TestProcessor:
     # There are no differences from last time
     # -> Skip this cycle
     @mock.patch("requests.Session.get")
-    async def test_normal_4_1(self, mock_get, processor, async_session, caplog):
+    async def test_normal_4_1(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -359,7 +386,13 @@ class TestProcessor:
     # <Normal_4_2>
     # There are differences from the previous cycle
     @mock.patch("requests.Session.get")
-    async def test_normal_4_2(self, mock_get, processor, async_session, caplog):
+    async def test_normal_4_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run target process: 1st time
         mock_get.side_effect = [
             MockResponse(
@@ -427,7 +460,7 @@ class TestProcessor:
         "requests.Session.get",
         MagicMock(side_effect=requests.exceptions.ConnectionError),
     )
-    async def test_error_1_1(self, processor, async_session):
+    async def test_error_1_1(self, processor: Processor, async_session: AsyncSession):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -451,7 +484,12 @@ class TestProcessor:
     # <Error_1_2>
     # API error: Not succeed request
     @mock.patch("requests.Session.get")
-    async def test_error_1_2(self, mock_get, processor, async_session):
+    async def test_error_1_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -481,7 +519,7 @@ class TestProcessor:
         "requests.Session.get",
         MagicMock(side_effect=json.decoder.JSONDecodeError),
     )
-    async def test_error_1_3(self, processor, async_session):
+    async def test_error_1_3(self, processor: Processor, async_session: AsyncSession):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -555,7 +593,13 @@ class TestProcessor:
             },  # product_type missing
         ],
     )
-    async def test_error_2(self, mock_get, processor, async_session, invalid_record):
+    async def test_error_2(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+        invalid_record: dict[str, object],
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
@@ -611,7 +655,12 @@ class TestProcessor:
     # <Error_3>
     # Other error
     @mock.patch("requests.Session.get")
-    async def test_error_3(self, mock_get, processor, async_session):
+    async def test_error_3(
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        async_session: AsyncSession,
+    ):
         # Prepare data
         _token_list_item = TokenList()
         _token_list_item.token_address = self.token_address_1
