@@ -118,9 +118,9 @@ class Notification(Base):
     block_timestamp: Mapped[datetime | None] = mapped_column(DateTime)
 
     # 通知イベントの内容
-    args: Mapped[dict | None] = mapped_column(JSON)
+    args: Mapped[dict[str, object] | None] = mapped_column(JSON)
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
-    metainfo: Mapped[dict | None] = mapped_column(JSON)
+    metainfo: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない

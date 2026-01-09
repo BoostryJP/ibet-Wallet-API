@@ -19,6 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
+from collections.abc import Iterator
+from typing import Awaitable, Callable, Mapping
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
@@ -34,7 +36,6 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister, Listing
-from batch import indexer_Token_List_Event
 from batch.indexer_Token_List_Event import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -47,26 +48,26 @@ from tests.contract_modules import (
     register_bond_list,
     register_share_list,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
+@pytest.fixture(scope="session", autouse=True)
+def test_module(shared_contract: SharedContract):
     config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-    return indexer_Token_List_Event.Processor
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, async_session):
+def processor() -> Iterator[Processor]:
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
     LOG.propagate = True
 
-    processor = test_module()
+    processor = Processor()
     yield processor
 
     LOG.propagate = False
@@ -74,7 +75,7 @@ def processor(test_module, async_session):
 
 
 @pytest.fixture(scope="function")
-def main_func(test_module):
+def main_func():
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -93,7 +94,7 @@ class TestProcessor:
     agent = eth_account["agent"]
 
     @staticmethod
-    async def listing_token(token_address, async_session):
+    async def listing_token(token_address: str, async_session: AsyncSession):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -104,33 +105,49 @@ class TestProcessor:
         await async_session.commit()
 
     @staticmethod
-    def issue_token_bond_with_args(issuer, token_list, args):
+    def issue_token_bond_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = issue_bond_token(issuer, args)
+        token = issue_bond_token(issuer, dict(args))
         register_bond_list(issuer, token, token_list)
 
         return token
 
     @staticmethod
-    def issue_token_share_with_args(issuer, token_list, args):
+    def issue_token_share_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = issue_share_token(issuer, args)
+        token = issue_share_token(issuer, dict(args))
         register_share_list(issuer, token, token_list)
 
         return token
 
     @staticmethod
-    def issue_token_coupon_with_args(issuer, token_list, args):
+    def issue_token_coupon_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = issue_coupon_token(issuer, args)
+        token = issue_coupon_token(issuer, dict(args))
         coupon_register_list(issuer, token, token_list)
 
         return token
 
     @staticmethod
-    def issue_token_membership_with_args(issuer, token_list, args):
+    def issue_token_membership_with_args(
+        issuer: UnitTestAccount,
+        token_list: DeployedContract,
+        args: Mapping[str, object],
+    ):
         # Issue token
-        token = membership_issue(issuer, args)
+        token = membership_issue(issuer, dict(args))
         membership_register_list(issuer, token, token_list)
 
         return token
@@ -144,7 +161,7 @@ class TestProcessor:
     async def test_normal_1(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -167,7 +184,7 @@ class TestProcessor:
     async def test_normal_2(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
     ):
@@ -176,7 +193,7 @@ class TestProcessor:
         exchange_contract = shared_contract["IbetStraightBondExchange"]
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        _token_expected_list = []
+        _token_expected_list: list[dict[str, object]] = []
 
         _token_list_block_number = IDXTokenListBlockNumber()
         _token_list_block_number.latest_block_number = web3.eth.block_number
@@ -369,7 +386,7 @@ class TestProcessor:
 
         # assertion
         for _expect_dict in _token_expected_list:
-            token_list_item: IDXTokenListRegister = (
+            token_list_item = (
                 await async_session.scalars(
                     select(IDXTokenListRegister)
                     .where(
@@ -379,6 +396,7 @@ class TestProcessor:
                     .limit(1)
                 )
             ).first()
+            assert token_list_item is not None
 
             assert token_list_item.token_template == _expect_dict["token_template"]
             assert token_list_item.owner_address == _expect_dict["owner_address"]
@@ -389,7 +407,7 @@ class TestProcessor:
     async def test_normal_3_1(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
         caplog: pytest.LogCaptureFixture,
@@ -417,11 +435,12 @@ class TestProcessor:
                 # Then processor calls "__sync_register" method 10 times.
                 assert __sync_register_mock.call_count == 10
 
-                idx_token_list_block_number: IDXTokenListBlockNumber = (
+                idx_token_list_block_number = (
                     await async_session.scalars(
                         select(IDXTokenListBlockNumber).limit(1)
                     )
                 ).first()
+                assert idx_token_list_block_number is not None
                 assert (
                     idx_token_list_block_number.latest_block_number
                     == current_block_number
@@ -476,7 +495,7 @@ class TestProcessor:
     async def test_normal_3_2(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
         caplog: pytest.LogCaptureFixture,
@@ -512,11 +531,12 @@ class TestProcessor:
                 # Then processor calls "__sync_register" method 10 times.
                 assert __sync_register_mock.call_count == 10
 
-                idx_token_list_block_number: IDXTokenListBlockNumber = (
+                idx_token_list_block_number = (
                     await async_session.scalars(
                         select(IDXTokenListBlockNumber).limit(1)
                     )
                 ).first()
+                assert idx_token_list_block_number is not None
                 assert (
                     idx_token_list_block_number.latest_block_number
                     == current_block_number
@@ -571,7 +591,7 @@ class TestProcessor:
     async def test_normal_3_3(
         self,
         processor: Processor,
-        shared_contract,
+        shared_contract: SharedContract,
         async_session: AsyncSession,
         block_number: None,
         caplog: pytest.LogCaptureFixture,
@@ -619,7 +639,12 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    async def test_error_1(self, processor: Processor, shared_contract, async_session):
+    async def test_error_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -655,9 +680,10 @@ class TestProcessor:
         # Assertion
         async_session.expunge_all()
         _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
-        _token_list_block_number: IDXTokenListBlockNumber = (
+        _token_list_block_number = (
             await async_session.scalars(select(IDXTokenListBlockNumber))
         ).first()
+        assert _token_list_block_number is not None
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
         assert _token_list_block_number.latest_block_number == block_number_current
@@ -679,16 +705,20 @@ class TestProcessor:
         await async_session.rollback()
         # Assertion
         _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
-        _token_list_block_number: IDXTokenListBlockNumber = (
+        _token_list_block_number = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number is not None
         assert len(_token_list) == 0
         # Latest_block is incremented in "process" process.
         assert _token_list_block_number.latest_block_number == block_number_current
 
     # <Error_2_1>: ServiceUnavailable occurs in __sync_xx method.
     async def test_error_2_1(
-        self, processor: Processor, shared_contract, async_session
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -718,9 +748,10 @@ class TestProcessor:
         )
         await self.listing_token(token["address"], async_session)
 
-        _token_list_block_number_bf: IDXTokenListBlockNumber = (
+        _token_list_block_number_bf = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number_bf is not None
         # Expect that process() raises ServiceUnavailable.
         with (
             mock.patch(
@@ -734,9 +765,10 @@ class TestProcessor:
         await async_session.rollback()
         # Assertion
         _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = (
+        _token_list_block_number_af = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number_af is not None
         assert len(_token_list) == 0
         assert (
             _token_list_block_number_bf.latest_block_number
@@ -749,9 +781,10 @@ class TestProcessor:
         await self.listing_token(token["address"], async_session)
 
         await async_session.rollback()
-        _token_list_block_number_bf: IDXTokenListBlockNumber = (
+        _token_list_block_number_bf = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number_bf is not None
 
         # Expect that process() raises ServiceUnavailable.
         with (
@@ -766,9 +799,10 @@ class TestProcessor:
         # Assertion
         await async_session.rollback()
         _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = (
+        _token_list_block_number_af = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number_af is not None
         assert len(_token_list) == 0
         assert (
             _token_list_block_number_bf.latest_block_number
@@ -777,7 +811,10 @@ class TestProcessor:
 
     # <Error_2_2>: SQLAlchemyError occurs in "process".
     async def test_error_2_2(
-        self, processor: Processor, shared_contract, async_session
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -816,9 +853,10 @@ class TestProcessor:
 
         # Assertion
         _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = (
+        _token_list_block_number_af = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number_af is not None
         assert len(_token_list) == 0
         assert (
             _token_list_block_number_af.latest_block_number
@@ -842,9 +880,10 @@ class TestProcessor:
         # Assertion
         await async_session.rollback()
         _token_list = (await async_session.scalars(select(IDXTokenListRegister))).all()
-        _token_list_block_number_af: IDXTokenListBlockNumber = (
+        _token_list_block_number_af = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
         ).first()
+        assert _token_list_block_number_af is not None
         assert len(_token_list) == 0
         assert (
             _token_list_block_number_af.latest_block_number
@@ -852,7 +891,13 @@ class TestProcessor:
         )
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(self, main_func, shared_contract, async_session, caplog):
+    async def test_error_3(
+        self,
+        main_func: Callable[[], Awaitable[None]],
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]

@@ -24,6 +24,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
@@ -36,7 +37,7 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 @pytest_asyncio.fixture(scope="function")
-async def processor(session):
+async def processor():
     yield Processor()
 
 
@@ -53,13 +54,14 @@ class TestProcessor:
     # Run 3rd: Return to normal state
     # Run 4th: Abnormal state - An error occurs when the difference between highestBlock and currentBlock exceeds a threshold.
     # Run 5th: Return to normal state - Since the difference between highestBlock and currentBlock is within the threshold, no error occurs.
-    async def test_normal_1(self, processor, async_session):
+    async def test_normal_1(self, processor: Processor, async_session: AsyncSession):
         # Run 1st: Normal state
         await processor.initial_setup()
         await processor.process()
         await async_session.commit()
 
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0
@@ -74,6 +76,7 @@ class TestProcessor:
             async_session.expire_all()
 
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.is_synced == False
 
         # Run 3rd: Return to normal state
@@ -83,6 +86,7 @@ class TestProcessor:
         async_session.expire_all()
 
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.is_synced == True
 
         # Run 4th: Abnormal state
@@ -100,6 +104,7 @@ class TestProcessor:
             async_session.expire_all()
 
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.is_synced == False
 
         # Run 5th: Return to normal state
@@ -117,35 +122,34 @@ class TestProcessor:
             async_session.expire_all()
 
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.is_synced == True
 
     # <Normal_2>
     # Standby node is down to sync
     @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000"])
-    async def test_normal_2(self, async_session):
+    async def test_normal_2(self, async_session: AsyncSession):
         processor = Processor()
         await processor.initial_setup()
 
         # pre assertion
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.id == 1
         assert _node.endpoint_uri == "http://test1:1000"
         assert _node.priority == 1
         assert _node.is_synced == False
 
         # node sync(processing)
-        org_value = processor.node_info["http://test1:1000"][
-            "web3"
-        ].manager.provider.endpoint_uri
-        processor.node_info["http://test1:1000"][
-            "web3"
-        ].manager.provider.endpoint_uri = config.WEB3_HTTP_PROVIDER
+        provider = processor.node_info["http://test1:1000"]["web3"].manager.provider
+        assert provider is not None
+        org_value = getattr(provider, "endpoint_uri")
+        assert isinstance(org_value, str)
+        setattr(provider, "endpoint_uri", config.WEB3_HTTP_PROVIDER)
         await processor.process()
         await async_session.rollback()
         async_session.expire_all()
-        processor.node_info["http://test1:1000"][
-            "web3"
-        ].manager.provider.endpoint_uri = org_value
+        setattr(provider, "endpoint_uri", org_value)
 
         # assertion
         _node = (
@@ -153,11 +157,12 @@ class TestProcessor:
                 select(Node).where(Node.endpoint_uri == "http://test1:1000").limit(1)
             )
         ).first()
+        assert _node is not None
         assert _node.is_synced == True
 
     # <Normal_3>
     # Delete old node data
-    async def test_normal_3(self, async_session):
+    async def test_normal_3(self, async_session: AsyncSession):
         node = Node()
         node.id = 1
         node.endpoint_uri = "old_node"
@@ -186,6 +191,7 @@ class TestProcessor:
 
         # assertion-2
         new_node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert new_node is not None
         assert new_node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert new_node.priority == 0
         assert new_node.is_synced == True
@@ -204,7 +210,7 @@ class TestProcessor:
         "web3.providers.rpc.AsyncHTTPProvider.make_request",
         MagicMock(side_effect=Exception()),
     )
-    async def test_error_1(self, async_session):
+    async def test_error_1(self, async_session: AsyncSession):
         processor = Processor()
         await processor.initial_setup()
 
@@ -229,33 +235,33 @@ class TestProcessor:
 
     # <Error_2>
     # node down(processing)
-    async def test_error_2(self, processor, async_session):
+    async def test_error_2(self, processor: Processor, async_session: AsyncSession):
         await processor.initial_setup()
         await processor.process()
 
         # assertion
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0
         assert _node.is_synced == True
 
         # node down(processing)
-        org_value = processor.node_info[config.WEB3_HTTP_PROVIDER][
+        provider = processor.node_info[config.WEB3_HTTP_PROVIDER][
             "web3"
-        ].manager.provider.endpoint_uri
-        processor.node_info[config.WEB3_HTTP_PROVIDER][
-            "web3"
-        ].manager.provider.endpoint_uri = "http://hogehoge"
+        ].manager.provider
+        org_value = getattr(provider, "endpoint_uri", None)
+        assert isinstance(org_value, str)
+        setattr(provider, "endpoint_uri", "http://hogehoge")
         await processor.process()
         await async_session.rollback()
         async_session.expire_all()
-        processor.node_info[config.WEB3_HTTP_PROVIDER][
-            "web3"
-        ].manager.provider.endpoint_uri = org_value
+        setattr(provider, "endpoint_uri", org_value)
 
         # assertion
         _node = (await async_session.scalars(select(Node).limit(1))).first()
+        assert _node is not None
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0

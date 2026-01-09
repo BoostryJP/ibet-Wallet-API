@@ -242,7 +242,7 @@ class IDXShareToken(TokenBase):
     is_canceled: Mapped[int | None] = mapped_column(Boolean)
     # Dividend Information(JSON)
     # NOTE: Short-term cache required
-    dividend_information: Mapped[dict | None] = mapped_column(JSON)
+    dividend_information: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     FIELDS = {
         "personal_info_address": str,

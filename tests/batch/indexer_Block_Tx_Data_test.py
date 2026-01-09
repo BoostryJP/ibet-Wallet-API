@@ -33,8 +33,7 @@ from web3.types import RPCEndpoint
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXBlockData, IDXBlockDataBlockNumber, IDXTxData
-from batch import indexer_Block_Tx_Data
-from batch.indexer_Block_Tx_Data import LOG
+from batch.indexer_Block_Tx_Data import LOG, Processor
 from tests.account_config import eth_account
 from tests.utils import IbetStandardTokenUtils
 
@@ -42,9 +41,10 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    return indexer_Block_Tx_Data
+def _transactions_len(block_data: IDXBlockData) -> int:
+    transactions = block_data.transactions
+    assert transactions is not None
+    return len(transactions)
 
 
 @pytest.fixture(scope="function")
@@ -59,15 +59,15 @@ def caplog(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
-    processor = test_module.Processor()
+def processor() -> Processor:
+    processor = Processor()
     return processor
 
 
 @pytest.mark.asyncio
 class TestProcessor:
     @staticmethod
-    def set_block_number(session, block_number):
+    def set_block_number(session: Session, block_number: int):
         indexed_block_number = IDXBlockDataBlockNumber()
         indexed_block_number.chain_id = config.WEB3_CHAINID
         indexed_block_number.latest_block_number = block_number
@@ -80,7 +80,9 @@ class TestProcessor:
 
     # Normal_1
     # Skip process: from_block > latest_block
-    async def test_normal_1(self, processor, session, caplog):
+    async def test_normal_1(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -88,11 +90,12 @@ class TestProcessor:
         await processor.process()
 
         # Assertion
-        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+        indexed_block = session.scalars(
             select(IDXBlockDataBlockNumber)
             .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
             .limit(1)
         ).first()
+        assert indexed_block is not None
         assert indexed_block.latest_block_number == before_block_number
 
         block_data: Sequence[IDXBlockData] = session.scalars(
@@ -111,7 +114,9 @@ class TestProcessor:
 
     # Normal_2
     # BlockData: Empty block is generated
-    async def test_normal_2(self, processor, session, caplog):
+    async def test_normal_2(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -124,11 +129,12 @@ class TestProcessor:
         after_block_number = web3.eth.block_number
 
         # Assertion: Data
-        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+        indexed_block = session.scalars(
             select(IDXBlockDataBlockNumber)
             .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
             .limit(1)
         ).first()
+        assert indexed_block is not None
         assert indexed_block.latest_block_number == after_block_number
 
         block_data: Sequence[IDXBlockData] = session.scalars(
@@ -157,7 +163,9 @@ class TestProcessor:
 
     # Normal_3_1
     # TxData: Contract deployment
-    async def test_normal_3_1(self, processor, session, caplog):
+    async def test_normal_3_1(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         deployer = eth_account["issuer"]["account_address"]
 
         before_block_number = web3.eth.block_number
@@ -181,11 +189,12 @@ class TestProcessor:
         after_block_number = web3.eth.block_number
 
         # Assertion
-        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+        indexed_block = session.scalars(
             select(IDXBlockDataBlockNumber)
             .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
             .limit(1)
         ).first()
+        assert indexed_block is not None
         assert indexed_block.latest_block_number == after_block_number
 
         block_data: Sequence[IDXBlockData] = session.scalars(
@@ -193,7 +202,7 @@ class TestProcessor:
         ).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
-        assert len(block_data[0].transactions) == 1
+        assert _transactions_len(block_data[0]) == 1
 
         tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
@@ -207,7 +216,9 @@ class TestProcessor:
 
     # Normal_3_2
     # TxData: Transaction
-    async def test_normal_3_2(self, processor, session, caplog):
+    async def test_normal_3_2(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         deployer = eth_account["issuer"]["account_address"]
         to_address = eth_account["user1"]["account_address"]
 
@@ -235,11 +246,12 @@ class TestProcessor:
         after_block_number = web3.eth.block_number
 
         # Assertion
-        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+        indexed_block = session.scalars(
             select(IDXBlockDataBlockNumber)
             .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
             .limit(1)
         ).first()
+        assert indexed_block is not None
         assert indexed_block.latest_block_number == after_block_number
 
         block_data: Sequence[IDXBlockData] = session.scalars(
@@ -248,10 +260,10 @@ class TestProcessor:
         assert len(block_data) == 2
 
         assert block_data[0].number == before_block_number + 1
-        assert len(block_data[0].transactions) == 1
+        assert _transactions_len(block_data[0]) == 1
 
         assert block_data[1].number == before_block_number + 2
-        assert len(block_data[1].transactions) == 1
+        assert _transactions_len(block_data[1]) == 1
 
         tx_data: Sequence[IDXTxData] = session.scalars(
             select(IDXTxData).order_by(IDXTxData.block_number)
@@ -276,7 +288,7 @@ class TestProcessor:
     ###########################################################################
 
     # Error_1: ServiceUnavailable
-    async def test_error_1(self, processor, session):
+    async def test_error_1(self, processor: Processor, session: Session):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -291,11 +303,12 @@ class TestProcessor:
             await processor.process()
 
         # Assertion
-        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+        indexed_block = session.scalars(
             select(IDXBlockDataBlockNumber)
             .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
             .limit(1)
         ).first()
+        assert indexed_block is not None
         assert indexed_block.latest_block_number == before_block_number
 
         block_data: Sequence[IDXBlockData] = session.scalars(
@@ -309,7 +322,7 @@ class TestProcessor:
         assert len(tx_data) == 0
 
     # Error_2: SQLAlchemyError
-    async def test_error_2(self, processor, session):
+    async def test_error_2(self, processor: Processor, session: Session):
         before_block_number = web3.eth.block_number
         self.set_block_number(session, before_block_number)
 
@@ -324,11 +337,12 @@ class TestProcessor:
             await processor.process()
 
         # Assertion
-        indexed_block: IDXBlockDataBlockNumber = session.scalars(
+        indexed_block = session.scalars(
             select(IDXBlockDataBlockNumber)
             .where(IDXBlockDataBlockNumber.chain_id == config.WEB3_CHAINID)
             .limit(1)
         ).first()
+        assert indexed_block is not None
         assert indexed_block.latest_block_number == before_block_number
 
         block_data: Sequence[IDXBlockData] = session.scalars(

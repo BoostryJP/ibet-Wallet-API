@@ -23,7 +23,7 @@ import functools
 import json
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Awaitable, Callable, Optional, Type, Union
+from typing import Awaitable, Callable, Self, Type, TypeVar, Union
 
 from eth_utils import to_checksum_address
 from sqlalchemy import select
@@ -59,6 +59,8 @@ TokenClassTypes = Union[
 
 TokenInstanceTypes = Union["BondToken", "ShareToken", "MembershipToken", "CouponToken"]
 
+TToken = TypeVar("TToken", bound="TokenBase")
+
 
 def token_db_cache(TargetModel: IDXTokenModel):
     """
@@ -67,19 +69,16 @@ def token_db_cache(TargetModel: IDXTokenModel):
     """
 
     def decorator(
-        func: Callable[
-            [TokenClassTypes, AsyncSession, str],
-            Awaitable[Optional[TokenInstanceTypes]],
-        ],
-    ):
+        func: Callable[[type[TToken], AsyncSession, str], Awaitable[TToken | None]],
+    ) -> Callable[[type[TToken], AsyncSession, str], Awaitable[TToken | None]]:
         """
         @param func: Function for decoration
         """
 
         @functools.wraps(func)
         async def wrapper(
-            cls: TokenClassTypes, async_session: AsyncSession, token_address: str
-        ) -> Optional[TokenInstanceTypes]:
+            cls: type[TToken], async_session: AsyncSession, token_address: str
+        ) -> TToken | None:
             """
             @param cls: Class of return instance
             @param async_session: ORM async session
@@ -91,7 +90,7 @@ def token_db_cache(TargetModel: IDXTokenModel):
                 return await func(cls, async_session, token_address)
 
             # Get data from cache
-            cached_token: Optional[IDXTokenInstance] = (
+            cached_token: IDXTokenInstance | None = (
                 await async_session.scalars(
                     select(TargetModel)
                     .where(TargetModel.token_address == token_address)
@@ -135,11 +134,11 @@ class TokenBase:
     max_holding_quantity: int
     max_sell_amount: int
 
-    @staticmethod
-    def from_model(token: TokenBase):
+    @classmethod
+    def from_model(cls, token_model: IDXTokenInstance) -> Self:
         raise NotImplementedError("Subclasses should implement this")
 
-    def to_model(self):
+    def to_model(self) -> IDXTokenInstance:
         raise NotImplementedError("Subclasses should implement this")
 
 
@@ -175,9 +174,10 @@ class BondToken(TokenBase):
     memo: str
     is_redeemed: bool
 
-    @staticmethod
-    def from_model(token_model: BondTokenModel) -> BondToken:
-        token_obj = BondToken()
+    @classmethod
+    def from_model(cls, token_model: IDXTokenInstance) -> Self:
+        assert isinstance(token_model, BondTokenModel)
+        token_obj = cls()
         for key, value in token_model.json().items():
             if key != "interest_payment_date":
                 setattr(token_obj, key, value)
@@ -526,9 +526,10 @@ class ShareToken(TokenBase):
     is_canceled: bool
     dividend_information: object
 
-    @staticmethod
-    def from_model(token_model: ShareTokenModel) -> ShareToken:
-        token_obj = ShareToken()
+    @classmethod
+    def from_model(cls, token_model: IDXTokenInstance) -> Self:
+        assert isinstance(token_model, ShareTokenModel)
+        token_obj = cls()
         for key, value in token_model.json().items():
             setattr(token_obj, key, value)
         return token_obj
@@ -757,9 +758,10 @@ class MembershipToken(TokenBase):
     initial_offering_status: bool
     image_url: object
 
-    @staticmethod
-    def from_model(token_model: MembershipTokenModel) -> MembershipToken:
-        token_obj = MembershipToken()
+    @classmethod
+    def from_model(cls, token_model: IDXTokenInstance) -> Self:
+        assert isinstance(token_model, MembershipTokenModel)
+        token_obj = cls()
         for key, value in token_model.json().items():
             setattr(token_obj, key, value)
         return token_obj
@@ -951,9 +953,10 @@ class CouponToken(TokenBase):
     initial_offering_status: bool
     image_url: object
 
-    @staticmethod
-    def from_model(token_model: CouponTokenModel) -> CouponToken:
-        token_obj = CouponToken()
+    @classmethod
+    def from_model(cls, token_model: IDXTokenInstance) -> Self:
+        assert isinstance(token_model, CouponTokenModel)
+        token_obj = cls()
         for key, value in token_model.json().items():
             setattr(token_obj, key, value)
         return token_obj

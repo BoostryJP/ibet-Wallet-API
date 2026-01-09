@@ -50,7 +50,7 @@ class IDXBlockData(Base):
     # Other data
     hash: Mapped[str] = mapped_column(String(66), nullable=False, index=True)
     size: Mapped[int | None] = mapped_column(Integer)
-    transactions: Mapped[dict | None] = mapped_column(JSON)
+    transactions: Mapped[list[str] | None] = mapped_column(JSON)
 
     FIELDS = {
         "number": int,

@@ -17,8 +17,20 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3.middleware.formatting import FormattingMiddlewareBuilder
+from typing import Any
 
-# NOTE: The correct type is likely FormattingMiddlewareBuilder,
-# but `type` is used here to avoid a type error when passing it to `web3.middleware_onion.inject`.
-ExtraDataToPOAMiddleware: type[FormattingMiddlewareBuilder]
+class Contract:
+    address: str
+    functions: Any
+    events: Any
+
+    def __init__(self, address: str | None = None) -> None: ...
+    def constructor(self, *args: Any, **kwargs: Any) -> Any: ...
+
+class AsyncContract:
+    address: str
+    functions: Any
+    events: Any
+
+    def __init__(self, address: str | None = None) -> None: ...
+    def constructor(self, *args: Any, **kwargs: Any) -> Any: ...

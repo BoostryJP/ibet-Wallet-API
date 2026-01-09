@@ -17,11 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from importlib import reload
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -68,7 +66,11 @@ from tests.contract_modules import (
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 if TYPE_CHECKING:
-    from batch.processor_Notifications_Token import EventWatcher
+    from batch.processor_Notifications_Token import AttributeWatcher, EventWatcher
+
+    WatcherFactory = Callable[[str], EventWatcher | AttributeWatcher]
+else:
+    WatcherFactory = Callable[[str], object]
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -77,18 +79,17 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 @pytest.fixture(scope="function")
 def watcher_factory(
     async_session: AsyncSession, shared_contract: SharedContract
-) -> Callable[[str], EventWatcher]:
-    def _watcher(cls_name):
+) -> WatcherFactory:
+    def _watcher(cls_name: str):
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
 
         from batch import processor_Notifications_Token
 
         test_module = reload(processor_Notifications_Token)
-        test_module.db_session = async_session
+        setattr(test_module, "db_session", async_session)
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
-        watcher.from_block = web3.eth.block_number
         return watcher
 
     return _watcher
@@ -240,7 +241,11 @@ class TestWatchTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
@@ -278,6 +283,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -296,7 +302,7 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -309,12 +315,17 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
@@ -360,6 +371,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -388,6 +400,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -406,7 +419,7 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -419,12 +432,17 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
@@ -463,12 +481,17 @@ class TestWatchTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # Transfer from DEX
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
@@ -523,6 +546,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -541,7 +565,7 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -554,6 +578,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -567,7 +592,11 @@ class TestWatchTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
@@ -614,7 +643,11 @@ class TestWatchApplyForTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -661,6 +694,7 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
         assert _notification.block_timestamp is not None
@@ -679,7 +713,7 @@ class TestWatchApplyForTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -692,12 +726,17 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -752,6 +791,7 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER
         assert _notification.priority == 0
@@ -782,6 +822,7 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER
         assert _notification.priority == 0
@@ -802,7 +843,7 @@ class TestWatchApplyForTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -815,12 +856,17 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -867,6 +913,7 @@ class TestWatchApplyForTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -880,7 +927,11 @@ class TestWatchApplyForTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -942,7 +993,11 @@ class TestWatchApproveTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApproveTransfer")
 
@@ -990,6 +1045,7 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER
         assert _notification.priority == 0
@@ -1009,7 +1065,7 @@ class TestWatchApproveTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1022,12 +1078,17 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApproveTransfer")
 
@@ -1084,6 +1145,7 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER
         assert _notification.priority == 0
@@ -1113,6 +1175,7 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER
         assert _notification.priority == 0
@@ -1132,7 +1195,7 @@ class TestWatchApproveTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1145,12 +1208,17 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -1197,6 +1265,7 @@ class TestWatchApproveTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1210,7 +1279,11 @@ class TestWatchApproveTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -1273,7 +1346,11 @@ class TestWatchCancelTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
@@ -1321,6 +1398,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1340,7 +1418,7 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1353,12 +1431,17 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single Token / Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
@@ -1415,6 +1498,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1444,6 +1528,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1463,7 +1548,7 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1476,12 +1561,17 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi token / Multi event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
@@ -1562,6 +1652,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1591,6 +1682,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1620,6 +1712,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1649,6 +1742,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1668,7 +1762,7 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1681,12 +1775,17 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # No event logs
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
@@ -1732,6 +1831,7 @@ class TestWatchCancelTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1745,7 +1845,11 @@ class TestWatchCancelTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
@@ -1807,7 +1911,11 @@ class TestWatchForceLock:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -1856,6 +1964,7 @@ class TestWatchForceLock:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.FORCE_LOCK
         assert _notification.priority == 0
@@ -1875,7 +1984,7 @@ class TestWatchForceLock:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1888,12 +1997,17 @@ class TestWatchForceLock:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -1943,7 +2057,7 @@ class TestWatchForceLock:
         _notification_list = (await async_session.scalars(select(Notification))).all()
         assert len(_notification_list) == 2
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -1956,12 +2070,17 @@ class TestWatchForceLock:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -1999,6 +2118,7 @@ class TestWatchForceLock:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2012,7 +2132,11 @@ class TestWatchForceLock:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2064,7 +2188,11 @@ class TestWatchForceUnlock:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2121,6 +2249,7 @@ class TestWatchForceUnlock:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.FORCE_UNLOCK
         assert _notification.priority == 0
@@ -2141,7 +2270,7 @@ class TestWatchForceUnlock:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2154,12 +2283,17 @@ class TestWatchForceUnlock:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2218,7 +2352,7 @@ class TestWatchForceUnlock:
         _notification_list = (await async_session.scalars(select(Notification))).all()
         assert len(_notification_list) == 2
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2231,12 +2365,17 @@ class TestWatchForceUnlock:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2274,6 +2413,7 @@ class TestWatchForceUnlock:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # ###########################################################################
@@ -2287,7 +2427,11 @@ class TestWatchForceUnlock:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2338,7 +2482,11 @@ class TestWatchChangeToRedeemed:
     # <Normal_1>
     # Initial Sync
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -2379,7 +2527,7 @@ class TestWatchChangeToRedeemed:
         ).first()
         assert _notification is None
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2392,12 +2540,17 @@ class TestWatchChangeToRedeemed:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -2460,7 +2613,7 @@ class TestWatchChangeToRedeemed:
             "token_type": "IbetStraightBond",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2473,12 +2626,17 @@ class TestWatchChangeToRedeemed:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -2560,7 +2718,7 @@ class TestWatchChangeToRedeemed:
             "token_type": "IbetStraightBond",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2573,12 +2731,17 @@ class TestWatchChangeToRedeemed:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # No event logs
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -2624,12 +2787,17 @@ class TestWatchChangeToRedeemed:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Skip past data on initial sync
     async def test_normal_5(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -2671,6 +2839,7 @@ class TestWatchChangeToRedeemed:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # ###########################################################################
@@ -2684,7 +2853,11 @@ class TestWatchChangeToRedeemed:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -2735,7 +2908,11 @@ class TestWatchChangeToCanceled:
     # <Normal_1>
     # Initial Sync
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2776,7 +2953,7 @@ class TestWatchChangeToCanceled:
         ).first()
         assert _notification is None
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2789,12 +2966,17 @@ class TestWatchChangeToCanceled:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2857,7 +3039,7 @@ class TestWatchChangeToCanceled:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2870,12 +3052,17 @@ class TestWatchChangeToCanceled:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -2957,7 +3144,7 @@ class TestWatchChangeToCanceled:
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
@@ -2970,12 +3157,17 @@ class TestWatchChangeToCanceled:
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # No event logs
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3021,12 +3213,17 @@ class TestWatchChangeToCanceled:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Skip past data on initial sync
     async def test_normal_5(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3068,6 +3265,7 @@ class TestWatchChangeToCanceled:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # ###########################################################################
@@ -3081,7 +3279,11 @@ class TestWatchChangeToCanceled:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3132,7 +3334,11 @@ class TestWatchWatchTransferableAttribute:
     # <Normal_1>
     # Initial Sync
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3164,7 +3370,7 @@ class TestWatchWatchTransferableAttribute:
         ).first()
         assert _notification is None
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
@@ -3176,13 +3382,18 @@ class TestWatchWatchTransferableAttribute:
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": True}
 
     # <Normal_2>
     # Attribute not changed
     @pytest.mark.freeze_time(datetime(2025, 7, 31, 1, 35, 0, tzinfo=timezone.utc))
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3231,7 +3442,7 @@ class TestWatchWatchTransferableAttribute:
         ).first()
         assert _notification is None
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
@@ -3243,13 +3454,18 @@ class TestWatchWatchTransferableAttribute:
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": True}
 
     # <Normal_3>
     # Attribute changed
     @pytest.mark.freeze_time(datetime(2025, 7, 31, 1, 35, 0, tzinfo=timezone.utc))
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3296,6 +3512,7 @@ class TestWatchWatchTransferableAttribute:
         _notification = (
             await async_session.scalars(select(Notification).limit(1))
         ).first()
+        assert _notification is not None
         attribute_key_hash = Web3.keccak(text="transferable").hex()[0:8]
         assert _notification.notification_category == "attribute_change"
         assert (
@@ -3318,7 +3535,7 @@ class TestWatchWatchTransferableAttribute:
             "token_type": "IbetShare",
         }
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
@@ -3330,13 +3547,18 @@ class TestWatchWatchTransferableAttribute:
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": False}
 
     # <Normal_4>
     # Attribute changed (On chain access)
     @pytest.mark.freeze_time(datetime(2025, 7, 31, 1, 35, 0, tzinfo=timezone.utc))
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3385,6 +3607,7 @@ class TestWatchWatchTransferableAttribute:
         _notification = (
             await async_session.scalars(select(Notification).limit(1))
         ).first()
+        assert _notification is not None
         attribute_key_hash = Web3.keccak(text="transferable").hex()[0:8]
         assert _notification.notification_category == "attribute_change"
         assert (
@@ -3407,7 +3630,7 @@ class TestWatchWatchTransferableAttribute:
             "token_type": "IbetShare",
         }
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
@@ -3419,6 +3642,7 @@ class TestWatchWatchTransferableAttribute:
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": False}
 
     # ###########################################################################
@@ -3432,7 +3656,11 @@ class TestWatchWatchTransferableAttribute:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -3465,7 +3693,7 @@ class TestWatchWatchTransferableAttribute:
         ).first()
         assert _notification is None
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(

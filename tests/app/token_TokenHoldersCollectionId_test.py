@@ -47,14 +47,9 @@ from tests.contract_modules import (
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract: SharedContract) -> type[Processor]:
-    return Processor
-
-
 @pytest.fixture(scope="function")
-def processor(test_module: type[Processor], session: Session) -> Processor:
-    return test_module()
+def processor() -> Processor:
+    return Processor()
 
 
 class TestTokenTokenHoldersCollectionId:

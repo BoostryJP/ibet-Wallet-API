@@ -32,7 +32,7 @@ from batch.processor_Send_Mail import LOG, Processor
 
 
 @pytest.fixture(scope="function")
-def processor(session):
+def processor():
     return Processor()
 
 
@@ -62,7 +62,9 @@ def caplog(caplog: pytest.LogCaptureFixture):
 class TestProcessorSendMail:
     # Normal_1
     # No unsent email exists
-    def test_normal_1(self, processor, session, caplog):
+    def test_normal_1(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         # Run processor
         with (
             mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
@@ -78,7 +80,9 @@ class TestProcessorSendMail:
 
     # Normal_2
     # Unsent email exists
-    def test_normal_2(self, processor, session, caplog):
+    def test_normal_2(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"
@@ -117,7 +121,9 @@ class TestProcessorSendMail:
     # ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST
     # - Not send emails if the domain is not allowed
     @mock.patch("app.config.ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST", ["example.net"])
-    def test_normal_3(self, processor, session, caplog):
+    def test_normal_3(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"
@@ -151,7 +157,9 @@ class TestProcessorSendMail:
         "app.config.DISALLOWED_DESTINATION_EMAIL_ADDRESS_REGEX",
         "^[a-zA-Z0-9_.+-]+@example.com",
     )
-    def test_normal_4(self, processor, session, caplog):
+    def test_normal_4(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"
@@ -180,7 +188,9 @@ class TestProcessorSendMail:
 
     # Normal_5
     # SMTPException -> skip
-    def test_normal_5(self, processor, session, caplog):
+    def test_normal_5(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"
@@ -216,7 +226,14 @@ class TestProcessorSendMail:
         "policy",
         ["", "SMTPUTF8", "HTTP"],
     )
-    def test_normal_6(self, policy, processor, session, caplog, monkeypatch):
+    def test_normal_6(
+        self,
+        policy: str,
+        processor: Processor,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"
@@ -248,7 +265,9 @@ class TestProcessorSendMail:
 
     # Error_1
     # SQLAlchemyError
-    def test_error_1(self, processor, session, caplog):
+    def test_error_1(
+        self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
+    ):
         # Prepare data
         mail = Mail()
         mail.to_email = "to@example.com"

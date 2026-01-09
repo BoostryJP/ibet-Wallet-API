@@ -17,8 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3.middleware.formatting import FormattingMiddlewareBuilder
+from typing import Any
 
-# NOTE: The correct type is likely FormattingMiddlewareBuilder,
-# but `type` is used here to avoid a type error when passing it to `web3.middleware_onion.inject`.
-ExtraDataToPOAMiddleware: type[FormattingMiddlewareBuilder]
+class BaseProvider:
+    endpoint_uri: str
+
+    def make_request(self, method: str, params: Any) -> Any: ...

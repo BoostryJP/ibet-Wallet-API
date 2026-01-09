@@ -24,13 +24,14 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from hexbytes import HexBytes
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
 from web3.exceptions import ABIEventNotFound, TransactionNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
-from web3.types import RPCEndpoint
+from web3.types import BlockData, RPCEndpoint
 
 from app import config
 from app.errors import ServiceUnavailable
@@ -41,7 +42,7 @@ from app.model.db import (
     Listing,
 )
 from batch import indexer_Transfer
-from batch.indexer_Transfer import LOG, UTC
+from batch.indexer_Transfer import LOG, UTC, Processor
 from tests.account_config import eth_account
 from tests.contract_modules import (
     coupon_register_list,
@@ -62,18 +63,33 @@ from tests.contract_modules import (
     transfer_membership_token,
     transfer_share_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils import PersonalInfoUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
+def _block_tx_hash(block: BlockData) -> str:
+    transactions = block.get("transactions")
+    assert isinstance(transactions, list)
+    assert len(transactions) > 0
+    tx_hash = transactions[0]
+    assert isinstance(tx_hash, HexBytes)
+    return tx_hash.to_0x_hex()
+
+
+def _block_timestamp(block: BlockData) -> int:
+    timestamp = block.get("timestamp")
+    assert isinstance(timestamp, int)
+    return timestamp
+
+
+@pytest.fixture(scope="session", autouse=True)
+def test_module(shared_contract: SharedContract):
     indexer_Transfer.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
         "address"
     ]
-    return indexer_Transfer
 
 
 @pytest.fixture(scope="function")
@@ -88,8 +104,8 @@ def caplog(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, async_session):
-    processor = test_module.Processor()
+def processor() -> Processor:
+    processor = Processor()
     return processor
 
 
@@ -101,7 +117,10 @@ class TestProcessor:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
     ):
         # Issue token
         args = {
@@ -145,7 +164,11 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_membership(issuer, exchange_contract_address, token_list):
+    def issue_token_membership(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テスト会員権",
@@ -166,7 +189,11 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_coupon(issuer, exchange_contract_address, token_list):
+    def issue_token_coupon(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テストクーポン",
@@ -188,7 +215,10 @@ class TestProcessor:
 
     @staticmethod
     def issue_token_share(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
     ):
         # Issue token
         args = {
@@ -214,7 +244,7 @@ class TestProcessor:
         return token
 
     @staticmethod
-    async def listing_token(token_address, async_session):
+    async def listing_token(token_address: str, async_session: AsyncSession):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -238,7 +268,11 @@ class TestProcessor:
     #  - Reallocation
     @pytest.mark.parametrize("is_old_token", [False, True])
     async def test_normal_1_1(
-        self, processor, shared_contract, async_session, is_old_token
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        is_old_token: bool,
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -346,7 +380,7 @@ class TestProcessor:
         block1 = web3.eth.get_block(block_number_1)
         idx_transfer: IDXTransfer = idx_transfer_list[0]
         assert idx_transfer.id == 1
-        assert idx_transfer.transaction_hash == block1["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block1)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -359,7 +393,7 @@ class TestProcessor:
         block5 = web3.eth.get_block(block_number_5)
         idx_transfer: IDXTransfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
-        assert idx_transfer.transaction_hash == block5["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block5)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -373,7 +407,7 @@ class TestProcessor:
         block2 = web3.eth.get_block(block_number_2)
         idx_transfer: IDXTransfer = idx_transfer_list[2]
         assert idx_transfer.id == 3
-        assert idx_transfer.transaction_hash == block2["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block2)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -387,7 +421,7 @@ class TestProcessor:
         block3 = web3.eth.get_block(block_number_3)
         idx_transfer: IDXTransfer = idx_transfer_list[3]
         assert idx_transfer.id == 4
-        assert idx_transfer.transaction_hash == block3["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block3)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -401,7 +435,7 @@ class TestProcessor:
         block4 = web3.eth.get_block(block_number_4)
         idx_transfer: IDXTransfer = idx_transfer_list[4]
         assert idx_transfer.id == 5
-        assert idx_transfer.transaction_hash == block4["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block4)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -415,7 +449,7 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -425,13 +459,19 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_5
 
     # <Normal_1_2>
     # IbetShare
     # Single event logs
     # - Unlock/ForceUnlock: Data is not registered because "from" and "to" are the same
-    async def test_normal_1_2(self, processor, shared_contract, async_session):
+    async def test_normal_1_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -503,7 +543,7 @@ class TestProcessor:
         ).all()
         assert len(idx_transfer_list) == 0
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -513,6 +553,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number
 
     # <Normal_2>
@@ -522,7 +563,12 @@ class TestProcessor:
     # - Unlock(twice)
     # - ForceUnlock(twice)
     # - ForceChangeLockedAccount(twice)
-    async def test_normal_2(self, processor, shared_contract, async_session):
+    async def test_normal_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -644,7 +690,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         idx_transfer = idx_transfer_list[0]
         assert idx_transfer.id == 1
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -657,7 +703,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_2)
         idx_transfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -670,7 +716,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_3)
         idx_transfer = idx_transfer_list[2]
         assert idx_transfer.id == 3
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -684,7 +730,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_4)
         idx_transfer = idx_transfer_list[3]
         assert idx_transfer.id == 4
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -698,7 +744,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_5)
         idx_transfer = idx_transfer_list[4]
         assert idx_transfer.id == 5
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -712,7 +758,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_6)
         idx_transfer = idx_transfer_list[5]
         assert idx_transfer.id == 6
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -726,7 +772,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_7)
         idx_transfer = idx_transfer_list[6]
         assert idx_transfer.id == 7
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -743,7 +789,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_8)
         idx_transfer = idx_transfer_list[7]
         assert idx_transfer.id == 8
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == share_token["address"]
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
@@ -757,7 +803,7 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -766,11 +812,17 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_8
 
     # <Normal_3>
     # IbetStraightBond, IbetMembership, IbetCoupon
-    async def test_normal_3(self, processor, shared_contract, async_session):
+    async def test_normal_3(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -833,7 +885,7 @@ class TestProcessor:
         block = web3.eth.get_block(bond_block_number)
         idx_transfer = idx_transfer_list[0]
         assert idx_transfer.id == 1
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == bond_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -846,7 +898,7 @@ class TestProcessor:
         block = web3.eth.get_block(membership_block_number)
         idx_transfer = idx_transfer_list[1]
         assert idx_transfer.id == 2
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == membership_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -859,7 +911,7 @@ class TestProcessor:
         block = web3.eth.get_block(coupon_block_number)
         idx_transfer = idx_transfer_list[2]
         assert idx_transfer.id == 3
-        assert idx_transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert idx_transfer.transaction_hash == _block_tx_hash(block)
         assert idx_transfer.token_address == coupon_token["address"]
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
@@ -869,16 +921,17 @@ class TestProcessor:
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(IDXTransferBlockNumber.contract_address == bond_token["address"])
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == latest_block_number
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -888,9 +941,10 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == latest_block_number
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -899,12 +953,19 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == latest_block_number
 
     # <Normal_4_1>
     # No blocks have been generated since the last transaction occurred
     # block_to <= skip_block
-    async def test_normal_4_1(self, processor, shared_contract, async_session, caplog):
+    async def test_normal_4_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -946,7 +1007,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
-        assert _transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _transfer.transaction_hash == _block_tx_hash(block)
         assert _transfer.token_address == share_token["address"]
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
@@ -956,7 +1017,7 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -965,6 +1026,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
         """
@@ -983,7 +1045,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -992,6 +1054,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
         assert 4 == caplog.record_tuples.count(
@@ -1006,7 +1069,13 @@ class TestProcessor:
     # <Normal_4_2>
     # Data that has already been synchronized is not processed
     # block_from <= skip_block < block_to
-    async def test_normal_4_2(self, processor, shared_contract, async_session, caplog):
+    async def test_normal_4_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1031,7 +1100,7 @@ class TestProcessor:
             amount=100000,
         )
         block_number_1 = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+        block_timestamp_1 = _block_timestamp(web3.eth.get_block(block_number_1))
 
         """
         1st execution
@@ -1049,7 +1118,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
-        assert _transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _transfer.transaction_hash == _block_tx_hash(block)
         assert _transfer.token_address == share_token["address"]
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
@@ -1059,7 +1128,7 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -1068,6 +1137,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
         """
@@ -1089,7 +1159,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -1098,6 +1168,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_2
 
         assert 4 == caplog.record_tuples.count(
@@ -1112,7 +1183,13 @@ class TestProcessor:
     # <Normal_4_3>
     # Data that has already been synchronized
     # block_to <= skip_block
-    async def test_normal_4_3(self, processor, shared_contract, async_session, caplog):
+    async def test_normal_4_3(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1137,7 +1214,7 @@ class TestProcessor:
             amount=100000,
         )
         block_number_1 = web3.eth.block_number
-        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+        block_timestamp_1 = _block_timestamp(web3.eth.get_block(block_number_1))
 
         """
         1st execution
@@ -1156,7 +1233,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number_1)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
-        assert _transfer.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _transfer.transaction_hash == _block_tx_hash(block)
         assert _transfer.token_address == share_token["address"]
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
@@ -1166,7 +1243,7 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -1175,8 +1252,10 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
+        assert idx_block_number.latest_block_number is not None
         idx_block_number.latest_block_number += 999999
 
         await async_session.merge(idx_block_number)
@@ -1202,7 +1281,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -1211,6 +1290,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_2
 
         assert 4 == caplog.record_tuples.count(
@@ -1226,7 +1306,13 @@ class TestProcessor:
     # Data that has already been synchronized,
     # but there is no index_transfer_block_number due to ibet-Wallet-API version upgrade.
     # block_to <= skip_block
-    async def test_normal_4_4(self, processor, shared_contract, async_session, caplog):
+    async def test_normal_4_4(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1255,13 +1341,13 @@ class TestProcessor:
 
         idx_transfer = IDXTransfer()
         idx_transfer.id = 1
-        idx_transfer.transaction_hash = block["transactions"][0].to_0x_hex()
+        idx_transfer.transaction_hash = _block_tx_hash(block)
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.issuer["account_address"]
         idx_transfer.value = 100000
-        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER
         idx_transfer.token_address = share_token["address"]
-        idx_transfer.created = datetime.fromtimestamp(block["timestamp"], UTC)
+        idx_transfer.created = datetime.fromtimestamp(_block_timestamp(block), UTC)
         await async_session.merge(idx_transfer)
         await async_session.commit()
 
@@ -1279,7 +1365,7 @@ class TestProcessor:
         ).all()
         assert len(_transfer_list) == 1
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -1288,6 +1374,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
         assert 1 == caplog.record_tuples.count(
@@ -1301,7 +1388,13 @@ class TestProcessor:
 
     # <Normal_4_5>
     # No event logs
-    async def test_normal_4_5(self, processor, shared_contract, async_session, caplog):
+    async def test_normal_4_5(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1333,7 +1426,7 @@ class TestProcessor:
         ).all()
         assert len(idx_transfer_list) == 0
 
-        idx_block_number: IDXTransferBlockNumber = (
+        idx_block_number = (
             await async_session.scalars(
                 select(IDXTransferBlockNumber)
                 .where(
@@ -1342,6 +1435,7 @@ class TestProcessor:
                 .limit(1)
             )
         ).first()
+        assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number
 
         assert 4 == caplog.record_tuples.count(
@@ -1355,7 +1449,12 @@ class TestProcessor:
 
     # <Normal_5>
     # Not Listing Token
-    async def test_normal_5(self, processor, shared_contract, async_session):
+    async def test_normal_5(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1404,7 +1503,12 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    async def test_error_1_1(self, processor, shared_contract, async_session):
+    async def test_error_1_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1443,7 +1547,12 @@ class TestProcessor:
         assert len(idx_transfer_list) == 0
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    async def test_error_1_2(self, processor, shared_contract, async_session):
+    async def test_error_1_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1488,7 +1597,12 @@ class TestProcessor:
         assert len(idx_transfer_list) == 0
 
     # <Error_2_1>: ServiceUnavailable occurs
-    async def test_error_2_1(self, processor, shared_contract, async_session):
+    async def test_error_2_1(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -1532,7 +1646,12 @@ class TestProcessor:
         assert len(idx_transfer_list) == 0
 
     # <Error_2_2>: SQLAlchemyError occurs
-    async def test_error_2_2(self, processor, shared_contract, async_session):
+    async def test_error_2_2(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]

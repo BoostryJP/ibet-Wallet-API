@@ -19,24 +19,27 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-from typing import Sequence
+from typing import Awaitable, Callable, Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+from hexbytes import HexBytes
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
+from web3.types import BlockData
 
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXConsumeCoupon, Listing
 from batch import indexer_Consume_Coupon
-from batch.indexer_Consume_Coupon import LOG, main
+from batch.indexer_Consume_Coupon import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
     consume_coupon_token,
@@ -44,21 +47,30 @@ from tests.contract_modules import (
     issue_coupon_token,
     transfer_coupon_token,
 )
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-@pytest_asyncio.fixture(scope="session")
-async def test_module(shared_contract):
+def _block_tx_hash(block: BlockData) -> str:
+    transactions = block.get("transactions")
+    assert isinstance(transactions, list)
+    assert len(transactions) > 0
+    tx_hash = transactions[0]
+    assert isinstance(tx_hash, HexBytes)
+    return tx_hash.to_0x_hex()
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def test_module(shared_contract: SharedContract):
     indexer_Consume_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
         "address"
     ]
-    return indexer_Consume_Coupon
 
 
 @pytest_asyncio.fixture(scope="function")
-async def main_func(test_module):
+async def main_func():
     LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
@@ -69,8 +81,8 @@ async def main_func(test_module):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def processor(test_module, session):
-    processor = test_module.Processor()
+async def processor() -> Processor:
+    processor = Processor()
     await processor.initial_sync()
     return processor
 
@@ -81,7 +93,11 @@ class TestProcessor:
     trader = eth_account["trader"]
 
     @staticmethod
-    def issue_token_coupon(issuer, exchange_contract_address, token_list):
+    def issue_token_coupon(
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        token_list: DeployedContract,
+    ):
         # Issue token
         args = {
             "name": "テストクーポン",
@@ -102,7 +118,7 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -119,7 +135,9 @@ class TestProcessor:
     # <Normal_1>
     # Single token
     # Single event logs
-    async def test_normal_1(self, processor, shared_contract, session):
+    async def test_normal_1(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -142,7 +160,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
@@ -151,7 +169,9 @@ class TestProcessor:
     # <Normal_2>
     # Single token
     # Multi event logs
-    async def test_normal_2(self, processor, shared_contract, session):
+    async def test_normal_2(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -177,7 +197,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
@@ -185,7 +205,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number2)
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
@@ -194,7 +214,9 @@ class TestProcessor:
     # <Normal_3>
     # Multi token
     # Multi event logs
-    async def test_normal_3(self, processor, shared_contract, session):
+    async def test_normal_3(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -229,7 +251,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
@@ -237,7 +259,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number2)
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token["address"]
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
@@ -245,7 +267,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number3)
         _consume_coupon = _consume_coupon_list[2]
         assert _consume_coupon.id == 3
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token2["address"]
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 3000
@@ -253,7 +275,7 @@ class TestProcessor:
         block = web3.eth.get_block(block_number4)
         _consume_coupon = _consume_coupon_list[3]
         assert _consume_coupon.id == 4
-        assert _consume_coupon.transaction_hash == block["transactions"][0].to_0x_hex()
+        assert _consume_coupon.transaction_hash == _block_tx_hash(block)
         assert _consume_coupon.token_address == token2["address"]
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 4000
@@ -261,7 +283,9 @@ class TestProcessor:
 
     # <Normal_4>
     # No event logs
-    async def test_normal_4(self, processor, shared_contract, session):
+    async def test_normal_4(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -281,7 +305,9 @@ class TestProcessor:
 
     # <Normal_5>
     # Not Listing Token
-    async def test_normal_5(self, processor, shared_contract, session):
+    async def test_normal_5(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -314,7 +340,9 @@ class TestProcessor:
         "web3.eth.async_eth.AsyncEth.get_logs",
         MagicMock(side_effect=ABIEventNotFound()),
     )
-    async def test_error_1_1(self, processor, shared_contract, session):
+    async def test_error_1_1(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -357,7 +385,9 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    async def test_error_1_2(self, processor, shared_contract, session):
+    async def test_error_1_2(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -410,7 +440,9 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_1(self, processor, shared_contract, session):
+    async def test_error_2_1(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -462,7 +494,9 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    async def test_error_2_2(self, processor, shared_contract, session):
+    async def test_error_2_2(
+        self, processor: Processor, shared_contract: SharedContract, session: Session
+    ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
@@ -508,7 +542,13 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(self, main_func, shared_contract, session, caplog):
+    async def test_error_3(
+        self,
+        main_func: Callable[[], Awaitable[None]],
+        shared_contract: SharedContract,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Mocking time.sleep to break mainloop
         asyncio_mock = AsyncMock(wraps=asyncio)
         asyncio_mock.sleep.side_effect = [True, TypeError()]
