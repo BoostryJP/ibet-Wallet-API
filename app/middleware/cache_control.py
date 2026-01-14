@@ -27,7 +27,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
     """
     Middleware to control caching headers.
     - For 4xx and 5xx responses: enforce no-store/no-cache headers and remove validators.
-    - For other responses: mirror incoming request's Cache-Control/Pragma/ETag/Expires if present.
+    - For other responses: mirror incoming request's Cache-Control if present.
     """
 
     def __init__(self, app: ASGIApp, statuses: tuple[int, ...] | None = None) -> None:
