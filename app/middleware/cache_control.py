@@ -62,16 +62,6 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
                 req_cache_control = request.headers.get("Cache-Control")
                 if req_cache_control is not None:
                     response.headers["Cache-Control"] = req_cache_control
-                # Mirror other related headers if present
-                req_pragma = request.headers.get("Pragma")
-                if req_pragma is not None:
-                    response.headers["Pragma"] = req_pragma
-                req_etag = request.headers.get("ETag")
-                if req_etag is not None:
-                    response.headers["ETag"] = req_etag
-                req_expires = request.headers.get("Expires")
-                if req_expires is not None:
-                    response.headers["Expires"] = req_expires
         except Exception:
             # Do not break the response flow even if header manipulation fails
             pass
