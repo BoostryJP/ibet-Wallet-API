@@ -52,28 +52,6 @@ class IDXBlockData(Base):
     size: Mapped[int | None] = mapped_column(Integer)
     transactions: Mapped[list[str] | None] = mapped_column(JSON)
 
-    FIELDS = {
-        "number": int,
-        "parent_hash": str,
-        "sha3_uncles": str,
-        "miner": str,
-        "state_root": str,
-        "transactions_root": str,
-        "receipts_root": str,
-        "logs_bloom": str,
-        "difficulty": int,
-        "gas_limit": int,
-        "gas_used": int,
-        "timestamp": int,
-        "proof_of_authority_data": str,
-        "mix_hash": str,
-        "nonce": str,
-        "hash": str,
-        "size": int,
-        "transactions": list[str],
-    }
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXBlockDataBlockNumber(Base):
     """Synchronized blockNumber of IDXBlockData"""
@@ -84,8 +62,3 @@ class IDXBlockDataBlockNumber(Base):
     chain_id: Mapped[str] = mapped_column(String(10), primary_key=True)
     # Latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "latest_block_number": int,
-    }
-    FIELDS.update(Base.FIELDS)

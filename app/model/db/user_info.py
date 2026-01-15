@@ -32,6 +32,3 @@ class AccountTag(Base):
     account_tag: Mapped[str | None] = mapped_column(
         String(50), nullable=True, index=True
     )
-
-    FIELDS = {"account_address": str, "account_tag": str}
-    FIELDS.update(Base.FIELDS)

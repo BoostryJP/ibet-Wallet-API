@@ -88,14 +88,3 @@ class Listing(Base):
             "owner_address": self.owner_address,
             "created": self.format_timestamp(self.created),
         }
-
-    FIELDS = {
-        "id": int,
-        "token_address": str,
-        "is_public": bool,
-        "max_holding_quantity": int,
-        "max_sell_amount": int,
-        "owner_address": str,
-    }
-
-    FIELDS.update(Base.FIELDS)

@@ -24,7 +24,6 @@ from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app import config, log
-from app.utils import alchemy
 
 LOG = log.get_logger()
 
@@ -54,22 +53,3 @@ class Base(DeclarativeBase):
         modified: Mapped[datetime | None] = mapped_column(
             DateTime, default=naive_utcnow, onupdate=naive_utcnow
         )
-
-    def to_dict(self):
-        intersection = set(self.__table__.columns.keys()) & set(self.FIELDS)
-        return dict(
-            map(
-                lambda key: (
-                    key,
-                    (lambda value: self.FIELDS[key](value) if value else None)(
-                        getattr(self, key)
-                    ),
-                ),
-                intersection,
-            )
-        )
-
-    FIELDS = {
-        "created": alchemy.datetime_to_timestamp,
-        "modified": alchemy.datetime_to_timestamp,
-    }

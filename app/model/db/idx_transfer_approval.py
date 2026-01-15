@@ -25,7 +25,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
 from app.model.db.base import Base
-from app.utils import alchemy
 
 UTC = timezone(timedelta(hours=0), "UTC")
 local_tz = ZoneInfo(TZ)
@@ -104,24 +103,6 @@ class IDXTransferApproval(Base):
             "transfer_approved": self.transfer_approved,
         }
 
-    FIELDS = {
-        "id": int,
-        "token_address": str,
-        "exchange_address": str,
-        "application_id": int,
-        "from_address": str,
-        "to_address": str,
-        "value": int,
-        "application_datetime": alchemy.datetime_to_timestamp,
-        "application_blocktimestamp": alchemy.datetime_to_timestamp,
-        "approval_datetime": alchemy.datetime_to_timestamp,
-        "approval_blocktimestamp": alchemy.datetime_to_timestamp,
-        "cancelled": bool,
-        "escrow_finished": bool,
-        "transfer_approved": bool,
-    }
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXTransferApprovalBlockNumber(Base):
     """Synchronized blockNumber of IDXTransferApproval"""
@@ -136,12 +117,3 @@ class IDXTransferApprovalBlockNumber(Base):
     exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "id": int,
-        "token_address": str,
-        "exchange_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)

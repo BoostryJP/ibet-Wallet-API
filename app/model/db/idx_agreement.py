@@ -24,7 +24,6 @@ from sqlalchemy import BigInteger, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
-from app.utils import alchemy
 
 
 class IDXAgreement(Base):
@@ -68,22 +67,6 @@ class IDXAgreement(Base):
     settlement_timestamp: Mapped[datetime | None] = mapped_column(
         DateTime, default=None
     )
-
-    FIELDS = {
-        "id": int,
-        "exchange_address": str,
-        "order_id": int,
-        "agreement_id": int,
-        "unique_order_id": str,
-        "buyer_address": str,
-        "seller_address": str,
-        "counterpart_address": str,
-        "amount": int,
-        "status": int,
-        "settlement_timestamp": alchemy.datetime_to_timestamp,
-    }
-
-    FIELDS.update(Base.FIELDS)
 
 
 class AgreementStatus(Enum):

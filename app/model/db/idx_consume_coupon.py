@@ -46,14 +46,3 @@ class IDXConsumeCoupon(Base):
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
     block_timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=None)
-
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "token_address": str,
-        "account_address": str,
-        "amount": int,
-        "block_timestamp": str,
-    }
-
-    FIELDS.update(Base.FIELDS)

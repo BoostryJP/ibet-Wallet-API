@@ -39,18 +39,3 @@ class IDXTxData(Base):
     gas_price: Mapped[int | None] = mapped_column(BigInteger)
     value: Mapped[int | None] = mapped_column(BigInteger)
     nonce: Mapped[int | None] = mapped_column(Integer)
-
-    FIELDS = {
-        "hash": str,
-        "block_hash": str,
-        "block_number": int,
-        "transaction_index": int,
-        "from_address": str,
-        "to_address": str,
-        "input": str,
-        "gas": int,
-        "gas_price": int,
-        "value": int,
-        "nonce": int,
-    }
-    FIELDS.update(Base.FIELDS)

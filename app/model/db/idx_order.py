@@ -23,7 +23,6 @@ from sqlalchemy import BigInteger, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
-from app.utils import alchemy
 
 
 class IDXOrder(Base):
@@ -63,21 +62,3 @@ class IDXOrder(Base):
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
     order_timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=None)
-
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "token_address": str,
-        "exchange_address": str,
-        "order_id": int,
-        "account_address": str,
-        "counterpart_address": str,
-        "is_buy": bool,
-        "price": int,
-        "amount": int,
-        "agent_address": str,
-        "is_cancelled": bool,
-        "order_timestamp": alchemy.datetime_to_timestamp,
-    }
-
-    FIELDS.update(Base.FIELDS)

@@ -29,9 +29,3 @@ class ExecutableContract(Base):
 
     def __repr__(self):
         return "<Listing contract_address='%s'>" % (self.contract_address,)
-
-    FIELDS = {
-        "contract_address": str,
-    }
-
-    FIELDS.update(Base.FIELDS)
