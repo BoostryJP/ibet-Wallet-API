@@ -21,9 +21,10 @@ import hashlib
 import json
 import sys
 import time
+from typing import Literal
 
 import requests
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
@@ -57,6 +58,9 @@ class Processor:
         LOG.info("Syncing public account list")
 
         # Get data from PUBLIC_ACCOUNT_LIST_URL
+        if PUBLIC_ACCOUNT_LIST_URL is None:
+            LOG.warning("PUBLIC_ACCOUNT_LIST_URL is not set")
+            return
         try:
             with requests.Session() as session:
                 adapter = HTTPAdapter(max_retries=Retry(3, allowed_methods=["GET"]))
@@ -106,6 +110,11 @@ class Processor:
                         f"Invalid type: key_manager={key_manager}, key_manager_name={key_manager_name}, type={account_type}, account_address={account_address}"
                     )
                     continue
+                if account_type not in (1, 2, 3, 4):
+                    LOG.notice(
+                        f"Invalid account_type: index={i} account_type={account_type}"
+                    )
+                    continue
                 try:
                     account_address = to_checksum_address(account_address)
                 except ValueError:
@@ -135,7 +144,7 @@ class Processor:
         db_session: Session,
         key_manager: str,
         key_manager_name: str,
-        account_type: int,
+        account_type: Literal[1, 2, 3, 4],
         account_address: str,
     ):
         _account_list = PublicAccountList()

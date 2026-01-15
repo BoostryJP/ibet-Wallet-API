@@ -20,12 +20,14 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 from datetime import UTC, datetime
+from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventNotFound
+from web3.types import EventData
 
 from app.config import (
     IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
@@ -55,10 +57,10 @@ async_web3 = AsyncWeb3Wrapper()
 class Processor:
     """Processor for indexing IbetExchange events"""
 
-    latest_block = 0
+    latest_block: int = 0
 
     def __init__(self):
-        self.exchange_list = []
+        self.exchange_list: list[Any] = []
         # MEMBERSHIP Exchange
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = AsyncContract.get_contract(
@@ -79,7 +81,7 @@ class Processor:
     async def initial_sync(self):
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
-        self.latest_block = await async_web3.eth.block_number
+        self.latest_block = int(await async_web3.eth.block_number)
         try:
             # Synchronize 1,000,000 blocks each
             _to_block = 999999
@@ -117,7 +119,7 @@ class Processor:
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
         try:
-            blockTo = await async_web3.eth.block_number
+            blockTo = int(await async_web3.eth.block_number)
             if blockTo == self.latest_block:
                 return
             await self.__sync_all(
@@ -151,14 +153,16 @@ class Processor:
     ):
         for exchange_contract in self.exchange_list:
             try:
-                events = await exchange_contract.events.NewOrder.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange_contract.events.NewOrder.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
                 events = []
             try:
                 for event in events:
-                    args = event["args"]
+                    args: Mapping[str, Any] = event["args"]
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
                         pass
                     else:
@@ -170,11 +174,11 @@ class Processor:
                             )
                         ).first()
                         transaction_hash = event["transactionHash"].to_0x_hex()
+                        block_data: dict[str, Any] = dict(
+                            await async_web3.eth.get_block(event["blockNumber"])
+                        )
                         order_timestamp = datetime.fromtimestamp(
-                            (await async_web3.eth.get_block(event["blockNumber"]))[
-                                "timestamp"
-                            ],
-                            UTC,
+                            block_data["timestamp"], UTC
                         ).replace(tzinfo=None)
                         if available_token is not None:
                             account_address = args["accountAddress"]
@@ -198,10 +202,14 @@ class Processor:
             except Exception as e:
                 raise e
 
-    async def __sync_cancel_order(self, db_session: AsyncSession, block_from, block_to):
+    async def __sync_cancel_order(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         for exchange_contract in self.exchange_list:
             try:
-                events = await exchange_contract.events.CancelOrder.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange_contract.events.CancelOrder.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -217,11 +225,13 @@ class Processor:
                 raise e
 
     async def __sync_force_cancel_order(
-        self, db_session: AsyncSession, block_from, block_to
+        self, db_session: AsyncSession, block_from: int, block_to: int
     ):
         for exchange_contract in self.exchange_list:
             try:
-                events = await exchange_contract.events.ForceCancelOrder.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange_contract.events.ForceCancelOrder.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -236,10 +246,12 @@ class Processor:
             except Exception as e:
                 raise e
 
-    async def __sync_agree(self, db_session: AsyncSession, block_from, block_to):
+    async def __sync_agree(
+        self, db_session: AsyncSession, block_from: int, block_to: int
+    ):
         for exchange_contract in self.exchange_list:
             try:
-                events = await exchange_contract.events.Agree.get_logs(
+                events: list[EventData] = await exchange_contract.events.Agree.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -256,17 +268,20 @@ class Processor:
                             function_name="getOrder",
                             args=(order_id,),
                         )
+                        if orderbook is None:
+                            continue
                         is_buy = orderbook[4]
                         if is_buy:
                             counterpart_address = args["sellAddress"]
                         else:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].to_0x_hex()
+                        block_data = await async_web3.eth.get_block(
+                            event["blockNumber"]
+                        )
+                        assert "timestamp" in block_data
                         agreement_timestamp = datetime.fromtimestamp(
-                            (await async_web3.eth.get_block(event["blockNumber"]))[
-                                "timestamp"
-                            ],
-                            UTC,
+                            block_data["timestamp"], UTC
                         ).replace(tzinfo=None)
                         await self.__sink_on_agree(
                             db_session=db_session,
@@ -284,11 +299,13 @@ class Processor:
                 raise e
 
     async def __sync_settlement_ok(
-        self, db_session: AsyncSession, block_from, block_to
+        self, db_session: AsyncSession, block_from: int, block_to: int
     ):
         for exchange_contract in self.exchange_list:
             try:
-                events = await exchange_contract.events.SettlementOK.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange_contract.events.SettlementOK.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -296,11 +313,10 @@ class Processor:
             try:
                 for event in events:
                     args = event["args"]
+                    block_data = await async_web3.eth.get_block(event["blockNumber"])
+                    assert "timestamp" in block_data
                     settlement_timestamp = datetime.fromtimestamp(
-                        (await async_web3.eth.get_block(event["blockNumber"]))[
-                            "timestamp"
-                        ],
-                        UTC,
+                        block_data["timestamp"], UTC
                     ).replace(tzinfo=None)
                     await self.__sink_on_settlement_ok(
                         db_session=db_session,
@@ -313,11 +329,13 @@ class Processor:
                 raise e
 
     async def __sync_settlement_ng(
-        self, db_session: AsyncSession, block_from, block_to
+        self, db_session: AsyncSession, block_from: int, block_to: int
     ):
         for exchange_contract in self.exchange_list:
             try:
-                events = await exchange_contract.events.SettlementNG.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange_contract.events.SettlementNG.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:

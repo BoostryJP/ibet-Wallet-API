@@ -57,6 +57,10 @@ class MockResponse:
         return self.data
 
 
+@mock.patch(
+    "batch.indexer_PublicInfo_PublicAccountList.PUBLIC_ACCOUNT_LIST_URL",
+    "http://test/public_account_list.json",
+)
 @pytest.mark.asyncio
 class TestProcessor:
     test_key_manager_1 = "test_key_manager_1"

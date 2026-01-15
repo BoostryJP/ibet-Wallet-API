@@ -20,12 +20,13 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 from datetime import datetime, timezone
-from typing import List, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.exceptions import ABIEventNotFound
+from web3.types import EventData
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -75,7 +76,7 @@ class Processor:
 
             def __init__(
                 self,
-                token_contract: AsyncContractEventsView,
+                token_contract: Any,
                 exchange_address: str,
                 block_number: int,
             ):
@@ -91,7 +92,7 @@ class Processor:
 
         def append(
             self,
-            token_contract: AsyncContractEventsView,
+            token_contract: Any,
             exchange_address: str,
             block_number: int,
         ):
@@ -132,7 +133,7 @@ class Processor:
 
             def __init__(
                 self,
-                exchange_contract: AsyncContractEventsView,
+                exchange_contract: Any,
                 exchange_address: str,
                 block_number: int,
             ):
@@ -148,7 +149,7 @@ class Processor:
 
         def append(
             self,
-            exchange_contract: AsyncContractEventsView,
+            exchange_contract: Any,
             exchange_address: str,
             block_number: int,
         ):
@@ -174,25 +175,28 @@ class Processor:
 
     # On memory cache
     token_type_cache: dict[str, TokenType] = {}
-    token_contract_cache: dict[str, AsyncContractEventsView] = {}
+    token_contract_cache: dict[str, Any] = {}
     token_tradable_exchange_address_cache: dict[str, str] = {}
-    exchange_contract_cache: dict[str, AsyncContractEventsView] = {}
+    exchange_contract_cache: dict[str, Any] = {}
 
     def __init__(self):
         self.token_list = self.TargetTokenList()
         self.exchange_list = self.TargetExchangeList()
 
     @staticmethod
-    async def get_block_timestamp(event) -> int:
-        block_timestamp = (await async_web3.eth.get_block(event["blockNumber"]))[
-            "timestamp"
-        ]
+    async def get_block_timestamp(event: Mapping[str, Any]) -> int | None:
+        block_data: dict[str, Any] = dict(
+            await async_web3.eth.get_block(event["blockNumber"])
+        )
+        block_timestamp = block_data["timestamp"]
         return block_timestamp
 
     async def __get_contract_list(self, db_session: AsyncSession):
         self.token_list = self.TargetTokenList()
         self.exchange_list = self.TargetExchangeList()
 
+        if TOKEN_LIST_CONTRACT_ADDRESS is None:
+            return
         list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
@@ -201,17 +205,20 @@ class Processor:
         ).all()
 
         for listed_token in listed_tokens:
+            assert listed_token.token_address is not None
             # Reuse token type cache
             if listed_token.token_address not in self.token_type_cache:
-                token_info = await AsyncContract.call_function(
+                token_info: tuple[str, str, str] = await AsyncContract.call_function(
                     contract=list_contract,
                     function_name="getTokenByAddress",
                     args=(listed_token.token_address,),
                     default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
                 )
-                self.token_type_cache[listed_token.token_address] = token_info[1]
+                self.token_type_cache[listed_token.token_address] = TokenType(
+                    token_info[1]
+                )
             token_type = self.token_type_cache[listed_token.token_address]
-            if token_type is None or token_type == "":
+            if not token_type:
                 # Skip if token is not listed in the TokenList contract
                 continue
 
@@ -225,11 +232,13 @@ class Processor:
                         contract_name="IbetSecurityTokenInterface",
                         address=listed_token.token_address,
                     )
-                    tradable_exchange_address = await AsyncContract.call_function(
-                        contract=token_contract,
-                        function_name="tradableExchange",
-                        args=(),
-                        default_returns=ZERO_ADDRESS,
+                    tradable_exchange_address = str(
+                        await AsyncContract.call_function(
+                            contract=token_contract,
+                            function_name="tradableExchange",
+                            args=(),
+                            default_returns=ZERO_ADDRESS,
+                        )
                     )
                     self.token_contract_cache[listed_token.token_address] = (
                         AsyncContractEventsView(
@@ -290,7 +299,7 @@ class Processor:
         try:
             await self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            latest_block = await async_web3.eth.block_number
+            latest_block = int(await async_web3.eth.block_number)
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -318,7 +327,7 @@ class Processor:
         try:
             await self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            latest_block = await async_web3.eth.block_number
+            latest_block = int(await async_web3.eth.block_number)
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -353,7 +362,7 @@ class Processor:
 
         self.__update_cursor(block_to + 1)
 
-    def __update_cursor(self, block_number):
+    def __update_cursor(self, block_number: int):
         """Memorize the block number where next processing should start from
         :param block_number: block number to be set
         :return: None
@@ -379,7 +388,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = await token.events.ApplyForTransfer.get_logs(
+                events: list[EventData] = await token.events.ApplyForTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -388,22 +397,21 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     value = args.get("value", 0)
-                    if value > sys.maxsize:  # suppress overflow
-                        pass
-                    else:
-                        block_timestamp = await self.get_block_timestamp(event=event)
-                        await self.__sink_on_transfer_approval(
-                            db_session=db_session,
-                            event_type="ApplyFor",
-                            token_address=token.address,
-                            exchange_address=None,
-                            application_id=args.get("index"),
-                            from_address=args.get("from", ZERO_ADDRESS),
-                            to_address=args.get("to", ZERO_ADDRESS),
-                            value=args.get("value"),
-                            optional_data_applicant=args.get("data"),
-                            block_timestamp=block_timestamp,
-                        )
+                    if value > sys.maxsize:
+                        continue
+                    block_timestamp = await self.get_block_timestamp(event=event)
+                    await self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="ApplyFor",
+                        token_address=token.address,
+                        exchange_address=None,
+                        application_id=args.get("index"),
+                        from_address=args.get("from", ZERO_ADDRESS),
+                        to_address=args.get("to", ZERO_ADDRESS),
+                        value=value,
+                        optional_data_applicant=args.get("data"),
+                        block_timestamp=block_timestamp,
+                    )
             except Exception as e:
                 raise e
 
@@ -421,7 +429,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = await token.events.CancelTransfer.get_logs(
+                events: list[EventData] = await token.events.CancelTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -455,7 +463,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = await token.events.ApproveTransfer.get_logs(
+                events: list[EventData] = await token.events.ApproveTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -492,14 +500,16 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = await exchange.events.ApplyForTransfer.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange.events.ApplyForTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
-                events_filtered = []
+                events_filtered: list[EventData] = []
                 token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
                     args = event["args"]
@@ -508,22 +518,21 @@ class Processor:
                 for event in events_filtered:
                     args = event["args"]
                     value = args.get("value", 0)
-                    if value > sys.maxsize:  # suppress overflow
-                        pass
-                    else:
-                        block_timestamp = await self.get_block_timestamp(event=event)
-                        await self.__sink_on_transfer_approval(
-                            db_session=db_session,
-                            event_type="ApplyFor",
-                            token_address=args.get("token", ZERO_ADDRESS),
-                            exchange_address=exchange.address,
-                            application_id=args.get("escrowId"),
-                            from_address=args.get("from", ZERO_ADDRESS),
-                            to_address=args.get("to", ZERO_ADDRESS),
-                            value=args.get("value"),
-                            optional_data_applicant=args.get("data"),
-                            block_timestamp=block_timestamp,
-                        )
+                    if value > sys.maxsize:
+                        continue
+                    block_timestamp = await self.get_block_timestamp(event=event)
+                    await self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="ApplyFor",
+                        token_address=args.get("token", ZERO_ADDRESS),
+                        exchange_address=exchange.address,
+                        application_id=args.get("escrowId"),
+                        from_address=args.get("from", ZERO_ADDRESS),
+                        to_address=args.get("to", ZERO_ADDRESS),
+                        value=args.get("value"),
+                        optional_data_applicant=args.get("data"),
+                        block_timestamp=block_timestamp,
+                    )
             except Exception as e:
                 raise e
 
@@ -541,14 +550,14 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = await exchange.events.CancelTransfer.get_logs(
+                events: list[EventData] = await exchange.events.CancelTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
-                events_filtered = []
+                events_filtered: list[EventData] = []
                 token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
                     args = event["args"]
@@ -582,7 +591,7 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = await exchange.events.EscrowFinished.get_logs(
+                events: list[EventData] = await exchange.events.EscrowFinished.get_logs(
                     from_block=block_from,
                     to_block=block_to,
                     argument_filters={"transferApprovalRequired": True},
@@ -591,7 +600,7 @@ class Processor:
                 events = []
             try:
                 # Filter events by listed token
-                events_filtered = []
+                events_filtered: list[EventData] = []
                 token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
                     args = event["args"]
@@ -625,14 +634,16 @@ class Processor:
                 continue
             exchange = target.exchange_contract
             try:
-                events = await exchange.events.ApproveTransfer.get_logs(
+                events: list[
+                    EventData
+                ] = await exchange.events.ApproveTransfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
                 events = []
             try:
                 # Filter events by listed token
-                events_filtered = []
+                events_filtered: list[EventData] = []
                 token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
                     args = event["args"]
@@ -667,7 +678,7 @@ class Processor:
     @staticmethod
     async def __get_idx_transfer_approval_block_number(
         db_session: AsyncSession, token_address: str, exchange_address: str
-    ):
+    ) -> int:
         """Get position index for Bond"""
         _idx_transfer_approval_block_number = (
             await db_session.scalars(
@@ -682,6 +693,7 @@ class Processor:
         if _idx_transfer_approval_block_number is None:
             return -1
         else:
+            assert _idx_transfer_approval_block_number.latest_block_number is not None
             return _idx_transfer_approval_block_number.latest_block_number
 
     @staticmethod
@@ -720,8 +732,8 @@ class Processor:
         db_session: AsyncSession,
         event_type: str,
         token_address: str,
-        application_id: int,
-        exchange_address: str = None,
+        application_id: int | None,
+        exchange_address: str | None = None,
         from_address: Optional[str] = None,
         to_address: Optional[str] = None,
         value: Optional[int] = None,
@@ -761,15 +773,21 @@ class Processor:
                 transfer_approval.from_address = from_address
                 transfer_approval.to_address = to_address
             transfer_approval.value = value
-            try:
-                transfer_approval.application_datetime = datetime.fromtimestamp(
-                    float(optional_data_applicant), tz=timezone.utc
-                )
-            except ValueError:
+            if optional_data_applicant is None:
                 transfer_approval.application_datetime = None
-            transfer_approval.application_blocktimestamp = datetime.fromtimestamp(
-                block_timestamp, tz=timezone.utc
-            )
+            else:
+                try:
+                    transfer_approval.application_datetime = datetime.fromtimestamp(
+                        float(optional_data_applicant), tz=timezone.utc
+                    )
+                except ValueError:
+                    transfer_approval.application_datetime = None
+            if block_timestamp is None:
+                transfer_approval.application_blocktimestamp = None
+            else:
+                transfer_approval.application_blocktimestamp = datetime.fromtimestamp(
+                    block_timestamp, tz=timezone.utc
+                )
         elif event_type == "Cancel":
             if transfer_approval is not None:
                 transfer_approval.cancelled = True
@@ -778,15 +796,21 @@ class Processor:
                 transfer_approval.escrow_finished = True
         elif event_type == "Approve":
             if transfer_approval is not None:
-                try:
-                    transfer_approval.approval_datetime = datetime.fromtimestamp(
-                        float(optional_data_approver), tz=timezone.utc
-                    )
-                except ValueError:
+                if optional_data_approver is None:
                     transfer_approval.approval_datetime = None
-                transfer_approval.approval_blocktimestamp = datetime.fromtimestamp(
-                    block_timestamp, tz=timezone.utc
-                )
+                else:
+                    try:
+                        transfer_approval.approval_datetime = datetime.fromtimestamp(
+                            float(optional_data_approver), tz=timezone.utc
+                        )
+                    except ValueError:
+                        transfer_approval.approval_datetime = None
+                if block_timestamp is None:
+                    transfer_approval.approval_blocktimestamp = None
+                else:
+                    transfer_approval.approval_blocktimestamp = datetime.fromtimestamp(
+                        block_timestamp, tz=timezone.utc
+                    )
                 transfer_approval.transfer_approved = True
         await db_session.merge(transfer_approval)
 

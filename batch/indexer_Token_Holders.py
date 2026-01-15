@@ -19,13 +19,14 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import sys
-from typing import Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.eth.async_eth import AsyncContract as Web3AsyncContract
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
+from web3.types import EventData
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -60,8 +61,10 @@ class Processor:
                 token_holder.locked_balance = 0 + locked
                 self.pages[account_address] = token_holder
             else:
-                self.pages[account_address].hold_balance += amount
-                self.pages[account_address].locked_balance += locked
+                hold_balance = self.pages[account_address].hold_balance or 0
+                locked_balance = self.pages[account_address].locked_balance or 0
+                self.pages[account_address].hold_balance = hold_balance + amount
+                self.pages[account_address].locked_balance = locked_balance + locked
 
     target: Optional[TokenHoldersList]
     balance_book: BalanceBook
@@ -84,7 +87,7 @@ class Processor:
         return BatchAsyncSessionLocal()
 
     async def __load_target(self, db_session: AsyncSession) -> bool:
-        self.target: TokenHoldersList = (
+        self.target = (
             await db_session.scalars(
                 select(TokenHoldersList)
                 .where(
@@ -98,31 +101,38 @@ class Processor:
 
     async def __load_token_info(self) -> bool:
         # Fetch token list information from TokenList Contract
+        if TOKEN_LIST_CONTRACT_ADDRESS is None:
+            return False
+        assert self.target is not None
+        assert self.target.token_address is not None
         list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
-        token_info = await TokenList(list_contract).get_token(self.target.token_address)
+        token_info: tuple[str, str, str] = await TokenList(list_contract).get_token(
+            self.target.token_address
+        )
+        token_type = str(token_info[1])
         self.token_owner_address = token_info[2]
         # Store token contract.
-        if token_info[1] == TokenType.IbetCoupon:
+        if token_type == TokenType.IbetCoupon:
             self.token_contract = AsyncContract.get_contract(
                 TokenType.IbetCoupon, self.target.token_address
             )
-        elif token_info[1] == TokenType.IbetMembership:
+        elif token_type == TokenType.IbetMembership:
             self.token_contract = AsyncContract.get_contract(
                 TokenType.IbetMembership, self.target.token_address
             )
-        elif token_info[1] == TokenType.IbetStraightBond:
+        elif token_type == TokenType.IbetStraightBond:
             self.token_contract = AsyncContract.get_contract(
                 TokenType.IbetStraightBond, self.target.token_address
             )
-        elif token_info[1] == TokenType.IbetShare:
+        elif token_type == TokenType.IbetShare:
             self.token_contract = AsyncContract.get_contract(
                 TokenType.IbetShare, self.target.token_address
             )
         else:
             return False
-        self.token_template = token_info[1]
+        self.token_template = token_type
 
         # Fetch current tradable exchange to store exchange contract.
         self.tradable_exchange_address = await AsyncContract.call_function(
@@ -161,9 +171,10 @@ class Processor:
             for holder in _holders:
                 self.balance_book.store(
                     account_address=holder.account_address,
-                    amount=holder.hold_balance,
-                    locked=holder.locked_balance,
+                    amount=holder.hold_balance or 0,
+                    locked=holder.locked_balance or 0,
                 )
+            assert _checkpoint.block_number is not None
             block_from = _checkpoint.block_number + 1
             return block_from
         return 0
@@ -179,6 +190,9 @@ class Processor:
                 await self.__update_status(local_session, TokenHolderBatchStatus.FAILED)
                 await local_session.commit()
                 return
+            assert self.target is not None
+            assert self.target.token_address is not None
+            assert self.target.block_number is not None
 
             _target_block = self.target.block_number
             _from_block = await self.__load_checkpoint(
@@ -221,6 +235,7 @@ class Processor:
     async def __update_status(
         self, local_session: AsyncSession, status: TokenHolderBatchStatus
     ):
+        assert self.target is not None
         if status == TokenHolderBatchStatus.DONE:
             # Not to store non-holders
             (
@@ -251,6 +266,8 @@ class Processor:
         self, db_session: AsyncSession, block_from: int, block_to: int
     ):
         LOG.info("process from={}, to={}".format(block_from, block_to))
+        assert self.target is not None
+        assert self.target.token_address is not None
 
         await self.__process_transfer(block_from, block_to)
         await self.__process_issue(block_from, block_to)
@@ -284,20 +301,21 @@ class Processor:
         :return: None
         """
         try:
-            tmp_events = []
+            assert self.token_contract is not None
+            tmp_events: list[dict[str, Any]] = []
 
             # Get "HolderChanged" events from exchange contract
-            exchange_contract: Web3AsyncContract = AsyncContract.get_contract(
+            exchange_contract = AsyncContract.get_contract(
                 contract_name="IbetExchangeInterface",
                 address=self.tradable_exchange_address,
             )
             try:
-                holder_changed_events = (
-                    await exchange_contract.events.HolderChanged.get_logs(
-                        from_block=block_from,
-                        to_block=block_to,
-                        argument_filters={"token": self.token_contract.address},
-                    )
+                holder_changed_events: list[
+                    EventData
+                ] = await exchange_contract.events.HolderChanged.get_logs(
+                    from_block=block_from,
+                    to_block=block_to,
+                    argument_filters={"token": self.token_contract.address},
                 )
             except ABIEventNotFound:
                 holder_changed_events = []
@@ -316,10 +334,10 @@ class Processor:
 
             # Get "Transfer" events from token contract
             try:
-                token_transfer_events = (
-                    await self.token_contract.events.Transfer.get_logs(
-                        from_block=block_from, to_block=block_to
-                    )
+                token_transfer_events: list[
+                    EventData
+                ] = await self.token_contract.events.Transfer.get_logs(
+                    from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
                 token_transfer_events = []
@@ -354,7 +372,7 @@ class Processor:
                 ).to_0x_hex() != "0x":
                     continue
 
-                if amount is not None and amount <= sys.maxsize:
+                if amount <= sys.maxsize:
                     # Update Balance（from account）
                     self.balance_book.store(
                         account_address=from_account, amount=-amount
@@ -377,7 +395,8 @@ class Processor:
         """
         try:
             # Get "Issue" events from token contract
-            events = await self.token_contract.events.Issue.get_logs(
+            assert self.token_contract is not None
+            events: list[EventData] = await self.token_contract.events.Issue.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -410,7 +429,8 @@ class Processor:
         """
         try:
             # Get "Redeem" events from token contract
-            events = await self.token_contract.events.Redeem.get_logs(
+            assert self.token_contract is not None
+            events: list[EventData] = await self.token_contract.events.Redeem.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -442,7 +462,8 @@ class Processor:
         """
         try:
             # Get "Consume" events from token contract
-            events = await self.token_contract.events.Consume.get_logs(
+            assert self.token_contract is not None
+            events: list[EventData] = await self.token_contract.events.Consume.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -451,7 +472,7 @@ class Processor:
             for event in events:
                 args = event["args"]
                 account = args.get("consumer", ZERO_ADDRESS)
-                amount = args.get("value", ZERO_ADDRESS)
+                amount = int(args.get("value", 0))
                 self.balance_book.store(account_address=account, amount=-amount)
         except Exception:
             raise
@@ -468,7 +489,8 @@ class Processor:
         """
         try:
             # Get "Lock" events from token contract
-            events = await self.token_contract.events.Lock.get_logs(
+            assert self.token_contract is not None
+            events: list[EventData] = await self.token_contract.events.Lock.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -497,7 +519,10 @@ class Processor:
         """
         try:
             # Get "Lock" events from token contract
-            events = await self.token_contract.events.ForceLock.get_logs(
+            assert self.token_contract is not None
+            events: list[
+                EventData
+            ] = await self.token_contract.events.ForceLock.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -526,7 +551,8 @@ class Processor:
         """
         try:
             # Get "Unlock" events from token contract
-            events = await self.token_contract.events.Unlock.get_logs(
+            assert self.token_contract is not None
+            events: list[EventData] = await self.token_contract.events.Unlock.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -559,7 +585,10 @@ class Processor:
         """
         try:
             # Get "ForceUnlock" events from token contract
-            events = await self.token_contract.events.ForceUnlock.get_logs(
+            assert self.token_contract is not None
+            events: list[
+                EventData
+            ] = await self.token_contract.events.ForceUnlock.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -594,7 +623,10 @@ class Processor:
         """
         try:
             # Get "ForceChangeLockedAccount" events from token contract
-            events = await self.token_contract.events.ForceChangeLockedAccount.get_logs(
+            assert self.token_contract is not None
+            events: list[
+                EventData
+            ] = await self.token_contract.events.ForceChangeLockedAccount.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -641,7 +673,7 @@ class Processor:
                 token_holder.hold_balance = page.hold_balance
                 token_holder.locked_balance = page.locked_balance
                 await db_session.merge(token_holder)
-            elif page.hold_balance > 0 or page.locked_balance > 0:
+            elif (page.hold_balance or 0) > 0 or (page.locked_balance or 0) > 0:
                 LOG.debug(
                     f"Collection record created : token_address={token_address}, account_address={account_address}"
                 )

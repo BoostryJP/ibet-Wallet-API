@@ -17,17 +17,19 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from web3.contract import AsyncContract as Web3AsyncContract
+
 from app.config import ZERO_ADDRESS
 from app.contracts import AsyncContract
 
 
 class TokenList:
-    def __init__(self, contract, token_template=None):
+    def __init__(self, contract: Web3AsyncContract, token_template: str | None = None):
         self.contract = contract
         self.token_template = token_template
 
-    async def is_registered(self, address):
-        token_info = await AsyncContract.call_function(
+    async def is_registered(self, address: str) -> bool:
+        token_info: tuple[str, str, str] = await AsyncContract.call_function(
             contract=self.contract,
             function_name="getTokenByAddress",
             args=(address,),
@@ -39,8 +41,8 @@ class TokenList:
             return False
         return True
 
-    async def get_token(self, address):
-        token_info = await AsyncContract.call_function(
+    async def get_token(self, address: str) -> tuple[str, str, str]:
+        token_info: tuple[str, str, str] = await AsyncContract.call_function(
             contract=self.contract,
             function_name="getTokenByAddress",
             args=(address,),

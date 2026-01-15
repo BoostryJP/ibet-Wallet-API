@@ -21,7 +21,7 @@ import asyncio
 import sys
 import time
 from dataclasses import dataclass
-from typing import List, Type
+from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -59,8 +59,8 @@ class Processor:
     @dataclass
     class TargetTokenType:
         template: str
-        token_class: Type[TokenClassTypes]
-        token_model: Type[IDXTokenInstance]
+        token_class: TokenClassTypes
+        token_model: type[IDXTokenInstance]
 
     target_token_types: List[TargetTokenType]
     SEC_PER_RECORD: float = config.TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC / 1000
