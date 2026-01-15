@@ -88,7 +88,7 @@ class Watcher:
         self.notification_type = notification_type
 
     @staticmethod
-    def _gen_notification_id(entry: dict[str, Any], option_type: int = 0) -> str:
+    def _gen_notification_id(entry: EventData, option_type: int = 0) -> str:
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -97,7 +97,7 @@ class Watcher:
         )
 
     @staticmethod
-    async def _gen_block_timestamp(entry: dict[str, Any]) -> datetime:
+    async def _gen_block_timestamp(entry: EventData) -> datetime:
         block = await async_web3.eth.get_block(entry["blockNumber"])
         assert "timestamp" in block
         return datetime.fromtimestamp(block["timestamp"], UTC).replace(tzinfo=None)
@@ -345,9 +345,7 @@ class WatchCouponBuyAgreement(Watcher):
             cp_exchange_contract, "Agree", {}, NotificationType.BUY_AGREEMENT
         )
 
-    async def watch(
-        self, db_session: AsyncSession, entries: list[dict[str, Any]]
-    ) -> None:
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:

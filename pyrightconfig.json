@@ -7,7 +7,7 @@
         "app/config.py",
         "app/errors.py",
         "app/main.py",
-        "batch/indexer_*.py",
+        "batch/",
         "logger.py",
         "server.py",
         "tests/",

@@ -25,7 +25,7 @@ from app import config
 from logger import SystemLogger
 
 
-def get_logger(process_name: str = None):
+def get_logger(process_name: str):
     logging.setLoggerClass(SystemLogger)
 
     logging.getLogger("pyroscope").setLevel(logging.ERROR)

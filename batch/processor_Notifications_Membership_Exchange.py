@@ -97,7 +97,7 @@ class Watcher:
         )
 
     @staticmethod
-    async def _gen_block_timestamp(entry: dict[str, Any]) -> datetime:
+    async def _gen_block_timestamp(entry: EventData) -> datetime:
         block = await async_web3.eth.get_block(entry["blockNumber"])
         assert "timestamp" in block
         return datetime.fromtimestamp(block["timestamp"], UTC).replace(tzinfo=None)
