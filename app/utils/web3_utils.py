@@ -49,7 +49,7 @@ thread_local = threading.local()
 class Web3Wrapper:
     DEFAULT_TIMEOUT = 5
 
-    def __init__(self, request_timeout: int | None = DEFAULT_TIMEOUT):
+    def __init__(self, request_timeout: int = DEFAULT_TIMEOUT):
         if not config.UNIT_TEST_MODE:
             FailOverHTTPProvider.set_fail_over_mode(True)
         self.request_timeout = request_timeout
@@ -87,7 +87,7 @@ class Web3Wrapper:
 class AsyncWeb3Wrapper:
     DEFAULT_TIMEOUT = 5
 
-    def __init__(self, request_timeout: int | None = DEFAULT_TIMEOUT):
+    def __init__(self, request_timeout: int = DEFAULT_TIMEOUT):
         if not config.UNIT_TEST_MODE:
             AsyncFailOverHTTPProvider.set_fail_over_mode(True)
         self.request_timeout = request_timeout
@@ -125,9 +125,9 @@ class AsyncWeb3Wrapper:
 class FailOverHTTPProvider(HTTPProvider):
     fail_over_mode = False  # If False, use only the default(primary) provider
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.endpoint_uri = None
+        self.endpoint_uri: URI | None = None
 
     def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
         db_session = Session(autocommit=False, autoflush=True, bind=engine)
@@ -155,6 +155,7 @@ class FailOverHTTPProvider(HTTPProvider):
                                 time.sleep(config.WEB3_REQUEST_WAIT_TIME)
                                 continue
                             raise ServiceUnavailable("Block synchronization is down")
+                        assert _node.endpoint_uri is not None
                         self.endpoint_uri = URI(_node.endpoint_uri)
                         try:
                             return super().make_request(method, params)
@@ -169,7 +170,7 @@ class FailOverHTTPProvider(HTTPProvider):
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:
                                 time.sleep(config.WEB3_REQUEST_WAIT_TIME)
                                 continue
-                            raise ServiceUnavailable("Block synchronization is down")
+                    raise ServiceUnavailable("Block synchronization is down")
             else:  # Use default provider
                 self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
                 return super().make_request(method, params)
@@ -184,9 +185,9 @@ class FailOverHTTPProvider(HTTPProvider):
 class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
     fail_over_mode = False  # If False, use only the default(primary) provider
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.endpoint_uri = None
+        self.endpoint_uri: URI | None = None
 
     async def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
         db_session = AsyncSession(autocommit=False, autoflush=True, bind=async_engine)
@@ -216,6 +217,7 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
                                 await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
                                 continue
                             raise ServiceUnavailable("Block synchronization is down")
+                        assert _node.endpoint_uri is not None
                         self.endpoint_uri = URI(_node.endpoint_uri)
                         try:
                             return await super().make_request(method, params)
@@ -230,7 +232,7 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
                             if counter <= config.WEB3_REQUEST_RETRY_COUNT:
                                 await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
                                 continue
-                            raise ServiceUnavailable("Block synchronization is down")
+                    raise ServiceUnavailable("Block synchronization is down")
             else:  # Use default provider
                 self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
                 return await super().make_request(method, params)
