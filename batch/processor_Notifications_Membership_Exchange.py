@@ -1,3 +1,4 @@
+# pyright: reportConstantRedefinition=false
 """
 Copyright BOOSTRY Co., Ltd.
 
@@ -21,12 +22,14 @@ import asyncio
 import sys
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.eth.async_eth import AsyncContract as Web3AsyncContract
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
+from web3.types import EventData
 
 from app.config import (
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -54,14 +57,16 @@ NOTIFICATION_PROCESS_INTERVAL = int(NOTIFICATION_PROCESS_INTERVAL)
 async_web3 = AsyncWeb3Wrapper()
 
 
-token_factory = TokenFactory()
+token_factory: Any = TokenFactory()
 
 # Get membership IbetExchange contract
+assert IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None
 membership_exchange_contract = AsyncContract.get_contract(
     contract_name="IbetExchange", address=IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
 )
 
 # Get TokenList contract
+assert TOKEN_LIST_CONTRACT_ADDRESS is not None
 list_contract = AsyncContract.get_contract(
     contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
@@ -74,7 +79,7 @@ class Watcher:
         self,
         contract: Web3AsyncContract,
         filter_name: str,
-        filter_params: dict,
+        filter_params: dict[str, Any],
         notification_type: str,
     ):
         self.contract = contract
@@ -83,7 +88,7 @@ class Watcher:
         self.notification_type = notification_type
 
     @staticmethod
-    def _gen_notification_id(entry, option_type=0):
+    def _gen_notification_id(entry: EventData, option_type: int = 0) -> str:
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -92,15 +97,15 @@ class Watcher:
         )
 
     @staticmethod
-    async def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(
-            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"], UTC
-        ).replace(tzinfo=None)
+    async def _gen_block_timestamp(entry: dict[str, Any]) -> datetime:
+        block = await async_web3.eth.get_block(entry["blockNumber"])
+        assert "timestamp" in block
+        return datetime.fromtimestamp(block["timestamp"], UTC).replace(tzinfo=None)
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         pass
 
-    async def loop(self):
+    async def loop(self) -> None:
         start_time = time.time()
         db_session = BatchAsyncSessionLocal()
 
@@ -131,7 +136,7 @@ class Watcher:
             # Get event logs
             try:
                 _event = getattr(self.contract.events, self.filter_name)
-                entries = await _event.get_logs(
+                entries: list[EventData] = await _event.get_logs(
                     from_block=from_block_number, to_block=to_block_number
                 )
             except ABIEventNotFound:
@@ -214,11 +219,11 @@ class WatchMembershipNewOrder(Watcher):
             membership_exchange_contract, "NewOrder", {}, NotificationType.NEW_ORDER
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -227,8 +232,8 @@ class WatchMembershipNewOrder(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -258,11 +263,11 @@ class WatchMembershipCancelOrder(Watcher):
             NotificationType.CANCEL_ORDER,
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -271,8 +276,8 @@ class WatchMembershipCancelOrder(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -302,11 +307,11 @@ class WatchMembershipForceCancelOrder(Watcher):
             NotificationType.FORCE_CANCEL_ORDER,
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -315,8 +320,8 @@ class WatchMembershipForceCancelOrder(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -343,11 +348,11 @@ class WatchMembershipBuyAgreement(Watcher):
             membership_exchange_contract, "Agree", {}, NotificationType.BUY_AGREEMENT
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -356,8 +361,8 @@ class WatchMembershipBuyAgreement(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -384,11 +389,11 @@ class WatchMembershipSellAgreement(Watcher):
             membership_exchange_contract, "Agree", {}, NotificationType.SELL_AGREEMENT
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -397,8 +402,8 @@ class WatchMembershipSellAgreement(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -428,11 +433,11 @@ class WatchMembershipBuySettlementOK(Watcher):
             NotificationType.BUY_SETTLEMENT_OK,
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -441,8 +446,8 @@ class WatchMembershipBuySettlementOK(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -472,11 +477,11 @@ class WatchMembershipSellSettlementOK(Watcher):
             NotificationType.SELL_SETTLEMENT_OK,
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -485,8 +490,8 @@ class WatchMembershipSellSettlementOK(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -516,11 +521,11 @@ class WatchMembershipBuySettlementNG(Watcher):
             NotificationType.BUY_SETTLEMENT_NG,
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -529,8 +534,8 @@ class WatchMembershipBuySettlementNG(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
@@ -560,11 +565,11 @@ class WatchMembershipSellSettlementNG(Watcher):
             NotificationType.SELL_SETTLEMENT_NG,
         )
 
-    async def watch(self, db_session: AsyncSession, entries):
+    async def watch(self, db_session: AsyncSession, entries: list[EventData]) -> None:
         company_list = await CompanyList.get()
 
         for entry in entries:
-            token_address = entry["args"]["tokenAddress"]
+            token_address: str = entry["args"]["tokenAddress"]
 
             if not await token_list.is_registered(token_address):
                 continue
@@ -573,8 +578,8 @@ class WatchMembershipSellSettlementNG(Watcher):
 
             company = company_list.find(await token.owner_address)
 
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": token_address,
                 "token_name": await token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,

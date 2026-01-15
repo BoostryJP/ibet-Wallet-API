@@ -20,14 +20,15 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 import time
-from typing import Any, TypedDict
+from typing import Any, Generic, TypedDict, TypeVar
 
 from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import AsyncHTTPProvider, AsyncWeb3
-from web3.middleware import ExtraDataToPOAMiddleware, Web3Middleware
-from web3.types import RPCEndpoint, RPCResponse
+from web3.middleware import ExtraDataToPOAMiddleware
+from web3.middleware.base import Web3Middleware
+from web3.types import AsyncMakeRequestFn, RPCEndpoint, RPCResponse
 
 from app import config
 from app.config import EXPECTED_BLOCKS_PER_SEC
@@ -45,7 +46,9 @@ class Web3WrapperException(Exception):
 
 
 class CustomWeb3ExceptionMiddleware(Web3Middleware):
-    async def async_wrap_make_request(self, make_request):
+    async def async_wrap_make_request(
+        self, make_request: AsyncMakeRequestFn
+    ) -> AsyncMakeRequestFn:
         async def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
             METHODS = [
                 "eth_blockNumber",
@@ -65,23 +68,31 @@ class CustomWeb3ExceptionMiddleware(Web3Middleware):
         return middleware
 
 
-class RingBuffer:
-    def __init__(self, size, default=None):
-        self._next = 0
-        self._buffer = [default] * size
+T = TypeVar("T")
 
-    def append(self, data):
+
+class RingBuffer(Generic[T]):
+    def __init__(self, size: int, default: T):
+        self._next = 0
+        self._buffer: list[T] = [default] * size
+
+    def append(self, data: T) -> None:
         self._buffer[self._next] = data
         self._next = (self._next + 1) % len(self._buffer)
 
-    def peek_oldest(self):
+    def peek_oldest(self) -> T:
         return self._buffer[self._next]
+
+
+class BlockHistory(TypedDict):
+    time: float
+    block_number: int
 
 
 class NodeInfo(TypedDict):
     priority: int
     web3: AsyncWeb3
-    history: RingBuffer
+    history: RingBuffer[BlockHistory]
 
 
 class Processor:
@@ -171,7 +182,12 @@ class Processor:
             LOG.error(f"Node connection failed: {endpoint_uri}")
             block = {"timestamp": time.time(), "number": 0}
 
-        data = {"time": block["timestamp"], "block_number": block["number"]}
+        assert "timestamp" in block and "number" in block, "Invalid block data"
+
+        data: BlockHistory = {
+            "time": block["timestamp"],
+            "block_number": int(block["number"]),
+        }
         history = RingBuffer(config.BLOCK_SYNC_STATUS_CALC_PERIOD, data)
         self.node_info[endpoint_uri] = {
             "priority": priority,
@@ -181,15 +197,17 @@ class Processor:
 
     async def __process(self, db_session: AsyncSession, endpoint_uri: str):
         is_synced = True
-        errors = []
+        errors: list[str] = []
         priority = self.node_info[endpoint_uri]["priority"]
         web3 = self.node_info[endpoint_uri]["web3"]
         history = self.node_info[endpoint_uri]["history"]
 
         # Check sync to other node
         syncing = await web3.eth.syncing
-        if syncing:
-            remaining_blocks = syncing["highestBlock"] - syncing["currentBlock"]
+        if isinstance(syncing, dict):
+            remaining_blocks = int(syncing["highestBlock"]) - int(
+                syncing["currentBlock"]
+            )
             if remaining_blocks > config.BLOCK_SYNC_REMAINING_THRESHOLD:
                 is_synced = False
                 errors.append(
@@ -197,7 +215,10 @@ class Processor:
                 )
 
         # Check increased block number
-        data = {"time": time.time(), "block_number": await web3.eth.block_number}
+        data: BlockHistory = {
+            "time": time.time(),
+            "block_number": await web3.eth.block_number,
+        }
         old_data = history.peek_oldest()
         elapsed_time = data["time"] - old_data["time"]
         generated_block_count = data["block_number"] - old_data["block_number"]

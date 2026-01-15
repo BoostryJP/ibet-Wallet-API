@@ -1,3 +1,4 @@
+# pyright: reportConstantRedefinition=false
 """
 Copyright BOOSTRY Co., Ltd.
 
@@ -21,7 +22,7 @@ import asyncio
 import sys
 import time
 from datetime import UTC, datetime
-from typing import Sequence
+from typing import Any, Sequence, TypedDict
 
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -41,7 +42,13 @@ from app.config import (
 from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
 from app.errors import ServiceUnavailable
-from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
+from app.model.blockchain import (
+    BondToken,
+    CouponToken,
+    MembershipToken,
+    ShareToken,
+    TokenInstanceTypes,
+)
 from app.model.db import (
     IDXTokenListRegister,
     Listing,
@@ -66,10 +73,17 @@ async_web3 = AsyncWeb3Wrapper()
 
 
 # Get TokenList contract
+assert TOKEN_LIST_CONTRACT_ADDRESS is not None
 list_contract = AsyncContract.get_contract(
     contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
 )
 token_list = TokenList(list_contract)
+
+
+# Typed dicts
+class TokenInfo(TypedDict):
+    token: IDXTokenListRegister
+    token_type: str | None
 
 
 # EventWatcher
@@ -79,9 +93,9 @@ class EventWatcher:
     def __init__(
         self,
         filter_name: str,
-        filter_params: dict,
+        filter_params: dict[str, Any],
         notification_type: str,
-        token_type_list: list[TokenType] = None,
+        token_type_list: list[TokenType] | None = None,
         skip_past_data_on_initial_sync: bool = False,
     ):
         if token_type_list is None:
@@ -93,7 +107,7 @@ class EventWatcher:
         self.skip_past_data_on_initial_sync = skip_past_data_on_initial_sync
 
     @staticmethod
-    def _gen_notification_id(entry, option_type=0):
+    def _gen_notification_id(entry: EventData, option_type: int = 0) -> str:
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -102,16 +116,16 @@ class EventWatcher:
         )
 
     @staticmethod
-    async def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(
-            (await async_web3.eth.get_block(entry["blockNumber"]))["timestamp"], UTC
-        ).replace(tzinfo=None)
+    async def _gen_block_timestamp(entry: EventData) -> datetime:
+        block = await async_web3.eth.get_block(entry["blockNumber"])
+        assert "timestamp" in block
+        return datetime.fromtimestamp(block["timestamp"], UTC).replace(tzinfo=None)
 
     @staticmethod
     async def _get_token_all_list(
         db_session: AsyncSession, token_type_list: list[TokenType]
-    ):
-        _tokens = []
+    ) -> list[TokenInfo]:
+        _tokens: list[TokenInfo] = []
 
         stmt = select(IDXTokenListRegister).join(
             Listing,
@@ -138,10 +152,10 @@ class EventWatcher:
         token_type: str,
         log_entries: list[EventData],
         token_owner_address: str,
-    ):
+    ) -> None:
         pass
 
-    async def loop(self):
+    async def loop(self) -> None:
         start_time = time.time()
         db_session = BatchAsyncSessionLocal()
 
@@ -153,6 +167,8 @@ class EventWatcher:
             latest_block_number = await async_web3.eth.block_number
 
             for _token in _token_list:
+                assert _token["token_type"] is not None
+                assert _token["token"].owner_address is not None
                 # Get synchronized block number
                 from_block_number = (
                     await self.__get_synchronized_block_number(
@@ -178,9 +194,10 @@ class EventWatcher:
                     to_block_number = latest_block_number
 
                 # Get event logs
+                token_contract: Web3AsyncContract | None = None
                 try:
                     token_contract = self.contract_cache.get(
-                        _token["token"].token_address, None
+                        _token["token"].token_address
                     )
                     if token_contract is None:
                         token_contract = AsyncContract.get_contract(
@@ -191,7 +208,7 @@ class EventWatcher:
                             token_contract
                         )
                     _event = getattr(token_contract.events, self.filter_name)
-                    entries = await _event.get_logs(
+                    entries: list[EventData] = await _event.get_logs(
                         from_block=from_block_number, to_block=to_block_number
                     )
                 except ABIEventNotFound:  # Backward compatibility
@@ -203,6 +220,9 @@ class EventWatcher:
                     continue
 
                 # Register notifications
+                if token_contract is None:
+                    continue
+
                 if len(entries) > 0:
                     await self.db_merge(
                         db_session=db_session,
@@ -300,7 +320,7 @@ class WatchTransfer(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
@@ -311,8 +331,8 @@ class WatchTransfer(EventWatcher):
                 continue
 
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -349,7 +369,7 @@ class WatchApplyForTransfer(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
@@ -357,8 +377,8 @@ class WatchApplyForTransfer(EventWatcher):
                 continue
 
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -395,7 +415,7 @@ class WatchApproveTransfer(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
@@ -403,8 +423,8 @@ class WatchApproveTransfer(EventWatcher):
                 continue
 
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -441,7 +461,7 @@ class WatchCancelTransfer(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
@@ -449,8 +469,8 @@ class WatchCancelTransfer(EventWatcher):
                 continue
 
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -486,13 +506,13 @@ class WatchForceLock(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -528,13 +548,13 @@ class WatchForceUnlock(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -576,13 +596,13 @@ class WatchChangeToRedeemed(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -624,13 +644,13 @@ class WatchChangeToCanceled(EventWatcher):
         token_owner_address: str,
     ):
         company_list = await CompanyList.get()
-        token_name = await AsyncContract.call_function(
+        token_name: str = await AsyncContract.call_function(
             contract=token_contract, function_name="name", args=(), default_returns=""
         )
         for entry in log_entries:
             company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
+            metadata: dict[str, Any] = {
+                "company_name": company["corporate_name"],
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
@@ -654,7 +674,7 @@ class AttributeWatcher:
         self,
         attribute_key: str,
         notification_type: str,
-        token_type_list: list[TokenType] = None,
+        token_type_list: list[TokenType] | None = None,
     ):
         if token_type_list is None:
             token_type_list = list([])
@@ -665,16 +685,19 @@ class AttributeWatcher:
 
     @staticmethod
     def _gen_notification_id(
-        timestamp_ms: int, contract_address: str, attribute_key_hash: str, option_type=0
-    ):
+        timestamp_ms: int,
+        contract_address: str,
+        attribute_key_hash: str,
+        option_type: int = 0,
+    ) -> str:
         contract_address_without_prefix = contract_address.replace("0x", "").lower()
         return f"0x{timestamp_ms:012x}{contract_address_without_prefix}{attribute_key_hash}{option_type:02x}"
 
     @staticmethod
     async def _get_token_all_list(
         db_session: AsyncSession, token_type_list: list[TokenType]
-    ):
-        _tokens = []
+    ) -> list[TokenInfo]:
+        _tokens: list[TokenInfo] = []
 
         stmt = select(IDXTokenListRegister).join(
             Listing,
@@ -703,10 +726,10 @@ class AttributeWatcher:
         token_owner_address: str,
         previous_value: str | int | bool,
         current_value: str | int | bool,
-    ):
+    ) -> None:
         pass
 
-    async def loop(self):
+    async def loop(self) -> None:
         start_time = time.time()
         db_session = BatchAsyncSessionLocal()
 
@@ -717,6 +740,8 @@ class AttributeWatcher:
             )
 
             for _token in _token_list:
+                assert _token["token_type"] is not None
+                assert _token["token"].owner_address is not None
                 try:
                     # Get previous attribute value from DB
                     previous_attribute_key_value = await self.__get_attribute_value(
@@ -724,40 +749,39 @@ class AttributeWatcher:
                         _token["token"].token_address,
                         self.attribute_key,
                     )
-                    is_initial_sync = (
-                        True if previous_attribute_key_value is None else False
-                    )
+                    is_initial_sync = previous_attribute_key_value is None
 
                     # Get token detail by token type
+                    token_detail: TokenInstanceTypes | None = None
                     if _token["token_type"] == TokenType.IbetStraightBond:
                         token_detail = await BondToken.get(
-                            async_session=db_session,
-                            token_address=_token["token"].token_address,
+                            db_session, _token["token"].token_address
                         )
                     elif _token["token_type"] == TokenType.IbetShare:
                         token_detail = await ShareToken.get(
-                            async_session=db_session,
-                            token_address=_token["token"].token_address,
+                            db_session, _token["token"].token_address
                         )
                     elif _token["token_type"] == TokenType.IbetCoupon:
                         token_detail = await CouponToken.get(
-                            async_session=db_session,
-                            token_address=_token["token"].token_address,
+                            db_session, _token["token"].token_address
                         )
                     elif _token["token_type"] == TokenType.IbetMembership:
                         token_detail = await MembershipToken.get(
-                            async_session=db_session,
-                            token_address=_token["token"].token_address,
+                            db_session, _token["token"].token_address
                         )
                     else:  # pragma: no cover
                         continue
 
                     # Get current attribute value from token detail
-                    current_attribute_value = token_detail.__dict__.get(
-                        self.attribute_key
+                    assert token_detail is not None
+                    current_attribute_value: str | int | bool | None = (
+                        token_detail.__dict__.get(self.attribute_key)
                     )
 
-                    if is_initial_sync is False:
+                    if (
+                        is_initial_sync is False
+                        and previous_attribute_key_value is not None
+                    ):
                         # Get previous attribute value from DB record
                         previous_attribute_value = (
                             previous_attribute_key_value.attribute.get(
@@ -827,7 +851,7 @@ class AttributeWatcher:
         db_session: AsyncSession,
         contract_address: str,
         attribute_key: str,
-        attribute_value: bool | int | str,
+        attribute_value: bool | int | str | None,
     ):
         """Set latest synchronized attribute value"""
         notification_attribute_value: NotificationAttributeValue | None = (
@@ -875,8 +899,8 @@ class WatchTransferableAttribute(AttributeWatcher):
     ):
         company_list = await CompanyList.get()
         company = company_list.find(token_owner_address)
-        metadata = {
-            "company_name": company.corporate_name,
+        metadata: dict[str, Any] = {
+            "company_name": company["corporate_name"],
             "token_address": token_address,
             "token_name": token_name,
             "exchange_address": "",
