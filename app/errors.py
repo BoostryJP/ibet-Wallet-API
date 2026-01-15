@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
+
 
 class AppError(Exception):
     status_code = 500
@@ -24,9 +26,9 @@ class AppError(Exception):
 
     error_code = 0
     message: str = ""
-    description: str | dict | None = None
+    description: str | dict[str, Any] | None = None
 
-    def __init__(self, description: str | None = None):
+    def __init__(self, description: str | dict[str, Any] | None = None):
         self.description = description
 
 

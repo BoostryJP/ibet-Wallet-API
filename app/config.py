@@ -1,3 +1,4 @@
+# pyright: reportConstantRedefinition=false
 """
 Copyright BOOSTRY Co., Ltd.
 
@@ -74,28 +75,18 @@ COMPANY_LIST_URL = os.environ.get("COMPANY_LIST_URL")
 COMPANY_LIST_LOCAL_MODE = (
     True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
 )
-COMPANY_LIST_SLEEP_INTERVAL = (
-    int(os.environ.get("COMPANY_LIST_SLEEP_INTERVAL"))
-    if os.environ.get("COMPANY_LIST_SLEEP_INTERVAL")
-    else 3600
-)
+COMPANY_LIST_SLEEP_INTERVAL = int(os.environ.get("COMPANY_LIST_SLEEP_INTERVAL") or 3600)
 
 # [PublicInfo] Token List
 # - Considering the need for timely information updates,
 #   the SLEEP interval is set to 10 minutes by default.
 TOKEN_LIST_URL = os.environ.get("TOKEN_LIST_URL")
-TOKEN_LIST_SLEEP_INTERVAL = (
-    int(os.environ.get("TOKEN_LIST_SLEEP_INTERVAL"))
-    if os.environ.get("TOKEN_LIST_SLEEP_INTERVAL")
-    else 600
-)
+TOKEN_LIST_SLEEP_INTERVAL = int(os.environ.get("TOKEN_LIST_SLEEP_INTERVAL") or 600)
 
 # [PublicInfo] Public Account List
 PUBLIC_ACCOUNT_LIST_URL = os.environ.get("PUBLIC_ACCOUNT_LIST_URL")
-PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL = (
-    int(os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL"))
-    if os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL")
-    else 3600
+PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL = int(
+    os.environ.get("PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL") or 3600
 )
 
 # System timezone for REST API
@@ -108,23 +99,15 @@ DEFAULT_CURRENCY = os.environ.get("DEFAULT_CURRENCY") or "JPY"
 # Server settings
 ####################################################
 # Worker thread
-WORKER_COUNT = (
-    int(os.environ.get("WORKER_COUNT")) if os.environ.get("WORKER_COUNT") else 8
-)
+WORKER_COUNT = int(os.environ.get("WORKER_COUNT") or 8)
 
 # HTTP request timeout
 REQUEST_TIMEOUT = (3.0, 7.5)
 
 # Batch processing interval
-BATCH_PROCESS_INTERVAL = (
-    int(os.environ.get("BATCH_PROCESS_INTERVAL"))
-    if os.environ.get("BATCH_PROCESS_INTERVAL")
-    else 3
-)
-NOTIFICATION_PROCESS_INTERVAL = (
-    int(os.environ.get("NOTIFICATION_PROCESS_INTERVAL"))
-    if os.environ.get("NOTIFICATION_PROCESS_INTERVAL")
-    else 60
+BATCH_PROCESS_INTERVAL = int(os.environ.get("BATCH_PROCESS_INTERVAL") or 3)
+NOTIFICATION_PROCESS_INTERVAL = int(
+    os.environ.get("NOTIFICATION_PROCESS_INTERVAL") or 60
 )
 
 # Database
@@ -169,16 +152,12 @@ BLOCK_SYNC_REMAINING_THRESHOLD = int(
 )
 # Threshold of block generation speed for judging synchronous stop [%]
 if APP_ENV == "local":
-    BLOCK_GENERATION_SPEED_THRESHOLD = (
-        int(os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD"))
-        if os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD")
-        else 0
+    BLOCK_GENERATION_SPEED_THRESHOLD = int(
+        os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD") or 0
     )
 else:
-    BLOCK_GENERATION_SPEED_THRESHOLD = (
-        int(os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD"))
-        if os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD")
-        else 10
+    BLOCK_GENERATION_SPEED_THRESHOLD = int(
+        os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD") or 10
     )
 # Average block generation interval
 EXPECTED_BLOCKS_PER_SEC = float(os.environ.get("EXPECTED_BLOCKS_PER_SEC", 0.1))
@@ -190,7 +169,10 @@ EXPECTED_BLOCKS_PER_SEC = float(os.environ.get("EXPECTED_BLOCKS_PER_SEC", 0.1))
 # Provider
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or "http://localhost:8545"
 WEB3_HTTP_PROVIDER_STANDBY = (
-    [node.strip() for node in os.environ.get("WEB3_HTTP_PROVIDER_STANDBY").split(",")]
+    [
+        node.strip()
+        for node in (os.environ.get("WEB3_HTTP_PROVIDER_STANDBY") or "").split(",")
+    ]
     if os.environ.get("WEB3_HTTP_PROVIDER_STANDBY")
     else []
 )
@@ -199,34 +181,20 @@ WEB3_HTTP_PROVIDER_STANDBY = (
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG["web3"]["chainid"]
 
 # Transaction reception wait
-TRANSACTION_WAIT_TIMEOUT = (
-    int(os.environ.get("TRANSACTION_WAIT_TIMEOUT"))
-    if os.environ.get("TRANSACTION_WAIT_TIMEOUT")
-    else 5
-)
-TRANSACTION_WAIT_POLL_LATENCY = (
-    float(os.environ.get("TRANSACTION_WAIT_POLL_LATENCY"))
-    if os.environ.get("TRANSACTION_WAIT_POLL_LATENCY")
-    else 0.5
+TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT") or 5)
+TRANSACTION_WAIT_POLL_LATENCY = float(
+    os.environ.get("TRANSACTION_WAIT_POLL_LATENCY") or 0.5
 )
 
 # Txpool length at which tx sending begins to pause
-TXPOOL_THRESHOLD_FOR_TX_PAUSE = (
-    int(os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE"))
-    if os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE")
-    else 200
+TXPOOL_THRESHOLD_FOR_TX_PAUSE = int(
+    os.environ.get("TXPOOL_THRESHOLD_FOR_TX_PAUSE") or 200
 )
 
 # Fail over settings
-WEB3_REQUEST_RETRY_COUNT = (
-    int(os.environ.get("WEB3_REQUEST_RETRY_COUNT"))
-    if os.environ.get("WEB3_REQUEST_RETRY_COUNT")
-    else 3
-)
-WEB3_REQUEST_WAIT_TIME = (
-    int(os.environ.get("WEB3_REQUEST_WAIT_TIME"))
-    if os.environ.get("WEB3_REQUEST_WAIT_TIME")
-    else BLOCK_SYNC_STATUS_SLEEP_INTERVAL
+WEB3_REQUEST_RETRY_COUNT = int(os.environ.get("WEB3_REQUEST_RETRY_COUNT") or 3)
+WEB3_REQUEST_WAIT_TIME = int(
+    os.environ.get("WEB3_REQUEST_WAIT_TIME") or BLOCK_SYNC_STATUS_SLEEP_INTERVAL
 )  # Same batch interval
 
 ####################################################
@@ -284,44 +252,26 @@ CONTRACT_REGISTRY_ADDRESS = os.environ.get("CONTRACT_REGISTRY_ADDRESS")
 # Enabling token cache
 TOKEN_CACHE = False if os.environ.get("TOKEN_CACHE") == "0" else True
 # TTL of cache [sec]
-TOKEN_CACHE_TTL = (
-    int(os.environ.get("TOKEN_CACHE_TTL"))
-    if os.environ.get("TOKEN_CACHE_TTL")
-    else 43200
-)
+TOKEN_CACHE_TTL = int(os.environ.get("TOKEN_CACHE_TTL") or 43200)
 # Refresh interval [sec]
 # NOTE: Default value is 80% of TTL
-TOKEN_CACHE_REFRESH_INTERVAL = (
-    int(os.environ.get("TOKEN_CACHE_REFRESH_INTERVAL"))
-    if os.environ.get("TOKEN_CACHE_REFRESH_INTERVAL")
-    else 34560
+TOKEN_CACHE_REFRESH_INTERVAL = int(
+    os.environ.get("TOKEN_CACHE_REFRESH_INTERVAL") or 34560
 )
 # TTL of short-term cache [sec]
-TOKEN_SHORT_TERM_CACHE_TTL = (
-    int(os.environ.get("TOKEN_SHORT_TERM_CACHE_TTL"))
-    if os.environ.get("TOKEN_SHORT_TERM_CACHE_TTL")
-    else 40
-)
+TOKEN_SHORT_TERM_CACHE_TTL = int(os.environ.get("TOKEN_SHORT_TERM_CACHE_TTL") or 40)
 # Refresh interval of short-term cache [sec]
 # NOTE: Default value is 80% of TTL
-TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL = (
-    int(os.environ.get("TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL"))
-    if os.environ.get("TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL")
-    else 32
+TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL = int(
+    os.environ.get("TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL") or 32
 )
 # Fetch interval of cache [sec]
 # NOTE: Interval allocated for each token information
-TOKEN_FETCH_INTERVAL = (
-    int(os.environ.get("TOKEN_FETCH_INTERVAL"))
-    if os.environ.get("TOKEN_FETCH_INTERVAL")
-    else 3
-)
+TOKEN_FETCH_INTERVAL = int(os.environ.get("TOKEN_FETCH_INTERVAL") or 3)
 # Fetch interval of short-term cache [sec]
 # NOTE: Interval allocated for each token information
-TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC = (
-    int(os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC"))
-    if os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC")
-    else 100
+TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC = int(
+    os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC") or 100
 )
 
 ####################################################
@@ -333,9 +283,7 @@ BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else 
 # Email settings
 ####################################################
 # Common
-SMTP_METHOD = (
-    int(os.environ.get("SMTP_METHOD")) if os.environ.get("SMTP_METHOD") else 0
-)  # 0:SMTP server, 1:Amazon SES
+SMTP_METHOD = int(os.environ.get("SMTP_METHOD") or 0)  # 0:SMTP server, 1:Amazon SES
 SMTP_POLICY = (
     SMTPUTF8
     if os.environ.get("SMTP_POLICY") == "SMTPUTF8"
@@ -343,10 +291,8 @@ SMTP_POLICY = (
     if os.environ.get("SMTP_POLICY") == "HTTP"
     else SMTP
 )  # SMTP (default), SMTPUTF8, HTTP
-SMTP_SERVER_ENCRYPTION_METHOD = (
-    int(os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD"))
-    if os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD")
-    else 0
+SMTP_SERVER_ENCRYPTION_METHOD = int(
+    os.environ.get("SMTP_SERVER_ENCRYPTION_METHOD") or 0
 )  # 0:STARTTLS, 1:SSL, 2:NO-ENCRYPT
 SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME")
 SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL")
@@ -374,7 +320,7 @@ SMTP_MS_CLIENT_SECRET: str | None = os.environ.get("SMTP_MS_CLIENT_SECRET")
 
 # Send settings
 ALLOWED_EMAIL_DESTINATION_DOMAIN_LIST = (
-    os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST").split(",")
+    (os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST") or "").split(",")
     if os.environ.get("AUTHORIZED_EMAIL_DESTINATION_DOMAIN_LIST")
     else None
 )
