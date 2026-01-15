@@ -66,7 +66,11 @@ from app.errors import (
     ServiceUnavailable,
     SuspendedTokenError,
 )
-from app.middleware import ResponseLoggerMiddleware, StripTrailingSlashMiddleware
+from app.middleware import (
+    CacheControlMiddleware,
+    ResponseLoggerMiddleware,
+    StripTrailingSlashMiddleware,
+)
 from app.utils import o11y
 from app.utils.docs_utils import custom_openapi
 
@@ -180,6 +184,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(CacheControlMiddleware)
 app.add_middleware(ResponseLoggerMiddleware)
 app.add_middleware(StripTrailingSlashMiddleware)
 
