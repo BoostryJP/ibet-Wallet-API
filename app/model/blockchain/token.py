@@ -246,8 +246,8 @@ class BondToken(TokenBase):
             raise ServiceUnavailable from None
 
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # Update
         self.owner_address = owner_address
@@ -441,8 +441,8 @@ class BondToken(TokenBase):
 
         # 企業リストから、企業名を取得する
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = (
@@ -591,8 +591,8 @@ class ShareToken(TokenBase):
             raise ServiceUnavailable from None
 
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # Update
         self.owner_address = owner_address
@@ -690,8 +690,8 @@ class ShareToken(TokenBase):
 
         # 企業リストから、企業名とRSA鍵を取得する
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = (
@@ -809,8 +809,8 @@ class MembershipToken(TokenBase):
             raise ServiceUnavailable from None
 
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # Update
         self.owner_address = owner_address
@@ -889,8 +889,8 @@ class MembershipToken(TokenBase):
 
         # 企業リストから、企業名を取得する
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = (
@@ -1004,8 +1004,8 @@ class CouponToken(TokenBase):
             raise ServiceUnavailable from None
 
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # Update
         self.owner_address = owner_address
@@ -1082,8 +1082,8 @@ class CouponToken(TokenBase):
 
         # 企業リストから、企業名を取得する
         company = await CompanyList.get_find(to_checksum_address(owner_address))
-        company_name = company.corporate_name
-        rsa_publickey = company.rsa_publickey
+        company_name = company["corporate_name"]
+        rsa_publickey = company["rsa_publickey"]
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = (

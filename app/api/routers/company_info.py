@@ -49,7 +49,7 @@ from app.model.schema.base import (
     TokenType,
 )
 from app.model.type import EthereumAddress
-from app.utils.company_list import CompanyList
+from app.utils.company_list import Company, CompanyList
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -78,7 +78,7 @@ async def list_all_companies(
 
     # Get company list
     _company_list = await CompanyList.get()
-    company_list = [company.json() for company in _company_list.all()]
+    company_list = _company_list.all()
 
     # Get the token listed
     if request_query.include_private_listing:
@@ -136,7 +136,7 @@ async def list_all_companies(
         ).all()
 
     # Filter only issuers that issue the listed tokens
-    listing_owner_set = set()
+    listing_owner_set: set[str] = set()
     for token in available_tokens:
         try:
             owner_address_is_cached = [t for t in token[1:5] if t is not None]
@@ -185,7 +185,7 @@ async def retrieve_company_info(
     """
     # Retrieve the company information linked to the issuer.
     company = await CompanyList.get_find(to_checksum_address(eth_address))
-    if company.address == "":
+    if company["address"] == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
 
     # Retrieve the personal information address linked to the issuer.
@@ -216,7 +216,7 @@ async def retrieve_company_info(
     _personal_info_list = (
         await async_session.scalars(select(distinct(token_all.c.personal_info_address)))
     ).all()
-    resp = company.json()
+    resp = {**company}
     resp["in_use_personal_info_addresses"] = _personal_info_list
 
     return json_response({**SuccessResponse.default(), "data": resp})
@@ -328,8 +328,8 @@ def get_token_model(token_template: str):
 
 def has_listing_owner_function_creator(
     listing_owner_set: set[str],
-) -> Callable[[dict], bool]:
-    def has_listing_owner_function(company_info: dict):
+) -> Callable[[Company], bool]:
+    def has_listing_owner_function(company_info: Company):
         if to_checksum_address(company_info["address"]) in listing_owner_set:
             return True
         return False
