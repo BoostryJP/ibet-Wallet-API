@@ -400,6 +400,7 @@ class Processor:
                                     if call_data.get("purpose") == "Reallocation":
                                         is_reallocation = True
                                 except (ValueError, json.JSONDecodeError):
+                                    # If decoding fails, treat it as a normal transfer
                                     pass
                         self.__insert_idx(
                             db_session=db_session,

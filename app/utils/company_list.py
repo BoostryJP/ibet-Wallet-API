@@ -58,9 +58,8 @@ class CompanyList:
         try:
             if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list: list[Company] = []
-                company_list_raw: list[Company] = json.load(
-                    open("data/company_list.json", "r")
-                )
+                with open("data/company_list.json", "r") as f:
+                    company_list_raw: list[Company] = json.load(f)
                 for _company in company_list_raw:
                     trustee_raw = _company.get("trustee")
                     trustee_dict: Trustee | None
@@ -137,9 +136,8 @@ class CompanyList:
     async def get_find(address: str) -> Company:
         try:
             if config.APP_ENV == "local" or config.COMPANY_LIST_LOCAL_MODE is True:
-                company_list: list[Company] = json.load(
-                    open("data/company_list.json", "r")
-                )
+                with open("data/company_list.json", "r") as f:
+                    company_list: list[Company] = json.load(f)
                 for _company in company_list:
                     if address == _company["address"]:
                         trustee_raw = _company.get("trustee")
