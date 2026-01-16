@@ -23,13 +23,11 @@ from pydantic_core.core_schema import ValidatorFunctionWrapHandler
 from web3 import Web3
 
 
-def ethereum_address_validator(
-    value: Any, handler: ValidatorFunctionWrapHandler, *args, **kwargs
-):
+def ethereum_address_validator(value: Any, handler: ValidatorFunctionWrapHandler):
     """Validator for ethereum address"""
     if value is not None:
         if not isinstance(value, str):
             raise ValueError("Value must be of string")
         if not Web3.is_address(value):
             raise ValueError("Invalid ethereum address")
-    return value
+    return handler(value)

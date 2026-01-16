@@ -19,9 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import sys
-from typing import Sequence
+from collections.abc import Sequence
+from typing import cast
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,8 +51,8 @@ class Processor:
     async def process(self):
         local_session = self.__get_db_session()
         try:
-            latest_block = await async_web3.eth.block_number
-            from_block = await self.__get_indexed_block_number(local_session) + 1
+            latest_block = int(await async_web3.eth.block_number)
+            from_block = (await self.__get_indexed_block_number(local_session)) + 1
 
             if from_block > latest_block:
                 LOG.info("Skip process: from_block > latest_block")
@@ -62,54 +63,100 @@ class Processor:
                 block_data: BlockData = await async_web3.eth.get_block(
                     block_number, full_transactions=True
                 )
+                assert "number" in block_data
+                assert "parentHash" in block_data
+                assert "timestamp" in block_data
+                assert "hash" in block_data
 
                 # Synchronize block data
                 block_model = IDXBlockData()
-                block_model.number = block_data.get("number")
-                block_model.parent_hash = block_data.get("parentHash").to_0x_hex()
-                block_model.sha3_uncles = block_data.get("sha3Uncles").to_0x_hex()
+                block_model.number = block_data["number"]
+                block_model.parent_hash = block_data["parentHash"].to_0x_hex()
+                block_model.sha3_uncles = (
+                    block_data["sha3Uncles"].to_0x_hex()
+                    if "sha3Uncles" in block_data
+                    else None
+                )
                 block_model.miner = block_data.get("miner")
-                block_model.state_root = block_data.get("stateRoot").to_0x_hex()
-                block_model.transactions_root = block_data.get(
-                    "transactionsRoot"
-                ).to_0x_hex()
-                block_model.receipts_root = block_data.get("receiptsRoot").to_0x_hex()
-                block_model.logs_bloom = block_data.get("logsBloom").to_0x_hex()
+                block_model.state_root = (
+                    block_data["stateRoot"].to_0x_hex()
+                    if "stateRoot" in block_data
+                    else None
+                )
+                block_model.transactions_root = (
+                    block_data["transactionsRoot"].to_0x_hex()
+                    if "transactionsRoot" in block_data
+                    else None
+                )
+                block_model.receipts_root = (
+                    block_data["receiptsRoot"].to_0x_hex()
+                    if "receiptsRoot" in block_data
+                    else None
+                )
+                block_model.logs_bloom = (
+                    block_data["logsBloom"].to_0x_hex()
+                    if "logsBloom" in block_data
+                    else None
+                )
                 block_model.difficulty = block_data.get("difficulty")
                 block_model.gas_limit = block_data.get("gasLimit")
                 block_model.gas_used = block_data.get("gasUsed")
-                block_model.timestamp = block_data.get("timestamp")
-                block_model.proof_of_authority_data = block_data.get(
-                    "proofOfAuthorityData"
-                ).to_0x_hex()
-                block_model.mix_hash = block_data.get("mixHash").to_0x_hex()
-                block_model.nonce = block_data.get("nonce").to_0x_hex()
-                block_model.hash = block_data.get("hash").to_0x_hex()
+                block_model.timestamp = block_data["timestamp"]
+                block_model.proof_of_authority_data = (
+                    block_data["proofOfAuthorityData"].to_0x_hex()
+                    if "proofOfAuthorityData" in block_data
+                    else None
+                )
+                block_model.mix_hash = (
+                    block_data["mixHash"].to_0x_hex()
+                    if "mixHash" in block_data
+                    else None
+                )
+                block_model.nonce = (
+                    block_data["nonce"].to_0x_hex() if "nonce" in block_data else None
+                )
+                block_model.hash = block_data["hash"].to_0x_hex()
                 block_model.size = block_data.get("size")
 
-                transactions: Sequence[TxData] = block_data.get("transactions")
-                transaction_hash_list = []
+                transactions = cast(
+                    Sequence[TxData], block_data.get("transactions", [])
+                )
+                transaction_hash_list: list[str] = []
+
                 for transaction in transactions:
+                    assert "hash" in transaction
                     # Synchronize tx data
                     tx_model = IDXTxData()
-                    tx_model.hash = transaction.get("hash").to_0x_hex()
-                    tx_model.block_hash = transaction.get("blockHash").to_0x_hex()
-                    tx_model.block_number = transaction.get("blockNumber")
-                    tx_model.transaction_index = transaction.get("transactionIndex")
-                    tx_model.from_address = to_checksum_address(transaction.get("from"))
-                    tx_model.to_address = (
-                        to_checksum_address(transaction.get("to"))
-                        if transaction.get("to")
+                    tx_model.hash = transaction["hash"].to_0x_hex()
+                    tx_model.block_hash = (
+                        transaction["blockHash"].to_0x_hex()
+                        if "blockHash" in transaction
                         else None
                     )
-                    tx_model.input = transaction.get("input").to_0x_hex()
+                    tx_model.block_number = transaction.get("blockNumber")
+                    tx_model.transaction_index = transaction.get("transactionIndex")
+                    tx_model.from_address = (
+                        to_checksum_address(transaction["from"])
+                        if "from" in transaction
+                        else None
+                    )
+                    tx_model.to_address = (
+                        to_checksum_address(transaction["to"])
+                        if "to" in transaction and transaction["to"] is not None  # type: ignore to_address can be None
+                        else None
+                    )
+                    tx_model.input = (
+                        transaction["input"].to_0x_hex()
+                        if "input" in transaction
+                        else None
+                    )
                     tx_model.gas = transaction.get("gas")
                     tx_model.gas_price = transaction.get("gasPrice")
                     tx_model.value = transaction.get("value")
                     tx_model.nonce = transaction.get("nonce")
                     local_session.add(tx_model)
 
-                    transaction_hash_list.append(transaction.get("hash").to_0x_hex())
+                    transaction_hash_list.append(transaction["hash"].to_0x_hex())
 
                 block_model.transactions = transaction_hash_list
                 local_session.add(block_model)
@@ -125,7 +172,7 @@ class Processor:
         LOG.info("Sync job has been completed")
 
     @staticmethod
-    async def __get_indexed_block_number(db_session: AsyncSession):
+    async def __get_indexed_block_number(db_session: AsyncSession) -> int:
         indexed_block_number = (
             await db_session.scalars(
                 select(IDXBlockDataBlockNumber)
@@ -136,6 +183,7 @@ class Processor:
         if indexed_block_number is None:
             return -1
         else:
+            assert indexed_block_number.latest_block_number is not None
             return indexed_block_number.latest_block_number
 
     @staticmethod

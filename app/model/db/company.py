@@ -92,12 +92,3 @@ class Company(Base):
             if self.trustee_corporate_name
             else None,
         }
-
-    FIELDS = {
-        "address": str,
-        "corporate_name": str,
-        "rsa_publickey": str,
-        "homepage": str,
-    }
-
-    FIELDS.update(Base.FIELDS)

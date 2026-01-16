@@ -214,6 +214,18 @@ wheels = [
 ]
 
 [[package]]
+name = "botocore-stubs"
+version = "1.42.27"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "types-awscrt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/28/16998a7a4a7d6128025a3a85c8419f6c410573314223ef0a9962cf4bcb84/botocore_stubs-1.42.27.tar.gz", hash = "sha256:1e5bc3f8879dc0c8cf98e668d108b3314d34db8f342ade2a9a53d88f27dc3292", size = 42396, upload-time = "2026-01-13T21:28:35.741Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/cd/fcb5810d0b7f98349128b223a2196589cb1757c6882895a8a3fb102010e0/botocore_stubs-1.42.27-py3-none-any.whl", hash = "sha256:b0075eb627800cc3bb6486595b4322e2ed3b3e36925bf1700d7b48ac14bfa37f", size = 66761, upload-time = "2026-01-13T21:28:34.131Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.4.26"
 source = { registry = "https://pypi.org/simple" }
@@ -883,6 +895,7 @@ dev = [
     { name = "ruamel-yaml" },
     { name = "ruff" },
     { name = "textual-dev" },
+    { name = "types-botocore" },
 ]
 
 [package.metadata]
@@ -947,6 +960,7 @@ dev = [
     { name = "ruamel-yaml", specifier = ">=0.18.6,<1.0.0" },
     { name = "ruff", specifier = ">=0.5.4,<1.0.0" },
     { name = "textual-dev", specifier = ">=1.2.1,<2.0.0" },
+    { name = "types-botocore", specifier = ">=1.0.2" },
 ]
 
 [[package]]
@@ -2228,6 +2242,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c5/58/a79003b91ac2c6890fc5d90145c662fd5771c6f11447f116b63300436bc9/typer-0.12.5.tar.gz", hash = "sha256:f592f089bedcc8ec1b974125d64851029c3b1af145f04aca64d69410f0c9b722", size = 98953, upload-time = "2024-08-24T21:17:57.346Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a8/2b/886d13e742e514f704c33c4caa7df0f3b89e5a25ef8db02aa9ca3d9535d5/typer-0.12.5-py3-none-any.whl", hash = "sha256:62fe4e471711b147e3365034133904df3e235698399bc4de2b36c8579298d52b", size = 47288, upload-time = "2024-08-24T21:17:55.451Z" },
+]
+
+[[package]]
+name = "types-awscrt"
+version = "0.31.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/9f/9be587f2243ea7837ad83aad248ff4d8f9a880ac5a84544e9661e5840a22/types_awscrt-0.31.0.tar.gz", hash = "sha256:aa8b42148af0847be14e2b8ea3637a3518ffab038f8d3be7083950f3ce87d3ff", size = 17817, upload-time = "2026-01-12T06:42:37.711Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4c/8d/87ac494b5165e7650b2bc92ee3325c1339a47323489beeda32dffc9a1334/types_awscrt-0.31.0-py3-none-any.whl", hash = "sha256:009cfe5b9af8c75e8304243490e20a5229e7a56203f1d41481f5522233453f51", size = 42509, upload-time = "2026-01-12T06:42:36.187Z" },
+]
+
+[[package]]
+name = "types-botocore"
+version = "1.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "botocore-stubs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/e0/2fc05f11a376ee73b4fa71684e57c599a3b49698fe708ea8347664af2184/types-botocore-1.0.2.tar.gz", hash = "sha256:885d4ceb8d0594b73d08d5feb12b6bbd1ef9e7333531acb80477dc7904f02304", size = 5050, upload-time = "2022-04-01T13:50:22.228Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/98/f8ce0e9beb5b877969cbb2330f457a8ef066debc486082ee28ad7cb8f9bc/types_botocore-1.0.2-py3-none-any.whl", hash = "sha256:453fc52a1da8ac162793323d5f0f0dbaa40a3cd9dad915f5a3de79a07fd65674", size = 5152, upload-time = "2022-04-01T13:50:20.491Z" },
 ]
 
 [[package]]

@@ -118,19 +118,6 @@ class IDXTransfer(Base):
             "created": self.format_timestamp(self.created),
         }
 
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "token_address": str,
-        "from_address": str,
-        "to_address": str,
-        "value": int,
-        "source_event": str,
-        "data": dict,
-        "message": str,
-    }
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXTransferBlockNumber(Base):
     """Synchronized blockNumber of IDXTransfer"""
@@ -141,10 +128,3 @@ class IDXTransferBlockNumber(Base):
     contract_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "contract_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)

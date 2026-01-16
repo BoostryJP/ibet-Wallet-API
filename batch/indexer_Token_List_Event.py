@@ -24,7 +24,9 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
+from web3.types import EventData
 
 from app import config
 from app.contracts import AsyncContract
@@ -45,9 +47,11 @@ class Processor:
     """Processor for indexing TokenList events"""
 
     def __init__(self):
-        self.token_list_contract = AsyncContract.get_contract(
-            contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
+        self.token_list_contract: Web3AsyncContract | None = None
+        if config.TOKEN_LIST_CONTRACT_ADDRESS is not None:
+            self.token_list_contract = AsyncContract.get_contract(
+                contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
+            )
         self.available_token_template_list = [
             TokenType.IbetStraightBond,
             TokenType.IbetShare,
@@ -62,11 +66,18 @@ class Processor:
     async def process(self):
         local_session = self.__get_db_session()
         try:
-            latest_block = await async_web3.eth.block_number
+            if (
+                self.token_list_contract is None
+                or config.TOKEN_LIST_CONTRACT_ADDRESS is None
+            ):
+                LOG.warning("TOKEN_LIST_CONTRACT_ADDRESS is not set")
+                return
+            contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
+            latest_block = int(await async_web3.eth.block_number)
             _from_block = (
                 await self.__get_idx_token_list_block_number(
                     db_session=local_session,
-                    contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS,
+                    contract_address=contract_address,
                 )
                 + 1
             )
@@ -95,7 +106,7 @@ class Processor:
                 )
             await self.__set_idx_token_list_block_number(
                 db_session=local_session,
-                contract_address=config.TOKEN_LIST_CONTRACT_ADDRESS,
+                contract_address=contract_address,
                 block_number=latest_block,
             )
             await local_session.commit()
@@ -122,8 +133,12 @@ class Processor:
         :param block_to: To block
         :return: None
         """
+        if self.token_list_contract is None:
+            return
         try:
-            events = await self.token_list_contract.events.Register.get_logs(
+            events: list[
+                EventData
+            ] = await self.token_list_contract.events.Register.get_logs(
                 from_block=block_from, to_block=block_to
             )
         except ABIEventNotFound:
@@ -133,6 +148,12 @@ class Processor:
                 token_address = _event["args"].get("token_address")
                 token_template = _event["args"].get("token_template")
                 owner_address = _event["args"].get("owner_address")
+                if (
+                    token_address is None
+                    or token_template is None
+                    or owner_address is None
+                ):
+                    continue
                 await self.__sink_on_token_info(
                     db_session=db_session,
                     token_address=token_address,
@@ -180,7 +201,7 @@ class Processor:
     @staticmethod
     async def __get_idx_token_list_block_number(
         db_session: AsyncSession, contract_address: str
-    ):
+    ) -> int:
         """Get token list index for Share"""
         _idx_token_list_block_number = (
             await db_session.scalars(
@@ -192,6 +213,7 @@ class Processor:
         if _idx_token_list_block_number is None:
             return -1
         else:
+            assert _idx_token_list_block_number.latest_block_number is not None
             return _idx_token_list_block_number.latest_block_number
 
     @staticmethod

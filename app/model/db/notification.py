@@ -175,21 +175,6 @@ class Notification(Base):
             "account_address": self.address,
         }
 
-    FIELDS = {
-        "notification_id": int,
-        "notification_type": str,
-        "priority": int,
-        "address": str,
-        "is_read": bool,
-        "is_flagged": bool,
-        "is_deleted": bool,
-        "deleted_at": datetime,
-        "args": dict,
-        "metainfo": dict,
-    }
-
-    FIELDS.update(Base.FIELDS)
-
 
 # 通知を新着順でソート時に使用
 Index("notification_index_1", Notification.address, Notification.notification_id)
@@ -240,14 +225,6 @@ class NotificationBlockNumber(Base):
     contract_address = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = mapped_column(BigInteger)
-
-    FIELDS = {
-        "notification_type": str,
-        "contract_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
 
 
 class NotificationAttributeValue(Base):

@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import logging
-from typing import Awaitable, Callable, Mapping, Sequence
+from typing import Awaitable, Callable, Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session
 from web3 import AsyncWeb3, Web3
 from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
+from web3.types import EventData
 
 from app import config
 from app.errors import ServiceUnavailable
@@ -782,8 +783,8 @@ class TestProcessor:
 
         # Get events for token address
         contract = Contract.get_contract("IbetCoupon", token["address"])
-        events: list[Mapping[str, Mapping[str, str]]] = (
-            contract.events.Transfer.get_logs(from_block=from_block, to_block=to_block)
+        events: list[EventData] = contract.events.Transfer.get_logs(
+            from_block=from_block, to_block=to_block
         )
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5

@@ -86,21 +86,6 @@ class IDXLock(Base):
     # Whether the lock is forced or not
     is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "msg_sender": str,
-        "block_number": int,
-        "token_address": str,
-        "lock_address": str,
-        "account_address": str,
-        "value": int,
-        "data": dict,
-        "block_timestamp": datetime,
-        "is_forced": bool,
-    }
-    FIELDS.update(Base.FIELDS)
-
     @staticmethod
     def replace_to_local_tz(_datetime: datetime) -> datetime | None:
         """Convert timestamp from UTC to local timezone
@@ -165,22 +150,6 @@ class IDXUnlock(Base):
     )
     # Whether the unlock is forced or not
     is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "msg_sender": str,
-        "block_number": int,
-        "token_address": str,
-        "lock_address": str,
-        "account_address": str,
-        "recipient_address": str,
-        "value": int,
-        "data": dict,
-        "block_timestamp": datetime,
-        "is_forced": bool,
-    }
-    FIELDS.update(Base.FIELDS)
 
     @staticmethod
     def replace_to_local_tz(_datetime: datetime) -> datetime | None:

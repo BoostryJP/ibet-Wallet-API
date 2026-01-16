@@ -22,12 +22,13 @@ import sys
 from itertools import groupby
 from typing import List, Mapping, Optional, Sequence
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3.eth.async_eth import AsyncContract as Web3AsyncContract
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
+from web3.types import EventData
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -59,7 +60,10 @@ class Processor:
             """
 
             def __init__(
-                self, token_contract, exchange_address: str, block_number: int
+                self,
+                token_contract: Web3AsyncContract,
+                exchange_address: str,
+                block_number: int,
             ):
                 self.token_contract = token_contract
                 self.exchange_address = exchange_address
@@ -71,7 +75,12 @@ class Processor:
         def __init__(self):
             self.target_token_list = []
 
-        def append(self, token_contract, exchange_address: str, block_number: int):
+        def append(
+            self,
+            token_contract: Web3AsyncContract,
+            exchange_address: str,
+            block_number: int,
+        ):
             is_duplicate = False
             for i, t in enumerate(self.target_token_list):
                 if t.token_contract.address == token_contract.address:
@@ -136,7 +145,7 @@ class Processor:
     exchange_list: TargetExchangeList
 
     # On memory cache
-    token_type_cache: dict[str, TokenType] = {}
+    token_type_cache: dict[str, str] = {}
     token_contract_cache: dict[str, Web3AsyncContract] = {}
     token_tradable_exchange_address_cache: dict[str, str] = {}
 
@@ -154,7 +163,7 @@ class Processor:
             await self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
             # if some blocks have already synced, sync starting from next block
-            latest_block = await async_web3.eth.block_number
+            latest_block = int(await async_web3.eth.block_number)
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -186,7 +195,7 @@ class Processor:
             await self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
             # if some blocks have already synced, sync starting from next block
-            latest_block = await async_web3.eth.block_number
+            latest_block = int(await async_web3.eth.block_number)
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -216,6 +225,8 @@ class Processor:
         self.token_list = self.TargetTokenList()
         self.exchange_list = self.TargetExchangeList()
 
+        if TOKEN_LIST_CONTRACT_ADDRESS is None:
+            return
         list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
@@ -224,17 +235,18 @@ class Processor:
         ).all()
 
         for listed_token in listed_tokens:
+            assert listed_token.token_address is not None
             # Reuse token type cache
             if listed_token.token_address not in self.token_type_cache:
-                token_info = await AsyncContract.call_function(
+                token_info: tuple[str, str, str] = await AsyncContract.call_function(
                     contract=list_contract,
                     function_name="getTokenByAddress",
                     args=(listed_token.token_address,),
                     default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
                 )
-                self.token_type_cache[listed_token.token_address] = token_info[1]
+                self.token_type_cache[listed_token.token_address] = str(token_info[1])
             token_type = self.token_type_cache[listed_token.token_address]
-            if token_type is None or token_type == "":
+            if not token_type:
                 # Skip if token is not listed in the TokenList contract
                 continue
 
@@ -284,12 +296,13 @@ class Processor:
         LOG.info("Syncing to={}".format(block_to))
 
         await self.__sync_transfer(db_session, block_to)
+        await self.__sync_consume(db_session, block_to)
         await self.__sync_exchange(db_session, block_to)
         await self.__sync_escrow(db_session, block_to)
 
         self.__update_cursor(block_to + 1)
 
-    def __update_cursor(self, block_number):
+    def __update_cursor(self, block_number: int):
         """Memorize the block number where next processing should start from
 
         :param block_number: block number to be set
@@ -315,7 +328,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = await token.events.Transfer.get_logs(
+                events: list[EventData] = await token.events.Transfer.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -373,7 +386,7 @@ class Processor:
             if block_from > block_to:
                 continue
             try:
-                events = await token.events.Consume.get_logs(
+                events: list[EventData] = await token.events.Consume.get_logs(
                     from_block=block_from, to_block=block_to
                 )
             except ABIEventNotFound:
@@ -386,8 +399,7 @@ class Processor:
                     token=token,
                     accounts=accounts_filtered,
                 )
-                for balances in balances_list:
-                    account, balance = balances
+                for account, balance in zip(accounts_filtered, balances_list):
                     await self.__sink_on_position(
                         db_session=db_session,
                         token_address=to_checksum_address(token.address),
@@ -414,11 +426,13 @@ class Processor:
                     contract_name="IbetExchange", address=exchange_address
                 )
 
-                account_list_tmp = []
+                account_list_tmp: list[dict[str, str]] = []
 
                 # NewOrder event
                 try:
-                    _event_list = await exchange.events.NewOrder.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await exchange.events.NewOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -443,7 +457,9 @@ class Processor:
 
                 # CancelOrder event
                 try:
-                    _event_list = await exchange.events.CancelOrder.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await exchange.events.CancelOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -468,7 +484,9 @@ class Processor:
 
                 # ForceCancelOrder event
                 try:
-                    _event_list = await exchange.events.ForceCancelOrder.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await exchange.events.ForceCancelOrder.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -493,7 +511,7 @@ class Processor:
 
                 # Agree event
                 try:
-                    _event_list = await exchange.events.Agree.get_logs(
+                    _event_list: list[EventData] = await exchange.events.Agree.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -518,7 +536,9 @@ class Processor:
 
                 # SettlementOK event
                 try:
-                    _event_list = await exchange.events.SettlementOK.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await exchange.events.SettlementOK.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -553,7 +573,9 @@ class Processor:
 
                 # SettlementNG event
                 try:
-                    _event_list = await exchange.events.SettlementNG.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await exchange.events.SettlementNG.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -580,8 +602,8 @@ class Processor:
                 account_list_tmp.sort(
                     key=lambda x: (x["token_address"], x["account_address"])
                 )
-                account_list_unfiltered = []
-                for k, g in groupby(
+                account_list_unfiltered: list[dict[str, str]] = []
+                for k, _group in groupby(
                     account_list_tmp,
                     lambda x: (x["token_address"], x["account_address"]),
                 ):
@@ -591,7 +613,7 @@ class Processor:
 
                 # Filter account_list by listed token
                 token_address_list = [t.token_contract.address for t in self.token_list]
-                account_list = []
+                account_list: list[dict[str, str]] = []
                 for _account in account_list_unfiltered:
                     if _account["token_address"] in token_address_list:
                         account_list.append(_account)
@@ -633,11 +655,13 @@ class Processor:
             try:
                 escrow = AsyncContract.get_contract("IbetEscrow", exchange_address)
 
-                account_list_tmp = []
+                account_list_tmp: list[dict[str, str]] = []
 
                 # EscrowCreated event
                 try:
-                    _event_list = await escrow.events.EscrowCreated.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await escrow.events.EscrowCreated.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -660,7 +684,9 @@ class Processor:
 
                 # EscrowCanceled event
                 try:
-                    _event_list = await escrow.events.EscrowCanceled.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await escrow.events.EscrowCanceled.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -683,7 +709,9 @@ class Processor:
 
                 # EscrowFinished event
                 try:
-                    _event_list = await escrow.events.EscrowFinished.get_logs(
+                    _event_list: list[
+                        EventData
+                    ] = await escrow.events.EscrowFinished.get_logs(
                         from_block=block_from, to_block=block_to
                     )
                 except ABIEventNotFound:
@@ -716,8 +744,8 @@ class Processor:
                 account_list_tmp.sort(
                     key=lambda x: (x["token_address"], x["account_address"])
                 )
-                account_list_unfiltered = []
-                for k, g in groupby(
+                account_list_unfiltered: list[dict[str, str]] = []
+                for k, _group in groupby(
                     account_list_tmp,
                     lambda x: (x["token_address"], x["account_address"]),
                 ):
@@ -727,7 +755,7 @@ class Processor:
 
                 # Filter account_list by listed token
                 token_address_list = [t.token_contract.address for t in self.token_list]
-                account_list = []
+                account_list: list[dict[str, str]] = []
                 for _account in account_list_unfiltered:
                     if _account["token_address"] in token_address_list:
                         account_list.append(_account)
@@ -768,7 +796,7 @@ class Processor:
     @staticmethod
     async def __get_idx_position_block_number(
         db_session: AsyncSession, token_address: str, exchange_address: str
-    ):
+    ) -> int:
         """Get position index for Bond"""
         _idx_position_block_number = (
             await db_session.scalars(
@@ -783,6 +811,7 @@ class Processor:
         if _idx_position_block_number is None:
             return -1
         else:
+            assert _idx_position_block_number.latest_block_number is not None
             return _idx_position_block_number.latest_block_number
 
     @staticmethod
@@ -816,8 +845,8 @@ class Processor:
 
     @staticmethod
     async def __get_account_balance_for_transfer(
-        token_contract, exchange_address: str, account_address: str
-    ):
+        token_contract: Web3AsyncContract, exchange_address: str, account_address: str
+    ) -> tuple[str, int, int]:
         """Get balance"""
         try:
 
@@ -860,7 +889,9 @@ class Processor:
         )
 
     @staticmethod
-    async def __get_account_balance_token(token_contract, account_address: str):
+    async def __get_account_balance_token(
+        token_contract: Web3AsyncContract, account_address: str
+    ) -> int:
         """Get balance on token"""
         balance = await AsyncContract.call_function(
             contract=token_contract,
@@ -873,7 +904,7 @@ class Processor:
     @staticmethod
     async def __get_account_balance_exchange(
         exchange_address: str, token_address: str, account_address: str
-    ):
+    ) -> tuple[str, str, int, int]:
         """Get balance on exchange"""
         exchange_contract = AsyncContract.get_contract(
             contract_name="IbetExchangeInterface", address=exchange_address
@@ -960,7 +991,7 @@ class Processor:
 
     @staticmethod
     def remove_duplicate_event_by_token_account_desc(
-        events: Sequence[Mapping[str, Mapping[str, str]]],
+        events: Sequence[EventData],
         account_keys: Sequence[str],
     ) -> list[str]:
         """Remove duplicate account from event list.
@@ -970,7 +1001,7 @@ class Processor:
         :param account_keys: keys in which event contains account address
         :return: account_list: account_list list filtered
         """
-        event_account_list = []
+        event_account_list: list[str] = []
 
         # reversed events loop for removing duplicates from the front
         for event in reversed(events):
@@ -979,8 +1010,8 @@ class Processor:
                 account_address = args.get(arg_key, ZERO_ADDRESS)
                 if account_address != ZERO_ADDRESS:
                     event_account_list.append(account_address)
-        seen = set()
-        remove_duplicate_list = []
+        seen: set[str] = set()
+        remove_duplicate_list: list[str] = []
         for record in event_account_list:
             if record not in seen:
                 remove_duplicate_list.append(record)
@@ -990,8 +1021,8 @@ class Processor:
         return list(reversed(remove_duplicate_list))
 
     async def get_bulk_account_balance_for_transfer(
-        self, token, exchange_address, accounts
-    ):
+        self, token: Web3AsyncContract, exchange_address: str, accounts: Sequence[str]
+    ) -> list[tuple[str, int, int]]:
         coroutines = [
             self.__get_account_balance_for_transfer(token, exchange_address, _account)
             for _account in accounts
@@ -1005,7 +1036,9 @@ class Processor:
         except ExceptionGroup:
             raise ServiceUnavailable
 
-    async def get_bulk_account_balance_token(self, token, accounts):
+    async def get_bulk_account_balance_token(
+        self, token: Web3AsyncContract, accounts: Sequence[str]
+    ) -> list[int]:
         coroutines = [
             self.__get_account_balance_token(token, _account) for _account in accounts
         ]
@@ -1018,7 +1051,9 @@ class Processor:
         except ExceptionGroup:
             raise ServiceUnavailable
 
-    async def get_bulk_account_balance_exchange(self, exchange_address, accounts):
+    async def get_bulk_account_balance_exchange(
+        self, exchange_address: str, accounts: Sequence[Mapping[str, str]]
+    ) -> list[tuple[str, str, int, int]]:
         coroutines = [
             self.__get_account_balance_exchange(
                 exchange_address, _account["token_address"], _account["account_address"]

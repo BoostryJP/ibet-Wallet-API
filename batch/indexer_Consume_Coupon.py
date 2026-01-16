@@ -20,13 +20,14 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 from datetime import UTC, datetime
-from typing import Sequence
+from typing import Any, Sequence
 from zoneinfo import ZoneInfo
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, TZ, ZERO_ADDRESS
@@ -52,7 +53,7 @@ class Processor:
     latest_block = 0
 
     def __init__(self):
-        self.token_list = []
+        self.token_list: list[Web3AsyncContract] = []
 
     @staticmethod
     def __get_db_session():
@@ -61,7 +62,7 @@ class Processor:
     async def initial_sync(self):
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
-        self.latest_block = await async_web3.eth.block_number
+        self.latest_block = int(await async_web3.eth.block_number)
         try:
             await self.__get_token_list(local_session)
 
@@ -103,7 +104,7 @@ class Processor:
         try:
             await self.__get_token_list(local_session)
 
-            blockTo = await async_web3.eth.block_number
+            blockTo = int(await async_web3.eth.block_number)
             if blockTo == self.latest_block:
                 return
 
@@ -124,6 +125,8 @@ class Processor:
 
     async def __get_token_list(self, db_session: AsyncSession):
         self.token_list = []
+        if TOKEN_LIST_CONTRACT_ADDRESS is None:
+            return
         list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=TOKEN_LIST_CONTRACT_ADDRESS
         )
@@ -131,13 +134,14 @@ class Processor:
             await db_session.scalars(select(Listing))
         ).all()
         for listed_token in listed_tokens:
-            token_info = await AsyncContract.call_function(
+            assert listed_token.token_address is not None
+            token_info: tuple[str, str, str] = await AsyncContract.call_function(
                 contract=list_contract,
                 function_name="getTokenByAddress",
                 args=(listed_token.token_address,),
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
-            if token_info[1] == TokenType.IbetCoupon:
+            if str(token_info[1]) == TokenType.IbetCoupon:
                 coupon_token_contract = AsyncContract.get_contract(
                     contract_name=TokenType.IbetCoupon,
                     address=listed_token.token_address,
@@ -154,6 +158,7 @@ class Processor:
         self, db_session: AsyncSession, block_from: int, block_to: int
     ):
         for token in self.token_list:
+            events: list[dict[str, Any]] = []
             try:
                 events = await token.events.Consume.get_logs(
                     from_block=block_from, to_block=block_to
@@ -164,10 +169,10 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].to_0x_hex()
-                    block_timestamp = datetime.fromtimestamp(
-                        (await async_web3.eth.get_block(event["blockNumber"]))[
-                            "timestamp"
-                        ],
+                    block_data = await async_web3.eth.get_block(event["blockNumber"])
+                    assert "timestamp" in block_data
+                    block_timestamp_dt = datetime.fromtimestamp(
+                        block_data["timestamp"],
                         UTC,
                     ).replace(tzinfo=None)
                     amount = args.get("value", 0)
@@ -182,7 +187,7 @@ class Processor:
                                 token_address=to_checksum_address(token.address),
                                 account_address=consumer,
                                 amount=amount,
-                                block_timestamp=block_timestamp,
+                                block_timestamp=block_timestamp_dt,
                             )
             except Exception as e:
                 raise e

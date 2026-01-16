@@ -24,9 +24,9 @@ from app.config import BRAND_NAME, PROFILING_MODE, PYROSCOPE_SERVER_URL, RUN_MOD
 
 def setup_pyroscope():
     if PROFILING_MODE is True and PYROSCOPE_SERVER_URL is not None:
-        import pyroscope
+        import pyroscope  # type: ignore
 
-        pyroscope.configure(
+        pyroscope.configure(  # type: ignore
             application_name=BRAND_NAME,
             server_address=PYROSCOPE_SERVER_URL,
             sample_rate=100,  # default is 100
@@ -95,7 +95,7 @@ def setup_otel(app: FastAPI | None = None) -> None:
             OTLPSpanExporter,
         )
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from pyroscope.otel import PyroscopeSpanProcessor
+        from pyroscope.otel import PyroscopeSpanProcessor  # type: ignore
 
         otlp_exporter = OTLPSpanExporter()
         batch_span_processor = BatchSpanProcessor(otlp_exporter)

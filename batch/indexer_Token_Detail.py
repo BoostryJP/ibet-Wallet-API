@@ -22,9 +22,9 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import List, Sequence, Type
+from typing import List, Sequence
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,7 +49,7 @@ class Processor:
     @dataclass
     class TargetTokenType:
         template: str
-        token_class: Type[TokenClassTypes]
+        token_class: TokenClassTypes
 
     target_token_types: List[TargetTokenType]
     SEC_PER_RECORD: int = config.TOKEN_FETCH_INTERVAL
@@ -115,8 +115,10 @@ class Processor:
             ).all()
 
             for available_token in available_tokens:
+                assert available_token.token_address is not None
                 try:
                     start_time = time.time()
+                    assert available_token.token_address is not None
                     token_address = to_checksum_address(available_token.token_address)
                     token_detail_obj = await token_type.token_class.fetch(
                         local_session, token_address

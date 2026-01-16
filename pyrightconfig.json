@@ -1,5 +1,13 @@
 {
     "include": [
+        "app/contracts/",
+        "app/database/",
+        "app/middleware/",
+        "app/utils/",
+        "app/config.py",
+        "app/errors.py",
+        "app/main.py",
+        "batch/",
         "logger.py",
         "server.py",
         "tests/",
