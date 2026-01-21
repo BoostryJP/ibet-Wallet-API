@@ -138,8 +138,8 @@ class TokenBase:
     contact_information: str
     privacy_policy: str
     status: bool
-    max_holding_quantity: int
-    max_sell_amount: int
+    max_holding_quantity: int | None
+    max_sell_amount: int | None
 
     @classmethod
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
@@ -556,8 +556,8 @@ class BondToken(TokenBase):
         bondtoken.privacy_policy = privacy_policy
         bondtoken.status = status
         if listed_token is not None:
-            bondtoken.max_holding_quantity = listed_token.max_holding_quantity or 0
-            bondtoken.max_sell_amount = listed_token.max_sell_amount or 0
+            bondtoken.max_holding_quantity = listed_token.max_holding_quantity
+            bondtoken.max_sell_amount = listed_token.max_sell_amount
         else:
             bondtoken.max_holding_quantity = 0
             bondtoken.max_sell_amount = 0

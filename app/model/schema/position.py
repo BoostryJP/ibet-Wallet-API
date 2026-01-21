@@ -31,6 +31,7 @@ from app.model.schema.base import (
 )
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
+from app.model.schema.token_lock import Locked
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 from app.model.schema.token_share import RetrieveShareTokenResponse
 from app.model.type import EthereumAddress
@@ -138,13 +139,6 @@ class CouponPositionWithAddress(CouponPosition):
 class LockEventCategory(StrEnum):
     Lock = "Lock"
     Unlock = "Unlock"
-
-
-class Locked(BaseModel):
-    token_address: EthereumAddress
-    lock_address: EthereumAddress
-    account_address: EthereumAddress
-    value: int
 
 
 class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):

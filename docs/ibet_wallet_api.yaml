@@ -54,14 +54,16 @@ paths:
           description: Limit for pagination
         - name: token_template
           in: query
-          required: true
+          required: false
           schema:
-            enum:
-              - ibetBond
-              - ibetShare
-              - ibetMembership
-              - ibetCoupon
-            type: string
+            anyOf:
+              - enum:
+                  - ibetBond
+                  - ibetShare
+                  - ibetMembership
+                  - ibetCoupon
+                type: string
+              - type: 'null'
             description: Token template
             title: Token Template
           description: Token template
@@ -8682,7 +8684,7 @@ components:
                 $ref: '#/components/schemas/LockedWithTokenDetail_RetrieveShareTokenResponse_'
               type: array
             - items:
-                $ref: '#/components/schemas/app__model__schema__position__Locked'
+                $ref: '#/components/schemas/Locked'
               type: array
           title: Locked Positions
       type: object
@@ -8700,7 +8702,7 @@ components:
                 $ref: '#/components/schemas/LockedWithTokenDetail_RetrieveStraightBondTokenResponse_'
               type: array
             - items:
-                $ref: '#/components/schemas/app__model__schema__position__Locked'
+                $ref: '#/components/schemas/Locked'
               type: array
           title: Locked Positions
       type: object
@@ -8929,7 +8931,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         locked_list:
           items:
-            $ref: '#/components/schemas/app__model__schema__position__Locked'
+            $ref: '#/components/schemas/Locked'
           type: array
           title: Locked List
       type: object
@@ -9152,6 +9154,27 @@ components:
         - block_timestamp
         - token
       title: LockEventWithTokenDetail[RetrieveStraightBondTokenResponse]
+    Locked:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        lock_address:
+          type: string
+          title: Lock Address
+        account_address:
+          type: string
+          title: Account Address
+        value:
+          type: integer
+          title: Value
+      type: object
+      required:
+        - token_address
+        - lock_address
+        - account_address
+        - value
+      title: Locked
     LockedWithTokenDetail_RetrieveShareTokenResponse_:
       properties:
         token_address:
@@ -11912,27 +11935,6 @@ components:
       required:
         - token_address
       title: TokenAddress
-    app__model__schema__position__Locked:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        lock_address:
-          type: string
-          title: Lock Address
-        account_address:
-          type: string
-          title: Account Address
-        value:
-          type: integer
-          title: Value
-      type: object
-      required:
-        - token_address
-        - lock_address
-        - account_address
-        - value
-      title: Locked
 tags:
   - name: root
     description: ''

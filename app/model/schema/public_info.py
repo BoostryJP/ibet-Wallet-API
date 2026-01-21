@@ -75,9 +75,9 @@ class ListAllPublicListedTokensSortItem(StrEnum):
 
 
 class ListAllPublicListedTokensQuery(BasePaginationQuery):
-    token_template: Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"] = (
-        Field(..., description="Token template")
-    )
+    token_template: (
+        Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"] | None
+    ) = Field(None, description="Token template")
     sort_item: ListAllPublicListedTokensSortItem = Field(
         default=ListAllPublicListedTokensSortItem.token_address, description="sort item"
     )
