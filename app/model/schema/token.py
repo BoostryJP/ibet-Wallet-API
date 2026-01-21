@@ -139,12 +139,10 @@ class SearchTokenHoldersRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTokenHoldersSortItem] = Field(
+    sort_item: SearchTokenHoldersSortItem = Field(
         default=SearchTokenHoldersSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.DESC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.DESC, description="sort order")
 
 
 class RetrieveTokenHoldersCountQuery(BaseModel):
@@ -241,12 +239,10 @@ class SearchTransferHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTransferHistorySortItem] = Field(
+    sort_item: SearchTransferHistorySortItem = Field(
         default=SearchTransferHistorySortItem.id, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 class ListAllTransferApprovalHistoryQuery(BasePaginationQuery):
@@ -315,13 +311,11 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTransferApprovalHistorySortItem] = Field(
+    sort_item: SearchTransferApprovalHistorySortItem = Field(
         default=SearchTransferApprovalHistorySortItem.application_id,
         description="sort item",
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 ############################

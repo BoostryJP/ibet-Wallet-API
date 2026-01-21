@@ -77,12 +77,10 @@ class ShareTokensQuery(BasePaginationQuery):
     )
     is_canceled: Optional[bool] = Field(None, description="cancellation status")
 
-    sort_item: Optional[ShareTokensSortItem] = Field(
+    sort_item: ShareTokensSortItem = Field(
         ShareTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class ListAllShareTokensQuery(ShareTokensQuery):

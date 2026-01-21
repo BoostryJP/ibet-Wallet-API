@@ -63,12 +63,10 @@ class CouponTokensQuery(BasePaginationQuery):
     transferable: Optional[bool] = Field(None, description="transferable status")
     initial_offering_status: Optional[bool] = Field(None, description="offering status")
 
-    sort_item: Optional[CouponTokensSortItem] = Field(
+    sort_item: CouponTokensSortItem = Field(
         CouponTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class ListAllCouponTokensQuery(CouponTokensQuery):

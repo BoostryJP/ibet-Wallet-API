@@ -77,12 +77,10 @@ class StraightBondTokensQuery(BasePaginationQuery):
     )
     is_redeemed: Optional[bool] = Field(None, description="redeem status")
 
-    sort_item: Optional[StraightBondTokensSortItem] = Field(
+    sort_item: StraightBondTokensSortItem = Field(
         StraightBondTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class ListAllStraightBondTokensQuery(StraightBondTokensQuery):

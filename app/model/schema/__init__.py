@@ -150,15 +150,18 @@ from .token_bond import (
     ListAllStraightBondTokensResponse,
     RetrieveStraightBondTokenResponse,
     StraightBondTokensQuery,
+    StraightBondTokensSortItem,
 )
 from .token_coupon import (
     CouponTokensQuery,
+    CouponTokensSortItem,
     ListAllCouponTokenAddressesResponse,
     ListAllCouponTokensQuery,
     ListAllCouponTokensResponse,
     RetrieveCouponTokenResponse,
 )
 from .token_lock import (
+    ListAllLockSortItem,
     ListAllTokenLockQuery,
     ListAllTokenLockResponse,
     RetrieveTokenLockCountQuery,
@@ -169,6 +172,7 @@ from .token_membership import (
     ListAllMembershipTokensQuery,
     ListAllMembershipTokensResponse,
     MembershipTokensQuery,
+    MembershipTokensSortItem,
     RetrieveMembershipTokenResponse,
 )
 from .token_share import (
@@ -177,6 +181,7 @@ from .token_share import (
     ListAllShareTokensResponse,
     RetrieveShareTokenResponse,
     ShareTokensQuery,
+    ShareTokensSortItem,
 )
 from .user_info import (
     RetrievePaymentAccountQuery,

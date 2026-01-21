@@ -30,12 +30,13 @@ from app.database import DBAsyncSession
 from app.errors import InvalidParameterError
 from app.model.db import IDXLockedPosition
 from app.model.schema import (
+    ListAllLockSortItem,
     ListAllTokenLockQuery,
     ListAllTokenLockResponse,
     RetrieveTokenLockCountQuery,
     RetrieveTokenLockCountResponse,
 )
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.model.schema.base import GenericSuccessResponse, SortOrder, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -86,15 +87,15 @@ async def list_all_lock(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    sort_attr = getattr(IDXLockedPosition, sort_item, None)
+    sort_attr = getattr(IDXLockedPosition, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
 
     # NOTE: Set secondary sort for consistent results
-    if sort_item != "token_address":
+    if sort_item != ListAllLockSortItem.token_address:
         stmt = stmt.order_by(IDXLockedPosition.token_address)
     else:
         stmt = stmt.order_by(IDXLockedPosition.created)
