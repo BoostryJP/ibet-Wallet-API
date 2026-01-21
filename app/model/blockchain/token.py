@@ -881,8 +881,8 @@ class ShareToken(TokenBase):
         sharetoken.contact_information = contact_information
         sharetoken.privacy_policy = privacy_policy
         if listed_token is not None:
-            sharetoken.max_holding_quantity = listed_token.max_holding_quantity or 0
-            sharetoken.max_sell_amount = listed_token.max_sell_amount or 0
+            sharetoken.max_holding_quantity = listed_token.max_holding_quantity
+            sharetoken.max_sell_amount = listed_token.max_sell_amount
         else:
             sharetoken.max_holding_quantity = 0
             sharetoken.max_sell_amount = 0
@@ -1118,10 +1118,8 @@ class MembershipToken(TokenBase):
             {"id": 3, "url": image_url_3},
         ]
         if listed_token is not None:
-            membershiptoken.max_holding_quantity = (
-                listed_token.max_holding_quantity or 0
-            )
-            membershiptoken.max_sell_amount = listed_token.max_sell_amount or 0
+            membershiptoken.max_holding_quantity = listed_token.max_holding_quantity
+            membershiptoken.max_sell_amount = listed_token.max_sell_amount
         else:
             membershiptoken.max_holding_quantity = 0
             membershiptoken.max_sell_amount = 0
@@ -1357,8 +1355,8 @@ class CouponToken(TokenBase):
             {"id": 3, "url": image_url_3},
         ]
         if listed_token is not None:
-            coupontoken.max_holding_quantity = listed_token.max_holding_quantity or 0
-            coupontoken.max_sell_amount = listed_token.max_sell_amount or 0
+            coupontoken.max_holding_quantity = listed_token.max_holding_quantity
+            coupontoken.max_sell_amount = listed_token.max_sell_amount
         else:
             coupontoken.max_holding_quantity = 0
             coupontoken.max_sell_amount = 0
