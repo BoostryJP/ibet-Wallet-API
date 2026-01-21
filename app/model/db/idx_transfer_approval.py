@@ -65,7 +65,7 @@ class IDXTransferApproval(Base):
     transfer_approved: Mapped[bool | None] = mapped_column(Boolean)
 
     @staticmethod
-    def format_datetime(_datetime: datetime) -> str:
+    def format_datetime(_datetime: datetime | None) -> str:
         """Convert timestamp from UTC to local timezone str
         :param _datetime:
         :return: str

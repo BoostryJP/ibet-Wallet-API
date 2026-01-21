@@ -25,9 +25,10 @@ from annotated_types import Timezone
 from pydantic import (
     AfterValidator,
     BaseModel,
+    ConfigDict,
     Field,
     NonNegativeInt,
-    constr,
+    StringConstraints,
 )
 
 from app.model.type.base import EthereumAddress
@@ -35,9 +36,13 @@ from app.model.type.base import EthereumAddress
 ############################
 # COMMON
 ############################
-EmailStr = constr(
-    pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$", max_length=100
-)
+EmailStr = Annotated[
+    str,
+    StringConstraints(
+        pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$",
+        max_length=100,
+    ),
+]
 
 NaiveUTCDatetime = Annotated[datetime, Timezone(None)]
 
@@ -246,11 +251,15 @@ class Success200MetaModel(BaseModel):
 Data = TypeVar("Data")
 
 
+class EmptyData(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
 class SuccessResponse(BaseModel):
     meta: Success200MetaModel = Field(
         ..., examples=[Success200MetaModel(code=200, message="OK").model_dump()]
     )
-    data: dict = {}
+    data: EmptyData = Field(default_factory=EmptyData)
 
     @staticmethod
     def default():

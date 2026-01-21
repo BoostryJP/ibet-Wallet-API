@@ -18,12 +18,15 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import DateTime, create_engine
 from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app import config, log
+
+local_tz = ZoneInfo(config.TZ)
 
 LOG = log.get_logger()
 
@@ -52,4 +55,29 @@ class Base(DeclarativeBase):
         created: Mapped[datetime | None] = mapped_column(DateTime, default=naive_utcnow)
         modified: Mapped[datetime | None] = mapped_column(
             DateTime, default=naive_utcnow, onupdate=naive_utcnow
+        )
+
+    @staticmethod
+    def replace_to_local_tz(_datetime: datetime) -> datetime:
+        """Convert timestamp from UTC to local timezone
+        :param _datetime:
+        :return: datetime
+        """
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local
+
+    @staticmethod
+    def format_timestamp(_datetime: datetime) -> str:
+        """Convert timestamp from UTC to local timezone str
+        :param _datetime:
+        :return: str
+        """
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            datetime_local.year,
+            datetime_local.month,
+            datetime_local.day,
+            datetime_local.hour,
+            datetime_local.minute,
+            datetime_local.second,
         )

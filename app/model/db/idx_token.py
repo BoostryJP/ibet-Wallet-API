@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import datetime
-from typing import Type, Union
+from typing import Any, Mapping, Type, Union
 
 from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -67,7 +67,7 @@ class TokenBase(Base):
     # Cached time of short-term cache
     short_term_cache_created: Mapped[datetime.datetime | None] = mapped_column(DateTime)
 
-    def json(self):
+    def json(self) -> Mapping[str, Any]:
         return {
             "token_address": self.token_address,
             "token_template": self.token_template,

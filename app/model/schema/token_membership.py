@@ -41,7 +41,7 @@ from app.model.type import EthereumAddress
 class MembershipTokensSortItem(StrEnum):
     token_address = "token_address"
     owner_address = "owner_address"
-    name = "name"
+    name_ = "name"
     symbol = "symbol"
     company_name = "company_name"
     tradable_exchange = "tradable_exchange"

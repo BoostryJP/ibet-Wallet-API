@@ -211,7 +211,7 @@ class SearchTransferHistorySortItem(StrEnum):
     transaction_hash = "transaction_hash"
     from_address = "from_address"
     to_address = "to_address"
-    value = "value"
+    value_ = "value"
 
 
 class SearchTransferHistoryRequest(BaseModel):
@@ -269,7 +269,7 @@ class SearchTransferApprovalHistorySortItem(StrEnum):
     created = "created"
     from_address = "from_address"
     to_address = "to_address"
-    value = "value"
+    value_ = "value"
     application_datetime = "application_datetime"
     application_blocktimestamp = "application_blocktimestamp"
     approval_datetime = "approval_datetime"
@@ -393,6 +393,15 @@ class TokenHoldersCollectionResponse(BaseModel):
     )
 
 
+class TransferDataMessage(BaseModel):
+    message: Literal[
+        "garnishment",
+        "inheritance",
+        "force_unlock",
+        "ibet_wst_bridge",
+    ]
+
+
 class TransferHistoryBase(BaseModel):
     transaction_hash: str = Field(description="Transaction hash")
     token_address: EthereumAddress = Field(description="Token address")
@@ -403,7 +412,6 @@ class TransferHistoryBase(BaseModel):
         description="Account address of transfer destination"
     )
     value: int = Field(description="Transfer quantity")
-    data: dict | None = Field(description="Event data")
     message: (
         Literal[
             "garnishment",
@@ -420,18 +428,10 @@ class TransferHistoryBase(BaseModel):
 
 class TransferHistory(TransferHistoryBase):
     source_event: Literal[
-        TransferSourceEvent.Transfer, TransferSourceEvent.Reallocation
+        TransferSourceEvent.Transfer,
+        TransferSourceEvent.Reallocation,
     ] = Field(description="Source Event")
     data: None = Field(description="Event data")
-
-
-class TransferDataMessage(BaseModel):
-    message: Literal[
-        "garnishment",
-        "inheritance",
-        "force_unlock",
-        "ibet_wst_bridge",
-    ]
 
 
 class TransferWithMessage(TransferHistoryBase):
@@ -440,7 +440,7 @@ class TransferWithMessage(TransferHistoryBase):
         TransferSourceEvent.ForceUnlock,
         TransferSourceEvent.ForceChangeLockedAccount,
     ] = Field(description="Source Event")
-    data: TransferDataMessage | dict = Field(description="Event data")
+    data: TransferDataMessage | dict[str, str] = Field(description="Event data")
 
 
 class TransferHistoriesResponse(BaseModel):

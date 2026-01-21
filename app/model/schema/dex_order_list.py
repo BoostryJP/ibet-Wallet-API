@@ -90,7 +90,7 @@ class AgreementSet(BaseModel, Generic[TokenModel]):
     sort_id: int
 
 
-class CompleteAgreementSet(AgreementSet, Generic[TokenModel]):
+class CompleteAgreementSet(AgreementSet[TokenModel], Generic[TokenModel]):
     settlement_timestamp: str = Field(description="settlement timestamp")
 
 

@@ -42,11 +42,11 @@ class SendRawTransactionStatus(IntEnum):
 
 class JsonRPCRequest(BaseModel):
     method: str = Field(description="method: eth_xxx")
-    params: list = Field(description="parameters")
+    params: list[object] = Field(description="parameters")
 
     @field_validator("method")
     @classmethod
-    def method_is_available(cls, v):
+    def method_is_available(cls, v: str) -> str:
         if v[: v.index("_")] not in ["eth"]:
             raise ValueError(f"The method {v} is not available")
         return v
