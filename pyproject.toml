@@ -60,6 +60,7 @@ dev = [
     "pytest-memray<2.0.0,>=1.6.0",
     "pyright>=1.1.407",
     "types-botocore>=1.0.2",
+    "boto3-stubs[all]>=1.42.29",
 ]
 
 [project.optional-dependencies]

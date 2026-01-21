@@ -81,7 +81,7 @@ class TxDataDetail(BaseModel):
     to_address: Optional[EthereumAddress]
     contract_name: Optional[str]
     contract_function: Optional[str]
-    contract_parameters: Optional[dict]
+    contract_parameters: Optional[dict[str, object]]
     gas: NonNegativeInt
     gas_price: NonNegativeInt
     value: NonNegativeInt

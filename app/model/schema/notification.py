@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -98,7 +98,7 @@ class Notification(BaseModel):
     is_deleted: bool
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
-    metainfo: NotificationMetainfo | dict
+    metainfo: NotificationMetainfo | dict[str, Any]
     account_address: EthereumAddress
     sort_id: int
     created: str = Field(description="datetime of create")
@@ -123,5 +123,5 @@ class NotificationUpdateResponse(BaseModel):
     is_deleted: bool
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
-    metainfo: NotificationMetainfo | dict
+    metainfo: NotificationMetainfo | dict[str, Any]
     account_address: EthereumAddress

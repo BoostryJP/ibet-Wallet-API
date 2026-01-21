@@ -3,6 +3,7 @@
         "app/contracts/",
         "app/database/",
         "app/middleware/",
+        "app/model/",
         "app/utils/",
         "app/config.py",
         "app/errors.py",

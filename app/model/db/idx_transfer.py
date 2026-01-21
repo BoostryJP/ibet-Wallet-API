@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from enum import StrEnum
 from typing import Literal
 from zoneinfo import ZoneInfo
@@ -87,25 +87,8 @@ class IDXTransfer(Base):
     #     => "ibet_wst_bridge"
     message: Mapped[str | None] = mapped_column(String(50), index=True)
 
-    @staticmethod
-    def format_timestamp(_datetime: datetime) -> str:
-        """Convert timestamp from UTC to local timezone str
-        :param _datetime:
-        :return: str
-        """
-        if _datetime is None:
-            return ""
-        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-            datetime_local.year,
-            datetime_local.month,
-            datetime_local.day,
-            datetime_local.hour,
-            datetime_local.minute,
-            datetime_local.second,
-        )
-
     def json(self):
+        assert self.created is not None
         return {
             "transaction_hash": self.transaction_hash,
             "token_address": self.token_address,

@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Generic, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from pydantic import BaseModel, Field, RootModel, StrictStr
 
@@ -163,7 +163,7 @@ class LockEvent(BaseModel):
         default=None, description="Recipient address"
     )
     value: int = Field(description="Transfer quantity")
-    data: dict = Field(description="Data")
+    data: dict[str, Any] = Field(description="Data")
     block_timestamp: datetime = Field(
         description="block_timestamp when Lock log was emitted (local_timezone)"
     )
@@ -207,7 +207,7 @@ class ListAllLockedSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     account_address = "account_address"
-    value = "value"
+    value_ = "value"
 
 
 class ListAllLockedPositionQuery(BasePaginationQuery):
@@ -230,7 +230,7 @@ class LockEventSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     recipient_address = "recipient_address"
-    value = "value"
+    value_ = "value"
     block_timestamp = "block_timestamp"
 
 
@@ -261,15 +261,11 @@ class ListAllLockEventQuery(BasePaginationQuery):
 ############################
 class TokenPositionsResponse(BaseModel):
     result_set: ResultSet
-    positions: Union[
-        list[
-            Union[
-                StraightBondPositionWithDetail,
-                SharePositionWithDetail,
-                CouponPositionWithDetail,
-                MembershipPositionWithDetail,
-            ]
-        ]
+    positions: list[
+        StraightBondPositionWithDetail
+        | SharePositionWithDetail
+        | CouponPositionWithDetail
+        | MembershipPositionWithDetail
     ]
 
 
@@ -295,9 +291,7 @@ class CouponPositionsResponse(BaseModel):
 
 class ListAllLockedPositionResponse(BaseModel, Generic[SecurityTokenResponseT]):
     result_set: ResultSet
-    locked_positions: Union[
-        list[LockedWithTokenDetail[SecurityTokenResponseT]] | list[Locked]
-    ]
+    locked_positions: list[LockedWithTokenDetail[SecurityTokenResponseT]] | list[Locked]
 
 
 class ListAllLockEventsResponse(BaseModel, Generic[SecurityTokenResponseT]):

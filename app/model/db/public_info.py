@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
@@ -81,25 +81,8 @@ class PublicAccountList(Base):
     # Account Address
     account_address: Mapped[str] = mapped_column(String(42), nullable=False)
 
-    @staticmethod
-    def format_timestamp(_datetime: datetime) -> str:
-        """Convert timestamp from UTC to local timezone str
-        :param _datetime:
-        :return: str
-        """
-        if _datetime is None:
-            return ""
-        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-            datetime_local.year,
-            datetime_local.month,
-            datetime_local.day,
-            datetime_local.hour,
-            datetime_local.minute,
-            datetime_local.second,
-        )
-
     def json(self):
+        assert self.modified is not None
         return {
             "key_manager": self.key_manager,
             "key_manager_name": self.key_manager_name,
