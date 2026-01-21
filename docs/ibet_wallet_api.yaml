@@ -14,6 +14,13 @@ paths:
       responses:
         '200':
           description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Root  Get
   /PublicInfo/Tokens:
     get:
       tags:
@@ -47,7 +54,7 @@ paths:
           description: Limit for pagination
         - name: token_template
           in: query
-          required: false
+          required: true
           schema:
             enum:
               - ibetBond
@@ -6240,7 +6247,7 @@ components:
     AgreementSet_TokenAddress_:
       properties:
         token:
-          $ref: '#/components/schemas/TokenAddress'
+          $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
         agreement:
           $ref: '#/components/schemas/Agreement'
         sort_id:
@@ -6254,20 +6261,28 @@ components:
       title: AgreementSet[TokenAddress]
     AppErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 0
         message:
           type: string
+          const: ''
           title: Message
           examples:
             - ''
+        code:
+          type: integer
+          const: 0
+          title: Code
+          examples:
+            - 0
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: AppErrorMetainfo
     AppErrorResponse:
       properties:
@@ -6723,7 +6738,7 @@ components:
     CompleteAgreementSet_TokenAddress_:
       properties:
         token:
-          $ref: '#/components/schemas/TokenAddress'
+          $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
         agreement:
           $ref: '#/components/schemas/Agreement'
         sort_id:
@@ -6982,20 +6997,28 @@ components:
       title: CreateTokenHoldersCollectionResponse
     DataConflictErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 40
         message:
           type: string
+          const: Data Conflict
           title: Message
           examples:
             - Data Conflict
+        code:
+          type: integer
+          const: 40
+          title: Code
+          examples:
+            - 40
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: DataConflictErrorMetainfo
     DataConflictErrorResponse:
       properties:
@@ -7014,20 +7037,28 @@ components:
       title: DataConflictErrorResponse
     DataNotExistsErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 30
         message:
           type: string
+          const: Data Not Exists
           title: Message
           examples:
             - Data Not Exists
+        code:
+          type: integer
+          const: 30
+          title: Code
+          examples:
+            - 30
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: DataNotExistsErrorMetainfo
     DataNotExistsErrorResponse:
       properties:
@@ -7067,6 +7098,11 @@ components:
         - PublicKeyUpdated
         - Message
       title: E2EMessagingEventType
+    EmptyData:
+      properties: {}
+      additionalProperties: false
+      type: object
+      title: EmptyData
     Event:
       properties:
         event:
@@ -8461,20 +8497,28 @@ components:
       title: IbetShareToken
     InvalidParameterErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 88
         message:
           type: string
+          const: Invalid Parameter
           title: Message
           examples:
             - Invalid Parameter
+        code:
+          type: integer
+          const: 88
+          title: Code
+          examples:
+            - 88
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: InvalidParameterErrorMetainfo
     InvalidParameterErrorResponse:
       properties:
@@ -8638,7 +8682,7 @@ components:
                 $ref: '#/components/schemas/LockedWithTokenDetail_RetrieveShareTokenResponse_'
               type: array
             - items:
-                $ref: '#/components/schemas/Locked'
+                $ref: '#/components/schemas/app__model__schema__position__Locked'
               type: array
           title: Locked Positions
       type: object
@@ -8656,7 +8700,7 @@ components:
                 $ref: '#/components/schemas/LockedWithTokenDetail_RetrieveStraightBondTokenResponse_'
               type: array
             - items:
-                $ref: '#/components/schemas/Locked'
+                $ref: '#/components/schemas/app__model__schema__position__Locked'
               type: array
           title: Locked Positions
       type: object
@@ -8885,7 +8929,7 @@ components:
           $ref: '#/components/schemas/ResultSet'
         locked_list:
           items:
-            $ref: '#/components/schemas/Locked'
+            $ref: '#/components/schemas/app__model__schema__position__Locked'
           type: array
           title: Locked List
       type: object
@@ -9108,27 +9152,6 @@ components:
         - block_timestamp
         - token
       title: LockEventWithTokenDetail[RetrieveStraightBondTokenResponse]
-    Locked:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        lock_address:
-          type: string
-          title: Lock Address
-        account_address:
-          type: string
-          title: Account Address
-        value:
-          type: integer
-          title: Value
-      type: object
-      required:
-        - token_address
-        - lock_address
-        - account_address
-        - value
-      title: Locked
     LockedWithTokenDetail_RetrieveShareTokenResponse_:
       properties:
         token_address:
@@ -9356,20 +9379,28 @@ components:
       title: MembershipTokensSortItem
     NotSupportedErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 10
         message:
           type: string
+          const: Not Supported
           title: Message
           examples:
             - Not Supported
+        code:
+          type: integer
+          const: 10
+          title: Code
+          examples:
+            - 10
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: NotSupportedErrorMetainfo
     NotSupportedErrorResponse:
       properties:
@@ -9704,7 +9735,7 @@ components:
     OrderSet_TokenAddress_:
       properties:
         token:
-          $ref: '#/components/schemas/TokenAddress'
+          $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
         order:
           $ref: '#/components/schemas/Order'
         sort_id:
@@ -9805,20 +9836,28 @@ components:
       title: RegisterTokenResponse
     RequestBlockRangeLimitExceededErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 31
         message:
           type: string
+          const: Request Block Range Limit Exceeded
           title: Message
           examples:
             - Request Block Range Limit Exceeded
+        code:
+          type: integer
+          const: 31
+          title: Code
+          examples:
+            - 31
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: RequestBlockRangeLimitExceededErrorMetainfo
     RequestBlockRangeLimitExceededErrorResponse:
       properties:
@@ -9892,20 +9931,28 @@ components:
       title: RequestValidationErrorResponse
     ResponseLimitExceededErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 30
         message:
           type: string
+          const: Response Limit Exceeded
           title: Message
           examples:
             - Response Limit Exceeded
+        code:
+          type: integer
+          const: 30
+          title: Code
+          examples:
+            - 30
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: ResponseLimitExceededErrorMetainfo
     ResponseLimitExceededErrorResponse:
       properties:
@@ -10543,7 +10590,7 @@ components:
         token:
           anyOf:
             - $ref: '#/components/schemas/RetrieveShareTokenResponse'
-            - $ref: '#/components/schemas/TokenAddress'
+            - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
           title: Token
           description: set when include_token_details=false or null
       type: object
@@ -10577,7 +10624,7 @@ components:
         token:
           anyOf:
             - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
-            - $ref: '#/components/schemas/TokenAddress'
+            - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
           title: Token
           description: set when include_token_details=false or null
       type: object
@@ -10749,20 +10796,28 @@ components:
       title: SendRawTransactionsResponse
     ServiceUnavailableMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 503
         message:
           type: string
+          const: Service Unavailable
           title: Message
           examples:
             - Service Unavailable
+        code:
+          type: integer
+          const: 503
+          title: Code
+          examples:
+            - 503
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: ServiceUnavailableMetainfo
     ServiceUnavailableResponse:
       properties:
@@ -11045,29 +11100,35 @@ components:
             - code: 200
               message: OK
         data:
-          type: object
-          title: Data
-          default: {}
+          $ref: '#/components/schemas/EmptyData'
       type: object
       required:
         - meta
       title: SuccessResponse
     SuspendedTokenErrorMetainfo:
       properties:
-        code:
-          type: integer
-          title: Code
-          examples:
-            - 20
         message:
           type: string
+          const: Suspended Token
           title: Message
           examples:
             - Suspended Token
+        code:
+          type: integer
+          const: 20
+          title: Code
+          examples:
+            - 20
+        description:
+          anyOf:
+            - type: string
+            - type: object
+            - type: 'null'
+          title: Description
       type: object
       required:
-        - code
         - message
+        - code
       title: SuspendedTokenErrorMetainfo
     SuspendedTokenErrorResponse:
       properties:
@@ -11151,15 +11212,6 @@ components:
         - token_address
         - tick
       title: Ticks
-    TokenAddress:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-      type: object
-      required:
-        - token_address
-      title: TokenAddress
     TokenHolder:
       properties:
         token_address:
@@ -11491,10 +11543,6 @@ components:
           type: integer
           title: Value
           description: Transfer quantity
-        data:
-          type: 'null'
-          title: Data
-          description: Event data
         message:
           anyOf:
             - type: string
@@ -11517,6 +11565,10 @@ components:
             - Reallocation
           title: Source Event
           description: Source Event
+        data:
+          type: 'null'
+          title: Data
+          description: Event data
       type: object
       required:
         - transaction_hash
@@ -11524,10 +11576,10 @@ components:
         - from_address
         - to_address
         - value
-        - data
         - message
         - created
         - source_event
+        - data
       title: TransferHistory
     TransferSourceEvent:
       type: string
@@ -11560,12 +11612,6 @@ components:
           type: integer
           title: Value
           description: Transfer quantity
-        data:
-          anyOf:
-            - $ref: '#/components/schemas/TransferDataMessage'
-            - type: object
-          title: Data
-          description: Event data
         message:
           anyOf:
             - type: string
@@ -11589,6 +11635,14 @@ components:
             - ForceChangeLockedAccount
           title: Source Event
           description: Source Event
+        data:
+          anyOf:
+            - $ref: '#/components/schemas/TransferDataMessage'
+            - additionalProperties:
+                type: string
+              type: object
+          title: Data
+          description: Event data
       type: object
       required:
         - transaction_hash
@@ -11596,10 +11650,10 @@ components:
         - from_address
         - to_address
         - value
-        - data
         - message
         - created
         - source_event
+        - data
       title: TransferWithMessage
     Trustee:
       properties:
@@ -11849,6 +11903,36 @@ components:
       required:
         - status
       title: WaitForTransactionReceiptResponse
+    app__model__schema__dex_order_list__TokenAddress:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+      type: object
+      required:
+        - token_address
+      title: TokenAddress
+    app__model__schema__position__Locked:
+      properties:
+        token_address:
+          type: string
+          title: Token Address
+        lock_address:
+          type: string
+          title: Lock Address
+        account_address:
+          type: string
+          title: Account Address
+        value:
+          type: integer
+          title: Value
+      type: object
+      required:
+        - token_address
+        - lock_address
+        - account_address
+        - value
+      title: Locked
 tags:
   - name: root
     description: ''
