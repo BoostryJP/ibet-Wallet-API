@@ -1309,23 +1309,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/StraightBondTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/StraightBondTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
         - name: address_list
           in: query
@@ -1513,23 +1507,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/StraightBondTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/StraightBondTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -1745,23 +1733,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/ShareTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/ShareTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
         - name: address_list
           in: query
@@ -1949,23 +1931,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/ShareTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/ShareTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -2138,23 +2114,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/MembershipTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/MembershipTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
         - name: address_list
           in: query
@@ -2302,23 +2272,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/MembershipTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/MembershipTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -2491,23 +2455,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/CouponTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/CouponTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
         - name: address_list
           in: query
@@ -2655,23 +2613,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/CouponTokensSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/CouponTokensSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -10295,15 +10247,11 @@ components:
             than)'
           default: 0
         sort_item:
-          anyOf:
-            - $ref: '#/components/schemas/SearchTokenHoldersSortItem'
-            - type: 'null'
+          $ref: '#/components/schemas/SearchTokenHoldersSortItem'
           description: sort item
           default: created
         sort_order:
-          anyOf:
-            - $ref: '#/components/schemas/SortOrder'
-            - type: 'null'
+          $ref: '#/components/schemas/SortOrder'
           description: sort order
           default: 1
       type: object
@@ -10424,15 +10372,11 @@ components:
             than)'
           default: 0
         sort_item:
-          anyOf:
-            - $ref: '#/components/schemas/SearchTransferApprovalHistorySortItem'
-            - type: 'null'
+          $ref: '#/components/schemas/SearchTransferApprovalHistorySortItem'
           description: sort item
           default: application_id
         sort_order:
-          anyOf:
-            - $ref: '#/components/schemas/SortOrder'
-            - type: 'null'
+          $ref: '#/components/schemas/SortOrder'
           description: sort order
           default: 0
       type: object
@@ -10533,15 +10477,11 @@ components:
             than)'
           default: 0
         sort_item:
-          anyOf:
-            - $ref: '#/components/schemas/SearchTransferHistorySortItem'
-            - type: 'null'
+          $ref: '#/components/schemas/SearchTransferHistorySortItem'
           description: sort item
           default: id
         sort_order:
-          anyOf:
-            - $ref: '#/components/schemas/SortOrder'
-            - type: 'null'
+          $ref: '#/components/schemas/SortOrder'
           description: sort order
           default: 0
       type: object
