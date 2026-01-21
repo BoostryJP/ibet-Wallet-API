@@ -308,7 +308,7 @@ async def retrieve_membership_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: MembershipToken | None = await MembershipToken.get(
+        token_detail: MembershipToken = await MembershipToken.get(
             async_session, token_address
         )
     except ServiceUnavailable as e:
@@ -317,8 +317,5 @@ async def retrieve_membership_token(
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
-
-    if token_detail is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

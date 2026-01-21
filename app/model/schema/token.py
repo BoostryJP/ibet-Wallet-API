@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Literal, Optional, TypeAlias, TypedDict
 
 from pydantic import UUID4, BaseModel, Field, StrictStr
 
@@ -31,6 +31,10 @@ from app.model.schema.base import (
     ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
+from app.model.schema.token_bond import BondTokenDict
+from app.model.schema.token_coupon import CouponTokenDict
+from app.model.schema.token_membership import MembershipTokenDict
+from app.model.schema.token_share import ShareTokenDict
 from app.model.type import EthereumAddress
 
 
@@ -43,6 +47,19 @@ class TransferSourceEvent(StrEnum):
     ForceUnlock = "ForceUnlock"
     ForceChangeLockedAccount = "ForceChangeLockedAccount"
     Reallocation = "Reallocation"
+
+
+############################
+# DTO
+############################
+class TokenImageDict(TypedDict):
+    id: int
+    url: str
+
+
+TokenDetailDict: TypeAlias = (
+    BondTokenDict | ShareTokenDict | MembershipTokenDict | CouponTokenDict
+)
 
 
 ############################

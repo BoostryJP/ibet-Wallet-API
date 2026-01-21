@@ -304,17 +304,12 @@ async def retrieve_coupon_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: CouponToken | None = await CouponToken.get(
-            async_session, token_address
-        )
+        token_detail: CouponToken = await CouponToken.get(async_session, token_address)
     except ServiceUnavailable as e:
         LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
-
-    if token_detail is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

@@ -320,17 +320,12 @@ async def retrieve_share_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: ShareToken | None = await ShareToken.get(
-            async_session, token_address
-        )
+        token_detail: ShareToken = await ShareToken.get(async_session, token_address)
     except ServiceUnavailable as e:
         LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
-
-    if token_detail is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})
