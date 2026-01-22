@@ -22,7 +22,7 @@ from typing import Annotated, Sequence
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Path, Query, Request
-from sqlalchemy import String, cast, column, desc, func, literal, null, select
+from sqlalchemy import String, cast, desc, func, literal, null, select
 
 from app import config, log
 from app.config import TZ
@@ -31,8 +31,8 @@ from app.errors import DataNotExistsError, InvalidParameterError, NotSupportedEr
 from app.model.blockchain import (
     BondToken,
     ShareToken,
-    TokenClassTypes as BlockChainTokenModel,
 )
+from app.model.blockchain.token import TokenBase
 from app.model.db import (
     IDXBondToken,
     IDXLock,
@@ -45,10 +45,15 @@ from app.model.db import (
 from app.model.schema import (
     ListAllLockedPositionQuery,
     ListAllLockedPositionResponse,
+    ListAllLockedSortItem,
     ListAllLockEventQuery,
     ListAllLockEventsResponse,
+    LockedPositionDataDict,
     LockEventCategory,
+    LockEventDataDict,
     LockEventSortItem,
+    LockEventsResponseDict,
+    LockPositionsResponseDict,
     RetrieveShareTokenResponse,
     RetrieveStraightBondTokenResponse,
 )
@@ -71,13 +76,13 @@ router = APIRouter(prefix="/Position", tags=["user_position"])
 
 class ListAllLock:
     token_type: str
-    token_model: BlockChainTokenModel
+    token_model: type[TokenBase]
     idx_token_model: IDXTokenModel
 
     def __init__(
         self,
         token_type: str,
-        token_model: BlockChainTokenModel,
+        token_model: type[TokenBase],
         idx_token_model: IDXTokenModel,
     ):
         self.token_type = token_type
@@ -92,7 +97,7 @@ class ListAllLock:
             EthereumAddress, Path(description="account address")
         ],
         request_query: Annotated[ListAllLockedPositionQuery, Query()],
-    ):
+    ) -> LockPositionsResponseDict:
         if self.token_type == TokenType.IbetShare:
             token_enabled = config.SHARE_TOKEN_ENABLED
         else:  # IbetStraightBond
@@ -133,7 +138,15 @@ class ListAllLock:
             .order_by(None)
         )
 
-        sort_attr = getattr(IDXLockedPosition, sort_item, None)
+        match sort_item:
+            case ListAllLockedSortItem.token_address:
+                sort_attr = IDXLockedPosition.token_address
+            case ListAllLockedSortItem.lock_address:
+                sort_attr = IDXLockedPosition.lock_address
+            case ListAllLockedSortItem.account_address:
+                sort_attr = IDXLockedPosition.account_address
+            case _:
+                sort_attr = IDXLockedPosition.value
 
         if sort_order == 0:  # ASC
             stmt = stmt.order_by(sort_attr)
@@ -141,7 +154,7 @@ class ListAllLock:
             stmt = stmt.order_by(desc(sort_attr))
 
         # NOTE: Set secondary sort for consistent results
-        if sort_item != "token_address":
+        if sort_item != ListAllLockedSortItem.token_address:
             stmt = stmt.order_by(IDXLockedPosition.token_address)
         else:
             stmt = stmt.order_by(IDXLockedPosition.created)
@@ -152,17 +165,23 @@ class ListAllLock:
             stmt = stmt.offset(offset)
 
         _locked_list: Sequence[tuple[IDXLockedPosition, IDXTokenInstance]] = (
-            await async_session.execute(stmt)
-        ).all()
-        locked_list = []
+            (await async_session.execute(stmt)).tuples().all()
+        )
+        locked_list: list[LockedPositionDataDict] = []
 
         for _locked in _locked_list:
-            _locked_data = _locked[0].json()
+            locked_position = _locked[0]
+            locked_data: LockedPositionDataDict = {
+                "token_address": locked_position.token_address,
+                "lock_address": locked_position.lock_address,
+                "account_address": locked_position.account_address,
+                "value": locked_position.value,
+            }
             if request_query.include_token_details is True:
-                _locked_data["token"] = self.token_model.from_model(_locked[1]).__dict__
-            locked_list.append(_locked_data)
+                locked_data["token"] = self.token_model.from_model(_locked[1]).to_dict()
+            locked_list.append(locked_data)
 
-        data = {
+        data: LockPositionsResponseDict = {
             "result_set": {
                 "count": count,
                 "offset": offset,
@@ -177,13 +196,13 @@ class ListAllLock:
 
 class ListAllLockEvent:
     token_type: str
-    token_model: BlockChainTokenModel
+    token_model: type[TokenBase]
     idx_token_model: IDXTokenModel
 
     def __init__(
         self,
         token_type: str,
-        token_model: BlockChainTokenModel,
+        token_model: type[TokenBase],
         idx_token_model: IDXTokenModel,
     ):
         self.token_type = token_type
@@ -198,7 +217,7 @@ class ListAllLockEvent:
             EthereumAddress, Path(description="account address")
         ],
         request_query: Annotated[ListAllLockEventQuery, Query()],
-    ):
+    ) -> LockEventsResponseDict:
         if self.token_type == TokenType.IbetShare:
             token_enabled = config.SHARE_TOKEN_ENABLED
         else:  # IbetStraightBond
@@ -248,70 +267,83 @@ class ListAllLockEvent:
                 IDXUnlock.token_address.label("token_address").in_(token_address_list)
             )
 
-        total = await async_session.scalar(
+        total_lock = await async_session.scalar(
             stmt_lock.with_only_columns(func.count())
             .select_from(IDXLock)
             .order_by(None)
-        ) + await async_session.scalar(
+        )
+        total_unlock = await async_session.scalar(
             stmt_unlock.with_only_columns(func.count())
             .select_from(IDXUnlock)
             .order_by(None)
         )
+        total = (total_lock or 0) + (total_unlock or 0)
 
         match category:
             case LockEventCategory.Lock:
-                stmt = stmt_lock.subquery()
+                history_stmt = stmt_lock.subquery()
             case LockEventCategory.Unlock:
-                stmt = stmt_unlock.subquery()
+                history_stmt = stmt_unlock.subquery()
             case _:
-                stmt = stmt_lock.union_all(stmt_unlock).subquery()
+                history_stmt = stmt_lock.union_all(stmt_unlock).subquery()
 
         stmt = (
-            select(stmt)
+            select(history_stmt)
             .join(
                 self.idx_token_model,
-                column("token_address_alias") == self.idx_token_model.token_address,
+                history_stmt.c.token_address_alias
+                == self.idx_token_model.token_address,
             )
             .add_columns(self.idx_token_model)
         )
-        stmt = stmt.where(column("account_address") == account_address)
+        stmt = stmt.where(history_stmt.c.account_address == account_address)
 
         if request_query.msg_sender is not None:
-            stmt = stmt.where(column("msg_sender") == request_query.msg_sender)
+            stmt = stmt.where(history_stmt.c.msg_sender == request_query.msg_sender)
         if request_query.lock_address is not None:
-            stmt = stmt.where(column("lock_address") == request_query.lock_address)
+            stmt = stmt.where(history_stmt.c.lock_address == request_query.lock_address)
         if request_query.recipient_address is not None:
             stmt = stmt.where(
-                column("recipient_address") == request_query.recipient_address
+                history_stmt.c.recipient_address == request_query.recipient_address
             )
         if request_query.data is not None:
             stmt = stmt.where(
-                cast(column("data"), String).like("%" + request_query.data + "%")
+                cast(history_stmt.c.data, String).like("%" + request_query.data + "%")
             )
         count = await async_session.scalar(
             stmt.with_only_columns(func.count()).order_by(None)
         )
 
         # Sort
-        sort_attr = column(request_query.sort_item)
+        match request_query.sort_item:
+            case LockEventSortItem.token_address:
+                sort_attr = history_stmt.c.token_address_alias
+            case LockEventSortItem.lock_address:
+                sort_attr = history_stmt.c.lock_address
+            case LockEventSortItem.recipient_address:
+                sort_attr = history_stmt.c.recipient_address
+            case LockEventSortItem.value_:
+                sort_attr = history_stmt.c.value
+            case _:
+                sort_attr = history_stmt.c.block_timestamp
         if request_query.sort_order == 0:  # ASC
             stmt = stmt.order_by(sort_attr.is_(None), sort_attr)
         else:  # DESC
             stmt = stmt.order_by(sort_attr.is_(None), desc(sort_attr))
         if request_query.sort_item != LockEventSortItem.block_timestamp:
             # NOTE: Set secondary sort for consistent results
-            stmt = stmt.order_by(desc(column(LockEventSortItem.block_timestamp)))
+            stmt = stmt.order_by(desc(history_stmt.c.block_timestamp))
 
         # Pagination
         if request_query.offset is not None:
             stmt = stmt.offset(request_query.offset)
         if request_query.limit is not None:
             stmt = stmt.limit(request_query.limit)
-        lock_events = (await async_session.execute(stmt)).all()
+        lock_events = (await async_session.execute(stmt)).tuples().all()
 
-        resp_data = []
+        resp_data: list[LockEventDataDict] = []
         for lock_event in lock_events:
-            event_data = {
+            event_data: LockEventDataDict = {
                 "category": lock_event[0],
                 "is_forced": lock_event[1],
                 "transaction_hash": lock_event[2],
@@ -329,10 +361,10 @@ class ListAllLockEvent:
             if request_query.include_token_details is True:
                 event_data["token"] = self.token_model.from_model(
                     lock_event[11]
-                ).__dict__
+                ).to_dict()
             resp_data.append(event_data)
 
-        data = {
+        data: LockEventsResponseDict = {
             "result_set": {
                 "count": count,
                 "offset": request_query.offset,
@@ -355,7 +387,9 @@ class ListAllLockEvent:
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def list_all_share_locked_position(
-    data: dict = Depends(ListAllLock(TokenType.IbetShare, ShareToken, IDXShareToken)),
+    data: LockPositionsResponseDict = Depends(
+        ListAllLock(TokenType.IbetShare, ShareToken, IDXShareToken)
+    ),
 ):
     """
     [Share]Returns a list of locked positions.
@@ -374,7 +408,7 @@ async def list_all_share_locked_position(
     responses=get_routers_responses(),
 )
 async def list_all_share_lock_events(
-    data: dict = Depends(
+    data: LockEventsResponseDict = Depends(
         ListAllLockEvent(TokenType.IbetShare, ShareToken, IDXShareToken)
     ),
 ):
@@ -395,7 +429,7 @@ async def list_all_share_lock_events(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
 )
 async def list_all_straight_bond_locked_position(
-    data: dict = Depends(
+    data: LockPositionsResponseDict = Depends(
         ListAllLock(TokenType.IbetStraightBond, BondToken, IDXBondToken)
     ),
 ):
@@ -416,7 +450,7 @@ async def list_all_straight_bond_locked_position(
     responses=get_routers_responses(),
 )
 async def list_all_straight_bond_lock_events(
-    data: dict = Depends(
+    data: LockEventsResponseDict = Depends(
         ListAllLockEvent(TokenType.IbetStraightBond, BondToken, IDXBondToken)
     ),
 ):
