@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Optional
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -33,6 +33,56 @@ from app.model.type import EthereumAddress
 ############################
 # COMMON
 ############################
+
+
+############################
+# DTO
+############################
+class BondTokenDict(TypedDict):
+    token_address: EthereumAddress
+    token_template: str
+    owner_address: EthereumAddress
+    company_name: str
+    rsa_publickey: str
+    name: str
+    symbol: str
+    total_supply: int
+    tradable_exchange: EthereumAddress
+    contact_information: str
+    privacy_policy: str
+    status: bool
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
+    personal_info_address: EthereumAddress
+    require_personal_info_registered: bool
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
+    face_value: int
+    face_value_currency: str
+    interest_rate: float
+    interest_payment_date1: str
+    interest_payment_date2: str
+    interest_payment_date3: str
+    interest_payment_date4: str
+    interest_payment_date5: str
+    interest_payment_date6: str
+    interest_payment_date7: str
+    interest_payment_date8: str
+    interest_payment_date9: str
+    interest_payment_date10: str
+    interest_payment_date11: str
+    interest_payment_date12: str
+    interest_payment_currency: str
+    redemption_date: str
+    redemption_value: int
+    redemption_value_currency: str
+    base_fx_rate: float
+    return_date: str
+    return_amount: str
+    purpose: str
+    memo: str
+    is_redeemed: bool
 
 
 ############################
@@ -77,12 +127,10 @@ class StraightBondTokensQuery(BasePaginationQuery):
     )
     is_redeemed: Optional[bool] = Field(None, description="redeem status")
 
-    sort_item: Optional[StraightBondTokensSortItem] = Field(
+    sort_item: StraightBondTokensSortItem = Field(
         StraightBondTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class ListAllStraightBondTokensQuery(StraightBondTokensQuery):

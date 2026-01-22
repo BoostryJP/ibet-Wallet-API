@@ -23,6 +23,7 @@ from typing import Annotated, Optional, Sequence
 from fastapi import APIRouter, Path, Query
 from pydantic import UUID4
 from sqlalchemy import String, and_, asc, case, cast, desc, func, or_, select
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import aliased
 
 from app import config, log
@@ -49,8 +50,11 @@ from app.model.schema import (
     ListTokenTransferHistoryQuery,
     RetrieveTokenHoldersCountQuery,
     SearchTokenHoldersRequest,
+    SearchTokenHoldersSortItem,
     SearchTransferApprovalHistoryRequest,
+    SearchTransferApprovalHistorySortItem,
     SearchTransferHistoryRequest,
+    SearchTransferHistorySortItem,
     TokenHoldersCollectionResponse,
     TokenHoldersCountResponse,
     TokenHoldersResponse,
@@ -60,6 +64,7 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    SortOrder,
     SuccessResponse,
     ValueOperator,
 )
@@ -167,7 +172,7 @@ async def get_token_holders(
     position_account = aliased(AccountTag)
     lock_position_account = aliased(AccountTag)
     stmt = (
-        select(IDXPosition, func.sum(IDXLockedPosition.value))
+        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
         .outerjoin(
             IDXLockedPosition,
             and_(
@@ -294,7 +299,7 @@ async def get_token_holders(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    holders: Sequence[tuple[IDXPosition, int | None]] = (
+    holders: Sequence[Row[tuple[IDXPosition, int]]] = (
         await async_session.execute(stmt.order_by(desc(IDXPosition.created)))
     ).all()
 
@@ -359,7 +364,7 @@ async def search_token_holders(
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
     stmt = (
-        select(IDXPosition, func.sum(IDXLockedPosition.value))
+        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
         .outerjoin(
             IDXLockedPosition,
             and_(
@@ -455,15 +460,18 @@ async def search_token_holders(
     )
 
     # Sort
-    def _order(_order):
-        if _order == 0:
-            return asc
-        else:
-            return desc
+    sort_item = data.sort_item
+    sort_order = data.sort_order
 
-    if data.sort_item == "account_address_list" and len(data.account_address_list) > 0:
+    def _order(order: SortOrder):
+        return asc if order == SortOrder.ASC else desc
+
+    if (
+        sort_item == SearchTokenHoldersSortItem.account_address_list
+        and len(data.account_address_list) > 0
+    ):
         stmt = stmt.order_by(
-            _order(data.sort_order)(
+            _order(sort_order)(
                 case(
                     {
                         account_address: i
@@ -473,17 +481,20 @@ async def search_token_holders(
                 )
             )
         )
-    elif data.sort_item == "locked":
-        stmt = stmt.order_by(_order(data.sort_order)(func.sum(IDXLockedPosition.value)))
-    elif data.sort_item == "amount":
-        sort_attr = getattr(IDXPosition, "balance", None)
-        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+    elif sort_item == SearchTokenHoldersSortItem.locked:
+        stmt = stmt.order_by(
+            _order(sort_order)(func.coalesce(func.sum(IDXLockedPosition.value), 0))
+        )
+    elif sort_item == SearchTokenHoldersSortItem.amount:
+        stmt = stmt.order_by(_order(sort_order)(IDXPosition.balance))
     else:
-        sort_attr = getattr(IDXPosition, data.sort_item, None)
-        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+        if sort_item == SearchTokenHoldersSortItem.account_address_list:
+            sort_item = SearchTokenHoldersSortItem.created
+        sort_attr = getattr(IDXPosition, sort_item.value)
+        stmt = stmt.order_by(_order(sort_order)(sort_attr))
 
     # NOTE: Set secondary sort for consistent results
-    if data.sort_item != "created":
+    if sort_item != SearchTokenHoldersSortItem.created:
         stmt = stmt.order_by(desc(IDXPosition.created))
 
     # Pagination
@@ -492,7 +503,7 @@ async def search_token_holders(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    holders: Sequence[tuple[IDXPosition, int | None]] = (
+    holders: Sequence[Row[tuple[IDXPosition, int]]] = (
         await async_session.execute(stmt)
     ).all()
 
@@ -556,7 +567,7 @@ async def get_token_holders_count(
     position_account = aliased(AccountTag)
     lock_position_account = aliased(AccountTag)
     stmt = (
-        select(IDXPosition, func.sum(IDXLockedPosition.value))
+        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
         .outerjoin(
             IDXLockedPosition,
             and_(
@@ -1053,18 +1064,18 @@ async def search_transfer_histories(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    def _order(_order):
-        if _order == 0:
-            return asc
-        else:
-            return desc
+    sort_item = data.sort_item
+    sort_order = data.sort_order
+
+    def _order(order: SortOrder):
+        return asc if order == SortOrder.ASC else desc
 
     if (
-        data.sort_item == "from_account_address_list"
+        sort_item == SearchTransferHistorySortItem.from_account_address_list
         and len(data.account_address_list) > 0
     ):
         stmt = stmt.order_by(
-            _order(data.sort_order)(
+            _order(sort_order)(
                 case(
                     {
                         account_address: i
@@ -1075,11 +1086,11 @@ async def search_transfer_histories(
             )
         )
     elif (
-        data.sort_item == "to_account_address_list"
+        sort_item == SearchTransferHistorySortItem.to_account_address_list
         and len(data.account_address_list) > 0
     ):
         stmt = stmt.order_by(
-            _order(data.sort_order)(
+            _order(sort_order)(
                 case(
                     {
                         account_address: i
@@ -1090,11 +1101,16 @@ async def search_transfer_histories(
             )
         )
     else:
-        sort_attr = getattr(IDXTransfer, data.sort_item, None)
-        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+        if sort_item in (
+            SearchTransferHistorySortItem.from_account_address_list,
+            SearchTransferHistorySortItem.to_account_address_list,
+        ):
+            sort_item = SearchTransferHistorySortItem.id
+        sort_attr = getattr(IDXTransfer, sort_item.value)
+        stmt = stmt.order_by(_order(sort_order)(sort_attr))
 
     # NOTE: Set secondary sort for consistent results
-    if data.sort_item != "id":
+    if sort_item != SearchTransferHistorySortItem.id:
         stmt = stmt.order_by(IDXTransfer.id)
 
     if data.offset is not None:
@@ -1104,7 +1120,7 @@ async def search_transfer_histories(
     transfer_history: Sequence[IDXTransfer] = (await async_session.scalars(stmt)).all()
 
     resp_data = [transfer_event.json() for transfer_event in transfer_history]
-    data = {
+    resp_body = {
         "result_set": {
             "count": count,
             "offset": data.offset,
@@ -1114,7 +1130,7 @@ async def search_transfer_histories(
         "transfer_history": resp_data,
     }
 
-    return json_response({**SuccessResponse.default(), "data": data})
+    return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
 @router.get(
@@ -1323,18 +1339,18 @@ async def search_transfer_approval_histories(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    def _order(_order):
-        if _order == 0:
-            return asc
-        else:
-            return desc
+    sort_item = data.sort_item
+    sort_order = data.sort_order
+
+    def _order(order: SortOrder):
+        return asc if order == SortOrder.ASC else desc
 
     if (
-        data.sort_item == "from_account_address_list"
+        sort_item == SearchTransferApprovalHistorySortItem.from_account_address_list
         and len(data.account_address_list) > 0
     ):
         stmt = stmt.order_by(
-            _order(data.sort_order)(
+            _order(sort_order)(
                 case(
                     {
                         account_address: i
@@ -1345,11 +1361,11 @@ async def search_transfer_approval_histories(
             )
         )
     elif (
-        data.sort_item == "to_account_address_list"
+        sort_item == SearchTransferApprovalHistorySortItem.to_account_address_list
         and len(data.account_address_list) > 0
     ):
         stmt = stmt.order_by(
-            _order(data.sort_order)(
+            _order(sort_order)(
                 case(
                     {
                         account_address: i
@@ -1360,11 +1376,16 @@ async def search_transfer_approval_histories(
             )
         )
     else:
-        sort_attr = getattr(IDXTransferApproval, data.sort_item, None)
-        stmt = stmt.order_by(_order(data.sort_order)(sort_attr))
+        if sort_item in (
+            SearchTransferApprovalHistorySortItem.from_account_address_list,
+            SearchTransferApprovalHistorySortItem.to_account_address_list,
+        ):
+            sort_item = SearchTransferApprovalHistorySortItem.application_id
+        sort_attr = getattr(IDXTransferApproval, sort_item.value)
+        stmt = stmt.order_by(_order(sort_order)(sort_attr))
 
     # NOTE: Set secondary sort for consistent results
-    if data.sort_item != "application_id":
+    if sort_item != SearchTransferApprovalHistorySortItem.application_id:
         stmt = stmt.order_by(IDXTransferApproval.application_id)
 
     # パラメータを設定
@@ -1380,7 +1401,7 @@ async def search_transfer_approval_histories(
         transfer_approval_event.json()
         for transfer_approval_event in transfer_approval_history
     ]
-    data = {
+    resp_body = {
         "result_set": {
             "count": count,
             "offset": data.offset,
@@ -1390,4 +1411,4 @@ async def search_transfer_approval_histories(
         "transfer_approval_history": resp_data,
     }
 
-    return json_response({**SuccessResponse.default(), "data": data})
+    return json_response({**SuccessResponse.default(), "data": resp_body})
