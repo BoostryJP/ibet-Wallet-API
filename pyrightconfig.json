@@ -1,5 +1,7 @@
 {
     "include": [
+        "app/api/routers/position*",
+        "app/api/routers/token*",
         "app/contracts/",
         "app/database/",
         "app/middleware/",
