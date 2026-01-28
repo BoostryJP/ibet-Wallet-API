@@ -47,7 +47,16 @@ from app.model.db import (
     Listing,
 )
 from app.model.db.idx_token import IDXTokenInstance, IDXTokenModel
-from app.model.schema.base import TokenType
+from app.model.schema import (
+    BondTokenDict,
+    CouponTokenDict,
+    MembershipTokenDict,
+    ShareDividendInformationDict,
+    ShareTokenDict,
+    TokenDetailDict,
+    TokenImageDict,
+    TokenType,
+)
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.company_list import CompanyList
 
@@ -69,8 +78,8 @@ def token_db_cache(TargetModel: IDXTokenModel):
     """
 
     def decorator(
-        func: Callable[[type[TToken], AsyncSession, str], Awaitable[TToken | None]],
-    ) -> Callable[[type[TToken], AsyncSession, str], Awaitable[TToken | None]]:
+        func: Callable[[type[TToken], AsyncSession, str], Awaitable[TToken]],
+    ) -> Callable[[type[TToken], AsyncSession, str], Awaitable[TToken]]:
         """
         @param func: Function for decoration
         """
@@ -78,7 +87,7 @@ def token_db_cache(TargetModel: IDXTokenModel):
         @functools.wraps(func)
         async def wrapper(
             cls: type[TToken], async_session: AsyncSession, token_address: str
-        ) -> TToken | None:
+        ) -> TToken:
             """
             @param cls: Class of return instance
             @param async_session: ORM async session
@@ -145,10 +154,17 @@ class TokenBase:
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         raise NotImplementedError("Subclasses should implement this")
 
+    @classmethod
+    def get(cls, async_session: AsyncSession, token_address: str, /) -> Awaitable[Self]:
+        raise NotImplementedError("Subclasses should implement this")
+
     def to_model(self) -> IDXTokenInstance:
         raise NotImplementedError("Subclasses should implement this")
 
     async def fetch_expiry_short(self) -> None:
+        raise NotImplementedError("Subclasses should implement this")
+
+    def to_dict(self) -> TokenDetailDict:
         raise NotImplementedError("Subclasses should implement this")
 
 
@@ -192,8 +208,11 @@ class BondToken(TokenBase):
             if key != "interest_payment_date":
                 setattr(token_obj, key, value)
 
+        for i in range(1, 13):
+            setattr(token_obj, f"interest_payment_date{i}", "")
+
         interest_payment_date_list = token_model.interest_payment_date or []
-        for i, d in enumerate(interest_payment_date_list):
+        for i, d in enumerate(interest_payment_date_list[:12]):
             setattr(token_obj, f"interest_payment_date{str(i + 1)}", d)
 
         return token_obj
@@ -213,6 +232,55 @@ class BondToken(TokenBase):
         token_model.interest_payment_date = interest_payment_date_list
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
+
+    def to_dict(self) -> BondTokenDict:
+        data: BondTokenDict = {
+            "token_address": self.token_address,
+            "token_template": self.token_template,
+            "owner_address": self.owner_address,
+            "company_name": self.company_name,
+            "rsa_publickey": self.rsa_publickey,
+            "name": self.name,
+            "symbol": self.symbol,
+            "total_supply": self.total_supply,
+            "tradable_exchange": self.tradable_exchange,
+            "contact_information": self.contact_information,
+            "privacy_policy": self.privacy_policy,
+            "status": self.status,
+            "max_holding_quantity": self.max_holding_quantity,
+            "max_sell_amount": self.max_sell_amount,
+            "personal_info_address": self.personal_info_address,
+            "require_personal_info_registered": self.require_personal_info_registered,
+            "transferable": self.transferable,
+            "is_offering": self.is_offering,
+            "transfer_approval_required": self.transfer_approval_required,
+            "face_value": self.face_value,
+            "face_value_currency": self.face_value_currency,
+            "interest_rate": self.interest_rate,
+            "interest_payment_date1": self.interest_payment_date1,
+            "interest_payment_date2": self.interest_payment_date2,
+            "interest_payment_date3": self.interest_payment_date3,
+            "interest_payment_date4": self.interest_payment_date4,
+            "interest_payment_date5": self.interest_payment_date5,
+            "interest_payment_date6": self.interest_payment_date6,
+            "interest_payment_date7": self.interest_payment_date7,
+            "interest_payment_date8": self.interest_payment_date8,
+            "interest_payment_date9": self.interest_payment_date9,
+            "interest_payment_date10": self.interest_payment_date10,
+            "interest_payment_date11": self.interest_payment_date11,
+            "interest_payment_date12": self.interest_payment_date12,
+            "interest_payment_currency": self.interest_payment_currency,
+            "redemption_date": self.redemption_date,
+            "redemption_value": self.redemption_value,
+            "redemption_value_currency": self.redemption_value_currency,
+            "base_fx_rate": self.base_fx_rate,
+            "return_date": self.return_date,
+            "return_amount": self.return_amount,
+            "purpose": self.purpose,
+            "memo": self.memo,
+            "is_redeemed": self.is_redeemed,
+        }
+        return data
 
     async def fetch_expiry_short(self) -> None:
         """
@@ -611,7 +679,7 @@ class ShareToken(TokenBase):
     memo: str
     principal_value: int
     is_canceled: bool
-    dividend_information: object
+    dividend_information: ShareDividendInformationDict
 
     @classmethod
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
@@ -628,6 +696,35 @@ class ShareToken(TokenBase):
                 setattr(token_model, key, value)
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
+
+    def to_dict(self) -> ShareTokenDict:
+        return {
+            "token_address": self.token_address,
+            "token_template": self.token_template,
+            "owner_address": self.owner_address,
+            "company_name": self.company_name,
+            "rsa_publickey": self.rsa_publickey,
+            "name": self.name,
+            "symbol": self.symbol,
+            "total_supply": self.total_supply,
+            "tradable_exchange": self.tradable_exchange,
+            "contact_information": self.contact_information,
+            "privacy_policy": self.privacy_policy,
+            "status": self.status,
+            "max_holding_quantity": self.max_holding_quantity,
+            "max_sell_amount": self.max_sell_amount,
+            "personal_info_address": self.personal_info_address,
+            "require_personal_info_registered": self.require_personal_info_registered,
+            "transferable": self.transferable,
+            "is_offering": self.is_offering,
+            "transfer_approval_required": self.transfer_approval_required,
+            "issue_price": self.issue_price,
+            "cancellation_date": self.cancellation_date,
+            "memo": self.memo,
+            "principal_value": self.principal_value,
+            "is_canceled": self.is_canceled,
+            "dividend_information": self.dividend_information,
+        }
 
     async def fetch_expiry_short(self) -> None:
         """
@@ -905,7 +1002,7 @@ class MembershipToken(TokenBase):
     memo: str
     transferable: bool
     initial_offering_status: bool
-    image_url: object
+    image_url: list[TokenImageDict]
 
     @classmethod
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
@@ -922,6 +1019,31 @@ class MembershipToken(TokenBase):
                 setattr(token_model, key, value)
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
+
+    def to_dict(self) -> MembershipTokenDict:
+        return {
+            "token_address": self.token_address,
+            "token_template": self.token_template,
+            "owner_address": self.owner_address,
+            "company_name": self.company_name,
+            "rsa_publickey": self.rsa_publickey,
+            "name": self.name,
+            "symbol": self.symbol,
+            "total_supply": self.total_supply,
+            "tradable_exchange": self.tradable_exchange,
+            "contact_information": self.contact_information,
+            "privacy_policy": self.privacy_policy,
+            "status": self.status,
+            "max_holding_quantity": self.max_holding_quantity,
+            "max_sell_amount": self.max_sell_amount,
+            "details": self.details,
+            "return_details": self.return_details,
+            "expiration_date": self.expiration_date,
+            "memo": self.memo,
+            "transferable": self.transferable,
+            "initial_offering_status": self.initial_offering_status,
+            "image_url": self.image_url,
+        }
 
     async def fetch_expiry_short(self) -> None:
         """
@@ -1144,7 +1266,7 @@ class CouponToken(TokenBase):
     memo: str
     transferable: bool
     initial_offering_status: bool
-    image_url: object
+    image_url: list[TokenImageDict]
 
     @classmethod
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
@@ -1161,6 +1283,31 @@ class CouponToken(TokenBase):
                 setattr(token_model, key, value)
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
+
+    def to_dict(self) -> CouponTokenDict:
+        return {
+            "token_address": self.token_address,
+            "token_template": self.token_template,
+            "owner_address": self.owner_address,
+            "company_name": self.company_name,
+            "rsa_publickey": self.rsa_publickey,
+            "name": self.name,
+            "symbol": self.symbol,
+            "total_supply": self.total_supply,
+            "tradable_exchange": self.tradable_exchange,
+            "contact_information": self.contact_information,
+            "privacy_policy": self.privacy_policy,
+            "status": self.status,
+            "max_holding_quantity": self.max_holding_quantity,
+            "max_sell_amount": self.max_sell_amount,
+            "details": self.details,
+            "return_details": self.return_details,
+            "expiration_date": self.expiration_date,
+            "memo": self.memo,
+            "transferable": self.transferable,
+            "initial_offering_status": self.initial_offering_status,
+            "image_url": self.image_url,
+        }
 
     async def fetch_expiry_short(self) -> None:
         """

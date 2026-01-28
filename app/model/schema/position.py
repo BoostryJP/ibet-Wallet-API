@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Generic, Optional, TypeVar, Union
+from typing import Any, Generic, NotRequired, Optional, TypedDict, TypeVar, Union
 
 from pydantic import BaseModel, Field, RootModel, StrictStr
 
@@ -29,6 +29,7 @@ from app.model.schema.base import (
     SortOrder,
     TokenType,
 )
+from app.model.schema.token import TokenDetailDict
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_lock import Locked
@@ -171,6 +172,65 @@ class CouponConsumption(BaseModel):
     account_address: str = Field(description="account address")
     block_timestamp: str = Field(description="consumption datetime")
     value: int = Field(description="consumption quantity")
+
+
+############################
+# DTO
+############################
+class ResultSetDict(TypedDict):
+    count: int | None
+    offset: int | None
+    limit: int | None
+    total: int | None
+
+
+class PositionDataDict(TypedDict, total=False):
+    balance: int
+    pending_transfer: int
+    exchange_balance: int
+    exchange_commitment: int
+    locked: int | None
+    used: int
+    token_address: EthereumAddress
+    token: TokenDetailDict
+
+
+class PositionsResponseDict(TypedDict):
+    result_set: ResultSetDict
+    positions: list[PositionDataDict]
+
+
+class LockedPositionDataDict(TypedDict):
+    token_address: EthereumAddress
+    lock_address: EthereumAddress
+    account_address: EthereumAddress
+    value: int
+    token: NotRequired[TokenDetailDict]
+
+
+class LockEventDataDict(TypedDict):
+    category: str
+    is_forced: bool
+    transaction_hash: str
+    msg_sender: EthereumAddress | None
+    token_address: EthereumAddress
+    lock_address: EthereumAddress
+    account_address: EthereumAddress
+    recipient_address: str | None
+    value: int
+    data: dict[str, Any]
+    block_timestamp: datetime
+    token: NotRequired[TokenDetailDict]
+
+
+class LockPositionsResponseDict(TypedDict):
+    result_set: ResultSetDict
+    locked_positions: list[LockedPositionDataDict]
+
+
+class LockEventsResponseDict(TypedDict):
+    result_set: ResultSetDict
+    events: list[LockEventDataDict]
 
 
 ############################

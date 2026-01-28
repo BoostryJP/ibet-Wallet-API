@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Literal, Optional, TypeAlias, TypedDict
 
 from pydantic import UUID4, BaseModel, Field, StrictStr
 
@@ -31,6 +31,10 @@ from app.model.schema.base import (
     ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
+from app.model.schema.token_bond import BondTokenDict
+from app.model.schema.token_coupon import CouponTokenDict
+from app.model.schema.token_membership import MembershipTokenDict
+from app.model.schema.token_share import ShareTokenDict
 from app.model.type import EthereumAddress
 
 
@@ -43,6 +47,19 @@ class TransferSourceEvent(StrEnum):
     ForceUnlock = "ForceUnlock"
     ForceChangeLockedAccount = "ForceChangeLockedAccount"
     Reallocation = "Reallocation"
+
+
+############################
+# DTO
+############################
+class TokenImageDict(TypedDict):
+    id: int
+    url: str
+
+
+TokenDetailDict: TypeAlias = (
+    BondTokenDict | ShareTokenDict | MembershipTokenDict | CouponTokenDict
+)
 
 
 ############################
@@ -139,12 +156,10 @@ class SearchTokenHoldersRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTokenHoldersSortItem] = Field(
+    sort_item: SearchTokenHoldersSortItem = Field(
         default=SearchTokenHoldersSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.DESC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.DESC, description="sort order")
 
 
 class RetrieveTokenHoldersCountQuery(BaseModel):
@@ -241,12 +256,10 @@ class SearchTransferHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTransferHistorySortItem] = Field(
+    sort_item: SearchTransferHistorySortItem = Field(
         default=SearchTransferHistorySortItem.id, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 class ListAllTransferApprovalHistoryQuery(BasePaginationQuery):
@@ -315,13 +328,11 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTransferApprovalHistorySortItem] = Field(
+    sort_item: SearchTransferApprovalHistorySortItem = Field(
         default=SearchTransferApprovalHistorySortItem.application_id,
         description="sort item",
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 ############################

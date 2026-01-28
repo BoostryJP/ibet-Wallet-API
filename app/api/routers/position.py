@@ -18,11 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from decimal import Decimal
-from typing import Annotated, Sequence, Type, Union
+from typing import Annotated, Sequence, Type, Union, cast
 
 from fastapi import APIRouter, Depends, Path, Query, Request
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import ColumnElement
 from sqlalchemy.sql.functions import sum as sum_
 
 from app import config, log
@@ -39,8 +40,8 @@ from app.model.blockchain import (
     CouponToken,
     MembershipToken,
     ShareToken,
-    TokenClassTypes as BlockChainTokenModel,
 )
+from app.model.blockchain.token import TokenBase
 from app.model.db import (
     IDXBondToken,
     IDXConsumeCoupon,
@@ -67,6 +68,8 @@ from app.model.schema import (
     MembershipPositionsResponse,
     MembershipPositionWithAddress,
     MembershipPositionWithDetail,
+    PositionDataDict,
+    PositionsResponseDict,
     RetrieveShareTokenResponse,
     RetrieveStraightBondTokenResponse,
     SecurityTokenPositionWithAddress,
@@ -93,14 +96,14 @@ class BasePosition:
     # NOTE: Set Child class initializer.
     token_enabled: bool
     token_type: str
-    token_model: BlockChainTokenModel
+    token_model: type[TokenBase]
     idx_token_model: IDXTokenModel
 
     def __init__(
         self,
         token_enabled: bool,
         token_type: str,
-        token_model: BlockChainTokenModel,
+        token_model: type[TokenBase],
         idx_token_model: IDXTokenModel,
     ) -> None:
         self.token_enabled = token_enabled
@@ -113,17 +116,17 @@ class BasePosition:
         req: Request,
         request_query: ListAllPositionQuery,
         async_session: AsyncSession,
-        account_address=None,
-    ):
+        account_address: str,
+    ) -> PositionsResponseDict:
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
 
-        enable_index = request_query.enable_index
+        enable_index = bool(request_query.enable_index)
 
         if enable_index:
             # If enable_index flag is set true, get position data from DB.
-            data = await self.get_list_from_index(
+            data: PositionsResponseDict = await self.get_list_from_index(
                 request_query=request_query,
                 async_session=async_session,
                 account_address=account_address,
@@ -131,7 +134,7 @@ class BasePosition:
             return data
 
         # If enable_index flag is not set or set false, get position data from contract.
-        data = await self.get_list_from_contract(
+        data: PositionsResponseDict = await self.get_list_from_contract(
             request_query=request_query,
             async_session=async_session,
             account_address=account_address,
@@ -143,10 +146,10 @@ class BasePosition:
         request_query: ListAllPositionQuery,
         async_session: AsyncSession,
         account_address: str,
-    ):
+    ) -> PositionsResponseDict:
         offset = request_query.offset
         limit = request_query.limit
-        include_token_details = request_query.include_token_details
+        include_token_details = bool(request_query.include_token_details)
         stmt = (
             select(
                 Listing.token_address,
@@ -201,13 +204,15 @@ class BasePosition:
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _token_position_list: Sequence[
-            tuple[str, IDXPosition, int | None, IDXTokenInstance]
-        ] = (await async_session.execute(stmt)).tuples().all()
+        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
+        _token_position_list = cast(
+            Sequence[tuple[str, IDXPosition | None, int | None, IDXTokenInstance]],
+            (await async_session.execute(stmt)).tuples().all(),
+        )
 
-        position_list = []
+        position_list: list[PositionDataDict] = []
         for item in _token_position_list:
-            position = {
+            position: PositionDataDict = {
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
                 "pending_transfer": (
                     item[1].pending_transfer
@@ -227,7 +232,7 @@ class BasePosition:
                 "locked": item[2] if item[2] else 0,
             }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[3]).__dict__
+                position["token"] = self.token_model.from_model(item[3]).to_dict()
             else:
                 position["token_address"] = item[3].token_address
             position_list.append(position)
@@ -246,10 +251,10 @@ class BasePosition:
         request_query: ListAllPositionQuery,
         async_session: AsyncSession,
         account_address: str,
-    ):
+    ) -> PositionsResponseDict:
         offset = request_query.offset
         limit = request_query.limit
-        include_token_details = request_query.include_token_details
+        include_token_details = bool(request_query.include_token_details)
         # Get TokenList Contract
         _list_contract = AsyncContract.get_contract(
             contract_name="TokenList", address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
@@ -260,7 +265,7 @@ class BasePosition:
             await async_session.scalars(select(Listing).order_by(Listing.id))
         ).all()
 
-        position_list = []
+        position_list: list[PositionDataDict] = []
         limit_count = 0
         count = 0
         for _token in _token_list:
@@ -314,23 +319,23 @@ class BasePosition:
         async_session: AsyncSession,
         account_address: str,
         token_address: str,
-    ):
+    ) -> PositionDataDict:
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
 
-        enable_index = request_query.enable_index
+        enable_index = bool(request_query.enable_index)
 
         if enable_index:
             # If enable_index flag is set true, get position data from DB.
-            data = await self.get_one_from_index(
+            data: PositionDataDict = await self.get_one_from_index(
                 async_session=async_session,
                 account_address=account_address,
                 token_address=token_address,
             )
             return data
         # If enable_index flag is not set or set false, get position data from contract.
-        data = await self.get_one_from_contract(
+        data: PositionDataDict = await self.get_one_from_contract(
             async_session=async_session,
             account_address=account_address,
             token_address=token_address,
@@ -339,7 +344,7 @@ class BasePosition:
 
     async def get_one_from_index(
         self, async_session: AsyncSession, account_address: str, token_address: str
-    ):
+    ) -> PositionDataDict:
         stmt = (
             select(
                 Listing.token_address,
@@ -384,9 +389,10 @@ class BasePosition:
             )
             .limit(1)
         )
-        result: tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None = (
-            await async_session.execute(stmt)
-        ).first()
+        result = cast(
+            tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None,
+            (await async_session.execute(stmt)).tuples().first(),
+        )
         if result is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
         _position = result[1]
@@ -411,12 +417,12 @@ class BasePosition:
                 else 0
             ),
             "locked": _locked or 0,
-            "token": self.token_model.from_model(token).__dict__,
+            "token": self.token_model.from_model(token).to_dict(),
         }
 
     async def get_one_from_contract(
         self, async_session: AsyncSession, account_address: str, token_address: str
-    ):
+    ) -> PositionDataDict:
         # Get Listing Token
         _token = (
             await async_session.scalars(
@@ -454,8 +460,8 @@ class BasePosition:
         account_address: str,
         token_address: str,
         async_session: AsyncSession,
-        is_detail=False,
-    ):
+        is_detail: bool = False,
+    ) -> PositionDataDict | None:
         # Get Contract
         _token_contract, _exchange_contract = await self._get_contract(token_address)
 
@@ -503,21 +509,19 @@ class BasePosition:
             if balance == 0 and _exchange_balance == 0 and _exchange_commitment == 0:
                 return None
             else:
-                token = await self.token_model.get(
-                    async_session=async_session, token_address=token_address
-                )
-                position = {
+                token = await self.token_model.get(async_session, token_address)
+                position: PositionDataDict = {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
                 }
                 if is_detail is True:
-                    position["token"] = token.__dict__
+                    position["token"] = token.to_dict()
                 else:
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.notice(e)
+            LOG.notice(str(e))
             return None
         except Exception as e:
             LOG.error(e)
@@ -556,8 +560,8 @@ class BasePositionShare(BasePosition):
         account_address: str,
         token_address: str,
         async_session: AsyncSession,
-        is_detail=False,
-    ):
+        is_detail: bool = False,
+    ) -> PositionDataDict | None:
         # Get Contract
         _token_contract, _exchange_contract = await self._get_contract(token_address)
 
@@ -624,10 +628,8 @@ class BasePositionShare(BasePosition):
             ):
                 return None
             else:
-                token = await ShareToken.get(
-                    async_session=async_session, token_address=token_address
-                )
-                position = {
+                token = await ShareToken.get(async_session, token_address)
+                position: PositionDataDict = {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
@@ -635,12 +637,12 @@ class BasePositionShare(BasePosition):
                     "locked": None,
                 }
                 if is_detail is True:
-                    position["token"] = token.__dict__
+                    position["token"] = token.to_dict()
                 else:
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.notice(e)
+            LOG.notice(str(e))
             return None
         except Exception as e:
             LOG.error(e)
@@ -661,8 +663,8 @@ class BasePositionStraightBond(BasePosition):
         account_address: str,
         token_address: str,
         async_session: AsyncSession,
-        is_detail=False,
-    ):
+        is_detail: bool = False,
+    ) -> PositionDataDict | None:
         # Get Contract
         _token_contract, _exchange_contract = await self._get_contract(token_address)
 
@@ -729,10 +731,8 @@ class BasePositionStraightBond(BasePosition):
             ):
                 return None
             else:
-                token = await BondToken.get(
-                    async_session=async_session, token_address=token_address
-                )
-                position = {
+                token = await BondToken.get(async_session, token_address)
+                position: PositionDataDict = {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
@@ -740,12 +740,12 @@ class BasePositionStraightBond(BasePosition):
                     "locked": None,
                 }
                 if is_detail is True:
-                    position["token"] = token.__dict__
+                    position["token"] = token.to_dict()
                 else:
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.notice(e)
+            LOG.notice(str(e))
             return None
         except Exception as e:
             LOG.error(e)
@@ -766,10 +766,10 @@ class BasePositionMembership(BasePosition):
         request_query: ListAllPositionQuery,
         async_session: AsyncSession,
         account_address: str,
-    ):
+    ) -> PositionsResponseDict:
         offset = request_query.offset
         limit = request_query.limit
-        include_token_details = request_query.include_token_details
+        include_token_details = bool(request_query.include_token_details)
         stmt = (
             select(Listing.token_address, IDXPosition, self.idx_token_model)
             .join(
@@ -798,13 +798,15 @@ class BasePositionMembership(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _token_position_list: Sequence[tuple[str, IDXPosition, IDXTokenInstance]] = (
-            (await async_session.execute(stmt)).tuples().all()
+        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
+        _token_position_list = cast(
+            Sequence[tuple[str, IDXPosition, IDXTokenInstance]],
+            (await async_session.execute(stmt)).tuples().all(),
         )
 
-        position_list = []
+        position_list: list[PositionDataDict] = []
         for item in _token_position_list:
-            position = {
+            position: PositionDataDict = {
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
                 "exchange_balance": (
                     item[1].exchange_balance
@@ -818,7 +820,7 @@ class BasePositionMembership(BasePosition):
                 ),
             }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[2]).__dict__
+                position["token"] = self.token_model.from_model(item[2]).to_dict()
             else:
                 position["token_address"] = item[2].token_address
             position_list.append(position)
@@ -847,10 +849,10 @@ class BasePositionCoupon(BasePosition):
         request_query: ListAllPositionQuery,
         async_session: AsyncSession,
         account_address: str,
-    ):
+    ) -> PositionsResponseDict:
         offset = request_query.offset
         limit = request_query.limit
-        include_token_details = request_query.include_token_details
+        include_token_details = bool(request_query.include_token_details)
 
         # NOTE: Sub Query for sum of used amount
         sub_tx_used = (
@@ -919,28 +921,30 @@ class BasePositionCoupon(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        _token_position_list: Sequence[
-            tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]
-        ] = (await async_session.execute(stmt)).tuples().all()
+        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
+        _token_position_list = cast(
+            Sequence[tuple[str, IDXPosition | None, IDXTokenInstance, Decimal | None]],
+            (await async_session.execute(stmt)).tuples().all(),
+        )
 
-        position_list = []
+        position_list: list[PositionDataDict] = []
         for item in _token_position_list:
-            if item[1] is None:
-                position = {
-                    "balance": 0,
-                    "exchange_balance": 0,
-                    "exchange_commitment": 0,
-                    "used": int(item[3]) if item[3] else 0,
-                }
-            else:
-                position = {
-                    "balance": item[1].balance or 0,
-                    "exchange_balance": item[1].exchange_balance or 0,
-                    "exchange_commitment": item[1].exchange_commitment or 0,
-                    "used": int(item[3]) if item[3] else 0,
-                }
+            position: PositionDataDict = {
+                "balance": item[1].balance if item[1] and item[1].balance else 0,
+                "exchange_balance": (
+                    item[1].exchange_balance
+                    if item[1] and item[1].exchange_balance
+                    else 0
+                ),
+                "exchange_commitment": (
+                    item[1].exchange_commitment
+                    if item[1] and item[1].exchange_commitment
+                    else 0
+                ),
+                "used": int(item[3]) if item[3] else 0,
+            }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[2]).__dict__
+                position["token"] = self.token_model.from_model(item[2]).to_dict()
             else:
                 position["token_address"] = item[2].token_address
             position_list.append(position)
@@ -955,8 +959,12 @@ class BasePositionCoupon(BasePosition):
         }
 
     async def _get_position(
-        self, account_address, token_address, async_session, is_detail=False
-    ):
+        self,
+        account_address: str,
+        token_address: str,
+        async_session: AsyncSession,
+        is_detail: bool = False,
+    ) -> PositionDataDict | None:
         # Get Contract
         _token_contract, _exchange_contract = await self._get_contract(token_address)
 
@@ -1034,22 +1042,20 @@ class BasePositionCoupon(BasePosition):
             ):
                 return None
             else:
-                token = await CouponToken.get(
-                    async_session=async_session, token_address=token_address
-                )
-                position = {
+                token = await CouponToken.get(async_session, token_address)
+                position: PositionDataDict = {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
                     "used": used,
                 }
                 if is_detail is True:
-                    position["token"] = token.__dict__
+                    position["token"] = token.to_dict()
                 else:
                     position["token_address"] = token_address
                 return position
         except ServiceUnavailable as e:
-            LOG.notice(e)
+            LOG.notice(str(e))
             return None
         except Exception as e:
             LOG.error(e)
@@ -1078,7 +1084,7 @@ class GetPositionList:
             EthereumAddress, Path(description="account address")
         ],
         request_query: Annotated[ListAllPositionQuery, Query()],
-    ):
+    ) -> PositionsResponseDict:
         return await self.base_position().get_list(
             req, request_query, async_session, account_address
         )
@@ -1099,7 +1105,7 @@ class GetPosition:
         ],
         token_address: Annotated[EthereumAddress, Path(description="token address")],
         request_query: Annotated[GetPositionQuery, Query()],
-    ):
+    ) -> PositionDataDict:
         return await self.base_position().get_one(
             req, request_query, async_session, account_address, token_address
         )
@@ -1119,7 +1125,8 @@ class GetPosition:
 )
 async def list_all_share_positions(
     positions: Union[
-        list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
+        list[SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]],
+        list[SecurityTokenPositionWithAddress],
     ] = Depends(GetPositionList(BasePositionShare)),
 ):
     """
@@ -1142,7 +1149,8 @@ async def list_all_share_positions(
 )
 async def list_all_straight_bond_positions(
     positions: Union[
-        list[SecurityTokenPositionWithDetail], list[SecurityTokenPositionWithAddress]
+        list[SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]],
+        list[SecurityTokenPositionWithAddress],
     ] = Depends(GetPositionList(BasePositionStraightBond)),
 ):
     """
@@ -1206,7 +1214,9 @@ async def list_all_coupon_positions(
     ),
 )
 async def retrieve_share_position_by_token_address(
-    position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare)),
+    position: SecurityTokenPositionWithDetail[RetrieveShareTokenResponse] = Depends(
+        GetPosition(BasePositionShare)
+    ),
 ):
     """
     [Share]Returns a position for a given account and token.
@@ -1227,9 +1237,9 @@ async def retrieve_share_position_by_token_address(
     ),
 )
 async def retrieve_straight_bond_position_by_token_address(
-    position: SecurityTokenPositionWithDetail = Depends(
-        GetPosition(BasePositionStraightBond)
-    ),
+    position: SecurityTokenPositionWithDetail[
+        RetrieveStraightBondTokenResponse
+    ] = Depends(GetPosition(BasePositionStraightBond)),
 ):
     """
     [StraightBond]Returns a position for a given account and token.
@@ -1310,21 +1320,24 @@ async def list_all_coupon_consumptions(
         )
     ).all()
 
-    res_data = [
-        {
-            "account_address": account_address,
-            "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                consumption.block_timestamp.year,
-                consumption.block_timestamp.month,
-                consumption.block_timestamp.day,
-                consumption.block_timestamp.hour,
-                consumption.block_timestamp.minute,
-                consumption.block_timestamp.second,
-            ),
-            "value": consumption.amount,
-        }
-        for consumption in consumptions
-    ]
+    res_data: list[dict[str, object]] = []
+    for consumption in consumptions:
+        # TODO: Migrate consumption.block_timestamp to NOT NULL and update ORM typing.
+        assert consumption.block_timestamp is not None
+        res_data.append(
+            {
+                "account_address": account_address,
+                "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                    consumption.block_timestamp.year,
+                    consumption.block_timestamp.month,
+                    consumption.block_timestamp.day,
+                    consumption.block_timestamp.hour,
+                    consumption.block_timestamp.minute,
+                    consumption.block_timestamp.second,
+                ),
+                "value": consumption.amount,
+            }
+        )
     return json_response({**SuccessResponse.default(), "data": res_data})
 
 
@@ -1370,17 +1383,31 @@ async def list_all_token_position(
     ):
         include_membership_token = True
 
-    query_target = [
+    bond_token_column = (
+        IDXBondToken if include_bond_token else literal(None).label("bond_token")
+    )
+    share_token_column = (
+        IDXShareToken if include_share_token else literal(None).label("share_token")
+    )
+    coupon_token_column = (
+        IDXCouponToken if include_coupon_token else literal(None).label("coupon_token")
+    )
+    membership_token_column = (
+        IDXMembershipToken
+        if include_membership_token
+        else literal(None).label("membership_token")
+    )
+    query_target = (
         Listing.token_address,
         IDXTokenListRegister.token_template,
         IDXPosition,
         func.sum(IDXLockedPosition.value),
         func.sum(IDXConsumeCoupon.amount),
-        IDXBondToken if include_bond_token else None,
-        IDXShareToken if include_share_token else None,
-        IDXCouponToken if include_coupon_token else None,
-        IDXMembershipToken if include_membership_token else None,
-    ]
+        bond_token_column,
+        share_token_column,
+        coupon_token_column,
+        membership_token_column,
+    )
     group_by_columns = [
         Listing.id,
         IDXTokenListRegister.token_address,
@@ -1389,7 +1416,7 @@ async def list_all_token_position(
         IDXLockedPosition.token_address,
         IDXConsumeCoupon.token_address,
     ]
-    token_type_filter = []
+    token_type_filter: list[ColumnElement[bool]] = []
 
     if include_bond_token:
         group_by_columns.append(IDXBondToken.token_address)
@@ -1444,25 +1471,25 @@ async def list_all_token_position(
         )
     )
 
-    if not token_type_list or TokenType.IbetStraightBond in token_type_list:
+    if include_bond_token:
         stmt = stmt.outerjoin(
             IDXBondToken,
             Listing.token_address == IDXBondToken.token_address,
         )
 
-    if not token_type_list or TokenType.IbetShare in token_type_list:
+    if include_share_token:
         stmt = stmt.outerjoin(
             IDXShareToken,
             Listing.token_address == IDXShareToken.token_address,
         )
 
-    if not token_type_list or TokenType.IbetCoupon in token_type_list:
+    if include_coupon_token:
         stmt = stmt.outerjoin(
             IDXCouponToken,
             Listing.token_address == IDXCouponToken.token_address,
         )
 
-    if not token_type_list or TokenType.IbetMembership in token_type_list:
+    if include_membership_token:
         stmt = stmt.outerjoin(
             IDXMembershipToken,
             Listing.token_address == IDXMembershipToken.token_address,
@@ -1496,43 +1523,77 @@ async def list_all_token_position(
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    _token_position_list = (await async_session.execute(stmt)).all()
+    # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
+    _token_position_list = cast(
+        Sequence[
+            tuple[
+                str,
+                str | None,
+                IDXPosition | None,
+                int | None,
+                int | None,
+                IDXBondToken | None,
+                IDXShareToken | None,
+                IDXCouponToken | None,
+                IDXMembershipToken | None,
+            ]
+        ],
+        (await async_session.execute(stmt)).tuples().all(),
+    )
 
-    position_list = []
+    position_list: list[PositionDataDict] = []
     for item in _token_position_list:
         if item[1] == TokenType.IbetStraightBond.value:
-            position_list.append(
-                {
-                    **IDXPosition.bond(item[2]),
-                    "locked": item[3] if item[3] else 0,
-                    "token": BondToken.from_model(item[5]).__dict__,
-                }
-            )
+            # TODO: Add SQL-side guarantees to remove this assert.
+            assert item[5] is not None
+            bond_position = IDXPosition.bond(item[2])
+            position: PositionDataDict = {
+                "balance": bond_position["balance"],
+                "pending_transfer": bond_position["pending_transfer"],
+                "exchange_balance": bond_position["exchange_balance"],
+                "exchange_commitment": bond_position["exchange_commitment"],
+                "locked": item[3] if item[3] else 0,
+                "token": BondToken.from_model(item[5]).to_dict(),
+            }
+            position_list.append(position)
         elif item[1] == TokenType.IbetShare.value:
-            position_list.append(
-                {
-                    **IDXPosition.share(item[2]),
-                    "locked": item[3] if item[3] else 0,
-                    "token": ShareToken.from_model(item[6]).__dict__,
-                }
-            )
+            # TODO: Add SQL-side guarantees to remove this assert.
+            assert item[6] is not None
+            share_position = IDXPosition.share(item[2])
+            position = {
+                "balance": share_position["balance"],
+                "pending_transfer": share_position["pending_transfer"],
+                "exchange_balance": share_position["exchange_balance"],
+                "exchange_commitment": share_position["exchange_commitment"],
+                "locked": item[3] if item[3] else 0,
+                "token": ShareToken.from_model(item[6]).to_dict(),
+            }
+            position_list.append(position)
         elif item[1] == TokenType.IbetCoupon.value:
-            position_list.append(
-                {
-                    **IDXPosition.coupon(item[2]),
-                    "used": int(item[4]) if item[4] else 0,
-                    "token": CouponToken.from_model(item[7]).__dict__,
-                }
-            )
+            # TODO: Add SQL-side guarantees to remove this assert.
+            assert item[7] is not None
+            coupon_position = IDXPosition.coupon(item[2])
+            position = {
+                "balance": coupon_position["balance"],
+                "exchange_balance": coupon_position["exchange_balance"],
+                "exchange_commitment": coupon_position["exchange_commitment"],
+                "used": int(item[4]) if item[4] else 0,
+                "token": CouponToken.from_model(item[7]).to_dict(),
+            }
+            position_list.append(position)
         elif item[1] == TokenType.IbetMembership.value:
-            position_list.append(
-                {
-                    **IDXPosition.membership(item[2]),
-                    "token": MembershipToken.from_model(item[8]).__dict__,
-                }
-            )
+            # TODO: Add SQL-side guarantees to remove this assert.
+            assert item[8] is not None
+            membership_position = IDXPosition.membership(item[2])
+            position = {
+                "balance": membership_position["balance"],
+                "exchange_balance": membership_position["exchange_balance"],
+                "exchange_commitment": membership_position["exchange_commitment"],
+                "token": MembershipToken.from_model(item[8]).to_dict(),
+            }
+            position_list.append(position)
 
-    data = {
+    data: PositionsResponseDict = {
         "result_set": {
             "count": count,
             "offset": offset,

@@ -35,6 +35,7 @@ from app.model.blockchain import CouponToken
 from app.model.db import IDXCouponToken, Listing
 from app.model.schema import (
     CouponTokensQuery,
+    CouponTokensSortItem,
     ListAllCouponTokenAddressesResponse,
     ListAllCouponTokensQuery,
     ListAllCouponTokensResponse,
@@ -42,6 +43,7 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    SortOrder,
     SuccessResponse,
     TokenType,
 )
@@ -122,16 +124,16 @@ async def list_all_coupon_tokens(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    if sort_item == "created":
-        sort_attr = getattr(Listing, sort_item, None)
+    if sort_item == CouponTokensSortItem.created:
+        sort_attr = getattr(Listing, sort_item.value)
     else:
-        sort_attr = getattr(IDXCouponToken, sort_item, None)
+        sort_attr = getattr(IDXCouponToken, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != CouponTokensSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Listing.created)
 
@@ -223,16 +225,16 @@ async def list_all_coupon_token_addresses(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    if sort_item == "created":
-        sort_attr = getattr(Listing, sort_item, None)
+    if sort_item == CouponTokensSortItem.created:
+        sort_attr = getattr(Listing, sort_item.value)
     else:
-        sort_attr = getattr(IDXCouponToken, sort_item, None)
+        sort_attr = getattr(IDXCouponToken, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != CouponTokensSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Listing.created)
 
@@ -290,29 +292,24 @@ async def retrieve_coupon_token(
     list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
     )
-    token = await AsyncContract.call_function(
+    token: tuple[str, str, str] = await AsyncContract.call_function(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-    token_template = token[1]
+    token_template = str(token[1])
 
     if token_template != TokenType.IbetCoupon:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail = await CouponToken.get(
-            async_session=async_session, token_address=token_address
-        )
+        token_detail: CouponToken = await CouponToken.get(async_session, token_address)
     except ServiceUnavailable as e:
-        LOG.notice(e)
+        LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
-
-    if token_detail is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
 
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})
