@@ -105,8 +105,4 @@ if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
   python batch/indexer_Token_Detail_ShortTerm.py &
 fi
 
-if [[ $BC_EXPLORER_ENABLED = 1 ]]; then
-  python batch/indexer_Block_Tx_Data.py &
-fi
-
 tail -f /dev/null

@@ -58,7 +58,7 @@ $ uv venv
 
 Install python packages with:
 ```bash
-$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
+$ uv sync --frozen --no-install-project --no-dev
 ```
 
 ### Setting environment variables

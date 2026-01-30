@@ -71,11 +71,6 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS       | False    | IbetExchange contract address for Coupon tokens                          | 0x0000000000000000000000000000000000000000 | --      |
 | EXCHANGE_NOTIFICATION_ENABLED               | True*    | Use of exchange-related notification (*Set only if you use IbetExchange) | 0 (not using) / 1 (using)                  | --      |
 
-### Blockchain Explorer
-| Variable Name       | Required | Details                                             | Example                   | Default |
-|---------------------|----------|-----------------------------------------------------|---------------------------|---------|
-| BC_EXPLORER_ENABLED | False    | Parameter for starting the Blockchain Explorer      | 0 (not using) / 1 (using) | 0       |
-
 ### Email
 Common
 
