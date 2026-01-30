@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-from app.database import get_db_schema
+from app.database import get_db_schema, engine
 
 # revision identifiers, used by Alembic.
 revision = "1cd2ee459858"
@@ -19,23 +19,53 @@ branch_labels = None
 depends_on = None
 
 
-def _schema_name() -> str:
-    return get_db_schema() or "public"
+def _mysql_drop_index_if_exists(conn, table_name: str, index_name: str) -> None:
+    """MySQL互換: インデックスが存在する場合のみDROPする
+
+    MySQLはバージョンにより `DROP INDEX IF EXISTS` が使えないため、
+    INFORMATION_SCHEMAから存在確認してから `DROP INDEX idx ON tbl` を実行する。
+    """
+
+    exists_sql = sa.text(
+        """
+        SELECT 1
+          FROM INFORMATION_SCHEMA.STATISTICS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = :table_name
+           AND INDEX_NAME = :index_name
+         LIMIT 1
+        """
+    )
+    exists = conn.execute(
+        exists_sql, {"table_name": table_name, "index_name": index_name}
+    ).scalar()
+    if exists:
+        op.execute(f"DROP INDEX {index_name} ON {table_name}")
 
 
 def upgrade():
-    schema = _schema_name()
+    connection = op.get_bind()
 
-    op.execute(f'DROP INDEX IF EXISTS {schema}."ix_tx_data_block_number"')
-    op.execute(f'DROP INDEX IF EXISTS {schema}."ix_tx_data_from_address"')
-    op.execute(f'DROP INDEX IF EXISTS {schema}."ix_tx_data_to_address"')
-    op.execute(f"DROP TABLE IF EXISTS {schema}.tx_data")
+    if engine.name == "mysql":
+        _mysql_drop_index_if_exists(connection, "tx_data", "ix_tx_data_block_number")
+        _mysql_drop_index_if_exists(connection, "tx_data", "ix_tx_data_from_address")
+        _mysql_drop_index_if_exists(connection, "tx_data", "ix_tx_data_to_address")
+        op.execute("DROP TABLE IF EXISTS tx_data")
 
-    op.execute(f'DROP INDEX IF EXISTS {schema}."ix_block_data_hash"')
-    op.execute(f'DROP INDEX IF EXISTS {schema}."ix_block_data_timestamp"')
-    op.execute(f"DROP TABLE IF EXISTS {schema}.block_data")
+        _mysql_drop_index_if_exists(connection, "block_data", "ix_block_data_hash")
+        _mysql_drop_index_if_exists(connection, "block_data", "ix_block_data_timestamp")
+        op.execute("DROP TABLE IF EXISTS block_data")
 
-    op.execute(f"DROP TABLE IF EXISTS {schema}.idx_block_data_block_number")
+        op.execute("DROP TABLE IF EXISTS idx_block_data_block_number")
+    else:
+        op.execute(f'DROP INDEX IF EXISTS "ix_tx_data_block_number"')
+        op.execute(f'DROP INDEX IF EXISTS "ix_tx_data_from_address"')
+        op.execute(f'DROP INDEX IF EXISTS "ix_tx_data_to_address"')
+        op.execute(f"DROP TABLE IF EXISTS tx_data")
+        op.execute(f'DROP INDEX IF EXISTS "ix_block_data_hash"')
+        op.execute(f'DROP INDEX IF EXISTS "ix_block_data_timestamp"')
+        op.execute(f"DROP TABLE IF EXISTS block_data")
+        op.execute(f"DROP TABLE IF EXISTS idx_block_data_block_number")
 
 
 def downgrade():
