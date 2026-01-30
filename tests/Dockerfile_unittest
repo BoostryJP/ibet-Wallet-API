@@ -56,7 +56,7 @@ RUN echo '. $HOME/.venv/bin/activate' >> ~apl/.bashrc
 COPY --chown=apl:apl . /app/ibet-Wallet-API
 RUN cd /app/ibet-Wallet-API \
  && uv venv $UV_PROJECT_ENVIRONMENT \
- && uv sync --frozen --no-install-project --extra ibet-explorer
+ && uv sync --frozen --no-install-project
 
 FROM ubuntu:24.04 AS runner
 

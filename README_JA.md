@@ -59,7 +59,7 @@ $ uv venv
 
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
+$ uv sync --frozen --no-install-project --no-dev
 ```
 
 ### 環境変数の設定

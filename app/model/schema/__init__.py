@@ -27,16 +27,6 @@ from .admin import (
     UpdateAdminTokenRequest,
 )
 from .base import TokenType
-from .bc_explorer import (
-    BlockDataDetail,
-    BlockDataListResponse,
-    BlockDataResponse,
-    ListBlockDataQuery,
-    ListTxDataQuery,
-    TxDataDetail,
-    TxDataListResponse,
-    TxDataResponse,
-)
 from .company_info import (
     ListAllCompaniesQuery,
     ListAllCompaniesResponse,

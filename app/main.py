@@ -35,7 +35,6 @@ from starlette.middleware.cors import CORSMiddleware
 from app import log
 from app.api.routers import (
     admin as routers_admin,
-    bc_explorer as routers_bc_explorer,
     company_info as routers_company_info,
     contract_abi as routers_contract_abi,
     dex_market as routers_dex_market,
@@ -154,7 +153,6 @@ app.include_router(routers_public_info.router)
 app.include_router(routers_company_info.router)
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
-app.include_router(routers_bc_explorer.router)
 app.include_router(routers_contract_abi.router)
 app.include_router(routers_user_info.router)
 app.include_router(routers_eth.router)

@@ -275,11 +275,6 @@ TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC = int(
 )
 
 ####################################################
-# Blockchain explorer settings
-####################################################
-BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else False
-
-####################################################
 # Email settings
 ####################################################
 # Common
