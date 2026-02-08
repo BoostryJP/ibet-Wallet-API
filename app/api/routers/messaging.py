@@ -50,8 +50,8 @@ async def send_mail(async_session: DBAsyncSession, data: SendMailRequest):
         mail = Mail()
         mail.to_email = to_email
         mail.subject = data.subject
-        mail.text_content = data.text_content
-        mail.html_content = data.html_content
+        mail.text_content = data.text_content or ""
+        mail.html_content = data.html_content or ""
         if data.file_content:
             mail.file_content = data.file_content
         if data.file_name:

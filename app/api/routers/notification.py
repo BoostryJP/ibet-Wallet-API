@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 from datetime import UTC, datetime
 from typing import Annotated, Optional, Sequence
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Path, Query
 from sqlalchemy import desc, func, select, update
 
@@ -34,6 +34,7 @@ from app.model.schema import (
     NotificationsCountResponse,
     NotificationsQuery,
     NotificationsResponse,
+    NotificationsSortItem,
     NotificationUpdateResponse,
     UpdateNotificationRequest,
 )
@@ -89,12 +90,19 @@ async def list_all_notifications(
     )
 
     # Sort
-    sort_attr = getattr(Notification, sort_item, None)
+    if sort_item == NotificationsSortItem.notification_type:
+        sort_attr = Notification.notification_type
+    elif sort_item == NotificationsSortItem.priority:
+        sort_attr = Notification.priority
+    elif sort_item == NotificationsSortItem.block_timestamp:
+        sort_attr = Notification.block_timestamp
+    else:
+        sort_attr = Notification.created
     if sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != NotificationsSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Notification.created)
 
@@ -110,22 +118,22 @@ async def list_all_notifications(
         await async_session.scalars(stmt)
     ).all()
 
-    notifications = [
-        {
-            **_notification.json(),
-            "sort_id": sort_id + i + 1,
-            "created": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                _notification.created.year,
-                _notification.created.month,
-                _notification.created.day,
-                _notification.created.hour,
-                _notification.created.minute,
-                _notification.created.second,
-            ),
-        }
-        for i, _notification in enumerate(_notification_list)
-    ]
-    data = {
+    notifications: list[dict[str, str | int | bool | dict[str, object] | None]] = []
+    for i, _notification in enumerate(_notification_list):
+        # TODO: Migrate notification.created to NOT NULL and update ORM typing
+        assert _notification.created is not None
+        notification_data = _notification.json()
+        notification_data["sort_id"] = sort_id + i + 1
+        notification_data["created"] = "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            _notification.created.year,
+            _notification.created.month,
+            _notification.created.day,
+            _notification.created.hour,
+            _notification.created.minute,
+            _notification.created.second,
+        )
+        notifications.append(notification_data)
+    data: dict[str, object] = {
         "result_set": {
             "count": count,
             "offset": offset,

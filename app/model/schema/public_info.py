@@ -81,9 +81,7 @@ class ListAllPublicListedTokensQuery(BasePaginationQuery):
     sort_item: ListAllPublicListedTokensSortItem = Field(
         default=ListAllPublicListedTokensSortItem.token_address, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 class ListAllPublicAccountsSortItem(StrEnum):
@@ -98,9 +96,7 @@ class ListAllPublicAccountsQuery(BasePaginationQuery):
     sort_item: ListAllPublicAccountsSortItem = Field(
         default=ListAllPublicAccountsSortItem.key_manager, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 ############################

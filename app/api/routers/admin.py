@@ -131,11 +131,18 @@ async def register_admin_token(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(contract_address,),
-        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+        default_returns=(
+            config.ZERO_ADDRESS,
+            "",
+            config.ZERO_ADDRESS,
+        ),
     )
 
     # Check whether the token is valid.
-    token_type = token[1]
+    try:
+        token_type = TokenType(token[1])
+    except ValueError:
+        token_type = None
     if token_type is None or token_type not in available_token_template():
         raise InvalidParameterError(
             description="contract_address is invalid token address"
@@ -352,13 +359,13 @@ async def delete_token(
     return json_response(SuccessResponse.default())
 
 
-def available_token_template():
+def available_token_template() -> list[TokenType]:
     """
     利用可能なtoken_templateをlistで返却
 
     :return: 利用可能なtoken_templateリスト
     """
-    available_token_template_list = []
+    available_token_template_list: list[TokenType] = []
     if config.BOND_TOKEN_ENABLED:
         available_token_template_list.append(TokenType.IbetStraightBond)
     if config.SHARE_TOKEN_ENABLED:
@@ -371,7 +378,7 @@ def available_token_template():
 
 
 async def get_account_balance_all(
-    token_template: str, token_address: str, account_address: str
+    token_template: TokenType, token_address: str, account_address: str
 ) -> tuple[int, int, int, int]:
     """Get balance"""
     token_contract = AsyncContract.get_contract(

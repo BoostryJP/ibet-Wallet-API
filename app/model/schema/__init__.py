@@ -83,6 +83,7 @@ from .notification import (
     NotificationsCountResponse,
     NotificationsQuery,
     NotificationsResponse,
+    NotificationsSortItem,
     NotificationUpdateResponse,
     UpdateNotificationRequest,
 )
@@ -123,6 +124,7 @@ from .public_info import (
     ListAllPublicAccountsSortItem,
     ListAllPublicListedTokensQuery,
     ListAllPublicListedTokensResponse,
+    ListAllPublicListedTokensSortItem,
 )
 from .token import (
     CreateTokenHoldersCollectionRequest,

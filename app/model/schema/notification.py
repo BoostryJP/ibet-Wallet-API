@@ -53,12 +53,10 @@ class NotificationsQuery(BasePaginationQuery):
     address: Optional[EthereumAddress] = Field(None, description="account address")
     notification_type: Optional[NotificationType] = Field(None)
     priority: Optional[int] = Field(None, ge=0, le=2)
-    sort_item: Optional[NotificationsSortItem] = Field(
-        NotificationsSortItem.created, description="sort item"
+    sort_item: NotificationsSortItem = Field(
+        default=NotificationsSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class NotificationReadRequest(BaseModel):

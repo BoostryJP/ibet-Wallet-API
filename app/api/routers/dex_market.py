@@ -17,9 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Sequence
+from typing import Annotated, Sequence, TypedDict
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Query, Request
 from sqlalchemy import and_, desc, func, select
 
@@ -46,6 +46,41 @@ from app.utils.fastapi_utils import json_response
 LOG = log.get_logger()
 
 router = APIRouter(prefix="/DEX/Market", tags=["dex"])
+
+
+class AgreementDetailData(TypedDict):
+    token_address: str
+    counterpart: str
+    buyer_address: str
+    seller_address: str
+    amount: int
+    price: int
+    canceled: bool
+    paid: bool
+    expiry: int
+
+
+class OrderBookItemData(TypedDict):
+    exchange_address: str
+    order_id: int
+    price: int
+    amount: int
+    account_address: str
+
+
+class TickData(TypedDict):
+    block_timestamp: str
+    buy_address: str
+    sell_address: str
+    order_id: int
+    agreement_id: int
+    price: int
+    amount: int
+
+
+class TokenTicksData(TypedDict):
+    token_address: str
+    tick: list[TickData]
 
 
 # /DEX/Market/Agreement
@@ -95,7 +130,18 @@ async def retrieve_agreement(
         _,
         _,
     ) = await AsyncContract.call_function(
-        contract=exchange_contract, function_name="getOrder", args=(order_id,)
+        contract=exchange_contract,
+        function_name="getOrder",
+        args=(order_id,),
+        default_returns=(
+            config.ZERO_ADDRESS,
+            config.ZERO_ADDRESS,
+            0,
+            0,
+            False,
+            config.ZERO_ADDRESS,
+            False,
+        ),
     )
 
     if maker_address == config.ZERO_ADDRESS:
@@ -116,6 +162,7 @@ async def retrieve_agreement(
             order_id,
             agreement_id,
         ),
+        default_returns=(config.ZERO_ADDRESS, 0, 0, False, False, 0),
     )
 
     if taker_address == config.ZERO_ADDRESS:
@@ -128,7 +175,7 @@ async def retrieve_agreement(
         buyer_address = taker_address
         seller_address = maker_address
 
-    res_data = {
+    res_data: AgreementDetailData = {
         "token_address": token_address,  # トークンアドレス
         "counterpart": taker_address,  # Takerのアドレス
         "buyer_address": buyer_address,  # 買い手EOA
@@ -211,16 +258,29 @@ async def list_all_membership_order_book(
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-        orders = (
-            await async_session.execute(
-                stmt.where(Order.account_address != account_address)
+        orders: Sequence[
+            tuple[
+                int | None,
+                int | None,
+                int | None,
+                str | None,
+                str | None,
+                int | None,
+            ]
+        ] = (
+            (
+                await async_session.execute(
+                    stmt.where(Order.account_address != account_address)
+                )
             )
-        ).all()
+            .tuples()
+            .all()
+        )
     else:
-        orders = (await async_session.execute(stmt)).all()
+        orders = (await async_session.execute(stmt)).tuples().all()
 
     # レスポンス用の注文一覧を構築
-    order_list_tmp = []
+    order_list_tmp: list[OrderBookItemData] = []
     for (
         order_id,
         amount,
@@ -229,6 +289,17 @@ async def list_all_membership_order_book(
         account_address,
         agreement_amount,
     ) in orders:
+        # TODO: Migrate order.order_id to NOT NULL and update ORM typing
+        assert order_id is not None
+        # TODO: Migrate order.amount to NOT NULL and update ORM typing
+        assert amount is not None
+        # TODO: Migrate order.price to NOT NULL and update ORM typing
+        assert price is not None
+        # TODO: Migrate order.exchange_address to NOT NULL and update ORM typing
+        assert exchange_address is not None
+        # TODO: Migrate order.account_address to NOT NULL and update ORM typing
+        assert account_address is not None
+
         # 残存注文数量 = 発注数量 - 約定済み数量
         if agreement_amount is not None:
             amount -= int(agreement_amount)
@@ -248,7 +319,9 @@ async def list_all_membership_order_book(
 
     # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
     if request_query.order_type == "buy":
-        order_list = sorted(order_list_tmp, key=lambda x: x["price"])
+        order_list: list[OrderBookItemData] = sorted(
+            order_list_tmp, key=lambda x: x["price"]
+        )
     else:
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
@@ -325,7 +398,7 @@ async def list_all_membership_tick(
     ):
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    tick_list = []
+    tick_list: list[TokenTicksData] = []
     # TokenごとにTickを取得
     for token_address in request_query.address_list:
         token = to_checksum_address(token_address)
@@ -347,28 +420,43 @@ async def list_all_membership_tick(
                 .tuples()
                 .all()
             )
-            _tick = [
-                {
-                    "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                        entry[0].settlement_timestamp.year,
-                        entry[0].settlement_timestamp.month,
-                        entry[0].settlement_timestamp.day,
-                        entry[0].settlement_timestamp.hour,
-                        entry[0].settlement_timestamp.minute,
-                        entry[0].settlement_timestamp.second,
-                    ),
-                    "buy_address": entry[0].buyer_address,
-                    "sell_address": entry[0].seller_address,
-                    "order_id": entry[0].order_id,
-                    "agreement_id": entry[0].agreement_id,
-                    "price": entry[1].price,
-                    "amount": entry[0].amount,
-                }
-                for entry in entries
-            ]
+            _tick: list[TickData] = []
+            for agreement, order in entries:
+                # TODO: Migrate agreement.settlement_timestamp to NOT NULL and update ORM typing
+                assert agreement.settlement_timestamp is not None
+                # TODO: Migrate agreement.buyer_address to NOT NULL and update ORM typing
+                assert agreement.buyer_address is not None
+                # TODO: Migrate agreement.seller_address to NOT NULL and update ORM typing
+                assert agreement.seller_address is not None
+                # TODO: Migrate agreement.order_id to NOT NULL and update ORM typing
+                assert agreement.order_id is not None
+                # TODO: Migrate agreement.agreement_id to NOT NULL and update ORM typing
+                assert agreement.agreement_id is not None
+                # TODO: Migrate agreement.amount to NOT NULL and update ORM typing
+                assert agreement.amount is not None
+                # TODO: Migrate order.price to NOT NULL and update ORM typing
+                assert order.price is not None
+                _tick.append(
+                    {
+                        "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                            agreement.settlement_timestamp.year,
+                            agreement.settlement_timestamp.month,
+                            agreement.settlement_timestamp.day,
+                            agreement.settlement_timestamp.hour,
+                            agreement.settlement_timestamp.minute,
+                            agreement.settlement_timestamp.second,
+                        ),
+                        "buy_address": agreement.buyer_address,
+                        "sell_address": agreement.seller_address,
+                        "order_id": agreement.order_id,
+                        "agreement_id": agreement.agreement_id,
+                        "price": order.price,
+                        "amount": agreement.amount,
+                    }
+                )
             tick_list.append({"token_address": token_address, "tick": _tick})
         except Exception as e:
-            LOG.error(e)
+            LOG.error(str(e))
             tick_list = []
 
     return json_response({**SuccessResponse.default(), "data": tick_list})
@@ -441,16 +529,29 @@ async def list_all_coupon_order_book(
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-        orders = (
-            await async_session.execute(
-                stmt.where(Order.account_address != account_address)
+        orders: Sequence[
+            tuple[
+                int | None,
+                int | None,
+                int | None,
+                str | None,
+                str | None,
+                int | None,
+            ]
+        ] = (
+            (
+                await async_session.execute(
+                    stmt.where(Order.account_address != account_address)
+                )
             )
-        ).all()
+            .tuples()
+            .all()
+        )
     else:
-        orders = (await async_session.execute(stmt)).all()
+        orders = (await async_session.execute(stmt)).tuples().all()
 
     # レスポンス用の注文一覧を構築
-    order_list_tmp = []
+    order_list_tmp: list[OrderBookItemData] = []
     for (
         order_id,
         amount,
@@ -459,6 +560,17 @@ async def list_all_coupon_order_book(
         account_address,
         agreement_amount,
     ) in orders:
+        # TODO: Migrate order.order_id to NOT NULL and update ORM typing
+        assert order_id is not None
+        # TODO: Migrate order.amount to NOT NULL and update ORM typing
+        assert amount is not None
+        # TODO: Migrate order.price to NOT NULL and update ORM typing
+        assert price is not None
+        # TODO: Migrate order.exchange_address to NOT NULL and update ORM typing
+        assert exchange_address is not None
+        # TODO: Migrate order.account_address to NOT NULL and update ORM typing
+        assert account_address is not None
+
         # 残存注文数量 = 発注数量 - 約定済み数量
         if agreement_amount is not None:
             amount -= int(agreement_amount)
@@ -478,7 +590,9 @@ async def list_all_coupon_order_book(
 
     # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
     if request_query.order_type == "buy":
-        order_list = sorted(order_list_tmp, key=lambda x: x["price"])
+        order_list: list[OrderBookItemData] = sorted(
+            order_list_tmp, key=lambda x: x["price"]
+        )
     else:
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
@@ -557,7 +671,7 @@ async def list_all_coupon_tick(
     ):
         raise NotSupportedError(method="GET", url=req.url.path)
 
-    tick_list = []
+    tick_list: list[TokenTicksData] = []
     # TokenごとにTickを取得
     for token_address in request_query.address_list:
         token = to_checksum_address(token_address)
@@ -579,28 +693,43 @@ async def list_all_coupon_tick(
                 .tuples()
                 .all()
             )
-            _tick = [
-                {
-                    "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                        entry[0].settlement_timestamp.year,
-                        entry[0].settlement_timestamp.month,
-                        entry[0].settlement_timestamp.day,
-                        entry[0].settlement_timestamp.hour,
-                        entry[0].settlement_timestamp.minute,
-                        entry[0].settlement_timestamp.second,
-                    ),
-                    "buy_address": entry[0].buyer_address,
-                    "sell_address": entry[0].seller_address,
-                    "order_id": entry[0].order_id,
-                    "agreement_id": entry[0].agreement_id,
-                    "price": entry[1].price,
-                    "amount": entry[0].amount,
-                }
-                for entry in entries
-            ]
+            _tick: list[TickData] = []
+            for agreement, order in entries:
+                # TODO: Migrate agreement.settlement_timestamp to NOT NULL and update ORM typing
+                assert agreement.settlement_timestamp is not None
+                # TODO: Migrate agreement.buyer_address to NOT NULL and update ORM typing
+                assert agreement.buyer_address is not None
+                # TODO: Migrate agreement.seller_address to NOT NULL and update ORM typing
+                assert agreement.seller_address is not None
+                # TODO: Migrate agreement.order_id to NOT NULL and update ORM typing
+                assert agreement.order_id is not None
+                # TODO: Migrate agreement.agreement_id to NOT NULL and update ORM typing
+                assert agreement.agreement_id is not None
+                # TODO: Migrate agreement.amount to NOT NULL and update ORM typing
+                assert agreement.amount is not None
+                # TODO: Migrate order.price to NOT NULL and update ORM typing
+                assert order.price is not None
+                _tick.append(
+                    {
+                        "block_timestamp": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                            agreement.settlement_timestamp.year,
+                            agreement.settlement_timestamp.month,
+                            agreement.settlement_timestamp.day,
+                            agreement.settlement_timestamp.hour,
+                            agreement.settlement_timestamp.minute,
+                            agreement.settlement_timestamp.second,
+                        ),
+                        "buy_address": agreement.buyer_address,
+                        "sell_address": agreement.seller_address,
+                        "order_id": agreement.order_id,
+                        "agreement_id": agreement.agreement_id,
+                        "price": order.price,
+                        "amount": agreement.amount,
+                    }
+                )
             tick_list.append({"token_address": token_address, "tick": _tick})
         except Exception as e:
-            LOG.error(e)
+            LOG.error(str(e))
             tick_list = []
 
     return json_response({**SuccessResponse.default(), "data": tick_list})
