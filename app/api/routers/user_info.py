@@ -19,12 +19,13 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Query
 
 from app import config, log
 from app.contracts import AsyncContract
 from app.database import DBAsyncSession
+from app.errors import InvalidParameterError
 from app.model.db import AccountTag
 from app.model.schema import (
     RetrievePaymentAccountQuery,
@@ -92,6 +93,12 @@ async def get_payment_account_registration_status(
             to_checksum_address(query.account_address),
             to_checksum_address(query.agent_address),
         ),
+        default_returns=(
+            config.ZERO_ADDRESS,
+            config.ZERO_ADDRESS,
+            0,
+            0,
+        ),
     )
     if account_info[0] == "0x0000000000000000000000000000000000000000":
         response_json = {
@@ -129,6 +136,8 @@ async def get_personal_info_registration_status(
         _personal_info_address = query.personal_info_address
     else:
         _personal_info_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
+    if _personal_info_address is None:
+        raise InvalidParameterError("personal_info_address is not set")
     personal_info_contract = AsyncContract.get_contract(
         contract_name="PersonalInfo", address=_personal_info_address
     )
@@ -140,6 +149,11 @@ async def get_personal_info_registration_status(
         args=(
             to_checksum_address(query.account_address),
             to_checksum_address(query.owner_address),
+        ),
+        default_returns=(
+            config.ZERO_ADDRESS,
+            config.ZERO_ADDRESS,
+            False,
         ),
     )
     if info[0] == config.ZERO_ADDRESS:

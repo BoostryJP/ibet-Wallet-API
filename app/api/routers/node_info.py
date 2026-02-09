@@ -102,7 +102,7 @@ async def get_block_sync_status(async_session: DBAsyncSession):
     Returns block sync status of node.
     """
     # Get block sync status
-    node: Node = (
+    node: Node | None = (
         await async_session.scalars(
             select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
         )

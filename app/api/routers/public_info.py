@@ -32,6 +32,7 @@ from app.model.schema import (
     ListAllPublicAccountsSortItem,
     ListAllPublicListedTokensQuery,
     ListAllPublicListedTokensResponse,
+    ListAllPublicListedTokensSortItem,
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
@@ -76,7 +77,10 @@ async def list_all_public_tokens(
     )
 
     # Sort
-    sort_attr = getattr(TokenList, request_query.sort_item, None)
+    if request_query.sort_item == ListAllPublicListedTokensSortItem.token_address:
+        sort_attr = TokenList.token_address
+    else:
+        sort_attr = TokenList.token_address
     if request_query.sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
@@ -144,7 +148,12 @@ async def list_all_public_accounts(
     )
 
     # Sort
-    sort_attr = getattr(PublicAccountList, request_query.sort_item, None)
+    if request_query.sort_item == ListAllPublicAccountsSortItem.key_manager:
+        sort_attr = PublicAccountList.key_manager
+    elif request_query.sort_item == ListAllPublicAccountsSortItem.key_manager_name:
+        sort_attr = PublicAccountList.key_manager_name
+    else:
+        sort_attr = PublicAccountList.account_address
     if request_query.sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
     else:  # DESC

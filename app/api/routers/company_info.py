@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Annotated, Callable, Sequence
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Path, Query
 from sqlalchemy import and_, desc, distinct, select
 from sqlalchemy.orm import aliased
@@ -28,7 +28,14 @@ from app import config, log
 from app.contracts import AsyncContract
 from app.database import DBAsyncSession
 from app.errors import DataNotExistsError, InvalidParameterError
-from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
+from app.model.blockchain import (
+    BondToken,
+    CouponToken,
+    MembershipToken,
+    ShareToken,
+    TokenClassTypes,
+    TokenInstanceTypes,
+)
 from app.model.db import (
     IDXBondToken,
     IDXCouponToken,
@@ -82,58 +89,74 @@ async def list_all_companies(
 
     # Get the token listed
     if request_query.include_private_listing:
-        available_tokens: Sequence[tuple[Listing, str, str, str, str]] = (
-            await async_session.execute(
-                select(
-                    Listing,
-                    IDXBondToken.owner_address,
-                    IDXShareToken.owner_address,
-                    IDXMembershipToken.owner_address,
-                    IDXCouponToken.owner_address,
-                )
-                .outerjoin(
-                    IDXBondToken, Listing.token_address == IDXBondToken.token_address
-                )
-                .outerjoin(
-                    IDXShareToken, Listing.token_address == IDXShareToken.token_address
-                )
-                .outerjoin(
-                    IDXMembershipToken,
-                    Listing.token_address == IDXMembershipToken.token_address,
-                )
-                .outerjoin(
-                    IDXCouponToken,
-                    Listing.token_address == IDXCouponToken.token_address,
+        available_tokens: Sequence[
+            tuple[Listing, str | None, str | None, str | None, str | None]
+        ] = (
+            (
+                await async_session.execute(
+                    select(
+                        Listing,
+                        IDXBondToken.owner_address,
+                        IDXShareToken.owner_address,
+                        IDXMembershipToken.owner_address,
+                        IDXCouponToken.owner_address,
+                    )
+                    .outerjoin(
+                        IDXBondToken,
+                        Listing.token_address == IDXBondToken.token_address,
+                    )
+                    .outerjoin(
+                        IDXShareToken,
+                        Listing.token_address == IDXShareToken.token_address,
+                    )
+                    .outerjoin(
+                        IDXMembershipToken,
+                        Listing.token_address == IDXMembershipToken.token_address,
+                    )
+                    .outerjoin(
+                        IDXCouponToken,
+                        Listing.token_address == IDXCouponToken.token_address,
+                    )
                 )
             )
-        ).all()
+            .tuples()
+            .all()
+        )
     else:
-        available_tokens: Sequence[tuple[Listing, str, str, str, str]] = (
-            await async_session.execute(
-                select(
-                    Listing,
-                    IDXBondToken.owner_address,
-                    IDXShareToken.owner_address,
-                    IDXMembershipToken.owner_address,
-                    IDXCouponToken.owner_address,
-                )
-                .where(Listing.is_public == True)
-                .outerjoin(
-                    IDXBondToken, Listing.token_address == IDXBondToken.token_address
-                )
-                .outerjoin(
-                    IDXShareToken, Listing.token_address == IDXShareToken.token_address
-                )
-                .outerjoin(
-                    IDXMembershipToken,
-                    Listing.token_address == IDXMembershipToken.token_address,
-                )
-                .outerjoin(
-                    IDXCouponToken,
-                    Listing.token_address == IDXCouponToken.token_address,
+        available_tokens: Sequence[
+            tuple[Listing, str | None, str | None, str | None, str | None]
+        ] = (
+            (
+                await async_session.execute(
+                    select(
+                        Listing,
+                        IDXBondToken.owner_address,
+                        IDXShareToken.owner_address,
+                        IDXMembershipToken.owner_address,
+                        IDXCouponToken.owner_address,
+                    )
+                    .where(Listing.is_public == True)
+                    .outerjoin(
+                        IDXBondToken,
+                        Listing.token_address == IDXBondToken.token_address,
+                    )
+                    .outerjoin(
+                        IDXShareToken,
+                        Listing.token_address == IDXShareToken.token_address,
+                    )
+                    .outerjoin(
+                        IDXMembershipToken,
+                        Listing.token_address == IDXMembershipToken.token_address,
+                    )
+                    .outerjoin(
+                        IDXCouponToken,
+                        Listing.token_address == IDXCouponToken.token_address,
+                    )
                 )
             )
-        ).all()
+            .tuples()
+            .all()
+        )
 
     # Filter only issuers that issue the listed tokens
     listing_owner_set: set[str] = set()
@@ -144,6 +167,8 @@ async def list_all_companies(
                 listing_owner_set.add(owner_address_is_cached[0])
                 continue
 
+            # TODO: Migrate listing.token_address to NOT NULL and update ORM typing
+            assert token[0].token_address is not None
             token_address = to_checksum_address(token[0].token_address)
             token_contract = AsyncContract.get_contract(
                 contract_name="Ownable", address=token_address
@@ -156,7 +181,7 @@ async def list_all_companies(
             )
             listing_owner_set.add(owner_address)
         except Exception as e:
-            LOG.notice(e)
+            LOG.notice(str(e))
 
     has_listing_owner_function = has_listing_owner_function_creator(listing_owner_set)
     filtered_company_list = filter(has_listing_owner_function, company_list)
@@ -265,8 +290,10 @@ async def list_all_company_tokens(
         ).all()
 
     # Get token attributes
-    token_list = []
+    token_list: list[object] = []
     for available_token in available_list:
+        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing
+        assert available_token.token_address is not None
         token_address = to_checksum_address(available_token.token_address)
         token_info = await AsyncContract.call_function(
             contract=list_contract,
@@ -280,10 +307,13 @@ async def list_all_company_tokens(
             # Filter only the token types used in the system
             if available_token_template(token_template):
                 token_model = get_token_model(token_template)
-                token = await token_model.get(
-                    async_session=async_session, token_address=token_address
+                if token_model is None:
+                    continue
+                token_model_cls: TokenClassTypes = token_model
+                token: TokenInstanceTypes = await token_model_cls.get(
+                    async_session, token_address
                 )
-                token_list.append(token.__dict__)
+                token_list.append(token.to_dict())
             else:
                 continue
 
@@ -308,7 +338,7 @@ def available_token_template(token_template: str) -> bool:
         return False
 
 
-def get_token_model(token_template: str):
+def get_token_model(token_template: str) -> TokenClassTypes | None:
     """Get token model
 
     :param token_template: Token type
@@ -323,7 +353,7 @@ def get_token_model(token_template: str):
     elif token_template == TokenType.IbetCoupon:
         return CouponToken
     else:
-        return False
+        return None
 
 
 def has_listing_owner_function_creator(

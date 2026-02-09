@@ -17,10 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated
+from typing import Annotated, Any, TypeAlias, TypedDict, cast
 
+from eth_typing import HexStr
 from fastapi import APIRouter, Depends, Path, Query
+from web3.contract.async_contract import AsyncContractEvent
 from web3.exceptions import Web3ValidationError
+from web3.types import EventData
 
 from app import config, log
 from app.contracts import AsyncContract
@@ -58,6 +61,72 @@ REQUEST_BLOCK_RANGE_LIMIT = 10000
 router = APIRouter(prefix="/Events", tags=["contract_log"])
 
 
+class EventLogData(TypedDict):
+    event: str
+    args: dict[str, Any]
+    transaction_hash: str
+    block_number: int
+    block_timestamp: int
+    log_index: int
+
+
+EventFilters: TypeAlias = dict[str, Any]
+
+
+async def _collect_event_logs(
+    contract_name: str,
+    contract_address: str,
+    attr_list: list[str],
+    from_block: int,
+    to_block: int,
+    argument_filters: EventFilters,
+) -> list[EventLogData]:
+    contract = AsyncContract.get_contract(
+        contract_name=contract_name,
+        address=contract_address,
+    )
+
+    tmp_list: list[EventLogData] = []
+    for attr in attr_list:
+        contract_event = getattr(contract.events, attr, None)
+        if not isinstance(contract_event, AsyncContractEvent):
+            raise InvalidParameterError("invalid event log")
+        events: list[EventData]
+        try:
+            events = list(
+                await contract_event.get_logs(
+                    from_block=from_block,
+                    to_block=to_block,
+                    argument_filters=argument_filters,
+                )
+            )
+        except Web3ValidationError:
+            events = []
+        for event in events:
+            block_number = int(event["blockNumber"])
+            log_index = int(event["logIndex"])
+            block_data = await async_web3.eth.get_block(block_number)
+            block_timestamp_raw = block_data.get("timestamp")
+            if block_timestamp_raw is None:
+                raise InvalidParameterError("invalid event log")
+            block_timestamp = int(block_timestamp_raw)
+            transaction_hash = HexStr(event["transactionHash"].to_0x_hex())
+            tmp_list.append(
+                cast(
+                    EventLogData,
+                    {
+                        "event": event["event"],
+                        "args": dict(event["args"]),
+                        "transaction_hash": str(transaction_hash),
+                        "block_number": block_number,
+                        "block_timestamp": block_timestamp,
+                        "log_index": log_index,
+                    },
+                )
+            )
+    return sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+
+
 # /Events/E2EMessaging
 @router.get(
     "/E2EMessaging",
@@ -80,19 +149,19 @@ async def list_all_e2e_messaging_event_logs(
         )
 
     # Validate
-    argument_filters_dict = {}
+    argument_filters_dict: EventFilters = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = E2EMessagingEventArguments.model_validate_json(
+            parsed_filters = E2EMessagingEventArguments.model_validate_json(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
+            argument_filters_dict = {
+                str(key): value for key, value in parsed_filters.items()
+            }
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
     # Get event logs
-    contract = AsyncContract.get_contract(
-        contract_name="E2EMessaging", address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
-    )
     if request_query.event == "Message":
         attr_list = ["Message"]
     elif request_query.event == "PublicKeyUpdated":
@@ -100,35 +169,14 @@ async def list_all_e2e_messaging_event_logs(
     else:  # All events
         attr_list = ["PublicKeyUpdated", "Message"]
 
-    tmp_list = []
-    for attr in attr_list:
-        contract_event = getattr(contract.events, attr)
-        try:
-            events = await contract_event.get_logs(
-                from_block=request_query.from_block,
-                to_block=request_query.to_block,
-                argument_filters=argument_filters_dict,
-            )
-        except Web3ValidationError:
-            events = []
-        for event in events:
-            block_number = event["blockNumber"]
-            block_timestamp = (await async_web3.eth.get_block(block_number))[
-                "timestamp"
-            ]
-            tmp_list.append(
-                {
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].to_0x_hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"],
-                }
-            )
-
-    # Sort: block_number > log_index
-    resp_json = sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+    resp_json = await _collect_event_logs(
+        contract_name="E2EMessaging",
+        contract_address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS),
+        attr_list=attr_list,
+        from_block=request_query.from_block,
+        to_block=request_query.to_block,
+        argument_filters=argument_filters_dict,
+    )
     return json_response({**SuccessResponse.default(), "data": resp_json})
 
 
@@ -154,18 +202,18 @@ async def list_all_ibet_escrow_event_logs(
         )
 
     # Validate
-    argument_filters_dict = {}
+    argument_filters_dict: EventFilters = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = EscrowEventArguments.model_validate_json(
+            parsed_filters = EscrowEventArguments.model_validate_json(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
-        except:
+            argument_filters_dict = {
+                str(key): value for key, value in parsed_filters.items()
+            }
+        except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
-    contract = AsyncContract.get_contract(
-        contract_name="IbetEscrow", address=str(config.IBET_ESCROW_CONTRACT_ADDRESS)
-    )
     if request_query.event == "Deposited":
         attr_list = ["Deposited"]
     elif request_query.event == "Withdrawn":
@@ -185,35 +233,14 @@ async def list_all_ibet_escrow_event_logs(
             "EscrowFinished",
         ]
 
-    tmp_list = []
-    for attr in attr_list:
-        contract_event = getattr(contract.events, attr)
-        try:
-            events = await contract_event.get_logs(
-                from_block=request_query.from_block,
-                to_block=request_query.to_block,
-                argument_filters=argument_filters_dict,
-            )
-        except Web3ValidationError:
-            events = []
-        for event in events:
-            block_number = event["blockNumber"]
-            block_timestamp = (await async_web3.eth.get_block(block_number))[
-                "timestamp"
-            ]
-            tmp_list.append(
-                {
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].to_0x_hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"],
-                }
-            )
-
-    # Sort: block_number > log_index
-    resp_json = sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+    resp_json = await _collect_event_logs(
+        contract_name="IbetEscrow",
+        contract_address=str(config.IBET_ESCROW_CONTRACT_ADDRESS),
+        attr_list=attr_list,
+        from_block=request_query.from_block,
+        to_block=request_query.to_block,
+        argument_filters=argument_filters_dict,
+    )
     return json_response({**SuccessResponse.default(), "data": resp_json})
 
 
@@ -239,19 +266,18 @@ async def list_all_ibet_security_token_escrow_event_logs(
             "Search request range is over the limit"
         )
 
-    argument_filters_dict = {}
+    argument_filters_dict: EventFilters = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = EscrowEventArguments.model_validate_json(
+            parsed_filters = EscrowEventArguments.model_validate_json(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
-        except:
+            argument_filters_dict = {
+                str(key): value for key, value in parsed_filters.items()
+            }
+        except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
-    contract = AsyncContract.get_contract(
-        contract_name="IbetSecurityTokenEscrow",
-        address=str(config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS),
-    )
     if request_query.event == "Deposited":
         attr_list = ["Deposited"]
     elif request_query.event == "Withdrawn":
@@ -280,35 +306,14 @@ async def list_all_ibet_security_token_escrow_event_logs(
             "ApproveTransfer",
         ]
 
-    tmp_list = []
-    for attr in attr_list:
-        contract_event = getattr(contract.events, attr)
-        try:
-            events = await contract_event.get_logs(
-                from_block=request_query.from_block,
-                to_block=request_query.to_block,
-                argument_filters=argument_filters_dict,
-            )
-        except Web3ValidationError:
-            events = []
-        for event in events:
-            block_number = event["blockNumber"]
-            block_timestamp = (await async_web3.eth.get_block(block_number))[
-                "timestamp"
-            ]
-            tmp_list.append(
-                {
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].to_0x_hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"],
-                }
-            )
-
-    # Sort: block_number > log_index
-    resp_json = sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+    resp_json = await _collect_event_logs(
+        contract_name="IbetSecurityTokenEscrow",
+        contract_address=str(config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS),
+        attr_list=attr_list,
+        from_block=request_query.from_block,
+        to_block=request_query.to_block,
+        argument_filters=argument_filters_dict,
+    )
     return json_response({**SuccessResponse.default(), "data": resp_json})
 
 
@@ -334,23 +339,20 @@ async def list_all_ibet_security_token_dvp_event_logs(
             "Search request range is over the limit"
         )
 
-    argument_filters_dict = {}
+    argument_filters_dict: EventFilters = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = (
-                IbetSecurityTokenDVPEventArguments.model_validate_json(
-                    request_query.argument_filters
-                ).model_dump(exclude_none=True)
-            )
-        except:
+            parsed_filters = IbetSecurityTokenDVPEventArguments.model_validate_json(
+                request_query.argument_filters
+            ).model_dump(exclude_none=True)
+            argument_filters_dict = {
+                str(key): value for key, value in parsed_filters.items()
+            }
+        except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
     if config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS is None:
         raise DataNotExistsError
-    contract = AsyncContract.get_contract(
-        contract_name="IbetSecurityTokenDVP",
-        address=str(config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS),
-    )
     if request_query.event == "Deposited":
         attr_list = ["Deposited"]
     elif request_query.event == "Withdrawn":
@@ -376,35 +378,14 @@ async def list_all_ibet_security_token_dvp_event_logs(
             "DeliveryAborted",
         ]
 
-    tmp_list = []
-    for attr in attr_list:
-        contract_event = getattr(contract.events, attr)
-        try:
-            events = await contract_event.get_logs(
-                from_block=request_query.from_block,
-                to_block=request_query.to_block,
-                argument_filters=argument_filters_dict,
-            )
-        except Web3ValidationError:
-            events = []
-        for event in events:
-            block_number = event["blockNumber"]
-            block_timestamp = (await async_web3.eth.get_block(block_number))[
-                "timestamp"
-            ]
-            tmp_list.append(
-                {
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].to_0x_hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"],
-                }
-            )
-
-    # Sort: block_number > log_index
-    resp_json = sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+    resp_json = await _collect_event_logs(
+        contract_name="IbetSecurityTokenDVP",
+        contract_address=str(config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS),
+        attr_list=attr_list,
+        from_block=request_query.from_block,
+        to_block=request_query.to_block,
+        argument_filters=argument_filters_dict,
+    )
     return json_response({**SuccessResponse.default(), "data": resp_json})
 
 
@@ -431,50 +412,31 @@ async def list_all_ibet_security_token_interface_event_logs(
             "Search request range is over the limit"
         )
 
-    argument_filters_dict = {}
+    argument_filters_dict: EventFilters = {}
     if request_query.argument_filters:
         try:
-            argument_filters_dict = SecurityTokenEventArguments.model_validate_json(
+            parsed_filters = SecurityTokenEventArguments.model_validate_json(
                 request_query.argument_filters, strict=True
             ).root.model_dump(exclude_none=True)
+            argument_filters_dict = {
+                str(key): value for key, value in parsed_filters.items()
+            }
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
 
-    contract = AsyncContract.get_contract(
-        contract_name="IbetSecurityTokenInterface", address=str(token_address)
-    )
     if request_query.event is None:
-        attr_list = [event_type for event_type in IbetSecurityTokenInterfaceEventType]
+        attr_list = [
+            event_type.value for event_type in IbetSecurityTokenInterfaceEventType
+        ]
     else:
         attr_list = [request_query.event.value]
 
-    tmp_list = []
-    for attr in attr_list:
-        contract_event = getattr(contract.events, attr)
-        try:
-            events = await contract_event.get_logs(
-                from_block=request_query.from_block,
-                to_block=request_query.to_block,
-                argument_filters=argument_filters_dict,
-            )
-        except Web3ValidationError:
-            events = []
-        for event in events:
-            block_number = event["blockNumber"]
-            block_timestamp = (await async_web3.eth.get_block(block_number))[
-                "timestamp"
-            ]
-            tmp_list.append(
-                {
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].to_0x_hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"],
-                }
-            )
-
-    # Sort: block_number > log_index
-    resp_json = sorted(tmp_list, key=lambda x: (x["block_number"], x["log_index"]))
+    resp_json = await _collect_event_logs(
+        contract_name="IbetSecurityTokenInterface",
+        contract_address=str(token_address),
+        attr_list=attr_list,
+        from_block=request_query.from_block,
+        to_block=request_query.to_block,
+        argument_filters=argument_filters_dict,
+    )
     return json_response({**SuccessResponse.default(), "data": resp_json})
