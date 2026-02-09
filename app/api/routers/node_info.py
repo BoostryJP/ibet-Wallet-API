@@ -52,11 +52,7 @@ async def get_node_info():
     """
     Returns node information.
     """
-    payment_gateway_json = json.load(
-        open("app/contracts/json/PaymentGateway.json", "r")
-    )
     personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
-    ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
     ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
     ibet_security_token_escrow_json = json.load(
         open("app/contracts/json/IbetSecurityTokenEscrow.json", "r")
@@ -67,14 +63,8 @@ async def get_node_info():
     e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
     nodeInfo = {
-        "payment_gateway_address": config.PAYMENT_GATEWAY_CONTRACT_ADDRESS,
-        "payment_gateway_abi": payment_gateway_json["abi"],
         "personal_info_address": config.PERSONAL_INFO_CONTRACT_ADDRESS,
         "personal_info_abi": personal_info_json["abi"],
-        "ibet_membership_exchange_address": config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-        "ibet_membership_exchange_abi": ibet_exchange_json["abi"],
-        "ibet_coupon_exchange_address": config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-        "ibet_coupon_exchange_abi": ibet_exchange_json["abi"],
         "ibet_escrow_address": config.IBET_ESCROW_CONTRACT_ADDRESS,
         "ibet_escrow_abi": ibet_escrow_json["abi"],
         "ibet_security_token_escrow_address": config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,

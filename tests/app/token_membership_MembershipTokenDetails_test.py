@@ -30,11 +30,11 @@ from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    coupon_register_list,
-    issue_coupon_token,
+    coupon_issue_token,
+    coupon_register_token_list,
     membership_invalidate,
-    membership_issue,
-    membership_register_list,
+    membership_issue_token,
+    membership_register_token_list,
 )
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
@@ -119,12 +119,10 @@ class TestTokenMembershipTokenDetails:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.membership_token_attribute(exchange_address)
-        token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, token, token_list)
+        token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, token, token_list)
 
         # Register tokens on the list
         self.list_token(session, token)
@@ -181,12 +179,10 @@ class TestTokenMembershipTokenDetails:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.membership_token_attribute(exchange_address)
-        token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, token, token_list)
+        token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, token, token_list)
 
         # Register tokens on the list
         self.list_token(session, token)
@@ -278,12 +274,10 @@ class TestTokenMembershipTokenDetails:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.membership_token_attribute(exchange_address)
-        token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, token, token_list)
+        token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, token, token_list)
 
         session.commit()
 
@@ -332,12 +326,10 @@ class TestTokenMembershipTokenDetails:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.coupon_token_attribute(exchange_address)
-        token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, token, token_list)
+        token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, token, token_list)
 
         # Register tokens on the list
         self.list_token(session, token)

@@ -30,11 +30,11 @@ from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    bond_invalidate,
-    issue_bond_token,
-    issue_share_token,
-    register_bond_list,
-    register_share_list,
+    bond_issue_token,
+    bond_register_token_list,
+    bond_set_status,
+    share_issue_token,
+    share_register_token_list,
 )
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
@@ -150,12 +150,12 @@ class TestTokenStraightBondTokenDetails:
 
         # Issue token
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # Register tokens on the list
         self.list_token(session, bond_token)
@@ -231,18 +231,18 @@ class TestTokenStraightBondTokenDetails:
 
         # Issue token
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # Register tokens on the list
         self.list_token(session, bond_token)
 
         # Invalidate token
-        bond_invalidate(issuer, bond_token)
+        bond_set_status(issuer, bond_token)
 
         session.commit()
 
@@ -348,12 +348,12 @@ class TestTokenStraightBondTokenDetails:
 
         # Prepare data: issue token
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, token, token_list)
 
         session.commit()
 
@@ -403,12 +403,12 @@ class TestTokenStraightBondTokenDetails:
 
         # Issue token
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # Register tokens on the list
         self.list_token(session, share_token)

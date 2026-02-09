@@ -31,9 +31,9 @@ from app import config
 from app.model.db import ExecutableContract, Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    coupon_register_list,
-    issue_coupon_token,
-    transfer_coupon_token,
+    coupon_issue_token,
+    coupon_register_token_list,
+    coupon_transfer_token,
 )
 from tests.types import DeployedContract
 from tests.utils.contract import Contract
@@ -91,7 +91,7 @@ class TestEthWaitForTransactionReceipt:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -107,7 +107,7 @@ class TestEthWaitForTransactionReceipt:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
         # List the issued token
         listing_token(session, coupontoken_1)
@@ -119,7 +119,7 @@ class TestEthWaitForTransactionReceipt:
             abi=_get_abi(coupontoken_1),
         )
         user1 = eth_account["user1"]
-        transfer_coupon_token(issuer, coupontoken_1, user1, 10)
+        coupon_transfer_token(issuer, coupontoken_1, user1, 10)
 
         tx = token_contract_1.functions.consume(10).build_transaction(
             _tx_params(to_checksum_address(user1["account_address"]))
@@ -141,7 +141,7 @@ class TestEthWaitForTransactionReceipt:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -157,7 +157,7 @@ class TestEthWaitForTransactionReceipt:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
         # List the issued token
         listing_token(session, coupontoken_1)

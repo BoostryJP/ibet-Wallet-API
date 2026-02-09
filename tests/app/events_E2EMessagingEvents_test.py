@@ -55,7 +55,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         latest_block_number = web3.eth.block_number
 
@@ -81,11 +81,11 @@ class TestEventsE2EMessaging:
     ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         tx = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
@@ -125,11 +125,11 @@ class TestEventsE2EMessaging:
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         tx = e2e_messaging_contract.functions.sendMessage(
             user2, "test_message"
@@ -173,11 +173,11 @@ class TestEventsE2EMessaging:
     ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         tx = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
@@ -213,11 +213,11 @@ class TestEventsE2EMessaging:
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         tx_1 = e2e_messaging_contract.functions.sendMessage(
             user2, "test_message"
@@ -281,11 +281,11 @@ class TestEventsE2EMessaging:
     ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         tx = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
@@ -326,11 +326,11 @@ class TestEventsE2EMessaging:
     ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         _tx = e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
@@ -363,11 +363,11 @@ class TestEventsE2EMessaging:
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
 
         tx_1 = e2e_messaging_contract.functions.sendMessage(
@@ -428,11 +428,11 @@ class TestEventsE2EMessaging:
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
 
         e2e_messaging_contract.functions.sendMessage(user2, "test_message").transact(
@@ -482,7 +482,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # request target API
         resp = client.get(self.apiurl, params={})
@@ -515,7 +515,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # request target API
         resp = client.get(self.apiurl, params={"from_block": 0, "to_block": 0})
@@ -550,7 +550,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API
@@ -586,7 +586,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API
@@ -615,7 +615,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API
@@ -653,7 +653,7 @@ class TestEventsE2EMessaging:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API

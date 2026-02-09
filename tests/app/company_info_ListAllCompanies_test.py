@@ -37,14 +37,14 @@ from app.model.db import (
 )
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    coupon_register_list,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    membership_issue,
-    membership_register_list,
-    register_bond_list,
-    register_share_list,
+    bond_issue_token,
+    bond_register_token_list,
+    coupon_issue_token,
+    coupon_register_token_list,
+    membership_issue_token,
+    membership_register_token_list,
+    share_issue_token,
+    share_register_token_list,
 )
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
@@ -285,13 +285,11 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：新規発行（クーポン）
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         for i in range(0, 3):
             attribute = self._coupon_attribute(exchange_address)
-            token = issue_coupon_token(issuerList[i], attribute)
-            coupon_register_list(issuerList[i], token, token_list)
+            token = coupon_issue_token(issuerList[i], attribute)
+            coupon_register_token_list(issuerList[i], token, token_list)
             # 取扱トークンデータ挿入
             self.list_token(session, token)
         session.commit()
@@ -344,13 +342,11 @@ class TestListAllCompanies:
         token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         for i in range(0, 2):
             attribute = self._coupon_attribute(exchange_address)
-            token = issue_coupon_token(issuerList[i], attribute)
-            coupon_register_list(issuerList[i], token, token_list)
+            token = coupon_issue_token(issuerList[i], attribute)
+            coupon_register_token_list(issuerList[i], token, token_list)
             # 取扱トークンデータ挿入
             self.list_token(session, token)
 
@@ -398,12 +394,10 @@ class TestListAllCompanies:
         token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self._coupon_attribute(exchange_address)
-        token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, token, token_list)
+        token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, token, token_list)
         self.list_token(session, token)
         session.commit()
 
@@ -432,13 +426,11 @@ class TestListAllCompanies:
         token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         for i in range(0, 2):
             attribute = self._coupon_attribute(exchange_address)
-            token = issue_coupon_token(issuerList[i], attribute)
-            coupon_register_list(issuerList[i], token, token_list)
+            token = coupon_issue_token(issuerList[i], attribute)
+            coupon_register_token_list(issuerList[i], token, token_list)
 
         # テスト対象API呼び出し
         resp = client.get(self.apiurl)
@@ -485,16 +477,16 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetCouponExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._coupon_attribute(exchange_address)
-        token_1 = issue_coupon_token(issuerList[0], attribute_1)
-        coupon_register_list(issuerList[0], token_1, token_list)
+        token_1 = coupon_issue_token(issuerList[0], attribute_1)
+        coupon_register_token_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
 
         attribute_2 = self._coupon_attribute(exchange_address)
-        token_2 = issue_coupon_token(issuerList[1], attribute_2)
-        coupon_register_list(issuerList[1], token_2, token_list)
+        token_2 = coupon_issue_token(issuerList[1], attribute_2)
+        coupon_register_token_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
 
         session.commit()
@@ -548,16 +540,16 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetCouponExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._coupon_attribute(exchange_address)
-        token_1 = issue_coupon_token(issuerList[0], attribute_1)
-        coupon_register_list(issuerList[0], token_1, token_list)
+        token_1 = coupon_issue_token(issuerList[0], attribute_1)
+        coupon_register_token_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
 
         attribute_2 = self._coupon_attribute(exchange_address)
-        token_2 = issue_coupon_token(issuerList[1], attribute_2)
-        coupon_register_list(issuerList[1], token_2, token_list)
+        token_2 = coupon_issue_token(issuerList[1], attribute_2)
+        coupon_register_token_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
 
         session.commit()
@@ -608,13 +600,13 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetStraightBondExchange"]["address"]
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
 
         attribute_1 = self._bond_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_1 = issue_bond_token(issuerList[0], attribute_1)
-        register_bond_list(issuerList[0], token_1, token_list)
+        token_1 = bond_issue_token(issuerList[0], attribute_1)
+        bond_register_token_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
         self.store_bond_index_data(
             session, token_1["address"], issuerList[0]["account_address"]
@@ -623,8 +615,8 @@ class TestListAllCompanies:
         attribute_2 = self._share_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_2 = issue_share_token(issuerList[1], attribute_2)
-        register_share_list(issuerList[1], token_2, token_list)
+        token_2 = share_issue_token(issuerList[1], attribute_2)
+        share_register_token_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
         self.store_bond_index_data(
             session, token_2["address"], issuerList[1]["account_address"]
@@ -682,13 +674,13 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetShareExchange"]["address"]
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
 
         attribute_1 = self._share_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_1 = issue_share_token(issuerList[0], attribute_1)
-        register_share_list(issuerList[0], token_1, token_list)
+        token_1 = share_issue_token(issuerList[0], attribute_1)
+        share_register_token_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
         self.store_share_index_data(
             session, token_1["address"], issuerList[0]["account_address"]
@@ -697,8 +689,8 @@ class TestListAllCompanies:
         attribute_2 = self._share_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_2 = issue_share_token(issuerList[1], attribute_2)
-        register_share_list(issuerList[1], token_2, token_list)
+        token_2 = share_issue_token(issuerList[1], attribute_2)
+        share_register_token_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
         self.store_share_index_data(
             session, token_2["address"], issuerList[1]["account_address"]
@@ -756,19 +748,19 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetMembershipExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._membership_attribute(exchange_address)
-        token_1 = membership_issue(issuerList[0], attribute_1)
-        membership_register_list(issuerList[0], token_1, token_list)
+        token_1 = membership_issue_token(issuerList[0], attribute_1)
+        membership_register_token_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
         self.store_membership_index_data(
             session, token_1["address"], issuerList[0]["account_address"]
         )
 
         attribute_2 = self._membership_attribute(exchange_address)
-        token_2 = membership_issue(issuerList[1], attribute_2)
-        membership_register_list(issuerList[1], token_2, token_list)
+        token_2 = membership_issue_token(issuerList[1], attribute_2)
+        membership_register_token_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
         self.store_membership_index_data(
             session, token_2["address"], issuerList[1]["account_address"]
@@ -826,19 +818,19 @@ class TestListAllCompanies:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetCouponExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._coupon_attribute(exchange_address)
-        token_1 = issue_coupon_token(issuerList[0], attribute_1)
-        coupon_register_list(issuerList[0], token_1, token_list)
+        token_1 = coupon_issue_token(issuerList[0], attribute_1)
+        coupon_register_token_list(issuerList[0], token_1, token_list)
         self.list_token(session, token_1, True)
         self.store_coupon_index_data(
             session, token_1["address"], issuerList[0]["account_address"]
         )
 
         attribute_2 = self._coupon_attribute(exchange_address)
-        token_2 = issue_coupon_token(issuerList[1], attribute_2)
-        coupon_register_list(issuerList[1], token_2, token_list)
+        token_2 = coupon_issue_token(issuerList[1], attribute_2)
+        coupon_register_token_list(issuerList[1], token_2, token_list)
         self.list_token(session, token_2, False)
         self.store_coupon_index_data(
             session, token_2["address"], issuerList[1]["account_address"]

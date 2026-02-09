@@ -41,39 +41,15 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 def register_personalinfo(invoker: UnitTestAccount, personal_info: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
 
-    PersonalInfoContract = Contract.get_contract(
+    personal_info_contract = Contract.get_contract(
         "PersonalInfo", personal_info["address"]
     )
 
     issuer = eth_account["issuer"]
     encrypted_info = "some_encrypted_info"
-    PersonalInfoContract.functions.register(
+    personal_info_contract.functions.register(
         issuer["account_address"], encrypted_info
     ).transact({"from": invoker["account_address"]})
-
-
-# 決済用銀行口座情報登録
-def register_payment_gateway(
-    invoker: UnitTestAccount, payment_gateway: DeployedContract
-):
-    PaymentGatewayContract = Contract.get_contract(
-        "PaymentGateway", payment_gateway["address"]
-    )
-
-    # 1) 登録 from Invoker
-    web3.eth.default_account = invoker["account_address"]
-
-    agent = eth_account["agent"]
-    encrypted_info = "some_encrypted_info"
-    PaymentGatewayContract.functions.register(
-        agent["account_address"], encrypted_info
-    ).transact({"from": invoker["account_address"]})
-
-    # 2) 認可 from Agent
-    web3.eth.default_account = agent["account_address"]
-    PaymentGatewayContract.functions.approve(invoker["account_address"]).transact(
-        {"from": agent["account_address"]}
-    )
 
 
 # トークン移転
@@ -92,12 +68,12 @@ def transfer_token(
 # Bond Token
 ###############################################################
 # BONDトークン：発行
-def issue_bond_token(
+def bond_issue_token(
     invoker: UnitTestAccount, attribute: dict[str, Any]
 ) -> DeployedContract:
     web3.eth.default_account = invoker["account_address"]
 
-    interestPaymentDate = json.dumps(
+    interest_payment_date = json.dumps(
         {
             "interestPaymentDate1": attribute["interestPaymentDate1"],
             "interestPaymentDate2": attribute["interestPaymentDate2"],
@@ -133,47 +109,47 @@ def issue_bond_token(
     )
 
     # その他項目の更新
-    TokenContract = Contract.get_contract("IbetStraightBond", contract_address)
+    token_contract = Contract.get_contract("IbetStraightBond", contract_address)
     if "tradableExchange" in attribute:
-        TokenContract.functions.setTradableExchange(
+        token_contract.functions.setTradableExchange(
             attribute["tradableExchange"]
         ).transact({"from": invoker["account_address"]})
     if "interestRate" in attribute:
-        TokenContract.functions.setInterestRate(attribute["interestRate"]).transact(
+        token_contract.functions.setInterestRate(attribute["interestRate"]).transact(
             {"from": invoker["account_address"]}
         )
-    TokenContract.functions.setInterestPaymentDate(interestPaymentDate).transact(
+    token_contract.functions.setInterestPaymentDate(interest_payment_date).transact(
         {"from": invoker["account_address"]}
     )
     if "memo" in attribute:
-        TokenContract.functions.setMemo(attribute["memo"]).transact(
+        token_contract.functions.setMemo(attribute["memo"]).transact(
             {"from": invoker["account_address"]}
         )
     if "contactInformation" in attribute:
-        TokenContract.functions.setContactInformation(
+        token_contract.functions.setContactInformation(
             attribute["contactInformation"]
         ).transact({"from": invoker["account_address"]})
     if "privacyPolicy" in attribute:
-        TokenContract.functions.setPrivacyPolicy(attribute["privacyPolicy"]).transact(
+        token_contract.functions.setPrivacyPolicy(attribute["privacyPolicy"]).transact(
             {"from": invoker["account_address"]}
         )
     if "personalInfoAddress" in attribute:
-        TokenContract.functions.setPersonalInfoAddress(
+        token_contract.functions.setPersonalInfoAddress(
             attribute["personalInfoAddress"]
         ).transact({"from": invoker["account_address"]})
     if "requirePersonalInfoRegistered" in attribute:
-        TokenContract.functions.setRequirePersonalInfoRegistered(
+        token_contract.functions.setRequirePersonalInfoRegistered(
             attribute["requirePersonalInfoRegistered"]
         ).transact({"from": invoker["account_address"]})
-    TokenContract.functions.setTransferable(True).transact(
+    token_contract.functions.setTransferable(True).transact(
         {"from": invoker["account_address"]}
     )
     if "interestPaymentCurrency" in attribute:
-        TokenContract.functions.setInterestPaymentCurrency(
+        token_contract.functions.setInterestPaymentCurrency(
             attribute["interestPaymentCurrency"]
         ).transact({"from": invoker["account_address"]})
     if "baseFxRate" in attribute:
-        TokenContract.functions.setBaseFXRate(str(attribute["baseFxRate"])).transact(
+        token_contract.functions.setBaseFXRate(str(attribute["baseFxRate"])).transact(
             {"from": invoker["account_address"]}
         )
 
@@ -181,28 +157,16 @@ def issue_bond_token(
 
 
 # BONDトークン：公開リスト登録
-def register_bond_list(
+def bond_register_token_list(
     invoker: UnitTestAccount, bond_token: DeployedContract, token_list: DeployedContract
 ):
-    TokenListContract = Contract.get_contract("TokenList", token_list["address"])
+    token_list_contract = Contract.get_contract("TokenList", token_list["address"])
 
     web3.eth.default_account = invoker["account_address"]
 
-    TokenListContract.functions.register(
+    token_list_contract.functions.register(
         bond_token["address"], "IbetStraightBond"
     ).transact({"from": invoker["account_address"]})
-
-
-# BONDトークン：募集
-def offer_bond_token(
-    invoker: UnitTestAccount,
-    bond_exchange: DeployedContract,
-    bond_token: DeployedContract,
-    amount: int,
-    price: int,
-):
-    bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount)
-    make_sell(invoker, bond_exchange, bond_token, amount, price)
 
 
 # BONDトークン：取引コントラクトにデポジット
@@ -213,19 +177,19 @@ def bond_transfer_to_exchange(
     amount: int,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", bond_token["address"])
-    TokenContract.functions.transfer(bond_exchange["address"], amount).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", bond_token["address"])
+    token_contract.functions.transfer(bond_exchange["address"], amount).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # BONDトークン：移転
-def transfer_bond_token(
+def bond_transfer_token(
     invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.transfer(to["account_address"], amount).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.transfer(to["account_address"], amount).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -233,28 +197,28 @@ def transfer_bond_token(
 # BONDトークン：償還
 def bond_redeem(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.changeToRedeemed().transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.changeToRedeemed().transact(
         {"from": invoker["account_address"]}
     )
 
 
 # BONDトークン：譲渡可否変更
-def bond_change_transferable(
+def bond_set_transferable(
     invoker: UnitTestAccount, token: DeployedContract, transferable: bool
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.setTransferable(transferable).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.setTransferable(transferable).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # BONDトークン：無効化
-def bond_invalidate(invoker: UnitTestAccount, token: DeployedContract):
+def bond_set_status(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.setStatus(False).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.setStatus(False).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -262,8 +226,8 @@ def bond_invalidate(invoker: UnitTestAccount, token: DeployedContract):
 # BONDトークン：譲渡不可設定
 def bond_untransferable(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.setTransferable(False).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.setTransferable(False).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -273,8 +237,8 @@ def bond_set_transfer_approval_required(
     invoker: UnitTestAccount, token: DeployedContract, required: bool
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.setTransferApprovalRequired(required).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.setTransferApprovalRequired(required).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -288,8 +252,8 @@ def bond_apply_for_transfer(
     application_data: str,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.applyForTransfer(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.applyForTransfer(
         recipient["account_address"], amount, application_data
     ).transact({"from": invoker["account_address"]})
 
@@ -302,8 +266,8 @@ def bond_cancel_transfer(
     application_data: str,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.cancelTransfer(application_id, application_data).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.cancelTransfer(application_id, application_data).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -316,8 +280,8 @@ def bond_approve_transfer(
     application_data: str,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.approveTransfer(application_id, application_data).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.approveTransfer(application_id, application_data).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -331,8 +295,8 @@ def bond_lock(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.lock(lock_address, amount, data_str).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.lock(lock_address, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -347,8 +311,8 @@ def bond_force_lock(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.forceLock(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.forceLock(
         lock_address, account_address, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
@@ -363,8 +327,8 @@ def bond_unlock(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.unlock(target, recipient, amount, data_str).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.unlock(target, recipient, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -380,8 +344,8 @@ def bond_force_unlock(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.forceUnlock(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.forceUnlock(
         lock_address, target, recipient, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
@@ -397,8 +361,8 @@ def bond_force_change_locked_account(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.forceChangeLockedAccount(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.forceChangeLockedAccount(
         lock_address, before_account_address, after_account_address, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
@@ -412,8 +376,8 @@ def bond_issue_from(
     lock_address: str = config.ZERO_ADDRESS,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.issueFrom(target, lock_address, amount).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.issueFrom(target, lock_address, amount).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -427,8 +391,8 @@ def bond_redeem_from(
     lock_address: str = config.ZERO_ADDRESS,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.redeemFrom(target_address, lock_address, amount).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.redeemFrom(target_address, lock_address, amount).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -438,8 +402,8 @@ def bond_set_tradable_exchange(
     invoker: UnitTestAccount, token: DeployedContract, exchange_address: str
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.setTradableExchange(exchange_address).transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.setTradableExchange(exchange_address).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -447,8 +411,8 @@ def bond_set_tradable_exchange(
 # BONDトークン：償還状態に変更
 def bond_change_to_redeemed(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-    TokenContract.functions.changeToRedeemed().transact(
+    token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+    token_contract.functions.changeToRedeemed().transact(
         {"from": invoker["account_address"]}
     )
 
@@ -457,7 +421,7 @@ def bond_change_to_redeemed(invoker: UnitTestAccount, token: DeployedContract):
 # Share Token
 ###############################################################
 # SHAREトークン：発行
-def issue_share_token(
+def share_issue_token(
     invoker: UnitTestAccount, attribute: dict[str, Any]
 ) -> DeployedContract:
     web3.eth.default_account = invoker["account_address"]
@@ -477,33 +441,33 @@ def issue_share_token(
         contract_name="IbetShare", args=arguments, deployer=invoker["account_address"]
     )
 
-    TokenContract = Contract.get_contract("IbetShare", contract_address)
+    token_contract = Contract.get_contract("IbetShare", contract_address)
     if "tradableExchange" in attribute:
-        TokenContract.functions.setTradableExchange(
+        token_contract.functions.setTradableExchange(
             to_checksum_address(attribute["tradableExchange"])
         ).transact({"from": invoker["account_address"]})
     if "personalInfoAddress" in attribute:
-        TokenContract.functions.setPersonalInfoAddress(
+        token_contract.functions.setPersonalInfoAddress(
             to_checksum_address(attribute["personalInfoAddress"])
         ).transact({"from": invoker["account_address"]})
     if "requirePersonalInfoRegistered" in attribute:
-        TokenContract.functions.setRequirePersonalInfoRegistered(
+        token_contract.functions.setRequirePersonalInfoRegistered(
             attribute["requirePersonalInfoRegistered"]
         ).transact({"from": invoker["account_address"]})
     if "contactInformation" in attribute:
-        TokenContract.functions.setContactInformation(
+        token_contract.functions.setContactInformation(
             attribute["contactInformation"]
         ).transact({"from": invoker["account_address"]})
     if "privacyPolicy" in attribute:
-        TokenContract.functions.setPrivacyPolicy(attribute["privacyPolicy"]).transact(
+        token_contract.functions.setPrivacyPolicy(attribute["privacyPolicy"]).transact(
             {"from": invoker["account_address"]}
         )
     if "memo" in attribute:
-        TokenContract.functions.setMemo(attribute["memo"]).transact(
+        token_contract.functions.setMemo(attribute["memo"]).transact(
             {"from": invoker["account_address"]}
         )
     if "transferable" in attribute:
-        TokenContract.functions.setTransferable(attribute["transferable"]).transact(
+        token_contract.functions.setTransferable(attribute["transferable"]).transact(
             {"from": invoker["account_address"]}
         )
 
@@ -511,30 +475,18 @@ def issue_share_token(
 
 
 # SHAREトークン：公開リスト登録
-def register_share_list(
+def share_register_token_list(
     invoker: UnitTestAccount,
     share_token: DeployedContract,
     token_list: DeployedContract,
 ):
-    TokenListContract = Contract.get_contract("TokenList", token_list["address"])
+    token_list_contract = Contract.get_contract("TokenList", token_list["address"])
 
     web3.eth.default_account = invoker["account_address"]
 
-    TokenListContract.functions.register(share_token["address"], "IbetShare").transact(
-        {"from": invoker["account_address"]}
-    )
-
-
-# SHAREトークン：募集（売出）
-def share_offer(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    token: DeployedContract,
-    amount: int,
-    price: int,
-):
-    share_transfer_to_exchange(invoker, exchange, token, amount)
-    make_sell(invoker, exchange, token, amount, price)
+    token_list_contract.functions.register(
+        share_token["address"], "IbetShare"
+    ).transact({"from": invoker["account_address"]})
 
 
 # SHAREトークン：取引コントラクトにデポジット
@@ -545,35 +497,35 @@ def share_transfer_to_exchange(
     amount: int,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.transfer(exchange["address"], amount).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.transfer(exchange["address"], amount).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # SHAREトークン：移転
-def transfer_share_token(
+def share_transfer_token(
     invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.transfer(to["account_address"], amount).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.transfer(to["account_address"], amount).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # SHAREトークン：移管
-def reallocate_share_token(
+def share_reallocate_token(
     invoker: UnitTestAccount, to: UnitTestAccount, token: DeployedContract, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract: Any = Contract.get_contract("IbetShare", token["address"])
+    token_contract: Any = Contract.get_contract("IbetShare", token["address"])
     tx_params: TxParams = {
         "from": invoker["account_address"],
         "gas": 6000000,
         "gasPrice": Wei(0),
     }
-    tx: TxParams = TokenContract.functions.transfer(
+    tx: TxParams = token_contract.functions.transfer(
         to["account_address"], amount
     ).build_transaction(tx_params)
     marker = b"\xc0\xff\xee\x00"
@@ -590,19 +542,19 @@ def reallocate_share_token(
 
 
 # SHAREトークン：無効化
-def invalidate_share_token(invoker: UnitTestAccount, token: DeployedContract):
+def share_set_status(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    ShareTokenContract = Contract.get_contract("IbetShare", token["address"])
-    ShareTokenContract.functions.setStatus(False).transact(
+    share_token_contract = Contract.get_contract("IbetShare", token["address"])
+    share_token_contract.functions.setStatus(False).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # SHAREトークン：譲渡不可設定
-def untransferable_share_token(invoker: UnitTestAccount, token: DeployedContract):
+def share_set_transferable(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    ShareTokenContract = Contract.get_contract("IbetShare", token["address"])
-    ShareTokenContract.functions.setTransferable(False).transact(
+    share_token_contract = Contract.get_contract("IbetShare", token["address"])
+    share_token_contract.functions.setTransferable(False).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -613,8 +565,8 @@ def share_set_transfer_approval_required(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.setTransferApprovalRequired(required).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.setTransferApprovalRequired(required).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -629,8 +581,8 @@ def share_apply_for_transfer(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.applyForTransfer(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.applyForTransfer(
         recipient["account_address"], amount, application_data
     ).transact({"from": invoker["account_address"]})
 
@@ -644,8 +596,8 @@ def share_cancel_transfer(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.cancelTransfer(application_id, application_data).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.cancelTransfer(application_id, application_data).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -659,8 +611,8 @@ def share_approve_transfer(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.approveTransfer(application_id, application_data).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.approveTransfer(application_id, application_data).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -675,8 +627,8 @@ def share_lock(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.lock(lock_address, amount, data_str).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.lock(lock_address, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -691,8 +643,8 @@ def share_force_lock(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.forceLock(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.forceLock(
         lock_address, account_address, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
@@ -708,8 +660,8 @@ def share_unlock(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.unlock(target, recipient, amount, data_str).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.unlock(target, recipient, amount, data_str).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -726,8 +678,8 @@ def share_force_unlock(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.forceUnlock(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.forceUnlock(
         lock_address, target, recipient, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
@@ -743,8 +695,8 @@ def share_force_change_locked_account(
     data_str: str = "",
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.forceChangeLockedAccount(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.forceChangeLockedAccount(
         lock_address, before_account_address, after_account_address, amount, data_str
     ).transact({"from": invoker["account_address"]})
 
@@ -759,8 +711,8 @@ def share_issue_from(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.issueFrom(target, lock_address, amount).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.issueFrom(target, lock_address, amount).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -775,8 +727,8 @@ def share_redeem_from(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.redeemFrom(target_address, lock_address, amount).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.redeemFrom(target_address, lock_address, amount).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -787,8 +739,8 @@ def share_set_tradable_exchange(
 ):
     web3.eth.default_account = invoker["account_address"]
 
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.setTradableExchange(exchange_address).transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.setTradableExchange(exchange_address).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -796,8 +748,8 @@ def share_set_tradable_exchange(
 # SHAREトークン：消却状態に変更
 def share_change_to_canceled(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetShare", token["address"])
-    TokenContract.functions.changeToCanceled().transact(
+    token_contract = Contract.get_contract("IbetShare", token["address"])
+    token_contract.functions.changeToCanceled().transact(
         {"from": invoker["account_address"]}
     )
 
@@ -806,7 +758,7 @@ def share_change_to_canceled(invoker: UnitTestAccount, token: DeployedContract):
 # Coupon Token
 ###############################################################
 # COUPONトークン：発行
-def issue_coupon_token(
+def coupon_issue_token(
     invoker: UnitTestAccount, attribute: dict[str, Any]
 ) -> DeployedContract:
     web3.eth.default_account = invoker["account_address"]
@@ -832,18 +784,18 @@ def issue_coupon_token(
 
 
 # COUPONトークン：公開リスト登録
-def coupon_register_list(
+def coupon_register_token_list(
     invoker: UnitTestAccount, token: DeployedContract, token_list: DeployedContract
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenListContract = Contract.get_contract("TokenList", token_list["address"])
-    TokenListContract.functions.register(token["address"], "IbetCoupon").transact(
+    token_list_contract = Contract.get_contract("TokenList", token_list["address"])
+    token_list_contract.functions.register(token["address"], "IbetCoupon").transact(
         {"from": invoker["account_address"]}
     )
 
 
 # COUPONトークン：トークンの移転
-def transfer_coupon_token(
+def coupon_transfer_token(
     invoker: UnitTestAccount, token: DeployedContract, to: UnitTestAccount, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
@@ -854,44 +806,32 @@ def transfer_coupon_token(
 
 
 # COUPONトークン：無効化
-def invalidate_coupon_token(invoker: UnitTestAccount, token: DeployedContract):
+def coupon_set_status(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    CouponTokenContract = Contract.get_contract("IbetCoupon", token["address"])
-    CouponTokenContract.functions.setStatus(False).transact(
+    coupon_token_contract = Contract.get_contract("IbetCoupon", token["address"])
+    coupon_token_contract.functions.setStatus(False).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # COUPONトークン：譲渡不可設定
-def untransferable_coupon_token(invoker: UnitTestAccount, token: DeployedContract):
+def coupon_set_transferable(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    CouponTokenContract = Contract.get_contract("IbetCoupon", token["address"])
-    CouponTokenContract.functions.setTransferable(False).transact(
+    coupon_token_contract = Contract.get_contract("IbetCoupon", token["address"])
+    coupon_token_contract.functions.setTransferable(False).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # COUPONトークン：消費
-def consume_coupon_token(
+def coupon_consume(
     invoker: UnitTestAccount, coupon_token: DeployedContract, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    CouponTokenContract = Contract.get_contract("IbetCoupon", coupon_token["address"])
-    CouponTokenContract.functions.consume(amount).transact(
+    coupon_token_contract = Contract.get_contract("IbetCoupon", coupon_token["address"])
+    coupon_token_contract.functions.consume(amount).transact(
         {"from": invoker["account_address"]}
     )
-
-
-# COUPONトークン：売出
-def coupon_offer(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    token: DeployedContract,
-    amount: int,
-    price: int,
-):
-    coupon_transfer_to_exchange(invoker, exchange, token, amount)
-    make_sell(invoker, exchange, token, amount, price)
 
 
 # COUPONトークン：取引コントラクトにデポジット
@@ -919,7 +859,7 @@ def coupon_withdraw_from_exchange(
 ):
     web3.eth.default_account = invoker["account_address"]
     exchange_contract = Contract.get_contract(
-        contract_name="IbetExchange", address=exchange["address"]
+        contract_name="IbetExchangeInterface", address=exchange["address"]
     )
     exchange_contract.functions.withdraw(token["address"]).transact(
         {"from": invoker["account_address"]}
@@ -931,8 +871,8 @@ def coupon_set_tradable_exchange(
     invoker: UnitTestAccount, token: DeployedContract, exchange_address: str
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetCoupon", token["address"])
-    TokenContract.functions.setTradableExchange(exchange_address).transact(
+    token_contract = Contract.get_contract("IbetCoupon", token["address"])
+    token_contract.functions.setTradableExchange(exchange_address).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -941,7 +881,7 @@ def coupon_set_tradable_exchange(
 # Membership Token
 ###############################################################
 # MEMBERSHIPトークン：発行
-def membership_issue(
+def membership_issue_token(
     invoker: UnitTestAccount, attribute: dict[str, Any]
 ) -> DeployedContract:
     web3.eth.default_account = invoker["account_address"]
@@ -964,13 +904,13 @@ def membership_issue(
     return {"address": contract_address, "abi": abi}
 
 
-# MEMBERSHIPトークン：開リスト登録
-def membership_register_list(
+# MEMBERSHIPトークン：公開リスト登録
+def membership_register_token_list(
     invoker: UnitTestAccount, token: DeployedContract, token_list: DeployedContract
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenListContract = Contract.get_contract("TokenList", token_list["address"])
-    TokenListContract.functions.register(token["address"], "IbetMembership").transact(
+    token_list_contract = Contract.get_contract("TokenList", token_list["address"])
+    token_list_contract.functions.register(token["address"], "IbetMembership").transact(
         {"from": invoker["account_address"]}
     )
 
@@ -978,8 +918,8 @@ def membership_register_list(
 # MEMBERSHIPトークン：無効化
 def membership_invalidate(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetMembership", token["address"])
-    TokenContract.functions.setStatus(False).transact(
+    token_contract = Contract.get_contract("IbetMembership", token["address"])
+    token_contract.functions.setStatus(False).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -987,22 +927,10 @@ def membership_invalidate(invoker: UnitTestAccount, token: DeployedContract):
 # MEMBERSHIPトークン：譲渡不可設定
 def membership_untransferable(invoker: UnitTestAccount, token: DeployedContract):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetMembership", token["address"])
-    TokenContract.functions.setTransferable(False).transact(
+    token_contract = Contract.get_contract("IbetMembership", token["address"])
+    token_contract.functions.setTransferable(False).transact(
         {"from": invoker["account_address"]}
     )
-
-
-# MEMBERSHIPトークン：募集（売出）
-def membership_offer(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    token: DeployedContract,
-    amount: int,
-    price: int,
-):
-    membership_transfer_to_exchange(invoker, exchange, token, amount)
-    make_sell(invoker, exchange, token, amount, price)
 
 
 # MEMBERSHIPトークン：取引コントラクトにデポジット
@@ -1013,8 +941,8 @@ def membership_transfer_to_exchange(
     amount: int,
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetMembership", token["address"])
-    TokenContract.functions.transfer(exchange["address"], amount).transact(
+    token_contract = Contract.get_contract("IbetMembership", token["address"])
+    token_contract.functions.transfer(exchange["address"], amount).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -1024,14 +952,14 @@ def membership_set_tradable_exchange(
     invoker: UnitTestAccount, token: DeployedContract, exchange_address: str
 ):
     web3.eth.default_account = invoker["account_address"]
-    TokenContract = Contract.get_contract("IbetMembership", token["address"])
-    TokenContract.functions.setTradableExchange(exchange_address).transact(
+    token_contract = Contract.get_contract("IbetMembership", token["address"])
+    token_contract.functions.setTradableExchange(exchange_address).transact(
         {"from": invoker["account_address"]}
     )
 
 
 # MEMBERSHIPトークン：移転
-def transfer_membership_token(
+def membership_transfer_token(
     invoker: UnitTestAccount, token: DeployedContract, to: UnitTestAccount, amount: int
 ):
     web3.eth.default_account = invoker["account_address"]
@@ -1042,124 +970,8 @@ def transfer_membership_token(
 
 
 ###############################################################
-# DEX
+# IbetSecurityTokenEscrow
 ###############################################################
-# Tokenの売りMake注文
-def make_sell(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    token: DeployedContract,
-    amount: int,
-    price: int,
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    agent = eth_account["agent"]
-    ExchangeContract.functions.createOrder(
-        token["address"], amount, price, False, agent["account_address"]
-    ).transact({"from": invoker["account_address"]})
-
-
-# Tokenの買いTake注文
-def take_buy(
-    invoker: UnitTestAccount, exchange: DeployedContract, order_id: int, amount: int
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    ExchangeContract.functions.executeOrder(order_id, amount, True).transact(
-        {"from": invoker["account_address"]}
-    )
-
-
-# Tokenの買いMake注文
-def make_buy(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    token: DeployedContract,
-    amount: int,
-    price: int,
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    agent = eth_account["agent"]
-    ExchangeContract.functions.createOrder(
-        token["address"], amount, price, True, agent["account_address"]
-    ).transact({"from": invoker["account_address"]})
-
-
-# Tokenの売りTake注文
-def take_sell(
-    invoker: UnitTestAccount, exchange: DeployedContract, order_id: int, amount: int
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    ExchangeContract.functions.executeOrder(order_id, amount, False).transact(
-        {"from": invoker["account_address"]}
-    )
-
-
-# 直近注文IDを取得
-def get_latest_orderid(exchange: DeployedContract) -> int:
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    latest_orderid = ExchangeContract.functions.latestOrderId().call()
-    return latest_orderid
-
-
-# 注文の取消
-def cancel_order(invoker: UnitTestAccount, exchange: DeployedContract, order_id: int):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    ExchangeContract.functions.cancelOrder(order_id).transact(
-        {"from": invoker["account_address"]}
-    )
-
-
-# 注文の強制取消
-def force_cancel_order(
-    invoker: UnitTestAccount, exchange: DeployedContract, order_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    ExchangeContract.functions.forceCancelOrder(order_id).transact(
-        {"from": invoker["account_address"]}
-    )
-
-
-# 直近約定IDを取得
-def get_latest_agreementid(exchange: DeployedContract, order_id: int) -> int:
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    latest_agreementid = ExchangeContract.functions.latestAgreementId(order_id).call()
-    return latest_agreementid
-
-
-# 約定の資金決済
-def confirm_agreement(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    order_id: int,
-    agreement_id: int,
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    ExchangeContract.functions.confirmAgreement(order_id, agreement_id).transact(
-        {"from": invoker["account_address"]}
-    )
-
-
-# 約定の取消
-def cancel_agreement(
-    invoker: UnitTestAccount,
-    exchange: DeployedContract,
-    order_id: int,
-    agreement_id: int,
-):
-    web3.eth.default_account = invoker["account_address"]
-    ExchangeContract = Contract.get_contract("IbetExchange", exchange["address"])
-    ExchangeContract.functions.cancelAgreement(order_id, agreement_id).transact(
-        {"from": invoker["account_address"]}
-    )
-
-
 # エスクローの作成
 def create_security_token_escrow(
     invoker: UnitTestAccount,
@@ -1170,19 +982,19 @@ def create_security_token_escrow(
     amount: int,
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenEscrowContract = Contract.get_contract(
+    security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    IbetSecurityTokenEscrowContract.functions.createEscrow(
+    security_token_escrow_contract.functions.createEscrow(
         token["address"], recipient_address, amount, agent_address, "{}", "{}"
     ).transact({"from": invoker["account_address"]})
 
 
 def get_latest_security_escrow_id(exchange: DeployedContract) -> int:
-    IbetSecurityTokenEscrowContract = Contract.get_contract(
+    security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    latest_escrow_id = IbetSecurityTokenEscrowContract.functions.latestEscrowId().call()
+    latest_escrow_id = security_token_escrow_contract.functions.latestEscrowId().call()
     return latest_escrow_id
 
 
@@ -1191,10 +1003,10 @@ def cancel_security_token_escrow(
     invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenEscrowContract = Contract.get_contract(
+    security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    IbetSecurityTokenEscrowContract.functions.cancelEscrow(escrow_id).transact(
+    security_token_escrow_contract.functions.cancelEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -1207,10 +1019,10 @@ def approve_transfer_security_token_escrow(
     transfer_approval_data: str,
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenEscrowContract = Contract.get_contract(
+    security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    IbetSecurityTokenEscrowContract.functions.approveTransfer(
+    security_token_escrow_contract.functions.approveTransfer(
         escrow_id, transfer_approval_data
     ).transact({"from": invoker["account_address"]})
 
@@ -1220,10 +1032,10 @@ def finish_security_token_escrow(
     invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenEscrowContract = Contract.get_contract(
+    security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    IbetSecurityTokenEscrowContract.functions.finishEscrow(escrow_id).transact(
+    security_token_escrow_contract.functions.finishEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -1238,15 +1050,15 @@ def create_token_escrow(
     amount: int,
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetEscrow = Contract.get_contract("IbetEscrow", exchange["address"])
-    IbetEscrow.functions.createEscrow(
+    ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
+    ibet_escrow.functions.createEscrow(
         token["address"], recipient_address, amount, agent_address, "{}"
     ).transact({"from": invoker["account_address"]})
 
 
 def get_latest_escrow_id(exchange: DeployedContract) -> int:
-    IbetEscrow = Contract.get_contract("IbetEscrow", exchange["address"])
-    latest_escrow_id = IbetEscrow.functions.latestEscrowId().call()
+    ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
+    latest_escrow_id = ibet_escrow.functions.latestEscrowId().call()
     return latest_escrow_id
 
 
@@ -1255,12 +1067,15 @@ def finish_token_escrow(
     invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetEscrow = Contract.get_contract("IbetEscrow", exchange["address"])
-    IbetEscrow.functions.finishEscrow(escrow_id).transact(
+    ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
+    ibet_escrow.functions.finishEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}
     )
 
 
+###############################################################
+# IbetSecurityTokenDVP
+###############################################################
 # DVP決済の作成
 def create_security_token_delivery(
     invoker: UnitTestAccount,
@@ -1271,10 +1086,10 @@ def create_security_token_delivery(
     amount: int,
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenDVPContract = Contract.get_contract(
+    security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    IbetSecurityTokenDVPContract.functions.createDelivery(
+    security_token_dvp_contract.functions.createDelivery(
         token["address"],
         recipient_address,
         amount,
@@ -1284,12 +1099,10 @@ def create_security_token_delivery(
 
 
 def get_latest_security_delivery_id(exchange: DeployedContract) -> int:
-    IbetSecurityTokenDVPContract = Contract.get_contract(
+    security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    latest_delivery_id = (
-        IbetSecurityTokenDVPContract.functions.latestDeliveryId().call()
-    )
+    latest_delivery_id = security_token_dvp_contract.functions.latestDeliveryId().call()
     return latest_delivery_id
 
 
@@ -1298,10 +1111,10 @@ def cancel_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenDVPContract = Contract.get_contract(
+    security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    IbetSecurityTokenDVPContract.functions.cancelDelivery(delivery_id).transact(
+    security_token_dvp_contract.functions.cancelDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -1311,10 +1124,10 @@ def confirm_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenDVPContract = Contract.get_contract(
+    security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    IbetSecurityTokenDVPContract.functions.confirmDelivery(delivery_id).transact(
+    security_token_dvp_contract.functions.confirmDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -1324,10 +1137,10 @@ def finish_security_token_dvlivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenDVPContract = Contract.get_contract(
+    security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    IbetSecurityTokenDVPContract.functions.finishDelivery(delivery_id).transact(
+    security_token_dvp_contract.functions.finishDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}
     )
 
@@ -1337,9 +1150,9 @@ def abort_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
 ):
     web3.eth.default_account = invoker["account_address"]
-    IbetSecurityTokenDVPContract = Contract.get_contract(
+    security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    IbetSecurityTokenDVPContract.functions.abortDelivery(delivery_id).transact(
+    security_token_dvp_contract.functions.abortDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}
     )

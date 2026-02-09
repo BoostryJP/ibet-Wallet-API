@@ -34,19 +34,19 @@ from tests.contract_modules import (
     bond_approve_transfer,
     bond_cancel_transfer,
     bond_issue_from,
+    bond_issue_token,
     bond_lock,
     bond_redeem_from,
+    bond_register_token_list,
     bond_set_transfer_approval_required,
     bond_transfer_to_exchange,
     bond_unlock,
     create_security_token_escrow,
     finish_security_token_escrow,
     get_latest_security_escrow_id,
-    issue_bond_token,
-    issue_share_token,
-    register_bond_list,
     register_personalinfo,
-    register_share_list,
+    share_issue_token,
+    share_register_token_list,
     transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
@@ -122,8 +122,8 @@ class TestEventsIbetSecurityTokenInterface:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(issuer, args)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, args)
+        bond_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -152,8 +152,8 @@ class TestEventsIbetSecurityTokenInterface:
             "memo": "メモ",
             "transferable": True,
         }
-        token = issue_share_token(issuer, args)
-        register_share_list(issuer, token, token_list)
+        token = share_issue_token(issuer, args)
+        share_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -176,7 +176,7 @@ class TestEventsIbetSecurityTokenInterface:
         # Issuer issues bond token.
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
@@ -194,7 +194,7 @@ class TestEventsIbetSecurityTokenInterface:
             20000,
         )
         bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract.address}, token, 10000
+            self.user1, {"address": escrow_contract["address"]}, token, 10000
         )
         # user1: 20000 trader: 0
 
@@ -209,21 +209,23 @@ class TestEventsIbetSecurityTokenInterface:
 
         create_security_token_escrow(
             self.user1,
-            {"address": escrow_contract.address},
+            {"address": escrow_contract["address"]},
             token,
             self.trader["account_address"],
             self.agent["account_address"],
             7000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id(
-            {"address": escrow_contract.address}
+            {"address": escrow_contract["address"]}
         )
         finish_security_token_escrow(
-            self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id
+            self.agent,
+            {"address": escrow_contract["address"]},
+            _latest_security_escrow_id,
         )
         approve_transfer_security_token_escrow(
             self.issuer,
-            {"address": escrow_contract.address},
+            {"address": escrow_contract["address"]},
             _latest_security_escrow_id,
             "",
         )
@@ -231,17 +233,19 @@ class TestEventsIbetSecurityTokenInterface:
 
         create_security_token_escrow(
             self.user1,
-            {"address": escrow_contract.address},
+            {"address": escrow_contract["address"]},
             token,
             self.trader["account_address"],
             self.agent["account_address"],
             2000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id(
-            {"address": escrow_contract.address}
+            {"address": escrow_contract["address"]}
         )
         finish_security_token_escrow(
-            self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id
+            self.agent,
+            {"address": escrow_contract["address"]},
+            _latest_security_escrow_id,
         )
         # user1: 13000 trader: 17000
 

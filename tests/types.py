@@ -20,7 +20,6 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Any, NotRequired, TypedDict
 
 from eth_typing import ChecksumAddress
-from web3.contract import Contract as Web3Contract
 
 
 class DeployedContract(TypedDict):
@@ -29,17 +28,12 @@ class DeployedContract(TypedDict):
 
 
 class SharedContract(TypedDict):
-    PaymentGateway: DeployedContract
     PersonalInfo: DeployedContract
-    IbetShareExchange: DeployedContract
-    IbetStraightBondExchange: DeployedContract
-    IbetMembershipExchange: DeployedContract
-    IbetCouponExchange: DeployedContract
     TokenList: DeployedContract
-    E2EMessaging: Web3Contract
-    IbetEscrow: Web3Contract
-    IbetSecurityTokenEscrow: Web3Contract
-    IbetSecurityTokenDVP: Web3Contract
+    E2EMessaging: DeployedContract
+    IbetEscrow: DeployedContract
+    IbetSecurityTokenEscrow: DeployedContract
+    IbetSecurityTokenDVP: DeployedContract
 
 
 class UnitTestAccount(TypedDict):

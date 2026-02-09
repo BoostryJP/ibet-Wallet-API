@@ -45,23 +45,23 @@ from batch import indexer_Transfer
 from batch.indexer_Transfer import LOG, UTC, Processor
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    coupon_register_list,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    membership_issue,
-    membership_register_list,
-    reallocate_share_token,
-    register_bond_list,
-    register_share_list,
+    bond_issue_token,
+    bond_register_token_list,
+    bond_transfer_token,
+    coupon_issue_token,
+    coupon_register_token_list,
+    coupon_transfer_token,
+    membership_issue_token,
+    membership_register_token_list,
+    membership_transfer_token,
     share_force_change_locked_account,
     share_force_unlock,
+    share_issue_token,
     share_lock,
+    share_reallocate_token,
+    share_register_token_list,
+    share_transfer_token,
     share_unlock,
-    transfer_bond_token,
-    transfer_coupon_token,
-    transfer_membership_token,
-    transfer_share_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils import PersonalInfoUtils
@@ -158,8 +158,8 @@ class TestProcessor:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(issuer, args)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, args)
+        bond_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -183,8 +183,8 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = membership_issue(issuer, args)
-        membership_register_list(issuer, token, token_list)
+        token = membership_issue_token(issuer, args)
+        membership_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -208,8 +208,8 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = issue_coupon_token(issuer, args)
-        coupon_register_list(issuer, token, token_list)
+        token = coupon_issue_token(issuer, args)
+        coupon_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -238,8 +238,8 @@ class TestProcessor:
             "memo": "メモ",
             "transferable": True,
         }
-        token = issue_share_token(issuer, args)
-        register_share_list(issuer, token, token_list)
+        token = share_issue_token(issuer, args)
+        share_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -296,7 +296,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -353,7 +353,7 @@ class TestProcessor:
         block_number_4 = web3.eth.block_number
 
         # emit "Reallocation"
-        reallocate_share_token(
+        share_reallocate_token(
             invoker=self.trader,
             to=self.trader2,
             token=share_token,
@@ -489,7 +489,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -593,7 +593,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -601,7 +601,7 @@ class TestProcessor:
         )
         block_number_1 = web3.eth.block_number
 
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader2,
             token=share_token,
@@ -849,12 +849,12 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_bond_token(
+        bond_transfer_token(
             invoker=self.issuer, to=self.trader, token=bond_token, amount=100000
         )
         bond_block_number = web3.eth.block_number
 
-        transfer_membership_token(
+        membership_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=membership_token,
@@ -862,7 +862,7 @@ class TestProcessor:
         )
         membership_block_number = web3.eth.block_number
 
-        transfer_coupon_token(
+        coupon_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=coupon_token,
@@ -983,7 +983,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1093,7 +1093,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1207,7 +1207,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1330,7 +1330,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1472,7 +1472,7 @@ class TestProcessor:
         )
 
         # Transfer
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1526,7 +1526,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1570,7 +1570,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1620,7 +1620,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,
@@ -1669,7 +1669,7 @@ class TestProcessor:
         )
 
         # emit "Transfer"
-        transfer_share_token(
+        share_transfer_token(
             invoker=self.issuer,
             to=self.trader,
             token=share_token,

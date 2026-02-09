@@ -30,7 +30,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from app.model.db import ExecutableContract, IDXBondToken, IDXPosition, Listing
 from tests.account_config import eth_account
-from tests.contract_modules import issue_bond_token, register_bond_list
+from tests.contract_modules import bond_issue_token, bond_register_token_list
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
@@ -124,15 +124,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # Call API
         req_params = {
@@ -240,15 +240,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # Call API
         req_params = {
@@ -344,15 +344,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         bf_position = IDXPosition()
         bf_position.token_address = bond_token["address"]
@@ -455,15 +455,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         token = {
             "token_address": bond_token["address"],
@@ -683,15 +683,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         token = {
             "token_address": bond_token["address"],
@@ -731,15 +731,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         contract = {
             "contract_address": bond_token["address"],
@@ -778,15 +778,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # Call API
         req_params = {
@@ -817,15 +817,15 @@ class TestAdminTokensPOST:
         token_list = TestAdminTokensPOST.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestAdminTokensPOST.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
+        bond_token = bond_issue_token(issuer, attribute)
 
-        register_bond_list(issuer, bond_token, token_list)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # Call API
         req_params = {

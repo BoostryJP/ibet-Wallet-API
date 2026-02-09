@@ -42,10 +42,10 @@ from batch import indexer_Consume_Coupon
 from batch.indexer_Consume_Coupon import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    consume_coupon_token,
-    coupon_register_list,
-    issue_coupon_token,
-    transfer_coupon_token,
+    coupon_consume,
+    coupon_issue_token,
+    coupon_register_token_list,
+    coupon_transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
@@ -112,8 +112,8 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = issue_coupon_token(issuer, args)
-        coupon_register_list(issuer, token, token_list)
+        token = coupon_issue_token(issuer, args)
+        coupon_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -146,7 +146,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
         block_number = web3.eth.block_number
 
         # Run target process
@@ -180,10 +180,10 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
         block_number = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token, self.trader, 2000)
-        consume_coupon_token(self.trader, token, 2000)
+        coupon_transfer_token(self.issuer, token, self.trader, 2000)
+        coupon_consume(self.trader, token, 2000)
         block_number2 = web3.eth.block_number
 
         # Run target process
@@ -229,15 +229,15 @@ class TestProcessor:
         self.listing_token(token2["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
         block_number = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token, self.trader, 2000)
-        consume_coupon_token(self.trader, token, 2000)
+        coupon_transfer_token(self.issuer, token, self.trader, 2000)
+        coupon_consume(self.trader, token, 2000)
         block_number2 = web3.eth.block_number
-        consume_coupon_token(self.issuer, token2, 3000)
+        coupon_consume(self.issuer, token2, 3000)
         block_number3 = web3.eth.block_number
-        transfer_coupon_token(self.issuer, token2, self.trader, 4000)
-        consume_coupon_token(self.trader, token2, 4000)
+        coupon_transfer_token(self.issuer, token2, self.trader, 4000)
+        coupon_consume(self.trader, token2, 4000)
         block_number4 = web3.eth.block_number
 
         # Run target process
@@ -315,7 +315,7 @@ class TestProcessor:
         )
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         # Run target process
         await processor.sync_new_logs()
@@ -351,7 +351,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_current = web3.eth.block_number
         # Run initial sync
@@ -366,7 +366,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_current = web3.eth.block_number
         # Run target process
@@ -396,7 +396,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -417,7 +417,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -451,7 +451,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -471,7 +471,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -504,7 +504,7 @@ class TestProcessor:
         )
         self.listing_token(token["address"], session)
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises SQLAlchemyError.
@@ -522,7 +522,7 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        coupon_consume(self.issuer, token, 1000)
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises SQLAlchemyError.

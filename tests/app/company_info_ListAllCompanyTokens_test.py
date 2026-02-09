@@ -28,14 +28,14 @@ from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    coupon_register_list,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    membership_issue,
-    membership_register_list,
-    register_bond_list,
-    register_share_list,
+    bond_issue_token,
+    bond_register_token_list,
+    coupon_issue_token,
+    coupon_register_token_list,
+    membership_issue_token,
+    membership_register_token_list,
+    share_issue_token,
+    share_register_token_list,
 )
 from tests.types import SharedContract
 
@@ -159,12 +159,11 @@ class TestListAllCompanyTokens:
 
     @staticmethod
     def _set_env(shared_contract: SharedContract):
-        bond_exchange = shared_contract["IbetStraightBondExchange"]
-        membership_exchange = shared_contract["IbetMembershipExchange"]
-        coupon_exchange = shared_contract["IbetCouponExchange"]
-        share_exchange = shared_contract["IbetShareExchange"]
+        bond_exchange = shared_contract["IbetSecurityTokenEscrow"]
+        share_exchange = shared_contract["IbetSecurityTokenEscrow"]
+        membership_exchange = shared_contract["IbetEscrow"]
+        coupon_exchange = shared_contract["IbetEscrow"]
         personal_info = shared_contract["PersonalInfo"]
-        payment_gateway = shared_contract["PaymentGateway"]
         token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         return (
@@ -173,7 +172,6 @@ class TestListAllCompanyTokens:
             coupon_exchange,
             share_exchange,
             personal_info,
-            payment_gateway,
             token_list,
         )
 
@@ -188,7 +186,7 @@ class TestListAllCompanyTokens:
     ):
         # 環境変数設定変更
         config.BOND_TOKEN_ENABLED = True
-        bond_exchange, _, _, _, personal_info, _, token_list = self._set_env(
+        bond_exchange, _, _, _, personal_info, token_list = self._set_env(
             shared_contract
         )
 
@@ -197,8 +195,8 @@ class TestListAllCompanyTokens:
         attribute = self._bond_attribute(
             bond_exchange["address"], personal_info["address"]
         )
-        token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         session.commit()
@@ -266,7 +264,7 @@ class TestListAllCompanyTokens:
     ):
         # 環境変数設定変更
         config.SHARE_TOKEN_ENABLED = True
-        _, _, _, share_exchange, personal_info, _, token_list = self._set_env(
+        _, _, _, share_exchange, personal_info, token_list = self._set_env(
             shared_contract
         )
 
@@ -275,8 +273,8 @@ class TestListAllCompanyTokens:
         attribute = self._share_attribute(
             share_exchange["address"], personal_info["address"]
         )
-        token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, token, token_list)
+        token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         session.commit()
@@ -329,13 +327,13 @@ class TestListAllCompanyTokens:
     ):
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        _, membership_exchange, _, _, _, _, token_list = self._set_env(shared_contract)
+        _, membership_exchange, _, _, _, token_list = self._set_env(shared_contract)
 
         # 新規トークン発行
         issuer = eth_account["issuer"]
         attribute = self._membership_attribute(membership_exchange["address"])
-        token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, token, token_list)
+        token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         session.commit()
@@ -384,13 +382,13 @@ class TestListAllCompanyTokens:
     ):
         # 環境変数設定変更
         config.COUPON_TOKEN_ENABLED = True
-        _, _, coupon_exchange, _, _, _, token_list = self._set_env(shared_contract)
+        _, _, coupon_exchange, _, _, token_list = self._set_env(shared_contract)
 
         # 新規トークン発行
         issuer = eth_account["issuer"]
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, token, token_list)
+        token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         session.commit()
@@ -442,22 +440,22 @@ class TestListAllCompanyTokens:
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
-        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(
+        _, membership_exchange, coupon_exchange, _, _, token_list = self._set_env(
             shared_contract
         )
 
         # 新規トークン発行（会員権）
         attribute = self._membership_attribute(membership_exchange["address"])
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership_token, token_list)
         self._insert_listing(
             session, membership_token["address"], issuer["account_address"]
         )
 
         # 新規トークン発行（クーポン）
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, coupon_token, token_list)
         self._insert_listing(
             session, coupon_token["address"], issuer["account_address"]
         )
@@ -552,21 +550,21 @@ class TestListAllCompanyTokens:
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
-        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(
+        _, membership_exchange, coupon_exchange, _, _, token_list = self._set_env(
             shared_contract
         )
 
         # データ準備
         attribute = self._membership_attribute(membership_exchange["address"])
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership_token, token_list)
         self._insert_listing(
             session, membership_token["address"], issuer["account_address"], True
         )
 
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, coupon_token, token_list)
         self._insert_listing(
             session, coupon_token["address"], issuer["account_address"], False
         )
@@ -649,21 +647,21 @@ class TestListAllCompanyTokens:
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
-        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(
+        _, membership_exchange, coupon_exchange, _, _, token_list = self._set_env(
             shared_contract
         )
 
         # データ準備
         attribute = self._membership_attribute(membership_exchange["address"])
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership_token, token_list)
         self._insert_listing(
             session, membership_token["address"], issuer["account_address"], True
         )
 
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, coupon_token, token_list)
         self._insert_listing(
             session, coupon_token["address"], issuer["account_address"], False
         )

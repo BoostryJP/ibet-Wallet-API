@@ -20,10 +20,8 @@ SPDX-License-Identifier: Apache-2.0
 
 from .company import Company
 from .executable_contract import ExecutableContract
-from .idx_agreement import AgreementStatus, IDXAgreement
 from .idx_consume_coupon import IDXConsumeCoupon
 from .idx_lock_unlock import IDXLock, IDXUnlock, LockDataMessage, UnlockDataMessage
-from .idx_order import IDXOrder
 from .idx_position import (
     IDXLockedPosition,
     IDXPosition,

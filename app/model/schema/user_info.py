@@ -37,11 +37,6 @@ class TaggingAccountAddressRequest(BaseModel):
     account_tag: str | None = Field(..., description="Account tag", max_length=50)
 
 
-class RetrievePaymentAccountQuery(BaseModel):
-    account_address: EthereumAddress = Field(..., description="Account Address")
-    agent_address: EthereumAddress = Field(..., description="Agent Address")
-
-
 class RetrievePersonalInfoQuery(BaseModel):
     account_address: EthereumAddress = Field(..., description="Account Address")
     owner_address: EthereumAddress = Field(..., description="Owner(issuer) address")
@@ -59,14 +54,6 @@ class ApprovalStatus(int, Enum):
     OK = 2
     WARN = 3
     BAN = 4
-
-
-class RetrievePaymentAccountRegistrationStatusResponse(BaseModel):
-    account_address: EthereumAddress
-    agent_address: EthereumAddress
-    approval_status: ApprovalStatus = Field(
-        description="approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))"
-    )
 
 
 class RetrievePersonalInfoRegistrationStatusResponse(BaseModel):

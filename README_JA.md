@@ -44,8 +44,6 @@
     - テスト用 DB: ethcache_test
 - 以下のコントラクトを事前にデプロイする必要があります。
   - TokenList
-  - PaymentGateway （任意）
-  - IbetExchange （任意）
   - IbetEscrow （任意）
   - IbetSecurityTokenEscrow （任意）
   - E2EMessaging （任意）

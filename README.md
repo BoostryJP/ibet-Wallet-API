@@ -43,8 +43,6 @@ English | <a href='./README_JA.md'>日本語</a>
     - DB for test use: ethcache_test
 - Need to deploy the following contract beforehand.
   - TokenList
-  - PaymentGateway (optional)
-  - IbetExchange (optional)
   - IbetEscrow (optional)
   - IbetSecurityTokenEscrow (optional)
   - E2EMessaging (optional)

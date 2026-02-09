@@ -246,11 +246,7 @@ async def send_raw_transaction(
         if executable_contract is None:
             # If it is not a default contract, return error status.
             if (
-                to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
-                and to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
-                and to_contract_address
-                != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-                and to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+                to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address
                 != config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS
@@ -455,11 +451,7 @@ async def send_raw_transaction_no_wait(
         if executable_contract is None:
             # If it is not a default contract, return error status.
             if (
-                to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
-                and to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
-                and to_contract_address
-                != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-                and to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+                to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address
                 != config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS

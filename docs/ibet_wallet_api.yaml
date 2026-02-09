@@ -79,12 +79,9 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: sort order
             default: 0
-            title: Sort Order
           description: sort order
       responses:
         '200':
@@ -164,12 +161,9 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: sort order
             default: 0
-            title: Sort Order
           description: sort order
       responses:
         '200':
@@ -644,43 +638,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequestValidationErrorResponse'
-  /User/PaymentAccount:
-    get:
-      tags:
-        - user_info
-      summary: Retrieve registration status for PersonalInfo contract
-      description: Returns payment registration status of given account.
-      operationId: RetrievePaymentAccountRegistrationStatus
-      parameters:
-        - name: account_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Account Address
-            title: Account Address
-          description: Account Address
-        - name: agent_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Agent Address
-            title: Agent Address
-          description: Agent Address
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
   /User/PersonalInfo:
     get:
       tags:
@@ -4806,23 +4763,17 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/NotificationsSortItem'
-              - type: 'null'
+            $ref: '#/components/schemas/NotificationsSortItem'
             description: sort item
             default: created
-            title: Sort Item
           description: sort item
         - name: sort_order
           in: query
           required: false
           schema:
-            anyOf:
-              - $ref: '#/components/schemas/SortOrder'
-              - type: 'null'
+            $ref: '#/components/schemas/SortOrder'
             description: 'sort order(0: ASC, 1: DESC)'
             default: 0
-            title: Sort Order
           description: 'sort order(0: ASC, 1: DESC)'
       responses:
         '200':
@@ -5391,583 +5342,12 @@ paths:
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Ibetsecuritytokeninterfaceevents
           description: Bad Request
-  /DEX/Market/Agreement:
-    get:
-      tags:
-        - dex
-      summary: Agreement Details
-      description: Returns agreement information of given id.
-      operationId: GetAgreement
-      parameters:
-        - name: order_id
-          in: query
-          required: true
-          schema:
-            type: integer
-            description: order id
-            title: Order Id
-          description: order id
-        - name: agreement_id
-          in: query
-          required: true
-          schema:
-            type: integer
-            description: agreement id
-            title: Agreement Id
-          description: agreement id
-        - name: exchange_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: exchange_address
-            title: Exchange Address
-          description: exchange_address
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveAgreementDetailResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Getagreement
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/Market/OrderBook/Membership:
-    get:
-      tags:
-        - dex
-      summary: Membership Token Order Book
-      description: '[Membership]Returns orderbook of given token.'
-      operationId: MembershipOrderBook
-      parameters:
-        - name: token_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Token address
-            title: Token Address
-          description: Token address
-        - name: exchange_agent_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Settlement agent address on ibet exchange
-            title: Exchange Agent Address
-          description: Settlement agent address on ibet exchange
-        - name: order_type
-          in: query
-          required: true
-          schema:
-            $ref: '#/components/schemas/OrderType'
-            description: Order type to be executed by the Orderer. If 'buy' is 
-              selected, the sell order book will be returned.
-          description: Order type to be executed by the Orderer. If 'buy' is 
-            selected, the sell order book will be returned.
-        - name: account_address
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            description: Orderer's account address. Orders from the given 
-              address will not be included in the response.
-            title: Account Address
-          description: Orderer's account address. Orders from the given address 
-            will not be included in the response.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/Market/LastPrice/Membership:
-    get:
-      tags:
-        - dex
-      summary: Membership Token Last Price (Bulk Get)
-      description: '[Membership]Returns last price of given token.'
-      operationId: MembershipLastPrice
-      parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Token address list
-            title: Address List
-          description: Token address list
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/Market/Tick/Membership:
-    get:
-      tags:
-        - dex
-      summary: Membership Token Tick (Bulk Get)
-      description: '[Membership]Returns ticks of given token.'
-      operationId: MembershipTick
-      parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Token address list
-            title: Address List
-          description: Token address list
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/Market/OrderBook/Coupon:
-    get:
-      tags:
-        - dex
-      summary: Coupon Token Order Book
-      description: '[Coupon]Returns orderbook of given token.'
-      operationId: CouponOrderBook
-      parameters:
-        - name: token_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Token address
-            title: Token Address
-          description: Token address
-        - name: exchange_agent_address
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Settlement agent address on ibet exchange
-            title: Exchange Agent Address
-          description: Settlement agent address on ibet exchange
-        - name: order_type
-          in: query
-          required: true
-          schema:
-            $ref: '#/components/schemas/OrderType'
-            description: Order type to be executed by the Orderer. If 'buy' is 
-              selected, the sell order book will be returned.
-          description: Order type to be executed by the Orderer. If 'buy' is 
-            selected, the sell order book will be returned.
-        - name: account_address
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            description: Orderer's account address. Orders from the given 
-              address will not be included in the response.
-            title: Account Address
-          description: Orderer's account address. Orders from the given address 
-            will not be included in the response.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/Market/LastPrice/Coupon:
-    get:
-      tags:
-        - dex
-      summary: Coupon Token Last Price (Bulk Get)
-      description: '[Coupon]Returns last price of given token.'
-      operationId: CouponLastPrice
-      parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Token address list
-            title: Address List
-          description: Token address list
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/Market/Tick/Coupon:
-    get:
-      tags:
-        - dex
-      summary: Coupon Token Tick (Bulk Get)
-      description: '[Coupon]Returns ticks of given token.'
-      operationId: CouponTick
-      parameters:
-        - name: address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Token address list
-            title: Address List
-          description: Token address list
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/OrderList/Membership:
-    get:
-      tags:
-        - dex
-      summary: Membership Order History (Bulk Get)
-      description: '[Membership]Returns order history of given token.'
-      operationId: MembershipOrderList
-      parameters:
-        - name: account_address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Account address list
-            title: Account Address List
-          description: Account address list
-        - name: include_canceled_items
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: Whether to include canceled orders or canceled 
-              agreements.
-            title: Include Canceled Items
-          description: Whether to include canceled orders or canceled 
-            agreements.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/OrderList/Coupon:
-    get:
-      tags:
-        - dex
-      summary: Coupon Order History (Bulk Get)
-      description: '[Coupon]Returns order history of given token.'
-      operationId: CouponOrderList
-      parameters:
-        - name: account_address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Account address list
-            title: Account Address List
-          description: Account address list
-        - name: include_canceled_items
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: Whether to include canceled orders or canceled 
-              agreements.
-            title: Include Canceled Items
-          description: Whether to include canceled orders or canceled 
-            agreements.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_RetrieveCouponTokenResponse__'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
-  /DEX/OrderList/{token_address}:
-    get:
-      tags:
-        - dex
-      summary: Order History filtered by token (Bulk Get)
-      description: Returns order history.
-      operationId: IbetExchange
-      parameters:
-        - name: token_address
-          in: path
-          required: true
-          schema:
-            type: string
-            description: Token address
-            title: Token Address
-          description: Token address
-        - name: account_address_list
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-            description: Account address list
-            title: Account Address List
-          description: Account address list
-        - name: include_canceled_items
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: boolean
-              - type: 'null'
-            description: Whether to include canceled orders or canceled 
-              agreements.
-            title: Include Canceled Items
-          description: Whether to include canceled orders or canceled 
-            agreements.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderListResponse_TokenAddress__'
-        '400':
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-                title: Response 400 Ibetexchange
-          description: Bad Request
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-          description: Not Found
 components:
   schemas:
     ABI:
       items: {}
       type: array
       title: ABI
-    Agreement:
-      properties:
-        exchange_address:
-          type: string
-          title: Exchange Address
-          description: exchange address
-        order_id:
-          type: integer
-          title: Order Id
-        agreement_id:
-          type: integer
-          title: Agreement Id
-        amount:
-          type: integer
-          title: Amount
-        price:
-          type: integer
-          title: Price
-        is_buy:
-          type: boolean
-          title: Is Buy
-        canceled:
-          type: boolean
-          title: Canceled
-        agreement_timestamp:
-          type: string
-          title: Agreement Timestamp
-      type: object
-      required:
-        - exchange_address
-        - order_id
-        - agreement_id
-        - amount
-        - price
-        - is_buy
-        - canceled
-        - agreement_timestamp
-      title: Agreement
-    AgreementSet_RetrieveCouponTokenResponse_:
-      properties:
-        token:
-          $ref: '#/components/schemas/RetrieveCouponTokenResponse'
-        agreement:
-          $ref: '#/components/schemas/Agreement'
-        sort_id:
-          type: integer
-          title: Sort Id
-      type: object
-      required:
-        - token
-        - agreement
-        - sort_id
-      title: AgreementSet[RetrieveCouponTokenResponse]
-    AgreementSet_RetrieveMembershipTokenResponse_:
-      properties:
-        token:
-          $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
-        agreement:
-          $ref: '#/components/schemas/Agreement'
-        sort_id:
-          type: integer
-          title: Sort Id
-      type: object
-      required:
-        - token
-        - agreement
-        - sort_id
-      title: AgreementSet[RetrieveMembershipTokenResponse]
-    AgreementSet_TokenAddress_:
-      properties:
-        token:
-          $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
-        agreement:
-          $ref: '#/components/schemas/Agreement'
-        sort_id:
-          type: integer
-          title: Sort Id
-      type: object
-      required:
-        - token
-        - agreement
-        - sort_id
-      title: AgreementSet[TokenAddress]
     AppErrorMetainfo:
       properties:
         message:
@@ -6008,15 +5388,6 @@ components:
       required:
         - meta
       title: AppErrorResponse
-    ApprovalStatus:
-      type: integer
-      enum:
-        - 0
-        - 1
-        - 2
-        - 3
-        - 4
-      title: ApprovalStatus
     BlockIdentifier:
       type: string
       enum:
@@ -6263,66 +5634,6 @@ components:
         - rsa_publickey
         - homepage
       title: CompanyInfo
-    CompleteAgreementSet_RetrieveCouponTokenResponse_:
-      properties:
-        token:
-          $ref: '#/components/schemas/RetrieveCouponTokenResponse'
-        agreement:
-          $ref: '#/components/schemas/Agreement'
-        sort_id:
-          type: integer
-          title: Sort Id
-        settlement_timestamp:
-          type: string
-          title: Settlement Timestamp
-          description: settlement timestamp
-      type: object
-      required:
-        - token
-        - agreement
-        - sort_id
-        - settlement_timestamp
-      title: CompleteAgreementSet[RetrieveCouponTokenResponse]
-    CompleteAgreementSet_RetrieveMembershipTokenResponse_:
-      properties:
-        token:
-          $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
-        agreement:
-          $ref: '#/components/schemas/Agreement'
-        sort_id:
-          type: integer
-          title: Sort Id
-        settlement_timestamp:
-          type: string
-          title: Settlement Timestamp
-          description: settlement timestamp
-      type: object
-      required:
-        - token
-        - agreement
-        - sort_id
-        - settlement_timestamp
-      title: CompleteAgreementSet[RetrieveMembershipTokenResponse]
-    CompleteAgreementSet_TokenAddress_:
-      properties:
-        token:
-          $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
-        agreement:
-          $ref: '#/components/schemas/Agreement'
-        sort_id:
-          type: integer
-          title: Sort Id
-        settlement_timestamp:
-          type: string
-          title: Settlement Timestamp
-          description: settlement timestamp
-      type: object
-      required:
-        - token
-        - agreement
-        - sort_id
-        - settlement_timestamp
-      title: CompleteAgreementSet[TokenAddress]
     CouponConsumption:
       properties:
         account_address:
@@ -6996,20 +6307,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllEventsResponse]
-    GenericSuccessResponse_ListAllLastPriceResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllLastPriceResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[ListAllLastPriceResponse]
     GenericSuccessResponse_ListAllLockEventsResponse_RetrieveShareTokenResponse__:
       properties:
         meta:
@@ -7098,64 +6395,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllMembershipTokensResponse]
-    GenericSuccessResponse_ListAllOrderBookItemResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllOrderBookItemResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[ListAllOrderBookItemResponse]
-    GenericSuccessResponse_ListAllOrderListResponse_RetrieveCouponTokenResponse__:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllOrderListResponse_RetrieveCouponTokenResponse_'
-      type: object
-      required:
-        - meta
-        - data
-      title: 
-        GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]]
-    GenericSuccessResponse_ListAllOrderListResponse_RetrieveMembershipTokenResponse__:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllOrderListResponse_RetrieveMembershipTokenResponse_'
-      type: object
-      required:
-        - meta
-        - data
-      title: 
-        GenericSuccessResponse[ListAllOrderListResponse[RetrieveMembershipTokenResponse]]
-    GenericSuccessResponse_ListAllOrderListResponse_TokenAddress__:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllOrderListResponse_TokenAddress_'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[ListAllOrderListResponse[TokenAddress]]
     GenericSuccessResponse_ListAllPublicAccountsResponse_:
       properties:
         meta:
@@ -7240,20 +6479,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllStraightBondTokensResponse]
-    GenericSuccessResponse_ListAllTicksResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/ListAllTicksResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[ListAllTicksResponse]
     GenericSuccessResponse_ListAllTokenLockResponse_:
       properties:
         meta:
@@ -7366,20 +6591,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[RetrieveAdminTokenResponse]
-    GenericSuccessResponse_RetrieveAgreementDetailResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/RetrieveAgreementDetailResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[RetrieveAgreementDetailResponse]
     GenericSuccessResponse_RetrieveCompanyInfoResponse_:
       properties:
         meta:
@@ -7422,21 +6633,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[RetrieveMembershipTokenResponse]
-    GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/RetrievePaymentAccountRegistrationStatusResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: 
-        GenericSuccessResponse[RetrievePaymentAccountRegistrationStatusResponse]
     GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_:
       properties:
         meta:
@@ -7718,16 +6914,6 @@ components:
       title: GetBlockSyncStatusResponse
     GetNodeInfoResponse:
       properties:
-        payment_gateway_address:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Payment Gateway Address
-        payment_gateway_abi:
-          anyOf:
-            - {}
-            - type: 'null'
-          title: Payment Gateway Abi
         personal_info_address:
           anyOf:
             - type: string
@@ -7738,26 +6924,6 @@ components:
             - {}
             - type: 'null'
           title: Personal Info Abi
-        ibet_membership_exchange_address:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Ibet Membership Exchange Address
-        ibet_membership_exchange_abi:
-          anyOf:
-            - {}
-            - type: 'null'
-          title: Ibet Membership Exchange Abi
-        ibet_coupon_exchange_address:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Ibet Coupon Exchange Address
-        ibet_coupon_exchange_abi:
-          anyOf:
-            - {}
-            - type: 'null'
-          title: Ibet Coupon Exchange Abi
         ibet_escrow_address:
           anyOf:
             - type: string
@@ -7800,14 +6966,8 @@ components:
           title: E2E Messaging Abi
       type: object
       required:
-        - payment_gateway_address
-        - payment_gateway_abi
         - personal_info_address
         - personal_info_abi
-        - ibet_membership_exchange_address
-        - ibet_membership_exchange_abi
-        - ibet_coupon_exchange_address
-        - ibet_coupon_exchange_abi
         - ibet_escrow_address
         - ibet_escrow_abi
         - ibet_security_token_escrow_address
@@ -8063,19 +7223,6 @@ components:
         - method
         - params
       title: JsonRPCRequest
-    LastPrice:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-        last_price:
-          type: integer
-          title: Last Price
-      type: object
-      required:
-        - token_address
-        - last_price
-      title: LastPrice
     ListAllAdminTokensResponse:
       items:
         $ref: '#/components/schemas/RetrieveAdminTokenResponse'
@@ -8133,11 +7280,6 @@ components:
         $ref: '#/components/schemas/Event'
       type: array
       title: ListAllEventsResponse
-    ListAllLastPriceResponse:
-      items:
-        $ref: '#/components/schemas/LastPrice'
-      type: array
-      title: ListAllLastPriceResponse
     ListAllLockEventsResponse_RetrieveShareTokenResponse_:
       properties:
         result_set:
@@ -8256,80 +7398,6 @@ components:
         - result_set
         - tokens
       title: ListAllMembershipTokensResponse
-    ListAllOrderBookItemResponse:
-      items:
-        $ref: '#/components/schemas/OrderBookItem'
-      type: array
-      title: ListAllOrderBookItemResponse
-    ListAllOrderListResponse_RetrieveCouponTokenResponse_:
-      properties:
-        order_list:
-          items:
-            $ref: '#/components/schemas/OrderSet_RetrieveCouponTokenResponse_'
-          type: array
-          title: Order List
-        settlement_list:
-          items:
-            $ref: '#/components/schemas/AgreementSet_RetrieveCouponTokenResponse_'
-          type: array
-          title: Settlement List
-        complete_list:
-          items:
-            $ref: '#/components/schemas/CompleteAgreementSet_RetrieveCouponTokenResponse_'
-          type: array
-          title: Complete List
-      type: object
-      required:
-        - order_list
-        - settlement_list
-        - complete_list
-      title: ListAllOrderListResponse[RetrieveCouponTokenResponse]
-    ListAllOrderListResponse_RetrieveMembershipTokenResponse_:
-      properties:
-        order_list:
-          items:
-            $ref: '#/components/schemas/OrderSet_RetrieveMembershipTokenResponse_'
-          type: array
-          title: Order List
-        settlement_list:
-          items:
-            $ref: '#/components/schemas/AgreementSet_RetrieveMembershipTokenResponse_'
-          type: array
-          title: Settlement List
-        complete_list:
-          items:
-            $ref: '#/components/schemas/CompleteAgreementSet_RetrieveMembershipTokenResponse_'
-          type: array
-          title: Complete List
-      type: object
-      required:
-        - order_list
-        - settlement_list
-        - complete_list
-      title: ListAllOrderListResponse[RetrieveMembershipTokenResponse]
-    ListAllOrderListResponse_TokenAddress_:
-      properties:
-        order_list:
-          items:
-            $ref: '#/components/schemas/OrderSet_TokenAddress_'
-          type: array
-          title: Order List
-        settlement_list:
-          items:
-            $ref: '#/components/schemas/AgreementSet_TokenAddress_'
-          type: array
-          title: Settlement List
-        complete_list:
-          items:
-            $ref: '#/components/schemas/CompleteAgreementSet_TokenAddress_'
-          type: array
-          title: Complete List
-      type: object
-      required:
-        - order_list
-        - settlement_list
-        - complete_list
-      title: ListAllOrderListResponse[TokenAddress]
     ListAllPublicAccountsResponse:
       properties:
         result_set:
@@ -8430,11 +7498,6 @@ components:
         - result_set
         - tokens
       title: ListAllStraightBondTokensResponse
-    ListAllTicksResponse:
-      items:
-        $ref: '#/components/schemas/Ticks'
-      type: array
-      title: ListAllTicksResponse
     ListAllTokenLockResponse:
       properties:
         result_set:
@@ -9172,120 +8235,6 @@ components:
         - block_timestamp
         - created
       title: NotificationsSortItem
-    Order:
-      properties:
-        order_id:
-          type: integer
-          title: Order Id
-        counterpart_address:
-          type: string
-          title: Counterpart Address
-        amount:
-          type: integer
-          title: Amount
-        price:
-          type: integer
-          title: Price
-        is_buy:
-          type: boolean
-          title: Is Buy
-        canceled:
-          type: boolean
-          title: Canceled
-        order_timestamp:
-          type: string
-          title: Order Timestamp
-      type: object
-      required:
-        - order_id
-        - counterpart_address
-        - amount
-        - price
-        - is_buy
-        - canceled
-        - order_timestamp
-      title: Order
-    OrderBookItem:
-      properties:
-        exchange_address:
-          type: string
-          title: Exchange Address
-          description: Exchange contract address
-        order_id:
-          type: integer
-          title: Order Id
-          description: Order id
-        price:
-          type: integer
-          title: Price
-          description: Order price
-        amount:
-          type: integer
-          title: Amount
-          description: Order volume
-        account_address:
-          type: string
-          title: Account Address
-          description: An orderrer of each order book
-      type: object
-      required:
-        - exchange_address
-        - order_id
-        - price
-        - amount
-        - account_address
-      title: OrderBookItem
-    OrderSet_RetrieveCouponTokenResponse_:
-      properties:
-        token:
-          $ref: '#/components/schemas/RetrieveCouponTokenResponse'
-        order:
-          $ref: '#/components/schemas/Order'
-        sort_id:
-          type: integer
-          title: Sort Id
-      type: object
-      required:
-        - token
-        - order
-        - sort_id
-      title: OrderSet[RetrieveCouponTokenResponse]
-    OrderSet_RetrieveMembershipTokenResponse_:
-      properties:
-        token:
-          $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
-        order:
-          $ref: '#/components/schemas/Order'
-        sort_id:
-          type: integer
-          title: Sort Id
-      type: object
-      required:
-        - token
-        - order
-        - sort_id
-      title: OrderSet[RetrieveMembershipTokenResponse]
-    OrderSet_TokenAddress_:
-      properties:
-        token:
-          $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
-        order:
-          $ref: '#/components/schemas/Order'
-        sort_id:
-          type: integer
-          title: Sort Id
-      type: object
-      required:
-        - token
-        - order
-        - sort_id
-      title: OrderSet[TokenAddress]
-    OrderType:
-      type: string
-      enum:
-        - buy
-        - sell
-      title: OrderType
     PublicAccount:
       properties:
         key_manager:
@@ -9532,56 +8481,6 @@ components:
         - owner_address
         - created
       title: RetrieveAdminTokenResponse
-    RetrieveAgreementDetailResponse:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-          description: token address
-        counterpart:
-          type: string
-          title: Counterpart
-          description: taker account address
-        buyer_address:
-          type: string
-          title: Buyer Address
-          description: buyer account address
-        seller_address:
-          type: string
-          title: Seller Address
-          description: seller account address
-        amount:
-          type: integer
-          title: Amount
-          description: agreement token amount
-        price:
-          type: integer
-          title: Price
-          description: agreement price
-        canceled:
-          type: boolean
-          title: Canceled
-          description: agreement canceled status
-        paid:
-          type: boolean
-          title: Paid
-          description: agreement payment status
-        expiry:
-          type: integer
-          title: Expiry
-          description: expiry (unixtime)
-      type: object
-      required:
-        - token_address
-        - counterpart
-        - buyer_address
-        - seller_address
-        - amount
-        - price
-        - canceled
-        - paid
-        - expiry
-      title: RetrieveAgreementDetailResponse
     RetrieveCompanyInfoResponse:
       properties:
         address:
@@ -9619,23 +8518,6 @@ components:
     RetrieveMembershipTokenResponse:
       $ref: '#/components/schemas/MembershipToken'
       title: RetrieveMembershipTokenResponse
-    RetrievePaymentAccountRegistrationStatusResponse:
-      properties:
-        account_address:
-          type: string
-          title: Account Address
-        agent_address:
-          type: string
-          title: Agent Address
-        approval_status:
-          $ref: '#/components/schemas/ApprovalStatus'
-          description: approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))
-      type: object
-      required:
-        - account_address
-        - agent_address
-        - approval_status
-      title: RetrievePaymentAccountRegistrationStatusResponse
     RetrievePersonalInfoRegistrationStatusResponse:
       properties:
         account_address:
@@ -10071,7 +8953,7 @@ components:
         token:
           anyOf:
             - $ref: '#/components/schemas/RetrieveShareTokenResponse'
-            - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
+            - $ref: '#/components/schemas/TokenAddress'
           title: Token
           description: set when include_token_details=false or null
       type: object
@@ -10105,7 +8987,7 @@ components:
         token:
           anyOf:
             - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
-            - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
+            - $ref: '#/components/schemas/TokenAddress'
           title: Token
           description: set when include_token_details=false or null
       type: object
@@ -10644,55 +9526,15 @@ components:
         - account_address
         - account_tag
       title: TaggingAccountAddressRequest
-    Tick:
-      properties:
-        block_timestamp:
-          type: string
-          title: Block Timestamp
-          description: block timestamp (UTC)
-        buy_address:
-          type: string
-          title: Buy Address
-        sell_address:
-          type: string
-          title: Sell Address
-        order_id:
-          type: integer
-          title: Order Id
-        agreement_id:
-          type: integer
-          title: Agreement Id
-        price:
-          type: integer
-          title: Price
-        amount:
-          type: integer
-          title: Amount
-      type: object
-      required:
-        - block_timestamp
-        - buy_address
-        - sell_address
-        - order_id
-        - agreement_id
-        - price
-        - amount
-      title: Tick
-    Ticks:
+    TokenAddress:
       properties:
         token_address:
           type: string
           title: Token Address
-        tick:
-          items:
-            $ref: '#/components/schemas/Tick'
-          type: array
-          title: Tick
       type: object
       required:
         - token_address
-        - tick
-      title: Ticks
+      title: TokenAddress
     TokenHolder:
       properties:
         token_address:
@@ -11261,15 +10103,6 @@ components:
       required:
         - status
       title: WaitForTransactionReceiptResponse
-    app__model__schema__position__TokenAddress:
-      properties:
-        token_address:
-          type: string
-          title: Token Address
-      type: object
-      required:
-        - token_address
-      title: TokenAddress
 tags:
   - name: root
     description: ''
@@ -11295,8 +10128,5 @@ tags:
     description: Notifications for users
   - name: contract_log
     description: Contract event logs
-  - name: dex
-    description: Trade related functions on IbetExchange (Only for utility 
-      tokens)
   - name: messaging
     description: Messaging functions with external systems

@@ -28,6 +28,7 @@ from app import config
 from tests.account_config import eth_account
 from tests.types import SharedContract
 from tests.utils import IbetShareUtils
+from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -54,7 +55,9 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+
         latest_block_number = web3.eth.block_number
 
         # request target API
@@ -77,8 +80,9 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -93,14 +97,14 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
             },
         )
 
         # Deposit token to escrow contract
         tx_hash = token_contract.functions.transfer(
-            escrow_contract.address, 1000
+            escrow_contract["address"], 1000
         ).transact({"from": issuer})
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -131,8 +135,12 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -147,18 +155,18 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Withdraw token from escrow contract
-        tx_hash = escrow_contract.functions.withdraw(
+        tx_hash = escrow_contract_instance.functions.withdraw(
             token_contract.address,
         ).transact({"from": issuer})  # Withdrawn
 
@@ -193,8 +201,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -209,19 +221,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        tx_hash = escrow_contract.functions.createEscrow(
+        tx_hash = escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -232,7 +244,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Request target API
         resp = client.get(
@@ -285,8 +297,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -301,19 +317,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        tx_hash = escrow_contract.functions.createEscrow(
+        tx_hash = escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -324,7 +340,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Request target API
         resp = client.get(
@@ -366,8 +382,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -382,19 +402,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        tx_hash = escrow_contract.functions.createEscrow(
+        tx_hash = escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -405,7 +425,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Request target API
         resp = client.get(
@@ -446,8 +466,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -462,19 +486,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -484,10 +508,10 @@ class TestEventsIbetSecurityTokenEscrow:
         ).transact({"from": issuer})  # EscrowCreated
 
         # Cancel escrow
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
-        tx_hash = escrow_contract.functions.cancelEscrow(latest_escrow_id).transact(
-            {"from": issuer}
-        )  # EscrowCanceled
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
+        tx_hash = escrow_contract_instance.functions.cancelEscrow(
+            latest_escrow_id
+        ).transact({"from": issuer})  # EscrowCanceled
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -540,8 +564,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -556,19 +584,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -578,10 +606,10 @@ class TestEventsIbetSecurityTokenEscrow:
         ).transact({"from": issuer})  # EscrowCreated
 
         # Cancel escrow
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
-        tx_hash = escrow_contract.functions.cancelEscrow(latest_escrow_id).transact(
-            {"from": issuer}
-        )  # EscrowCanceled
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
+        tx_hash = escrow_contract_instance.functions.cancelEscrow(
+            latest_escrow_id
+        ).transact({"from": issuer})  # EscrowCanceled
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -625,8 +653,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -641,19 +673,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -663,10 +695,10 @@ class TestEventsIbetSecurityTokenEscrow:
         ).transact({"from": issuer})  # EscrowCreated
 
         # Cancel escrow
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
-        tx_hash = escrow_contract.functions.cancelEscrow(latest_escrow_id).transact(
-            {"from": issuer}
-        )  # EscrowCanceled
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
+        tx_hash = escrow_contract_instance.functions.cancelEscrow(
+            latest_escrow_id
+        ).transact({"from": issuer})  # EscrowCanceled
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -708,8 +740,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -724,19 +760,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -744,12 +780,12 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         ).transact({"from": issuer})  # EscrowCreated
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Finish escrow
-        tx_hash = escrow_contract.functions.finishEscrow(latest_escrow_id).transact(
-            {"from": agent}
-        )  # EscrowFinished
+        tx_hash = escrow_contract_instance.functions.finishEscrow(
+            latest_escrow_id
+        ).transact({"from": agent})  # EscrowFinished
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -790,8 +826,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -806,19 +846,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -826,12 +866,12 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         ).transact({"from": issuer})  # EscrowCreated
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Finish escrow
-        tx_hash = escrow_contract.functions.finishEscrow(latest_escrow_id).transact(
-            {"from": agent}
-        )  # EscrowFinished
+        tx_hash = escrow_contract_instance.functions.finishEscrow(
+            latest_escrow_id
+        ).transact({"from": agent})  # EscrowFinished
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -876,8 +916,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -892,19 +936,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -912,15 +956,15 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         ).transact({"from": issuer})  # EscrowCreated
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Finish escrow
-        escrow_contract.functions.finishEscrow(latest_escrow_id).transact(
+        escrow_contract_instance.functions.finishEscrow(latest_escrow_id).transact(
             {"from": agent}
         )  # EscrowFinished
 
         # Approve transfer
-        tx_hash = escrow_contract.functions.approveTransfer(
+        tx_hash = escrow_contract_instance.functions.approveTransfer(
             latest_escrow_id, "test_approval_data"
         ).transact({"from": issuer})
 
@@ -959,8 +1003,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -975,19 +1023,19 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
         )
 
         # Deposit token to escrow contract
-        token_contract.functions.transfer(escrow_contract.address, 1000).transact(
+        token_contract.functions.transfer(escrow_contract["address"], 1000).transact(
             {"from": issuer}
         )  # Deposited
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -995,15 +1043,15 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         ).transact({"from": issuer})  # EscrowCreated
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Finish escrow
-        escrow_contract.functions.finishEscrow(latest_escrow_id).transact(
+        escrow_contract_instance.functions.finishEscrow(latest_escrow_id).transact(
             {"from": agent}
         )  # EscrowFinished
 
         # Approve transfer
-        tx_hash = escrow_contract.functions.approveTransfer(
+        tx_hash = escrow_contract_instance.functions.approveTransfer(
             latest_escrow_id, "test_approval_data"
         ).transact({"from": issuer})
 
@@ -1046,8 +1094,9 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -1062,14 +1111,14 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
             },
         )
 
         # Deposit token to escrow contract
         tx_hash = token_contract.functions.transfer(
-            escrow_contract.address, 1000
+            escrow_contract["address"], 1000
         ).transact({"from": issuer})
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -1110,7 +1159,7 @@ class TestEventsIbetSecurityTokenEscrow:
     ):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -1125,14 +1174,14 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
             },
         )
 
         # Deposit token to escrow contract
         _tx_hash = token_contract.functions.transfer(
-            escrow_contract.address, 1000
+            escrow_contract["address"], 1000
         ).transact({"from": issuer})
         latest_block_number = web3.eth.block_number
         _latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -1166,8 +1215,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -1182,7 +1235,7 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
@@ -1190,13 +1243,13 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Deposit token to escrow contract
         tx_hash_1 = token_contract.functions.transfer(
-            escrow_contract.address, 1000
+            escrow_contract["address"], 1000
         ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create escrow
-        tx_hash_2 = escrow_contract.functions.createEscrow(
+        tx_hash_2 = escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -1207,7 +1260,7 @@ class TestEventsIbetSecurityTokenEscrow:
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = _get_block_timestamp(block_number_2)
 
-        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+        latest_escrow_id = escrow_contract_instance.functions.latestEscrowId().call()
 
         # Request target API
         resp = client.get(
@@ -1270,8 +1323,12 @@ class TestEventsIbetSecurityTokenEscrow:
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
+
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
+        escrow_contract_instance = Contract.get_contract(
+            "IbetSecurityTokenEscrow", escrow_contract["address"]
+        )
 
         # Issue token
         token_contract = IbetShareUtils.issue(
@@ -1286,7 +1343,7 @@ class TestEventsIbetSecurityTokenEscrow:
                 "dividendPaymentDate": "20210101",
                 "cancellationDate": "20251231",
                 "principalValue": 10000,
-                "tradableExchange": escrow_contract.address,
+                "tradableExchange": escrow_contract["address"],
                 "transferable": True,
                 "transferApprovalRequired": True,
             },
@@ -1294,13 +1351,13 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Deposit token to escrow contract
         tx_hash_1 = token_contract.functions.transfer(
-            escrow_contract.address, 1000
+            escrow_contract["address"], 1000
         ).transact({"from": issuer})  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create escrow
-        escrow_contract.functions.createEscrow(
+        escrow_contract_instance.functions.createEscrow(
             token_contract.address,
             user1,
             1000,
@@ -1347,7 +1404,7 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
 
         # request target API
         resp = client.get(self.apiurl, params={})
@@ -1380,7 +1437,7 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
 
         # request target API
         resp = client.get(self.apiurl, params={"from_block": 0, "to_block": 0})
@@ -1415,7 +1472,7 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API
@@ -1460,7 +1517,7 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API
@@ -1498,7 +1555,7 @@ class TestEventsIbetSecurityTokenEscrow:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract["address"]
         latest_block_number = web3.eth.block_number
 
         # request target API

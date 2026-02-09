@@ -28,8 +28,6 @@ from app.database import DBAsyncSession
 from app.errors import InvalidParameterError
 from app.model.db import AccountTag
 from app.model.schema import (
-    RetrievePaymentAccountQuery,
-    RetrievePaymentAccountRegistrationStatusResponse,
     RetrievePersonalInfoQuery,
     RetrievePersonalInfoRegistrationStatusResponse,
     TaggingAccountAddressRequest,
@@ -63,57 +61,6 @@ async def tagging_account_address(
     await async_session.commit()
 
     return json_response(SuccessResponse.default())
-
-
-@router.get(
-    "/PaymentAccount",
-    summary="Retrieve registration status for PersonalInfo contract",
-    operation_id="RetrievePaymentAccountRegistrationStatus",
-    response_model=GenericSuccessResponse[
-        RetrievePaymentAccountRegistrationStatusResponse
-    ],
-    responses=get_routers_responses(),
-)
-async def get_payment_account_registration_status(
-    query: Annotated[RetrievePaymentAccountQuery, Query()],
-):
-    """
-    Returns payment registration status of given account.
-    """
-    pg_contract = AsyncContract.get_contract(
-        contract_name="PaymentGateway",
-        address=str(config.PAYMENT_GATEWAY_CONTRACT_ADDRESS),
-    )
-
-    # 口座登録・承認状況を参照
-    account_info = await AsyncContract.call_function(
-        contract=pg_contract,
-        function_name="payment_accounts",
-        args=(
-            to_checksum_address(query.account_address),
-            to_checksum_address(query.agent_address),
-        ),
-        default_returns=(
-            config.ZERO_ADDRESS,
-            config.ZERO_ADDRESS,
-            0,
-            0,
-        ),
-    )
-    if account_info[0] == "0x0000000000000000000000000000000000000000":
-        response_json = {
-            "account_address": query.account_address,
-            "agent_address": query.agent_address,
-            "approval_status": 0,
-        }
-    else:
-        response_json = {
-            "account_address": account_info[0],
-            "agent_address": account_info[1],
-            "approval_status": account_info[3],
-        }
-
-    return json_response({**SuccessResponse.default(), "data": response_json})
 
 
 @router.get(

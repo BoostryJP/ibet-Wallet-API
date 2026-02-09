@@ -32,22 +32,22 @@ from app.errors import ServiceUnavailable
 from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    bond_invalidate,
+    bond_issue_token,
+    bond_register_token_list,
+    bond_set_status,
     bond_untransferable,
-    coupon_register_list,
-    invalidate_coupon_token,
-    invalidate_share_token,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
+    coupon_issue_token,
+    coupon_register_token_list,
+    coupon_set_status,
+    coupon_set_transferable,
     membership_invalidate,
-    membership_issue,
-    membership_register_list,
+    membership_issue_token,
+    membership_register_token_list,
     membership_untransferable,
-    register_bond_list,
-    register_share_list,
-    untransferable_coupon_token,
-    untransferable_share_token,
+    share_issue_token,
+    share_register_token_list,
+    share_set_status,
+    share_set_transferable,
 )
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
@@ -197,14 +197,14 @@ class TestTokenTokenStatus:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, bond_token)
@@ -241,20 +241,20 @@ class TestTokenTokenStatus:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.bond_token_attribute(
             exchange_address, personal_info
         )
-        token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, token)
 
         # Tokenの無効化
-        bond_invalidate(issuer, token)
+        bond_set_status(issuer, token)
 
         session.commit()
 
@@ -288,14 +288,14 @@ class TestTokenTokenStatus:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, bond_token)
@@ -335,14 +335,14 @@ class TestTokenTokenStatus:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.share_token_attribute(
             exchange_address, personal_info
         )
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, share_token)
@@ -379,20 +379,20 @@ class TestTokenTokenStatus:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.share_token_attribute(
             exchange_address, personal_info
         )
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, share_token)
 
         # Tokenの無効化
-        invalidate_share_token(issuer, share_token)
+        share_set_status(issuer, share_token)
 
         session.commit()
 
@@ -426,20 +426,20 @@ class TestTokenTokenStatus:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.share_token_attribute(
             exchange_address, personal_info
         )
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, share_token)
 
         # Tokenの譲渡不可
-        untransferable_share_token(issuer, share_token)
+        share_set_transferable(issuer, share_token)
 
         session.commit()
 
@@ -473,11 +473,11 @@ class TestTokenTokenStatus:
 
         # データ準備：会員権新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         attribute = TestTokenTokenStatus.membership_token_attribute(exchange_address)
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, membership_token)
@@ -514,11 +514,11 @@ class TestTokenTokenStatus:
 
         # データ準備：会員権新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         attribute = TestTokenTokenStatus.membership_token_attribute(exchange_address)
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, membership_token)
@@ -558,11 +558,11 @@ class TestTokenTokenStatus:
 
         # データ準備：会員権新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         attribute = TestTokenTokenStatus.membership_token_attribute(exchange_address)
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, membership_token)
@@ -602,11 +602,11 @@ class TestTokenTokenStatus:
 
         # データ準備：クーポン新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         attribute = TestTokenTokenStatus.coupon_token_attribute(exchange_address)
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, coupon_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, coupon_token)
@@ -643,17 +643,17 @@ class TestTokenTokenStatus:
 
         # データ準備：クーポン新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         attribute = TestTokenTokenStatus.coupon_token_attribute(exchange_address)
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, coupon_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, coupon_token)
 
         # Tokenの無効化
-        invalidate_coupon_token(issuer, coupon_token)
+        coupon_set_status(issuer, coupon_token)
 
         session.commit()
 
@@ -687,17 +687,17 @@ class TestTokenTokenStatus:
 
         # データ準備：クーポン新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         attribute = TestTokenTokenStatus.coupon_token_attribute(exchange_address)
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = coupon_issue_token(issuer, attribute)
+        coupon_register_token_list(issuer, coupon_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, coupon_token)
 
         # Tokenの譲渡不可
-        untransferable_coupon_token(issuer, coupon_token)
+        coupon_set_transferable(issuer, coupon_token)
 
         session.commit()
 
@@ -751,7 +751,7 @@ class TestTokenTokenStatus:
     def test_error_2(
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
-        share_exchange = shared_contract["IbetShareExchange"]
+        share_exchange = shared_contract["IbetSecurityTokenEscrow"]
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, share_exchange)
@@ -784,14 +784,14 @@ class TestTokenTokenStatus:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = TestTokenTokenStatus.bond_token_attribute(
             exchange_address, personal_info
         )
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
         TestTokenTokenStatus.list_token(session, bond_token)
