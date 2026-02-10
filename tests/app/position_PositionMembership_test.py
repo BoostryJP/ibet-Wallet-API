@@ -28,8 +28,8 @@ from app import config
 from app.model.db import IDXMembershipToken, IDXPosition, IDXTokenListRegister, Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    membership_issue,
-    membership_register_list,
+    membership_issue_token,
+    membership_register_token_list,
     membership_transfer_to_exchange,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
@@ -69,8 +69,8 @@ class TestPositionMembership:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = membership_issue(TestPositionMembership.issuer, args)
-        membership_register_list(
+        token = membership_issue_token(TestPositionMembership.issuer, args)
+        membership_register_token_list(
             TestPositionMembership.issuer, token, token_list_contract
         )
         membership_transfer_to_exchange(
@@ -85,7 +85,7 @@ class TestPositionMembership:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(
+    def create_exchange_commitment_data(
         account: UnitTestAccount,
         exchange_contract: DeployedContract,
         token_list_contract: DeployedContract,
@@ -96,14 +96,17 @@ class TestPositionMembership:
             account, exchange_contract, token_list_contract
         )
 
-        # Sell order
-        agent = eth_account["agent"]
+        # Create escrow
         membership_transfer_to_exchange(account, exchange_contract, token, commitment)
-        ExchangeContract = Contract.get_contract(
-            "IbetExchange", exchange_contract["address"]
+        escrow_contract = Contract.get_contract(
+            contract_name="IbetEscrow", address=exchange_contract["address"]
         )
-        ExchangeContract.functions.createOrder(
-            token["address"], commitment, 10000, False, agent["account_address"]
+        escrow_contract.functions.createEscrow(
+            token["address"],
+            account["account_address"],
+            commitment,
+            account["account_address"],
+            "test_data",
         ).transact({"from": account["account_address"]})
 
         return token
@@ -214,7 +217,7 @@ class TestPositionMembership:
     ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetMembershipExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -254,11 +257,11 @@ class TestPositionMembership:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.list_token(token_4["address"], session)
@@ -330,7 +333,7 @@ class TestPositionMembership:
     ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetMembershipExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -370,11 +373,11 @@ class TestPositionMembership:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.list_token(token_4["address"], session)
@@ -513,7 +516,7 @@ class TestPositionMembership:
     ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetMembershipExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -601,7 +604,7 @@ class TestPositionMembership:
         self.list_token(token_non["address"], session)  # not target
         self.create_idx_token(session, token_non["address"], config.ZERO_ADDRESS)
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.create_idx_position(
@@ -614,7 +617,7 @@ class TestPositionMembership:
         self.list_token(token_3["address"], session)
         self.create_idx_token(session, token_3["address"], config.ZERO_ADDRESS)
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.create_idx_position(
@@ -709,7 +712,7 @@ class TestPositionMembership:
     ):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetMembershipExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -797,7 +800,7 @@ class TestPositionMembership:
         self.list_token(token_non["address"], session)  # not target
         self.create_idx_token(session, token_non["address"], config.ZERO_ADDRESS)
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.create_idx_position(
@@ -810,7 +813,7 @@ class TestPositionMembership:
         self.list_token(token_3["address"], session)
         self.create_idx_token(session, token_3["address"], config.ZERO_ADDRESS)
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.create_idx_position(

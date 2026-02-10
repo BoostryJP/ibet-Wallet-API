@@ -42,8 +42,8 @@ from batch import indexer_TransferApproval
 from batch.indexer_TransferApproval import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    issue_share_token,
-    register_share_list,
+    share_issue_token,
+    share_register_token_list,
     transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
@@ -117,8 +117,8 @@ class TestProcessor:
             "memo": "メモ",
             "transferable": True,
         }
-        _token = issue_share_token(issuer, args)
-        register_share_list(issuer, _token, token_list_contract)
+        _token = share_issue_token(issuer, args)
+        share_register_token_list(issuer, _token, token_list_contract)
 
         token_contract = Contract.get_contract(
             contract_name="IbetShare", address=_token["address"]
@@ -667,12 +667,17 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        st_escrow_contract_instance = Contract.get_contract(
+            contract_name="IbetSecurityTokenEscrow",
+            address=st_escrow_contract["address"],
+        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract,
+            exchange_contract=st_escrow_contract_instance,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
@@ -705,12 +710,12 @@ class TestProcessor:
         transfer_token(
             token_contract=token,
             from_address=self.account1["account_address"],
-            to_address=st_escrow_contract.address,
+            to_address=st_escrow_contract["address"],
             amount=10000,
         )
 
         # Create escrow
-        st_escrow_contract.functions.createEscrow(
+        st_escrow_contract_instance.functions.createEscrow(
             token.address,
             self.account2["account_address"],
             10000,
@@ -733,10 +738,10 @@ class TestProcessor:
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
         assert _transfer_approval.token_address == token.address
-        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.exchange_address == st_escrow_contract["address"]
         assert (
             _transfer_approval.application_id
-            == st_escrow_contract.functions.latestEscrowId().call()
+            == st_escrow_contract_instance.functions.latestEscrowId().call()
         )
         assert _transfer_approval.from_address == self.account1["account_address"]
         assert _transfer_approval.to_address == self.account2["account_address"]
@@ -763,12 +768,17 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        st_escrow_contract_instance = Contract.get_contract(
+            contract_name="IbetSecurityTokenEscrow",
+            address=st_escrow_contract["address"],
+        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract,
+            exchange_contract=st_escrow_contract_instance,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
@@ -801,12 +811,12 @@ class TestProcessor:
         transfer_token(
             token_contract=token,
             from_address=self.account1["account_address"],
-            to_address=st_escrow_contract.address,
+            to_address=st_escrow_contract["address"],
             amount=10000,
         )
 
         # Create escrow
-        st_escrow_contract.functions.createEscrow(
+        st_escrow_contract_instance.functions.createEscrow(
             token.address,
             self.account2["account_address"],
             10000,
@@ -816,8 +826,8 @@ class TestProcessor:
         ).transact({"from": self.account1["account_address"]})
 
         # Cancel escrow
-        escrow_id = st_escrow_contract.functions.latestEscrowId().call()
-        st_escrow_contract.functions.cancelEscrow(escrow_id).transact(
+        escrow_id = st_escrow_contract_instance.functions.latestEscrowId().call()
+        st_escrow_contract_instance.functions.cancelEscrow(escrow_id).transact(
             {"from": self.account1["account_address"]}
         )
 
@@ -835,7 +845,7 @@ class TestProcessor:
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
         assert _transfer_approval.token_address == token.address
-        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.exchange_address == st_escrow_contract["address"]
         assert _transfer_approval.application_id == escrow_id
         assert _transfer_approval.from_address == self.account1["account_address"]
         assert _transfer_approval.to_address == self.account2["account_address"]
@@ -862,12 +872,17 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        st_escrow_contract_instance = Contract.get_contract(
+            contract_name="IbetSecurityTokenEscrow",
+            address=st_escrow_contract["address"],
+        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract,
+            exchange_contract=st_escrow_contract_instance,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
@@ -900,12 +915,12 @@ class TestProcessor:
         transfer_token(
             token_contract=token,
             from_address=self.account1["account_address"],
-            to_address=st_escrow_contract.address,
+            to_address=st_escrow_contract["address"],
             amount=10000,
         )
 
         # Create escrow
-        st_escrow_contract.functions.createEscrow(
+        st_escrow_contract_instance.functions.createEscrow(
             token.address,
             self.account2["account_address"],
             10000,
@@ -913,10 +928,10 @@ class TestProcessor:
             "978266096",  # 2000/12/31 12:34:56
             "test_escrow_data",
         ).transact({"from": self.account1["account_address"]})
-        escrow_id = st_escrow_contract.functions.latestEscrowId().call()
+        escrow_id = st_escrow_contract_instance.functions.latestEscrowId().call()
 
         # Finish escrow
-        st_escrow_contract.functions.finishEscrow(escrow_id).transact(
+        st_escrow_contract_instance.functions.finishEscrow(escrow_id).transact(
             {"from": self.escrow_agent["account_address"]}
         )
 
@@ -934,7 +949,7 @@ class TestProcessor:
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
         assert _transfer_approval.token_address == token.address
-        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.exchange_address == st_escrow_contract["address"]
         assert _transfer_approval.application_id == escrow_id
         assert _transfer_approval.from_address == self.account1["account_address"]
         assert _transfer_approval.to_address == self.account2["account_address"]
@@ -961,12 +976,17 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        st_escrow_contract_instance = Contract.get_contract(
+            contract_name="IbetSecurityTokenEscrow",
+            address=st_escrow_contract["address"],
+        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract,
+            exchange_contract=st_escrow_contract_instance,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
@@ -999,12 +1019,12 @@ class TestProcessor:
         transfer_token(
             token_contract=token,
             from_address=self.account1["account_address"],
-            to_address=st_escrow_contract.address,
+            to_address=st_escrow_contract["address"],
             amount=10000,
         )
 
         # Create escrow
-        st_escrow_contract.functions.createEscrow(
+        st_escrow_contract_instance.functions.createEscrow(
             token.address,
             self.account2["account_address"],
             10000,
@@ -1012,15 +1032,15 @@ class TestProcessor:
             "978266096",  # 2000/12/31 12:34:56
             "test_escrow_data",
         ).transact({"from": self.account1["account_address"]})
-        escrow_id = st_escrow_contract.functions.latestEscrowId().call()
+        escrow_id = st_escrow_contract_instance.functions.latestEscrowId().call()
 
         # Finish escrow
-        st_escrow_contract.functions.finishEscrow(escrow_id).transact(
+        st_escrow_contract_instance.functions.finishEscrow(escrow_id).transact(
             {"from": self.escrow_agent["account_address"]}
         )
 
         # Approve transfer
-        st_escrow_contract.functions.approveTransfer(
+        st_escrow_contract_instance.functions.approveTransfer(
             escrow_id,
             "1609418096",  # 2020/12/31 12:34:56
         ).transact({"from": self.issuer["account_address"]})
@@ -1039,7 +1059,7 @@ class TestProcessor:
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
         assert _transfer_approval.token_address == token.address
-        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.exchange_address == st_escrow_contract["address"]
         assert _transfer_approval.application_id == escrow_id
         assert _transfer_approval.from_address == self.account1["account_address"]
         assert _transfer_approval.to_address == self.account2["account_address"]

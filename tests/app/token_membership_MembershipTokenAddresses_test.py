@@ -31,7 +31,10 @@ from app import config
 from app.model.db import IDXTokenListRegister, Listing
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import membership_issue, membership_register_list
+from tests.contract_modules import (
+    membership_issue_token,
+    membership_register_token_list,
+)
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
@@ -117,12 +120,10 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.token_attribute(exchange_address)
-        membership = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership, token_list)
+        membership = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
@@ -164,9 +165,7 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
 
         token_address_list: list[str] = []
 
@@ -174,33 +173,33 @@ class TestTokenMembershipTokenAddresses:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue(issuer, attribute_token1)
+        membership1 = membership_issue_token(issuer, attribute_token1)
         token_address_list.append(membership1["address"])
-        membership_register_list(issuer, membership1, token_list)
+        membership_register_token_list(issuer, membership1, token_list)
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue(issuer, attribute_token2)
+        membership2 = membership_issue_token(issuer, attribute_token2)
         token_address_list.append(membership2["address"])
-        membership_register_list(issuer, membership2, token_list)
+        membership_register_token_list(issuer, membership2, token_list)
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue(issuer, attribute_token3)
+        membership3 = membership_issue_token(issuer, attribute_token3)
         token_address_list.append(membership3["address"])
-        membership_register_list(issuer, membership3, token_list)
+        membership_register_token_list(issuer, membership3, token_list)
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue(issuer, attribute_token4)
+        membership4 = membership_issue_token(issuer, attribute_token4)
         token_address_list.append(membership4["address"])
-        membership_register_list(issuer, membership4, token_list)
+        membership_register_token_list(issuer, membership4, token_list)
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue(issuer, attribute_token5)
+        membership5 = membership_issue_token(issuer, attribute_token5)
         token_address_list.append(membership5["address"])
-        membership_register_list(issuer, membership5, token_list)
+        membership_register_token_list(issuer, membership5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership1)
@@ -251,9 +250,7 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
 
         token_address_list: list[str] = []
 
@@ -261,33 +258,33 @@ class TestTokenMembershipTokenAddresses:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue(issuer, attribute_token1)
+        membership1 = membership_issue_token(issuer, attribute_token1)
         token_address_list.append(membership1["address"])
-        membership_register_list(issuer, membership1, token_list)
+        membership_register_token_list(issuer, membership1, token_list)
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue(issuer, attribute_token2)
+        membership2 = membership_issue_token(issuer, attribute_token2)
         token_address_list.append(membership2["address"])
-        membership_register_list(issuer, membership2, token_list)
+        membership_register_token_list(issuer, membership2, token_list)
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue(issuer, attribute_token3)
+        membership3 = membership_issue_token(issuer, attribute_token3)
         token_address_list.append(membership3["address"])
-        membership_register_list(issuer, membership3, token_list)
+        membership_register_token_list(issuer, membership3, token_list)
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue(issuer, attribute_token4)
+        membership4 = membership_issue_token(issuer, attribute_token4)
         token_address_list.append(membership4["address"])
-        membership_register_list(issuer, membership4, token_list)
+        membership_register_token_list(issuer, membership4, token_list)
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue(issuer, attribute_token5)
+        membership5 = membership_issue_token(issuer, attribute_token5)
         token_address_list.append(membership5["address"])
-        membership_register_list(issuer, membership5, token_list)
+        membership_register_token_list(issuer, membership5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership1)
@@ -332,9 +329,7 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
 
         token_address_list: list[str] = []
 
@@ -342,33 +337,33 @@ class TestTokenMembershipTokenAddresses:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue(issuer, attribute_token1)
+        membership1 = membership_issue_token(issuer, attribute_token1)
         token_address_list.append(membership1["address"])
-        membership_register_list(issuer, membership1, token_list)
+        membership_register_token_list(issuer, membership1, token_list)
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue(issuer, attribute_token2)
+        membership2 = membership_issue_token(issuer, attribute_token2)
         token_address_list.append(membership2["address"])
-        membership_register_list(issuer, membership2, token_list)
+        membership_register_token_list(issuer, membership2, token_list)
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue(issuer, attribute_token3)
+        membership3 = membership_issue_token(issuer, attribute_token3)
         token_address_list.append(membership3["address"])
-        membership_register_list(issuer, membership3, token_list)
+        membership_register_token_list(issuer, membership3, token_list)
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue(issuer, attribute_token4)
+        membership4 = membership_issue_token(issuer, attribute_token4)
         token_address_list.append(membership4["address"])
-        membership_register_list(issuer, membership4, token_list)
+        membership_register_token_list(issuer, membership4, token_list)
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue(issuer, attribute_token5)
+        membership5 = membership_issue_token(issuer, attribute_token5)
         token_address_list.append(membership5["address"])
-        membership_register_list(issuer, membership5, token_list)
+        membership_register_token_list(issuer, membership5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership1)
@@ -425,9 +420,7 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
 
         token_address_list: list[str] = []
 
@@ -435,33 +428,33 @@ class TestTokenMembershipTokenAddresses:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue(issuer, attribute_token1)
+        membership1 = membership_issue_token(issuer, attribute_token1)
         token_address_list.append(membership1["address"])
-        membership_register_list(issuer, membership1, token_list)
+        membership_register_token_list(issuer, membership1, token_list)
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue(issuer, attribute_token2)
+        membership2 = membership_issue_token(issuer, attribute_token2)
         token_address_list.append(membership2["address"])
-        membership_register_list(issuer, membership2, token_list)
+        membership_register_token_list(issuer, membership2, token_list)
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue(issuer, attribute_token3)
+        membership3 = membership_issue_token(issuer, attribute_token3)
         token_address_list.append(membership3["address"])
-        membership_register_list(issuer, membership3, token_list)
+        membership_register_token_list(issuer, membership3, token_list)
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue(issuer, attribute_token4)
+        membership4 = membership_issue_token(issuer, attribute_token4)
         token_address_list.append(membership4["address"])
-        membership_register_list(issuer, membership4, token_list)
+        membership_register_token_list(issuer, membership4, token_list)
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue(issuer, attribute_token5)
+        membership5 = membership_issue_token(issuer, attribute_token5)
         token_address_list.append(membership5["address"])
-        membership_register_list(issuer, membership5, token_list)
+        membership_register_token_list(issuer, membership5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership1)
@@ -517,9 +510,7 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
 
         token_address_list: list[str] = []
 
@@ -527,33 +518,33 @@ class TestTokenMembershipTokenAddresses:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue(issuer, attribute_token1)
+        membership1 = membership_issue_token(issuer, attribute_token1)
         token_address_list.append(membership1["address"])
-        membership_register_list(issuer, membership1, token_list)
+        membership_register_token_list(issuer, membership1, token_list)
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue(issuer, attribute_token2)
+        membership2 = membership_issue_token(issuer, attribute_token2)
         token_address_list.append(membership2["address"])
-        membership_register_list(issuer, membership2, token_list)
+        membership_register_token_list(issuer, membership2, token_list)
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue(issuer, attribute_token3)
+        membership3 = membership_issue_token(issuer, attribute_token3)
         token_address_list.append(membership3["address"])
-        membership_register_list(issuer, membership3, token_list)
+        membership_register_token_list(issuer, membership3, token_list)
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue(issuer, attribute_token4)
+        membership4 = membership_issue_token(issuer, attribute_token4)
         token_address_list.append(membership4["address"])
-        membership_register_list(issuer, membership4, token_list)
+        membership_register_token_list(issuer, membership4, token_list)
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue(issuer, attribute_token5)
+        membership5 = membership_issue_token(issuer, attribute_token5)
         token_address_list.append(membership5["address"])
-        membership_register_list(issuer, membership5, token_list)
+        membership_register_token_list(issuer, membership5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership1)
@@ -605,12 +596,10 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.token_attribute(exchange_address)
-        membership = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership, token_list)
+        membership = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
@@ -649,12 +638,10 @@ class TestTokenMembershipTokenAddresses:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetMembershipExchange"]["address"]
-        )
+        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.token_attribute(exchange_address)
-        membership = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership, token_list)
+        membership = membership_issue_token(issuer, attribute)
+        membership_register_token_list(issuer, membership, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)

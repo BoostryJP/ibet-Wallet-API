@@ -44,10 +44,6 @@ if [ "${COUPON_TOKEN_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} batch/indexer_Position_Coupon.py"
 fi
 
-if [ -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" ] || [ -n "$IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS" ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_DEX.py"
-fi
-
 if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
   PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail.py"
   PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_ShortTerm.py"

@@ -35,21 +35,6 @@ from .company_info import (
     RetrieveCompanyInfoResponse,
 )
 from .contract_abi import ABI
-from .dex_market import (
-    ListAllLastPriceQuery,
-    ListAllLastPriceResponse,
-    ListAllOrderBookItemResponse,
-    ListAllOrderBookQuery,
-    ListAllTickQuery,
-    ListAllTicksResponse,
-    RetrieveAgreementDetailResponse,
-    RetrieveAgreementQuery,
-)
-from .dex_order_list import (
-    ListAllOrderListQuery,
-    ListAllOrderListResponse,
-    TokenAddress,
-)
 from .e2e_message import E2EMessageEncryptionKeyResponse
 from .eth import (
     GetTransactionCountQuery,
@@ -195,8 +180,6 @@ from .token_share import (
     ShareTokensSortItem,
 )
 from .user_info import (
-    RetrievePaymentAccountQuery,
-    RetrievePaymentAccountRegistrationStatusResponse,
     RetrievePersonalInfoQuery,
     RetrievePersonalInfoRegistrationStatusResponse,
     TaggingAccountAddressRequest,

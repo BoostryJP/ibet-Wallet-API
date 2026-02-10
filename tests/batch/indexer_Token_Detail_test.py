@@ -46,14 +46,14 @@ from app.model.db import (
 from batch.indexer_Token_Detail import LOG, Processor, main
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    coupon_register_list,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    membership_issue,
-    membership_register_list,
-    register_bond_list,
-    register_share_list,
+    bond_issue_token,
+    bond_register_token_list,
+    coupon_issue_token,
+    coupon_register_token_list,
+    membership_issue_token,
+    membership_register_token_list,
+    share_issue_token,
+    share_register_token_list,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
@@ -120,8 +120,8 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = issue_bond_token(issuer, dict(args))
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, dict(args))
+        bond_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -132,8 +132,8 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = issue_share_token(issuer, dict(args))
-        register_share_list(issuer, token, token_list)
+        token = share_issue_token(issuer, dict(args))
+        share_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -144,8 +144,8 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = issue_coupon_token(issuer, dict(args))
-        coupon_register_list(issuer, token, token_list)
+        token = coupon_issue_token(issuer, dict(args))
+        coupon_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -156,8 +156,8 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = membership_issue(issuer, dict(args))
-        membership_register_list(issuer, token, token_list)
+        token = membership_issue_token(issuer, dict(args))
+        membership_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -175,7 +175,7 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         _bond_token_expected_list: list[dict[str, object]] = []
@@ -417,7 +417,7 @@ class TestProcessor:
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -483,7 +483,7 @@ class TestProcessor:
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -544,7 +544,7 @@ class TestProcessor:
     ):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         args = {
             "name": "テストクーポン",
             "symbol": "COUPON",

@@ -35,7 +35,7 @@ from web3.types import Nonce, TxParams, Wei
 from app import config, log
 from app.model.db import ExecutableContract, Listing, Node
 from tests.account_config import eth_account
-from tests.contract_modules import coupon_register_list, issue_coupon_token
+from tests.contract_modules import coupon_issue_token, coupon_register_token_list
 from tests.types import DeployedContract
 from tests.utils.contract import Contract
 
@@ -134,7 +134,7 @@ class TestEthSendRawTransactionNoWait:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -150,7 +150,7 @@ class TestEthSendRawTransactionNoWait:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
         # Listing,実行可能コントラクト登録
         listing_token(session, coupontoken_1)
@@ -202,7 +202,7 @@ class TestEthSendRawTransactionNoWait:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -218,8 +218,8 @@ class TestEthSendRawTransactionNoWait:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
-        coupontoken_2 = issue_coupon_token(
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
+        coupontoken_2 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test2",
@@ -235,7 +235,7 @@ class TestEthSendRawTransactionNoWait:
                 "privacyPolicy": "privacyPolicy_test2",
             },
         )
-        coupon_register_list(issuer, coupontoken_2, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_2, tokenlist)
 
         # Listing,実行可能コントラクト登録
         listing_token(session, coupontoken_1)
@@ -334,7 +334,7 @@ class TestEthSendRawTransactionNoWait:
             tokenlist = tokenlist_contract()
             config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
             issuer = eth_account["issuer"]
-            coupontoken_1 = issue_coupon_token(
+            coupontoken_1 = coupon_issue_token(
                 issuer,
                 {
                     "name": "name_test1",
@@ -350,7 +350,7 @@ class TestEthSendRawTransactionNoWait:
                     "privacyPolicy": "privacyPolicy_test1",
                 },
             )
-            coupon_register_list(issuer, coupontoken_1, tokenlist)
+            coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
             # Listing,実行可能コントラクト登録
             listing_token(session, coupontoken_1)
@@ -438,7 +438,7 @@ class TestEthSendRawTransactionNoWait:
             tokenlist = tokenlist_contract()
             config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
             issuer = eth_account["issuer"]
-            coupontoken_1 = issue_coupon_token(
+            coupontoken_1 = coupon_issue_token(
                 issuer,
                 {
                     "name": "name_test1",
@@ -454,7 +454,7 @@ class TestEthSendRawTransactionNoWait:
                     "privacyPolicy": "privacyPolicy_test1",
                 },
             )
-            coupon_register_list(issuer, coupontoken_1, tokenlist)
+            coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
             # Listing,実行可能コントラクト登録
             listing_token(session, coupontoken_1)
@@ -681,7 +681,7 @@ class TestEthSendRawTransactionNoWait:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -697,7 +697,7 @@ class TestEthSendRawTransactionNoWait:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
         # Listing,実行可能コントラクト登録
         listing_token(session, coupontoken_1)
@@ -748,7 +748,7 @@ class TestEthSendRawTransactionNoWait:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -764,7 +764,7 @@ class TestEthSendRawTransactionNoWait:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
         # Listing登録
         listing_token(session, coupontoken_1)
@@ -803,7 +803,7 @@ class TestEthSendRawTransactionNoWait:
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
         issuer = eth_account["issuer"]
-        coupontoken_1 = issue_coupon_token(
+        coupontoken_1 = coupon_issue_token(
             issuer,
             {
                 "name": "name_test1",
@@ -819,7 +819,7 @@ class TestEthSendRawTransactionNoWait:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
 
         # Listing,実行可能コントラクト登録
         listing_token(session, coupontoken_1)

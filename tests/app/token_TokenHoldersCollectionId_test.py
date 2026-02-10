@@ -36,11 +36,11 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    bond_issue_token,
     bond_lock,
+    bond_register_token_list,
     bond_transfer_to_exchange,
     bond_unlock,
-    issue_bond_token,
-    register_bond_list,
     register_personalinfo,
     transfer_token,
 )
@@ -111,8 +111,8 @@ class TestTokenTokenHoldersCollectionId:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(issuer, args)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, args)
+        bond_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -186,7 +186,7 @@ class TestTokenTokenHoldersCollectionId:
         personal_info_contract = shared_contract["PersonalInfo"]
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
@@ -199,7 +199,7 @@ class TestTokenTokenHoldersCollectionId:
 
         # Transfer
         bond_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract.address}, token, 10000
+            self.issuer, {"address": escrow_contract["address"]}, token, 10000
         )
         transfer_token(
             token_contract,
@@ -214,7 +214,7 @@ class TestTokenTokenHoldersCollectionId:
             50000,
         )
         bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract.address}, token, 30000
+            self.user1, {"address": escrow_contract["address"]}, token, 30000
         )
         bond_lock(self.trader, token, self.user1["account_address"], 2000)
         bond_lock(self.trader, token, self.issuer["account_address"], 1000)

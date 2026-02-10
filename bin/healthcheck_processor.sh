@@ -23,20 +23,6 @@ if [ "${TOKEN_NOTIFICATION_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} batch/processor_Notifications_Token.py"
 fi
 
-if [ "${EXCHANGE_NOTIFICATION_ENABLED}" = 1 ]; then
-  if [ "${MEMBERSHIP_TOKEN_ENABLED}" = 1 ]; then
-    if [ ! -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-      PROC_LIST="${PROC_LIST} batch/processor_Notifications_Membership_Exchange.py"
-    fi
-  fi
-
-  if [ "${COUPON_TOKEN_ENABLED}" = 1 ]; then
-    if [ ! -z "${IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-      PROC_LIST="${PROC_LIST} batch/processor_Notifications_Coupon_Exchange.py"
-    fi
-  fi
-fi
-
 if [ ! -z "${SMTP_METHOD}" ]; then
   PROC_LIST="${PROC_LIST} batch/processor_Send_Mail.py"
 fi

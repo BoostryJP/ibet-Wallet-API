@@ -37,8 +37,6 @@ from app.api.routers import (
     admin as routers_admin,
     company_info as routers_company_info,
     contract_abi as routers_contract_abi,
-    dex_market as routers_dex_market,
-    dex_order_list as routers_dex_order_list,
     e2e_message as routers_e2e_message,
     eth as routers_eth,
     events as routers_events,
@@ -95,10 +93,6 @@ tags_metadata: list[dict[str, str]] = [
     {"name": "user_position", "description": "User's token balance"},
     {"name": "user_notification", "description": "Notifications for users"},
     {"name": "contract_log", "description": "Contract event logs"},
-    {
-        "name": "dex",
-        "description": "Trade related functions on IbetExchange (Only for utility tokens)",
-    },
     {"name": "messaging", "description": "Messaging functions with external systems"},
 ]
 
@@ -168,8 +162,6 @@ app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)
 app.include_router(routers_mail.router)
 app.include_router(routers_events.router)
-app.include_router(routers_dex_market.router)
-app.include_router(routers_dex_order_list.router)
 
 
 ###############################################################

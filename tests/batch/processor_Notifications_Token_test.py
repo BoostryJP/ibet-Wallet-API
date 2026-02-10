@@ -43,25 +43,25 @@ from app.model.db import (
 from tests.account_config import eth_account
 from tests.contract_modules import (
     bond_change_to_redeemed,
-    coupon_register_list,
+    bond_issue_token,
+    bond_register_token_list,
+    coupon_issue_token,
+    coupon_register_token_list,
     coupon_transfer_to_exchange,
+    coupon_transfer_token,
     coupon_withdraw_from_exchange,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    register_bond_list,
     register_personalinfo,
-    register_share_list,
     share_apply_for_transfer,
     share_approve_transfer,
     share_cancel_transfer,
     share_change_to_canceled,
     share_force_lock,
     share_force_unlock,
+    share_issue_token,
+    share_register_token_list,
     share_set_transfer_approval_required,
-    transfer_coupon_token,
-    transfer_share_token,
-    untransferable_share_token,
+    share_set_transferable,
+    share_transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
@@ -115,8 +115,8 @@ async def prepare_coupon_token(
         "contactInformation": "問い合わせ先",
         "privacyPolicy": "プライバシーポリシー",
     }
-    token = issue_coupon_token(issuer, args)
-    coupon_register_list(issuer, token, token_list)
+    token = coupon_issue_token(issuer, args)
+    coupon_register_token_list(issuer, token, token_list)
 
     _listing = Listing()
     _listing.token_address = token["address"]
@@ -173,8 +173,8 @@ async def prepare_bond_token(
         "redemptionValueCurrency": "JPY",
         "baseFxRate": "",
     }
-    token = issue_bond_token(issuer, args)
-    register_bond_list(issuer, token, token_list)
+    token = bond_issue_token(issuer, args)
+    bond_register_token_list(issuer, token, token_list)
 
     _listing = Listing()
     _listing.token_address = token["address"]
@@ -213,8 +213,8 @@ async def prepare_share_token(
         "memo": "メモ",
         "transferable": True,
     }
-    token = issue_share_token(issuer, args)
-    register_share_list(issuer, token, token_list)
+    token = share_issue_token(issuer, args)
+    share_register_token_list(issuer, token, token_list)
 
     _listing = Listing()
     _listing.token_address = token["address"]
@@ -249,7 +249,7 @@ class TestWatchTransfer:
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -265,7 +265,7 @@ class TestWatchTransfer:
         await async_session.commit()
 
         # Emit Transfer event
-        transfer_coupon_token(self.issuer, token, self.trader, 100)
+        coupon_transfer_token(self.issuer, token, self.trader, 100)
 
         # Run target process
         await watcher.loop()
@@ -329,7 +329,7 @@ class TestWatchTransfer:
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -345,8 +345,8 @@ class TestWatchTransfer:
         await async_session.commit()
 
         # Emit Transfer event
-        transfer_coupon_token(self.issuer, token, self.trader, 100)
-        transfer_coupon_token(self.issuer, token, self.trader2, 200)
+        coupon_transfer_token(self.issuer, token, self.trader, 100)
+        coupon_transfer_token(self.issuer, token, self.trader2, 200)
 
         # Run target process
         await watcher.loop()
@@ -446,7 +446,7 @@ class TestWatchTransfer:
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -495,7 +495,7 @@ class TestWatchTransfer:
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -600,7 +600,7 @@ class TestWatchTransfer:
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
         token = await prepare_coupon_token(
             self.issuer, exchange_contract, token_list_contract, async_session
@@ -651,7 +651,7 @@ class TestWatchApplyForTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -674,7 +674,7 @@ class TestWatchApplyForTransfer:
         # Emit ApplyForTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
 
@@ -740,7 +740,7 @@ class TestWatchApplyForTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -763,7 +763,7 @@ class TestWatchApplyForTransfer:
         # Emmit ApplyForTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
@@ -870,7 +870,7 @@ class TestWatchApplyForTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -893,7 +893,7 @@ class TestWatchApplyForTransfer:
         # Not emit ApplyForTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
         # Run target process
@@ -935,7 +935,7 @@ class TestWatchApplyForTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -950,7 +950,7 @@ class TestWatchApplyForTransfer:
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
 
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
         # Transfer
@@ -1001,7 +1001,7 @@ class TestWatchApproveTransfer:
     ):
         watcher = watcher_factory("WatchApproveTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1024,7 +1024,7 @@ class TestWatchApproveTransfer:
         # Emit ApproveTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA")
@@ -1092,7 +1092,7 @@ class TestWatchApproveTransfer:
     ):
         watcher = watcher_factory("WatchApproveTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1115,7 +1115,7 @@ class TestWatchApproveTransfer:
         # Emit ApproveTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
@@ -1222,7 +1222,7 @@ class TestWatchApproveTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1245,7 +1245,7 @@ class TestWatchApproveTransfer:
         # No emit ApproveTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
         # Run target process
@@ -1287,7 +1287,7 @@ class TestWatchApproveTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1302,7 +1302,7 @@ class TestWatchApproveTransfer:
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
 
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
         # Transfer
@@ -1354,7 +1354,7 @@ class TestWatchCancelTransfer:
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1377,7 +1377,7 @@ class TestWatchCancelTransfer:
         # Emit CancelTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA")
@@ -1445,7 +1445,7 @@ class TestWatchCancelTransfer:
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1468,7 +1468,7 @@ class TestWatchCancelTransfer:
         # Emit CancelTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
@@ -1575,7 +1575,7 @@ class TestWatchCancelTransfer:
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1597,7 +1597,7 @@ class TestWatchCancelTransfer:
 
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token_1, 100)
+        share_transfer_token(self.issuer, self.trader, token_1, 100)
         share_set_transfer_approval_required(self.issuer, token_1, True)
         share_apply_for_transfer(self.trader, token_1, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token_1, self.trader2, 20, "TEST_DATA2")
@@ -1618,7 +1618,7 @@ class TestWatchCancelTransfer:
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
-        transfer_share_token(self.issuer, self.trader, token_2, 100)
+        share_transfer_token(self.issuer, self.trader, token_2, 100)
         share_set_transfer_approval_required(self.issuer, token_2, True)
         share_apply_for_transfer(self.trader, token_2, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token_2, self.trader2, 20, "TEST_DATA2")
@@ -1789,7 +1789,7 @@ class TestWatchCancelTransfer:
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1811,7 +1811,7 @@ class TestWatchCancelTransfer:
         # Not emit CancelTransfer event
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
         # Run target process
@@ -1853,7 +1853,7 @@ class TestWatchCancelTransfer:
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1868,7 +1868,7 @@ class TestWatchCancelTransfer:
         register_personalinfo(self.trader, personal_info_contract)
         register_personalinfo(self.trader2, personal_info_contract)
 
-        transfer_share_token(self.issuer, self.trader, token, 100)
+        share_transfer_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
         # Transfer
@@ -1918,7 +1918,7 @@ class TestWatchForceLock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2010,7 +2010,7 @@ class TestWatchForceLock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2083,7 +2083,7 @@ class TestWatchForceLock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2139,7 +2139,7 @@ class TestWatchForceLock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2195,7 +2195,7 @@ class TestWatchForceUnlock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2296,7 +2296,7 @@ class TestWatchForceUnlock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2378,7 +2378,7 @@ class TestWatchForceUnlock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2434,7 +2434,7 @@ class TestWatchForceUnlock:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2489,7 +2489,7 @@ class TestWatchChangeToRedeemed:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2553,7 +2553,7 @@ class TestWatchChangeToRedeemed:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2639,7 +2639,7 @@ class TestWatchChangeToRedeemed:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2744,7 +2744,7 @@ class TestWatchChangeToRedeemed:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2800,7 +2800,7 @@ class TestWatchChangeToRedeemed:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2860,7 +2860,7 @@ class TestWatchChangeToRedeemed:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2915,7 +2915,7 @@ class TestWatchChangeToCanceled:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2979,7 +2979,7 @@ class TestWatchChangeToCanceled:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3065,7 +3065,7 @@ class TestWatchChangeToCanceled:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3170,7 +3170,7 @@ class TestWatchChangeToCanceled:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3226,7 +3226,7 @@ class TestWatchChangeToCanceled:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3286,7 +3286,7 @@ class TestWatchChangeToCanceled:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3341,7 +3341,7 @@ class TestWatchWatchTransferableAttribute:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3396,7 +3396,7 @@ class TestWatchWatchTransferableAttribute:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3468,7 +3468,7 @@ class TestWatchWatchTransferableAttribute:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3561,7 +3561,7 @@ class TestWatchWatchTransferableAttribute:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3574,7 +3574,7 @@ class TestWatchWatchTransferableAttribute:
             async_session,
         )
 
-        untransferable_share_token(self.issuer, token)
+        share_set_transferable(self.issuer, token)
 
         idx_token = IDXShareToken()
         idx_token.token_address = token["address"]
@@ -3663,7 +3663,7 @@ class TestWatchWatchTransferableAttribute:
         mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 

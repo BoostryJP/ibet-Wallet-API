@@ -36,11 +36,11 @@ from app.model.db import (
 )
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    consume_coupon_token,
-    coupon_register_list,
+    coupon_consume,
+    coupon_issue_token,
+    coupon_register_token_list,
     coupon_transfer_to_exchange,
-    issue_coupon_token,
-    transfer_coupon_token,
+    coupon_transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils.contract import Contract
@@ -79,9 +79,11 @@ class TestPositionCoupon:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = issue_coupon_token(TestPositionCoupon.issuer, args)
-        coupon_register_list(TestPositionCoupon.issuer, token, token_list_contract)
-        transfer_coupon_token(
+        token = coupon_issue_token(TestPositionCoupon.issuer, args)
+        coupon_register_token_list(
+            TestPositionCoupon.issuer, token, token_list_contract
+        )
+        coupon_transfer_token(
             TestPositionCoupon.issuer,
             token,
             account,
@@ -93,7 +95,7 @@ class TestPositionCoupon:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(
+    def create_exchange_commitment_data(
         account: UnitTestAccount,
         exchange_contract: DeployedContract,
         token_list_contract: DeployedContract,
@@ -104,14 +106,17 @@ class TestPositionCoupon:
             account, exchange_contract, token_list_contract
         )
 
-        # Sell order
-        agent = eth_account["agent"]
+        # Create escrow
         coupon_transfer_to_exchange(account, exchange_contract, token, commitment)
-        ExchangeContract = Contract.get_contract(
-            "IbetExchange", exchange_contract["address"]
+        escrow_contract = Contract.get_contract(
+            contract_name="IbetEscrow", address=exchange_contract["address"]
         )
-        ExchangeContract.functions.createOrder(
-            token["address"], commitment, 10000, False, agent["account_address"]
+        escrow_contract.functions.createEscrow(
+            token["address"],
+            account["account_address"],
+            commitment,
+            account["account_address"],
+            "test_data",
         ).transact({"from": account["account_address"]})
 
         return token
@@ -131,7 +136,7 @@ class TestPositionCoupon:
         )
 
         # Used
-        consume_coupon_token(account, token, used)
+        coupon_consume(account, token, used)
 
         return token
 
@@ -150,7 +155,7 @@ class TestPositionCoupon:
         )
 
         # Transfer all amount
-        transfer_coupon_token(account, token, to_account, 1000000)
+        coupon_transfer_token(account, token, to_account, 1000000)
 
         return token
 
@@ -248,7 +253,7 @@ class TestPositionCoupon:
     ):
         config.COUPON_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -288,11 +293,11 @@ class TestPositionCoupon:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.list_token(token_4["address"], session)
@@ -433,7 +438,7 @@ class TestPositionCoupon:
     ):
         config.COUPON_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -473,11 +478,11 @@ class TestPositionCoupon:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.list_token(token_4["address"], session)
@@ -663,7 +668,7 @@ class TestPositionCoupon:
     ):
         config.COUPON_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -751,7 +756,7 @@ class TestPositionCoupon:
         self.list_token(token_non["address"], session)  # not target
         self.create_idx_token(session, token_non["address"], config.ZERO_ADDRESS)
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.create_idx_position(
@@ -764,7 +769,7 @@ class TestPositionCoupon:
         self.list_token(token_3["address"], session)
         self.create_idx_token(session, token_3["address"], config.ZERO_ADDRESS)
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.create_idx_position(
@@ -983,7 +988,7 @@ class TestPositionCoupon:
     ):
         config.COUPON_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -1071,7 +1076,7 @@ class TestPositionCoupon:
         self.list_token(token_non["address"], session)  # not target
         self.create_idx_token(session, token_non["address"], config.ZERO_ADDRESS)
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
         self.create_idx_position(
@@ -1084,7 +1089,7 @@ class TestPositionCoupon:
         self.list_token(token_3["address"], session)
         self.create_idx_token(session, token_3["address"], config.ZERO_ADDRESS)
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
         self.create_idx_position(

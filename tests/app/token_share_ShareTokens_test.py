@@ -31,7 +31,7 @@ from app import config
 from app.model.db import IDXTokenListRegister, Listing
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import issue_share_token, register_share_list
+from tests.contract_modules import share_issue_token, share_register_token_list
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
@@ -126,12 +126,12 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token)
@@ -205,7 +205,7 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -216,33 +216,33 @@ class TestTokenShareTokens:
             personal_info,
         )
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = issue_share_token(issuer, attribute_token1)
+        share_token1 = share_issue_token(issuer, attribute_token1)
         token_address_list.append(share_token1["address"])
-        register_share_list(issuer, share_token1, token_list)
+        share_register_token_list(issuer, share_token1, token_list)
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = issue_share_token(issuer, attribute_token2)
+        share_token2 = share_issue_token(issuer, attribute_token2)
         token_address_list.append(share_token2["address"])
-        register_share_list(issuer, share_token2, token_list)
+        share_register_token_list(issuer, share_token2, token_list)
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = issue_share_token(issuer, attribute_token3)
+        share_token3 = share_issue_token(issuer, attribute_token3)
         token_address_list.append(share_token3["address"])
-        register_share_list(issuer, share_token3, token_list)
+        share_register_token_list(issuer, share_token3, token_list)
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = issue_share_token(issuer, attribute_token4)
+        share_token4 = share_issue_token(issuer, attribute_token4)
         token_address_list.append(share_token4["address"])
-        register_share_list(issuer, share_token4, token_list)
+        share_register_token_list(issuer, share_token4, token_list)
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = issue_share_token(issuer, attribute_token5)
+        share_token5 = share_issue_token(issuer, attribute_token5)
         token_address_list.append(share_token5["address"])
-        register_share_list(issuer, share_token5, token_list)
+        share_register_token_list(issuer, share_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token1)
@@ -324,7 +324,7 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -335,33 +335,33 @@ class TestTokenShareTokens:
             personal_info,
         )
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = issue_share_token(issuer, attribute_token1)
+        share_token1 = share_issue_token(issuer, attribute_token1)
         token_address_list.append(share_token1["address"])
-        register_share_list(issuer, share_token1, token_list)
+        share_register_token_list(issuer, share_token1, token_list)
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = issue_share_token(issuer, attribute_token2)
+        share_token2 = share_issue_token(issuer, attribute_token2)
         token_address_list.append(share_token2["address"])
-        register_share_list(issuer, share_token2, token_list)
+        share_register_token_list(issuer, share_token2, token_list)
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = issue_share_token(issuer, attribute_token3)
+        share_token3 = share_issue_token(issuer, attribute_token3)
         token_address_list.append(share_token3["address"])
-        register_share_list(issuer, share_token3, token_list)
+        share_register_token_list(issuer, share_token3, token_list)
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = issue_share_token(issuer, attribute_token4)
+        share_token4 = share_issue_token(issuer, attribute_token4)
         token_address_list.append(share_token4["address"])
-        register_share_list(issuer, share_token4, token_list)
+        share_register_token_list(issuer, share_token4, token_list)
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = issue_share_token(issuer, attribute_token5)
+        share_token5 = share_issue_token(issuer, attribute_token5)
         token_address_list.append(share_token5["address"])
-        register_share_list(issuer, share_token5, token_list)
+        share_register_token_list(issuer, share_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token1)
@@ -445,7 +445,7 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -456,33 +456,33 @@ class TestTokenShareTokens:
             personal_info,
         )
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = issue_share_token(issuer, attribute_token1)
+        share_token1 = share_issue_token(issuer, attribute_token1)
         token_address_list.append(share_token1["address"])
-        register_share_list(issuer, share_token1, token_list)
+        share_register_token_list(issuer, share_token1, token_list)
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = issue_share_token(issuer, attribute_token2)
+        share_token2 = share_issue_token(issuer, attribute_token2)
         token_address_list.append(share_token2["address"])
-        register_share_list(issuer, share_token2, token_list)
+        share_register_token_list(issuer, share_token2, token_list)
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = issue_share_token(issuer, attribute_token3)
+        share_token3 = share_issue_token(issuer, attribute_token3)
         token_address_list.append(share_token3["address"])
-        register_share_list(issuer, share_token3, token_list)
+        share_register_token_list(issuer, share_token3, token_list)
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = issue_share_token(issuer, attribute_token4)
+        share_token4 = share_issue_token(issuer, attribute_token4)
         token_address_list.append(share_token4["address"])
-        register_share_list(issuer, share_token4, token_list)
+        share_register_token_list(issuer, share_token4, token_list)
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = issue_share_token(issuer, attribute_token5)
+        share_token5 = share_issue_token(issuer, attribute_token5)
         token_address_list.append(share_token5["address"])
-        register_share_list(issuer, share_token5, token_list)
+        share_register_token_list(issuer, share_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token1)
@@ -527,7 +527,7 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -538,33 +538,33 @@ class TestTokenShareTokens:
             personal_info,
         )
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = issue_share_token(issuer, attribute_token1)
+        share_token1 = share_issue_token(issuer, attribute_token1)
         token_address_list.append(share_token1["address"])
-        register_share_list(issuer, share_token1, token_list)
+        share_register_token_list(issuer, share_token1, token_list)
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = issue_share_token(issuer, attribute_token2)
+        share_token2 = share_issue_token(issuer, attribute_token2)
         token_address_list.append(share_token2["address"])
-        register_share_list(issuer, share_token2, token_list)
+        share_register_token_list(issuer, share_token2, token_list)
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = issue_share_token(issuer, attribute_token3)
+        share_token3 = share_issue_token(issuer, attribute_token3)
         token_address_list.append(share_token3["address"])
-        register_share_list(issuer, share_token3, token_list)
+        share_register_token_list(issuer, share_token3, token_list)
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = issue_share_token(issuer, attribute_token4)
+        share_token4 = share_issue_token(issuer, attribute_token4)
         token_address_list.append(share_token4["address"])
-        register_share_list(issuer, share_token4, token_list)
+        share_register_token_list(issuer, share_token4, token_list)
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = issue_share_token(issuer, attribute_token5)
+        share_token5 = share_issue_token(issuer, attribute_token5)
         token_address_list.append(share_token5["address"])
-        register_share_list(issuer, share_token5, token_list)
+        share_register_token_list(issuer, share_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token1)
@@ -658,7 +658,7 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -669,33 +669,33 @@ class TestTokenShareTokens:
             personal_info,
         )
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = issue_share_token(issuer, attribute_token1)
+        share_token1 = share_issue_token(issuer, attribute_token1)
         token_address_list.append(share_token1["address"])
-        register_share_list(issuer, share_token1, token_list)
+        share_register_token_list(issuer, share_token1, token_list)
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = issue_share_token(issuer, attribute_token2)
+        share_token2 = share_issue_token(issuer, attribute_token2)
         token_address_list.append(share_token2["address"])
-        register_share_list(issuer, share_token2, token_list)
+        share_register_token_list(issuer, share_token2, token_list)
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = issue_share_token(issuer, attribute_token3)
+        share_token3 = share_issue_token(issuer, attribute_token3)
         token_address_list.append(share_token3["address"])
-        register_share_list(issuer, share_token3, token_list)
+        share_register_token_list(issuer, share_token3, token_list)
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = issue_share_token(issuer, attribute_token4)
+        share_token4 = share_issue_token(issuer, attribute_token4)
         token_address_list.append(share_token4["address"])
-        register_share_list(issuer, share_token4, token_list)
+        share_register_token_list(issuer, share_token4, token_list)
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = issue_share_token(issuer, attribute_token5)
+        share_token5 = share_issue_token(issuer, attribute_token5)
         token_address_list.append(share_token5["address"])
-        register_share_list(issuer, share_token5, token_list)
+        share_register_token_list(issuer, share_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token1)
@@ -755,7 +755,7 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -766,33 +766,33 @@ class TestTokenShareTokens:
             personal_info,
         )
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = issue_share_token(issuer, attribute_token1)
+        share_token1 = share_issue_token(issuer, attribute_token1)
         token_address_list.append(share_token1["address"])
-        register_share_list(issuer, share_token1, token_list)
+        share_register_token_list(issuer, share_token1, token_list)
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = issue_share_token(issuer, attribute_token2)
+        share_token2 = share_issue_token(issuer, attribute_token2)
         token_address_list.append(share_token2["address"])
-        register_share_list(issuer, share_token2, token_list)
+        share_register_token_list(issuer, share_token2, token_list)
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = issue_share_token(issuer, attribute_token3)
+        share_token3 = share_issue_token(issuer, attribute_token3)
         token_address_list.append(share_token3["address"])
-        register_share_list(issuer, share_token3, token_list)
+        share_register_token_list(issuer, share_token3, token_list)
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = issue_share_token(issuer, attribute_token4)
+        share_token4 = share_issue_token(issuer, attribute_token4)
         token_address_list.append(share_token4["address"])
-        register_share_list(issuer, share_token4, token_list)
+        share_register_token_list(issuer, share_token4, token_list)
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = issue_share_token(issuer, attribute_token5)
+        share_token5 = share_issue_token(issuer, attribute_token5)
         token_address_list.append(share_token5["address"])
-        register_share_list(issuer, share_token5, token_list)
+        share_register_token_list(issuer, share_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token1)
@@ -877,12 +877,12 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token)
@@ -921,12 +921,12 @@ class TestTokenShareTokens:
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = share_issue_token(issuer, attribute)
+        share_register_token_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token)

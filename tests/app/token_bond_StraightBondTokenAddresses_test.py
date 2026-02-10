@@ -31,7 +31,7 @@ from app import config
 from app.model.db import IDXTokenListRegister, Listing
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import issue_bond_token, register_bond_list
+from tests.contract_modules import bond_issue_token, bond_register_token_list
 from tests.types import DeployedContract, SharedContract
 from tests.utils.contract import Contract
 
@@ -141,12 +141,12 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token)
@@ -189,7 +189,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -200,33 +200,33 @@ class TestTokenStraightBondTokenAddresses:
             personal_info,
         )
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = issue_bond_token(issuer, attribute_token1)
+        bond_token1 = bond_issue_token(issuer, attribute_token1)
         token_address_list.append(bond_token1["address"])
-        register_bond_list(issuer, bond_token1, token_list)
+        bond_register_token_list(issuer, bond_token1, token_list)
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = issue_bond_token(issuer, attribute_token2)
+        bond_token2 = bond_issue_token(issuer, attribute_token2)
         token_address_list.append(bond_token2["address"])
-        register_bond_list(issuer, bond_token2, token_list)
+        bond_register_token_list(issuer, bond_token2, token_list)
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = issue_bond_token(issuer, attribute_token3)
+        bond_token3 = bond_issue_token(issuer, attribute_token3)
         token_address_list.append(bond_token3["address"])
-        register_bond_list(issuer, bond_token3, token_list)
+        bond_register_token_list(issuer, bond_token3, token_list)
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = issue_bond_token(issuer, attribute_token4)
+        bond_token4 = bond_issue_token(issuer, attribute_token4)
         token_address_list.append(bond_token4["address"])
-        register_bond_list(issuer, bond_token4, token_list)
+        bond_register_token_list(issuer, bond_token4, token_list)
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = issue_bond_token(issuer, attribute_token5)
+        bond_token5 = bond_issue_token(issuer, attribute_token5)
         token_address_list.append(bond_token5["address"])
-        register_bond_list(issuer, bond_token5, token_list)
+        bond_register_token_list(issuer, bond_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token1)
@@ -278,7 +278,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -289,33 +289,33 @@ class TestTokenStraightBondTokenAddresses:
             personal_info,
         )
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = issue_bond_token(issuer, attribute_token1)
+        bond_token1 = bond_issue_token(issuer, attribute_token1)
         token_address_list.append(bond_token1["address"])
-        register_bond_list(issuer, bond_token1, token_list)
+        bond_register_token_list(issuer, bond_token1, token_list)
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = issue_bond_token(issuer, attribute_token2)
+        bond_token2 = bond_issue_token(issuer, attribute_token2)
         token_address_list.append(bond_token2["address"])
-        register_bond_list(issuer, bond_token2, token_list)
+        bond_register_token_list(issuer, bond_token2, token_list)
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = issue_bond_token(issuer, attribute_token3)
+        bond_token3 = bond_issue_token(issuer, attribute_token3)
         token_address_list.append(bond_token3["address"])
-        register_bond_list(issuer, bond_token3, token_list)
+        bond_register_token_list(issuer, bond_token3, token_list)
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = issue_bond_token(issuer, attribute_token4)
+        bond_token4 = bond_issue_token(issuer, attribute_token4)
         token_address_list.append(bond_token4["address"])
-        register_bond_list(issuer, bond_token4, token_list)
+        bond_register_token_list(issuer, bond_token4, token_list)
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = issue_bond_token(issuer, attribute_token5)
+        bond_token5 = bond_issue_token(issuer, attribute_token5)
         token_address_list.append(bond_token5["address"])
-        register_bond_list(issuer, bond_token5, token_list)
+        bond_register_token_list(issuer, bond_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token1)
@@ -361,7 +361,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -372,33 +372,33 @@ class TestTokenStraightBondTokenAddresses:
             personal_info,
         )
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = issue_bond_token(issuer, attribute_token1)
+        bond_token1 = bond_issue_token(issuer, attribute_token1)
         token_address_list.append(bond_token1["address"])
-        register_bond_list(issuer, bond_token1, token_list)
+        bond_register_token_list(issuer, bond_token1, token_list)
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = issue_bond_token(issuer, attribute_token2)
+        bond_token2 = bond_issue_token(issuer, attribute_token2)
         token_address_list.append(bond_token2["address"])
-        register_bond_list(issuer, bond_token2, token_list)
+        bond_register_token_list(issuer, bond_token2, token_list)
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = issue_bond_token(issuer, attribute_token3)
+        bond_token3 = bond_issue_token(issuer, attribute_token3)
         token_address_list.append(bond_token3["address"])
-        register_bond_list(issuer, bond_token3, token_list)
+        bond_register_token_list(issuer, bond_token3, token_list)
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = issue_bond_token(issuer, attribute_token4)
+        bond_token4 = bond_issue_token(issuer, attribute_token4)
         token_address_list.append(bond_token4["address"])
-        register_bond_list(issuer, bond_token4, token_list)
+        bond_register_token_list(issuer, bond_token4, token_list)
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = issue_bond_token(issuer, attribute_token5)
+        bond_token5 = bond_issue_token(issuer, attribute_token5)
         token_address_list.append(bond_token5["address"])
-        register_bond_list(issuer, bond_token5, token_list)
+        bond_register_token_list(issuer, bond_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token1)
@@ -460,7 +460,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -471,33 +471,33 @@ class TestTokenStraightBondTokenAddresses:
             personal_info,
         )
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = issue_bond_token(issuer, attribute_token1)
+        bond_token1 = bond_issue_token(issuer, attribute_token1)
         token_address_list.append(bond_token1["address"])
-        register_bond_list(issuer, bond_token1, token_list)
+        bond_register_token_list(issuer, bond_token1, token_list)
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = issue_bond_token(issuer, attribute_token2)
+        bond_token2 = bond_issue_token(issuer, attribute_token2)
         token_address_list.append(bond_token2["address"])
-        register_bond_list(issuer, bond_token2, token_list)
+        bond_register_token_list(issuer, bond_token2, token_list)
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = issue_bond_token(issuer, attribute_token3)
+        bond_token3 = bond_issue_token(issuer, attribute_token3)
         token_address_list.append(bond_token3["address"])
-        register_bond_list(issuer, bond_token3, token_list)
+        bond_register_token_list(issuer, bond_token3, token_list)
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = issue_bond_token(issuer, attribute_token4)
+        bond_token4 = bond_issue_token(issuer, attribute_token4)
         token_address_list.append(bond_token4["address"])
-        register_bond_list(issuer, bond_token4, token_list)
+        bond_register_token_list(issuer, bond_token4, token_list)
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = issue_bond_token(issuer, attribute_token5)
+        bond_token5 = bond_issue_token(issuer, attribute_token5)
         token_address_list.append(bond_token5["address"])
-        register_bond_list(issuer, bond_token5, token_list)
+        bond_register_token_list(issuer, bond_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token1)
@@ -558,7 +558,7 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
 
@@ -569,33 +569,33 @@ class TestTokenStraightBondTokenAddresses:
             personal_info,
         )
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = issue_bond_token(issuer, attribute_token1)
+        bond_token1 = bond_issue_token(issuer, attribute_token1)
         token_address_list.append(bond_token1["address"])
-        register_bond_list(issuer, bond_token1, token_list)
+        bond_register_token_list(issuer, bond_token1, token_list)
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = issue_bond_token(issuer, attribute_token2)
+        bond_token2 = bond_issue_token(issuer, attribute_token2)
         token_address_list.append(bond_token2["address"])
-        register_bond_list(issuer, bond_token2, token_list)
+        bond_register_token_list(issuer, bond_token2, token_list)
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = issue_bond_token(issuer, attribute_token3)
+        bond_token3 = bond_issue_token(issuer, attribute_token3)
         token_address_list.append(bond_token3["address"])
-        register_bond_list(issuer, bond_token3, token_list)
+        bond_register_token_list(issuer, bond_token3, token_list)
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = issue_bond_token(issuer, attribute_token4)
+        bond_token4 = bond_issue_token(issuer, attribute_token4)
         token_address_list.append(bond_token4["address"])
-        register_bond_list(issuer, bond_token4, token_list)
+        bond_register_token_list(issuer, bond_token4, token_list)
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = issue_bond_token(issuer, attribute_token5)
+        bond_token5 = bond_issue_token(issuer, attribute_token5)
         token_address_list.append(bond_token5["address"])
-        register_bond_list(issuer, bond_token5, token_list)
+        bond_register_token_list(issuer, bond_token5, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token1)
@@ -652,12 +652,12 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token)
@@ -697,12 +697,12 @@ class TestTokenStraightBondTokenAddresses:
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
+            shared_contract["IbetSecurityTokenEscrow"]["address"]
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = bond_issue_token(issuer, attribute)
+        bond_register_token_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token)

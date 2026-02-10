@@ -28,11 +28,11 @@ from app import config
 from app.model.db import IDXBondToken, IDXLockedPosition, IDXPosition, Listing
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    bond_issue_token,
     bond_lock,
+    bond_register_token_list,
     bond_transfer_to_exchange,
-    issue_bond_token,
-    register_bond_list,
-    transfer_bond_token,
+    bond_transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 from tests.utils import PersonalInfoUtils
@@ -99,8 +99,8 @@ class TestPositionStraightBondContractAddress:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(TestPositionStraightBondContractAddress.issuer, args)
-        register_bond_list(
+        token = bond_issue_token(TestPositionStraightBondContractAddress.issuer, args)
+        bond_register_token_list(
             TestPositionStraightBondContractAddress.issuer, token, token_list_contract
         )
         PersonalInfoUtils.register(
@@ -120,7 +120,7 @@ class TestPositionStraightBondContractAddress:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(
+    def create_exchange_commitment_data(
         account: UnitTestAccount,
         exchange_contract: DeployedContract,
         personal_info_contract: DeployedContract,
@@ -132,14 +132,19 @@ class TestPositionStraightBondContractAddress:
             account, exchange_contract, personal_info_contract, token_list_contract
         )
 
-        # Sell order
-        agent = eth_account["agent"]
+        # Create escrow
         bond_transfer_to_exchange(account, exchange_contract, token, commitment)
-        ExchangeContract = Contract.get_contract(
-            "IbetExchange", exchange_contract["address"]
+        escrow_contract = Contract.get_contract(
+            contract_name="IbetSecurityTokenEscrow",
+            address=exchange_contract["address"],
         )
-        ExchangeContract.functions.createOrder(
-            token["address"], commitment, 10000, False, agent["account_address"]
+        escrow_contract.functions.createEscrow(
+            token["address"],
+            account["account_address"],
+            commitment,
+            account["account_address"],
+            "test_data",
+            "test_data",
         ).transact({"from": account["account_address"]})
 
         return token
@@ -305,7 +310,7 @@ class TestPositionStraightBondContractAddress:
     ):
         config.BOND_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -356,7 +361,7 @@ class TestPositionStraightBondContractAddress:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -364,7 +369,7 @@ class TestPositionStraightBondContractAddress:
             100,
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -464,7 +469,7 @@ class TestPositionStraightBondContractAddress:
     ):
         config.BOND_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -515,7 +520,7 @@ class TestPositionStraightBondContractAddress:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -523,7 +528,7 @@ class TestPositionStraightBondContractAddress:
             100,
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -623,7 +628,7 @@ class TestPositionStraightBondContractAddress:
     ):
         config.BOND_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -674,7 +679,7 @@ class TestPositionStraightBondContractAddress:
             token_list_contract,
         )
         self.list_token(token_non["address"], session)  # not target
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -682,7 +687,7 @@ class TestPositionStraightBondContractAddress:
             100,
         )
         self.list_token(token_3["address"], session)
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -783,7 +788,7 @@ class TestPositionStraightBondContractAddress:
     ):
         config.BOND_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -912,7 +917,7 @@ class TestPositionStraightBondContractAddress:
             config.ZERO_ADDRESS,
         )
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -934,7 +939,7 @@ class TestPositionStraightBondContractAddress:
             exchange_contract["address"],
         )
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1072,7 +1077,7 @@ class TestPositionStraightBondContractAddress:
     ):
         config.BOND_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1201,7 +1206,7 @@ class TestPositionStraightBondContractAddress:
             config.ZERO_ADDRESS,
         )
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1223,7 +1228,7 @@ class TestPositionStraightBondContractAddress:
             exchange_contract["address"],
         )
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1361,7 +1366,7 @@ class TestPositionStraightBondContractAddress:
     ):
         config.BOND_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1490,7 +1495,7 @@ class TestPositionStraightBondContractAddress:
             config.ZERO_ADDRESS,
         )
 
-        token_3 = self.create_commitment_data(
+        token_3 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1512,7 +1517,7 @@ class TestPositionStraightBondContractAddress:
             exchange_contract["address"],
         )
 
-        token_4 = self.create_commitment_data(
+        token_4 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1672,7 +1677,7 @@ class TestPositionStraightBondContractAddress:
             lock_address=self.issuer["account_address"],
             amount=2000,
         )
-        transfer_bond_token(
+        bond_transfer_token(
             invoker=self.account_1, to=self.account_2, token=token_1, amount=5000
         )
         bond_lock(

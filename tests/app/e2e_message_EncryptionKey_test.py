@@ -45,11 +45,11 @@ class TestE2EMessageEncryptionKey:
     ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
@@ -76,11 +76,11 @@ class TestE2EMessageEncryptionKey:
     ):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract.address
+            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
         )
         e2e_messaging_contract.functions.setPublicKey(
             "test_key", "test_key_type"
@@ -113,7 +113,7 @@ class TestE2EMessageEncryptionKey:
     ):
         user = eth_account["deployer"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # request target API
         resp = client.get(self.apiurl.format(account_address=user))

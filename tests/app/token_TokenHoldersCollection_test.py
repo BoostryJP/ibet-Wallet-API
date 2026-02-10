@@ -37,9 +37,9 @@ from sqlalchemy.orm import Session
 
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    bond_issue_token,
+    bond_register_token_list,
     bond_transfer_to_exchange,
-    issue_bond_token,
-    register_bond_list,
     register_personalinfo,
     transfer_token,
 )
@@ -111,8 +111,8 @@ class TestTokenTokenHoldersCollection:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(issuer, args)
-        register_bond_list(issuer, token, token_list)
+        token = bond_issue_token(issuer, args)
+        bond_register_token_list(issuer, token, token_list)
 
         return token
 
@@ -150,7 +150,7 @@ class TestTokenTokenHoldersCollection:
         personal_info_contract = shared_contract["PersonalInfo"]
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
@@ -163,7 +163,7 @@ class TestTokenTokenHoldersCollection:
 
         # Transfer
         bond_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract.address}, token, 10000
+            self.issuer, {"address": escrow_contract["address"]}, token, 10000
         )
         transfer_token(
             token_contract,
@@ -230,7 +230,7 @@ class TestTokenTokenHoldersCollection:
 
         token1 = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
@@ -239,7 +239,7 @@ class TestTokenTokenHoldersCollection:
 
         token2 = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
@@ -283,7 +283,7 @@ class TestTokenTokenHoldersCollection:
 
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )

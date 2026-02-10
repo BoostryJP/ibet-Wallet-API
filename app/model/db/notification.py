@@ -189,17 +189,17 @@ Index(
 
 class NotificationType(StrEnum):
     # Event Log Notification
-    NEW_ORDER = "NewOrder"
-    NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
-    CANCEL_ORDER = "CancelOrder"
-    CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"
-    FORCE_CANCEL_ORDER = "ForceCancelOrder"
-    BUY_AGREEMENT = "BuyAgreement"
-    BUY_SETTLEMENT_OK = "BuySettlementOK"
-    BUY_SETTLEMENT_NG = "BuySettlementNG"
-    SELL_AGREEMENT = "SellAgreement"
-    SELL_SETTLEMENT_OK = "SellSettlementOK"
-    SELL_SETTLEMENT_NG = "SellSettlementNG"
+    NEW_ORDER = "NewOrder"  # Deprecated
+    NEW_ORDER_COUNTERPART = "NewOrderCounterpart"  # Deprecated
+    CANCEL_ORDER = "CancelOrder"  # Deprecated
+    CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"  # Deprecated
+    FORCE_CANCEL_ORDER = "ForceCancelOrder"  # Deprecated
+    BUY_AGREEMENT = "BuyAgreement"  # Deprecated
+    BUY_SETTLEMENT_OK = "BuySettlementOK"  # Deprecated
+    BUY_SETTLEMENT_NG = "BuySettlementNG"  # Deprecated
+    SELL_AGREEMENT = "SellAgreement"  # Deprecated
+    SELL_SETTLEMENT_OK = "SellSettlementOK"  # Deprecated
+    SELL_SETTLEMENT_NG = "SellSettlementNG"  # Deprecated
 
     TRANSFER = "Transfer"
     APPLY_FOR_TRANSFER = "ApplyForTransfer"

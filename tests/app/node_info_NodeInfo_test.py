@@ -37,9 +37,7 @@ class TestNodeInfoNodeInfo:
     def test_nodeinfo_normal_1(self, client: TestClient, session: Session):
         resp = client.get(self.apiurl)
 
-        payment_gateway = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
         personal_info = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
-        ibet_exchange = json.load(open("app/contracts/json/IbetExchange.json", "r"))
         ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
         ibet_security_token_escrow_json = json.load(
             open("app/contracts/json/IbetSecurityTokenEscrow.json", "r")
@@ -51,17 +49,8 @@ class TestNodeInfoNodeInfo:
             open("app/contracts/json/E2EMessaging.json", "r")
         )
 
-        payment_gateway_address = config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
-        payment_gateway_abi = payment_gateway["abi"]
-
         personalinfo_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
         personalinfo_abi = personal_info["abi"]
-
-        membership_exchange_address = config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-        membership_exchange_abi = ibet_exchange["abi"]
-
-        coupon_exchange_address = config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
-        coupon_exchange_abi = ibet_exchange["abi"]
 
         ibet_escrow_address = config.IBET_ESCROW_CONTRACT_ADDRESS
         ibet_escrow_abi = ibet_escrow_json["abi"]
@@ -80,14 +69,8 @@ class TestNodeInfoNodeInfo:
         e2e_messaging_abi = e2e_messaging_json["abi"]
 
         assumed_body = {
-            "payment_gateway_address": payment_gateway_address,
-            "payment_gateway_abi": payment_gateway_abi,
             "personal_info_address": personalinfo_address,
             "personal_info_abi": personalinfo_abi,
-            "ibet_membership_exchange_address": membership_exchange_address,
-            "ibet_membership_exchange_abi": membership_exchange_abi,
-            "ibet_coupon_exchange_address": coupon_exchange_address,
-            "ibet_coupon_exchange_abi": coupon_exchange_abi,
             "ibet_escrow_address": ibet_escrow_address,
             "ibet_escrow_abi": ibet_escrow_abi,
             "ibet_security_token_escrow_address": ibet_security_token_escrow_address,
