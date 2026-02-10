@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import timedelta, timezone
-from typing import Annotated, Sequence
+from typing import TYPE_CHECKING, Annotated, Sequence
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Path, Query, Request
@@ -59,8 +59,14 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    ResultSet,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
+)
+from app.model.schema.position import (
+    Locked as LockedSchema,
+    LockEvent as LockEventSchema,
 )
 from app.model.type import EthereumAddress
 from app.utils.docs_utils import get_routers_responses
@@ -394,6 +400,31 @@ async def list_all_share_locked_position(
     """
     [Share]Returns a list of locked positions.
     """
+    if TYPE_CHECKING:
+        result_set = data["result_set"]
+        type_checked_locked_positions = [
+            LockedSchema(
+                token_address=locked["token_address"],
+                lock_address=locked["lock_address"],
+                account_address=locked["account_address"],
+                value=locked["value"],
+            )
+            for locked in data["locked_positions"]
+        ]
+        _ = GenericSuccessResponse[
+            ListAllLockedPositionResponse[RetrieveShareTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllLockedPositionResponse[RetrieveShareTokenResponse](
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                locked_positions=type_checked_locked_positions,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -415,6 +446,38 @@ async def list_all_share_lock_events(
     """
     [Share]Returns a list of lock events.
     """
+    if TYPE_CHECKING:
+        result_set = data["result_set"]
+        type_checked_events = [
+            LockEventSchema(
+                category=LockEventCategory(event["category"]),
+                is_forced=event["is_forced"],
+                transaction_hash=event["transaction_hash"],
+                msg_sender=event["msg_sender"],
+                token_address=event["token_address"],
+                lock_address=event["lock_address"],
+                account_address=event["account_address"],
+                recipient_address=event["recipient_address"],
+                value=event["value"],
+                data=event["data"],
+                block_timestamp=event["block_timestamp"],
+            )
+            for event in data["events"]
+        ]
+        _ = GenericSuccessResponse[
+            ListAllLockEventsResponse[RetrieveShareTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllLockEventsResponse[RetrieveShareTokenResponse](
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                events=type_checked_events,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -436,6 +499,31 @@ async def list_all_straight_bond_locked_position(
     """
     [StraightBond]Returns a list of locked positions.
     """
+    if TYPE_CHECKING:
+        result_set = data["result_set"]
+        type_checked_locked_positions = [
+            LockedSchema(
+                token_address=locked["token_address"],
+                lock_address=locked["lock_address"],
+                account_address=locked["account_address"],
+                value=locked["value"],
+            )
+            for locked in data["locked_positions"]
+        ]
+        _ = GenericSuccessResponse[
+            ListAllLockedPositionResponse[RetrieveStraightBondTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllLockedPositionResponse[RetrieveStraightBondTokenResponse](
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                locked_positions=type_checked_locked_positions,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -457,4 +545,36 @@ async def list_all_straight_bond_lock_events(
     """
     [StraightBond]Returns a list of lock events.
     """
+    if TYPE_CHECKING:
+        result_set = data["result_set"]
+        type_checked_events = [
+            LockEventSchema(
+                category=LockEventCategory(event["category"]),
+                is_forced=event["is_forced"],
+                transaction_hash=event["transaction_hash"],
+                msg_sender=event["msg_sender"],
+                token_address=event["token_address"],
+                lock_address=event["lock_address"],
+                account_address=event["account_address"],
+                recipient_address=event["recipient_address"],
+                value=event["value"],
+                data=event["data"],
+                block_timestamp=event["block_timestamp"],
+            )
+            for event in data["events"]
+        ]
+        _ = GenericSuccessResponse[
+            ListAllLockEventsResponse[RetrieveStraightBondTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllLockEventsResponse[RetrieveStraightBondTokenResponse](
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                events=type_checked_events,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})

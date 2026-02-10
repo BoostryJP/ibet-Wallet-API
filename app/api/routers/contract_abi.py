@@ -18,13 +18,18 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Request
 
 from app import config, log
 from app.errors import NotSupportedError
 from app.model.schema import ABI
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    Success200MetaModel,
+    SuccessResponse,
+)
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -54,6 +59,11 @@ async def get_straight_bond_abi(req: Request):
         open("app/contracts/json/IbetStraightBond.json", "r")
     )
     abi = ibet_straightbond_json["abi"]
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ABI](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ABI(root=abi),
+        )
     return json_response({**SuccessResponse.default(), "data": abi})
 
 
@@ -76,6 +86,11 @@ async def get_share_abi(req: Request):
 
     ibet_share_json = json.load(open("app/contracts/json/IbetShare.json", "r"))
     abi = ibet_share_json["abi"]
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ABI](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ABI(root=abi),
+        )
     return json_response({**SuccessResponse.default(), "data": abi})
 
 
@@ -100,6 +115,11 @@ async def get_membership_abi(req: Request):
         open("app/contracts/json/IbetMembership.json", "r")
     )
     abi = ibet_membership_json["abi"]
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ABI](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ABI(root=abi),
+        )
     return json_response({**SuccessResponse.default(), "data": abi})
 
 
@@ -122,4 +142,9 @@ async def get_coupon_abi(req: Request):
 
     ibet_coupon_json = json.load(open("app/contracts/json/IbetCoupon.json", "r"))
     abi = ibet_coupon_json["abi"]
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ABI](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ABI(root=abi),
+        )
     return json_response({**SuccessResponse.default(), "data": abi})

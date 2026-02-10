@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import timedelta, timezone
-from typing import Annotated, Sequence
+from typing import TYPE_CHECKING, Annotated, Sequence
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Query
@@ -36,7 +36,14 @@ from app.model.schema import (
     RetrieveTokenLockCountQuery,
     RetrieveTokenLockCountResponse,
 )
-from app.model.schema.base import GenericSuccessResponse, SortOrder, SuccessResponse
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    ResultSet,
+    SortOrder,
+    Success200MetaModel,
+    SuccessResponse,
+)
+from app.model.schema.token_lock import Locked
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -118,6 +125,37 @@ async def list_all_lock(
         },
         "locked_list": [lock.json() for lock in _locked_list],
     }
+    if TYPE_CHECKING:
+        type_checked_locked_list: list[Locked] = []
+        for lock in _locked_list:
+            # TODO: Migrate idx_locked_position.token_address to NOT NULL and update ORM typing.
+            assert lock.token_address is not None
+            # TODO: Migrate idx_locked_position.lock_address to NOT NULL and update ORM typing.
+            assert lock.lock_address is not None
+            # TODO: Migrate idx_locked_position.account_address to NOT NULL and update ORM typing.
+            assert lock.account_address is not None
+            # TODO: Migrate idx_locked_position.value to NOT NULL and update ORM typing.
+            assert lock.value is not None
+            type_checked_locked_list.append(
+                Locked(
+                    token_address=lock.token_address,
+                    lock_address=lock.lock_address,
+                    account_address=lock.account_address,
+                    value=lock.value,
+                )
+            )
+        _ = GenericSuccessResponse[ListAllTokenLockResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllTokenLockResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                locked_list=type_checked_locked_list,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -148,9 +186,15 @@ async def retrieve_lock_count(
     if lock_address is not None:
         stmt = stmt.where(IDXLockedPosition.lock_address == lock_address)
 
-    _count = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+    _count = (
+        await async_session.scalar(stmt.with_only_columns(func.count()).order_by(None))
+        or 0
     )
 
     data = {"count": _count}
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[RetrieveTokenLockCountResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveTokenLockCountResponse(count=_count),
+        )
     return json_response({**SuccessResponse.default(), "data": data})

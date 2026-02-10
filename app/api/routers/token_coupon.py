@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Optional, Sequence
+from typing import TYPE_CHECKING, Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
@@ -31,7 +31,7 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import CouponToken
+from app.model.blockchain import CouponToken as CouponTokenBlockchain
 from app.model.db import IDXCouponToken, Listing
 from app.model.schema import (
     CouponTokensQuery,
@@ -42,8 +42,11 @@ from app.model.schema import (
     RetrieveCouponTokenResponse,
 )
 from app.model.schema.base import (
+    CouponToken as CouponTokenSchema,
     GenericSuccessResponse,
+    ResultSet,
     SortOrder,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
@@ -144,8 +147,8 @@ async def list_all_coupon_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXCouponToken] = (await async_session.scalars(stmt)).all()
-
-    tokens = [CouponToken.from_model(_token).__dict__ for _token in _token_list]
+    coupon_tokens = [CouponTokenBlockchain.from_model(_token) for _token in _token_list]
+    tokens = [token.__dict__ for token in coupon_tokens]
     data = {
         "result_set": {
             "count": count,
@@ -156,6 +159,22 @@ async def list_all_coupon_tokens(
         "tokens": tokens,
     }
 
+    if TYPE_CHECKING:
+        type_checked_tokens: list[CouponTokenSchema] = [
+            CouponTokenSchema.from_blockchain_token(token) for token in coupon_tokens
+        ]
+        _ = GenericSuccessResponse[ListAllCouponTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCouponTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                tokens=type_checked_tokens,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -256,6 +275,19 @@ async def list_all_coupon_token_addresses(
         "address_list": [_token.token_address for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllCouponTokenAddressesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCouponTokenAddressesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                address_list=[token.token_address for token in _token_list],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -304,7 +336,9 @@ async def retrieve_coupon_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: CouponToken = await CouponToken.get(async_session, token_address)
+        token_detail: CouponTokenBlockchain = await CouponTokenBlockchain.get(
+            async_session, token_address
+        )
     except ServiceUnavailable as e:
         LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
@@ -312,4 +346,10 @@ async def retrieve_coupon_token(
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
+    if TYPE_CHECKING:
+        type_checked_token = CouponTokenSchema.from_blockchain_token(token_detail)
+        _ = GenericSuccessResponse[RetrieveCouponTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveCouponTokenResponse(root=type_checked_token),
+        )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

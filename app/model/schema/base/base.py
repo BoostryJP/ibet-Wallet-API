@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime, timezone
 from enum import IntEnum, StrEnum
-from typing import Annotated, Any, Generic, Optional, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Generic, Optional, TypeVar
 
 from annotated_types import Timezone
 from pydantic import (
@@ -32,6 +32,18 @@ from pydantic import (
 )
 
 from app.model.type.base import EthereumAddress
+
+if TYPE_CHECKING:
+    from app.model.blockchain import (
+        BondToken as BlockchainBondToken,
+        CouponToken as BlockchainCouponToken,
+        MembershipToken as BlockchainMembershipToken,
+        ShareToken as BlockchainShareToken,
+    )
+    from app.model.schema.token_bond import BondTokenDict
+    from app.model.schema.token_coupon import CouponTokenDict
+    from app.model.schema.token_membership import MembershipTokenDict
+    from app.model.schema.token_share import ShareTokenDict
 
 ############################
 # COMMON
@@ -105,6 +117,61 @@ class BondToken(BaseModel):
     memo: str
     is_redeemed: bool
 
+    @classmethod
+    def from_token_dict(cls, token_data: "BondTokenDict") -> "BondToken":
+        return cls(
+            token_address=token_data["token_address"],
+            token_template=token_data["token_template"],
+            owner_address=token_data["owner_address"],
+            company_name=token_data["company_name"],
+            rsa_publickey=token_data["rsa_publickey"],
+            name=token_data["name"],
+            symbol=token_data["symbol"],
+            total_supply=token_data["total_supply"],
+            tradable_exchange=token_data["tradable_exchange"],
+            contact_information=token_data["contact_information"],
+            privacy_policy=token_data["privacy_policy"],
+            status=token_data["status"],
+            max_holding_quantity=token_data["max_holding_quantity"],
+            max_sell_amount=token_data["max_sell_amount"],
+            personal_info_address=token_data["personal_info_address"],
+            require_personal_info_registered=token_data[
+                "require_personal_info_registered"
+            ],
+            transferable=token_data["transferable"],
+            is_offering=token_data["is_offering"],
+            transfer_approval_required=token_data["transfer_approval_required"],
+            face_value=token_data["face_value"],
+            face_value_currency=token_data["face_value_currency"],
+            interest_rate=token_data["interest_rate"],
+            interest_payment_date1=token_data["interest_payment_date1"],
+            interest_payment_date2=token_data["interest_payment_date2"],
+            interest_payment_date3=token_data["interest_payment_date3"],
+            interest_payment_date4=token_data["interest_payment_date4"],
+            interest_payment_date5=token_data["interest_payment_date5"],
+            interest_payment_date6=token_data["interest_payment_date6"],
+            interest_payment_date7=token_data["interest_payment_date7"],
+            interest_payment_date8=token_data["interest_payment_date8"],
+            interest_payment_date9=token_data["interest_payment_date9"],
+            interest_payment_date10=token_data["interest_payment_date10"],
+            interest_payment_date11=token_data["interest_payment_date11"],
+            interest_payment_date12=token_data["interest_payment_date12"],
+            interest_payment_currency=token_data["interest_payment_currency"],
+            redemption_date=token_data["redemption_date"],
+            redemption_value=token_data["redemption_value"],
+            redemption_value_currency=token_data["redemption_value_currency"],
+            base_fx_rate=token_data["base_fx_rate"],
+            return_date=token_data["return_date"],
+            return_amount=token_data["return_amount"],
+            purpose=token_data["purpose"],
+            memo=token_data["memo"],
+            is_redeemed=token_data["is_redeemed"],
+        )
+
+    @classmethod
+    def from_blockchain_token(cls, token: "BlockchainBondToken") -> "BondToken":
+        return cls.from_token_dict(token.to_dict())
+
 
 class ShareDividendInformation(BaseModel):
     dividends: float = Field(examples=[999.9999999999999])
@@ -139,6 +206,47 @@ class ShareToken(BaseModel):
     is_canceled: bool
     dividend_information: ShareDividendInformation
 
+    @classmethod
+    def from_token_dict(cls, token_data: "ShareTokenDict") -> "ShareToken":
+        dividend_information = token_data["dividend_information"]
+        return cls(
+            token_address=token_data["token_address"],
+            token_template=token_data["token_template"],
+            owner_address=token_data["owner_address"],
+            company_name=token_data["company_name"],
+            rsa_publickey=token_data["rsa_publickey"],
+            name=token_data["name"],
+            symbol=token_data["symbol"],
+            total_supply=token_data["total_supply"],
+            tradable_exchange=token_data["tradable_exchange"],
+            contact_information=token_data["contact_information"],
+            privacy_policy=token_data["privacy_policy"],
+            status=token_data["status"],
+            max_holding_quantity=token_data["max_holding_quantity"],
+            max_sell_amount=token_data["max_sell_amount"],
+            personal_info_address=token_data["personal_info_address"],
+            require_personal_info_registered=token_data[
+                "require_personal_info_registered"
+            ],
+            transferable=token_data["transferable"],
+            is_offering=token_data["is_offering"],
+            transfer_approval_required=token_data["transfer_approval_required"],
+            issue_price=token_data["issue_price"],
+            cancellation_date=token_data["cancellation_date"],
+            memo=token_data["memo"],
+            principal_value=token_data["principal_value"],
+            is_canceled=token_data["is_canceled"],
+            dividend_information=ShareDividendInformation(
+                dividends=dividend_information["dividends"],
+                dividend_record_date=dividend_information["dividend_record_date"],
+                dividend_payment_date=dividend_information["dividend_payment_date"],
+            ),
+        )
+
+    @classmethod
+    def from_blockchain_token(cls, token: "BlockchainShareToken") -> "ShareToken":
+        return cls.from_token_dict(token.to_dict())
+
 
 class MembershipToken(BaseModel):
     token_address: EthereumAddress
@@ -163,6 +271,41 @@ class MembershipToken(BaseModel):
     initial_offering_status: bool
     image_url: list[TokenImage]
 
+    @classmethod
+    def from_token_dict(cls, token_data: "MembershipTokenDict") -> "MembershipToken":
+        return cls(
+            token_address=token_data["token_address"],
+            token_template=token_data["token_template"],
+            owner_address=token_data["owner_address"],
+            company_name=token_data["company_name"],
+            rsa_publickey=token_data["rsa_publickey"],
+            name=token_data["name"],
+            symbol=token_data["symbol"],
+            total_supply=token_data["total_supply"],
+            tradable_exchange=token_data["tradable_exchange"],
+            contact_information=token_data["contact_information"],
+            privacy_policy=token_data["privacy_policy"],
+            status=token_data["status"],
+            max_holding_quantity=token_data["max_holding_quantity"],
+            max_sell_amount=token_data["max_sell_amount"],
+            details=token_data["details"],
+            return_details=token_data["return_details"],
+            expiration_date=token_data["expiration_date"],
+            memo=token_data["memo"],
+            transferable=token_data["transferable"],
+            initial_offering_status=token_data["initial_offering_status"],
+            image_url=[
+                TokenImage(id=image["id"], url=image["url"])
+                for image in token_data["image_url"]
+            ],
+        )
+
+    @classmethod
+    def from_blockchain_token(
+        cls, token: "BlockchainMembershipToken"
+    ) -> "MembershipToken":
+        return cls.from_token_dict(token.to_dict())
+
 
 class CouponToken(BaseModel):
     token_address: EthereumAddress
@@ -186,6 +329,39 @@ class CouponToken(BaseModel):
     transferable: bool
     initial_offering_status: bool
     image_url: list[TokenImage]
+
+    @classmethod
+    def from_token_dict(cls, token_data: "CouponTokenDict") -> "CouponToken":
+        return cls(
+            token_address=token_data["token_address"],
+            token_template=token_data["token_template"],
+            owner_address=token_data["owner_address"],
+            company_name=token_data["company_name"],
+            rsa_publickey=token_data["rsa_publickey"],
+            name=token_data["name"],
+            symbol=token_data["symbol"],
+            total_supply=token_data["total_supply"],
+            tradable_exchange=token_data["tradable_exchange"],
+            contact_information=token_data["contact_information"],
+            privacy_policy=token_data["privacy_policy"],
+            status=token_data["status"],
+            max_holding_quantity=token_data["max_holding_quantity"],
+            max_sell_amount=token_data["max_sell_amount"],
+            details=token_data["details"],
+            return_details=token_data["return_details"],
+            expiration_date=token_data["expiration_date"],
+            memo=token_data["memo"],
+            transferable=token_data["transferable"],
+            initial_offering_status=token_data["initial_offering_status"],
+            image_url=[
+                TokenImage(id=image["id"], url=image["url"])
+                for image in token_data["image_url"]
+            ],
+        )
+
+    @classmethod
+    def from_blockchain_token(cls, token: "BlockchainCouponToken") -> "CouponToken":
+        return cls.from_token_dict(token.to_dict())
 
 
 class ValueOperator(IntEnum):
@@ -237,10 +413,10 @@ class BasePaginationQuery(BaseModel):
 class ResultSet(BaseModel):
     """result set for pagination"""
 
-    count: Optional[int] = None
+    count: Optional[int] = Field(..., description="number of returned items")
     offset: Optional[int] = Field(..., description="start position")
     limit: Optional[int] = Field(..., description="number of set")
-    total: Optional[int] = None
+    total: Optional[int] = Field(..., description="total number of available items")
 
 
 class Success200MetaModel(BaseModel):

@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from typing import Any, Type, TypeVar
+from typing import Any, Type, TypeVar, overload
 
 from eth_utils.address import to_checksum_address
 from hexbytes import HexBytes
@@ -53,6 +53,7 @@ class AsyncContractEventsView:
 class AsyncContract:
     cache: dict[str, dict[str, Any]] = {}  # コントラクト情報のキャッシュ
     factory_map: dict[str, Type[Web3AsyncContract]] = {}
+    _MISSING = object()
 
     @classmethod
     def get_contract(cls, contract_name: str, address: str) -> Web3AsyncContract:
@@ -116,20 +117,62 @@ class AsyncContract:
         return contract_address, contract_json["abi"]
 
     T = TypeVar("T")
+    R = TypeVar("R")
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+    ) -> Any: ...
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        default_returns: T,
+    ) -> T: ...
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        *,
+        expected_type: type[R],
+    ) -> R: ...
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        default_returns: object,
+        *,
+        expected_type: type[R],
+    ) -> R: ...
 
     @staticmethod
     async def call_function(
         contract: Web3AsyncContract,
         function_name: str,
         args: tuple[Any, ...],
-        default_returns: T = None,
-    ) -> T:
+        default_returns: object = _MISSING,
+        *,
+        expected_type: type[Any] | None = None,
+    ) -> Any:
         """Call contract function
 
         :param contract: Contract
         :param function_name: Function name
         :param args: Function args
         :param default_returns: Default return when exception is raised
+        :param expected_type: Expected type of return value
         :return: Return from function or default return
         """
         _function = getattr(contract.functions, function_name)
@@ -137,10 +180,15 @@ class AsyncContract:
         try:
             result = await _function(*args).call()
         except (BadFunctionCallOutput, ContractLogicError) as exc:
-            if default_returns is not None:
-                return default_returns
-            else:
+            if default_returns is AsyncContract._MISSING:
                 raise exc
+            result = default_returns
+
+        if expected_type is not None and not isinstance(result, expected_type):
+            raise TypeError(
+                f"{function_name} returned unexpected type: "
+                f"expected={expected_type.__name__}, got={type(result).__name__}"
+            )
 
         return result
 

@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -34,6 +34,24 @@ from app.model.type import EthereumAddress
 ############################
 # COMMON
 ############################
+
+
+############################
+# DTO
+############################
+class NotificationJSONDict(TypedDict):
+    notification_category: Literal["event_log", "attribute_change"]
+    notification_type: str | None
+    id: str
+    priority: int | None
+    block_timestamp: str | None
+    is_read: bool | None
+    is_flagged: bool | None
+    is_deleted: bool | None
+    deleted_at: str | None
+    args: object
+    metainfo: dict[str, Any] | None
+    account_address: EthereumAddress | None
 
 
 ############################

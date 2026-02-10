@@ -77,6 +77,7 @@ class IDXTransfer(Base):
     #     => None
     #   source_event = "Unlock", "ForceUnlock", "ForceChangeLockedAccount"
     #     =>  DataMessage
+    # TODO: Enforce a valid JSON schema for transfer.data at the DB layer and reflect the same constraint in ORM typing.
     data: Mapped[dict[str, object] | None] = mapped_column(JSON)
     # Message
     #   source_event = "Transfer", "Reallocation"
@@ -85,6 +86,7 @@ class IDXTransfer(Base):
     #     => "force_unlock", "garnishment" or "inheritance"
     #   source_event = "ForceChangeLockedAccount"
     #     => "ibet_wst_bridge"
+    # TODO: Enforce valid (source_event, message) combinations at the DB layer and reflect the same constraint in ORM typing.
     message: Mapped[str | None] = mapped_column(String(50), index=True)
 
     def json(self):

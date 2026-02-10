@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Sequence
+from typing import TYPE_CHECKING, Annotated, Sequence
 
 from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
@@ -31,7 +31,7 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import BondToken
+from app.model.blockchain import BondToken as BondTokenBlockchain
 from app.model.db import IDXBondToken, Listing
 from app.model.schema import (
     ListAllStraightBondTokenAddressesResponse,
@@ -42,8 +42,11 @@ from app.model.schema import (
     StraightBondTokensSortItem,
 )
 from app.model.schema.base import (
+    BondToken as BondTokenSchema,
     GenericSuccessResponse,
+    ResultSet,
     SortOrder,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
@@ -153,8 +156,8 @@ async def list_all_straight_bond_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXBondToken] = (await async_session.scalars(stmt)).all()
-
-    tokens = [BondToken.from_model(_token).__dict__ for _token in _token_list]
+    bond_tokens = [BondTokenBlockchain.from_model(_token) for _token in _token_list]
+    tokens = [token.__dict__ for token in bond_tokens]
     data = {
         "result_set": {
             "count": count,
@@ -165,6 +168,22 @@ async def list_all_straight_bond_tokens(
         "tokens": tokens,
     }
 
+    if TYPE_CHECKING:
+        type_checked_tokens: list[BondTokenSchema] = [
+            BondTokenSchema.from_blockchain_token(token) for token in bond_tokens
+        ]
+        _ = GenericSuccessResponse[ListAllStraightBondTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllStraightBondTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                tokens=type_checked_tokens,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -274,6 +293,19 @@ async def list_all_straight_bond_token_addresses(
         "address_list": [_token.token_address for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllStraightBondTokenAddressesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllStraightBondTokenAddressesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                address_list=[token.token_address for token in _token_list],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -322,7 +354,9 @@ async def retrieve_straight_bond_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: BondToken = await BondToken.get(async_session, token_address)
+        token_detail: BondTokenBlockchain = await BondTokenBlockchain.get(
+            async_session, token_address
+        )
     except ServiceUnavailable as e:
         LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
@@ -330,4 +364,10 @@ async def retrieve_straight_bond_token(
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
+    if TYPE_CHECKING:
+        type_checked_token = BondTokenSchema.from_blockchain_token(token_detail)
+        _ = GenericSuccessResponse[RetrieveStraightBondTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveStraightBondTokenResponse(root=type_checked_token),
+        )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

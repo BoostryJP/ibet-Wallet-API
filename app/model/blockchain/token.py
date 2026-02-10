@@ -177,6 +177,8 @@ class BondToken(TokenBase):
     face_value: int
     face_value_currency: str
     interest_rate: float
+    # TODO: Make interest_payment_date1..12 Optional[str] and standardize unset values
+    # as null in API responses.
     interest_payment_date1: str
     interest_payment_date2: str
     interest_payment_date3: str
@@ -208,6 +210,8 @@ class BondToken(TokenBase):
             if key != "interest_payment_date":
                 setattr(token_obj, key, value)
 
+        # TODO: Initialize these as None (not "") and normalize empty strings from IDX
+        # to None when applying the nullable migration.
         for i in range(1, 13):
             setattr(token_obj, f"interest_payment_date{i}", "")
 
@@ -234,6 +238,8 @@ class BondToken(TokenBase):
         return token_model
 
     def to_dict(self) -> BondTokenDict:
+        # TODO: Align with nullable BondTokenDict and emit null for unset
+        # interest_payment_date1..12 values.
         data: BondTokenDict = {
             "token_address": self.token_address,
             "token_template": self.token_template,
@@ -517,6 +523,8 @@ class BondToken(TokenBase):
         except ExceptionGroup:
             raise ServiceUnavailable from None
 
+        # TODO: During nullable migration, initialize as None and normalize empty-string
+        # values from on-chain payloads to None before returning API data.
         interest_payment_date1 = ""
         interest_payment_date2 = ""
         interest_payment_date3 = ""

@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Optional, Sequence
+from typing import TYPE_CHECKING, Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
@@ -31,7 +31,7 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import MembershipToken
+from app.model.blockchain import MembershipToken as MembershipTokenBlockchain
 from app.model.db import IDXMembershipToken, Listing
 from app.model.schema import (
     ListAllMembershipTokenAddressesResponse,
@@ -43,7 +43,10 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    MembershipToken as MembershipTokenSchema,
+    ResultSet,
     SortOrder,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
@@ -149,7 +152,10 @@ async def list_all_membership_tokens(
         await async_session.scalars(stmt)
     ).all()
 
-    tokens = [MembershipToken.from_model(_token).__dict__ for _token in _token_list]
+    membership_tokens = [
+        MembershipTokenBlockchain.from_model(_token) for _token in _token_list
+    ]
+    tokens = [token.__dict__ for token in membership_tokens]
     data = {
         "result_set": {
             "count": count,
@@ -160,6 +166,23 @@ async def list_all_membership_tokens(
         "tokens": tokens,
     }
 
+    if TYPE_CHECKING:
+        type_checked_tokens: list[MembershipTokenSchema] = [
+            MembershipTokenSchema.from_blockchain_token(token)
+            for token in membership_tokens
+        ]
+        _ = GenericSuccessResponse[ListAllMembershipTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllMembershipTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                tokens=type_checked_tokens,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -262,6 +285,19 @@ async def list_all_membership_token_addresses(
         "address_list": [_token.token_address for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllMembershipTokenAddressesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllMembershipTokenAddressesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                address_list=[token.token_address for token in _token_list],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -308,7 +344,7 @@ async def retrieve_membership_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: MembershipToken = await MembershipToken.get(
+        token_detail: MembershipTokenBlockchain = await MembershipTokenBlockchain.get(
             async_session, token_address
         )
     except ServiceUnavailable as e:
@@ -318,4 +354,10 @@ async def retrieve_membership_token(
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
+    if TYPE_CHECKING:
+        type_checked_token = MembershipTokenSchema.from_blockchain_token(token_detail)
+        _ = GenericSuccessResponse[RetrieveMembershipTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveMembershipTokenResponse(root=type_checked_token),
+        )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

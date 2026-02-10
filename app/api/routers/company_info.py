@@ -17,11 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Callable, Sequence
+from typing import TYPE_CHECKING, Annotated, Callable, Sequence
 
 from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Path, Query
-from sqlalchemy import and_, desc, distinct, select
+from sqlalchemy import String, and_, desc, distinct, select, type_coerce
 from sqlalchemy.orm import aliased
 
 from app import config, log
@@ -49,13 +49,25 @@ from app.model.schema import (
     ListAllCompanyTokensQuery,
     ListAllCompanyTokensResponse,
     RetrieveCompanyInfoResponse,
+    RetrieveCouponTokenResponse,
+    RetrieveMembershipTokenResponse,
+    RetrieveShareTokenResponse,
+    RetrieveStraightBondTokenResponse,
+    TokenDetailDict,
 )
 from app.model.schema.base import (
+    BondToken as BondTokenSchema,
+    CouponToken as CouponTokenSchema,
     GenericSuccessResponse,
+    MembershipToken as MembershipTokenSchema,
+    ShareToken as ShareTokenSchema,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
+from app.model.schema.company_info import CompanyInfo
 from app.model.type import EthereumAddress
+from app.model.type.company_list import Trustee as CompanyListTrustee
 from app.utils.company_list import Company, CompanyList
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -184,11 +196,33 @@ async def list_all_companies(
             LOG.notice(str(e))
 
     has_listing_owner_function = has_listing_owner_function_creator(listing_owner_set)
-    filtered_company_list = filter(has_listing_owner_function, company_list)
+    filtered_companies = list(filter(has_listing_owner_function, company_list))
 
-    return json_response(
-        {**SuccessResponse.default(), "data": list(filtered_company_list)}
-    )
+    if TYPE_CHECKING:
+        type_checked_companies: list[CompanyInfo] = []
+        for company in filtered_companies:
+            company_trustee = company["trustee"]
+            type_checked_trustee: CompanyListTrustee | None = None
+            if company_trustee is not None:
+                type_checked_trustee = CompanyListTrustee(
+                    corporate_name=company_trustee["corporate_name"],
+                    corporate_number=company_trustee["corporate_number"],
+                    corporate_address=company_trustee["corporate_address"],
+                )
+            type_checked_companies.append(
+                CompanyInfo(
+                    address=company["address"],
+                    corporate_name=company["corporate_name"],
+                    trustee=type_checked_trustee,
+                    rsa_publickey=company["rsa_publickey"],
+                    homepage=company["homepage"],
+                )
+            )
+        _ = GenericSuccessResponse[ListAllCompaniesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCompaniesResponse(root=type_checked_companies),
+        )
+    return json_response({**SuccessResponse.default(), "data": filtered_companies})
 
 
 # ------------------------------
@@ -238,12 +272,38 @@ async def retrieve_company_info(
         .subquery()
     )
 
-    _personal_info_list = (
-        await async_session.scalars(select(distinct(token_all.c.personal_info_address)))
-    ).all()
+    _personal_info_list: list[str] = list(
+        (
+            await async_session.scalars(
+                select(
+                    distinct(type_coerce(token_all.c.personal_info_address, String()))
+                ).where(token_all.c.personal_info_address.is_not(None))
+            )
+        ).all()
+    )
     resp = {**company}
     resp["in_use_personal_info_addresses"] = _personal_info_list
 
+    if TYPE_CHECKING:
+        company_trustee = company["trustee"]
+        type_checked_trustee: CompanyListTrustee | None = None
+        if company_trustee is not None:
+            type_checked_trustee = CompanyListTrustee(
+                corporate_name=company_trustee["corporate_name"],
+                corporate_number=company_trustee["corporate_number"],
+                corporate_address=company_trustee["corporate_address"],
+            )
+        _ = GenericSuccessResponse[RetrieveCompanyInfoResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveCompanyInfoResponse(
+                address=company["address"],
+                corporate_name=company["corporate_name"],
+                trustee=type_checked_trustee,
+                rsa_publickey=company["rsa_publickey"],
+                homepage=company["homepage"],
+                in_use_personal_info_addresses=_personal_info_list,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": resp})
 
 
@@ -290,7 +350,8 @@ async def list_all_company_tokens(
         ).all()
 
     # Get token attributes
-    token_list: list[object] = []
+    token_list: list[TokenDetailDict] = []
+    token_instance_list: list[TokenInstanceTypes] = []
     for available_token in available_list:
         # TODO: Migrate listing.token_address to NOT NULL and update ORM typing
         assert available_token.token_address is not None
@@ -310,13 +371,50 @@ async def list_all_company_tokens(
                 if token_model is None:
                     continue
                 token_model_cls: TokenClassTypes = token_model
-                token: TokenInstanceTypes = await token_model_cls.get(
+                token_instance: TokenInstanceTypes = await token_model_cls.get(
                     async_session, token_address
                 )
-                token_list.append(token.to_dict())
+                token_instance_list.append(token_instance)
+                token_list.append(token_instance.to_dict())
             else:
                 continue
 
+    if TYPE_CHECKING:
+        type_checked_tokens: list[
+            RetrieveStraightBondTokenResponse
+            | RetrieveShareTokenResponse
+            | RetrieveMembershipTokenResponse
+            | RetrieveCouponTokenResponse
+        ] = []
+        for token_instance in token_instance_list:
+            if isinstance(token_instance, BondToken):
+                type_checked_tokens.append(
+                    RetrieveStraightBondTokenResponse(
+                        root=BondTokenSchema.from_blockchain_token(token_instance)
+                    )
+                )
+            elif isinstance(token_instance, ShareToken):
+                type_checked_tokens.append(
+                    RetrieveShareTokenResponse(
+                        root=ShareTokenSchema.from_blockchain_token(token_instance)
+                    )
+                )
+            elif isinstance(token_instance, MembershipToken):
+                type_checked_tokens.append(
+                    RetrieveMembershipTokenResponse(
+                        root=MembershipTokenSchema.from_blockchain_token(token_instance)
+                    )
+                )
+            else:
+                type_checked_tokens.append(
+                    RetrieveCouponTokenResponse(
+                        root=CouponTokenSchema.from_blockchain_token(token_instance)
+                    )
+                )
+        _ = GenericSuccessResponse[ListAllCompanyTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCompanyTokensResponse(root=type_checked_tokens),
+        )
     return json_response({**SuccessResponse.default(), "data": token_list})
 
 

@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import httpx
 from eth_account import Account
@@ -43,16 +43,30 @@ from app.model.db import ExecutableContract, Listing, Node
 from app.model.schema import (
     GetTransactionCountQuery,
     JsonRPCRequest,
+    SendRawTransactionNoWaitResultDict,
     SendRawTransactionRequest,
+    SendRawTransactionResultDict,
     SendRawTransactionsNoWaitResponse,
     SendRawTransactionsResponse,
     TransactionCountResponse,
     WaitForTransactionReceiptQuery,
     WaitForTransactionReceiptResponse,
+    WaitForTransactionReceiptResultDict,
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    Success200MetaModel,
     SuccessResponse,
+)
+from app.model.schema.eth import (
+    SendRawTransactionFailureResponse,
+    SendRawTransactionNoWaitFailureResponse,
+    SendRawTransactionNoWaitResponse,
+    SendRawTransactionNoWaitSuccessResponse,
+    SendRawTransactionResponse,
+    SendRawTransactionSuccessResponse,
+    WaitForTransactionReceiptFailureResponse,
+    WaitForTransactionReceiptSuccessResponse,
 )
 from app.model.type import EthereumAddress
 from app.utils.contract_error_code import error_code_msg
@@ -105,6 +119,10 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
     else:
         raise ServiceUnavailable("No web3 providers available")
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[Any](
+            meta=Success200MetaModel(code=200, message="OK"), data=res_data.json()
+        )
     return json_response({**SuccessResponse.default(), "data": res_data.json()})
 
 
@@ -142,6 +160,15 @@ async def get_transaction_count(
 
     eth_info = {"nonce": nonce, "gasprice": gasprice, "chainid": chainid}
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[TransactionCountResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransactionCountResponse(
+                nonce=nonce,
+                gasprice=gasprice,
+                chainid=chainid,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": eth_info})
 
 
@@ -223,7 +250,7 @@ async def send_raw_transaction(
                 continue
 
     # Send transaction
-    result: list[dict[str, Any]] = []
+    result: list[SendRawTransactionResultDict] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
@@ -341,11 +368,40 @@ async def send_raw_transaction(
         result.append(
             {
                 "id": i + 1,
-                "status": tx["status"],
+                "status": 1,
                 "transaction_hash": tx_hash.to_0x_hex(),
             }
         )
 
+    if TYPE_CHECKING:
+        type_checked_result: list[SendRawTransactionResponse] = []
+        for entry in result:
+            if entry["status"] == 0:
+                error_code_value = (
+                    entry["error_code"] if "error_code" in entry else None
+                )
+                error_msg_value = entry["error_msg"] if "error_msg" in entry else None
+                type_checked_result.append(
+                    SendRawTransactionFailureResponse(
+                        id=entry["id"],
+                        status=entry["status"],
+                        transaction_hash=entry["transaction_hash"],
+                        error_code=error_code_value,
+                        error_msg=error_msg_value,
+                    )
+                )
+            else:
+                type_checked_result.append(
+                    SendRawTransactionSuccessResponse(
+                        id=entry["id"],
+                        status=entry["status"],
+                        transaction_hash=entry["transaction_hash"],
+                    )
+                )
+        _ = GenericSuccessResponse[SendRawTransactionsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=SendRawTransactionsResponse(root=type_checked_result),
+        )
     return json_response({**SuccessResponse.default(), "data": result})
 
 
@@ -428,7 +484,7 @@ async def send_raw_transaction_no_wait(
                 continue
 
     # Send transaction
-    result: list[dict[str, Any]] = []
+    result: list[SendRawTransactionNoWaitResultDict] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
@@ -489,6 +545,32 @@ async def send_raw_transaction_no_wait(
             {"id": i + 1, "status": 1, "transaction_hash": transaction_hash.to_0x_hex()}
         )
 
+    if TYPE_CHECKING:
+        type_checked_result: list[SendRawTransactionNoWaitResponse] = []
+        for entry in result:
+            if entry["status"] == 0:
+                transaction_hash_value = (
+                    entry["transaction_hash"] if "transaction_hash" in entry else None
+                )
+                type_checked_result.append(
+                    SendRawTransactionNoWaitFailureResponse(
+                        id=entry["id"],
+                        status=entry["status"],
+                        transaction_hash=transaction_hash_value,
+                    )
+                )
+            else:
+                type_checked_result.append(
+                    SendRawTransactionNoWaitSuccessResponse(
+                        id=entry["id"],
+                        status=entry["status"],
+                        transaction_hash=entry["transaction_hash"],
+                    )
+                )
+        _ = GenericSuccessResponse[SendRawTransactionsNoWaitResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=SendRawTransactionsNoWaitResponse(root=type_checked_result),
+        )
     return json_response({**SuccessResponse.default(), "data": result})
 
 
@@ -512,7 +594,7 @@ async def wait_for_transaction_receipt(
     transaction_hash = query.transaction_hash
     timeout = query.timeout
 
-    result: dict[str, Any] = {}
+    result: WaitForTransactionReceiptResultDict = {"status": 1}
     # Watch transaction receipt for given timeout duration.
     try:
         tx_hash = HexBytes(transaction_hash)
@@ -526,14 +608,28 @@ async def wait_for_transaction_receipt(
                 code, message = error_code_msg(err_msg)
             except DataNotExistsError:
                 code, message = None, None
-            result["status"] = 0
-            result["error_code"] = code
-            result["error_msg"] = message
+            result = {"status": 0, "error_code": code, "error_msg": message}
         else:
-            result["status"] = 1
+            result = {"status": 1}
     except TimeExhausted:
         raise DataNotExistsError
 
+    if TYPE_CHECKING:
+        type_checked_data: WaitForTransactionReceiptResponse
+        if result["status"] == 0:
+            type_checked_data = WaitForTransactionReceiptFailureResponse(
+                status=result["status"],
+                error_code=result["error_code"],
+                error_msg=result["error_msg"],
+            )
+        else:
+            type_checked_data = WaitForTransactionReceiptSuccessResponse(
+                status=result["status"],
+            )
+        _ = GenericSuccessResponse[WaitForTransactionReceiptResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=type_checked_data,
+        )
     return json_response({**SuccessResponse.default(), "data": result})
 
 
