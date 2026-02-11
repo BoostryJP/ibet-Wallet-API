@@ -17,26 +17,27 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from eth_utils.address import to_checksum_address
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from tests.utils.contract import Contract
+from tests.helpers.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-class PersonalInfoUtils:
+class PersonalInfoHelper:
     @staticmethod
-    def register(tx_from: str, personal_info_address: str, link_address: str) -> None:
-        from_address = to_checksum_address(tx_from)
-        web3.eth.default_account = from_address
-        PersonalInfoContract = Contract.get_contract(
+    def register(
+        tx_from: str,
+        personal_info_address: str,
+        link_address: str,
+        encrypted_info: str = "",
+    ) -> None:
+        personal_info_contract = Contract.get_contract(
             contract_name="PersonalInfo", address=personal_info_address
         )
-        encrypted_info = "some_encrypted_info"
-        PersonalInfoContract.functions.register(link_address, encrypted_info).transact(
-            {"from": from_address}
-        )
+        personal_info_contract.functions.register(
+            link_address, encrypted_info
+        ).transact({"from": tx_from})

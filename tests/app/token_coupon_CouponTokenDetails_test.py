@@ -20,27 +20,14 @@ SPDX-License-Identifier: Apache-2.0
 from typing import Any
 from unittest import mock
 
-from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    coupon_issue_token,
-    coupon_register_token_list,
-    coupon_set_status,
-    membership_issue_token,
-    membership_register_token_list,
-)
-from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+from tests.helpers import IbetCouponTestHelper, IbetMembershipTestHelper
+from tests.types import SharedContract
 
 
 class TestTokenCouponTokenDetails:
@@ -86,18 +73,9 @@ class TestTokenCouponTokenDetails:
         return attribute
 
     @staticmethod
-    def tokenlist_contract() -> DeployedContract:
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session: Session, token: DeployedContract) -> None:
+    def list_token(session: Session, token_address: str) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -115,28 +93,32 @@ class TestTokenCouponTokenDetails:
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.coupon_token_attribute(exchange_address)
-        token = coupon_issue_token(issuer, attribute)
-        coupon_register_token_list(issuer, token, token_list)
+        token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
 
         # Register tokens on the list
-        self.list_token(session, token)
+        self.list_token(session, token.address)
 
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + token["address"]
+        apiurl = self.apiurl_base + token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_template": "IbetCoupon",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -176,31 +158,36 @@ class TestTokenCouponTokenDetails:
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.coupon_token_attribute(exchange_address)
-        token = coupon_issue_token(issuer, attribute)
-        coupon_register_token_list(issuer, token, token_list)
+        token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
 
         # Register tokens on the list
-        self.list_token(session, token)
-
-        # Invalidate token
-        coupon_set_status(issuer, token)
-
+        self.list_token(session, token.address)
         session.commit()
 
+        # Invalidate token
+        IbetCouponTestHelper.set_token_status(
+            issuer["account_address"], token.address, False
+        )
+
         # Request target API
-        apiurl = self.apiurl_base + token["address"]
+        apiurl = self.apiurl_base + token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_template": "IbetCoupon",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -271,19 +258,21 @@ class TestTokenCouponTokenDetails:
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.coupon_token_attribute(exchange_address)
-        token = coupon_issue_token(issuer, attribute)
-        coupon_register_token_list(issuer, token, token_list)
-
-        session.commit()
+        token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
 
         # Request target API
-        apiurl = self.apiurl_base + token["address"]
+        apiurl = self.apiurl_base + token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
@@ -292,7 +281,7 @@ class TestTokenCouponTokenDetails:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "token_address: " + token["address"],
+            "description": "token_address: " + token.address,
         }
 
     # Error_3
@@ -323,22 +312,26 @@ class TestTokenCouponTokenDetails:
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.membership_token_attribute(exchange_address)
-        token = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, token, token_list)
+        token = IbetMembershipTestHelper.issue(issuer["account_address"], attribute)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
 
         # Register tokens on the list
-        self.list_token(session, token)
+        self.list_token(session, token.address)
 
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + token["address"]
+        apiurl = self.apiurl_base + token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
@@ -346,6 +339,6 @@ class TestTokenCouponTokenDetails:
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 30,
-            "description": f"token_address: {token['address']}",
+            "description": f"token_address: {token.address}",
             "message": "Data Not Exists",
         }

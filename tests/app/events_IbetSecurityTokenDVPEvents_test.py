@@ -28,9 +28,9 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
+from tests.helpers import IbetShareTestHelper
+from tests.helpers.contract import Contract
 from tests.types import SharedContract
-from tests.utils import IbetShareUtils
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -84,7 +84,7 @@ class TestEventsIbetSecurityTokenDVP:
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -153,7 +153,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -236,7 +236,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -333,7 +333,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -434,7 +434,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -535,7 +535,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -641,7 +641,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -733,7 +733,7 @@ class TestEventsIbetSecurityTokenDVP:
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -796,7 +796,7 @@ class TestEventsIbetSecurityTokenDVP:
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -857,7 +857,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",
@@ -949,7 +949,7 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Issue token
-        token_contract = IbetShareUtils.issue(
+        token_contract = IbetShareTestHelper.issue(
             tx_from=issuer,
             args={
                 "name": "test_token",

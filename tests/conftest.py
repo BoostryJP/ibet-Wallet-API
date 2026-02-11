@@ -47,8 +47,8 @@ from app.model.db import Notification
 from app.model.db.base import Base
 from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
+from tests.helpers.contract import Contract
 from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)

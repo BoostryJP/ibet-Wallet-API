@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Any
 from unittest import mock
 
 from eth_utils.address import to_checksum_address
@@ -30,49 +29,29 @@ from web3.types import TxParams, Wei
 from app import config
 from app.model.db import ExecutableContract, Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    coupon_issue_token,
-    coupon_register_token_list,
-    coupon_transfer_token,
-)
-from tests.types import DeployedContract
-from tests.utils.contract import Contract
+from tests.helpers import IbetCouponTestHelper
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-
-
-def _get_abi(token: DeployedContract) -> Any:
-    assert "abi" in token
-    return token["abi"]
 
 
 def _tx_params(from_address: str) -> TxParams:
     return {"from": from_address, "gas": 6000000, "gasPrice": Wei(0)}
 
 
-def tokenlist_contract() -> DeployedContract:
-    issuer = eth_account["issuer"]
-    web3.eth.default_account = issuer["account_address"]
-    contract_address, abi = Contract.deploy_contract(
-        "TokenList", [], issuer["account_address"]
-    )
-
-    return {"address": contract_address, "abi": abi}
-
-
-def listing_token(session: Session, token: DeployedContract) -> None:
+def listing_token(session: Session, token_address: str) -> None:
     listing = Listing()
-    listing.token_address = token["address"]
+    listing.token_address = token_address
     listing.is_public = True
     listing.max_holding_quantity = 1
     listing.max_sell_amount = 1000
     session.add(listing)
 
 
-def executable_contract_token(session: Session, contract: DeployedContract) -> None:
+def executable_contract_token(session: Session, contract_address: str) -> None:
     executable_contract = ExecutableContract()
-    executable_contract.contract_address = contract["address"]
+    executable_contract.contract_address = contract_address
     session.add(executable_contract)
 
 
@@ -86,13 +65,16 @@ class TestEthWaitForTransactionReceipt:
 
     # <Normal_1>
     # Wait receipt for successful transaction
-    def test_normal_1(self, client: TestClient, session: Session):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Issue a token
-        tokenlist = tokenlist_contract()
+        tokenlist = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
+
         issuer = eth_account["issuer"]
-        coupontoken_1 = coupon_issue_token(
-            issuer,
+        coupontoken_1 = IbetCouponTestHelper.issue(
+            issuer["account_address"],
             {
                 "name": "name_test1",
                 "symbol": "symbol_test1",
@@ -107,26 +89,28 @@ class TestEthWaitForTransactionReceipt:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupontoken_1.address, tokenlist["address"]
+        )
 
         # List the issued token
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
+        listing_token(session, coupontoken_1.address)
+        executable_contract_token(session, coupontoken_1.address)
 
         # Send a test transaction
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=_get_abi(coupontoken_1),
-        )
         user1 = eth_account["user1"]
-        coupon_transfer_token(issuer, coupontoken_1, user1, 10)
-
-        tx = token_contract_1.functions.consume(10).build_transaction(
+        IbetCouponTestHelper.transfer_token(
+            issuer["account_address"],
+            coupontoken_1.address,
+            user1["account_address"],
+            10,
+        )
+        tx = coupontoken_1.functions.consume(10).build_transaction(
             _tx_params(to_checksum_address(user1["account_address"]))
         )
         tx_hash = web3.eth.send_transaction(tx)
 
-        # Request the target API
+        # Call API
         resp = client.get(self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()})
 
         # Assertion
@@ -136,13 +120,16 @@ class TestEthWaitForTransactionReceipt:
 
     # <Normal_2>
     # Wait receipt for reverted transaction
-    def test_normal_2(self, client: TestClient, session: Session):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Issue a token
-        tokenlist = tokenlist_contract()
+        tokenlist = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
+
         issuer = eth_account["issuer"]
-        coupontoken_1 = coupon_issue_token(
-            issuer,
+        coupontoken_1 = IbetCouponTestHelper.issue(
+            issuer["account_address"],
             {
                 "name": "name_test1",
                 "symbol": "symbol_test1",
@@ -157,21 +144,18 @@ class TestEthWaitForTransactionReceipt:
                 "privacyPolicy": "privacyPolicy_test1",
             },
         )
-        coupon_register_token_list(issuer, coupontoken_1, tokenlist)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupontoken_1.address, tokenlist["address"]
+        )
 
         # List the issued token
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
-
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=_get_abi(coupontoken_1),
-        )
-        user1 = eth_account["user1"]
+        listing_token(session, coupontoken_1.address)
+        executable_contract_token(session, coupontoken_1.address)
 
         # Send a test transaction
         # NOTE: Coupon consumption with no balance -> Revert
-        tx = token_contract_1.functions.consume(10000).build_transaction(
+        user1 = eth_account["user1"]
+        tx = coupontoken_1.functions.consume(10000).build_transaction(
             _tx_params(to_checksum_address(user1["account_address"]))
         )
         tx_hash = web3.eth.send_transaction(tx)

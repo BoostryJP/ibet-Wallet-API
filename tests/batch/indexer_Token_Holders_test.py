@@ -33,46 +33,22 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from app.config import ZERO_ADDRESS
 from app.errors import ServiceUnavailable
-from app.model.db import Listing, TokenHolder, TokenHolderBatchStatus, TokenHoldersList
+from app.model.db import TokenHolder, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import LOG, Processor
 from tests.account_config import eth_account
-from tests.contract_modules import (
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
+)
+from tests.helpers.ibet_exchange_helpers import (
     approve_transfer_security_token_escrow,
-    bond_apply_for_transfer,
-    bond_approve_transfer,
-    bond_force_change_locked_account,
-    bond_force_lock,
-    bond_force_unlock,
-    bond_issue_from,
-    bond_issue_token,
-    bond_lock,
-    bond_redeem_from,
-    bond_register_token_list,
-    bond_set_transfer_approval_required,
-    bond_transfer_to_exchange,
-    bond_unlock,
-    coupon_consume,
-    coupon_issue_token,
-    coupon_register_token_list,
     create_security_token_escrow,
     finish_security_token_escrow,
     get_latest_security_escrow_id,
-    membership_issue_token,
-    membership_register_token_list,
-    register_personalinfo,
-    share_force_change_locked_account,
-    share_force_lock,
-    share_force_unlock,
-    share_issue_from,
-    share_issue_token,
-    share_lock,
-    share_redeem_from,
-    share_register_token_list,
-    share_unlock,
-    transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -101,17 +77,6 @@ class TestProcessor:
     agent = eth_account["agent"]
 
     target_process_name = "INDEXER-TOKEN_HOLDERS"
-
-    @staticmethod
-    async def listing_token(token_address: str, async_session: AsyncSession):
-        _listing = Listing()
-        _listing.token_address = token_address
-        _listing.is_public = True
-        _listing.max_holding_quantity = 1000000
-        _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
-        async_session.add(_listing)
-        await async_session.commit()
 
     @staticmethod
     def issue_token_bond(
@@ -158,9 +123,12 @@ class TestProcessor:
             "baseFxRate": "",
             "requirePersonalInfoRegistered": False,
         }
-        token = bond_issue_token(issuer, args)
-        bond_register_token_list(issuer, token, token_list)
-
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], args)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -190,9 +158,12 @@ class TestProcessor:
             "transferable": True,
             "requirePersonalInfoRegistered": False,
         }
-        token = share_issue_token(issuer, args)
-        share_register_token_list(issuer, token, token_list)
-
+        token = IbetShareTestHelper.issue(issuer["account_address"], args)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -216,9 +187,12 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = coupon_issue_token(issuer, args)
-        coupon_register_token_list(issuer, token, token_list)
-
+        token = IbetCouponTestHelper.issue(issuer["account_address"], args)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -242,20 +216,23 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = membership_issue_token(issuer, args)
-        membership_register_token_list(issuer, token, token_list)
-
+        token = IbetMembershipTestHelper.issue(issuer["account_address"], args)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
     def token_holders_list(
-        token: DeployedContract,
+        token_address: str,
         block_number: int,
         status: TokenHolderBatchStatus = TokenHolderBatchStatus.PENDING,
     ) -> TokenHoldersList:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.list_id = str(uuid.uuid4())
-        target_token_holders_list.token_address = token["address"]
+        target_token_holders_list.token_address = token_address
         target_token_holders_list.batch_status = status.value
         target_token_holders_list.block_number = block_number
         return target_token_holders_list
@@ -287,15 +264,13 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        await self.listing_token(token["address"], async_session)
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
         # Issuer transfers issued token to user1, trader and exchange.
         # - "Transfer" event is emitted from token contract.
         # - user1: 20000
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             20000,
         )
@@ -303,25 +278,35 @@ class TestProcessor:
         # Issuer issues token to user1.
         # - "Issue" event is emitted from token contract.
         # - user1: 60000
-        bond_issue_from(self.issuer, token, self.user1["account_address"], 40000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            40000,
+        )
 
         # Issuer redeems token from user1.
         # - "Redeem" event is emitted from token contract.
         # - user1: 50000
-        bond_redeem_from(self.issuer, token, self.user1["account_address"], 10000)
+        IbetStraightBondTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            10000,
+        )
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         # - No effect on holder balance because collection is done before this transfer.
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             10000,
         )
@@ -388,40 +373,49 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        await self.listing_token(token["address"], async_session)
-        token_contract = Contract.get_contract("IbetShare", token["address"])
 
         # Issuer transfers issued token to user1, trader and exchange.
         # - "Transfer" event is emitted from token contract.
         # - user1: 20000
-        transfer_token(
-            token_contract,
+        IbetShareTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             20000,
         )
+
         # Issuer issues token to user1.
         # - "Issue" event is emitted from token contract.
         # - user1: 60000
-        share_issue_from(self.issuer, token, self.user1["account_address"], 40000)
+        IbetShareTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            40000,
+        )
 
         # Issuer redeems token from user1.
         # - "Redeem" event is emitted from token contract.
         # - user1: 50000
-        share_redeem_from(self.issuer, token, self.user1["account_address"], 10000)
+        IbetShareTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            10000,
+        )
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
 
         # Issuer transfers issued token to user1 again to proceed block_number on chain.
         # - No effect on holder balance because collection is done before this transfer.
-        transfer_token(
-            token_contract,
+        IbetShareTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             10000,
         )
@@ -487,25 +481,26 @@ class TestProcessor:
             token_list_contract,
             10000,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
         # Issuer transfers issued token to user1.
         # - "Transfer" event is emitted from token contract.
         # - user1: 10000
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             10000,
         )
 
         # User1 transfers some token to exchange.
         # - user1: 10000
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract["address"]}, token, 1000
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            1000,
         )
 
         # User1 creates escrow to User2 via agent.
@@ -514,7 +509,7 @@ class TestProcessor:
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.user2["account_address"],
             self.agent["account_address"],
             1000,
@@ -535,7 +530,7 @@ class TestProcessor:
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
@@ -604,59 +599,72 @@ class TestProcessor:
             token_list_contract,
             0,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         # Issuer issues token to user1.
-        bond_issue_from(self.issuer, token, self.user1["account_address"], 15000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            15000,
+        )
 
         # User1 lock some token to issuer.
         # - "Lock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 2000)
-        bond_lock(self.user1, token, self.issuer["account_address"], 2000)
+        IbetStraightBondTestHelper.lock_token(
+            self.user1["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            2000,
+            "",
+        )
 
         # Issuer force lock some token of user1.
         # - "ForceLock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 4000)
-        bond_force_lock(
-            self.issuer,
-            token,
+        IbetStraightBondTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.user1["account_address"],
             2000,
+            "",
         )
 
         # Issuer(lock_address) unlock some token from user1.
         # - "Unlock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 3000)
-        bond_unlock(
-            self.issuer,
-            token,
+        IbetStraightBondTestHelper.unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             self.user1["account_address"],
             1000,
+            "",
         )
 
         # Issuer force unlock some token from user1.
         # - "ForceUnlock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 2000)
-        bond_force_unlock(
-            self.issuer,
-            token,
+        IbetStraightBondTestHelper.force_unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.user1["account_address"],
             self.user1["account_address"],
             1000,
+            "",
         )
 
         # Issuer change lock account from user1 to user2.
         # - "ForceChangeLockAccount" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 1000)
         # - user2: (hold: 0, locked: 1000)
-        bond_force_change_locked_account(
-            self.issuer,
-            token,
+        IbetStraightBondTestHelper.force_change_locked_account(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.user1["account_address"],
             self.user2["account_address"],
@@ -666,7 +674,7 @@ class TestProcessor:
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
@@ -737,59 +745,72 @@ class TestProcessor:
             token_list_contract,
             0,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         # Issuer issues token to user1.
-        share_issue_from(self.issuer, token, self.user1["account_address"], 15000)
+        IbetShareTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            15000,
+        )
 
         # User1 lock some token to issuer.
         # - "Lock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 2000)
-        share_lock(self.user1, token, self.issuer["account_address"], 2000)
+        IbetShareTestHelper.lock_token(
+            self.user1["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            2000,
+            "",
+        )
 
         # Issuer force lock some token of user1.
         # - "ForceLock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 4000)
-        share_force_lock(
-            self.issuer,
-            token,
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.user1["account_address"],
             2000,
+            "",
         )
 
         # Issuer(lock_address) unlock some token from user1.
         # - "Unlock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 3000)
-        share_unlock(
-            self.issuer,
-            token,
+        IbetShareTestHelper.unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             self.user1["account_address"],
             1000,
+            "",
         )
 
         # Issuer force unlock some token from user1.
         # - "ForceUnlock" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 2000)
-        share_force_unlock(
-            self.issuer,
-            token,
+        IbetShareTestHelper.force_unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.user1["account_address"],
             self.user1["account_address"],
             1000,
+            "",
         )
 
         # Issuer change lock account from user1 to user2.
         # - "ForceChangeLockAccount" event is emitted from token contract.
         # - user1: (hold: 15000, locked: 1000)
         # - user2: (hold: 0, locked: 1000)
-        share_force_change_locked_account(
-            self.issuer,
-            token,
+        IbetShareTestHelper.force_change_locked_account(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.user1["account_address"],
             self.user2["account_address"],
@@ -799,7 +820,7 @@ class TestProcessor:
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
@@ -868,36 +889,49 @@ class TestProcessor:
             token_list_contract,
             0,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         # Issuer issues token to User1.
         # - user1: 30000
-        bond_issue_from(self.issuer, token, self.user1["account_address"], 30000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            30000,
+        )
 
         # Issuer sets transfer approval required.
-        bond_set_transfer_approval_required(self.issuer, token, True)
+        IbetStraightBondTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # User1 applies for transfer to User2.
         # - "Transfer" event is NOT emitted from token contract.
         # - user1: 30000
         # - user2: 0
-        bond_apply_for_transfer(self.user1, token, self.user2, 10000, "to user2")
+        IbetStraightBondTestHelper.apply_for_token_transfer(
+            self.user1["account_address"],
+            token.address,
+            self.user2["account_address"],
+            10000,
+        )
 
         # User1 creates escrow to User2 via agent.
         # - user1: 30000
         # - user2: 0
-        bond_transfer_to_exchange(
-            self.user1,
-            {"address": escrow_contract["address"]},
-            token,
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
             10000,
         )
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.user2["account_address"],
             self.agent["account_address"],
             10000,
@@ -918,7 +952,7 @@ class TestProcessor:
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
@@ -982,41 +1016,56 @@ class TestProcessor:
             token_list_contract,
             0,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         # Issuer issues token to User1.
         # - user1: 30000
-        bond_issue_from(self.issuer, token, self.user1["account_address"], 30000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            30000,
+        )
 
         # Issuer sets transfer approval required.
-        bond_set_transfer_approval_required(self.issuer, token, True)
+        IbetStraightBondTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # User1 applies for transfer to User2.
         # - user1: 30000
         # - user2: 0
-        bond_apply_for_transfer(self.user1, token, self.user2, 10000, "to user2")
+        IbetStraightBondTestHelper.apply_for_token_transfer(
+            self.user1["account_address"],
+            token.address,
+            self.user2["account_address"],
+            10000,
+        )
 
         # Issuer approves transfer from User1 to User2.
         # - "Transfer" event is emitted from token contract.
         # - user1: 20000
         # - user2: 10000
-        bond_approve_transfer(self.issuer, token, 0, "")
+        IbetStraightBondTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 0, ""
+        )
 
         # User1 creates escrow to User2 via agent.
         # - user1: 20000
         # - user2: 10000
-        bond_transfer_to_exchange(
-            self.user1,
-            {"address": escrow_contract["address"]},
-            token,
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
             10000,
         )
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.user2["account_address"],
             self.agent["account_address"],
             10000,
@@ -1047,7 +1096,7 @@ class TestProcessor:
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
@@ -1106,16 +1155,14 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, escrow_contract["address"], token_list_contract
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetCoupon", token["address"])
 
         # Issuer transfers issued token to User1.
         # - user1: 10000
-        transfer_token(
-            token_contract,
+        IbetCouponTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             10000,
         )
@@ -1123,11 +1170,15 @@ class TestProcessor:
         # User1 consumes some token.
         # - "Consume" event is emitted from token contract.
         # - user1: 9000
-        coupon_consume(self.user1, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.user1["account_address"],
+            token.address,
+            1000,
+        )
 
         # Register instruction to collect token holders.
         target_token_holders_list = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list)
         await async_session.commit()
@@ -1188,29 +1239,29 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
         target_token_holders_list1 = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list1)
         await async_session.commit()
-        transfer_token(
-            token_contract,
+
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             20000,
         )
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.trader["account_address"],
             10000,
         )
+
         target_token_holders_list2 = self.token_holders_list(
-            token, web3.eth.block_number
+            token.address, web3.eth.block_number
         )
         async_session.add(target_token_holders_list2)
         await async_session.commit()
@@ -1268,14 +1319,15 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        await self.listing_token(token["address"], async_session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         # Insert collection record with above token and checkpoint block number
-        target_token_holders_list = self.token_holders_list(token, current_block_number)
+        target_token_holders_list = self.token_holders_list(
+            token.address, current_block_number
+        )
         async_session.add(target_token_holders_list)
         completed_token_holders_list = self.token_holders_list(
-            token, checkpoint_block_number, status=TokenHolderBatchStatus.DONE
+            token.address, checkpoint_block_number, status=TokenHolderBatchStatus.DONE
         )
         async_session.add(completed_token_holders_list)
         await async_session.commit()
@@ -1344,7 +1396,6 @@ class TestProcessor:
         shared_contract: SharedContract,
         async_session: AsyncSession,
         caplog: pytest.LogCaptureFixture,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
 
@@ -1367,7 +1418,6 @@ class TestProcessor:
         shared_contract: SharedContract,
         async_session: AsyncSession,
         caplog: pytest.LogCaptureFixture,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
@@ -1421,8 +1471,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog: pytest.LogCaptureFixture,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1435,28 +1483,27 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
-        # User1 and trader must register personal information before they receive token.
-        register_personalinfo(self.user1, personal_info_contract)
-        register_personalinfo(self.trader, personal_info_contract)
-
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             20000,
         )
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract["address"]}, token, 10000
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
-
         current_block_number = web3.eth.block_number
+
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, current_block_number)
+        target_token_holders_list = self.token_holders_list(
+            token.address, current_block_number
+        )
         async_session.add(target_token_holders_list)
         await async_session.commit()
 
@@ -1481,8 +1528,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        caplog: pytest.LogCaptureFixture,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1495,28 +1540,27 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        await self.listing_token(token["address"], async_session)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
-        # User1 and trader must register personal information before they receive token.
-        register_personalinfo(self.user1, personal_info_contract)
-        register_personalinfo(self.trader, personal_info_contract)
-
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             20000,
         )
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract["address"]}, token, 10000
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
-
         current_block_number = web3.eth.block_number
+
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, current_block_number)
+        target_token_holders_list = self.token_holders_list(
+            token.address, current_block_number
+        )
         async_session.add(target_token_holders_list)
         await async_session.commit()
 
@@ -1541,19 +1585,24 @@ class TestProcessor:
         ).all()
         assert len(_records) == 0
 
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             20000,
         )
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract["address"]}, token, 10000
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
-
         current_block_number = web3.eth.block_number
+
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, current_block_number)
+        target_token_holders_list = self.token_holders_list(
+            token.address, current_block_number
+        )
         async_session.add(target_token_holders_list)
         await async_session.commit()
 

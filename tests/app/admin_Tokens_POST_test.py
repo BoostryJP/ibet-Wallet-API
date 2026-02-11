@@ -20,7 +20,6 @@ SPDX-License-Identifier: Apache-2.0
 import json
 from typing import Any
 
-from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,9 +29,8 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from app.model.db import ExecutableContract, IDXBondToken, IDXPosition, Listing
 from tests.account_config import eth_account
-from tests.contract_modules import bond_issue_token, bond_register_token_list
-from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
+from tests.helpers.ibet_bond_token import IbetStraightBondTestHelper
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -82,17 +80,6 @@ class TestAdminTokensPOST:
         return attribute
 
     @staticmethod
-    def tokenlist_contract() -> DeployedContract:
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-
-        contract_address_str = str(contract_address)
-        return {"address": contract_address_str, "abi": abi}
-
-    @staticmethod
     def insert_listing_data(session: Session, _token: dict[str, Any]):
         token = Listing()
         token.token_address = _token["token_address"]
@@ -118,28 +105,33 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         # Call API
         req_params = {
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         resp = client.post(self.apiurl, json=req_params)
 
@@ -148,7 +140,7 @@ class TestAdminTokensPOST:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
             "token": {
-                "token_address": bond_token["address"],
+                "token_address": bond_token.address,
                 "token_template": "IbetStraightBond",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -156,13 +148,13 @@ class TestAdminTokensPOST:
                 "name": "テスト債券",
                 "symbol": "BOND",
                 "total_supply": 1000000,
-                "tradable_exchange": exchange_address,
+                "tradable_exchange": exchange["address"],
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
                 "status": True,
                 "max_holding_quantity": 100,
                 "max_sell_amount": 50000,
-                "personal_info_address": personal_info,
+                "personal_info_address": personal_info["address"],
                 "require_personal_info_registered": True,
                 "transferable": True,
                 "is_offering": False,
@@ -234,26 +226,31 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         # Call API
         req_params = {
             "is_public": True,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         resp = client.post(self.apiurl, json=req_params)
 
@@ -262,7 +259,7 @@ class TestAdminTokensPOST:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
             "token": {
-                "token_address": bond_token["address"],
+                "token_address": bond_token.address,
                 "token_template": "IbetStraightBond",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -270,13 +267,13 @@ class TestAdminTokensPOST:
                 "name": "テスト債券",
                 "symbol": "BOND",
                 "total_supply": 1000000,
-                "tradable_exchange": exchange_address,
+                "tradable_exchange": exchange["address"],
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
                 "status": True,
                 "max_holding_quantity": None,
                 "max_sell_amount": None,
-                "personal_info_address": personal_info,
+                "personal_info_address": personal_info["address"],
                 "require_personal_info_registered": True,
                 "transferable": True,
                 "is_offering": False,
@@ -310,12 +307,10 @@ class TestAdminTokensPOST:
         }
 
         listing = session.scalars(
-            select(Listing)
-            .where(Listing.token_address == bond_token["address"])
-            .limit(1)
+            select(Listing).where(Listing.token_address == bond_token.address).limit(1)
         ).first()
         assert listing is not None
-        assert listing.token_address == bond_token["address"]
+        assert listing.token_address == bond_token.address
         assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
@@ -323,12 +318,12 @@ class TestAdminTokensPOST:
 
         bond = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond is not None
-        assert bond.token_address == bond_token["address"]
+        assert bond.token_address == bond_token.address
         assert bond.owner_address == issuer["account_address"]
 
         position = session.scalars(select(IDXPosition).limit(1)).first()
         assert position is not None
-        assert position.token_address == bond_token["address"]
+        assert position.token_address == bond_token.address
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
@@ -338,24 +333,29 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         bf_position = IDXPosition()
-        bf_position.token_address = bond_token["address"]
+        bf_position.token_address = bond_token.address
         bf_position.account_address = issuer["account_address"]
         bf_position.balance = 1000000
         session.add(bf_position)
@@ -364,7 +364,7 @@ class TestAdminTokensPOST:
         # Call API
         req_params = {
             "is_public": True,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         resp = client.post(self.apiurl, json=req_params)
 
@@ -373,7 +373,7 @@ class TestAdminTokensPOST:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
             "token": {
-                "token_address": bond_token["address"],
+                "token_address": bond_token.address,
                 "token_template": "IbetStraightBond",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -381,13 +381,13 @@ class TestAdminTokensPOST:
                 "name": "テスト債券",
                 "symbol": "BOND",
                 "total_supply": 1000000,
-                "tradable_exchange": exchange_address,
+                "tradable_exchange": exchange["address"],
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
                 "status": True,
                 "max_holding_quantity": None,
                 "max_sell_amount": None,
-                "personal_info_address": personal_info,
+                "personal_info_address": personal_info["address"],
                 "require_personal_info_registered": True,
                 "transferable": True,
                 "is_offering": False,
@@ -421,12 +421,10 @@ class TestAdminTokensPOST:
         }
 
         listing = session.scalars(
-            select(Listing)
-            .where(Listing.token_address == bond_token["address"])
-            .limit(1)
+            select(Listing).where(Listing.token_address == bond_token.address).limit(1)
         ).first()
         assert listing is not None
-        assert listing.token_address == bond_token["address"]
+        assert listing.token_address == bond_token.address
         assert listing.is_public == req_params["is_public"]
         assert listing.max_holding_quantity is None
         assert listing.max_sell_amount is None
@@ -434,12 +432,12 @@ class TestAdminTokensPOST:
 
         bond = session.scalars(select(IDXBondToken).limit(1)).first()
         assert bond is not None
-        assert bond.token_address == bond_token["address"]
+        assert bond.token_address == bond_token.address
         assert bond.owner_address == issuer["account_address"]
 
         position = session.scalars(select(IDXPosition).limit(1)).first()
         assert position is not None
-        assert position.token_address == bond_token["address"]
+        assert position.token_address == bond_token.address
         assert position.account_address == issuer["account_address"]
         assert position.balance == 1000000
 
@@ -449,24 +447,29 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         token = {
-            "token_address": bond_token["address"],
+            "token_address": bond_token.address,
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
@@ -477,7 +480,7 @@ class TestAdminTokensPOST:
         # Call API
         req_params = {
             "is_public": True,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
             "skip_conflict_error": True,
         }
         resp = client.post(self.apiurl, json=req_params)
@@ -487,7 +490,7 @@ class TestAdminTokensPOST:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {
             "token": {
-                "token_address": bond_token["address"],
+                "token_address": bond_token.address,
                 "token_template": "IbetStraightBond",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -495,13 +498,13 @@ class TestAdminTokensPOST:
                 "name": "テスト債券",
                 "symbol": "BOND",
                 "total_supply": 1000000,
-                "tradable_exchange": exchange_address,
+                "tradable_exchange": exchange["address"],
                 "contact_information": "問い合わせ先",
                 "privacy_policy": "プライバシーポリシー",
                 "status": True,
                 "max_holding_quantity": 100,
                 "max_sell_amount": 50000,
-                "personal_info_address": personal_info,
+                "personal_info_address": personal_info["address"],
                 "require_personal_info_registered": True,
                 "transferable": True,
                 "is_offering": False,
@@ -677,24 +680,29 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         token = {
-            "token_address": bond_token["address"],
+            "token_address": bond_token.address,
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
@@ -707,7 +715,7 @@ class TestAdminTokensPOST:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         resp = client.post(self.apiurl, json=req_params)
 
@@ -725,24 +733,29 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         contract = {
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         self.insert_executable_contract_data(session, contract)
         session.commit()
@@ -752,7 +765,7 @@ class TestAdminTokensPOST:
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         resp = client.post(self.apiurl, json=req_params)
 
@@ -770,30 +783,34 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
 
         # Bond token is disabled
         config.BOND_TOKEN_ENABLED = False
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            shared_contract["TokenList"]["address"],
+        )
 
         # Call API
         req_params = {
             "is_public": True,
             "max_holding_quantity": 100,
             "max_sell_amount": 50000,
-            "contract_address": bond_token["address"],
+            "contract_address": bond_token.address,
         }
         resp = client.post(self.apiurl, json=req_params)
 
@@ -811,21 +828,21 @@ class TestAdminTokensPOST:
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
+        exchange = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info = shared_contract["PersonalInfo"]
+        token_list = shared_contract["TokenList"]
+
+        config.BOND_TOKEN_ENABLED = True
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data
-        config.BOND_TOKEN_ENABLED = True
-        token_list = TestAdminTokensPOST.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.bond_token_attribute(
+            exchange["address"], personal_info["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestAdminTokensPOST.bond_token_attribute(
-            exchange_address, personal_info
+        IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            attribute,
         )
-        bond_token = bond_issue_token(issuer, attribute)
-
-        bond_register_token_list(issuer, bond_token, token_list)
 
         # Call API
         req_params = {

@@ -25,7 +25,7 @@ from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
-from tests.utils.contract import Contract
+from tests.helpers.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)

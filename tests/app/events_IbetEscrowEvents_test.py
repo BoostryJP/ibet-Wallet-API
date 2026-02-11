@@ -26,9 +26,9 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
+from tests.helpers import IbetStandardTokenUtils
+from tests.helpers.contract import Contract
 from tests.types import SharedContract
-from tests.utils import IbetStandardTokenUtils
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)

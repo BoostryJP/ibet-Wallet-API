@@ -45,15 +45,11 @@ from app.model.db import (
 )
 from batch.indexer_Token_Detail import LOG, Processor, main
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    bond_issue_token,
-    bond_register_token_list,
-    coupon_issue_token,
-    coupon_register_token_list,
-    membership_issue_token,
-    membership_register_token_list,
-    share_issue_token,
-    share_register_token_list,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
@@ -120,9 +116,10 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = bond_issue_token(issuer, dict(args))
-        bond_register_token_list(issuer, token, token_list)
-
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], dict(args))
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
         return token
 
     @staticmethod
@@ -132,9 +129,10 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = share_issue_token(issuer, dict(args))
-        share_register_token_list(issuer, token, token_list)
-
+        token = IbetShareTestHelper.issue(issuer["account_address"], dict(args))
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
         return token
 
     @staticmethod
@@ -144,9 +142,10 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = coupon_issue_token(issuer, dict(args))
-        coupon_register_token_list(issuer, token, token_list)
-
+        token = IbetCouponTestHelper.issue(issuer["account_address"], dict(args))
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
         return token
 
     @staticmethod
@@ -156,9 +155,10 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = membership_issue_token(issuer, dict(args))
-        membership_register_token_list(issuer, token, token_list)
-
+        token = IbetMembershipTestHelper.issue(issuer["account_address"], dict(args))
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
         return token
 
     ###########################################################################
@@ -171,7 +171,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -219,9 +218,7 @@ class TestProcessor:
             token = self.issue_token_bond_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(
-                token["address"], "IbetStraightBond", async_session
-            )
+            await self.listing_token(token.address, "IbetStraightBond", async_session)
             args = {
                 re.sub("([A-Z])", lambda x: "_" + x.group(1).lower(), k): v
                 for k, v in args.items()
@@ -229,9 +226,7 @@ class TestProcessor:
             args["interest_rate"] = float(
                 Decimal(str(args["interest_rate"])) * Decimal("0.0001")
             )
-            _bond_token_expected_list.append(
-                {**args, "token_address": token["address"]}
-            )
+            _bond_token_expected_list.append({**args, "token_address": token.address})
 
         _share_token_expected_list: list[dict[str, object]] = []
         # Issue share token
@@ -256,7 +251,7 @@ class TestProcessor:
             token = self.issue_token_share_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetShare", async_session)
+            await self.listing_token(token.address, "IbetShare", async_session)
             args = {
                 re.sub("([A-Z])", lambda x: "_" + x.group(1).lower(), k): v
                 for k, v in args.items()
@@ -271,9 +266,7 @@ class TestProcessor:
             del args["dividends"]
             del args["dividend_record_date"]
             del args["dividend_payment_date"]
-            _share_token_expected_list.append(
-                {**args, "token_address": token["address"]}
-            )
+            _share_token_expected_list.append({**args, "token_address": token.address})
 
         _membership_token_expected_list: list[dict[str, object]] = []
         # Issue membership token
@@ -294,7 +287,7 @@ class TestProcessor:
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetMembership", async_session)
+            await self.listing_token(token.address, "IbetMembership", async_session)
 
             args["totalSupply"] = args["initialSupply"]
             del args["initialSupply"]
@@ -303,7 +296,7 @@ class TestProcessor:
                 for k, v in args.items()
             }
             _membership_token_expected_list.append(
-                {**args, "token_address": token["address"]}
+                {**args, "token_address": token.address}
             )
 
         _coupon_token_expected_list: list[dict[str, object]] = []
@@ -326,14 +319,12 @@ class TestProcessor:
             token = self.issue_token_coupon_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetCoupon", async_session)
+            await self.listing_token(token.address, "IbetCoupon", async_session)
             args = {
                 re.sub("([A-Z])", lambda x: "_" + x.group(1).lower(), k): v
                 for k, v in args.items()
             }
-            _coupon_token_expected_list.append(
-                {**args, "token_address": token["address"]}
-            )
+            _coupon_token_expected_list.append({**args, "token_address": token.address})
 
         # Run target process
         processor.SEC_PER_RECORD = 0
@@ -434,7 +425,7 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
+        await self.listing_token(token.address, "IbetCoupon", async_session)
 
         # Expect that process() raises ServiceUnavailable.
         with (
@@ -455,7 +446,7 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
+        await self.listing_token(token.address, "IbetCoupon", async_session)
 
         # Expect that process() raises ServiceUnavailable.
         with (
@@ -500,7 +491,7 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
+        await self.listing_token(token.address, "IbetCoupon", async_session)
 
         # Expect that process() raises SQLAlchemyError.
         with (
@@ -518,7 +509,7 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
+        await self.listing_token(token.address, "IbetCoupon", async_session)
 
         # Expect that process() raises SQLAlchemyError.
         with (
@@ -561,7 +552,7 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
+        await self.listing_token(token.address, "IbetCoupon", async_session)
         # Mocking time.sleep to break mainloop
         time_mock = MagicMock(wraps=asyncio)
         time_mock.sleep.side_effect = [TypeError()]
