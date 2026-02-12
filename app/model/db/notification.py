@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import sys
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from sqlalchemy import (
     JSON,
@@ -37,6 +37,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import engine
 from app.model.db.base import Base, naive_utcnow
+
+if TYPE_CHECKING:
+    from app.model.schema.notification import NotificationJSONDict
 
 
 # 通知データをキャッシュするためのテーブル
@@ -137,7 +140,7 @@ class Notification(Base):
             self.notification_id, self.notification_type
         )
 
-    def json(self):
+    def json(self) -> "NotificationJSONDict":
         return {
             "notification_category": self.notification_category,
             "notification_type": self.notification_type,

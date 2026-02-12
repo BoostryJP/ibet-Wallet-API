@@ -39,6 +39,8 @@ from app.model.type import EthereumAddress
 # DTO
 ############################
 class BondTokenDict(TypedDict):
+    # TODO: Keep this DTO aligned with app/model/blockchain/token.py when the nullable
+    # migration for interest payment dates is implemented.
     token_address: EthereumAddress
     token_template: str
     owner_address: EthereumAddress
@@ -61,6 +63,8 @@ class BondTokenDict(TypedDict):
     face_value: int
     face_value_currency: str
     interest_rate: float
+    # TODO: Change interest_payment_date1..12 to Optional[str] while keeping these keys
+    # required (required-nullable) in the response contract.
     interest_payment_date1: str
     interest_payment_date2: str
     interest_payment_date3: str

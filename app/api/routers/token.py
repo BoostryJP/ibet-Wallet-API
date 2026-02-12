@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import timezone
-from typing import Annotated, Optional, Sequence
+from typing import TYPE_CHECKING, Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Path, Query
 from pydantic import UUID4
@@ -37,7 +37,7 @@ from app.model.db import (
     IDXTransfer,
     IDXTransferApproval,
     Listing,
-    TokenHolder,
+    TokenHolder as TokenHolderModel,
     TokenHolderBatchStatus,
     TokenHoldersList,
 )
@@ -64,9 +64,22 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    ResultSet,
     SortOrder,
+    Success200MetaModel,
     SuccessResponse,
+    TokenType,
     ValueOperator,
+)
+from app.model.schema.token import (
+    TokenHolder as TokenHolderSchema,
+    TokenHoldersCollectionBatchStatus,
+    TokenHoldersCollectionHolder,
+    TransferApprovalHistory as TransferApprovalHistorySchema,
+    TransferDataMessage as TransferDataMessageSchema,
+    TransferHistory as TransferHistorySchema,
+    TransferSourceEvent,
+    TransferWithMessage as TransferWithMessageSchema,
 )
 from app.model.type import EthereumAddress
 from app.utils.asyncio_utils import SemaphoreTaskGroup
@@ -113,19 +126,34 @@ async def get_token_status(
 
         # Token-Contractへの接続
         token_contract = AsyncContract.get_contract(token_template, token_address)
-        tasks = await SemaphoreTaskGroup.run(
-            AsyncContract.call_function(
-                contract=token_contract, function_name="name", args=()
-            ),
-            AsyncContract.call_function(
-                contract=token_contract, function_name="status", args=()
-            ),
-            AsyncContract.call_function(
-                contract=token_contract, function_name="transferable", args=()
-            ),
-            max_concurrency=3,
-        )
-        name, status, transferable = [task.result() for task in tasks]
+        async with SemaphoreTaskGroup(max_concurrency=3) as tg:
+            name_task = tg.create_task(
+                AsyncContract.call_function(
+                    contract=token_contract,
+                    function_name="name",
+                    args=(),
+                    expected_type=str,
+                )
+            )
+            status_task = tg.create_task(
+                AsyncContract.call_function(
+                    contract=token_contract,
+                    function_name="status",
+                    args=(),
+                    expected_type=bool,
+                )
+            )
+            transferable_task = tg.create_task(
+                AsyncContract.call_function(
+                    contract=token_contract,
+                    function_name="transferable",
+                    args=(),
+                    expected_type=bool,
+                )
+            )
+        name = name_task.result()
+        status = status_task.result()
+        transferable = transferable_task.result()
     except* ServiceUnavailable:
         raise ServiceUnavailable("Service is temporarily unavailable") from None
     except* Exception:
@@ -138,6 +166,17 @@ async def get_token_status(
         "status": status,
         "transferable": transferable,
     }
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[TokenStatusResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TokenStatusResponse(
+                token_template=TokenType(token_template),
+                owner_address=owner_address,
+                name=name,
+                status=status,
+                transferable=transferable,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": response_json})
 
 
@@ -332,6 +371,36 @@ async def get_token_holders(
         ],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[TokenHoldersResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TokenHoldersResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                token_holder_list=[
+                    TokenHolderSchema(
+                        token_address=holder[0].token_address,
+                        account_address=holder[0].account_address,
+                        amount=holder[0].balance if holder[0].balance else 0,
+                        pending_transfer=holder[0].pending_transfer
+                        if holder[0].pending_transfer
+                        else 0,
+                        exchange_balance=holder[0].exchange_balance
+                        if holder[0].exchange_balance
+                        else 0,
+                        exchange_commitment=holder[0].exchange_commitment
+                        if holder[0].exchange_commitment
+                        else 0,
+                        locked=holder[1] if holder[1] else 0,
+                    )
+                    for holder in holders
+                ],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
@@ -536,6 +605,36 @@ async def search_token_holders(
         ],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[TokenHoldersResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TokenHoldersResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                token_holder_list=[
+                    TokenHolderSchema(
+                        token_address=holder[0].token_address,
+                        account_address=holder[0].account_address,
+                        amount=holder[0].balance if holder[0].balance else 0,
+                        pending_transfer=holder[0].pending_transfer
+                        if holder[0].pending_transfer
+                        else 0,
+                        exchange_balance=holder[0].exchange_balance
+                        if holder[0].exchange_balance
+                        else 0,
+                        exchange_commitment=holder[0].exchange_commitment
+                        if holder[0].exchange_commitment
+                        else 0,
+                        locked=holder[1] if holder[1] else 0,
+                    )
+                    for holder in holders
+                ],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
@@ -609,14 +708,22 @@ async def get_token_holders_count(
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
-    _count = await async_session.scalar(
-        select(func.count()).select_from(
-            stmt.with_only_columns(1).order_by(None).subquery()
+    _count = (
+        await async_session.scalar(
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
+        or 0
     )
 
     resp_body = {"count": _count}
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[TokenHoldersCountResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TokenHoldersCountResponse(count=_count),
+        )
     return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
@@ -674,6 +781,18 @@ async def create_token_holders_collection(
     if _same_combi_record is not None:
         # 同じブロックナンバー・トークンアドレスのコレクションが、PENDINGかDONEで既に存在する場合、
         # そのlist_idとstatusを返却する。
+        if TYPE_CHECKING:
+            # TODO: Migrate token_holders_list.batch_status to NOT NULL and update ORM typing.
+            assert _same_combi_record.batch_status is not None
+            _ = GenericSuccessResponse[CreateTokenHoldersCollectionResponse](
+                meta=Success200MetaModel(code=200, message="OK"),
+                data=CreateTokenHoldersCollectionResponse(
+                    list_id=data.list_id,
+                    status=TokenHoldersCollectionBatchStatus(
+                        _same_combi_record.batch_status
+                    ),
+                ),
+            )
         return json_response(
             {
                 **SuccessResponse.default(),
@@ -693,6 +812,18 @@ async def create_token_holders_collection(
         async_session.add(token_holder_list)
         await async_session.commit()
 
+        if TYPE_CHECKING:
+            # TODO: Migrate token_holders_list.batch_status to NOT NULL and update ORM typing.
+            assert token_holder_list.batch_status is not None
+            _ = GenericSuccessResponse[CreateTokenHoldersCollectionResponse](
+                meta=Success200MetaModel(code=200, message="OK"),
+                data=CreateTokenHoldersCollectionResponse(
+                    list_id=data.list_id,
+                    status=TokenHoldersCollectionBatchStatus(
+                        token_holder_list.batch_status
+                    ),
+                ),
+            )
         return json_response(
             {
                 **SuccessResponse.default(),
@@ -751,15 +882,38 @@ async def get_token_holders_collection(
         )
         raise InvalidParameterError(description=description)
 
-    _token_holders: Sequence[TokenHolder] = (
+    _token_holders: Sequence[TokenHolderModel] = (
         await async_session.scalars(
-            select(TokenHolder)
-            .where(TokenHolder.holder_list == _same_list_id_record.id)
-            .order_by(asc(TokenHolder.account_address))
+            select(TokenHolderModel)
+            .where(TokenHolderModel.holder_list == _same_list_id_record.id)
+            .order_by(asc(TokenHolderModel.account_address))
         )
     ).all()
     token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
+    if TYPE_CHECKING:
+        # TODO: Migrate token_holders_list.batch_status to NOT NULL and update ORM typing.
+        assert _same_list_id_record.batch_status is not None
+        _ = GenericSuccessResponse[TokenHoldersCollectionResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TokenHoldersCollectionResponse(
+                status=TokenHoldersCollectionBatchStatus(
+                    _same_list_id_record.batch_status
+                ),
+                holders=[
+                    TokenHoldersCollectionHolder(
+                        account_address=token_holder.account_address,
+                        hold_balance=token_holder.hold_balance
+                        if token_holder.hold_balance is not None
+                        else 0,
+                        locked_balance=token_holder.locked_balance
+                        if token_holder.locked_balance is not None
+                        else 0,
+                    )
+                    for token_holder in _token_holders
+                ],
+            ),
+        )
     return json_response(
         {
             **SuccessResponse.default(),
@@ -876,6 +1030,95 @@ async def list_all_transfer_histories(
         "transfer_history": resp_data,
     }
 
+    if TYPE_CHECKING:
+        type_checked_transfer_history: list[
+            TransferHistorySchema | TransferWithMessageSchema
+        ] = []
+        for transfer_event in transfer_history:
+            source_event = TransferSourceEvent(transfer_event.source_event)
+            data_value = transfer_event.data
+            # TODO: Migrate transfer.transaction_hash/token_address/from_address/to_address/value/created to NOT NULL and update ORM typing.
+            assert transfer_event.transaction_hash is not None
+            assert transfer_event.token_address is not None
+            assert transfer_event.from_address is not None
+            assert transfer_event.to_address is not None
+            assert transfer_event.value is not None
+            assert transfer_event.created is not None
+            message_value = transfer_event.message
+            # TODO: Once (source_event, message) constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+            match message_value:
+                case "garnishment" | "inheritance" | "force_unlock" | "ibet_wst_bridge":
+                    message = message_value
+                case _:
+                    message = None
+            if source_event in (
+                TransferSourceEvent.Transfer,
+                TransferSourceEvent.Reallocation,
+            ):
+                type_checked_transfer_history.append(
+                    TransferHistorySchema(
+                        transaction_hash=transfer_event.transaction_hash,
+                        token_address=transfer_event.token_address,
+                        from_address=transfer_event.from_address,
+                        to_address=transfer_event.to_address,
+                        value=transfer_event.value,
+                        message=message,
+                        created=IDXTransfer.format_timestamp(transfer_event.created),
+                        source_event=source_event,
+                        data=None,
+                    )
+                )
+            else:
+                transfer_data: TransferDataMessageSchema | dict[str, str]
+                # TODO: Once transfer.data JSON constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+                if data_value is not None:
+                    message_in_data = data_value.get("message")
+                    match message_in_data:
+                        case "garnishment":
+                            transfer_data = TransferDataMessageSchema(
+                                message="garnishment"
+                            )
+                        case "inheritance":
+                            transfer_data = TransferDataMessageSchema(
+                                message="inheritance"
+                            )
+                        case "force_unlock":
+                            transfer_data = TransferDataMessageSchema(
+                                message="force_unlock"
+                            )
+                        case "ibet_wst_bridge":
+                            transfer_data = TransferDataMessageSchema(
+                                message="ibet_wst_bridge"
+                            )
+                        case _:
+                            transfer_data = {}
+                else:
+                    transfer_data = {}
+                type_checked_transfer_history.append(
+                    TransferWithMessageSchema(
+                        transaction_hash=transfer_event.transaction_hash,
+                        token_address=transfer_event.token_address,
+                        from_address=transfer_event.from_address,
+                        to_address=transfer_event.to_address,
+                        value=transfer_event.value,
+                        message=message,
+                        created=IDXTransfer.format_timestamp(transfer_event.created),
+                        source_event=source_event,
+                        data=transfer_data,
+                    )
+                )
+        _ = GenericSuccessResponse[TransferHistoriesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransferHistoriesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=request_query.offset,
+                    limit=request_query.limit,
+                    total=total,
+                ),
+                transfer_history=type_checked_transfer_history,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -991,6 +1234,105 @@ async def list_token_transfer_histories(
         "transfer_history": resp_data,
     }
 
+    if TYPE_CHECKING:
+        type_checked_transfer_history: list[
+            TransferHistorySchema | TransferWithMessageSchema
+        ] = []
+        for transfer_event in transfer_history:
+            source_event = TransferSourceEvent(transfer_event.source_event)
+            transaction_hash = transfer_event.transaction_hash
+            token_address_value = transfer_event.token_address
+            from_address_value = transfer_event.from_address
+            to_address_value = transfer_event.to_address
+            value = transfer_event.value
+            message_value = transfer_event.message
+            data_value = transfer_event.data
+            # TODO: Migrate transfer.transaction_hash/token_address/from_address/
+            # to_address/value to NOT NULL and update ORM typing.
+            assert transaction_hash is not None
+            assert token_address_value is not None
+            assert from_address_value is not None
+            assert to_address_value is not None
+            assert value is not None
+            assert transfer_event.created is not None
+            created = IDXTransfer.format_timestamp(transfer_event.created)
+            # TODO: Once (source_event, message) constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+            match message_value:
+                case "garnishment" | "inheritance" | "force_unlock" | "ibet_wst_bridge":
+                    message = message_value
+                case _:
+                    message = None
+            if source_event in (
+                TransferSourceEvent.Transfer,
+                TransferSourceEvent.Reallocation,
+            ):
+                type_checked_transfer_history.append(
+                    TransferHistorySchema(
+                        transaction_hash=transaction_hash,
+                        token_address=token_address_value,
+                        from_address=from_address_value,
+                        to_address=to_address_value,
+                        value=value,
+                        message=message,
+                        created=created,
+                        source_event=source_event,
+                        data=None,
+                    )
+                )
+            else:
+                transfer_data: TransferDataMessageSchema | dict[str, str]
+                # TODO: Once transfer.data JSON constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+                if data_value is not None:
+                    message_in_data = data_value.get("message")
+                    match message_in_data:
+                        case "garnishment":
+                            transfer_data = TransferDataMessageSchema(
+                                message="garnishment"
+                            )
+                        case "inheritance":
+                            transfer_data = TransferDataMessageSchema(
+                                message="inheritance"
+                            )
+                        case "force_unlock":
+                            transfer_data = TransferDataMessageSchema(
+                                message="force_unlock"
+                            )
+                        case "ibet_wst_bridge":
+                            transfer_data = TransferDataMessageSchema(
+                                message="ibet_wst_bridge"
+                            )
+                        case _:
+                            transfer_data = {
+                                str(key): str(value)
+                                for key, value in data_value.items()
+                            }
+                else:
+                    transfer_data = {}
+                type_checked_transfer_history.append(
+                    TransferWithMessageSchema(
+                        transaction_hash=transaction_hash,
+                        token_address=token_address_value,
+                        from_address=from_address_value,
+                        to_address=to_address_value,
+                        value=value,
+                        message=message,
+                        created=created,
+                        source_event=source_event,
+                        data=transfer_data,
+                    )
+                )
+        _ = GenericSuccessResponse[TransferHistoriesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransferHistoriesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=request_query.offset,
+                    limit=request_query.limit,
+                    total=total,
+                ),
+                transfer_history=type_checked_transfer_history,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -1130,6 +1472,105 @@ async def search_transfer_histories(
         "transfer_history": resp_data,
     }
 
+    if TYPE_CHECKING:
+        type_checked_transfer_history: list[
+            TransferHistorySchema | TransferWithMessageSchema
+        ] = []
+        for transfer_event in transfer_history:
+            source_event = TransferSourceEvent(transfer_event.source_event)
+            transaction_hash = transfer_event.transaction_hash
+            token_address_value = transfer_event.token_address
+            from_address_value = transfer_event.from_address
+            to_address_value = transfer_event.to_address
+            value = transfer_event.value
+            message_value = transfer_event.message
+            data_value = transfer_event.data
+            # TODO: Migrate transfer.transaction_hash/token_address/from_address/
+            # to_address/value to NOT NULL and update ORM typing.
+            assert transaction_hash is not None
+            assert token_address_value is not None
+            assert from_address_value is not None
+            assert to_address_value is not None
+            assert value is not None
+            assert transfer_event.created is not None
+            created = IDXTransfer.format_timestamp(transfer_event.created)
+            # TODO: Once (source_event, message) constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+            match message_value:
+                case "garnishment" | "inheritance" | "force_unlock" | "ibet_wst_bridge":
+                    message = message_value
+                case _:
+                    message = None
+            if source_event in (
+                TransferSourceEvent.Transfer,
+                TransferSourceEvent.Reallocation,
+            ):
+                type_checked_transfer_history.append(
+                    TransferHistorySchema(
+                        transaction_hash=transaction_hash,
+                        token_address=token_address_value,
+                        from_address=from_address_value,
+                        to_address=to_address_value,
+                        value=value,
+                        message=message,
+                        created=created,
+                        source_event=source_event,
+                        data=None,
+                    )
+                )
+            else:
+                transfer_data: TransferDataMessageSchema | dict[str, str]
+                # TODO: Once transfer.data JSON constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+                if data_value is not None:
+                    message_in_data = data_value.get("message")
+                    match message_in_data:
+                        case "garnishment":
+                            transfer_data = TransferDataMessageSchema(
+                                message="garnishment"
+                            )
+                        case "inheritance":
+                            transfer_data = TransferDataMessageSchema(
+                                message="inheritance"
+                            )
+                        case "force_unlock":
+                            transfer_data = TransferDataMessageSchema(
+                                message="force_unlock"
+                            )
+                        case "ibet_wst_bridge":
+                            transfer_data = TransferDataMessageSchema(
+                                message="ibet_wst_bridge"
+                            )
+                        case _:
+                            transfer_data = {
+                                str(key): str(value)
+                                for key, value in data_value.items()
+                            }
+                else:
+                    transfer_data = {}
+                type_checked_transfer_history.append(
+                    TransferWithMessageSchema(
+                        transaction_hash=transaction_hash,
+                        token_address=token_address_value,
+                        from_address=from_address_value,
+                        to_address=to_address_value,
+                        value=value,
+                        message=message,
+                        created=created,
+                        source_event=source_event,
+                        data=transfer_data,
+                    )
+                )
+        _ = GenericSuccessResponse[TransferHistoriesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransferHistoriesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=data.offset,
+                    limit=data.limit,
+                    total=total,
+                ),
+                transfer_history=type_checked_transfer_history,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": resp_body})
 
 
@@ -1218,6 +1659,8 @@ async def list_all_transfer_approval_histories(
         await async_session.scalars(stmt)
     ).all()
 
+    # TODO: Build transfer_approval_history responses without relying on
+    # empty-string datetime sentinels.
     resp_data = [
         transfer_approval_event.json()
         for transfer_approval_event in transfer_approval_history
@@ -1232,6 +1675,71 @@ async def list_all_transfer_approval_histories(
         "transfer_approval_history": resp_data,
     }
 
+    if TYPE_CHECKING:
+        type_checked_transfer_approval_history: list[TransferApprovalHistorySchema] = []
+        for transfer_approval_event in transfer_approval_history:
+            token_address_value = transfer_approval_event.token_address
+            application_id = transfer_approval_event.application_id
+            from_address_value = transfer_approval_event.from_address
+            to_address_value = transfer_approval_event.to_address
+            value = transfer_approval_event.value
+            application_datetime_value = transfer_approval_event.application_datetime
+            application_blocktimestamp_value = (
+                transfer_approval_event.application_blocktimestamp
+            )
+            approval_datetime_value = transfer_approval_event.approval_datetime
+            approval_blocktimestamp_value = (
+                transfer_approval_event.approval_blocktimestamp
+            )
+            # TODO: Migrate transfer_approval.token_address/application_id/from_address/
+            # to_address/value/application_datetime/application_blocktimestamp to NOT NULL and update ORM typing.
+            assert token_address_value is not None
+            assert application_id is not None
+            assert from_address_value is not None
+            assert to_address_value is not None
+            assert value is not None
+            assert application_datetime_value is not None
+            assert application_blocktimestamp_value is not None
+            application_datetime = IDXTransferApproval.format_datetime(
+                application_datetime_value
+            )
+            application_blocktimestamp = IDXTransferApproval.format_datetime(
+                application_blocktimestamp_value
+            )
+            approval_datetime = IDXTransferApproval.format_datetime(
+                approval_datetime_value
+            )
+            approval_blocktimestamp = IDXTransferApproval.format_datetime(
+                approval_blocktimestamp_value
+            )
+            type_checked_transfer_approval_history.append(
+                TransferApprovalHistorySchema(
+                    token_address=token_address_value,
+                    exchange_address=transfer_approval_event.exchange_address,
+                    application_id=application_id,
+                    from_address=from_address_value,
+                    to_address=to_address_value,
+                    value=value,
+                    application_datetime=application_datetime,
+                    application_blocktimestamp=application_blocktimestamp,
+                    approval_datetime=approval_datetime,
+                    approval_blocktimestamp=approval_blocktimestamp,
+                    cancelled=transfer_approval_event.cancelled,
+                    transfer_approved=transfer_approval_event.transfer_approved,
+                )
+            )
+        _ = GenericSuccessResponse[TransferApprovalHistoriesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransferApprovalHistoriesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=request_query.offset,
+                    limit=request_query.limit,
+                    total=total,
+                ),
+                transfer_approval_history=type_checked_transfer_approval_history,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -1397,6 +1905,8 @@ async def search_transfer_approval_histories(
         await async_session.scalars(stmt)
     ).all()
 
+    # TODO: Build transfer_approval_history responses without relying on
+    # empty-string datetime sentinels.
     resp_data = [
         transfer_approval_event.json()
         for transfer_approval_event in transfer_approval_history
@@ -1411,4 +1921,69 @@ async def search_transfer_approval_histories(
         "transfer_approval_history": resp_data,
     }
 
+    if TYPE_CHECKING:
+        type_checked_transfer_approval_history: list[TransferApprovalHistorySchema] = []
+        for transfer_approval_event in transfer_approval_history:
+            token_address_value = transfer_approval_event.token_address
+            application_id = transfer_approval_event.application_id
+            from_address_value = transfer_approval_event.from_address
+            to_address_value = transfer_approval_event.to_address
+            value = transfer_approval_event.value
+            application_datetime_value = transfer_approval_event.application_datetime
+            application_blocktimestamp_value = (
+                transfer_approval_event.application_blocktimestamp
+            )
+            approval_datetime_value = transfer_approval_event.approval_datetime
+            approval_blocktimestamp_value = (
+                transfer_approval_event.approval_blocktimestamp
+            )
+            # TODO: Migrate transfer_approval.token_address/application_id/from_address/
+            # to_address/value/application_datetime/application_blocktimestamp to NOT NULL and update ORM typing.
+            assert token_address_value is not None
+            assert application_id is not None
+            assert from_address_value is not None
+            assert to_address_value is not None
+            assert value is not None
+            assert application_datetime_value is not None
+            assert application_blocktimestamp_value is not None
+            application_datetime = IDXTransferApproval.format_datetime(
+                application_datetime_value
+            )
+            application_blocktimestamp = IDXTransferApproval.format_datetime(
+                application_blocktimestamp_value
+            )
+            approval_datetime = IDXTransferApproval.format_datetime(
+                approval_datetime_value
+            )
+            approval_blocktimestamp = IDXTransferApproval.format_datetime(
+                approval_blocktimestamp_value
+            )
+            type_checked_transfer_approval_history.append(
+                TransferApprovalHistorySchema(
+                    token_address=token_address_value,
+                    exchange_address=transfer_approval_event.exchange_address,
+                    application_id=application_id,
+                    from_address=from_address_value,
+                    to_address=to_address_value,
+                    value=value,
+                    application_datetime=application_datetime,
+                    application_blocktimestamp=application_blocktimestamp,
+                    approval_datetime=approval_datetime,
+                    approval_blocktimestamp=approval_blocktimestamp,
+                    cancelled=transfer_approval_event.cancelled,
+                    transfer_approved=transfer_approval_event.transfer_approved,
+                )
+            )
+        _ = GenericSuccessResponse[TransferApprovalHistoriesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransferApprovalHistoriesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=data.offset,
+                    limit=data.limit,
+                    total=total,
+                ),
+                transfer_approval_history=type_checked_transfer_approval_history,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": resp_body})

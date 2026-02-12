@@ -18,6 +18,7 @@ SPDX-License
 """
 
 import json
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
@@ -26,7 +27,7 @@ from app.database import DBAsyncSession
 from app.errors import InvalidParameterError
 from app.model.db import ChatWebhook, Mail
 from app.model.schema import SendChatWebhookRequest, SendMailRequest
-from app.model.schema.base import SuccessResponse
+from app.model.schema.base import EmptyData, Success200MetaModel, SuccessResponse
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -60,6 +61,10 @@ async def send_mail(async_session: DBAsyncSession, data: SendMailRequest):
 
     await async_session.commit()
 
+    if TYPE_CHECKING:
+        _ = SuccessResponse(
+            meta=Success200MetaModel(code=200, message="OK"), data=EmptyData()
+        )
     return json_response(SuccessResponse.default())
 
 
@@ -81,4 +86,8 @@ async def send_chat_webhook(
     async_session.add(hook)
     await async_session.commit()
 
+    if TYPE_CHECKING:
+        _ = SuccessResponse(
+            meta=Success200MetaModel(code=200, message="OK"), data=EmptyData()
+        )
     return json_response(SuccessResponse.default())

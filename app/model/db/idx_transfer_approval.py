@@ -65,6 +65,8 @@ class IDXTransferApproval(Base):
     transfer_approved: Mapped[bool | None] = mapped_column(Boolean)
 
     @staticmethod
+    # TODO: Migrate transfer_approval datetime serialization from
+    # empty-string sentinel to null and update ORM typing.
     def format_datetime(_datetime: datetime | None) -> str:
         """Convert timestamp from UTC to local timezone str
         :param _datetime:
@@ -83,6 +85,8 @@ class IDXTransferApproval(Base):
         )
 
     def json(self):
+        # TODO: During nullable datetime migration, stop emitting empty-string
+        # sentinels in transfer_approval JSON output.
         return {
             "token_address": self.token_address,
             "exchange_address": self.exchange_address,

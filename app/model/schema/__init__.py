@@ -39,12 +39,15 @@ from .e2e_message import E2EMessageEncryptionKeyResponse
 from .eth import (
     GetTransactionCountQuery,
     JsonRPCRequest,
+    SendRawTransactionNoWaitResultDict,
     SendRawTransactionRequest,
+    SendRawTransactionResultDict,
     SendRawTransactionsNoWaitResponse,
     SendRawTransactionsResponse,
     TransactionCountResponse,
     WaitForTransactionReceiptQuery,
     WaitForTransactionReceiptResponse,
+    WaitForTransactionReceiptResultDict,
 )
 from .events import (
     E2EMessagingEventArguments,
@@ -63,6 +66,7 @@ from .events import (
 from .messaging import SendChatWebhookRequest, SendMailRequest
 from .node_info import GetBlockSyncStatusResponse, GetNodeInfoResponse
 from .notification import (
+    NotificationJSONDict,
     NotificationReadRequest,
     NotificationsCountQuery,
     NotificationsCountResponse,

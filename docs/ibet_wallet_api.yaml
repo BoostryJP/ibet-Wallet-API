@@ -854,7 +854,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_WaitForTransactionReceiptResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_Annotated_Union_WaitForTransactionReceiptFailureResponse__WaitForTransactionReceiptSuccessResponse___FieldInfo_annotation_NoneType__required_True__discriminator__status____'
         '400':
           content:
             application/json:
@@ -6067,6 +6067,31 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ABI]
+    ? GenericSuccessResponse_Annotated_Union_WaitForTransactionReceiptFailureResponse__WaitForTransactionReceiptSuccessResponse___FieldInfo_annotation_NoneType__required_True__discriminator__status____
+    : properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/WaitForTransactionReceiptFailureResponse'
+            - $ref: '#/components/schemas/WaitForTransactionReceiptSuccessResponse'
+          title: Data
+          discriminator:
+            propertyName: status
+            mapping:
+              '0': '#/components/schemas/WaitForTransactionReceiptFailureResponse'
+              '1': '#/components/schemas/WaitForTransactionReceiptSuccessResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: 
+        GenericSuccessResponse[Annotated[Union[WaitForTransactionReceiptFailureResponse,
+        WaitForTransactionReceiptSuccessResponse], 
+        FieldInfo(annotation=NoneType, required=True, discriminator='status')]]
     GenericSuccessResponse_Any_:
       properties:
         meta:
@@ -6860,20 +6885,6 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[TransferHistoriesResponse]
-    GenericSuccessResponse_WaitForTransactionReceiptResponse_:
-      properties:
-        meta:
-          $ref: '#/components/schemas/Success200MetaModel'
-          examples:
-            - code: 200
-              message: OK
-        data:
-          $ref: '#/components/schemas/WaitForTransactionReceiptResponse'
-      type: object
-      required:
-        - meta
-        - data
-      title: GenericSuccessResponse[WaitForTransactionReceiptResponse]
     GetAdminTokenTypeResponse:
       properties:
         IbetStraightBond:
@@ -8418,6 +8429,7 @@ components:
             - type: integer
             - type: 'null'
           title: Count
+          description: number of returned items
         offset:
           anyOf:
             - type: integer
@@ -8435,10 +8447,13 @@ components:
             - type: integer
             - type: 'null'
           title: Total
+          description: total number of available items
       type: object
       required:
+        - count
         - offset
         - limit
+        - total
       title: ResultSet
       description: result set for pagination
     RetrieveAdminTokenResponse:
@@ -9060,7 +9075,7 @@ components:
         - to_emails
         - subject
       title: SendMailRequest
-    SendRawTransactionNoWaitResponse:
+    SendRawTransactionFailureResponse:
       properties:
         id:
           type: integer
@@ -9069,48 +9084,12 @@ components:
           examples:
             - 1
         status:
-          $ref: '#/components/schemas/SendRawTransactionStatus'
-          description: execution failure:0, execution success:1
-          examples:
-            - 1
-        transaction_hash:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Transaction Hash
-          description: transaction hash
-      type: object
-      required:
-        - id
-        - status
-      title: SendRawTransactionNoWaitResponse
-    SendRawTransactionRequest:
-      properties:
-        raw_tx_hex_list:
-          items:
-            type: string
-          type: array
-          minItems: 1
-          title: Raw Tx Hex List
-          description: Signed transaction list
-      type: object
-      required:
-        - raw_tx_hex_list
-      title: SendRawTransactionRequest
-    SendRawTransactionResponse:
-      properties:
-        id:
           type: integer
-          title: Id
-          description: transaction send order
+          const: 0
+          title: Status
+          description: execution failure
           examples:
-            - 1
-        status:
-          $ref: '#/components/schemas/SendRawTransactionStatus'
-          description: execution failure:0, execution success:1, execution 
-            success(pending transaction):2
-          examples:
-            - 1
+            - 0
         transaction_hash:
           anyOf:
             - type: string
@@ -9137,24 +9116,135 @@ components:
       required:
         - id
         - status
-      title: SendRawTransactionResponse
-    SendRawTransactionStatus:
-      type: integer
-      enum:
-        - 0
-        - 1
-        - 2
-        - 3
-        - 4
-      title: SendRawTransactionStatus
+        - transaction_hash
+      title: SendRawTransactionFailureResponse
+    SendRawTransactionNoWaitFailureResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+          description: transaction send order
+          examples:
+            - 1
+        status:
+          type: integer
+          const: 0
+          title: Status
+          description: execution failure
+          examples:
+            - 0
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Transaction Hash
+          description: transaction hash
+      type: object
+      required:
+        - id
+        - status
+      title: SendRawTransactionNoWaitFailureResponse
+    SendRawTransactionNoWaitSuccessResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+          description: transaction send order
+          examples:
+            - 1
+        status:
+          type: integer
+          enum:
+            - 1
+            - 3
+            - 4
+          title: Status
+          description: execution success:1, nonce too low:3, already known:4
+          examples:
+            - 1
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Transaction Hash
+          description: transaction hash
+      type: object
+      required:
+        - id
+        - status
+      title: SendRawTransactionNoWaitSuccessResponse
+    SendRawTransactionRequest:
+      properties:
+        raw_tx_hex_list:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Raw Tx Hex List
+          description: Signed transaction list
+      type: object
+      required:
+        - raw_tx_hex_list
+      title: SendRawTransactionRequest
+    SendRawTransactionSuccessResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+          description: transaction send order
+          examples:
+            - 1
+        status:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+          title: Status
+          description: execution success:1, pending:2, nonce too low:3, already 
+            known:4
+          examples:
+            - 1
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Transaction Hash
+          description: transaction hash
+      type: object
+      required:
+        - id
+        - status
+        - transaction_hash
+      title: SendRawTransactionSuccessResponse
     SendRawTransactionsNoWaitResponse:
       items:
-        $ref: '#/components/schemas/SendRawTransactionNoWaitResponse'
+        oneOf:
+          - $ref: '#/components/schemas/SendRawTransactionNoWaitFailureResponse'
+          - $ref: '#/components/schemas/SendRawTransactionNoWaitSuccessResponse'
+        discriminator:
+          propertyName: status
+          mapping:
+            '0': '#/components/schemas/SendRawTransactionNoWaitFailureResponse'
+            '1': '#/components/schemas/SendRawTransactionNoWaitSuccessResponse'
+            '3': '#/components/schemas/SendRawTransactionNoWaitSuccessResponse'
+            '4': '#/components/schemas/SendRawTransactionNoWaitSuccessResponse'
       type: array
       title: SendRawTransactionsNoWaitResponse
     SendRawTransactionsResponse:
       items:
-        $ref: '#/components/schemas/SendRawTransactionResponse'
+        oneOf:
+          - $ref: '#/components/schemas/SendRawTransactionFailureResponse'
+          - $ref: '#/components/schemas/SendRawTransactionSuccessResponse'
+        discriminator:
+          propertyName: status
+          mapping:
+            '0': '#/components/schemas/SendRawTransactionFailureResponse'
+            '1': '#/components/schemas/SendRawTransactionSuccessResponse'
+            '2': '#/components/schemas/SendRawTransactionSuccessResponse'
+            '3': '#/components/schemas/SendRawTransactionSuccessResponse'
+            '4': '#/components/schemas/SendRawTransactionSuccessResponse'
       type: array
       title: SendRawTransactionsResponse
     ServiceUnavailableMetainfo:
@@ -10075,14 +10165,15 @@ components:
         - 1
         - 2
       title: ValueOperator
-    WaitForTransactionReceiptResponse:
+    WaitForTransactionReceiptFailureResponse:
       properties:
         status:
           type: integer
+          const: 0
           title: Status
-          description: transaction revert:0, transaction success:1
+          description: transaction revert
           examples:
-            - 1
+            - 0
         error_code:
           anyOf:
             - type: integer
@@ -10102,7 +10193,20 @@ components:
       type: object
       required:
         - status
-      title: WaitForTransactionReceiptResponse
+      title: WaitForTransactionReceiptFailureResponse
+    WaitForTransactionReceiptSuccessResponse:
+      properties:
+        status:
+          type: integer
+          const: 1
+          title: Status
+          description: transaction success
+          examples:
+            - 1
+      type: object
+      required:
+        - status
+      title: WaitForTransactionReceiptSuccessResponse
 tags:
   - name: root
     description: ''

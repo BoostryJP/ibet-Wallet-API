@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from decimal import Decimal
-from typing import Annotated, Sequence, Type, Union, cast
+from typing import TYPE_CHECKING, Annotated, Sequence, Type, Union, cast
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import and_, func, literal, or_, select
@@ -70,6 +70,8 @@ from app.model.schema import (
     MembershipPositionWithDetail,
     PositionDataDict,
     PositionsResponseDict,
+    RetrieveCouponTokenResponse,
+    RetrieveMembershipTokenResponse,
     RetrieveShareTokenResponse,
     RetrieveStraightBondTokenResponse,
     SecurityTokenPositionWithAddress,
@@ -77,9 +79,20 @@ from app.model.schema import (
     TokenPositionsResponse,
 )
 from app.model.schema.base import (
+    BondToken as BondTokenSchema,
+    CouponToken as CouponTokenSchema,
     GenericSuccessResponse,
+    MembershipToken as MembershipTokenSchema,
+    ResultSet,
+    ShareToken as ShareTokenSchema,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
+)
+from app.model.schema.position import (
+    CouponConsumption as CouponConsumptionSchema,
+    SharePositionWithDetail,
+    StraightBondPositionWithDetail,
 )
 from app.model.type import EthereumAddress
 from app.utils.asyncio_utils import SemaphoreTaskGroup
@@ -212,30 +225,56 @@ class BasePosition:
 
         position_list: list[PositionDataDict] = []
         for item in _token_position_list:
-            position: PositionDataDict = {
-                "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "pending_transfer": (
-                    item[1].pending_transfer
-                    if item[1] and item[1].pending_transfer
-                    else 0
-                ),
-                "exchange_balance": (
-                    item[1].exchange_balance
-                    if item[1] and item[1].exchange_balance
-                    else 0
-                ),
-                "exchange_commitment": (
-                    item[1].exchange_commitment
-                    if item[1] and item[1].exchange_commitment
-                    else 0
-                ),
-                "locked": item[2] if item[2] else 0,
-            }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[3]).to_dict()
+                position_list.append(
+                    {
+                        "balance": item[1].balance
+                        if item[1] and item[1].balance
+                        else 0,
+                        "pending_transfer": (
+                            item[1].pending_transfer
+                            if item[1] and item[1].pending_transfer
+                            else 0
+                        ),
+                        "exchange_balance": (
+                            item[1].exchange_balance
+                            if item[1] and item[1].exchange_balance
+                            else 0
+                        ),
+                        "exchange_commitment": (
+                            item[1].exchange_commitment
+                            if item[1] and item[1].exchange_commitment
+                            else 0
+                        ),
+                        "locked": item[2] if item[2] else 0,
+                        "token": self.token_model.from_model(item[3]).to_dict(),
+                    }
+                )
             else:
-                position["token_address"] = item[3].token_address
-            position_list.append(position)
+                position_list.append(
+                    {
+                        "balance": item[1].balance
+                        if item[1] and item[1].balance
+                        else 0,
+                        "pending_transfer": (
+                            item[1].pending_transfer
+                            if item[1] and item[1].pending_transfer
+                            else 0
+                        ),
+                        "exchange_balance": (
+                            item[1].exchange_balance
+                            if item[1] and item[1].exchange_balance
+                            else 0
+                        ),
+                        "exchange_commitment": (
+                            item[1].exchange_commitment
+                            if item[1] and item[1].exchange_commitment
+                            else 0
+                        ),
+                        "locked": item[2] if item[2] else 0,
+                        "token_address": item[3].token_address,
+                    }
+                )
         return {
             "result_set": {
                 "count": count,
@@ -510,16 +549,19 @@ class BasePosition:
                 return None
             else:
                 token = await self.token_model.get(async_session, token_address)
-                position: PositionDataDict = {
+                if is_detail is True:
+                    return {
+                        "balance": balance,
+                        "exchange_balance": _exchange_balance,
+                        "exchange_commitment": _exchange_commitment,
+                        "token": token.to_dict(),
+                    }
+                return {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
+                    "token_address": token_address,
                 }
-                if is_detail is True:
-                    position["token"] = token.to_dict()
-                else:
-                    position["token_address"] = token_address
-                return position
         except ServiceUnavailable as e:
             LOG.notice(str(e))
             return None
@@ -629,18 +671,23 @@ class BasePositionShare(BasePosition):
                 return None
             else:
                 token = await ShareToken.get(async_session, token_address)
-                position: PositionDataDict = {
+                if is_detail is True:
+                    return {
+                        "balance": balance,
+                        "pending_transfer": pending_transfer,
+                        "exchange_balance": _exchange_balance,
+                        "exchange_commitment": _exchange_commitment,
+                        "locked": None,
+                        "token": token.to_dict(),
+                    }
+                return {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
                     "locked": None,
+                    "token_address": token_address,
                 }
-                if is_detail is True:
-                    position["token"] = token.to_dict()
-                else:
-                    position["token_address"] = token_address
-                return position
         except ServiceUnavailable as e:
             LOG.notice(str(e))
             return None
@@ -732,18 +779,23 @@ class BasePositionStraightBond(BasePosition):
                 return None
             else:
                 token = await BondToken.get(async_session, token_address)
-                position: PositionDataDict = {
+                if is_detail is True:
+                    return {
+                        "balance": balance,
+                        "pending_transfer": pending_transfer,
+                        "exchange_balance": _exchange_balance,
+                        "exchange_commitment": _exchange_commitment,
+                        "locked": None,
+                        "token": token.to_dict(),
+                    }
+                return {
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
                     "locked": None,
+                    "token_address": token_address,
                 }
-                if is_detail is True:
-                    position["token"] = token.to_dict()
-                else:
-                    position["token_address"] = token_address
-                return position
         except ServiceUnavailable as e:
             LOG.notice(str(e))
             return None
@@ -806,24 +858,44 @@ class BasePositionMembership(BasePosition):
 
         position_list: list[PositionDataDict] = []
         for item in _token_position_list:
-            position: PositionDataDict = {
-                "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "exchange_balance": (
-                    item[1].exchange_balance
-                    if item[1] and item[1].exchange_balance
-                    else 0
-                ),
-                "exchange_commitment": (
-                    item[1].exchange_commitment
-                    if item[1] and item[1].exchange_commitment
-                    else 0
-                ),
-            }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[2]).to_dict()
+                position_list.append(
+                    {
+                        "balance": item[1].balance
+                        if item[1] and item[1].balance
+                        else 0,
+                        "exchange_balance": (
+                            item[1].exchange_balance
+                            if item[1] and item[1].exchange_balance
+                            else 0
+                        ),
+                        "exchange_commitment": (
+                            item[1].exchange_commitment
+                            if item[1] and item[1].exchange_commitment
+                            else 0
+                        ),
+                        "token": self.token_model.from_model(item[2]).to_dict(),
+                    }
+                )
             else:
-                position["token_address"] = item[2].token_address
-            position_list.append(position)
+                position_list.append(
+                    {
+                        "balance": item[1].balance
+                        if item[1] and item[1].balance
+                        else 0,
+                        "exchange_balance": (
+                            item[1].exchange_balance
+                            if item[1] and item[1].exchange_balance
+                            else 0
+                        ),
+                        "exchange_commitment": (
+                            item[1].exchange_commitment
+                            if item[1] and item[1].exchange_commitment
+                            else 0
+                        ),
+                        "token_address": item[2].token_address,
+                    }
+                )
         return {
             "result_set": {
                 "count": count,
@@ -929,25 +1001,46 @@ class BasePositionCoupon(BasePosition):
 
         position_list: list[PositionDataDict] = []
         for item in _token_position_list:
-            position: PositionDataDict = {
-                "balance": item[1].balance if item[1] and item[1].balance else 0,
-                "exchange_balance": (
-                    item[1].exchange_balance
-                    if item[1] and item[1].exchange_balance
-                    else 0
-                ),
-                "exchange_commitment": (
-                    item[1].exchange_commitment
-                    if item[1] and item[1].exchange_commitment
-                    else 0
-                ),
-                "used": int(item[3]) if item[3] else 0,
-            }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[2]).to_dict()
+                position_list.append(
+                    {
+                        "balance": item[1].balance
+                        if item[1] and item[1].balance
+                        else 0,
+                        "exchange_balance": (
+                            item[1].exchange_balance
+                            if item[1] and item[1].exchange_balance
+                            else 0
+                        ),
+                        "exchange_commitment": (
+                            item[1].exchange_commitment
+                            if item[1] and item[1].exchange_commitment
+                            else 0
+                        ),
+                        "used": int(item[3]) if item[3] else 0,
+                        "token": self.token_model.from_model(item[2]).to_dict(),
+                    }
+                )
             else:
-                position["token_address"] = item[2].token_address
-            position_list.append(position)
+                position_list.append(
+                    {
+                        "balance": item[1].balance
+                        if item[1] and item[1].balance
+                        else 0,
+                        "exchange_balance": (
+                            item[1].exchange_balance
+                            if item[1] and item[1].exchange_balance
+                            else 0
+                        ),
+                        "exchange_commitment": (
+                            item[1].exchange_commitment
+                            if item[1] and item[1].exchange_commitment
+                            else 0
+                        ),
+                        "used": int(item[3]) if item[3] else 0,
+                        "token_address": item[2].token_address,
+                    }
+                )
         return {
             "result_set": {
                 "count": count,
@@ -1043,17 +1136,21 @@ class BasePositionCoupon(BasePosition):
                 return None
             else:
                 token = await CouponToken.get(async_session, token_address)
-                position: PositionDataDict = {
+                if is_detail is True:
+                    return {
+                        "balance": balance,
+                        "exchange_balance": _exchange_balance,
+                        "exchange_commitment": _exchange_commitment,
+                        "used": used,
+                        "token": token.to_dict(),
+                    }
+                return {
                     "balance": balance,
                     "exchange_balance": _exchange_balance,
                     "exchange_commitment": _exchange_commitment,
                     "used": used,
+                    "token_address": token_address,
                 }
-                if is_detail is True:
-                    position["token"] = token.to_dict()
-                else:
-                    position["token_address"] = token_address
-                return position
         except ServiceUnavailable as e:
             LOG.notice(str(e))
             return None
@@ -1124,14 +1221,50 @@ class GetPosition:
     ),
 )
 async def list_all_share_positions(
-    positions: Union[
-        list[SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]],
-        list[SecurityTokenPositionWithAddress],
-    ] = Depends(GetPositionList(BasePositionShare)),
+    positions: PositionsResponseDict = Depends(GetPositionList(BasePositionShare)),
 ):
     """
     [Share]Returns a list of positions for a given account.
     """
+    if TYPE_CHECKING:
+        result_set = positions["result_set"]
+        type_checked_positions: list[SecurityTokenPositionWithAddress] = []
+        for position_data in positions["positions"]:
+            assert "pending_transfer" in position_data
+            assert "locked" in position_data
+            balance = position_data["balance"]
+            pending_transfer = position_data["pending_transfer"]
+            exchange_balance = position_data["exchange_balance"]
+            exchange_commitment = position_data["exchange_commitment"]
+            locked = position_data["locked"]
+            if "token_address" in position_data:
+                token_address = position_data["token_address"]
+            else:
+                token_address = position_data["token"]["token_address"]
+            type_checked_positions.append(
+                SecurityTokenPositionWithAddress(
+                    balance=balance,
+                    pending_transfer=pending_transfer,
+                    exchange_balance=exchange_balance,
+                    exchange_commitment=exchange_commitment,
+                    locked=locked,
+                    token_address=token_address,
+                )
+            )
+        _ = GenericSuccessResponse[
+            GenericSecurityTokenPositionsResponse[RetrieveShareTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=GenericSecurityTokenPositionsResponse[RetrieveShareTokenResponse](
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                positions=type_checked_positions,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
@@ -1148,14 +1281,54 @@ async def list_all_share_positions(
     ),
 )
 async def list_all_straight_bond_positions(
-    positions: Union[
-        list[SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]],
-        list[SecurityTokenPositionWithAddress],
-    ] = Depends(GetPositionList(BasePositionStraightBond)),
+    positions: PositionsResponseDict = Depends(
+        GetPositionList(BasePositionStraightBond)
+    ),
 ):
     """
     [StraightBond]Returns a list of positions for a given account.
     """
+    if TYPE_CHECKING:
+        result_set = positions["result_set"]
+        type_checked_positions: list[SecurityTokenPositionWithAddress] = []
+        for position_data in positions["positions"]:
+            assert "pending_transfer" in position_data
+            assert "locked" in position_data
+            balance = position_data["balance"]
+            pending_transfer = position_data["pending_transfer"]
+            exchange_balance = position_data["exchange_balance"]
+            exchange_commitment = position_data["exchange_commitment"]
+            locked = position_data["locked"]
+            if "token_address" in position_data:
+                token_address = position_data["token_address"]
+            else:
+                token_address = position_data["token"]["token_address"]
+            type_checked_positions.append(
+                SecurityTokenPositionWithAddress(
+                    balance=balance,
+                    pending_transfer=pending_transfer,
+                    exchange_balance=exchange_balance,
+                    exchange_commitment=exchange_commitment,
+                    locked=locked,
+                    token_address=token_address,
+                )
+            )
+        _ = GenericSuccessResponse[
+            GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=GenericSecurityTokenPositionsResponse[
+                RetrieveStraightBondTokenResponse
+            ](
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                positions=type_checked_positions,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
@@ -1170,13 +1343,37 @@ async def list_all_straight_bond_positions(
     ),
 )
 async def list_all_membership_positions(
-    positions: Union[
-        list[MembershipPositionWithDetail], list[MembershipPositionWithAddress]
-    ] = Depends(GetPositionList(BasePositionMembership)),
+    positions: PositionsResponseDict = Depends(GetPositionList(BasePositionMembership)),
 ):
     """
     [Membership]Returns a list of positions for a given account.
     """
+    if TYPE_CHECKING:
+        result_set = positions["result_set"]
+        _ = GenericSuccessResponse[MembershipPositionsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=MembershipPositionsResponse(
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                positions=[
+                    MembershipPositionWithAddress(
+                        balance=position_data["balance"],
+                        exchange_balance=position_data["exchange_balance"],
+                        exchange_commitment=position_data["exchange_commitment"],
+                        token_address=(
+                            position_data["token_address"]
+                            if "token_address" in position_data
+                            else position_data["token"]["token_address"]
+                        ),
+                    )
+                    for position_data in positions["positions"]
+                ],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
@@ -1191,13 +1388,45 @@ async def list_all_membership_positions(
     ),
 )
 async def list_all_coupon_positions(
-    positions: Union[
-        list[CouponPositionWithDetail], list[CouponPositionWithAddress]
-    ] = Depends(GetPositionList(BasePositionCoupon)),
+    positions: PositionsResponseDict = Depends(GetPositionList(BasePositionCoupon)),
 ):
     """
     [Coupon]Returns a list of positions for a given account.
     """
+    if TYPE_CHECKING:
+        result_set = positions["result_set"]
+        type_checked_positions: list[CouponPositionWithAddress] = []
+        for position_data in positions["positions"]:
+            assert "used" in position_data
+            balance = position_data["balance"]
+            exchange_balance = position_data["exchange_balance"]
+            exchange_commitment = position_data["exchange_commitment"]
+            used = position_data["used"]
+            if "token_address" in position_data:
+                token_address = position_data["token_address"]
+            else:
+                token_address = position_data["token"]["token_address"]
+            type_checked_positions.append(
+                CouponPositionWithAddress(
+                    balance=balance,
+                    exchange_balance=exchange_balance,
+                    exchange_commitment=exchange_commitment,
+                    used=used,
+                    token_address=token_address,
+                )
+            )
+        _ = GenericSuccessResponse[CouponPositionsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=CouponPositionsResponse(
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                positions=type_checked_positions,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": positions})
 
 
@@ -1221,6 +1450,20 @@ async def retrieve_share_position_by_token_address(
     """
     [Share]Returns a position for a given account and token.
     """
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[
+            SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=SecurityTokenPositionWithDetail[RetrieveShareTokenResponse](
+                balance=position.balance,
+                pending_transfer=position.pending_transfer,
+                exchange_balance=position.exchange_balance,
+                exchange_commitment=position.exchange_commitment,
+                locked=position.locked,
+                token=position.token,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": position})
 
 
@@ -1244,6 +1487,20 @@ async def retrieve_straight_bond_position_by_token_address(
     """
     [StraightBond]Returns a position for a given account and token.
     """
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[
+            SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]
+        ](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse](
+                balance=position.balance,
+                pending_transfer=position.pending_transfer,
+                exchange_balance=position.exchange_balance,
+                exchange_commitment=position.exchange_commitment,
+                locked=position.locked,
+                token=position.token,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": position})
 
 
@@ -1265,6 +1522,16 @@ async def retrieve_membership_position_by_token_address(
     """
     [Membership]Returns a position for a given account and token.
     """
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[MembershipPositionWithDetail](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=MembershipPositionWithDetail(
+                balance=position.balance,
+                exchange_balance=position.exchange_balance,
+                exchange_commitment=position.exchange_commitment,
+                token=position.token,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": position})
 
 
@@ -1284,6 +1551,17 @@ async def retrieve_coupon_position_by_token_address(
     """
     [Coupon]Returns a position for a given account and token.
     """
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[CouponPositionWithDetail](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=CouponPositionWithDetail(
+                balance=position.balance,
+                exchange_balance=position.exchange_balance,
+                exchange_commitment=position.exchange_commitment,
+                used=position.used,
+                token=position.token,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": position})
 
 
@@ -1337,6 +1615,32 @@ async def list_all_coupon_consumptions(
                 ),
                 "value": consumption.amount,
             }
+        )
+    if TYPE_CHECKING:
+        type_checked_consumptions: list[CouponConsumptionSchema] = []
+        for consumption in consumptions:
+            # TODO: Migrate consumption.block_timestamp to NOT NULL and update ORM typing.
+            assert consumption.block_timestamp is not None
+            # TODO: Migrate consumption.amount to NOT NULL and update ORM typing.
+            assert consumption.amount is not None
+            block_timestamp = "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+                consumption.block_timestamp.year,
+                consumption.block_timestamp.month,
+                consumption.block_timestamp.day,
+                consumption.block_timestamp.hour,
+                consumption.block_timestamp.minute,
+                consumption.block_timestamp.second,
+            )
+            type_checked_consumptions.append(
+                CouponConsumptionSchema(
+                    account_address=account_address,
+                    block_timestamp=block_timestamp,
+                    value=consumption.amount,
+                )
+            )
+        _ = GenericSuccessResponse[ListAllCouponConsumptionsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCouponConsumptionsResponse(root=type_checked_consumptions),
         )
     return json_response({**SuccessResponse.default(), "data": res_data})
 
@@ -1602,4 +1906,88 @@ async def list_all_token_position(
         },
         "positions": position_list,
     }
+    if TYPE_CHECKING:
+        type_checked_positions: list[
+            StraightBondPositionWithDetail
+            | SharePositionWithDetail
+            | CouponPositionWithDetail
+            | MembershipPositionWithDetail
+        ] = []
+        for item in _token_position_list:
+            if item[1] == TokenType.IbetStraightBond.value:
+                assert item[5] is not None
+                bond_position = IDXPosition.bond(item[2])
+                bond_token = BondToken.from_model(item[5])
+                type_checked_positions.append(
+                    StraightBondPositionWithDetail(
+                        balance=bond_position["balance"],
+                        pending_transfer=bond_position["pending_transfer"],
+                        exchange_balance=bond_position["exchange_balance"],
+                        exchange_commitment=bond_position["exchange_commitment"],
+                        locked=item[3] if item[3] else 0,
+                        token=RetrieveStraightBondTokenResponse(
+                            root=BondTokenSchema.from_blockchain_token(bond_token)
+                        ),
+                    )
+                )
+            elif item[1] == TokenType.IbetShare.value:
+                assert item[6] is not None
+                share_position = IDXPosition.share(item[2])
+                share_token = ShareToken.from_model(item[6])
+                type_checked_positions.append(
+                    SharePositionWithDetail(
+                        balance=share_position["balance"],
+                        pending_transfer=share_position["pending_transfer"],
+                        exchange_balance=share_position["exchange_balance"],
+                        exchange_commitment=share_position["exchange_commitment"],
+                        locked=item[3] if item[3] else 0,
+                        token=RetrieveShareTokenResponse(
+                            root=ShareTokenSchema.from_blockchain_token(share_token)
+                        ),
+                    )
+                )
+            elif item[1] == TokenType.IbetCoupon.value:
+                assert item[7] is not None
+                coupon_position = IDXPosition.coupon(item[2])
+                coupon_token = CouponToken.from_model(item[7])
+                type_checked_positions.append(
+                    CouponPositionWithDetail(
+                        balance=coupon_position["balance"],
+                        exchange_balance=coupon_position["exchange_balance"],
+                        exchange_commitment=coupon_position["exchange_commitment"],
+                        used=int(item[4]) if item[4] else 0,
+                        token=RetrieveCouponTokenResponse(
+                            root=CouponTokenSchema.from_blockchain_token(coupon_token)
+                        ),
+                    )
+                )
+            elif item[1] == TokenType.IbetMembership.value:
+                assert item[8] is not None
+                membership_position = IDXPosition.membership(item[2])
+                membership_token = MembershipToken.from_model(item[8])
+                type_checked_positions.append(
+                    MembershipPositionWithDetail(
+                        balance=membership_position["balance"],
+                        exchange_balance=membership_position["exchange_balance"],
+                        exchange_commitment=membership_position["exchange_commitment"],
+                        token=RetrieveMembershipTokenResponse(
+                            root=MembershipTokenSchema.from_blockchain_token(
+                                membership_token
+                            )
+                        ),
+                    )
+                )
+        result_set = data["result_set"]
+        _ = GenericSuccessResponse[TokenPositionsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TokenPositionsResponse(
+                result_set=ResultSet(
+                    count=result_set["count"],
+                    offset=result_set["offset"],
+                    limit=result_set["limit"],
+                    total=result_set["total"],
+                ),
+                positions=type_checked_positions,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})

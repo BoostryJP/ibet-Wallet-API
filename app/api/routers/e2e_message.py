@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Path
 
@@ -27,6 +27,7 @@ from app.errors import DataNotExistsError, InvalidParameterError
 from app.model.schema import E2EMessageEncryptionKeyResponse
 from app.model.schema.base import (
     GenericSuccessResponse,
+    Success200MetaModel,
     SuccessResponse,
 )
 from app.model.type import EthereumAddress
@@ -67,4 +68,9 @@ async def retrieve_encryption_key(
         raise DataNotExistsError(f"account_address: {account_address}")
     else:
         encryption_key = {"key": key, "key_type": key_type}
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[E2EMessageEncryptionKeyResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=E2EMessageEncryptionKeyResponse(key=key, key_type=key_type),
+        )
     return json_response({**SuccessResponse.default(), "data": encryption_key})

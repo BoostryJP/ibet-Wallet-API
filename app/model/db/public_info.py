@@ -49,6 +49,7 @@ class TokenList(Base):
     # Key Manager
     key_manager: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     # Product Type
+    # TODO: Enforce valid (token_template, product_type) combinations at the DB layer and reflect the same constraint in ORM typing.
     product_type: Mapped[int] = mapped_column(Integer, nullable=False)
     # Issuer Address
     issuer_address: Mapped[str | None] = mapped_column(String(42), nullable=True)

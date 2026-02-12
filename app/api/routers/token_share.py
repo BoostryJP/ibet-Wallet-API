@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Sequence
+from typing import TYPE_CHECKING, Annotated, Sequence
 
 from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
@@ -31,7 +31,7 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import ShareToken
+from app.model.blockchain import ShareToken as ShareTokenBlockchain
 from app.model.db import IDXShareToken, Listing
 from app.model.schema import (
     ListAllShareTokenAddressesResponse,
@@ -43,7 +43,10 @@ from app.model.schema import (
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    ResultSet,
+    ShareToken as ShareTokenSchema,
     SortOrder,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
@@ -153,8 +156,8 @@ async def list_all_share_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXShareToken] = (await async_session.scalars(stmt)).all()
-
-    tokens = [ShareToken.from_model(_token).__dict__ for _token in _token_list]
+    share_tokens = [ShareTokenBlockchain.from_model(_token) for _token in _token_list]
+    tokens = [token.__dict__ for token in share_tokens]
     data = {
         "result_set": {
             "count": count,
@@ -165,6 +168,22 @@ async def list_all_share_tokens(
         "tokens": tokens,
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllShareTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllShareTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                tokens=[
+                    ShareTokenSchema.from_blockchain_token(token)
+                    for token in share_tokens
+                ],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -274,6 +293,19 @@ async def list_all_share_token_addresses(
         "address_list": [_token.token_address for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllShareTokenAddressesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllShareTokenAddressesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                address_list=[token.token_address for token in _token_list],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -320,7 +352,9 @@ async def retrieve_share_token(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail: ShareToken = await ShareToken.get(async_session, token_address)
+        token_detail: ShareTokenBlockchain = await ShareTokenBlockchain.get(
+            async_session, token_address
+        )
     except ServiceUnavailable as e:
         LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
@@ -328,4 +362,11 @@ async def retrieve_share_token(
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[RetrieveShareTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveShareTokenResponse(
+                root=ShareTokenSchema.from_blockchain_token(token_detail)
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

@@ -19,7 +19,16 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Generic, NotRequired, Optional, TypedDict, TypeVar, Union
+from typing import (
+    Any,
+    Generic,
+    NotRequired,
+    Optional,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 from pydantic import BaseModel, Field, RootModel, StrictStr
 
@@ -184,15 +193,69 @@ class ResultSetDict(TypedDict):
     total: int | None
 
 
-class PositionDataDict(TypedDict, total=False):
+class SecurityTokenPositionDataDictBase(TypedDict):
     balance: int
     pending_transfer: int
     exchange_balance: int
     exchange_commitment: int
     locked: int | None
-    used: int
+
+
+class SecurityTokenPositionDataWithAddressDict(SecurityTokenPositionDataDictBase):
     token_address: EthereumAddress
+
+
+class SecurityTokenPositionDataWithTokenDict(SecurityTokenPositionDataDictBase):
     token: TokenDetailDict
+
+
+SecurityTokenPositionDataDict: TypeAlias = (
+    SecurityTokenPositionDataWithAddressDict | SecurityTokenPositionDataWithTokenDict
+)
+
+
+class MembershipPositionDataDictBase(TypedDict):
+    balance: int
+    exchange_balance: int
+    exchange_commitment: int
+
+
+class MembershipPositionDataWithAddressDict(MembershipPositionDataDictBase):
+    token_address: EthereumAddress
+
+
+class MembershipPositionDataWithTokenDict(MembershipPositionDataDictBase):
+    token: TokenDetailDict
+
+
+MembershipPositionDataDict: TypeAlias = (
+    MembershipPositionDataWithAddressDict | MembershipPositionDataWithTokenDict
+)
+
+
+class CouponPositionDataDictBase(TypedDict):
+    balance: int
+    exchange_balance: int
+    exchange_commitment: int
+    used: int
+
+
+class CouponPositionDataWithAddressDict(CouponPositionDataDictBase):
+    token_address: EthereumAddress
+
+
+class CouponPositionDataWithTokenDict(CouponPositionDataDictBase):
+    token: TokenDetailDict
+
+
+CouponPositionDataDict: TypeAlias = (
+    CouponPositionDataWithAddressDict | CouponPositionDataWithTokenDict
+)
+
+
+PositionDataDict: TypeAlias = (
+    SecurityTokenPositionDataDict | MembershipPositionDataDict | CouponPositionDataDict
+)
 
 
 class PositionsResponseDict(TypedDict):
