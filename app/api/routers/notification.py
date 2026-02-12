@@ -266,16 +266,17 @@ async def count_notifications(
     address = to_checksum_address(request_query.address)
 
     # 未読数を取得
-    count = await async_session.scalar(
-        select(func.count())
-        .where(Notification.address == address)
-        .where(Notification.is_read == False)
-        .where(Notification.is_deleted == False)
+    count = (
+        await async_session.scalar(
+            select(func.count())
+            .where(Notification.address == address)
+            .where(Notification.is_read == False)
+            .where(Notification.is_deleted == False)
+        )
+        or 0
     )
 
     if TYPE_CHECKING:
-        # TODO: Migrate aggregate count result to NOT NULL and update ORM typing.
-        assert count is not None
         _ = GenericSuccessResponse[NotificationsCountResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=NotificationsCountResponse(unread_counts=count),

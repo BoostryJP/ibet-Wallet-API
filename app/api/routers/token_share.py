@@ -169,9 +169,6 @@ async def list_all_share_tokens(
     }
 
     if TYPE_CHECKING:
-        type_checked_tokens: list[ShareTokenSchema] = [
-            ShareTokenSchema.from_blockchain_token(token) for token in share_tokens
-        ]
         _ = GenericSuccessResponse[ListAllShareTokensResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=ListAllShareTokensResponse(
@@ -181,7 +178,10 @@ async def list_all_share_tokens(
                     limit=limit,
                     total=total,
                 ),
-                tokens=type_checked_tokens,
+                tokens=[
+                    ShareTokenSchema.from_blockchain_token(token)
+                    for token in share_tokens
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -363,9 +363,10 @@ async def retrieve_share_token(
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
     if TYPE_CHECKING:
-        type_checked_token = ShareTokenSchema.from_blockchain_token(token_detail)
         _ = GenericSuccessResponse[RetrieveShareTokenResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=RetrieveShareTokenResponse(root=type_checked_token),
+            data=RetrieveShareTokenResponse(
+                root=ShareTokenSchema.from_blockchain_token(token_detail)
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

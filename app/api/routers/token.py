@@ -372,24 +372,6 @@ async def get_token_holders(
     }
 
     if TYPE_CHECKING:
-        type_checked_holders = [
-            TokenHolderSchema(
-                token_address=holder[0].token_address,
-                account_address=holder[0].account_address,
-                amount=holder[0].balance if holder[0].balance else 0,
-                pending_transfer=holder[0].pending_transfer
-                if holder[0].pending_transfer
-                else 0,
-                exchange_balance=holder[0].exchange_balance
-                if holder[0].exchange_balance
-                else 0,
-                exchange_commitment=holder[0].exchange_commitment
-                if holder[0].exchange_commitment
-                else 0,
-                locked=holder[1] if holder[1] else 0,
-            )
-            for holder in holders
-        ]
         _ = GenericSuccessResponse[TokenHoldersResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=TokenHoldersResponse(
@@ -399,7 +381,24 @@ async def get_token_holders(
                     limit=limit,
                     total=total,
                 ),
-                token_holder_list=type_checked_holders,
+                token_holder_list=[
+                    TokenHolderSchema(
+                        token_address=holder[0].token_address,
+                        account_address=holder[0].account_address,
+                        amount=holder[0].balance if holder[0].balance else 0,
+                        pending_transfer=holder[0].pending_transfer
+                        if holder[0].pending_transfer
+                        else 0,
+                        exchange_balance=holder[0].exchange_balance
+                        if holder[0].exchange_balance
+                        else 0,
+                        exchange_commitment=holder[0].exchange_commitment
+                        if holder[0].exchange_commitment
+                        else 0,
+                        locked=holder[1] if holder[1] else 0,
+                    )
+                    for holder in holders
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": resp_body})
@@ -607,24 +606,6 @@ async def search_token_holders(
     }
 
     if TYPE_CHECKING:
-        type_checked_holders = [
-            TokenHolderSchema(
-                token_address=holder[0].token_address,
-                account_address=holder[0].account_address,
-                amount=holder[0].balance if holder[0].balance else 0,
-                pending_transfer=holder[0].pending_transfer
-                if holder[0].pending_transfer
-                else 0,
-                exchange_balance=holder[0].exchange_balance
-                if holder[0].exchange_balance
-                else 0,
-                exchange_commitment=holder[0].exchange_commitment
-                if holder[0].exchange_commitment
-                else 0,
-                locked=holder[1] if holder[1] else 0,
-            )
-            for holder in holders
-        ]
         _ = GenericSuccessResponse[TokenHoldersResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=TokenHoldersResponse(
@@ -634,7 +615,24 @@ async def search_token_holders(
                     limit=limit,
                     total=total,
                 ),
-                token_holder_list=type_checked_holders,
+                token_holder_list=[
+                    TokenHolderSchema(
+                        token_address=holder[0].token_address,
+                        account_address=holder[0].account_address,
+                        amount=holder[0].balance if holder[0].balance else 0,
+                        pending_transfer=holder[0].pending_transfer
+                        if holder[0].pending_transfer
+                        else 0,
+                        exchange_balance=holder[0].exchange_balance
+                        if holder[0].exchange_balance
+                        else 0,
+                        exchange_commitment=holder[0].exchange_commitment
+                        if holder[0].exchange_commitment
+                        else 0,
+                        locked=holder[1] if holder[1] else 0,
+                    )
+                    for holder in holders
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": resp_body})
@@ -710,17 +708,18 @@ async def get_token_holders_count(
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
 
-    _count = await async_session.scalar(
-        select(func.count()).select_from(
-            stmt.with_only_columns(1).order_by(None).subquery()
+    _count = (
+        await async_session.scalar(
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
         )
+        or 0
     )
 
     resp_body = {"count": _count}
 
     if TYPE_CHECKING:
-        # TODO: Migrate aggregate count result to NOT NULL and update ORM typing.
-        assert _count is not None
         _ = GenericSuccessResponse[TokenHoldersCountResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=TokenHoldersCountResponse(count=_count),
@@ -895,25 +894,24 @@ async def get_token_holders_collection(
     if TYPE_CHECKING:
         # TODO: Migrate token_holders_list.batch_status to NOT NULL and update ORM typing.
         assert _same_list_id_record.batch_status is not None
-        type_checked_holders = [
-            TokenHoldersCollectionHolder(
-                account_address=token_holder.account_address,
-                hold_balance=token_holder.hold_balance
-                if token_holder.hold_balance is not None
-                else 0,
-                locked_balance=token_holder.locked_balance
-                if token_holder.locked_balance is not None
-                else 0,
-            )
-            for token_holder in _token_holders
-        ]
         _ = GenericSuccessResponse[TokenHoldersCollectionResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=TokenHoldersCollectionResponse(
                 status=TokenHoldersCollectionBatchStatus(
                     _same_list_id_record.batch_status
                 ),
-                holders=type_checked_holders,
+                holders=[
+                    TokenHoldersCollectionHolder(
+                        account_address=token_holder.account_address,
+                        hold_balance=token_holder.hold_balance
+                        if token_holder.hold_balance is not None
+                        else 0,
+                        locked_balance=token_holder.locked_balance
+                        if token_holder.locked_balance is not None
+                        else 0,
+                    )
+                    for token_holder in _token_holders
+                ],
             ),
         )
     return json_response(

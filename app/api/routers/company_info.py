@@ -199,28 +199,28 @@ async def list_all_companies(
     filtered_companies = list(filter(has_listing_owner_function, company_list))
 
     if TYPE_CHECKING:
-        type_checked_companies: list[CompanyInfo] = []
-        for company in filtered_companies:
-            company_trustee = company["trustee"]
-            type_checked_trustee: CompanyListTrustee | None = None
-            if company_trustee is not None:
-                type_checked_trustee = CompanyListTrustee(
-                    corporate_name=company_trustee["corporate_name"],
-                    corporate_number=company_trustee["corporate_number"],
-                    corporate_address=company_trustee["corporate_address"],
-                )
-            type_checked_companies.append(
-                CompanyInfo(
-                    address=company["address"],
-                    corporate_name=company["corporate_name"],
-                    trustee=type_checked_trustee,
-                    rsa_publickey=company["rsa_publickey"],
-                    homepage=company["homepage"],
-                )
-            )
         _ = GenericSuccessResponse[ListAllCompaniesResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=ListAllCompaniesResponse(root=type_checked_companies),
+            data=ListAllCompaniesResponse(
+                root=[
+                    CompanyInfo(
+                        address=company["address"],
+                        corporate_name=company["corporate_name"],
+                        trustee=(
+                            CompanyListTrustee(
+                                corporate_name=company_trustee["corporate_name"],
+                                corporate_number=company_trustee["corporate_number"],
+                                corporate_address=company_trustee["corporate_address"],
+                            )
+                            if (company_trustee := company["trustee"]) is not None
+                            else None
+                        ),
+                        rsa_publickey=company["rsa_publickey"],
+                        homepage=company["homepage"],
+                    )
+                    for company in filtered_companies
+                ]
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": filtered_companies})
 
@@ -285,20 +285,20 @@ async def retrieve_company_info(
     resp["in_use_personal_info_addresses"] = _personal_info_list
 
     if TYPE_CHECKING:
-        company_trustee = company["trustee"]
-        type_checked_trustee: CompanyListTrustee | None = None
-        if company_trustee is not None:
-            type_checked_trustee = CompanyListTrustee(
-                corporate_name=company_trustee["corporate_name"],
-                corporate_number=company_trustee["corporate_number"],
-                corporate_address=company_trustee["corporate_address"],
-            )
         _ = GenericSuccessResponse[RetrieveCompanyInfoResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=RetrieveCompanyInfoResponse(
                 address=company["address"],
                 corporate_name=company["corporate_name"],
-                trustee=type_checked_trustee,
+                trustee=(
+                    CompanyListTrustee(
+                        corporate_name=company_trustee["corporate_name"],
+                        corporate_number=company_trustee["corporate_number"],
+                        corporate_address=company_trustee["corporate_address"],
+                    )
+                    if (company_trustee := company["trustee"]) is not None
+                    else None
+                ),
                 rsa_publickey=company["rsa_publickey"],
                 homepage=company["homepage"],
                 in_use_personal_info_addresses=_personal_info_list,

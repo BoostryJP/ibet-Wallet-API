@@ -169,9 +169,6 @@ async def list_all_straight_bond_tokens(
     }
 
     if TYPE_CHECKING:
-        type_checked_tokens: list[BondTokenSchema] = [
-            BondTokenSchema.from_blockchain_token(token) for token in bond_tokens
-        ]
         _ = GenericSuccessResponse[ListAllStraightBondTokensResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=ListAllStraightBondTokensResponse(
@@ -181,7 +178,10 @@ async def list_all_straight_bond_tokens(
                     limit=limit,
                     total=total,
                 ),
-                tokens=type_checked_tokens,
+                tokens=[
+                    BondTokenSchema.from_blockchain_token(token)
+                    for token in bond_tokens
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -365,9 +365,10 @@ async def retrieve_straight_bond_token(
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
     if TYPE_CHECKING:
-        type_checked_token = BondTokenSchema.from_blockchain_token(token_detail)
         _ = GenericSuccessResponse[RetrieveStraightBondTokenResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=RetrieveStraightBondTokenResponse(root=type_checked_token),
+            data=RetrieveStraightBondTokenResponse(
+                root=BondTokenSchema.from_blockchain_token(token_detail)
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

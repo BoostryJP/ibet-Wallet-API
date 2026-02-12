@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Query
@@ -32,7 +32,11 @@ from app.model.schema import (
     RetrievePersonalInfoRegistrationStatusResponse,
     TaggingAccountAddressRequest,
 )
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    Success200MetaModel,
+    SuccessResponse,
+)
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
@@ -60,6 +64,10 @@ async def tagging_account_address(
     await async_session.merge(account_tag)
     await async_session.commit()
 
+    if TYPE_CHECKING:
+        _ = SuccessResponse(
+            meta=Success200MetaModel(code=200, message="OK"),
+        )
     return json_response(SuccessResponse.default())
 
 
@@ -116,4 +124,21 @@ async def get_personal_info_registration_status(
             "registered": True,
         }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[RetrievePersonalInfoRegistrationStatusResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=(
+                RetrievePersonalInfoRegistrationStatusResponse(
+                    account_address=query.account_address,
+                    owner_address=query.owner_address,
+                    registered=False,
+                )
+                if info[0] == config.ZERO_ADDRESS
+                else RetrievePersonalInfoRegistrationStatusResponse(
+                    account_address=info[0],
+                    owner_address=info[1],
+                    registered=True,
+                )
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": response_json})

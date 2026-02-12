@@ -160,9 +160,6 @@ async def list_all_coupon_tokens(
     }
 
     if TYPE_CHECKING:
-        type_checked_tokens: list[CouponTokenSchema] = [
-            CouponTokenSchema.from_blockchain_token(token) for token in coupon_tokens
-        ]
         _ = GenericSuccessResponse[ListAllCouponTokensResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=ListAllCouponTokensResponse(
@@ -172,7 +169,10 @@ async def list_all_coupon_tokens(
                     limit=limit,
                     total=total,
                 ),
-                tokens=type_checked_tokens,
+                tokens=[
+                    CouponTokenSchema.from_blockchain_token(token)
+                    for token in coupon_tokens
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -347,9 +347,10 @@ async def retrieve_coupon_token(
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
     if TYPE_CHECKING:
-        type_checked_token = CouponTokenSchema.from_blockchain_token(token_detail)
         _ = GenericSuccessResponse[RetrieveCouponTokenResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=RetrieveCouponTokenResponse(root=type_checked_token),
+            data=RetrieveCouponTokenResponse(
+                root=CouponTokenSchema.from_blockchain_token(token_detail)
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

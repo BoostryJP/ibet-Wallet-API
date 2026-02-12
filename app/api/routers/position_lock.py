@@ -402,15 +402,6 @@ async def list_all_share_locked_position(
     """
     if TYPE_CHECKING:
         result_set = data["result_set"]
-        type_checked_locked_positions = [
-            LockedSchema(
-                token_address=locked["token_address"],
-                lock_address=locked["lock_address"],
-                account_address=locked["account_address"],
-                value=locked["value"],
-            )
-            for locked in data["locked_positions"]
-        ]
         _ = GenericSuccessResponse[
             ListAllLockedPositionResponse[RetrieveShareTokenResponse]
         ](
@@ -422,7 +413,15 @@ async def list_all_share_locked_position(
                     limit=result_set["limit"],
                     total=result_set["total"],
                 ),
-                locked_positions=type_checked_locked_positions,
+                locked_positions=[
+                    LockedSchema(
+                        token_address=locked["token_address"],
+                        lock_address=locked["lock_address"],
+                        account_address=locked["account_address"],
+                        value=locked["value"],
+                    )
+                    for locked in data["locked_positions"]
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -448,22 +447,6 @@ async def list_all_share_lock_events(
     """
     if TYPE_CHECKING:
         result_set = data["result_set"]
-        type_checked_events = [
-            LockEventSchema(
-                category=LockEventCategory(event["category"]),
-                is_forced=event["is_forced"],
-                transaction_hash=event["transaction_hash"],
-                msg_sender=event["msg_sender"],
-                token_address=event["token_address"],
-                lock_address=event["lock_address"],
-                account_address=event["account_address"],
-                recipient_address=event["recipient_address"],
-                value=event["value"],
-                data=event["data"],
-                block_timestamp=event["block_timestamp"],
-            )
-            for event in data["events"]
-        ]
         _ = GenericSuccessResponse[
             ListAllLockEventsResponse[RetrieveShareTokenResponse]
         ](
@@ -475,7 +458,22 @@ async def list_all_share_lock_events(
                     limit=result_set["limit"],
                     total=result_set["total"],
                 ),
-                events=type_checked_events,
+                events=[
+                    LockEventSchema(
+                        category=LockEventCategory(event["category"]),
+                        is_forced=event["is_forced"],
+                        transaction_hash=event["transaction_hash"],
+                        msg_sender=event["msg_sender"],
+                        token_address=event["token_address"],
+                        lock_address=event["lock_address"],
+                        account_address=event["account_address"],
+                        recipient_address=event["recipient_address"],
+                        value=event["value"],
+                        data=event["data"],
+                        block_timestamp=event["block_timestamp"],
+                    )
+                    for event in data["events"]
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -501,15 +499,6 @@ async def list_all_straight_bond_locked_position(
     """
     if TYPE_CHECKING:
         result_set = data["result_set"]
-        type_checked_locked_positions = [
-            LockedSchema(
-                token_address=locked["token_address"],
-                lock_address=locked["lock_address"],
-                account_address=locked["account_address"],
-                value=locked["value"],
-            )
-            for locked in data["locked_positions"]
-        ]
         _ = GenericSuccessResponse[
             ListAllLockedPositionResponse[RetrieveStraightBondTokenResponse]
         ](
@@ -521,7 +510,15 @@ async def list_all_straight_bond_locked_position(
                     limit=result_set["limit"],
                     total=result_set["total"],
                 ),
-                locked_positions=type_checked_locked_positions,
+                locked_positions=[
+                    LockedSchema(
+                        token_address=locked["token_address"],
+                        lock_address=locked["lock_address"],
+                        account_address=locked["account_address"],
+                        value=locked["value"],
+                    )
+                    for locked in data["locked_positions"]
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -547,22 +544,6 @@ async def list_all_straight_bond_lock_events(
     """
     if TYPE_CHECKING:
         result_set = data["result_set"]
-        type_checked_events = [
-            LockEventSchema(
-                category=LockEventCategory(event["category"]),
-                is_forced=event["is_forced"],
-                transaction_hash=event["transaction_hash"],
-                msg_sender=event["msg_sender"],
-                token_address=event["token_address"],
-                lock_address=event["lock_address"],
-                account_address=event["account_address"],
-                recipient_address=event["recipient_address"],
-                value=event["value"],
-                data=event["data"],
-                block_timestamp=event["block_timestamp"],
-            )
-            for event in data["events"]
-        ]
         _ = GenericSuccessResponse[
             ListAllLockEventsResponse[RetrieveStraightBondTokenResponse]
         ](
@@ -574,7 +555,22 @@ async def list_all_straight_bond_lock_events(
                     limit=result_set["limit"],
                     total=result_set["total"],
                 ),
-                events=type_checked_events,
+                events=[
+                    LockEventSchema(
+                        category=LockEventCategory(event["category"]),
+                        is_forced=event["is_forced"],
+                        transaction_hash=event["transaction_hash"],
+                        msg_sender=event["msg_sender"],
+                        token_address=event["token_address"],
+                        lock_address=event["lock_address"],
+                        account_address=event["account_address"],
+                        recipient_address=event["recipient_address"],
+                        value=event["value"],
+                        data=event["data"],
+                        block_timestamp=event["block_timestamp"],
+                    )
+                    for event in data["events"]
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})

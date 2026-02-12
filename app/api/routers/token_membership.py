@@ -167,10 +167,6 @@ async def list_all_membership_tokens(
     }
 
     if TYPE_CHECKING:
-        type_checked_tokens: list[MembershipTokenSchema] = [
-            MembershipTokenSchema.from_blockchain_token(token)
-            for token in membership_tokens
-        ]
         _ = GenericSuccessResponse[ListAllMembershipTokensResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=ListAllMembershipTokensResponse(
@@ -180,7 +176,10 @@ async def list_all_membership_tokens(
                     limit=limit,
                     total=total,
                 ),
-                tokens=type_checked_tokens,
+                tokens=[
+                    MembershipTokenSchema.from_blockchain_token(token)
+                    for token in membership_tokens
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": data})
@@ -355,9 +354,10 @@ async def retrieve_membership_token(
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
     if TYPE_CHECKING:
-        type_checked_token = MembershipTokenSchema.from_blockchain_token(token_detail)
         _ = GenericSuccessResponse[RetrieveMembershipTokenResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=RetrieveMembershipTokenResponse(root=type_checked_token),
+            data=RetrieveMembershipTokenResponse(
+                root=MembershipTokenSchema.from_blockchain_token(token_detail)
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

@@ -1350,23 +1350,6 @@ async def list_all_membership_positions(
     """
     if TYPE_CHECKING:
         result_set = positions["result_set"]
-        type_checked_positions: list[MembershipPositionWithAddress] = []
-        for position_data in positions["positions"]:
-            balance = position_data["balance"]
-            exchange_balance = position_data["exchange_balance"]
-            exchange_commitment = position_data["exchange_commitment"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
-            type_checked_positions.append(
-                MembershipPositionWithAddress(
-                    balance=balance,
-                    exchange_balance=exchange_balance,
-                    exchange_commitment=exchange_commitment,
-                    token_address=token_address,
-                )
-            )
         _ = GenericSuccessResponse[MembershipPositionsResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=MembershipPositionsResponse(
@@ -1376,7 +1359,19 @@ async def list_all_membership_positions(
                     limit=result_set["limit"],
                     total=result_set["total"],
                 ),
-                positions=type_checked_positions,
+                positions=[
+                    MembershipPositionWithAddress(
+                        balance=position_data["balance"],
+                        exchange_balance=position_data["exchange_balance"],
+                        exchange_commitment=position_data["exchange_commitment"],
+                        token_address=(
+                            position_data["token_address"]
+                            if "token_address" in position_data
+                            else position_data["token"]["token_address"]
+                        ),
+                    )
+                    for position_data in positions["positions"]
+                ],
             ),
         )
     return json_response({**SuccessResponse.default(), "data": positions})

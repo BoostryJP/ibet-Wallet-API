@@ -61,9 +61,7 @@ from app.model.schema.base import (
 from app.model.schema.eth import (
     SendRawTransactionFailureResponse,
     SendRawTransactionNoWaitFailureResponse,
-    SendRawTransactionNoWaitResponse,
     SendRawTransactionNoWaitSuccessResponse,
-    SendRawTransactionResponse,
     SendRawTransactionSuccessResponse,
     WaitForTransactionReceiptFailureResponse,
     WaitForTransactionReceiptSuccessResponse,
@@ -374,33 +372,32 @@ async def send_raw_transaction(
         )
 
     if TYPE_CHECKING:
-        type_checked_result: list[SendRawTransactionResponse] = []
-        for entry in result:
-            if entry["status"] == 0:
-                error_code_value = (
-                    entry["error_code"] if "error_code" in entry else None
-                )
-                error_msg_value = entry["error_msg"] if "error_msg" in entry else None
-                type_checked_result.append(
-                    SendRawTransactionFailureResponse(
-                        id=entry["id"],
-                        status=entry["status"],
-                        transaction_hash=entry["transaction_hash"],
-                        error_code=error_code_value,
-                        error_msg=error_msg_value,
-                    )
-                )
-            else:
-                type_checked_result.append(
-                    SendRawTransactionSuccessResponse(
-                        id=entry["id"],
-                        status=entry["status"],
-                        transaction_hash=entry["transaction_hash"],
-                    )
-                )
         _ = GenericSuccessResponse[SendRawTransactionsResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=SendRawTransactionsResponse(root=type_checked_result),
+            data=SendRawTransactionsResponse(
+                root=[
+                    (
+                        SendRawTransactionFailureResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=entry["transaction_hash"],
+                            error_code=(
+                                entry["error_code"] if "error_code" in entry else None
+                            ),
+                            error_msg=(
+                                entry["error_msg"] if "error_msg" in entry else None
+                            ),
+                        )
+                        if entry["status"] == 0
+                        else SendRawTransactionSuccessResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=entry["transaction_hash"],
+                        )
+                    )
+                    for entry in result
+                ]
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": result})
 
@@ -546,30 +543,30 @@ async def send_raw_transaction_no_wait(
         )
 
     if TYPE_CHECKING:
-        type_checked_result: list[SendRawTransactionNoWaitResponse] = []
-        for entry in result:
-            if entry["status"] == 0:
-                transaction_hash_value = (
-                    entry["transaction_hash"] if "transaction_hash" in entry else None
-                )
-                type_checked_result.append(
-                    SendRawTransactionNoWaitFailureResponse(
-                        id=entry["id"],
-                        status=entry["status"],
-                        transaction_hash=transaction_hash_value,
-                    )
-                )
-            else:
-                type_checked_result.append(
-                    SendRawTransactionNoWaitSuccessResponse(
-                        id=entry["id"],
-                        status=entry["status"],
-                        transaction_hash=entry["transaction_hash"],
-                    )
-                )
         _ = GenericSuccessResponse[SendRawTransactionsNoWaitResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=SendRawTransactionsNoWaitResponse(root=type_checked_result),
+            data=SendRawTransactionsNoWaitResponse(
+                root=[
+                    (
+                        SendRawTransactionNoWaitFailureResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=(
+                                entry["transaction_hash"]
+                                if "transaction_hash" in entry
+                                else None
+                            ),
+                        )
+                        if entry["status"] == 0
+                        else SendRawTransactionNoWaitSuccessResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=entry["transaction_hash"],
+                        )
+                    )
+                    for entry in result
+                ]
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": result})
 
@@ -615,20 +612,19 @@ async def wait_for_transaction_receipt(
         raise DataNotExistsError
 
     if TYPE_CHECKING:
-        type_checked_data: WaitForTransactionReceiptResponse
-        if result["status"] == 0:
-            type_checked_data = WaitForTransactionReceiptFailureResponse(
-                status=result["status"],
-                error_code=result["error_code"],
-                error_msg=result["error_msg"],
-            )
-        else:
-            type_checked_data = WaitForTransactionReceiptSuccessResponse(
-                status=result["status"],
-            )
         _ = GenericSuccessResponse[WaitForTransactionReceiptResponse](
             meta=Success200MetaModel(code=200, message="OK"),
-            data=type_checked_data,
+            data=(
+                WaitForTransactionReceiptFailureResponse(
+                    status=result["status"],
+                    error_code=result["error_code"],
+                    error_msg=result["error_msg"],
+                )
+                if result["status"] == 0
+                else WaitForTransactionReceiptSuccessResponse(
+                    status=result["status"],
+                )
+            ),
         )
     return json_response({**SuccessResponse.default(), "data": result})
 
