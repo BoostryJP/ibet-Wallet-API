@@ -18,9 +18,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from .e2e_messaging import E2EMessagingHelper
 from .ibet_bond_token import IbetStraightBondTestHelper
 from .ibet_coupon_token import IbetCouponTestHelper
 from .ibet_membership_token import IbetMembershipTestHelper
 from .ibet_share_token import IbetShareTestHelper
-from .ibet_standard_token import IbetStandardTokenUtils
+from .ibet_standard_token import IbetStandardTokenHelper
 from .personal_info import PersonalInfoHelper

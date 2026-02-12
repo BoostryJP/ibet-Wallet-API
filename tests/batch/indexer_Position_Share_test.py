@@ -53,7 +53,7 @@ from tests.helpers.ibet_exchange_helpers import (
     confirm_security_token_delivery,
     create_security_token_delivery,
     create_security_token_escrow,
-    finish_security_token_dvlivery,
+    finish_security_token_delivery,
     finish_security_token_escrow,
     get_latest_security_delivery_id,
     get_latest_security_escrow_id,
@@ -1759,7 +1759,7 @@ class TestProcessor:
             {"address": dvp_contract["address"]},
             get_latest_security_delivery_id({"address": dvp_contract["address"]}),
         )
-        finish_security_token_dvlivery(
+        finish_security_token_delivery(
             self.issuer,
             {"address": dvp_contract["address"]},
             get_latest_security_delivery_id({"address": dvp_contract["address"]}),

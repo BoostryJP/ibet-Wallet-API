@@ -24,7 +24,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from tests.account_config import eth_account
-from tests.helpers.contract import Contract
+from tests.helpers import E2EMessagingHelper
 from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -48,12 +48,12 @@ class TestE2EMessageEncryptionKey:
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
-        e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
+        E2EMessagingHelper.set_public_key(
+            user1,
+            e2e_messaging_contract["address"],
+            "test_key",
+            "test_key_type",
         )
-        e2e_messaging_contract.functions.setPublicKey(
-            "test_key", "test_key_type"
-        ).transact({"from": user1})
 
         # request target API
         resp = client.get(self.apiurl.format(account_address=user1))
@@ -79,12 +79,12 @@ class TestE2EMessageEncryptionKey:
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract["address"]
 
         # prepare data
-        e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging", address=e2e_messaging_contract["address"]
+        E2EMessagingHelper.set_public_key(
+            user1,
+            e2e_messaging_contract["address"],
+            "test_key",
+            "test_key_type",
         )
-        e2e_messaging_contract.functions.setPublicKey(
-            "test_key", "test_key_type"
-        ).transact({"from": user1})
 
         # request target API
         resp = client.get(self.apiurl.format(account_address=user1[:-1]))

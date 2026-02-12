@@ -54,7 +54,7 @@ from tests.helpers.ibet_exchange_helpers import (
     confirm_security_token_delivery,
     create_security_token_delivery,
     create_security_token_escrow,
-    finish_security_token_dvlivery,
+    finish_security_token_delivery,
     finish_security_token_escrow,
     get_latest_security_delivery_id,
     get_latest_security_escrow_id,
@@ -1848,7 +1848,7 @@ class TestProcessor:
             {"address": dvp_contract["address"]},
             get_latest_security_delivery_id({"address": dvp_contract["address"]}),
         )
-        finish_security_token_dvlivery(
+        finish_security_token_delivery(
             self.issuer,
             {"address": dvp_contract["address"]},
             get_latest_security_delivery_id({"address": dvp_contract["address"]}),
@@ -2177,11 +2177,13 @@ class TestProcessor:
             10000,
         )
         for i in range(1001):
-            token.functions.transferFrom(
+            IbetStraightBondTestHelper.force_transfer_token(
+                self.issuer["account_address"],
+                token.address,
                 self.issuer["account_address"],
                 to_checksum_address(f"0x{hex(i)[2:].zfill(40)}"),
                 1,
-            ).transact({"from": self.issuer["account_address"]})
+            )
 
         # Run target process
         block_number = web3.eth.block_number

@@ -17,35 +17,30 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
+from hexbytes import HexBytes
 
-from app import config
 from tests.helpers.contract import Contract
 from tests.types import DeployedContract, UnitTestAccount
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 def withdraw_from_exchange(
     invoker: UnitTestAccount,
     exchange: DeployedContract,
     token: DeployedContract,
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     exchange_contract = Contract.get_contract(
         contract_name="IbetExchangeInterface", address=exchange["address"]
     )
-    exchange_contract.functions.withdraw(token["address"]).transact(
-        {"from": invoker["account_address"]}
+    tx = exchange_contract.functions.withdraw(token["address"]).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
 ###############################################################
 # IbetSecurityTokenEscrow
 ###############################################################
-# エスクローの作成
+# Create escrow
 def create_security_token_escrow(
     invoker: UnitTestAccount,
     exchange: DeployedContract,
@@ -55,19 +50,19 @@ def create_security_token_escrow(
     amount: int,
     transfer_application_data: str = "{}",
     data: str = "{}",
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    security_token_escrow_contract.functions.createEscrow(
+    tx = security_token_escrow_contract.functions.createEscrow(
         token["address"],
         recipient_address,
         amount,
         agent_address,
         transfer_application_data,
         data,
-    ).transact({"from": invoker["account_address"]})
+    ).transact({"from": invoker["account_address"]})  # type: ignore
+    return tx
 
 
 def get_latest_security_escrow_id(exchange: DeployedContract) -> int:
@@ -78,52 +73,52 @@ def get_latest_security_escrow_id(exchange: DeployedContract) -> int:
     return latest_escrow_id
 
 
-# エスクローのキャンセル
+# Cancel escrow
 def cancel_security_token_escrow(
     invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    security_token_escrow_contract.functions.cancelEscrow(escrow_id).transact(
-        {"from": invoker["account_address"]}
+    tx = security_token_escrow_contract.functions.cancelEscrow(escrow_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
-# エスクローの完了
+# Finish escrow
 def finish_security_token_escrow(
     invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    security_token_escrow_contract.functions.finishEscrow(escrow_id).transact(
-        {"from": invoker["account_address"]}
+    tx = security_token_escrow_contract.functions.finishEscrow(escrow_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
-# 移転の承認
+# Approve transfer
 def approve_transfer_security_token_escrow(
     invoker: UnitTestAccount,
     exchange: DeployedContract,
     escrow_id: int,
     transfer_approval_data: str,
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_escrow_contract = Contract.get_contract(
         "IbetSecurityTokenEscrow", exchange["address"]
     )
-    security_token_escrow_contract.functions.approveTransfer(
+    tx = security_token_escrow_contract.functions.approveTransfer(
         escrow_id, transfer_approval_data
-    ).transact({"from": invoker["account_address"]})
+    ).transact({"from": invoker["account_address"]})  # type: ignore
+    return tx
 
 
 ###############################################################
 # IbetEscrow
 ###############################################################
-# エスクローの作成
+# Create escrow
 def create_token_escrow(
     invoker: UnitTestAccount,
     exchange: DeployedContract,
@@ -131,35 +126,47 @@ def create_token_escrow(
     recipient_address: str,
     agent_address: str,
     amount: int,
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
-    ibet_escrow.functions.createEscrow(
+    tx = ibet_escrow.functions.createEscrow(
         token["address"], recipient_address, amount, agent_address, "{}"
-    ).transact({"from": invoker["account_address"]})
+    ).transact({"from": invoker["account_address"]})  # type: ignore
+    return tx
 
 
+# Get latest escrow ID
 def get_latest_escrow_id(exchange: DeployedContract) -> int:
     ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
     latest_escrow_id = ibet_escrow.functions.latestEscrowId().call()
     return latest_escrow_id
 
 
-# エスクローの完了
+# Cancel escrow
+def cancel_token_escrow(
+    invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
+) -> HexBytes:
+    ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
+    tx = ibet_escrow.functions.cancelEscrow(escrow_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
+    )
+    return tx
+
+
+# Finish escrow
 def finish_token_escrow(
     invoker: UnitTestAccount, exchange: DeployedContract, escrow_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     ibet_escrow = Contract.get_contract("IbetEscrow", exchange["address"])
-    ibet_escrow.functions.finishEscrow(escrow_id).transact(
-        {"from": invoker["account_address"]}
+    tx = ibet_escrow.functions.finishEscrow(escrow_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
 ###############################################################
 # IbetSecurityTokenDVP
 ###############################################################
-# DVP決済の作成
+# Create DVP settlement
 def create_security_token_delivery(
     invoker: UnitTestAccount,
     exchange: DeployedContract,
@@ -167,18 +174,18 @@ def create_security_token_delivery(
     recipient_address: str,
     agent_address: str,
     amount: int,
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    security_token_dvp_contract.functions.createDelivery(
+    tx = security_token_dvp_contract.functions.createDelivery(
         token["address"],
         recipient_address,
         amount,
         agent_address,
         "{}",
-    ).transact({"from": invoker["account_address"]})
+    ).transact({"from": invoker["account_address"]})  # type: ignore
+    return tx
 
 
 def get_latest_security_delivery_id(exchange: DeployedContract) -> int:
@@ -189,53 +196,53 @@ def get_latest_security_delivery_id(exchange: DeployedContract) -> int:
     return latest_delivery_id
 
 
-# DVP決済の取消
+# Cancel DVP settlement
 def cancel_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    security_token_dvp_contract.functions.cancelDelivery(delivery_id).transact(
-        {"from": invoker["account_address"]}
+    tx = security_token_dvp_contract.functions.cancelDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
-# DVP決済の確認
+# Confirm DVP settlement
 def confirm_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    security_token_dvp_contract.functions.confirmDelivery(delivery_id).transact(
-        {"from": invoker["account_address"]}
+    tx = security_token_dvp_contract.functions.confirmDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
-# DVP決済の完了
-def finish_security_token_dvlivery(
+# Finish DVP settlement
+def finish_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    security_token_dvp_contract.functions.finishDelivery(delivery_id).transact(
-        {"from": invoker["account_address"]}
+    tx = security_token_dvp_contract.functions.finishDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx
 
 
-# DVP決済の中断
+# Abort DVP settlement
 def abort_security_token_delivery(
     invoker: UnitTestAccount, exchange: DeployedContract, delivery_id: int
-):
-    web3.eth.default_account = invoker["account_address"]
+) -> HexBytes:
     security_token_dvp_contract = Contract.get_contract(
         "IbetSecurityTokenDVP", exchange["address"]
     )
-    security_token_dvp_contract.functions.abortDelivery(delivery_id).transact(
-        {"from": invoker["account_address"]}
+    tx = security_token_dvp_contract.functions.abortDelivery(delivery_id).transact(
+        {"from": invoker["account_address"]}  # type: ignore
     )
+    return tx

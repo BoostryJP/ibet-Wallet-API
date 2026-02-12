@@ -19,15 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Any
 
-from web3 import Web3
+from hexbytes import HexBytes
 from web3.contract import Contract as Web3Contract
-from web3.middleware import ExtraDataToPOAMiddleware
 
-from app import config
 from tests.helpers.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class IbetMembershipTestHelper:
@@ -69,7 +64,7 @@ class IbetMembershipTestHelper:
         token_address: str,
         token_list_contract_address: str,
         token_template_name: str = "IbetMembership",
-    ) -> None:
+    ) -> HexBytes:
         """
         Register IbetMembership token to TokenList contract
 
@@ -77,16 +72,20 @@ class IbetMembershipTestHelper:
         :param token_address: IbetMembership token contract address
         :param token_list_contract_address: TokenList contract address
         :param token_template_name: Token template name (default: "IbetMembership")
+        :return: Transaction object
         """
         token_list_contract = Contract.get_contract(
             contract_name="TokenList", address=token_list_contract_address
         )
-        token_list_contract.functions.register(
+        tx = token_list_contract.functions.register(
             token_address, token_template_name
-        ).transact({"from": tx_from})
+        ).transact({"from": tx_from})  # type: ignore
+        return tx
 
     @staticmethod
-    def transfer_token(tx_from: str, token_address: str, to: str, amount: int) -> None:
+    def transfer_token(
+        tx_from: str, token_address: str, to: str, amount: int
+    ) -> HexBytes:
         """
         Transfer IbetMembership token
 
@@ -94,22 +93,26 @@ class IbetMembershipTestHelper:
         :param token_address: IbetMembership contract address
         :param to: Transfer destination address
         :param amount: Transfer amount
+        :return: Transaction object
         """
         token_contract = Contract.get_contract(
             contract_name="IbetMembership", address=token_address
         )
-        token_contract.functions.transfer(to, amount).transact({"from": tx_from})
+        tx = token_contract.functions.transfer(to, amount).transact({"from": tx_from})  # type: ignore
+        return tx
 
     @staticmethod
-    def set_token_status(tx_from: str, token_address: str, status: int) -> None:
+    def set_token_status(tx_from: str, token_address: str, status: int) -> HexBytes:
         """
         Set token status on IbetMembership contract
 
         :param tx_from: Transaction sender address (issuer)
         :param token_address: IbetMembership contract address
         :param status: Token status
+        :return: Transaction object
         """
         token_contract = Contract.get_contract(
             contract_name="IbetMembership", address=token_address
         )
-        token_contract.functions.setStatus(status).transact({"from": tx_from})
+        tx = token_contract.functions.setStatus(status).transact({"from": tx_from})  # type: ignore
+        return tx

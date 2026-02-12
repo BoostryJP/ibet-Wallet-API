@@ -29,7 +29,15 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from tests.account_config import eth_account
 from tests.helpers import IbetShareTestHelper
-from tests.helpers.contract import Contract
+from tests.helpers.ibet_exchange_helpers import (
+    abort_security_token_delivery,
+    cancel_security_token_delivery,
+    confirm_security_token_delivery,
+    create_security_token_delivery,
+    finish_security_token_delivery,
+    get_latest_security_delivery_id,
+    withdraw_from_exchange,
+)
 from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -79,13 +87,13 @@ class TestEventsIbetSecurityTokenDVP:
     def test_normal_2(
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
-        issuer = eth_account["issuer"]["account_address"]
+        issuer = eth_account["issuer"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -102,9 +110,12 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        tx_hash = token_contract.functions.transfer(
-            dvp_contract["address"], 1000
-        ).transact({"from": issuer})
+        tx_hash = IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
+        )
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -120,7 +131,10 @@ class TestEventsIbetSecurityTokenDVP:
         assert resp.json()["data"] == [
             {
                 "event": "Deposited",
-                "args": {"token": token_contract.address, "account": issuer},
+                "args": {
+                    "token": token_contract.address,
+                    "account": issuer["account_address"],
+                },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
@@ -144,17 +158,14 @@ class TestEventsIbetSecurityTokenDVP:
         session: Session,
         shared_contract: SharedContract,
     ):
-        issuer = eth_account["issuer"]["account_address"]
+        issuer = eth_account["issuer"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -171,15 +182,17 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        token_contract.functions.transfer(dvp_contract["address"], 1000).transact(
-            {"from": issuer}
+        IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
         )  # Deposited
 
         # Withdraw token from DVP contract
-        tx_hash = dvp_contract_instance.functions.withdraw(
-            token_contract.address,
-        ).transact({"from": issuer})  # Withdrawn
-
+        tx_hash = withdraw_from_exchange(
+            issuer, dvp_contract, {"address": token_contract.address}
+        )  # Withdrawn
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -201,7 +214,10 @@ class TestEventsIbetSecurityTokenDVP:
         assert resp.json()["data"] == [
             {
                 "event": "Withdrawn",
-                "args": {"token": token_contract.address, "account": issuer},
+                "args": {
+                    "token": token_contract.address,
+                    "account": issuer["account_address"],
+                },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
@@ -225,19 +241,16 @@ class TestEventsIbetSecurityTokenDVP:
         session: Session,
         shared_contract: SharedContract,
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -255,22 +268,27 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        token_contract.functions.transfer(dvp_contract["address"], 1000).transact(
-            {"from": issuer}
+        IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
         )  # Deposited
 
         # Create delivery
-        tx_hash = dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        tx_hash = create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCreated
+        )  # DeliveryCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_delivery_id = dvp_contract_instance.functions.latestDeliveryId().call()
+
+        latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
 
         # Request target API
         params: dict[str, Any] = {
@@ -293,11 +311,11 @@ class TestEventsIbetSecurityTokenDVP:
                 "args": {
                     "deliveryId": latest_delivery_id,
                     "token": token_contract.address,
-                    "seller": issuer,
-                    "buyer": user1,
+                    "seller": issuer["account_address"],
+                    "buyer": user1["account_address"],
                     "amount": 1000,
-                    "agent": agent,
-                    "data": "test_data",
+                    "agent": agent["account_address"],
+                    "data": "{}",
                 },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
@@ -322,19 +340,16 @@ class TestEventsIbetSecurityTokenDVP:
         session: Session,
         shared_contract: SharedContract,
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -352,27 +367,31 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        token_contract.functions.transfer(dvp_contract["address"], 1000).transact(
-            {"from": issuer}
+        IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
         )  # Deposited
 
         # Create delivery
-        dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCanceled
+        )  # DeliveryCreated
 
         # Cancel delivery
-        tx_hash = dvp_contract_instance.functions.cancelDelivery(
-            dvp_contract_instance.functions.latestDeliveryId().call()
-        ).transact({"from": issuer})  # DeliveryCreated
+        latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
+        tx_hash = cancel_security_token_delivery(
+            issuer, dvp_contract, latest_delivery_id
+        )  # DeliveryCreated
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_delivery_id = dvp_contract_instance.functions.latestDeliveryId().call()
 
         # Request target API
         params: dict[str, Any] = {
@@ -395,10 +414,10 @@ class TestEventsIbetSecurityTokenDVP:
                 "args": {
                     "deliveryId": latest_delivery_id,
                     "token": token_contract.address,
-                    "seller": issuer,
-                    "buyer": user1,
+                    "seller": issuer["account_address"],
+                    "buyer": user1["account_address"],
                     "amount": 1000,
-                    "agent": agent,
+                    "agent": agent["account_address"],
                 },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
@@ -423,19 +442,16 @@ class TestEventsIbetSecurityTokenDVP:
         session: Session,
         shared_contract: SharedContract,
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -453,27 +469,31 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        token_contract.functions.transfer(dvp_contract["address"], 1000).transact(
-            {"from": issuer}
+        IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
         )  # Deposited
 
         # Create delivery
-        dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCreated
+        )  # DeliveryCreated
 
         # Confirm delivery
-        tx_hash = dvp_contract_instance.functions.confirmDelivery(
-            dvp_contract_instance.functions.latestDeliveryId().call()
-        ).transact({"from": user1})  # DeliveryConfirmed
+        latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
+        tx_hash = confirm_security_token_delivery(
+            user1, dvp_contract, latest_delivery_id
+        )  # DeliveryConfirmed
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_delivery_id = dvp_contract_instance.functions.latestDeliveryId().call()
 
         # request target API
         params: dict[str, Any] = {
@@ -496,10 +516,10 @@ class TestEventsIbetSecurityTokenDVP:
                 "args": {
                     "deliveryId": latest_delivery_id,
                     "token": token_contract.address,
-                    "seller": issuer,
-                    "buyer": user1,
+                    "seller": issuer["account_address"],
+                    "buyer": user1["account_address"],
                     "amount": 1000,
-                    "agent": agent,
+                    "agent": agent["account_address"],
                 },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
@@ -524,19 +544,16 @@ class TestEventsIbetSecurityTokenDVP:
         session: Session,
         shared_contract: SharedContract,
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -554,32 +571,36 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        token_contract.functions.transfer(dvp_contract["address"], 1000).transact(
-            {"from": issuer}
+        IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
         )  # Deposited
 
         # Create delivery
-        dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCreated
+        )  # DeliveryCreated
 
         # Confirm delivery
-        dvp_contract_instance.functions.confirmDelivery(
-            dvp_contract_instance.functions.latestDeliveryId().call()
-        ).transact({"from": user1})  # DeliveryConfirmed
+        latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
+        confirm_security_token_delivery(
+            user1, dvp_contract, latest_delivery_id
+        )  # DeliveryConfirmed
 
         # Finish delivery
-        tx_hash = dvp_contract_instance.functions.finishDelivery(
-            dvp_contract_instance.functions.latestDeliveryId().call()
-        ).transact({"from": agent})  # DeliveryFinished
+        tx_hash = finish_security_token_delivery(
+            agent, dvp_contract, latest_delivery_id
+        )  # DeliveryFinished
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_delivery_id = dvp_contract_instance.functions.latestDeliveryId().call()
 
         # request target API
         params: dict[str, Any] = {
@@ -602,10 +623,10 @@ class TestEventsIbetSecurityTokenDVP:
                 "args": {
                     "deliveryId": latest_delivery_id,
                     "token": token_contract.address,
-                    "seller": issuer,
-                    "buyer": user1,
+                    "seller": issuer["account_address"],
+                    "buyer": user1["account_address"],
                     "amount": 1000,
-                    "agent": agent,
+                    "agent": agent["account_address"],
                 },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
@@ -630,19 +651,16 @@ class TestEventsIbetSecurityTokenDVP:
         session: Session,
         shared_contract: SharedContract,
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -660,32 +678,36 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        token_contract.functions.transfer(dvp_contract["address"], 1000).transact(
-            {"from": issuer}
+        IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
         )  # Deposited
 
         # Create delivery
-        dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCreated
+        )  # DeliveryCreated
 
         # Confirm delivery
-        dvp_contract_instance.functions.confirmDelivery(
-            dvp_contract_instance.functions.latestDeliveryId().call()
-        ).transact({"from": user1})  # DeliveryConfirmed
+        latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
+        confirm_security_token_delivery(
+            user1, dvp_contract, latest_delivery_id
+        )  # DeliveryConfirmed
 
-        # Finish delivery
-        tx_hash = dvp_contract_instance.functions.abortDelivery(
-            dvp_contract_instance.functions.latestDeliveryId().call()
-        ).transact({"from": agent})  # DeliveryFinished
+        # Abort delivery
+        tx_hash = abort_security_token_delivery(
+            agent, dvp_contract, latest_delivery_id
+        )  # DeliveryAborted
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
-        latest_delivery_id = dvp_contract_instance.functions.latestDeliveryId().call()
 
         # request target API
         params: dict[str, Any] = {
@@ -708,10 +730,10 @@ class TestEventsIbetSecurityTokenDVP:
                 "args": {
                     "deliveryId": latest_delivery_id,
                     "token": token_contract.address,
-                    "seller": issuer,
-                    "buyer": user1,
+                    "seller": issuer["account_address"],
+                    "buyer": user1["account_address"],
                     "amount": 1000,
-                    "agent": agent,
+                    "agent": agent["account_address"],
                 },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
@@ -727,14 +749,14 @@ class TestEventsIbetSecurityTokenDVP:
     def test_normal_9_1(
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
-        issuer = eth_account["issuer"]["account_address"]
+        issuer = eth_account["issuer"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -751,9 +773,12 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        tx_hash = token_contract.functions.transfer(
-            dvp_contract["address"], 1000
-        ).transact({"from": issuer})
+        tx_hash = IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
+        )
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -764,7 +789,10 @@ class TestEventsIbetSecurityTokenDVP:
                 "from_block": latest_block_number,
                 "to_block": latest_block_number,
                 "argument_filters": json.dumps(
-                    {"token": token_contract.address, "account": issuer}
+                    {
+                        "token": token_contract.address,
+                        "account": issuer["account_address"],
+                    }
                 ),
                 "event": "Deposited",
             },
@@ -776,7 +804,10 @@ class TestEventsIbetSecurityTokenDVP:
         assert resp.json()["data"] == [
             {
                 "event": "Deposited",
-                "args": {"token": token_contract.address, "account": issuer},
+                "args": {
+                    "token": token_contract.address,
+                    "account": issuer["account_address"],
+                },
                 "transaction_hash": tx_hash.to_0x_hex(),
                 "block_number": latest_block_number,
                 "block_timestamp": latest_block_timestamp,
@@ -791,13 +822,13 @@ class TestEventsIbetSecurityTokenDVP:
     def test_normal_9_2(
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
-        issuer = eth_account["issuer"]["account_address"]
+        issuer = eth_account["issuer"]
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -814,9 +845,12 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        _tx_hash = token_contract.functions.transfer(
-            dvp_contract["address"], 1000
-        ).transact({"from": issuer})
+        _tx_hash = IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
+        )
         latest_block_number = web3.eth.block_number
         _latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -846,19 +880,16 @@ class TestEventsIbetSecurityTokenDVP:
     def test_normal_10_1(
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -876,24 +907,28 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        tx_hash_1 = token_contract.functions.transfer(
-            dvp_contract["address"], 1000
-        ).transact({"from": issuer})  # Deposited
+        tx_hash_1 = IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
+        )  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create delivery
-        tx_hash_2 = dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        tx_hash_2 = create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCreated
+        )  # DeliveryCreated
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = _get_block_timestamp(block_number_2)
 
-        latest_delivery_id = dvp_contract_instance.functions.latestDeliveryId().call()
+        latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
 
         # Request target API
         resp = client.get(
@@ -907,7 +942,10 @@ class TestEventsIbetSecurityTokenDVP:
         assert resp.json()["data"] == [
             {
                 "event": "Deposited",
-                "args": {"token": token_contract.address, "account": issuer},
+                "args": {
+                    "token": token_contract.address,
+                    "account": issuer["account_address"],
+                },
                 "transaction_hash": tx_hash_1.to_0x_hex(),
                 "block_number": block_number_1,
                 "block_timestamp": block_timestamp_1,
@@ -918,11 +956,11 @@ class TestEventsIbetSecurityTokenDVP:
                 "args": {
                     "deliveryId": latest_delivery_id,
                     "token": token_contract.address,
-                    "seller": issuer,
-                    "buyer": user1,
+                    "seller": issuer["account_address"],
+                    "buyer": user1["account_address"],
                     "amount": 1000,
-                    "agent": agent,
-                    "data": "test_data",
+                    "agent": agent["account_address"],
+                    "data": "{}",
                 },
                 "transaction_hash": tx_hash_2.to_0x_hex(),
                 "block_number": block_number_2,
@@ -938,19 +976,16 @@ class TestEventsIbetSecurityTokenDVP:
     def test_normal_10_2(
         self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
-        issuer = eth_account["issuer"]["account_address"]
-        user1 = eth_account["user1"]["account_address"]
-        agent = eth_account["agent"]["account_address"]
+        issuer = eth_account["issuer"]
+        user1 = eth_account["user1"]
+        agent = eth_account["agent"]
 
         dvp_contract = shared_contract["IbetSecurityTokenDVP"]
         config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS = dvp_contract["address"]
-        dvp_contract_instance = Contract.get_contract(
-            "IbetSecurityTokenDVP", dvp_contract["address"]
-        )
 
         # Issue token
         token_contract = IbetShareTestHelper.issue(
-            tx_from=issuer,
+            tx_from=issuer["account_address"],
             args={
                 "name": "test_token",
                 "symbol": "TEST",
@@ -968,20 +1003,24 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        tx_hash_1 = token_contract.functions.transfer(
-            dvp_contract["address"], 1000
-        ).transact({"from": issuer})  # Deposited
+        tx_hash_1 = IbetShareTestHelper.transfer_token(
+            issuer["account_address"],
+            token_contract.address,
+            dvp_contract["address"],
+            1000,
+        )  # Deposited
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create delivery
-        dvp_contract_instance.functions.createDelivery(
-            token_contract.address,
-            user1,
+        create_security_token_delivery(
+            issuer,
+            dvp_contract,
+            {"address": token_contract.address},
+            user1["account_address"],
+            agent["account_address"],
             1000,
-            agent,
-            "test_data",
-        ).transact({"from": issuer})  # DeliveryCreated
+        )  # DeliveryCreated
         block_number_2 = web3.eth.block_number
 
         # Request target API
@@ -991,7 +1030,10 @@ class TestEventsIbetSecurityTokenDVP:
                 "from_block": block_number_1,
                 "to_block": block_number_2,
                 "argument_filters": json.dumps(
-                    {"token": token_contract.address, "account": issuer}
+                    {
+                        "token": token_contract.address,
+                        "account": issuer["account_address"],
+                    }
                 ),
             },
         )
@@ -1002,7 +1044,10 @@ class TestEventsIbetSecurityTokenDVP:
         assert resp.json()["data"] == [
             {
                 "event": "Deposited",
-                "args": {"token": token_contract.address, "account": issuer},
+                "args": {
+                    "token": token_contract.address,
+                    "account": issuer["account_address"],
+                },
                 "transaction_hash": tx_hash_1.to_0x_hex(),
                 "block_number": block_number_1,
                 "block_timestamp": block_timestamp_1,

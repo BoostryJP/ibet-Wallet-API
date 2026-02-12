@@ -17,14 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
+from hexbytes import HexBytes
 
-from app import config
 from tests.helpers.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class PersonalInfoHelper:
@@ -34,10 +29,20 @@ class PersonalInfoHelper:
         personal_info_address: str,
         link_address: str,
         encrypted_info: str = "",
-    ) -> None:
+    ) -> HexBytes:
+        """
+        Register personal information in PersonalInfo contract
+
+        :param tx_from: Transaction sender address
+        :param personal_info_address: PersonalInfo contract address
+        :param link_address: Link address for the personal information
+        :param encrypted_info: Encrypted personal information (default: "")
+        :return: Transaction object
+        """
         personal_info_contract = Contract.get_contract(
             contract_name="PersonalInfo", address=personal_info_address
         )
-        personal_info_contract.functions.register(
+        tx = personal_info_contract.functions.register(
             link_address, encrypted_info
-        ).transact({"from": tx_from})
+        ).transact({"from": tx_from})  # type: ignore
+        return tx

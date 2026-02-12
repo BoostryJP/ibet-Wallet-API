@@ -21,9 +21,7 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
 from web3.contract import Contract as Web3Contract
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import (
@@ -35,11 +33,8 @@ from app.model.db import (
 )
 from tests.account_config import eth_account
 from tests.helpers import IbetStraightBondTestHelper, PersonalInfoHelper
-from tests.helpers.contract import Contract
+from tests.helpers.ibet_exchange_helpers import create_security_token_escrow
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPositionStraightBond:
@@ -141,19 +136,16 @@ class TestPositionStraightBond:
             exchange_contract["address"],
             commitment,
         )
-
-        escrow_contract = Contract.get_contract(
-            contract_name="IbetSecurityTokenEscrow",
-            address=exchange_contract["address"],
-        )
-        escrow_contract.functions.createEscrow(
-            token.address,
+        create_security_token_escrow(
+            account,
+            exchange_contract,
+            {"address": token.address},
+            account["account_address"],
             account["account_address"],
             commitment,
-            account["account_address"],
             "test_data",
             "test_data",
-        ).transact({"from": account["account_address"]})
+        )
 
         return token
 
