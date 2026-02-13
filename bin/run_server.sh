@@ -37,10 +37,9 @@ function start () {
   WORKER_MAX_REQUESTS=${WORKER_MAX_REQUESTS:-0}
   WORKER_MAX_REQUESTS_JITTER=${WORKER_MAX_REQUESTS_JITTER:-0}
   KEEP_ALIVE=${KEEP_ALIVE:-2}
-  WORKER_CONNECTIONS=${WORKER_CONNECTIONS:-100}
 
   # start
-  gunicorn --worker-class asgi \
+  gunicorn --worker-class server.AppUvicornWorker \
            --workers ${WORKER_COUNT} \
            --bind :5000 \
            --timeout ${WORKER_TIMEOUT} \
@@ -48,7 +47,6 @@ function start () {
            --max-requests-jitter ${WORKER_MAX_REQUESTS_JITTER} \
            --keep-alive ${KEEP_ALIVE} \
            --limit-request-line 0 \
-           --worker-connections ${WORKER_CONNECTIONS} \
            app.main:app
 }
 
