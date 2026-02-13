@@ -47,22 +47,18 @@ from app.model.db import (
 from batch import indexer_Position_Share
 from batch.indexer_Position_Share import LOG, Processor, main
 from tests.account_config import eth_account
-from tests.contract_modules import (
+from tests.helpers import IbetShareTestHelper, PersonalInfoHelper
+from tests.helpers.ibet_exchange_helpers import (
     abort_security_token_delivery,
     confirm_security_token_delivery,
     create_security_token_delivery,
     create_security_token_escrow,
-    finish_security_token_dvlivery,
+    finish_security_token_delivery,
     finish_security_token_escrow,
     get_latest_security_delivery_id,
     get_latest_security_escrow_id,
-    share_issue_token,
-    share_register_token_list,
-    share_transfer_to_exchange,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils import PersonalInfoUtils
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -123,10 +119,14 @@ class TestProcessor:
             "privacyPolicy": "プライバシーポリシー",
             "memo": "メモ",
             "transferable": True,
+            "requirePersonalInfoRegistered": False,
         }
-        token = share_issue_token(issuer, args)
-        share_register_token_list(issuer, token, token_list)
-
+        token = IbetShareTestHelper.issue(issuer["account_address"], args)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -160,17 +160,14 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Run target process
@@ -185,7 +182,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -195,14 +192,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
@@ -213,14 +210,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer == 0
@@ -244,20 +241,20 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract["address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 3000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            3000,
         )
 
         # Run target process
@@ -272,7 +269,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -282,14 +279,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer == 0
@@ -300,14 +297,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer == 0
@@ -330,7 +327,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         personal_info_contract = shared_contract["PersonalInfo"]
         token2 = self.issue_token_share(
             self.issuer,
@@ -338,31 +335,32 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token2["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
-        PersonalInfoUtils.register(
-            self.trader2["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token2.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader2["account_address"]}, token, 3000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            3000,
         )
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token2, 5000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token2.address,
+            self.trader["account_address"],
+            5000,
         )
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader2["account_address"]}, token2, 3000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token2.address,
+            self.trader2["account_address"],
+            3000,
         )
 
         # Run target process
@@ -377,7 +375,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -387,14 +385,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer == 0
@@ -405,14 +403,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader2["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer == 0
@@ -423,14 +421,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer == 0
@@ -441,14 +439,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.token_address == token2.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token2["address"]
+        assert _position.token_address == token2.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 5000
         assert _position.pending_transfer == 0
@@ -459,14 +457,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.token_address == token2.address,
                     IDXPosition.account_address == self.trader2["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token2["address"]
+        assert _position.token_address == token2.address
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer == 0
@@ -477,7 +475,7 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token2["address"],
+                    IDXPosition.token_address == token2.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
@@ -485,7 +483,7 @@ class TestProcessor:
         ).first()
         assert _position is not None
 
-        assert _position.token_address == token2["address"]
+        assert _position.token_address == token2.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 5000 - 3000
         assert _position.pending_transfer == 0
@@ -513,20 +511,30 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
+        self.listing_token(token.address, session)
 
         # Lock
-        token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "garnishment"}'
-        ).transact({"from": self.issuer["account_address"]})
-        token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "ibet_wst_bridge"}'
-        ).transact({"from": self.issuer["account_address"]})
-        token_contract.functions.lock(
-            self.trader["account_address"], 1500, '{"message": "inheritance"}'
-        ).transact({"from": self.issuer["account_address"]})
+        IbetShareTestHelper.lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            1500,
+            '{"message": "garnishment"}',
+        )
+        IbetShareTestHelper.lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            1500,
+            '{"message": "ibet_wst_bridge"}',
+        )
+        IbetShareTestHelper.lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            1500,
+            '{"message": "inheritance"}',
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -547,14 +555,14 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
         assert _idx_position_share_block_number.latest_block_number == block_number
 
         _position = _position_list[0]
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 4500
         assert _position.pending_transfer == 0
@@ -567,7 +575,7 @@ class TestProcessor:
         assert len(_locked_list) == 1
 
         _locked1 = _locked_list[0]
-        assert _locked1.token_address == token["address"]
+        assert _locked1.token_address == token.address
         assert _locked1.lock_address == self.trader["account_address"]
         assert _locked1.account_address == self.issuer["account_address"]
         assert _locked1.value == 4500
@@ -577,7 +585,7 @@ class TestProcessor:
 
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
+        assert _lock1.token_address == token.address
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
         assert _lock1.value == 1500
@@ -585,7 +593,7 @@ class TestProcessor:
         assert _lock1.is_forced is False
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
-        assert _lock2.token_address == token["address"]
+        assert _lock2.token_address == token.address
         assert _lock2.lock_address == self.trader["account_address"]
         assert _lock2.account_address == self.issuer["account_address"]
         assert _lock2.value == 1500
@@ -593,7 +601,7 @@ class TestProcessor:
         assert _lock2.is_forced is False
         _lock3 = _lock_list[2]
         assert _lock3.id == 3
-        assert _lock3.token_address == token["address"]
+        assert _lock3.token_address == token.address
         assert _lock3.lock_address == self.trader["account_address"]
         assert _lock3.account_address == self.issuer["account_address"]
         assert _lock3.value == 1500
@@ -621,32 +629,32 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
+        IbetShareTestHelper.transfer_token(
             self.issuer["account_address"],
-        )
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 3000
+            token.address,
+            self.trader["account_address"],
+            3000,
         )
 
         # ForceLock
-        token_contract.functions.forceLock(
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.trader["account_address"],
             1500,
             '{"message": "force_lock"}',
-        ).transact({"from": self.issuer["account_address"]})
-        token_contract.functions.forceLock(
+        )
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.trader["account_address"],
             1500,
             '{"message": "force_lock"}',
-        ).transact({"from": self.issuer["account_address"]})
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -666,7 +674,7 @@ class TestProcessor:
             .limit(1)
         ).first()
         assert _position_issuer is not None
-        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.token_address == token.address
         assert _position_issuer.account_address == self.issuer["account_address"]
         assert _position_issuer.balance == 1000000 - 3000
         assert _position_issuer.pending_transfer == 0
@@ -679,7 +687,7 @@ class TestProcessor:
             .limit(1)
         ).first()
         assert _position_trader is not None
-        assert _position_trader.token_address == token["address"]
+        assert _position_trader.token_address == token.address
         assert _position_trader.account_address == self.trader["account_address"]
         assert _position_trader.balance == 0
         assert _position_trader.pending_transfer == 0
@@ -688,7 +696,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -699,7 +707,7 @@ class TestProcessor:
         ).all()
         assert len(_locked_list) == 1
         _locked1 = _locked_list[0]
-        assert _locked1.token_address == token["address"]
+        assert _locked1.token_address == token.address
         assert _locked1.lock_address == self.issuer["account_address"]
         assert _locked1.account_address == self.trader["account_address"]
         assert _locked1.value == 3000
@@ -710,7 +718,7 @@ class TestProcessor:
         assert len(_lock_list) == 2
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
+        assert _lock1.token_address == token.address
         assert _lock1.msg_sender == self.issuer["account_address"]
         assert _lock1.lock_address == self.issuer["account_address"]
         assert _lock1.account_address == self.trader["account_address"]
@@ -719,7 +727,7 @@ class TestProcessor:
         assert _lock1.is_forced is True
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
-        assert _lock2.token_address == token["address"]
+        assert _lock2.token_address == token.address
         assert _lock2.msg_sender == self.issuer["account_address"]
         assert _lock2.lock_address == self.issuer["account_address"]
         assert _lock2.account_address == self.trader["account_address"]
@@ -748,22 +756,26 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
+        self.listing_token(token.address, session)
 
         # Lock
-        token_contract.functions.lock(
-            self.trader["account_address"], 3000, '{"message": "garnishment"}'
-        ).transact({"from": self.issuer["account_address"]})
+        IbetShareTestHelper.lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            3000,
+            '{"message": "garnishment"}',
+        )
 
         # Unlock
-        token_contract.functions.unlock(
+        IbetShareTestHelper.unlock_token(
+            self.trader["account_address"],
+            token.address,
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
             '{"message": "garnishment"}',
-        ).transact({"from": self.trader["account_address"]})
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -784,7 +796,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -794,14 +806,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 3000
         assert _position.pending_transfer == 0
@@ -812,14 +824,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader2["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 100
         assert _position.pending_transfer == 0
@@ -831,7 +843,7 @@ class TestProcessor:
         ).all()
         assert len(_locked_list) == 1
         _locked = _locked_list[0]
-        assert _locked.token_address == token["address"]
+        assert _locked.token_address == token.address
         assert _locked.lock_address == self.trader["account_address"]
         assert _locked.account_address == self.issuer["account_address"]
         assert _locked.value == 2900
@@ -840,7 +852,7 @@ class TestProcessor:
         assert len(_lock_list) == 1
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
+        assert _lock1.token_address == token.address
         assert _lock1.msg_sender == self.issuer["account_address"]
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
@@ -851,7 +863,7 @@ class TestProcessor:
         assert len(_unlock_list) == 1
         _unlock1 = _unlock_list[0]
         assert _unlock1.id == 1
-        assert _unlock1.token_address == token["address"]
+        assert _unlock1.token_address == token.address
         assert _unlock1.msg_sender == self.trader["account_address"]
         assert _unlock1.lock_address == self.trader["account_address"]
         assert _unlock1.account_address == self.issuer["account_address"]
@@ -881,23 +893,27 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
+        self.listing_token(token.address, session)
 
         # Lock
-        token_contract.functions.lock(
-            self.trader["account_address"], 3000, '{"message": "garnishment"}'
-        ).transact({"from": self.issuer["account_address"]})
+        IbetShareTestHelper.lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            3000,
+            '{"message": "garnishment"}',
+        )
 
         # Unlock
-        token_contract.functions.forceUnlock(
+        IbetShareTestHelper.force_unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.trader["account_address"],
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
             '{"message": "garnishment"}',
-        ).transact({"from": self.issuer["account_address"]})
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -918,7 +934,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -928,14 +944,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 3000
         assert _position.pending_transfer == 0
@@ -946,14 +962,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader2["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 100
         assert _position.pending_transfer == 0
@@ -965,7 +981,7 @@ class TestProcessor:
         ).all()
         assert len(_locked_list) == 1
         _locked = _locked_list[0]
-        assert _locked.token_address == token["address"]
+        assert _locked.token_address == token.address
         assert _locked.lock_address == self.trader["account_address"]
         assert _locked.account_address == self.issuer["account_address"]
         assert _locked.value == 2900
@@ -974,7 +990,7 @@ class TestProcessor:
         assert len(_lock_list) == 1
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
+        assert _lock1.token_address == token.address
         assert _lock1.msg_sender == self.issuer["account_address"]
         assert _lock1.lock_address == self.trader["account_address"]
         assert _lock1.account_address == self.issuer["account_address"]
@@ -985,7 +1001,7 @@ class TestProcessor:
         assert len(_unlock_list) == 1
         _unlock1 = _unlock_list[0]
         assert _unlock1.id == 1
-        assert _unlock1.token_address == token["address"]
+        assert _unlock1.token_address == token.address
         assert _unlock1.msg_sender == self.issuer["account_address"]
         assert _unlock1.lock_address == self.trader["account_address"]
         assert _unlock1.account_address == self.issuer["account_address"]
@@ -1015,35 +1031,35 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 3000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            3000,
         )
 
         # Lock
-        token_contract.functions.lock(
-            self.issuer["account_address"],  # lock address
+        IbetShareTestHelper.lock_token(
+            self.trader["account_address"],
+            token.address,
+            self.issuer["account_address"],
             3000,
             '{"message": "garnishment"}',
-        ).transact({"from": self.trader["account_address"]})
+        )
 
         # ForceChangeLockedAccount
-        token_contract.functions.forceChangeLockedAccount(
+        IbetShareTestHelper.force_change_locked_account(
+            self.issuer["account_address"],
+            token.address,
             self.issuer["account_address"],  # lock address
             self.trader["account_address"],  # before account address
             self.trader2["account_address"],  # after account address
             100,
             '{"message": "ibet_wst_bridge"}',
-        ).transact({"from": self.issuer["account_address"]})
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1061,14 +1077,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position_issuer is not None
-        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.token_address == token.address
         assert _position_issuer.account_address == self.issuer["account_address"]
         assert _position_issuer.balance == 1000000 - 3000
         assert _position_issuer.pending_transfer == 0
@@ -1079,14 +1095,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position_trader_1 is not None
-        assert _position_trader_1.token_address == token["address"]
+        assert _position_trader_1.token_address == token.address
         assert _position_trader_1.account_address == self.trader["account_address"]
         assert _position_trader_1.balance == 0
         assert _position_trader_1.pending_transfer == 0
@@ -1097,14 +1113,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader2["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position_trader_2 is not None
-        assert _position_trader_2.token_address == token["address"]
+        assert _position_trader_2.token_address == token.address
         assert _position_trader_2.account_address == self.trader2["account_address"]
         assert _position_trader_2.balance == 0
         assert _position_trader_2.pending_transfer == 0
@@ -1113,7 +1129,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1124,12 +1140,12 @@ class TestProcessor:
         ).all()
         assert len(_locked_list) == 2
         _locked = _locked_list[0]
-        assert _locked.token_address == token["address"]
+        assert _locked.token_address == token.address
         assert _locked.lock_address == self.issuer["account_address"]
         assert _locked.account_address == self.trader["account_address"]
         assert _locked.value == 2900
         _locked = _locked_list[1]
-        assert _locked.token_address == token["address"]
+        assert _locked.token_address == token.address
         assert _locked.lock_address == self.issuer["account_address"]
         assert _locked.account_address == self.trader2["account_address"]
         assert _locked.value == 100
@@ -1138,7 +1154,7 @@ class TestProcessor:
         assert len(_lock_list) == 2
         _lock1 = _lock_list[0]
         assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
+        assert _lock1.token_address == token.address
         assert _lock1.msg_sender == self.trader["account_address"]
         assert _lock1.lock_address == self.issuer["account_address"]
         assert _lock1.account_address == self.trader["account_address"]
@@ -1146,7 +1162,7 @@ class TestProcessor:
         assert _lock1.data == {"message": "garnishment"}
         _lock2 = _lock_list[1]
         assert _lock2.id == 2
-        assert _lock2.token_address == token["address"]
+        assert _lock2.token_address == token.address
         assert _lock2.msg_sender == self.issuer["account_address"]
         assert _lock2.lock_address == self.issuer["account_address"]
         assert _lock2.account_address == self.trader2["account_address"]
@@ -1157,7 +1173,7 @@ class TestProcessor:
         assert len(_unlock_list) == 1
         _unlock1 = _unlock_list[0]
         assert _unlock1.id == 1
-        assert _unlock1.token_address == token["address"]
+        assert _unlock1.token_address == token.address
         assert _unlock1.msg_sender == self.issuer["account_address"]
         assert _unlock1.lock_address == self.issuer["account_address"]
         assert _unlock1.account_address == self.trader["account_address"]
@@ -1182,13 +1198,15 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Issue(add balance)
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        token_contract.functions.issueFrom(
-            self.issuer["account_address"], config.ZERO_ADDRESS, 50000
-        ).transact({"from": self.issuer["account_address"]})
+        IbetShareTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            50000,
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1202,14 +1220,14 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
         assert _idx_position_share_block_number.latest_block_number == block_number
 
         _position = _position_list[0]
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 + 50000
         assert _position.pending_transfer == 0
@@ -1232,13 +1250,15 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Redeem
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        token_contract.functions.redeemFrom(
-            self.issuer["account_address"], config.ZERO_ADDRESS, 50000
-        ).transact({"from": self.issuer["account_address"]})
+        IbetShareTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            50000,
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1252,14 +1272,14 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
         assert _idx_position_share_block_number.latest_block_number == block_number
 
         _position = _position_list[0]
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 50000
         assert _position.pending_transfer == 0
@@ -1282,33 +1302,27 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
-        PersonalInfoUtils.register(
-            self.trader2["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"]}
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Apply For Transfer
-        token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"]})
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            2000,
+            "test",
+        )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -1322,7 +1336,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1332,14 +1346,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
@@ -1350,14 +1364,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000 - 2000
         assert _position.pending_transfer == 2000
@@ -1381,37 +1395,42 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             self.trader["account_address"],
             personal_info_contract["address"],
             self.issuer["account_address"],
         )
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             self.trader2["account_address"],
             personal_info_contract["address"],
             self.issuer["account_address"],
         )
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"]}
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Apply For Transfer
-        token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"]})
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            2000,
+            "test",
+        )
 
         # Approve
-        token_contract.functions.approveTransfer(0, "test").transact(
-            {"from": self.issuer["account_address"]}
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 0, "test"
         )
 
         # Run target process
@@ -1426,7 +1445,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1436,14 +1455,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
@@ -1454,14 +1473,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader2["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 2000
         assert _position.pending_transfer == 0
@@ -1472,14 +1491,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000 - 2000
         assert _position.pending_transfer == 0
@@ -1502,37 +1521,42 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             self.trader["account_address"],
             personal_info_contract["address"],
             self.issuer["account_address"],
         )
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             self.trader2["account_address"],
             personal_info_contract["address"],
             self.issuer["account_address"],
         )
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
-        )
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        token_contract.functions.setTransferApprovalRequired(True).transact(
-            {"from": self.issuer["account_address"]}
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Apply For Transfer
-        token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "test"
-        ).transact({"from": self.trader["account_address"]})
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            2000,
+            "test",
+        )
 
         # Cancel
-        token_contract.functions.cancelTransfer(0, "test").transact(
-            {"from": self.issuer["account_address"]}
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.trader["account_address"], token.address, 0, "test"
         )
 
         # Run target process
@@ -1547,7 +1571,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1557,14 +1581,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
@@ -1575,14 +1599,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer == 0
@@ -1608,22 +1632,19 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Deposit and Escrow
-        share_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract["address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
         create_security_token_escrow(
             self.issuer,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.trader["account_address"],
             self.issuer["account_address"],
             200,
@@ -1636,7 +1657,7 @@ class TestProcessor:
         create_security_token_escrow(
             self.issuer,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.trader["account_address"],
             self.issuer["account_address"],
             300,
@@ -1654,7 +1675,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1664,14 +1685,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000
         assert _position.pending_transfer == 0
@@ -1682,14 +1703,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 0
         assert _position.pending_transfer == 0
@@ -1716,22 +1737,19 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Deposit and Create Delivery
-        share_transfer_to_exchange(
-            self.issuer, {"address": dvp_contract["address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            dvp_contract["address"],
+            10000,
         )
         create_security_token_delivery(
             self.issuer,
             {"address": dvp_contract["address"]},
-            token,
+            {"address": token.address},
             self.trader["account_address"],
             self.issuer["account_address"],
             200,
@@ -1741,7 +1759,7 @@ class TestProcessor:
             {"address": dvp_contract["address"]},
             get_latest_security_delivery_id({"address": dvp_contract["address"]}),
         )
-        finish_security_token_dvlivery(
+        finish_security_token_delivery(
             self.issuer,
             {"address": dvp_contract["address"]},
             get_latest_security_delivery_id({"address": dvp_contract["address"]}),
@@ -1749,7 +1767,7 @@ class TestProcessor:
         create_security_token_delivery(
             self.issuer,
             {"address": dvp_contract["address"]},
-            token,
+            {"address": token.address},
             self.trader["account_address"],
             self.issuer["account_address"],
             300,
@@ -1774,14 +1792,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position_issuer is not None
-        assert _position_issuer.token_address == token["address"]
+        assert _position_issuer.token_address == token.address
         assert _position_issuer.account_address == self.issuer["account_address"]
         assert _position_issuer.balance == 1000000 - 10000
         assert _position_issuer.pending_transfer == 0
@@ -1792,14 +1810,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.trader["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position_trader is not None
-        assert _position_trader.token_address == token["address"]
+        assert _position_trader.token_address == token.address
         assert _position_trader.account_address == self.trader["account_address"]
         assert _position_trader.balance == 0
         assert _position_trader.pending_transfer == 0
@@ -1808,7 +1826,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1828,7 +1846,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Not Event
         # Run target process
@@ -1843,7 +1861,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1865,15 +1883,12 @@ class TestProcessor:
             token_list_contract,
         )
 
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
-
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Run target process
@@ -1888,14 +1903,14 @@ class TestProcessor:
         _idx_position_share_block_numbers: Sequence[IDXPositionShareBlockNumber] = (
             session.scalars(
                 select(IDXPositionShareBlockNumber).where(
-                    IDXPositionShareBlockNumber.token_address == token["address"]
+                    IDXPositionShareBlockNumber.token_address == token.address
                 )
             ).all()
         )
         assert len(_idx_position_share_block_numbers) == 0
 
         # Listing
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         block_number = web3.eth.block_number
         await processor.sync_new_logs()
@@ -1909,7 +1924,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -1932,24 +1947,21 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
         from_block = web3.eth.block_number
         for _ in range(0, 5):
             # Transfer
-            share_transfer_to_exchange(
-                self.issuer, {"address": self.trader["account_address"]}, token, 10000
+            IbetShareTestHelper.transfer_token(
+                self.issuer["account_address"],
+                token.address,
+                self.trader["account_address"],
+                10000,
             )
         to_block = web3.eth.block_number
 
         # Get events for token address
-        contract = Contract.get_contract("IbetShare", token["address"])
-        events: list[EventData] = contract.events.Transfer.get_logs(
+        events: list[EventData] = token.events.Transfer.get_logs(
             from_block=from_block, to_block=to_block
         )
         # Ensure 5 events squashed to 2 events
@@ -1982,10 +1994,10 @@ class TestProcessor:
         )
 
         # Setting current block number to 19,999,999
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         block_number_mock = AsyncMock()
         block_number_mock.return_value = current_block_number
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         with mock.patch(
             "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
         ):
@@ -1993,7 +2005,7 @@ class TestProcessor:
                 Processor, "_Processor__sync_all", return_value=mock_lib
             ) as __sync_all_mock:
                 idx_position_share_block_number = IDXPositionShareBlockNumber()
-                idx_position_share_block_number.token_address = token["address"]
+                idx_position_share_block_number.token_address = token.address
                 idx_position_share_block_number.exchange_address = escrow_contract[
                     "address"
                 ]
@@ -2026,7 +2038,7 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(new_token["address"], session)
+        self.listing_token(new_token.address, session)
 
         with mock.patch(
             "web3.eth.async_eth.AsyncEth.block_number", block_number_mock()
@@ -2057,20 +2069,24 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract["address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
+
         for i in range(1001):
-            web3.eth.default_account = self.issuer["account_address"]
-            TokenContract = Contract.get_contract("IbetStraightBond", token["address"])
-            TokenContract.functions.transferFrom(
+            IbetShareTestHelper.force_transfer_token(
+                self.issuer["account_address"],
+                token.address,
                 self.issuer["account_address"],
                 to_checksum_address(f"0x{hex(i)[2:].zfill(40)}"),
                 1,
-            ).transact({"from": self.issuer["account_address"]})
+            )
 
         # Run target process
         block_number = web3.eth.block_number
@@ -2084,7 +2100,7 @@ class TestProcessor:
 
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -2094,14 +2110,14 @@ class TestProcessor:
             select(IDXPosition)
             .where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.account_address == self.issuer["account_address"],
                 )
             )
             .limit(1)
         ).first()
         assert _position is not None
-        assert _position.token_address == token["address"]
+        assert _position.token_address == token.address
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 1001
         assert _position.pending_transfer == 0
@@ -2111,7 +2127,7 @@ class TestProcessor:
         _positions: Sequence[IDXPosition] = session.scalars(
             select(IDXPosition).where(
                 and_(
-                    IDXPosition.token_address == token["address"],
+                    IDXPosition.token_address == token.address,
                     IDXPosition.balance == 1,
                 )
             )
@@ -2143,16 +2159,14 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         block_number_current = web3.eth.block_number
@@ -2168,7 +2182,7 @@ class TestProcessor:
         # Latest_block is incremented in "initial_sync" process.
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -2177,8 +2191,11 @@ class TestProcessor:
         )
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         block_number_current = web3.eth.block_number
@@ -2200,7 +2217,7 @@ class TestProcessor:
         # Latest_block is incremented in "sync_new_logs" process.
         _idx_position_share_block_number = session.scalars(
             select(IDXPositionShareBlockNumber)
-            .where(IDXPositionShareBlockNumber.token_address == token["address"])
+            .where(IDXPositionShareBlockNumber.token_address == token.address)
             .limit(1)
         ).first()
         assert _idx_position_share_block_number is not None
@@ -2225,17 +2242,14 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -2267,8 +2281,11 @@ class TestProcessor:
         session.rollback()
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -2321,17 +2338,14 @@ class TestProcessor:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"],
-            personal_info_contract["address"],
-            self.issuer["account_address"],
-        )
+        self.listing_token(token.address, session)
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Expect that initial_sync() raises SQLAlchemyError.
@@ -2360,8 +2374,11 @@ class TestProcessor:
         session.rollback()
 
         # Transfer
-        share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, token, 10000
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
         )
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
@@ -2398,8 +2415,6 @@ class TestProcessor:
     async def test_error_3(
         self,
         main_func: Callable[[], Awaitable[None]],
-        shared_contract: SharedContract,
-        session: Session,
         caplog: pytest.LogCaptureFixture,
     ):
         # Mocking time.sleep to break mainloop

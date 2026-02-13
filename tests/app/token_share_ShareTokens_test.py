@@ -24,19 +24,13 @@ import pytest
 from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXTokenListRegister, Listing
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import share_issue_token, share_register_token_list
-from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+from tests.helpers import IbetShareTestHelper
+from tests.types import SharedContract
 
 
 @pytest.fixture(scope="function")
@@ -78,25 +72,15 @@ class TestTokenShareTokens:
         return attribute
 
     @staticmethod
-    def tokenlist_contract() -> DeployedContract:
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session: Session, token: DeployedContract) -> None:
+    def list_token(session: Session, token_address: str) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
         token_list_item = IDXTokenListRegister()
-        token_list_item.token_address = token["address"]
+        token_list_item.token_address = token_address
         token_list_item.token_template = "IbetShare"
         token_list_item.owner_address = ""
         session.add(token_list_item)
@@ -121,7 +105,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -130,11 +114,13 @@ class TestTokenShareTokens:
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = share_issue_token(issuer, attribute)
-        share_register_token_list(issuer, share_token, token_list)
+        share_token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], share_token.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token)
+        self.list_token(session, share_token.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -144,7 +130,7 @@ class TestTokenShareTokens:
         resp = client.get(self.apiurl, params=query_string)
         tokens = [
             {
-                "token_address": share_token["address"],
+                "token_address": share_token.address,
                 "token_template": "IbetShare",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -200,7 +186,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -211,54 +197,81 @@ class TestTokenShareTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.share_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = share_issue_token(issuer, attribute_token1)
-        token_address_list.append(share_token1["address"])
-        share_register_token_list(issuer, share_token1, token_list)
+        share_token1 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(share_token1.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = share_issue_token(issuer, attribute_token2)
-        token_address_list.append(share_token2["address"])
-        share_register_token_list(issuer, share_token2, token_list)
+        share_token2 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(share_token2.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = share_issue_token(issuer, attribute_token3)
-        token_address_list.append(share_token3["address"])
-        share_register_token_list(issuer, share_token3, token_list)
+        share_token3 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(share_token3.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = share_issue_token(issuer, attribute_token4)
-        token_address_list.append(share_token4["address"])
-        share_register_token_list(issuer, share_token4, token_list)
+        share_token4 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(share_token4.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = share_issue_token(issuer, attribute_token5)
-        token_address_list.append(share_token5["address"])
-        share_register_token_list(issuer, share_token5, token_list)
+        share_token5 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(share_token5.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token1)
-        self.list_token(session, share_token2)
-        self.list_token(session, share_token3)
-        self.list_token(session, share_token4)
-        self.list_token(session, share_token5)
+        self.list_token(session, share_token1.address)
+        self.list_token(session, share_token2.address)
+        self.list_token(session, share_token3.address)
+        self.list_token(session, share_token4.address)
+        self.list_token(session, share_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
         asyncio.run(processor.process())
 
-        target_token_addrss_list = token_address_list[1:4]
+        target_token_address_list = token_address_list[1:4]
 
         resp = client.get(
-            self.apiurl, params={"address_list": target_token_addrss_list}
+            self.apiurl, params={"address_list": target_token_address_list}
         )
         tokens = [
             {
@@ -319,7 +332,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -330,45 +343,72 @@ class TestTokenShareTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.share_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = share_issue_token(issuer, attribute_token1)
-        token_address_list.append(share_token1["address"])
-        share_register_token_list(issuer, share_token1, token_list)
+        share_token1 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(share_token1.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = share_issue_token(issuer, attribute_token2)
-        token_address_list.append(share_token2["address"])
-        share_register_token_list(issuer, share_token2, token_list)
+        share_token2 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(share_token2.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = share_issue_token(issuer, attribute_token3)
-        token_address_list.append(share_token3["address"])
-        share_register_token_list(issuer, share_token3, token_list)
+        share_token3 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(share_token3.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = share_issue_token(issuer, attribute_token4)
-        token_address_list.append(share_token4["address"])
-        share_register_token_list(issuer, share_token4, token_list)
+        share_token4 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(share_token4.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = share_issue_token(issuer, attribute_token5)
-        token_address_list.append(share_token5["address"])
-        share_register_token_list(issuer, share_token5, token_list)
+        share_token5 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(share_token5.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token1)
-        self.list_token(session, share_token2)
-        self.list_token(session, share_token3)
-        self.list_token(session, share_token4)
-        self.list_token(session, share_token5)
+        self.list_token(session, share_token1.address)
+        self.list_token(session, share_token2.address)
+        self.list_token(session, share_token3.address)
+        self.list_token(session, share_token4.address)
+        self.list_token(session, share_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -440,7 +480,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -451,45 +491,72 @@ class TestTokenShareTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.share_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = share_issue_token(issuer, attribute_token1)
-        token_address_list.append(share_token1["address"])
-        share_register_token_list(issuer, share_token1, token_list)
+        share_token1 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(share_token1.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = share_issue_token(issuer, attribute_token2)
-        token_address_list.append(share_token2["address"])
-        share_register_token_list(issuer, share_token2, token_list)
+        share_token2 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(share_token2.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = share_issue_token(issuer, attribute_token3)
-        token_address_list.append(share_token3["address"])
-        share_register_token_list(issuer, share_token3, token_list)
+        share_token3 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(share_token3.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = share_issue_token(issuer, attribute_token4)
-        token_address_list.append(share_token4["address"])
-        share_register_token_list(issuer, share_token4, token_list)
+        share_token4 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(share_token4.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = share_issue_token(issuer, attribute_token5)
-        token_address_list.append(share_token5["address"])
-        share_register_token_list(issuer, share_token5, token_list)
+        share_token5 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(share_token5.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token1)
-        self.list_token(session, share_token2)
-        self.list_token(session, share_token3)
-        self.list_token(session, share_token4)
-        self.list_token(session, share_token5)
+        self.list_token(session, share_token1.address)
+        self.list_token(session, share_token2.address)
+        self.list_token(session, share_token3.address)
+        self.list_token(session, share_token4.address)
+        self.list_token(session, share_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -522,7 +589,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -533,45 +600,72 @@ class TestTokenShareTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.share_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = share_issue_token(issuer, attribute_token1)
-        token_address_list.append(share_token1["address"])
-        share_register_token_list(issuer, share_token1, token_list)
+        share_token1 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(share_token1.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = share_issue_token(issuer, attribute_token2)
-        token_address_list.append(share_token2["address"])
-        share_register_token_list(issuer, share_token2, token_list)
+        share_token2 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(share_token2.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = share_issue_token(issuer, attribute_token3)
-        token_address_list.append(share_token3["address"])
-        share_register_token_list(issuer, share_token3, token_list)
+        share_token3 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(share_token3.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = share_issue_token(issuer, attribute_token4)
-        token_address_list.append(share_token4["address"])
-        share_register_token_list(issuer, share_token4, token_list)
+        share_token4 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(share_token4.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = share_issue_token(issuer, attribute_token5)
-        token_address_list.append(share_token5["address"])
-        share_register_token_list(issuer, share_token5, token_list)
+        share_token5 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(share_token5.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token1)
-        self.list_token(session, share_token2)
-        self.list_token(session, share_token3)
-        self.list_token(session, share_token4)
-        self.list_token(session, share_token5)
+        self.list_token(session, share_token1.address)
+        self.list_token(session, share_token2.address)
+        self.list_token(session, share_token3.address)
+        self.list_token(session, share_token4.address)
+        self.list_token(session, share_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -653,7 +747,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -664,45 +758,72 @@ class TestTokenShareTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.share_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = share_issue_token(issuer, attribute_token1)
-        token_address_list.append(share_token1["address"])
-        share_register_token_list(issuer, share_token1, token_list)
+        share_token1 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(share_token1.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = share_issue_token(issuer, attribute_token2)
-        token_address_list.append(share_token2["address"])
-        share_register_token_list(issuer, share_token2, token_list)
+        share_token2 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(share_token2.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = share_issue_token(issuer, attribute_token3)
-        token_address_list.append(share_token3["address"])
-        share_register_token_list(issuer, share_token3, token_list)
+        share_token3 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(share_token3.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = share_issue_token(issuer, attribute_token4)
-        token_address_list.append(share_token4["address"])
-        share_register_token_list(issuer, share_token4, token_list)
+        share_token4 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(share_token4.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = share_issue_token(issuer, attribute_token5)
-        token_address_list.append(share_token5["address"])
-        share_register_token_list(issuer, share_token5, token_list)
+        share_token5 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(share_token5.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token1)
-        self.list_token(session, share_token2)
-        self.list_token(session, share_token3)
-        self.list_token(session, share_token4)
-        self.list_token(session, share_token5)
+        self.list_token(session, share_token1.address)
+        self.list_token(session, share_token2.address)
+        self.list_token(session, share_token3.address)
+        self.list_token(session, share_token4.address)
+        self.list_token(session, share_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -750,7 +871,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -761,45 +882,72 @@ class TestTokenShareTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.share_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト株式1"
-        share_token1 = share_issue_token(issuer, attribute_token1)
-        token_address_list.append(share_token1["address"])
-        share_register_token_list(issuer, share_token1, token_list)
+        share_token1 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(share_token1.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト株式2"
-        share_token2 = share_issue_token(issuer, attribute_token2)
-        token_address_list.append(share_token2["address"])
-        share_register_token_list(issuer, share_token2, token_list)
+        share_token2 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(share_token2.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト株式3"
-        share_token3 = share_issue_token(issuer, attribute_token3)
-        token_address_list.append(share_token3["address"])
-        share_register_token_list(issuer, share_token3, token_list)
+        share_token3 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(share_token3.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト株式4"
-        share_token4 = share_issue_token(issuer, attribute_token4)
-        token_address_list.append(share_token4["address"])
-        share_register_token_list(issuer, share_token4, token_list)
+        share_token4 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(share_token4.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.share_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト株式5"
-        share_token5 = share_issue_token(issuer, attribute_token5)
-        token_address_list.append(share_token5["address"])
-        share_register_token_list(issuer, share_token5, token_list)
+        share_token5 = IbetShareTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(share_token5.address)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token1)
-        self.list_token(session, share_token2)
-        self.list_token(session, share_token3)
-        self.list_token(session, share_token4)
-        self.list_token(session, share_token5)
+        self.list_token(session, share_token1.address)
+        self.list_token(session, share_token2.address)
+        self.list_token(session, share_token3.address)
+        self.list_token(session, share_token4.address)
+        self.list_token(session, share_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -872,7 +1020,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -881,11 +1029,15 @@ class TestTokenShareTokens:
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = share_issue_token(issuer, attribute)
-        share_register_token_list(issuer, share_token, token_list)
+        share_token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token)
+        self.list_token(session, share_token.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -916,7 +1068,7 @@ class TestTokenShareTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：株式新規発行
@@ -925,11 +1077,15 @@ class TestTokenShareTokens:
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = share_issue_token(issuer, attribute)
-        share_register_token_list(issuer, share_token, token_list)
+        share_token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            share_token.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, share_token)
+        self.list_token(session, share_token.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0

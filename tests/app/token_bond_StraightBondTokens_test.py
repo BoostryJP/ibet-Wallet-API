@@ -31,9 +31,8 @@ from app import config
 from app.model.db import IDXTokenListRegister, Listing
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import bond_issue_token, bond_register_token_list
-from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
+from tests.helpers import IbetStraightBondTestHelper
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -94,25 +93,15 @@ class TestTokenStraightBondTokens:
         return attribute
 
     @staticmethod
-    def tokenlist_contract() -> DeployedContract:
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session: Session, token: DeployedContract) -> None:
+    def list_token(session: Session, token_address: str) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
         token_list_item = IDXTokenListRegister()
-        token_list_item.token_address = token["address"]
+        token_list_item.token_address = token_address
         token_list_item.token_template = "IbetStraightBond"
         token_list_item.owner_address = ""
         session.add(token_list_item)
@@ -137,7 +126,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -146,11 +135,17 @@ class TestTokenStraightBondTokens:
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, bond_token, token_list)
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token)
+        self.list_token(session, bond_token.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -160,7 +155,7 @@ class TestTokenStraightBondTokens:
         resp = client.get(self.apiurl, params=query_string)
         tokens = [
             {
-                "token_address": bond_token["address"],
+                "token_address": bond_token.address,
                 "token_template": "IbetStraightBond",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -231,7 +226,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -242,45 +237,72 @@ class TestTokenStraightBondTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.bond_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = bond_issue_token(issuer, attribute_token1)
-        token_address_list.append(bond_token1["address"])
-        bond_register_token_list(issuer, bond_token1, token_list)
+        bond_token1 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(bond_token1.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = bond_issue_token(issuer, attribute_token2)
-        token_address_list.append(bond_token2["address"])
-        bond_register_token_list(issuer, bond_token2, token_list)
+        bond_token2 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(bond_token2.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = bond_issue_token(issuer, attribute_token3)
-        token_address_list.append(bond_token3["address"])
-        bond_register_token_list(issuer, bond_token3, token_list)
+        bond_token3 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(bond_token3.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = bond_issue_token(issuer, attribute_token4)
-        token_address_list.append(bond_token4["address"])
-        bond_register_token_list(issuer, bond_token4, token_list)
+        bond_token4 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(bond_token4.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = bond_issue_token(issuer, attribute_token5)
-        token_address_list.append(bond_token5["address"])
-        bond_register_token_list(issuer, bond_token5, token_list)
+        bond_token5 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(bond_token5.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token1)
-        self.list_token(session, bond_token2)
-        self.list_token(session, bond_token3)
-        self.list_token(session, bond_token4)
-        self.list_token(session, bond_token5)
+        self.list_token(session, bond_token1.address)
+        self.list_token(session, bond_token2.address)
+        self.list_token(session, bond_token3.address)
+        self.list_token(session, bond_token4.address)
+        self.list_token(session, bond_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -366,7 +388,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -377,45 +399,72 @@ class TestTokenStraightBondTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.bond_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = bond_issue_token(issuer, attribute_token1)
-        token_address_list.append(bond_token1["address"])
-        bond_register_token_list(issuer, bond_token1, token_list)
+        bond_token1 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(bond_token1.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = bond_issue_token(issuer, attribute_token2)
-        token_address_list.append(bond_token2["address"])
-        bond_register_token_list(issuer, bond_token2, token_list)
+        bond_token2 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(bond_token2.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = bond_issue_token(issuer, attribute_token3)
-        token_address_list.append(bond_token3["address"])
-        bond_register_token_list(issuer, bond_token3, token_list)
+        bond_token3 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(bond_token3.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = bond_issue_token(issuer, attribute_token4)
-        token_address_list.append(bond_token4["address"])
-        bond_register_token_list(issuer, bond_token4, token_list)
+        bond_token4 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(bond_token4.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = bond_issue_token(issuer, attribute_token5)
-        token_address_list.append(bond_token5["address"])
-        bond_register_token_list(issuer, bond_token5, token_list)
+        bond_token5 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(bond_token5.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token1)
-        self.list_token(session, bond_token2)
-        self.list_token(session, bond_token3)
-        self.list_token(session, bond_token4)
-        self.list_token(session, bond_token5)
+        self.list_token(session, bond_token1.address)
+        self.list_token(session, bond_token2.address)
+        self.list_token(session, bond_token3.address)
+        self.list_token(session, bond_token4.address)
+        self.list_token(session, bond_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -502,7 +551,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -513,45 +562,72 @@ class TestTokenStraightBondTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.bond_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = bond_issue_token(issuer, attribute_token1)
-        token_address_list.append(bond_token1["address"])
-        bond_register_token_list(issuer, bond_token1, token_list)
+        bond_token1 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(bond_token1.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = bond_issue_token(issuer, attribute_token2)
-        token_address_list.append(bond_token2["address"])
-        bond_register_token_list(issuer, bond_token2, token_list)
+        bond_token2 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(bond_token2.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = bond_issue_token(issuer, attribute_token3)
-        token_address_list.append(bond_token3["address"])
-        bond_register_token_list(issuer, bond_token3, token_list)
+        bond_token3 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(bond_token3.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = bond_issue_token(issuer, attribute_token4)
-        token_address_list.append(bond_token4["address"])
-        bond_register_token_list(issuer, bond_token4, token_list)
+        bond_token4 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(bond_token4.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = bond_issue_token(issuer, attribute_token5)
-        token_address_list.append(bond_token5["address"])
-        bond_register_token_list(issuer, bond_token5, token_list)
+        bond_token5 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(bond_token5.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token1)
-        self.list_token(session, bond_token2)
-        self.list_token(session, bond_token3)
-        self.list_token(session, bond_token4)
-        self.list_token(session, bond_token5)
+        self.list_token(session, bond_token1.address)
+        self.list_token(session, bond_token2.address)
+        self.list_token(session, bond_token3.address)
+        self.list_token(session, bond_token4.address)
+        self.list_token(session, bond_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -584,7 +660,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -595,45 +671,72 @@ class TestTokenStraightBondTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.bond_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = bond_issue_token(issuer, attribute_token1)
-        token_address_list.append(bond_token1["address"])
-        bond_register_token_list(issuer, bond_token1, token_list)
+        bond_token1 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(bond_token1.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = bond_issue_token(issuer, attribute_token2)
-        token_address_list.append(bond_token2["address"])
-        bond_register_token_list(issuer, bond_token2, token_list)
+        bond_token2 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(bond_token2.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = bond_issue_token(issuer, attribute_token3)
-        token_address_list.append(bond_token3["address"])
-        bond_register_token_list(issuer, bond_token3, token_list)
+        bond_token3 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(bond_token3.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = bond_issue_token(issuer, attribute_token4)
-        token_address_list.append(bond_token4["address"])
-        bond_register_token_list(issuer, bond_token4, token_list)
+        bond_token4 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(bond_token4.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = bond_issue_token(issuer, attribute_token5)
-        token_address_list.append(bond_token5["address"])
-        bond_register_token_list(issuer, bond_token5, token_list)
+        bond_token5 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(bond_token5.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token1)
-        self.list_token(session, bond_token2)
-        self.list_token(session, bond_token3)
-        self.list_token(session, bond_token4)
-        self.list_token(session, bond_token5)
+        self.list_token(session, bond_token1.address)
+        self.list_token(session, bond_token2.address)
+        self.list_token(session, bond_token3.address)
+        self.list_token(session, bond_token4.address)
+        self.list_token(session, bond_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -730,7 +833,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -741,45 +844,72 @@ class TestTokenStraightBondTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.bond_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = bond_issue_token(issuer, attribute_token1)
-        token_address_list.append(bond_token1["address"])
-        bond_register_token_list(issuer, bond_token1, token_list)
+        bond_token1 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(bond_token1.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = bond_issue_token(issuer, attribute_token2)
-        token_address_list.append(bond_token2["address"])
-        bond_register_token_list(issuer, bond_token2, token_list)
+        bond_token2 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(bond_token2.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = bond_issue_token(issuer, attribute_token3)
-        token_address_list.append(bond_token3["address"])
-        bond_register_token_list(issuer, bond_token3, token_list)
+        bond_token3 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(bond_token3.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = bond_issue_token(issuer, attribute_token4)
-        token_address_list.append(bond_token4["address"])
-        bond_register_token_list(issuer, bond_token4, token_list)
+        bond_token4 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(bond_token4.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = bond_issue_token(issuer, attribute_token5)
-        token_address_list.append(bond_token5["address"])
-        bond_register_token_list(issuer, bond_token5, token_list)
+        bond_token5 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(bond_token5.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token1)
-        self.list_token(session, bond_token2)
-        self.list_token(session, bond_token3)
-        self.list_token(session, bond_token4)
-        self.list_token(session, bond_token5)
+        self.list_token(session, bond_token1.address)
+        self.list_token(session, bond_token2.address)
+        self.list_token(session, bond_token3.address)
+        self.list_token(session, bond_token4.address)
+        self.list_token(session, bond_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -827,7 +957,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -838,45 +968,72 @@ class TestTokenStraightBondTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.bond_token_attribute(
-            exchange_address,
-            personal_info,
-        )
+        attribute_token1 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token1["name"] = "テスト債券1"
-        bond_token1 = bond_issue_token(issuer, attribute_token1)
-        token_address_list.append(bond_token1["address"])
-        bond_register_token_list(issuer, bond_token1, token_list)
+        bond_token1 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(bond_token1.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token2["name"] = "テスト債券2"
-        bond_token2 = bond_issue_token(issuer, attribute_token2)
-        token_address_list.append(bond_token2["address"])
-        bond_register_token_list(issuer, bond_token2, token_list)
+        bond_token2 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(bond_token2.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token3["name"] = "テスト債券3"
-        bond_token3 = bond_issue_token(issuer, attribute_token3)
-        token_address_list.append(bond_token3["address"])
-        bond_register_token_list(issuer, bond_token3, token_list)
+        bond_token3 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(bond_token3.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token4["name"] = "テスト債券4"
-        bond_token4 = bond_issue_token(issuer, attribute_token4)
-        token_address_list.append(bond_token4["address"])
-        bond_register_token_list(issuer, bond_token4, token_list)
+        bond_token4 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(bond_token4.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.bond_token_attribute(exchange_address, personal_info)
         attribute_token5["name"] = "テスト債券5"
-        bond_token5 = bond_issue_token(issuer, attribute_token5)
-        token_address_list.append(bond_token5["address"])
-        bond_register_token_list(issuer, bond_token5, token_list)
+        bond_token5 = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(bond_token5.address)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token1)
-        self.list_token(session, bond_token2)
-        self.list_token(session, bond_token3)
-        self.list_token(session, bond_token4)
-        self.list_token(session, bond_token5)
+        self.list_token(session, bond_token1.address)
+        self.list_token(session, bond_token2.address)
+        self.list_token(session, bond_token3.address)
+        self.list_token(session, bond_token4.address)
+        self.list_token(session, bond_token5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -968,7 +1125,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -977,11 +1134,17 @@ class TestTokenStraightBondTokens:
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, bond_token, token_list)
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token)
+        self.list_token(session, bond_token.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -1012,7 +1175,7 @@ class TestTokenStraightBondTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：債券新規発行
@@ -1021,11 +1184,17 @@ class TestTokenStraightBondTokens:
         )
         personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, bond_token, token_list)
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            bond_token.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, bond_token)
+        self.list_token(session, bond_token.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0

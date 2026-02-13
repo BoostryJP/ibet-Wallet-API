@@ -21,36 +21,20 @@ from typing import Any
 from unittest import mock
 from unittest.mock import MagicMock
 
-from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.errors import ServiceUnavailable
-from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    bond_issue_token,
-    bond_register_token_list,
-    bond_set_status,
-    bond_untransferable,
-    coupon_issue_token,
-    coupon_register_token_list,
-    coupon_set_status,
-    coupon_set_transferable,
-    membership_invalidate,
-    membership_issue_token,
-    membership_register_token_list,
-    membership_untransferable,
-    share_issue_token,
-    share_register_token_list,
-    share_set_status,
-    share_set_transferable,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
-from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -160,61 +144,35 @@ class TestTokenTokenStatus:
         }
         return attribute
 
-    @staticmethod
-    def tokenlist_contract() -> DeployedContract:
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session: Session, token: DeployedContract) -> None:
-        listed_token = Listing()
-        listed_token.token_address = token["address"]
-        listed_token.is_public = True
-        listed_token.max_holding_quantity = 1
-        listed_token.max_sell_amount = 1000
-        session.add(listed_token)
-
     ###########################################################################
     # Normal
     ###########################################################################
 
-    # ＜正常系1＞
-    #   債券：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_1(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
+    # Normal_1
+    # - IbetStraightBond
+    def test_normal_1(self, client: TestClient, shared_contract: SharedContract):
         issuer = eth_account["issuer"]
 
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：債券新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        # Prepare data: Issue new bond
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
+        attribute = self.bond_token_attribute(exchange_address, personal_info)
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.bond_token_attribute(
-            exchange_address, personal_info
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], bond_token.address, token_list["address"]
         )
-        bond_token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, bond_token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, bond_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=bond_token["address"])
+        # Call API
+        apiurl = self.apiurl_base.format(contract_address=bond_token.address)
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
+        # Verify response
         assumed_body = {
             "name": "テスト債券",
             "token_template": "IbetStraightBond",
@@ -222,137 +180,33 @@ class TestTokenTokenStatus:
             "status": True,
             "transferable": True,
         }
-
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # ＜正常系2＞
-    #   債券：データ有り（トークン無効化済み）
-    def test_normal_2(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
+    # Normal_2
+    # - IbetShare
+    def test_normal_2(self, client: TestClient, shared_contract: SharedContract):
         issuer = eth_account["issuer"]
 
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：債券新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        # Prepare data: Issue new share
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
+        attribute = self.share_token_attribute(exchange_address, personal_info)
+        share_token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], share_token.address, token_list["address"]
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.bond_token_attribute(
-            exchange_address, personal_info
-        )
-        token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, token)
-
-        # Tokenの無効化
-        bond_set_status(issuer, token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=token["address"])
+        # Call API
+        apiurl = self.apiurl_base.format(contract_address=share_token.address)
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = {
-            "name": "テスト債券",
-            "token_template": "IbetStraightBond",
-            "owner_address": issuer["account_address"],
-            "status": False,
-            "transferable": True,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系3＞
-    #   債券：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_3(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：債券新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.bond_token_attribute(
-            exchange_address, personal_info
-        )
-        bond_token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, bond_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, bond_token)
-
-        # Tokenの譲渡不可
-        bond_untransferable(issuer, bond_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=bond_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
-        assumed_body = {
-            "name": "テスト債券",
-            "token_template": "IbetStraightBond",
-            "owner_address": issuer["account_address"],
-            "status": True,
-            "transferable": False,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系4＞
-    #   株式：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_4(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：株式新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.share_token_attribute(
-            exchange_address, personal_info
-        )
-        share_token = share_issue_token(issuer, attribute)
-        share_register_token_list(issuer, share_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, share_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=share_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
+        # Verify response
         assumed_body = {
             "name": "テスト株式",
             "token_template": "IbetShare",
@@ -365,129 +219,30 @@ class TestTokenTokenStatus:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # ＜正常系5＞
-    #   株式：データ有り（トークン無効化済み）
-    def test_normal_5(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
+    # Normal_3
+    # - IbetMembership
+    def test_normal_3(self, client: TestClient, shared_contract: SharedContract):
         issuer = eth_account["issuer"]
 
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：株式新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        # Prepare data: Issue new membership
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.membership_token_attribute(exchange_address)
+        membership_token = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.share_token_attribute(
-            exchange_address, personal_info
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership_token.address, token_list["address"]
         )
-        share_token = share_issue_token(issuer, attribute)
-        share_register_token_list(issuer, share_token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, share_token)
-
-        # Tokenの無効化
-        share_set_status(issuer, share_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=share_token["address"])
+        # Call API
+        apiurl = self.apiurl_base.format(contract_address=membership_token.address)
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = {
-            "name": "テスト株式",
-            "token_template": "IbetShare",
-            "owner_address": issuer["account_address"],
-            "status": False,
-            "transferable": True,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系6＞
-    #   株式：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_6(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：株式新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.share_token_attribute(
-            exchange_address, personal_info
-        )
-        share_token = share_issue_token(issuer, attribute)
-        share_register_token_list(issuer, share_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, share_token)
-
-        # Tokenの譲渡不可
-        share_set_transferable(issuer, share_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=share_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
-        assumed_body = {
-            "name": "テスト株式",
-            "token_template": "IbetShare",
-            "owner_address": issuer["account_address"],
-            "status": True,
-            "transferable": False,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系7＞
-    #   会員権：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_7(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        attribute = TestTokenTokenStatus.membership_token_attribute(exchange_address)
-        membership_token = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, membership_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, membership_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=membership_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
+        # Verify response
         assumed_body = {
             "name": "テスト会員権",
             "token_template": "IbetMembership",
@@ -495,128 +250,32 @@ class TestTokenTokenStatus:
             "status": True,
             "transferable": True,
         }
-
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # ＜正常系8＞
-    #   会員権：データ有り（トークン無効化済み）
-    def test_normal_8(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
+    # Normal_4
+    # - IbetCoupon
+    def test_normal_4(self, client: TestClient, shared_contract: SharedContract):
         issuer = eth_account["issuer"]
 
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        # Prepare data: Issue new coupon
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        attribute = self.coupon_token_attribute(exchange_address)
+        coupon_token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupon_token.address, token_list["address"]
         )
-        attribute = TestTokenTokenStatus.membership_token_attribute(exchange_address)
-        membership_token = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, membership_token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, membership_token)
-
-        # Tokenの無効化
-        membership_invalidate(issuer, membership_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=membership_token["address"])
+        # Call API
+        apiurl = self.apiurl_base.format(contract_address=coupon_token.address)
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = {
-            "name": "テスト会員権",
-            "token_template": "IbetMembership",
-            "owner_address": issuer["account_address"],
-            "status": False,
-            "transferable": True,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系9＞
-    #   会員権：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_9(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        attribute = TestTokenTokenStatus.membership_token_attribute(exchange_address)
-        membership_token = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, membership_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, membership_token)
-
-        # Tokenの譲渡不可
-        membership_untransferable(issuer, membership_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=membership_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
-        assumed_body = {
-            "name": "テスト会員権",
-            "token_template": "IbetMembership",
-            "owner_address": issuer["account_address"],
-            "status": True,
-            "transferable": False,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系10＞
-    #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_normal_10(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：クーポン新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        attribute = TestTokenTokenStatus.coupon_token_attribute(exchange_address)
-        coupon_token = coupon_issue_token(issuer, attribute)
-        coupon_register_token_list(issuer, coupon_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, coupon_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=coupon_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
+        # Verify response
         assumed_body = {
             "name": "テストクーポン",
             "token_template": "IbetCoupon",
@@ -624,95 +283,6 @@ class TestTokenTokenStatus:
             "status": True,
             "transferable": True,
         }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系11＞
-    #   クーポン：データ有り（トークン無効化済み）
-    def test_normal_11(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：クーポン新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        attribute = TestTokenTokenStatus.coupon_token_attribute(exchange_address)
-        coupon_token = coupon_issue_token(issuer, attribute)
-        coupon_register_token_list(issuer, coupon_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, coupon_token)
-
-        # Tokenの無効化
-        coupon_set_status(issuer, coupon_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=coupon_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
-        assumed_body = {
-            "name": "テストクーポン",
-            "token_template": "IbetCoupon",
-            "owner_address": issuer["account_address"],
-            "status": False,
-            "transferable": True,
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # ＜正常系12＞
-    #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_normal_12(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
-        issuer = eth_account["issuer"]
-
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
-
-        # データ準備：クーポン新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
-        )
-        attribute = TestTokenTokenStatus.coupon_token_attribute(exchange_address)
-        coupon_token = coupon_issue_token(issuer, attribute)
-        coupon_register_token_list(issuer, coupon_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, coupon_token)
-
-        # Tokenの譲渡不可
-        coupon_set_transferable(issuer, coupon_token)
-
-        session.commit()
-
-        apiurl = self.apiurl_base.format(contract_address=coupon_token["address"])
-        query_string = ""
-        resp = client.get(apiurl, params=query_string)
-
-        assumed_body = {
-            "name": "テストクーポン",
-            "token_template": "IbetCoupon",
-            "owner_address": issuer["account_address"],
-            "status": True,
-            "transferable": False,
-        }
-
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
@@ -724,7 +294,7 @@ class TestTokenTokenStatus:
     # <Error_1>
     # Invalid token address
     # -> 400
-    def test_error_1(self, client: TestClient, session: Session):
+    def test_error_1(self, client: TestClient):
         apiurl = self.apiurl_base.format(contract_address="0xabcd")
 
         query_string = ""
@@ -748,15 +318,8 @@ class TestTokenTokenStatus:
     # <Error_2>
     # Contract not exists
     # -> 404
-    def test_error_2(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
+    def test_error_2(self, client: TestClient, shared_contract: SharedContract):
         share_exchange = shared_contract["IbetSecurityTokenEscrow"]
-
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, share_exchange)
-
-        session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=share_exchange["address"])
 
@@ -772,39 +335,33 @@ class TestTokenTokenStatus:
 
     # <Error_3>
     # ServiceUnavailable
-    def test_error_3(
-        self, client: TestClient, session: Session, shared_contract: SharedContract
-    ):
-        # テスト用アカウント
+    def test_error_3(self, client: TestClient, shared_contract: SharedContract):
         issuer = eth_account["issuer"]
 
-        # TokenListコントラクト
-        token_list = TestTokenTokenStatus.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：債券新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetSecurityTokenEscrow"]["address"]
+        # Prepare data: Issue new bond
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
+        attribute = self.bond_token_attribute(exchange_address, personal_info)
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute
         )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
-        attribute = TestTokenTokenStatus.bond_token_attribute(
-            exchange_address, personal_info
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], bond_token.address, token_list["address"]
         )
-        bond_token = bond_issue_token(issuer, attribute)
-        bond_register_token_list(issuer, bond_token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestTokenTokenStatus.list_token(session, bond_token)
-        session.commit()
-
+        # Call API with mocking ServiceUnavailable
         with mock.patch(
             "web3.contract.async_contract.AsyncContractFunction.call",
             MagicMock(side_effect=ServiceUnavailable()),
         ):
-            apiurl = self.apiurl_base.format(contract_address=bond_token["address"])
+            apiurl = self.apiurl_base.format(contract_address=bond_token.address)
             query_string = ""
             resp = client.get(apiurl, params=query_string)
 
+        # Verify response
         assert resp.status_code == 503
         assert resp.json()["meta"] == {
             "code": 503,

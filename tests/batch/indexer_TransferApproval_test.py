@@ -31,7 +31,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.contract import Contract as Web3Contract
 from web3.exceptions import ABIEventNotFound
 from web3.middleware import ExtraDataToPOAMiddleware
 
@@ -41,14 +40,15 @@ from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Li
 from batch import indexer_TransferApproval
 from batch.indexer_TransferApproval import LOG, Processor, main
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    share_issue_token,
-    share_register_token_list,
-    transfer_token,
+from tests.helpers import IbetShareTestHelper
+from tests.helpers.ibet_exchange_helpers import (
+    approve_transfer_security_token_escrow,
+    cancel_security_token_escrow,
+    create_security_token_escrow,
+    finish_security_token_escrow,
+    get_latest_security_escrow_id,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils import PersonalInfoUtils
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -89,22 +89,20 @@ class TestProcessor:
     @staticmethod
     def issue_token_share(
         issuer: UnitTestAccount,
-        exchange_contract: Web3Contract | None,
+        exchange_contract: DeployedContract | None,
         personal_info_contract: DeployedContract,
         token_list_contract: DeployedContract,
     ):
         if exchange_contract is None:
             exchange_contract_address = config.ZERO_ADDRESS
         else:
-            exchange_contract_address = exchange_contract.address
+            exchange_contract_address = exchange_contract["address"]
         # Issue token
         args = {
             "name": "テスト株式",
             "symbol": "SHARE",
             "tradableExchange": exchange_contract_address,
-            "personalInfoAddress": personal_info_contract.get(
-                "address", config.ZERO_ADDRESS
-            ),
+            "personalInfoAddress": personal_info_contract["address"],
             "issuePrice": 1000,
             "principalValue": 1000,
             "totalSupply": 1000000,
@@ -116,15 +114,15 @@ class TestProcessor:
             "privacyPolicy": "プライバシーポリシー",
             "memo": "メモ",
             "transferable": True,
+            "requirePersonalInfoRegistered": False,
         }
-        _token = share_issue_token(issuer, args)
-        share_register_token_list(issuer, _token, token_list_contract)
-
-        token_contract = Contract.get_contract(
-            contract_name="IbetShare", address=_token["address"]
+        token = IbetShareTestHelper.issue(issuer["account_address"], args)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list_contract["address"],
         )
-
-        return token_contract
+        return token
 
     @staticmethod
     async def list_token(async_session: AsyncSession, token_address: str):
@@ -134,24 +132,6 @@ class TestProcessor:
         _listing.owner_address = TestProcessor.issuer["account_address"]
         async_session.add(_listing)
         await async_session.commit()
-
-    @staticmethod
-    def register_personal_info(
-        account_address: str,
-        link_address: str,
-        personal_info_contract: DeployedContract,
-    ):
-        PersonalInfoUtils.register(
-            tx_from=account_address,
-            personal_info_address=personal_info_contract["address"],
-            link_address=link_address,
-        )
-
-    @staticmethod
-    def set_transfer_approval_required(token_contract: Web3Contract, required: bool):
-        token_contract.functions.setTransferApprovalRequired(required).transact(
-            {"from": TestProcessor.issuer["account_address"]}
-        )
 
     ###########################################################################
     # Normal Case
@@ -178,35 +158,29 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -258,41 +232,37 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Approve transfer
-        token.functions.approveTransfer(
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"],
+            token.address,
             0,
             "1609418096",  # 2020/12/31 12:34:56
-        ).transact({"from": self.issuer["account_address"]})
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -346,37 +316,36 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Apply for transfer
-        token.functions.applyForTransfer(
-            self.account2["account_address"], 2000, "978266096"
-        ).transact({"from": self.account1["account_address"]})
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
+            self.account2["account_address"],
+            2000,
+            "978266096",  # 2000/12/31 12:34:56
+        )
 
         # Cancel transfer
-        token.functions.cancelTransfer(0, "test_data").transact(
-            {"from": self.issuer["account_address"]}
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"],
+            token.address,
+            0,
+            "test_data",
         )
 
         # Run target process
@@ -441,57 +410,61 @@ class TestProcessor:
             token_address=token_2.address, async_session=async_session
         )
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token_1,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token_1.address,
+            self.account1["account_address"],
+            10000,
         )
-        transfer_token(
-            token_contract=token_2,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token_2.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token_1, required=True)
-        self.set_transfer_approval_required(token_contract=token_2, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token_1.address,
+            True,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token_2.address,
+            True,
+        )
 
         # Apply for transfer
-        token_1.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token_1.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
-        token_2.functions.applyForTransfer(
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token_2.address,
             self.account2["account_address"],
             3000,
             "978266097",  # 2000/12/31 12:34:57
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Approve transfer
-        token_1.functions.approveTransfer(
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"],
+            token_1.address,
             0,
             "1609418096",  # 2020/12/31 12:34:56
-        ).transact({"from": self.issuer["account_address"]})
-        token_2.functions.approveTransfer(
+        )
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"],
+            token_2.address,
             0,
             "1609418097",  # 2020/12/31 12:34:57
-        ).transact({"from": self.issuer["account_address"]})
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -561,28 +534,20 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # ApplyForTransfer events not emitted
         # Run target process
@@ -615,35 +580,29 @@ class TestProcessor:
             token_list_contract=token_list_contract,
         )
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -667,62 +626,51 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        st_escrow_contract_instance = Contract.get_contract(
-            contract_name="IbetSecurityTokenEscrow",
-            address=st_escrow_contract["address"],
-        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract_instance,
+            exchange_contract=st_escrow_contract,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Deposit token to escrow
-        transfer_token(
-            token_contract=token,
-            from_address=self.account1["account_address"],
-            to_address=st_escrow_contract["address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.account1["account_address"],
+            token.address,
+            st_escrow_contract["address"],
+            10000,
         )
 
         # Create escrow
-        st_escrow_contract_instance.functions.createEscrow(
-            token.address,
-            self.account2["account_address"],
-            10000,
-            self.escrow_agent["account_address"],
-            "978266096",  # 2000/12/31 12:34:56
-            "test_escrow_data",
-        ).transact({"from": self.account1["account_address"]})
+        create_security_token_escrow(
+            invoker=self.account1,
+            exchange={"address": st_escrow_contract["address"]},
+            token={"address": token.address},
+            recipient_address=self.account2["account_address"],
+            agent_address=self.escrow_agent["account_address"],
+            amount=10000,
+            transfer_application_data="978266096",  # 2000/12/31 12:34:56
+            data="test_escrow_data",
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -739,9 +687,8 @@ class TestProcessor:
         assert _transfer_approval.id == 1
         assert _transfer_approval.token_address == token.address
         assert _transfer_approval.exchange_address == st_escrow_contract["address"]
-        assert (
-            _transfer_approval.application_id
-            == st_escrow_contract_instance.functions.latestEscrowId().call()
+        assert _transfer_approval.application_id == get_latest_security_escrow_id(
+            {"address": st_escrow_contract["address"]}
         )
         assert _transfer_approval.from_address == self.account1["account_address"]
         assert _transfer_approval.to_address == self.account2["account_address"]
@@ -768,67 +715,60 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        st_escrow_contract_instance = Contract.get_contract(
-            contract_name="IbetSecurityTokenEscrow",
-            address=st_escrow_contract["address"],
-        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract_instance,
+            exchange_contract=st_escrow_contract,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Deposit token to escrow
-        transfer_token(
-            token_contract=token,
-            from_address=self.account1["account_address"],
-            to_address=st_escrow_contract["address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.account1["account_address"],
+            token.address,
+            st_escrow_contract["address"],
+            10000,
         )
 
         # Create escrow
-        st_escrow_contract_instance.functions.createEscrow(
-            token.address,
-            self.account2["account_address"],
-            10000,
-            self.escrow_agent["account_address"],
-            "978266096",  # 2000/12/31 12:34:56
-            "test_escrow_data",
-        ).transact({"from": self.account1["account_address"]})
+        create_security_token_escrow(
+            invoker=self.account1,
+            exchange={"address": st_escrow_contract["address"]},
+            token={"address": token.address},
+            recipient_address=self.account2["account_address"],
+            agent_address=self.escrow_agent["account_address"],
+            amount=10000,
+            transfer_application_data="978266096",  # 2000/12/31 12:34:56
+            data="test_escrow_data",
+        )
 
         # Cancel escrow
-        escrow_id = st_escrow_contract_instance.functions.latestEscrowId().call()
-        st_escrow_contract_instance.functions.cancelEscrow(escrow_id).transact(
-            {"from": self.account1["account_address"]}
+        escrow_id = get_latest_security_escrow_id(
+            {"address": st_escrow_contract["address"]}
+        )
+        cancel_security_token_escrow(
+            invoker=self.account1,
+            exchange={"address": st_escrow_contract["address"]},
+            escrow_id=escrow_id,
         )
 
         # Run target process
@@ -872,67 +812,60 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        st_escrow_contract_instance = Contract.get_contract(
-            contract_name="IbetSecurityTokenEscrow",
-            address=st_escrow_contract["address"],
-        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract_instance,
+            exchange_contract=st_escrow_contract,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Deposit token to escrow
-        transfer_token(
-            token_contract=token,
-            from_address=self.account1["account_address"],
-            to_address=st_escrow_contract["address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.account1["account_address"],
+            token.address,
+            st_escrow_contract["address"],
+            10000,
         )
 
         # Create escrow
-        st_escrow_contract_instance.functions.createEscrow(
-            token.address,
-            self.account2["account_address"],
-            10000,
-            self.escrow_agent["account_address"],
-            "978266096",  # 2000/12/31 12:34:56
-            "test_escrow_data",
-        ).transact({"from": self.account1["account_address"]})
-        escrow_id = st_escrow_contract_instance.functions.latestEscrowId().call()
+        create_security_token_escrow(
+            invoker=self.account1,
+            exchange={"address": st_escrow_contract["address"]},
+            token={"address": token.address},
+            recipient_address=self.account2["account_address"],
+            agent_address=self.escrow_agent["account_address"],
+            amount=10000,
+            transfer_application_data="978266096",  # 2000/12/31 12:34:56
+            data="test_escrow_data",
+        )
+        escrow_id = get_latest_security_escrow_id(
+            {"address": st_escrow_contract["address"]}
+        )
 
         # Finish escrow
-        st_escrow_contract_instance.functions.finishEscrow(escrow_id).transact(
-            {"from": self.escrow_agent["account_address"]}
+        finish_security_token_escrow(
+            invoker=self.escrow_agent,
+            exchange={"address": st_escrow_contract["address"]},
+            escrow_id=escrow_id,
         )
 
         # Run target process
@@ -976,74 +909,69 @@ class TestProcessor:
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        st_escrow_contract_instance = Contract.get_contract(
-            contract_name="IbetSecurityTokenEscrow",
-            address=st_escrow_contract["address"],
-        )
 
         # Issue token
         token = self.issue_token_share(
             issuer=self.issuer,
-            exchange_contract=st_escrow_contract_instance,
+            exchange_contract=st_escrow_contract,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract,
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            10000,
         )
 
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Deposit token to escrow
-        transfer_token(
-            token_contract=token,
-            from_address=self.account1["account_address"],
-            to_address=st_escrow_contract["address"],
-            amount=10000,
+        IbetShareTestHelper.transfer_token(
+            self.account1["account_address"],
+            token.address,
+            st_escrow_contract["address"],
+            10000,
         )
 
         # Create escrow
-        st_escrow_contract_instance.functions.createEscrow(
-            token.address,
-            self.account2["account_address"],
-            10000,
-            self.escrow_agent["account_address"],
-            "978266096",  # 2000/12/31 12:34:56
-            "test_escrow_data",
-        ).transact({"from": self.account1["account_address"]})
-        escrow_id = st_escrow_contract_instance.functions.latestEscrowId().call()
+        create_security_token_escrow(
+            invoker=self.account1,
+            exchange={"address": st_escrow_contract["address"]},
+            token={"address": token.address},
+            recipient_address=self.account2["account_address"],
+            agent_address=self.escrow_agent["account_address"],
+            amount=10000,
+            transfer_application_data="978266096",  # 2000/12/31 12:34:56
+            data="test_escrow_data",
+        )
+        escrow_id = get_latest_security_escrow_id(
+            {"address": st_escrow_contract["address"]}
+        )
 
         # Finish escrow
-        st_escrow_contract_instance.functions.finishEscrow(escrow_id).transact(
-            {"from": self.escrow_agent["account_address"]}
+        finish_security_token_escrow(
+            invoker=self.escrow_agent,
+            exchange={"address": st_escrow_contract["address"]},
+            escrow_id=escrow_id,
         )
 
         # Approve transfer
-        st_escrow_contract_instance.functions.approveTransfer(
-            escrow_id,
-            "1609418096",  # 2020/12/31 12:34:56
-        ).transact({"from": self.issuer["account_address"]})
+        approve_transfer_security_token_escrow(
+            invoker=self.issuer,
+            exchange={"address": st_escrow_contract["address"]},
+            escrow_id=escrow_id,
+            transfer_approval_data="1609418096",  # 2020/12/31 12:34:56
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -1107,33 +1035,30 @@ class TestProcessor:
             token_list_contract=token_list_contract,
         )
         await self.list_token(token_address=token.address, async_session=async_session)
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
+
         # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=5000,
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            5000,
         )
+
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
+
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
-            "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
-
+            "978266096",  # 2000/12/31 12:34
+        )
         block_number_current = web3.eth.block_number
 
         # Run initial sync
@@ -1161,11 +1086,13 @@ class TestProcessor:
         )
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
         block_number_current = web3.eth.block_number
 
         # Run target process
@@ -1215,34 +1142,29 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
+        # Transfer token: from issuer to account1
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            5000,
         )
 
-        # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=5000,
-        )
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with (
@@ -1270,11 +1192,13 @@ class TestProcessor:
         assert idx_transfer_approval_block_number is None
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with (
@@ -1323,33 +1247,29 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
+        # Transfer token: from issuer to account1
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            5000,
         )
 
-        # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=5000,
-        )
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
+
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Expect that initial_sync() raises ServiceUnavailable.
         with (
@@ -1377,11 +1297,13 @@ class TestProcessor:
         assert idx_transfer_approval_block_number is None
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with (
@@ -1430,33 +1352,29 @@ class TestProcessor:
         )
         await self.list_token(token_address=token.address, async_session=async_session)
 
-        # Register personal info
-        self.register_personal_info(
-            account_address=self.account1["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
-        )
-        self.register_personal_info(
-            account_address=self.account2["account_address"],
-            link_address=self.issuer["account_address"],
-            personal_info_contract=personal_info_contract,
+        # Transfer token: from issuer to account1
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.account1["account_address"],
+            5000,
         )
 
-        # Transfer token: from issuer to account1
-        transfer_token(
-            token_contract=token,
-            from_address=self.issuer["account_address"],
-            to_address=self.account1["account_address"],
-            amount=5000,
-        )
         # Change transfer approval required to True
-        self.set_transfer_approval_required(token_contract=token, required=True)
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"],
+            token.address,
+            True,
+        )
+
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Expect that initial_sync() raises SQLAlchemyError.
         with (
@@ -1482,11 +1400,13 @@ class TestProcessor:
         assert idx_transfer_approval_block_number is None
 
         # Apply for transfer
-        token.functions.applyForTransfer(
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.account1["account_address"],
+            token.address,
             self.account2["account_address"],
             2000,
             "978266096",  # 2000/12/31 12:34:56
-        ).transact({"from": self.account1["account_address"]})
+        )
 
         # Expect that sync_new_logs() raises SQLAlchemyError.
         with (

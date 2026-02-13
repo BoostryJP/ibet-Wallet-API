@@ -19,19 +19,13 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Any
 
-from eth_utils.address import to_checksum_address
-from web3 import Web3
+from hexbytes import HexBytes
 from web3.contract import Contract as Web3Contract
-from web3.middleware import ExtraDataToPOAMiddleware
 
-from app import config
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+from tests.helpers.contract import Contract
 
 
-class IbetStandardTokenUtils:
+class IbetStandardTokenHelper:
     @staticmethod
     def issue(tx_from: str, args: dict[str, Any]) -> Web3Contract:
         """issue token
@@ -40,8 +34,6 @@ class IbetStandardTokenUtils:
         :param args: deploy args
         :return: Contract
         """
-        from_address = to_checksum_address(tx_from)
-        web3.eth.default_account = from_address
         arguments = [
             args["name"],
             args["symbol"],
@@ -51,9 +43,28 @@ class IbetStandardTokenUtils:
             args["privacyPolicy"],
         ]
         contract_address, _ = Contract.deploy_contract(
-            contract_name="IbetStandardToken", args=arguments, deployer=from_address
+            contract_name="IbetStandardToken", args=arguments, deployer=tx_from
         )
         contract = Contract.get_contract(
             contract_name="IbetStandardToken", address=contract_address
         )
         return contract
+
+    @staticmethod
+    def transfer_token(
+        tx_from: str, token_address: str, to: str, amount: int
+    ) -> HexBytes:
+        """
+        Transfer IbetStandardToken token
+
+        :param tx_from: Transaction sender address
+        :param token_address: IbetStandardToken token contract address
+        :param to: Recipient address
+        :param amount: Transfer amount
+        :return: Transaction object
+        """
+        token_contract = Contract.get_contract(
+            contract_name="IbetStandardToken", address=token_address
+        )
+        tx = token_contract.functions.transfer(to, amount).transact({"from": tx_from})  # type: ignore
+        return tx

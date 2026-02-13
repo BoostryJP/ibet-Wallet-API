@@ -26,9 +26,8 @@ from web3.contract import Contract as Web3Contract
 from app import config
 from app.model.db import IDXLockedPosition, IDXPosition, IDXShareToken, Listing
 from tests.account_config import eth_account
-from tests.contract_modules import share_lock, share_transfer_token
+from tests.helpers import IbetShareTestHelper, PersonalInfoHelper
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils import IbetShareUtils, PersonalInfoUtils
 
 
 class TestPositionShareContractAddress:
@@ -69,20 +68,20 @@ class TestPositionShareContractAddress:
             "memo": "メモ",
             "transferable": True,
         }
-        token = IbetShareUtils.issue(tx_from=issuer_address, args=args)
-        IbetShareUtils.register_token_list(
+        token = IbetShareTestHelper.issue(tx_from=issuer_address, args=args)
+        IbetShareTestHelper.register_token_list(
             tx_from=issuer_address,
             token_address=token.address,
             token_list_contract_address=token_list_contract["address"],
         )
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             tx_from=account["account_address"],
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address,
         )
-        IbetShareUtils.transfer_to_exchange(
+        IbetShareTestHelper.transfer_token(
             tx_from=issuer_address,
-            exchange_address=account["account_address"],
+            to=account["account_address"],
             token_address=token.address,
             amount=1000000,
         )
@@ -108,15 +107,15 @@ class TestPositionShareContractAddress:
         )
 
         # Apply for transfer
-        IbetShareUtils.set_transfer_approval_required(
+        IbetShareTestHelper.set_transfer_approval_required(
             tx_from=issuer_address, token_address=token.address, required=True
         )
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             tx_from=to_account["account_address"],
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address,
         )
-        IbetShareUtils.apply_for_transfer(
+        IbetShareTestHelper.apply_for_token_transfer(
             tx_from=account["account_address"],
             token_address=token.address,
             to=to_account["account_address"],
@@ -141,7 +140,7 @@ class TestPositionShareContractAddress:
         )
 
         # Create escrow
-        IbetShareUtils.create_escrow(
+        IbetShareTestHelper.create_escrow(
             escrow_address=exchange_contract["address"],
             tx_from=account["account_address"],
             token_address=token.address,
@@ -170,14 +169,14 @@ class TestPositionShareContractAddress:
         )
 
         # Transfer all amount
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             tx_from=to_account["account_address"],
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address,
         )
-        IbetShareUtils.transfer_to_exchange(
+        IbetShareTestHelper.transfer_token(
             tx_from=account["account_address"],
-            exchange_address=to_account["account_address"],
+            to=to_account["account_address"],
             token_address=token.address,
             amount=1000000,
         )
@@ -2748,29 +2747,32 @@ class TestPositionShareContractAddress:
             token_list_contract,
         )
 
-        share_lock(
-            invoker=self.account_1,
-            token={"address": token_1.address},
-            lock_address=self.account_2["account_address"],
-            amount=1000,
+        IbetShareTestHelper.lock_token(
+            self.account_1["account_address"],
+            token_1.address,
+            self.account_2["account_address"],
+            1000,
+            "",
         )
-        share_lock(
-            invoker=self.account_1,
-            token={"address": token_1.address},
-            lock_address=self.issuer["account_address"],
-            amount=2000,
+        IbetShareTestHelper.lock_token(
+            self.account_1["account_address"],
+            token_1.address,
+            self.issuer["account_address"],
+            2000,
+            "",
         )
-        share_transfer_token(
-            invoker=self.account_1,
-            to=self.account_2,
-            token={"address": token_1.address},
-            amount=5000,
+        IbetShareTestHelper.transfer_token(
+            self.account_1["account_address"],
+            token_1.address,
+            self.account_2["account_address"],
+            5000,
         )
-        share_lock(
-            invoker=self.account_2,
-            token={"address": token_1.address},
-            lock_address=self.issuer["account_address"],
-            amount=5000,
+        IbetShareTestHelper.lock_token(
+            self.account_2["account_address"],
+            token_1.address,
+            self.issuer["account_address"],
+            5000,
+            "",
         )
 
         self.create_idx_position(

@@ -21,24 +21,13 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXTransfer, IDXTransferSourceEventType, Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    coupon_consume,
-    coupon_issue_token,
-    coupon_register_token_list,
-    coupon_transfer_to_exchange,
-    coupon_transfer_token,
-)
+from tests.helpers import IbetCouponTestHelper
+from tests.helpers.ibet_exchange_helpers import create_token_escrow
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 class TestPositionCouponContractAddress:
@@ -56,7 +45,7 @@ class TestPositionCouponContractAddress:
         account: UnitTestAccount,
         exchange_contract: DeployedContract,
         token_list_contract: DeployedContract,
-    ) -> DeployedContract:
+    ):
         # Issue token
         args = {
             "name": "テストクーポン",
@@ -71,14 +60,18 @@ class TestPositionCouponContractAddress:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = coupon_issue_token(TestPositionCouponContractAddress.issuer, args)
-        coupon_register_token_list(
-            TestPositionCouponContractAddress.issuer, token, token_list_contract
+        token = IbetCouponTestHelper.issue(
+            TestPositionCouponContractAddress.issuer["account_address"], args
         )
-        coupon_transfer_token(
-            TestPositionCouponContractAddress.issuer,
-            token,
-            account,
+        IbetCouponTestHelper.register_token_list(
+            TestPositionCouponContractAddress.issuer["account_address"],
+            token.address,
+            token_list_contract["address"],
+        )
+        IbetCouponTestHelper.transfer_token(
+            TestPositionCouponContractAddress.issuer["account_address"],
+            token.address,
+            account["account_address"],
             1000000,
         )
 
@@ -92,24 +85,27 @@ class TestPositionCouponContractAddress:
         exchange_contract: DeployedContract,
         token_list_contract: DeployedContract,
         commitment: int,
-    ) -> DeployedContract:
+    ):
         # Issue token
         token = TestPositionCouponContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract
         )
 
         # Create escrow
-        coupon_transfer_to_exchange(account, exchange_contract, token, commitment)
-        escrow_contract = Contract.get_contract(
-            contract_name="IbetEscrow", address=exchange_contract["address"]
+        IbetCouponTestHelper.transfer_token(
+            account["account_address"],
+            token.address,
+            exchange_contract["address"],
+            commitment,
         )
-        escrow_contract.functions.createEscrow(
-            token["address"],
+        create_token_escrow(
+            account,
+            {"address": exchange_contract["address"]},
+            {"address": token.address},
+            account["account_address"],
             account["account_address"],
             commitment,
-            account["account_address"],
-            "test_data",
-        ).transact({"from": account["account_address"]})
+        )
 
         return token
 
@@ -121,14 +117,18 @@ class TestPositionCouponContractAddress:
         exchange_contract: DeployedContract,
         token_list_contract: DeployedContract,
         used: int,
-    ) -> DeployedContract:
+    ):
         # Issue token
         token = TestPositionCouponContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract
         )
 
         # Used
-        coupon_consume(account, token, used)
+        IbetCouponTestHelper.consume_token(
+            account["account_address"],
+            token.address,
+            used,
+        )
 
         return token
 
@@ -140,14 +140,19 @@ class TestPositionCouponContractAddress:
         to_account: UnitTestAccount,
         exchange_contract: DeployedContract,
         token_list_contract: DeployedContract,
-    ) -> DeployedContract:
+    ):
         # Issue token
         token = TestPositionCouponContractAddress.create_balance_data(
             account, exchange_contract, token_list_contract
         )
 
         # Transfer all amount
-        coupon_transfer_token(account, token, to_account, 1000000)
+        IbetCouponTestHelper.transfer_token(
+            account["account_address"],
+            token.address,
+            to_account["account_address"],
+            1000000,
+        )
 
         return token
 
@@ -181,90 +186,90 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_1 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_1["address"], session)
+        self.list_token(token_1.address, session)
         token_2 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_2["address"], session)
+        self.list_token(token_2.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_3["address"], session)
+        self.list_token(token_3.address, session)
         token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_4["address"], session)
+        self.list_token(token_4.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_5 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_5["address"], session)
+        self.list_token(token_5.address, session)
         token_6 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_6["address"], session)
+        self.list_token(token_6.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_7 = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_7["address"], session)
+        self.list_token(token_7.address, session)
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
-        idx_transfer.token_address = token_7["address"]
+        idx_transfer.token_address = token_7.address
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
@@ -276,7 +281,7 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
         session.commit()
 
@@ -287,14 +292,14 @@ class TestPositionCouponContractAddress:
             resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
-                    contract_address=token_2["address"],
+                    contract_address=token_2.address,
                 ),
             )
 
         assert resp.status_code == 200
         assert resp.json()["data"] == {
             "token": {
-                "token_address": token_2["address"],
+                "token_address": token_2.address,
                 "token_template": "IbetCoupon",
                 "owner_address": self.issuer["account_address"],
                 "company_name": "",
@@ -343,90 +348,90 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_1 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_1["address"], session)
+        self.list_token(token_1.address, session)
         token_2 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_2["address"], session)
+        self.list_token(token_2.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_3["address"], session)
+        self.list_token(token_3.address, session)
         token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_4["address"], session)
+        self.list_token(token_4.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_5 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_5["address"], session)
+        self.list_token(token_5.address, session)
         token_6 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_6["address"], session)
+        self.list_token(token_6.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_7 = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_7["address"], session)
+        self.list_token(token_7.address, session)
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
-        idx_transfer.token_address = token_7["address"]
+        idx_transfer.token_address = token_7.address
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
@@ -438,7 +443,7 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
         session.commit()
 
@@ -449,14 +454,14 @@ class TestPositionCouponContractAddress:
             resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
-                    contract_address=token_3["address"],
+                    contract_address=token_3.address,
                 ),
             )
 
         assert resp.status_code == 200
         assert resp.json()["data"] == {
             "token": {
-                "token_address": token_3["address"],
+                "token_address": token_3.address,
                 "token_template": "IbetCoupon",
                 "owner_address": self.issuer["account_address"],
                 "company_name": "",
@@ -505,90 +510,90 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_1 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_1["address"], session)
+        self.list_token(token_1.address, session)
         token_2 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_2["address"], session)
+        self.list_token(token_2.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_3["address"], session)
+        self.list_token(token_3.address, session)
         token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_4["address"], session)
+        self.list_token(token_4.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_5 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_5["address"], session)
+        self.list_token(token_5.address, session)
         token_6 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_6["address"], session)
+        self.list_token(token_6.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_7 = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_7["address"], session)
+        self.list_token(token_7.address, session)
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
-        idx_transfer.token_address = token_7["address"]
+        idx_transfer.token_address = token_7.address
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
@@ -600,7 +605,7 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
         session.commit()
 
@@ -611,14 +616,14 @@ class TestPositionCouponContractAddress:
             resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
-                    contract_address=token_4["address"],
+                    contract_address=token_4.address,
                 ),
             )
 
         assert resp.status_code == 200
         assert resp.json()["data"] == {
             "token": {
-                "token_address": token_4["address"],
+                "token_address": token_4.address,
                 "token_template": "IbetCoupon",
                 "owner_address": self.issuer["account_address"],
                 "company_name": "",
@@ -667,90 +672,90 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_1 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_1["address"], session)
+        self.list_token(token_1.address, session)
         token_2 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_2["address"], session)
+        self.list_token(token_2.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_3["address"], session)
+        self.list_token(token_3.address, session)
         token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_4["address"], session)
+        self.list_token(token_4.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_5 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_5["address"], session)
+        self.list_token(token_5.address, session)
         token_6 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_6["address"], session)
+        self.list_token(token_6.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_7 = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_7["address"], session)
+        self.list_token(token_7.address, session)
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
-        idx_transfer.token_address = token_7["address"]
+        idx_transfer.token_address = token_7.address
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
@@ -762,7 +767,7 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
         session.commit()
 
@@ -773,14 +778,14 @@ class TestPositionCouponContractAddress:
             resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
-                    contract_address=token_5["address"],
+                    contract_address=token_5.address,
                 ),
             )
 
         assert resp.status_code == 200
         assert resp.json()["data"] == {
             "token": {
-                "token_address": token_5["address"],
+                "token_address": token_5.address,
                 "token_template": "IbetCoupon",
                 "owner_address": self.issuer["account_address"],
                 "company_name": "",
@@ -829,90 +834,90 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_1 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_1["address"], session)
+        self.list_token(token_1.address, session)
         token_2 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_2["address"], session)
+        self.list_token(token_2.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_3["address"], session)
+        self.list_token(token_3.address, session)
         token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_4["address"], session)
+        self.list_token(token_4.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_5 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_5["address"], session)
+        self.list_token(token_5.address, session)
         token_6 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_6["address"], session)
+        self.list_token(token_6.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_7 = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_7["address"], session)
+        self.list_token(token_7.address, session)
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
-        idx_transfer.token_address = token_7["address"]
+        idx_transfer.token_address = token_7.address
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
@@ -924,7 +929,7 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
         session.commit()
 
@@ -935,14 +940,14 @@ class TestPositionCouponContractAddress:
             resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
-                    contract_address=token_6["address"],
+                    contract_address=token_6.address,
                 ),
             )
 
         assert resp.status_code == 200
         assert resp.json()["data"] == {
             "token": {
-                "token_address": token_6["address"],
+                "token_address": token_6.address,
                 "token_template": "IbetCoupon",
                 "owner_address": self.issuer["account_address"],
                 "company_name": "",
@@ -991,90 +996,90 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_1 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_1["address"], session)
+        self.list_token(token_1.address, session)
         token_2 = self.create_balance_data(
             self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract
         )
-        self.list_token(token_2["address"], session)
+        self.list_token(token_2.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_3 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_3["address"], session)
+        self.list_token(token_3.address, session)
         token_4 = self.create_exchange_commitment_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_4["address"], session)
+        self.list_token(token_4.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_5 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 100
         )
-        self.list_token(token_5["address"], session)
+        self.list_token(token_5.address, session)
         token_6 = self.create_used_data(
             self.account_1, exchange_contract, token_list_contract, 1000000
         )
-        self.list_token(token_6["address"], session)
+        self.list_token(token_6.address, session)
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_non = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
         token_7 = self.create_non_balance_data(
             self.account_1,
             self.account_2,
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_7["address"], session)
+        self.list_token(token_7.address, session)
         idx_transfer = IDXTransfer()
         idx_transfer.transaction_hash = "tx1"
-        idx_transfer.token_address = token_7["address"]
+        idx_transfer.token_address = token_7.address
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
@@ -1086,7 +1091,7 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
         session.commit()
 
@@ -1097,14 +1102,14 @@ class TestPositionCouponContractAddress:
             resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
-                    contract_address=token_7["address"],
+                    contract_address=token_7.address,
                 ),
             )
 
         assert resp.status_code == 200
         assert resp.json()["data"] == {
             "token": {
-                "token_address": token_7["address"],
+                "token_address": token_7.address,
                 "token_template": "IbetCoupon",
                 "owner_address": self.issuer["account_address"],
                 "company_name": "",
@@ -1262,9 +1267,9 @@ class TestPositionCouponContractAddress:
             {"address": config.ZERO_ADDRESS},
             token_list_contract,
         )
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
 
-        contract_address = token_non["address"]
+        contract_address = token_non.address
 
         with mock.patch(
             "app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]

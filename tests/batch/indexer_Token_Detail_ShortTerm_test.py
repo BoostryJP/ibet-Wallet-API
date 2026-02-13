@@ -30,6 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
@@ -45,18 +46,14 @@ from app.model.db import (
 )
 from batch.indexer_Token_Detail_ShortTerm import LOG, Processor, main
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    bond_issue_token,
-    bond_register_token_list,
-    coupon_issue_token,
-    coupon_register_token_list,
-    membership_issue_token,
-    membership_register_token_list,
-    share_issue_token,
-    share_register_token_list,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
+from tests.helpers.contract import Contract
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -118,11 +115,12 @@ class TestProcessor:
         issuer: UnitTestAccount,
         token_list: DeployedContract,
         args: Mapping[str, object],
-    ):
+    ) -> Web3Contract:
         # Issue token
-        token = bond_issue_token(issuer, dict(args))
-        bond_register_token_list(issuer, token, token_list)
-
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], dict(args))
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
         return token
 
     @staticmethod
@@ -130,11 +128,14 @@ class TestProcessor:
         issuer: UnitTestAccount,
         token_list: DeployedContract,
         args: Mapping[str, object],
-    ):
+    ) -> Web3Contract:
         # Issue token
-        token = share_issue_token(issuer, dict(args))
-        share_register_token_list(issuer, token, token_list)
-
+        token = IbetShareTestHelper.issue(issuer["account_address"], dict(args))
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -142,11 +143,14 @@ class TestProcessor:
         issuer: UnitTestAccount,
         token_list: DeployedContract,
         args: Mapping[str, object],
-    ):
+    ) -> Web3Contract:
         # Issue token
-        token = coupon_issue_token(issuer, dict(args))
-        coupon_register_token_list(issuer, token, token_list)
-
+        token = IbetCouponTestHelper.issue(issuer["account_address"], dict(args))
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -154,11 +158,14 @@ class TestProcessor:
         issuer: UnitTestAccount,
         token_list: DeployedContract,
         args: Mapping[str, object],
-    ):
+    ) -> Web3Contract:
         # Issue token
-        token = membership_issue_token(issuer, dict(args))
-        membership_register_token_list(issuer, token, token_list)
-
+        token = IbetMembershipTestHelper.issue(issuer["account_address"], dict(args))
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     ###########################################################################
@@ -221,14 +228,12 @@ class TestProcessor:
             token = self.issue_token_bond_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(
-                token["address"], "IbetStraightBond", async_session
-            )
+            await self.listing_token(token.address, "IbetStraightBond", async_session)
             # Fetch data for cache
-            bond_token = await BondToken.get(async_session, token["address"])
+            bond_token = await BondToken.get(async_session, token.address)
             assert bond_token is not None
             async_session.add(bond_token.to_model())
-            _bond_token_expected_list.append({"token_address": token["address"]})
+            _bond_token_expected_list.append({"token_address": token.address})
 
         _share_token_expected_list: list[dict[str, str]] = []
         # Issue share token
@@ -253,12 +258,12 @@ class TestProcessor:
             token = self.issue_token_share_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetShare", async_session)
+            await self.listing_token(token.address, "IbetShare", async_session)
             # Fetch data for cache
-            share_token = await ShareToken.get(async_session, token["address"])
+            share_token = await ShareToken.get(async_session, token.address)
             assert share_token is not None
             async_session.add(share_token.to_model())
-            _share_token_expected_list.append({"token_address": token["address"]})
+            _share_token_expected_list.append({"token_address": token.address})
 
         _membership_token_expected_list: list[dict[str, str]] = []
         # Issue membership token
@@ -279,14 +284,12 @@ class TestProcessor:
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetMembership", async_session)
+            await self.listing_token(token.address, "IbetMembership", async_session)
             # Fetch data for cache
-            membership_token = await MembershipToken.get(
-                async_session, token["address"]
-            )
+            membership_token = await MembershipToken.get(async_session, token.address)
             assert membership_token is not None
             async_session.add(membership_token.to_model())
-            _membership_token_expected_list.append({"token_address": token["address"]})
+            _membership_token_expected_list.append({"token_address": token.address})
 
         _coupon_token_expected_list: list[dict[str, str]] = []
         # issue coupon token
@@ -308,12 +311,12 @@ class TestProcessor:
             token = self.issue_token_coupon_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetCoupon", async_session)
+            await self.listing_token(token.address, "IbetCoupon", async_session)
             # Fetch data for cache
-            coupon_token = await CouponToken.get(async_session, token["address"])
+            coupon_token = await CouponToken.get(async_session, token.address)
             assert coupon_token is not None
             async_session.add(coupon_token.to_model())
-            _coupon_token_expected_list.append({"token_address": token["address"]})
+            _coupon_token_expected_list.append({"token_address": token.address})
 
         await async_session.commit()
         current = datetime.now(UTC).replace(tzinfo=None)
@@ -448,45 +451,40 @@ class TestProcessor:
             token = self.issue_token_bond_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(
-                token["address"], "IbetStraightBond", async_session
-            )
-            bond_token = await BondToken.get(async_session, token["address"])
+            await self.listing_token(token.address, "IbetStraightBond", async_session)
+            bond_token = await BondToken.get(async_session, token.address)
             assert bond_token is not None
             async_session.add(bond_token.to_model())
 
             # Change attributes to occur events
-            token_contract = Contract.get_contract(
-                contract_name="IbetStraightBond", address=token["address"]
-            )
-            token_contract.functions.setRedemptionValue(99999).transact(
+            token.functions.setRedemptionValue(99999).transact(
                 {"from": self.issuer["account_address"]}
             )
-            token_contract.functions.changeToRedeemed().transact(
+            token.functions.changeToRedeemed().transact(
                 {"from": self.issuer["account_address"]}
             )
-            token_contract.functions.changeOfferingStatus(False).transact(
+            token.functions.changeOfferingStatus(False).transact(
                 {"from": self.issuer["account_address"]}
             )
-            token_contract.functions.setTransferApprovalRequired(True).transact(
+            token.functions.setTransferApprovalRequired(True).transact(
                 {"from": self.issuer["account_address"]}
             )
-            token_contract.functions.setFaceValue(1).transact(
+            token.functions.setFaceValue(1).transact(
                 {"from": self.issuer["account_address"]}
             )
-            token_contract.functions.setStatus(False).transact(
+            token.functions.setStatus(False).transact(
                 {"from": self.issuer["account_address"]}
             )
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable", address=token["address"]
+                contract_name="Ownable", address=token.address
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
             ).transact({"from": self.issuer["account_address"]})
 
             # Fetch data for cache
-            _bond_token_expected_list.append({"token_address": token["address"]})
+            _bond_token_expected_list.append({"token_address": token.address})
 
         await async_session.commit()
         # Then
@@ -562,43 +560,37 @@ class TestProcessor:
             token = self.issue_token_share_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(
-                token["address"], "IbetStraightBond", async_session
-            )
+            await self.listing_token(token.address, "IbetStraightBond", async_session)
             # Fetch data for cache
-            share_token = await ShareToken.get(async_session, token["address"])
+            share_token = await ShareToken.get(async_session, token.address)
             assert share_token is not None
             async_session.add(share_token.to_model())
 
             # Change attributes to occur events
-            token_contract = Contract.get_contract(
-                contract_name="IbetShare", address=token["address"]
+            token.functions.setStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token.functions.setTransferApprovalRequired(True).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token.functions.changeOfferingStatus(False).transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token.functions.changeToCanceled().transact(
+                {"from": self.issuer["account_address"]}
+            )
+            token.functions.setDividendInformation(50, "20200401", "20200401").transact(
+                {"from": self.issuer["account_address"]}
             )
 
-            token_contract.functions.setStatus(False).transact(
-                {"from": self.issuer["account_address"]}
-            )
-            token_contract.functions.setTransferApprovalRequired(True).transact(
-                {"from": self.issuer["account_address"]}
-            )
-            token_contract.functions.changeOfferingStatus(False).transact(
-                {"from": self.issuer["account_address"]}
-            )
-            token_contract.functions.changeToCanceled().transact(
-                {"from": self.issuer["account_address"]}
-            )
-            token_contract.functions.setDividendInformation(
-                50, "20200401", "20200401"
-            ).transact({"from": self.issuer["account_address"]})
-
             token_contract = Contract.get_contract(
-                contract_name="Ownable", address=token["address"]
+                contract_name="Ownable", address=token.address
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
             ).transact({"from": self.issuer["account_address"]})
 
-            _share_token_expected_list.append({"token_address": token["address"]})
+            _share_token_expected_list.append({"token_address": token.address})
 
         await async_session.commit()
         # Then
@@ -668,31 +660,25 @@ class TestProcessor:
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetMembership", async_session)
-            membership_token = await MembershipToken.get(
-                async_session, token["address"]
-            )
+            await self.listing_token(token.address, "IbetMembership", async_session)
+            membership_token = await MembershipToken.get(async_session, token.address)
             assert membership_token is not None
             async_session.add(membership_token.to_model())
 
             # Change attributes to occur events
-            token_contract = Contract.get_contract(
-                contract_name="IbetMembership", address=token["address"]
-            )
-
-            token_contract.functions.setStatus(False).transact(
+            token.functions.setStatus(False).transact(
                 {"from": self.issuer["account_address"]}
             )
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable", address=token["address"]
+                contract_name="Ownable", address=token.address
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
             ).transact({"from": self.issuer["account_address"]})
 
             # Fetch data for cache
-            _membership_token_expected_list.append({"token_address": token["address"]})
+            _membership_token_expected_list.append({"token_address": token.address})
 
         _coupon_token_expected_list: list[dict[str, str]] = []
         # issue coupon token
@@ -714,29 +700,25 @@ class TestProcessor:
             token = self.issue_token_coupon_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], "IbetCoupon", async_session)
-            coupon_token = await CouponToken.get(async_session, token["address"])
+            await self.listing_token(token.address, "IbetCoupon", async_session)
+            coupon_token = await CouponToken.get(async_session, token.address)
             assert coupon_token is not None
             async_session.add(coupon_token.to_model())
 
             # Change attributes to occur events
-            token_contract = Contract.get_contract(
-                contract_name="IbetCoupon", address=token["address"]
-            )
-
-            token_contract.functions.setStatus(False).transact(
+            token.functions.setStatus(False).transact(
                 {"from": self.issuer["account_address"]}
             )
 
             token_contract = Contract.get_contract(
-                contract_name="Ownable", address=token["address"]
+                contract_name="Ownable", address=token.address
             )
             token_contract.functions.transferOwnership(
                 self.agent["account_address"]
             ).transact({"from": self.issuer["account_address"]})
 
             # Fetch data for cache
-            _coupon_token_expected_list.append({"token_address": token["address"]})
+            _coupon_token_expected_list.append({"token_address": token.address})
 
         await async_session.commit()
         # Then
@@ -808,8 +790,8 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
-        coupon_data = await CouponToken.get(async_session, token["address"])
+        await self.listing_token(token.address, "IbetCoupon", async_session)
+        coupon_data = await CouponToken.get(async_session, token.address)
         assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
@@ -831,7 +813,7 @@ class TestProcessor:
         _coupon_token = (
             await async_session.scalars(
                 select(CouponTokenModel)
-                .where(CouponTokenModel.token_address == token["address"])
+                .where(CouponTokenModel.token_address == token.address)
                 .limit(1)
             )
         ).first()
@@ -842,8 +824,8 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
-        coupon_data = await CouponToken.get(async_session, token["address"])
+        await self.listing_token(token.address, "IbetCoupon", async_session)
+        coupon_data = await CouponToken.get(async_session, token.address)
         assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
@@ -866,7 +848,7 @@ class TestProcessor:
         _coupon_token = (
             await async_session.scalars(
                 select(CouponTokenModel)
-                .where(CouponTokenModel.token_address == token["address"])
+                .where(CouponTokenModel.token_address == token.address)
                 .limit(1)
             )
         ).first()
@@ -901,8 +883,8 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
-        coupon_data = await CouponToken.get(async_session, token["address"])
+        await self.listing_token(token.address, "IbetCoupon", async_session)
+        coupon_data = await CouponToken.get(async_session, token.address)
         assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 
@@ -921,7 +903,7 @@ class TestProcessor:
         _coupon_token = (
             await async_session.scalars(
                 select(CouponTokenModel)
-                .where(CouponTokenModel.token_address == token["address"])
+                .where(CouponTokenModel.token_address == token.address)
                 .limit(1)
             )
         ).first()
@@ -957,8 +939,8 @@ class TestProcessor:
         token = self.issue_token_coupon_with_args(
             self.issuer, token_list_contract, args
         )
-        await self.listing_token(token["address"], "IbetCoupon", async_session)
-        coupon_data = await CouponToken.get(async_session, token["address"])
+        await self.listing_token(token.address, "IbetCoupon", async_session)
+        coupon_data = await CouponToken.get(async_session, token.address)
         assert coupon_data is not None
         async_session.add(coupon_data.to_model())
 

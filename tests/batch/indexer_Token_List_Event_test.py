@@ -35,21 +35,16 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.errors import ServiceUnavailable
-from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister, Listing
+from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister
 from batch.indexer_Token_List_Event import LOG, Processor, main
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    bond_issue_token,
-    bond_register_token_list,
-    coupon_issue_token,
-    coupon_register_token_list,
-    membership_issue_token,
-    membership_register_token_list,
-    share_issue_token,
-    share_register_token_list,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -94,26 +89,18 @@ class TestProcessor:
     agent = eth_account["agent"]
 
     @staticmethod
-    async def listing_token(token_address: str, async_session: AsyncSession):
-        _listing = Listing()
-        _listing.token_address = token_address
-        _listing.is_public = True
-        _listing.max_holding_quantity = 1000000
-        _listing.max_sell_amount = 1000000
-        _listing.owner_address = TestProcessor.issuer["account_address"]
-        async_session.add(_listing)
-        await async_session.commit()
-
-    @staticmethod
     def issue_token_bond_with_args(
         issuer: UnitTestAccount,
         token_list: DeployedContract,
         args: Mapping[str, object],
     ):
         # Issue token
-        token = bond_issue_token(issuer, dict(args))
-        bond_register_token_list(issuer, token, token_list)
-
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], dict(args))
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -123,9 +110,12 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = share_issue_token(issuer, dict(args))
-        share_register_token_list(issuer, token, token_list)
-
+        token = IbetShareTestHelper.issue(issuer["account_address"], dict(args))
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -135,9 +125,12 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = coupon_issue_token(issuer, dict(args))
-        coupon_register_token_list(issuer, token, token_list)
-
+        token = IbetCouponTestHelper.issue(issuer["account_address"], dict(args))
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -147,9 +140,12 @@ class TestProcessor:
         args: Mapping[str, object],
     ):
         # Issue token
-        token = membership_issue_token(issuer, dict(args))
-        membership_register_token_list(issuer, token, token_list)
-
+        token = IbetMembershipTestHelper.issue(issuer["account_address"], dict(args))
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     ###########################################################################
@@ -163,7 +159,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         _token_list_block_number = IDXTokenListBlockNumber()
@@ -186,7 +181,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        block_number: None,
     ):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -241,10 +235,9 @@ class TestProcessor:
             token = self.issue_token_bond_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
-                    "token_address": token["address"],
+                    "token_address": token.address,
                     "token_template": "IbetStraightBond",
                     "owner_address": self.issuer["account_address"],
                 }
@@ -272,10 +265,9 @@ class TestProcessor:
             token = self.issue_token_share_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
-                    "token_address": token["address"],
+                    "token_address": token.address,
                     "token_template": "IbetShare",
                     "owner_address": self.issuer["account_address"],
                 }
@@ -299,10 +291,9 @@ class TestProcessor:
             token = self.issue_token_membership_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
-                    "token_address": token["address"],
+                    "token_address": token.address,
                     "token_template": "IbetMembership",
                     "owner_address": self.issuer["account_address"],
                 }
@@ -327,20 +318,15 @@ class TestProcessor:
             token = self.issue_token_coupon_with_args(
                 self.issuer, token_list_contract, args
             )
-            await self.listing_token(token["address"], async_session)
             _token_expected_list.append(
                 {
-                    "token_address": token["address"],
+                    "token_address": token.address,
                     "token_template": "IbetCoupon",
                     "owner_address": self.issuer["account_address"],
                 }
             )
 
         # register unknown token template
-        TokenListContract = Contract.get_contract(
-            "TokenList", token_list_contract["address"]
-        )
-        web3.eth.default_account = self.issuer["account_address"]
         args = {
             "name": "TestToken",
             "symbol": "Test",
@@ -376,10 +362,15 @@ class TestProcessor:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        test_token = bond_issue_token(self.issuer, args)
-        TokenListContract.functions.register(
-            test_token["address"], "UnknownTokenTemplate"
-        ).transact({"from": self.issuer["account_address"]})
+        test_token = IbetStraightBondTestHelper.issue(
+            self.issuer["account_address"], args
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            self.issuer["account_address"],
+            test_token.address,
+            token_list_contract["address"],
+            "UnknownTokenTemplate",
+        )
 
         # Run target process
         await processor.process()
@@ -409,7 +400,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        block_number: None,
         caplog: pytest.LogCaptureFixture,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -497,7 +487,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        block_number: None,
         caplog: pytest.LogCaptureFixture,
     ):
         token_list_contract = shared_contract["TokenList"]
@@ -593,8 +582,6 @@ class TestProcessor:
         processor: Processor,
         shared_contract: SharedContract,
         async_session: AsyncSession,
-        block_number: None,
-        caplog: pytest.LogCaptureFixture,
     ):
         token_list_contract = shared_contract["TokenList"]
 
@@ -668,10 +655,7 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         block_number_current = web3.eth.block_number
         # Run initial sync
@@ -688,10 +672,7 @@ class TestProcessor:
         # Latest_block is incremented in "process" process.
         assert _token_list_block_number.latest_block_number == block_number_current
 
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         block_number_current = web3.eth.block_number
         # Run target process
@@ -743,10 +724,7 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         _token_list_block_number_bf = (
             await async_session.scalars(select(IDXTokenListBlockNumber).limit(1))
@@ -775,10 +753,7 @@ class TestProcessor:
             == _token_list_block_number_af.latest_block_number
         )
 
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         await async_session.rollback()
         _token_list_block_number_bf = (
@@ -839,10 +814,7 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         # Expect that process() raises SQLAlchemyError.
         with (
@@ -863,10 +835,7 @@ class TestProcessor:
             == _token_list_block_number.latest_block_number
         )
 
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         await async_session.rollback()
 
@@ -915,10 +884,7 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token["address"], async_session)
+        self.issue_token_coupon_with_args(self.issuer, token_list_contract, args)
 
         # Mocking time.sleep to break mainloop
         asyncio_mock = MagicMock(wraps=asyncio)

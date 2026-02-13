@@ -23,34 +23,24 @@ from unittest.mock import ANY
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
+from tests.helpers import (
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
+    PersonalInfoHelper,
+)
+from tests.helpers.ibet_exchange_helpers import (
     approve_transfer_security_token_escrow,
-    bond_apply_for_transfer,
-    bond_approve_transfer,
-    bond_cancel_transfer,
-    bond_issue_from,
-    bond_issue_token,
-    bond_lock,
-    bond_redeem_from,
-    bond_register_token_list,
-    bond_set_transfer_approval_required,
-    bond_transfer_to_exchange,
-    bond_unlock,
     create_security_token_escrow,
     finish_security_token_escrow,
     get_latest_security_escrow_id,
-    register_personalinfo,
-    share_issue_token,
-    share_register_token_list,
-    transfer_token,
 )
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -85,7 +75,7 @@ class TestEventsIbetSecurityTokenInterface:
         exchange_contract_address: str,
         personal_info_contract_address: str,
         token_list: DeployedContract,
-    ) -> DeployedContract:
+    ) -> Web3Contract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -122,8 +112,10 @@ class TestEventsIbetSecurityTokenInterface:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = bond_issue_token(issuer, args)
-        bond_register_token_list(issuer, token, token_list)
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], args)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
 
         return token
 
@@ -133,7 +125,7 @@ class TestEventsIbetSecurityTokenInterface:
         exchange_contract_address: str,
         personal_info_contract_address: str,
         token_list: DeployedContract,
-    ) -> DeployedContract:
+    ) -> Web3Contract:
         # Issue token
         args = {
             "name": "テスト株式",
@@ -152,8 +144,10 @@ class TestEventsIbetSecurityTokenInterface:
             "memo": "メモ",
             "transferable": True,
         }
-        token = share_issue_token(issuer, args)
-        share_register_token_list(issuer, token, token_list)
+        token = IbetShareTestHelper.issue(issuer["account_address"], args)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
 
         return token
 
@@ -180,37 +174,62 @@ class TestEventsIbetSecurityTokenInterface:
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+        self.listing_token(token.address, session)
 
         # User1 and trader must register personal information before they receive token.
-        register_personalinfo(self.user1, personal_info_contract)
-        register_personalinfo(self.trader, personal_info_contract)
-
-        transfer_token(
-            token_contract,
-            self.issuer["account_address"],
+        PersonalInfoHelper.register(
             self.user1["account_address"],
-            20000,
+            personal_info_contract["address"],
+            self.issuer["account_address"],
         )
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract["address"]}, token, 10000
+        PersonalInfoHelper.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+
+        IbetStraightBondTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            200000,
+        )
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
         # user1: 20000 trader: 0
 
         # Issuer transfers issued token to user1 and trader.
-        bond_set_transfer_approval_required(self.issuer, token, True)
-        bond_apply_for_transfer(self.issuer, token, self.user1, 10000, "to user1#1")
-        bond_apply_for_transfer(self.issuer, token, self.trader, 10000, "to trader#1")
-
-        bond_cancel_transfer(self.issuer, token, 0, "to user1#1")
-        bond_approve_transfer(self.issuer, token, 1, "to trader#1")
+        IbetStraightBondTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetStraightBondTestHelper.apply_for_token_transfer(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            10000,
+        )
+        IbetStraightBondTestHelper.apply_for_token_transfer(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
+        )
+        IbetStraightBondTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token.address, 0, "to user1#1"
+        )
+        IbetStraightBondTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 1, "to trader#1"
+        )
         # user1: 20000 trader: 10000
 
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.trader["account_address"],
             self.agent["account_address"],
             7000,
@@ -234,7 +253,7 @@ class TestEventsIbetSecurityTokenInterface:
         create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
-            token,
+            {"address": token.address},
             self.trader["account_address"],
             self.agent["account_address"],
             2000,
@@ -249,36 +268,65 @@ class TestEventsIbetSecurityTokenInterface:
         )
         # user1: 13000 trader: 17000
 
-        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        IbetStraightBondTestHelper.lock_token(
+            self.trader["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            3000,
+            "",
+        )
         # user1: 13000 trader: 17000
 
-        bond_unlock(
-            self.issuer,
-            token,
+        IbetStraightBondTestHelper.unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.trader["account_address"],
             self.user1["account_address"],
             2000,
+            "",
         )
         # user1: 15000 trader: 15000
 
-        bond_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, False
+        )
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             100000,
         )
         # user1: 115000 trader: 15000
 
-        bond_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
-        bond_redeem_from(self.issuer, token, self.user1["account_address"], 10000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            40000,
+        )
+        IbetStraightBondTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            10000,
+        )
         # user1: 105000 trader: 15000
 
-        bond_issue_from(self.issuer, token, self.trader["account_address"], 30000)
-        bond_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            30000,
+        )
+        IbetStraightBondTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            10000,
+        )
         # user1: 115000 trader: 45000
 
-        self.token_address = token["address"]
+        self.token_address = token.address
         self.latest_block_number = web3.eth.block_number
 
     ###########################################################################

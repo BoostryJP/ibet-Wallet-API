@@ -25,26 +25,18 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import Listing, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
-from tests.utils.contract import Contract
+from tests.account_config import eth_account
+from tests.helpers import IbetStraightBondTestHelper, PersonalInfoHelper
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-from tests.account_config import eth_account
-from tests.contract_modules import (
-    bond_issue_token,
-    bond_lock,
-    bond_register_token_list,
-    bond_transfer_to_exchange,
-    bond_unlock,
-    register_personalinfo,
-    transfer_token,
-)
-from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 
 @pytest.fixture(scope="function")
@@ -74,7 +66,7 @@ class TestTokenTokenHoldersCollectionId:
         exchange_contract_address: str,
         personal_info_contract_address: str,
         token_list: DeployedContract,
-    ) -> DeployedContract:
+    ) -> Web3Contract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -111,8 +103,15 @@ class TestTokenTokenHoldersCollectionId:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = bond_issue_token(issuer, args)
-        bond_register_token_list(issuer, token, token_list)
+        token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"],
+            args,
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
 
         return token
 
@@ -191,43 +190,70 @@ class TestTokenTokenHoldersCollectionId:
             token_list_contract,
         )
 
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.user1, personal_info_contract)
+
+        PersonalInfoHelper.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+        PersonalInfoHelper.register(
+            self.user1["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
 
         # Transfer
-        bond_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract["address"]}, token, 10000
-        )
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
+        )
+        IbetStraightBondTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
             self.trader["account_address"],
             30000,
         )
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             50000,
         )
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract["address"]}, token, 30000
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            30000,
         )
-        bond_lock(self.trader, token, self.user1["account_address"], 2000)
-        bond_lock(self.trader, token, self.issuer["account_address"], 1000)
-        bond_unlock(
-            self.user1,
-            token,
+        IbetStraightBondTestHelper.lock_token(
+            self.trader["account_address"],
+            token.address,
+            self.user1["account_address"],
+            2000,
+            "",
+        )
+        IbetStraightBondTestHelper.lock_token(
+            self.trader["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            1000,
+            "",
+        )
+        IbetStraightBondTestHelper.unlock_token(
+            self.user1["account_address"],
+            token.address,
             self.trader["account_address"],
             self.user1["account_address"],
             1000,
+            "",
         )
 
         target_token_holders_list = TokenHoldersList()
-        target_token_holders_list.token_address = token["address"]
+        target_token_holders_list.token_address = token.address
         target_token_holders_list.list_id = str(uuid.uuid4())
         target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = web3.eth.block_number
@@ -242,7 +268,7 @@ class TestTokenTokenHoldersCollectionId:
 
         # Request target API
         apiurl = self.apiurl_base.format(
-            contract_address=token["address"], list_id=target_token_holders_list.list_id
+            contract_address=token.address, list_id=target_token_holders_list.list_id
         )
         resp = client.get(apiurl)
 

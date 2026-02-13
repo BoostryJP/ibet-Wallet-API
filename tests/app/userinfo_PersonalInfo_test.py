@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from app import config
 from tests.account_config import eth_account
-from tests.contract_modules import register_personalinfo
+from tests.helpers import PersonalInfoHelper
 from tests.types import SharedContract
 
 
@@ -48,7 +48,9 @@ class TestUserInfoPersonalInfo:
         config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info["address"]
 
         # Prepare data
-        register_personalinfo(eth_account["trader"], personal_info)
+        PersonalInfoHelper.register(
+            eth_account["trader"]["account_address"], personal_info["address"], issuer
+        )
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"
@@ -78,7 +80,9 @@ class TestUserInfoPersonalInfo:
         _personal_info_address = personal_info["address"]
 
         # Prepare data
-        register_personalinfo(eth_account["trader"], personal_info)
+        PersonalInfoHelper.register(
+            eth_account["trader"]["account_address"], personal_info["address"], issuer
+        )
 
         # Request target API
         query_string = (

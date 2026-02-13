@@ -24,22 +24,13 @@ import pytest
 from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXTokenListRegister, Listing
 from batch.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    membership_issue_token,
-    membership_register_token_list,
-)
-from tests.types import DeployedContract, SharedContract
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+from tests.helpers import IbetMembershipTestHelper
+from tests.types import SharedContract
 
 
 @pytest.fixture(scope="function")
@@ -75,24 +66,15 @@ class TestTokenMembershipTokens:
         return attribute
 
     @staticmethod
-    def tokenlist_contract() -> DeployedContract:
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session: Session, token: DeployedContract) -> None:
+    def list_token(session: Session, token_address: str) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
         token_list_item = IDXTokenListRegister()
-        token_list_item.token_address = token["address"]
+        token_list_item.token_address = token_address
         token_list_item.token_template = "IbetMembership"
         token_list_item.owner_address = ""
         session.add(token_list_item)
@@ -117,17 +99,23 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
         exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.token_attribute(exchange_address)
-        membership = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, membership, token_list)
+        membership = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            membership.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership)
+        self.list_token(session, membership.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -137,7 +125,7 @@ class TestTokenMembershipTokens:
         resp = client.get(self.apiurl, params=query_string)
         tokens = [
             {
-                "token_address": membership["address"],
+                "token_address": membership.address,
                 "token_template": "IbetMembership",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -189,7 +177,7 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
@@ -201,49 +189,69 @@ class TestTokenMembershipTokens:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue_token(issuer, attribute_token1)
-        token_address_list.append(membership1["address"])
-        membership_register_token_list(issuer, membership1, token_list)
+        membership1 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(membership1.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership1.address, token_list["address"]
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue_token(issuer, attribute_token2)
-        token_address_list.append(membership2["address"])
-        membership_register_token_list(issuer, membership2, token_list)
+        membership2 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(membership2.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership2.address, token_list["address"]
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue_token(issuer, attribute_token3)
-        token_address_list.append(membership3["address"])
-        membership_register_token_list(issuer, membership3, token_list)
+        membership3 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(membership3.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership3.address, token_list["address"]
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue_token(issuer, attribute_token4)
-        token_address_list.append(membership4["address"])
-        membership_register_token_list(issuer, membership4, token_list)
+        membership4 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(membership4.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership4.address, token_list["address"]
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue_token(issuer, attribute_token5)
-        token_address_list.append(membership5["address"])
-        membership_register_token_list(issuer, membership5, token_list)
+        membership5 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(membership5.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership5.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership1)
-        self.list_token(session, membership2)
-        self.list_token(session, membership3)
-        self.list_token(session, membership4)
-        self.list_token(session, membership5)
+        self.list_token(session, membership1.address)
+        self.list_token(session, membership2.address)
+        self.list_token(session, membership3.address)
+        self.list_token(session, membership4.address)
+        self.list_token(session, membership5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
         asyncio.run(processor.process())
 
-        target_token_addrss_list = token_address_list[1:4]
+        target_token_address_list = token_address_list[1:4]
 
         resp = client.get(
-            self.apiurl, params={"address_list": target_token_addrss_list}
+            self.apiurl, params={"address_list": target_token_address_list}
         )
         tokens = [
             {
@@ -300,7 +308,7 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
@@ -308,42 +316,64 @@ class TestTokenMembershipTokens:
 
         token_address_list: list[str] = []
 
-        attribute_token1 = self.token_attribute(exchange_address)
+        attribute_token1 = self.token_attribute(
+            exchange_address,
+        )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue_token(issuer, attribute_token1)
-        token_address_list.append(membership1["address"])
-        membership_register_token_list(issuer, membership1, token_list)
+        membership1 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(membership1.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership1.address, token_list["address"]
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue_token(issuer, attribute_token2)
-        token_address_list.append(membership2["address"])
-        membership_register_token_list(issuer, membership2, token_list)
+        membership2 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(membership2.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership2.address, token_list["address"]
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue_token(issuer, attribute_token3)
-        token_address_list.append(membership3["address"])
-        membership_register_token_list(issuer, membership3, token_list)
+        membership3 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(membership3.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership3.address, token_list["address"]
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue_token(issuer, attribute_token4)
-        token_address_list.append(membership4["address"])
-        membership_register_token_list(issuer, membership4, token_list)
+        membership4 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(membership4.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership4.address, token_list["address"]
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue_token(issuer, attribute_token5)
-        token_address_list.append(membership5["address"])
-        membership_register_token_list(issuer, membership5, token_list)
+        membership5 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(membership5.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership5.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership1)
-        self.list_token(session, membership2)
-        self.list_token(session, membership3)
-        self.list_token(session, membership4)
-        self.list_token(session, membership5)
+        self.list_token(session, membership1.address)
+        self.list_token(session, membership2.address)
+        self.list_token(session, membership3.address)
+        self.list_token(session, membership4.address)
+        self.list_token(session, membership5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -411,7 +441,7 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
@@ -423,40 +453,60 @@ class TestTokenMembershipTokens:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue_token(issuer, attribute_token1)
-        token_address_list.append(membership1["address"])
-        membership_register_token_list(issuer, membership1, token_list)
+        membership1 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(membership1.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership1.address, token_list["address"]
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue_token(issuer, attribute_token2)
-        token_address_list.append(membership2["address"])
-        membership_register_token_list(issuer, membership2, token_list)
+        membership2 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(membership2.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership2.address, token_list["address"]
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue_token(issuer, attribute_token3)
-        token_address_list.append(membership3["address"])
-        membership_register_token_list(issuer, membership3, token_list)
+        membership3 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(membership3.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership3.address, token_list["address"]
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue_token(issuer, attribute_token4)
-        token_address_list.append(membership4["address"])
-        membership_register_token_list(issuer, membership4, token_list)
+        membership4 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(membership4.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership4.address, token_list["address"]
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue_token(issuer, attribute_token5)
-        token_address_list.append(membership5["address"])
-        membership_register_token_list(issuer, membership5, token_list)
+        membership5 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(membership5.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership5.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership1)
-        self.list_token(session, membership2)
-        self.list_token(session, membership3)
-        self.list_token(session, membership4)
-        self.list_token(session, membership5)
+        self.list_token(session, membership1.address)
+        self.list_token(session, membership2.address)
+        self.list_token(session, membership3.address)
+        self.list_token(session, membership4.address)
+        self.list_token(session, membership5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -489,7 +539,7 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
@@ -501,40 +551,60 @@ class TestTokenMembershipTokens:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue_token(issuer, attribute_token1)
-        token_address_list.append(membership1["address"])
-        membership_register_token_list(issuer, membership1, token_list)
+        membership1 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(membership1.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership1.address, token_list["address"]
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue_token(issuer, attribute_token2)
-        token_address_list.append(membership2["address"])
-        membership_register_token_list(issuer, membership2, token_list)
+        membership2 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(membership2.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership2.address, token_list["address"]
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue_token(issuer, attribute_token3)
-        token_address_list.append(membership3["address"])
-        membership_register_token_list(issuer, membership3, token_list)
+        membership3 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(membership3.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership3.address, token_list["address"]
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue_token(issuer, attribute_token4)
-        token_address_list.append(membership4["address"])
-        membership_register_token_list(issuer, membership4, token_list)
+        membership4 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(membership4.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership4.address, token_list["address"]
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue_token(issuer, attribute_token5)
-        token_address_list.append(membership5["address"])
-        membership_register_token_list(issuer, membership5, token_list)
+        membership5 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(membership5.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership5.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership1)
-        self.list_token(session, membership2)
-        self.list_token(session, membership3)
-        self.list_token(session, membership4)
-        self.list_token(session, membership5)
+        self.list_token(session, membership1.address)
+        self.list_token(session, membership2.address)
+        self.list_token(session, membership3.address)
+        self.list_token(session, membership4.address)
+        self.list_token(session, membership5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -608,7 +678,7 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
@@ -620,40 +690,60 @@ class TestTokenMembershipTokens:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue_token(issuer, attribute_token1)
-        token_address_list.append(membership1["address"])
-        membership_register_token_list(issuer, membership1, token_list)
+        membership1 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(membership1.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership1.address, token_list["address"]
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue_token(issuer, attribute_token2)
-        token_address_list.append(membership2["address"])
-        membership_register_token_list(issuer, membership2, token_list)
+        membership2 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(membership2.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership2.address, token_list["address"]
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue_token(issuer, attribute_token3)
-        token_address_list.append(membership3["address"])
-        membership_register_token_list(issuer, membership3, token_list)
+        membership3 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(membership3.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership3.address, token_list["address"]
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue_token(issuer, attribute_token4)
-        token_address_list.append(membership4["address"])
-        membership_register_token_list(issuer, membership4, token_list)
+        membership4 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(membership4.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership4.address, token_list["address"]
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue_token(issuer, attribute_token5)
-        token_address_list.append(membership5["address"])
-        membership_register_token_list(issuer, membership5, token_list)
+        membership5 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(membership5.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership5.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership1)
-        self.list_token(session, membership2)
-        self.list_token(session, membership3)
-        self.list_token(session, membership4)
-        self.list_token(session, membership5)
+        self.list_token(session, membership1.address)
+        self.list_token(session, membership2.address)
+        self.list_token(session, membership3.address)
+        self.list_token(session, membership4.address)
+        self.list_token(session, membership5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -697,7 +787,7 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
@@ -709,40 +799,60 @@ class TestTokenMembershipTokens:
             exchange_address,
         )
         attribute_token1["name"] = "テスト会員権1"
-        membership1 = membership_issue_token(issuer, attribute_token1)
-        token_address_list.append(membership1["address"])
-        membership_register_token_list(issuer, membership1, token_list)
+        membership1 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(membership1.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership1.address, token_list["address"]
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テスト会員権2"
-        membership2 = membership_issue_token(issuer, attribute_token2)
-        token_address_list.append(membership2["address"])
-        membership_register_token_list(issuer, membership2, token_list)
+        membership2 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(membership2.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership2.address, token_list["address"]
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テスト会員権3"
-        membership3 = membership_issue_token(issuer, attribute_token3)
-        token_address_list.append(membership3["address"])
-        membership_register_token_list(issuer, membership3, token_list)
+        membership3 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(membership3.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership3.address, token_list["address"]
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テスト会員権4"
-        membership4 = membership_issue_token(issuer, attribute_token4)
-        token_address_list.append(membership4["address"])
-        membership_register_token_list(issuer, membership4, token_list)
+        membership4 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(membership4.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership4.address, token_list["address"]
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テスト会員権5"
-        membership5 = membership_issue_token(issuer, attribute_token5)
-        token_address_list.append(membership5["address"])
-        membership_register_token_list(issuer, membership5, token_list)
+        membership5 = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(membership5.address)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership5.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership1)
-        self.list_token(session, membership2)
-        self.list_token(session, membership3)
-        self.list_token(session, membership4)
-        self.list_token(session, membership5)
+        self.list_token(session, membership1.address)
+        self.list_token(session, membership2.address)
+        self.list_token(session, membership3.address)
+        self.list_token(session, membership4.address)
+        self.list_token(session, membership5.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 1
@@ -811,17 +921,21 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
         exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.token_attribute(exchange_address)
-        membership = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, membership, token_list)
+        membership = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership)
+        self.list_token(session, membership.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -852,17 +966,21 @@ class TestTokenMembershipTokens:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：会員権新規発行
         exchange_address = to_checksum_address(shared_contract["IbetEscrow"]["address"])
         attribute = self.token_attribute(exchange_address)
-        membership = membership_issue_token(issuer, attribute)
-        membership_register_token_list(issuer, membership, token_list)
+        membership = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership.address, token_list["address"]
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, membership)
+        self.list_token(session, membership.address)
 
         # 事前準備
         processor.SEC_PER_RECORD = 0

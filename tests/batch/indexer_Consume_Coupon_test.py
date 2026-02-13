@@ -41,12 +41,7 @@ from app.model.db import IDXConsumeCoupon, Listing
 from batch import indexer_Consume_Coupon
 from batch.indexer_Consume_Coupon import LOG, Processor, main
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    coupon_consume,
-    coupon_issue_token,
-    coupon_register_token_list,
-    coupon_transfer_token,
-)
+from tests.helpers import IbetCouponTestHelper
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -112,9 +107,12 @@ class TestProcessor:
             "contactInformation": "問い合わせ先",
             "privacyPolicy": "プライバシーポリシー",
         }
-        token = coupon_issue_token(issuer, args)
-        coupon_register_token_list(issuer, token, token_list)
-
+        token = IbetCouponTestHelper.issue(issuer["account_address"], args)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
@@ -143,10 +141,12 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
         block_number = web3.eth.block_number
 
         # Run target process
@@ -161,7 +161,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token["address"]
+        assert _consume_coupon.token_address == token.address
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
@@ -177,13 +177,23 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
         block_number = web3.eth.block_number
-        coupon_transfer_token(self.issuer, token, self.trader, 2000)
-        coupon_consume(self.trader, token, 2000)
+
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            2000,
+        )
+        IbetCouponTestHelper.consume_token(
+            self.trader["account_address"], token.address, 2000
+        )
         block_number2 = web3.eth.block_number
 
         # Run target process
@@ -198,7 +208,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token["address"]
+        assert _consume_coupon.token_address == token.address
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
@@ -206,7 +216,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token["address"]
+        assert _consume_coupon.token_address == token.address
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
         assert _consume_coupon.block_timestamp is not None
@@ -222,22 +232,43 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         token2 = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token2["address"], session)
+        self.listing_token(token2.address, session)
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
         block_number = web3.eth.block_number
-        coupon_transfer_token(self.issuer, token, self.trader, 2000)
-        coupon_consume(self.trader, token, 2000)
+
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            2000,
+        )
+        IbetCouponTestHelper.consume_token(
+            self.trader["account_address"], token.address, 2000
+        )
         block_number2 = web3.eth.block_number
-        coupon_consume(self.issuer, token2, 3000)
+
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token2.address, 3000
+        )
         block_number3 = web3.eth.block_number
-        coupon_transfer_token(self.issuer, token2, self.trader, 4000)
-        coupon_consume(self.trader, token2, 4000)
+
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token2.address,
+            self.trader["account_address"],
+            4000,
+        )
+        IbetCouponTestHelper.consume_token(
+            self.trader["account_address"], token2.address, 4000
+        )
         block_number4 = web3.eth.block_number
 
         # Run target process
@@ -252,7 +283,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token["address"]
+        assert _consume_coupon.token_address == token.address
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
@@ -260,7 +291,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token["address"]
+        assert _consume_coupon.token_address == token.address
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
         assert _consume_coupon.block_timestamp is not None
@@ -268,7 +299,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[2]
         assert _consume_coupon.id == 3
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token2["address"]
+        assert _consume_coupon.token_address == token2.address
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 3000
         assert _consume_coupon.block_timestamp is not None
@@ -276,7 +307,7 @@ class TestProcessor:
         _consume_coupon = _consume_coupon_list[3]
         assert _consume_coupon.id == 4
         assert _consume_coupon.transaction_hash == _block_tx_hash(block)
-        assert _consume_coupon.token_address == token2["address"]
+        assert _consume_coupon.token_address == token2.address
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 4000
         assert _consume_coupon.block_timestamp is not None
@@ -291,7 +322,7 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Not Consume
         # Run target process
@@ -315,7 +346,9 @@ class TestProcessor:
         )
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
 
         # Run target process
         await processor.sync_new_logs()
@@ -348,10 +381,12 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
 
         block_number_current = web3.eth.block_number
         # Run initial sync
@@ -366,7 +401,9 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
 
         block_number_current = web3.eth.block_number
         # Run target process
@@ -393,10 +430,12 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -417,7 +456,9 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
@@ -448,10 +489,12 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -471,9 +514,11 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
-
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
         block_number_bf = processor.latest_block
+
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with (
             mock.patch(
@@ -502,11 +547,14 @@ class TestProcessor:
         token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract
         )
-        self.listing_token(token["address"], session)
-        # Consume
-        coupon_consume(self.issuer, token, 1000)
+        self.listing_token(token.address, session)
 
+        # Consume
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
         block_number_bf = processor.latest_block
+
         # Expect that initial_sync() raises SQLAlchemyError.
         with (
             mock.patch.object(AsyncSession, "commit", side_effect=SQLAlchemyError()),
@@ -522,9 +570,11 @@ class TestProcessor:
         assert processor.latest_block == block_number_bf
 
         # Consume
-        coupon_consume(self.issuer, token, 1000)
-
+        IbetCouponTestHelper.consume_token(
+            self.issuer["account_address"], token.address, 1000
+        )
         block_number_bf = processor.latest_block
+
         # Expect that sync_new_logs() raises SQLAlchemyError.
         with (
             mock.patch.object(AsyncSession, "commit", side_effect=SQLAlchemyError()),
