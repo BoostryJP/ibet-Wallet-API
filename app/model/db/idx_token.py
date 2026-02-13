@@ -196,7 +196,7 @@ class IDXShareToken(TokenBase):
     principal_value: Mapped[int | None] = mapped_column(BigInteger)
     # Is Canceled
     # NOTE: Short-term cache required
-    is_canceled: Mapped[int | None] = mapped_column(Boolean)
+    is_canceled: Mapped[bool | None] = mapped_column(Boolean)
     # Dividend Information(JSON)
     # NOTE: Short-term cache required
     dividend_information: Mapped[dict[str, object] | None] = mapped_column(JSON)
