@@ -17,28 +17,91 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import contextlib
+import contextvars
 import logging
 import sys
-from typing import cast
+from typing import Any, Mapping, cast
 
 from app import config
-from logger import SystemLogger
+from logger import NOTICE, SystemLogger
+
+_parent_process_name: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "batch_parent_process_name", default=None
+)
 
 
-def get_logger(process_name: str):
+@contextlib.contextmanager
+def parent_process(process_name: str | None):
+    token = _parent_process_name.set(process_name)
+    try:
+        yield
+    finally:
+        _parent_process_name.reset(token)
+
+
+class _BatchContextFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        process_name = getattr(record, "process_name", None) or record.name
+        parent_name = _parent_process_name.get()
+        record.process_name = process_name
+        record.parent_process_name = parent_name
+        record.process_path = (
+            f"{parent_name} > {process_name}" if parent_name else str(process_name)
+        )
+        return True
+
+
+class BatchLoggerAdapter(logging.LoggerAdapter[SystemLogger]):
+    """Logger adapter that injects a fixed batch `process_name` per module."""
+
+    def __init__(self, logger: SystemLogger, process_name: str):
+        super().__init__(logger, {"process_name": process_name})
+
+    def process(self, msg: Any, kwargs: Mapping[str, Any]):
+        kwargs = dict(kwargs)
+        extra = kwargs.get("extra")
+        empty_extra: dict[str, object] = {}
+        base_extra: Mapping[str, object] = (
+            self.extra if self.extra is not None else empty_extra
+        )
+        if extra is None:
+            kwargs["extra"] = dict(base_extra)
+        else:
+            merged = dict(base_extra)
+            if isinstance(extra, Mapping):
+                merged.update(cast(Mapping[str, object], extra))
+            kwargs["extra"] = merged
+        return msg, kwargs
+
+    def notice(self, msg: str, *args: Any, **kwargs: Any):
+        self.log(NOTICE, msg, *args, **kwargs)
+
+
+def _configure_base_logger() -> SystemLogger:
     logging.setLoggerClass(SystemLogger)
 
     logging.getLogger("pyroscope").setLevel(logging.ERROR)
     logging.getLogger("py_spy").setLevel(logging.ERROR)
     logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 
-    LOG = cast(SystemLogger, logging.getLogger("ibet_wallet_batch"))
-    LOG.propagate = False
-    stream_handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        config.INFO_LOG_FORMAT.format(f"[{process_name}]"), config.LOG_TIMESTAMP_FORMAT
-    )
-    stream_handler.setFormatter(formatter)
-    LOG.addHandler(stream_handler)
+    base_logger = cast(SystemLogger, logging.getLogger("ibet_wallet_batch"))
+    base_logger.propagate = False
 
-    return LOG
+    if not getattr(base_logger, "_ibet_wallet_batch_configured", False):
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.addFilter(_BatchContextFilter())
+        formatter = logging.Formatter(
+            config.INFO_LOG_FORMAT.format("[%(process_path)s]"),
+            config.LOG_TIMESTAMP_FORMAT,
+        )
+        stream_handler.setFormatter(formatter)
+        base_logger.addHandler(stream_handler)
+        setattr(base_logger, "_ibet_wallet_batch_configured", True)
+
+    return base_logger
+
+
+def get_logger(process_name: str) -> BatchLoggerAdapter:
+    base_logger = _configure_base_logger()
+    return BatchLoggerAdapter(base_logger, process_name=process_name)

@@ -41,8 +41,8 @@ from app.model.db import (
     IDXTransferSourceEventType,
     Listing,
 )
-from batch import indexer_Transfer
-from batch.indexer_Transfer import LOG, UTC, Processor
+from batch.sub_indexers import indexer_Transfer
+from batch.sub_indexers.indexer_Transfer import LOG, UTC, Processor
 from tests.account_config import eth_account
 from tests.helpers import (
     IbetCouponTestHelper,
