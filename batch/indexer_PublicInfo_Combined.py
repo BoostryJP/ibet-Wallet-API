@@ -45,7 +45,7 @@ LOG: BatchLoggerAdapter = log.get_logger(process_name=process_name)
 
 
 class IndexerProcessor(Protocol):
-    async def sync_new_logs(self) -> None: ...
+    def process(self) -> None: ...
 
 
 @dataclass
@@ -59,7 +59,7 @@ class ScheduledProcessor:
 async def run_processor(processor: IndexerProcessor, child_logger: BatchLoggerAdapter):
     try:
         with log.parent_process(process_name):
-            await processor.sync_new_logs()
+            processor.process()
             child_logger.debug("Processed")
     except ServiceUnavailable:
         with log.parent_process(process_name):

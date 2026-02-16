@@ -46,9 +46,6 @@ class Processor:
     def __init__(self):
         self.token_list_digest = None
 
-    async def sync_new_logs(self) -> None:
-        self.process()
-
     def process(self):
         LOG.info("Syncing token list")
 
