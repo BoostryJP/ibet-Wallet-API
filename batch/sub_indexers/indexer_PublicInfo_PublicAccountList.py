@@ -52,6 +52,7 @@ class Processor:
     def process(self):
         LOG.info("Syncing public account list")
 
+        # Get data from PUBLIC_ACCOUNT_LIST_URL
         if PUBLIC_ACCOUNT_LIST_URL is None:
             LOG.warning("PUBLIC_ACCOUNT_LIST_URL is not set")
             return
@@ -71,6 +72,7 @@ class Processor:
             LOG.exception("Failed to get public account list")
             return
 
+        # Check the difference from the previous cycle
         _resp_digest = hashlib.sha256(
             json.dumps(account_list_json).encode()
         ).hexdigest()
@@ -80,10 +82,13 @@ class Processor:
         else:
             self.account_list_digest = _resp_digest
 
+        # Update DB data
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
+            # Delete all account list from DB
             db_session.execute(delete(PublicAccountList))
 
+            # Insert account list
             for i, _account in enumerate(account_list_json):
                 key_manager = _account.get("key_manager", None)
                 key_manager_name = _account.get("key_manager_name", None)

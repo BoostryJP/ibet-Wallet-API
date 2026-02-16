@@ -52,6 +52,7 @@ class Processor:
     def process(self):
         LOG.info("Syncing token list")
 
+        # Get from TOKEN_LIST_URL
         try:
             if TOKEN_LIST_URL is None:
                 LOG.warning("TOKEN_LIST_URL is not set")
@@ -71,6 +72,7 @@ class Processor:
             LOG.exception("Failed to get token list")
             return
 
+        # Check the difference from the previous cycle
         _resp_digest = hashlib.sha256(json.dumps(token_list_json).encode()).hexdigest()
         if _resp_digest == self.token_list_digest:
             LOG.info("Skip: There are no differences from the previous cycle")
@@ -78,10 +80,13 @@ class Processor:
         else:
             self.token_list_digest = _resp_digest
 
+        # Update DB data
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
+            # Delete all token list from DB
             db_session.execute(delete(TokenList))
 
+            # Insert token list
             for i, token in enumerate(token_list_json):
                 try:
                     token_list_item = TokenListItem.model_validate(token)

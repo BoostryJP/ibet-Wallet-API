@@ -52,6 +52,7 @@ class Processor:
     def process(self):
         LOG.info("Syncing company list")
 
+        # Get from COMPANY_LIST_URL
         if COMPANY_LIST_URL is None:
             LOG.warning("COMPANY_LIST_URL is not set")
             return
@@ -71,6 +72,7 @@ class Processor:
             LOG.exception("Failed to get company list")
             return
 
+        # Check the difference from the previous cycle
         _resp_digest = hashlib.sha256(
             json.dumps(company_list_json).encode()
         ).hexdigest()
@@ -80,10 +82,13 @@ class Processor:
         else:
             self.company_list_digest = _resp_digest
 
+        # Update DB data
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
+            # Delete all company list from DB
             db_session.execute(delete(Company))
 
+            # Insert company list
             for i, company in enumerate(company_list_json):
                 try:
                     company_list_item = CompanyListItem.model_validate(company)  # type: ignore[arg-type]
