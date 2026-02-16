@@ -206,18 +206,86 @@ class BondToken(TokenBase):
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, BondTokenModel)
         token_obj = cls()
-        for key, value in token_model.json().items():
-            if key != "interest_payment_date":
-                setattr(token_obj, key, value)
+        token_obj.token_address = token_model.token_address
+        # TODO: Remove these casts after fixing app/model/db/idx_token.py types to align with schema.
+        token_obj.token_template = cast(str, token_model.token_template)
+        token_obj.owner_address = cast(str, token_model.owner_address)
+        token_obj.company_name = cast(str, token_model.company_name)
+        token_obj.rsa_publickey = cast(str, token_model.rsa_publickey)
+        token_obj.name = cast(str, token_model.name)
+        token_obj.symbol = cast(str, token_model.symbol)
+        token_obj.total_supply = cast(int, token_model.total_supply)
+        token_obj.tradable_exchange = cast(str, token_model.tradable_exchange)
+        token_obj.contact_information = cast(str, token_model.contact_information)
+        token_obj.privacy_policy = cast(str, token_model.privacy_policy)
+        token_obj.status = cast(bool, token_model.status)
+        token_obj.max_holding_quantity = token_model.max_holding_quantity
+        token_obj.max_sell_amount = token_model.max_sell_amount
+        token_obj.personal_info_address = cast(str, token_model.personal_info_address)
+        token_obj.require_personal_info_registered = cast(
+            bool,
+            token_model.require_personal_info_registered,
+        )
+        token_obj.transferable = cast(bool, token_model.transferable)
+        token_obj.is_offering = cast(bool, token_model.is_offering)
+        token_obj.transfer_approval_required = cast(
+            bool,
+            token_model.transfer_approval_required,
+        )
+        token_obj.face_value = cast(int, token_model.face_value)
+        token_obj.face_value_currency = token_model.face_value_currency
+        token_obj.interest_rate = cast(float, token_model.interest_rate)
+        token_obj.interest_payment_currency = token_model.interest_payment_currency
+        token_obj.redemption_date = cast(str, token_model.redemption_date)
+        token_obj.redemption_value = cast(int, token_model.redemption_value)
+        token_obj.redemption_value_currency = token_model.redemption_value_currency
+        token_obj.base_fx_rate = float(token_model.base_fx_rate)
+        token_obj.return_date = cast(str, token_model.return_date)
+        token_obj.return_amount = cast(str, token_model.return_amount)
+        token_obj.purpose = cast(str, token_model.purpose)
+        token_obj.memo = cast(str, token_model.memo)
+        token_obj.is_redeemed = cast(bool, token_model.is_redeemed)
 
         # TODO: Initialize these as None (not "") and normalize empty strings from IDX
         # to None when applying the nullable migration.
-        for i in range(1, 13):
-            setattr(token_obj, f"interest_payment_date{i}", "")
+        token_obj.interest_payment_date1 = ""
+        token_obj.interest_payment_date2 = ""
+        token_obj.interest_payment_date3 = ""
+        token_obj.interest_payment_date4 = ""
+        token_obj.interest_payment_date5 = ""
+        token_obj.interest_payment_date6 = ""
+        token_obj.interest_payment_date7 = ""
+        token_obj.interest_payment_date8 = ""
+        token_obj.interest_payment_date9 = ""
+        token_obj.interest_payment_date10 = ""
+        token_obj.interest_payment_date11 = ""
+        token_obj.interest_payment_date12 = ""
 
-        interest_payment_date_list = token_model.interest_payment_date or []
-        for i, d in enumerate(interest_payment_date_list[:12]):
-            setattr(token_obj, f"interest_payment_date{str(i + 1)}", d)
+        interest_payment_date_list = (token_model.interest_payment_date or [])[:12]
+        if len(interest_payment_date_list) > 0:
+            token_obj.interest_payment_date1 = interest_payment_date_list[0]
+        if len(interest_payment_date_list) > 1:
+            token_obj.interest_payment_date2 = interest_payment_date_list[1]
+        if len(interest_payment_date_list) > 2:
+            token_obj.interest_payment_date3 = interest_payment_date_list[2]
+        if len(interest_payment_date_list) > 3:
+            token_obj.interest_payment_date4 = interest_payment_date_list[3]
+        if len(interest_payment_date_list) > 4:
+            token_obj.interest_payment_date5 = interest_payment_date_list[4]
+        if len(interest_payment_date_list) > 5:
+            token_obj.interest_payment_date6 = interest_payment_date_list[5]
+        if len(interest_payment_date_list) > 6:
+            token_obj.interest_payment_date7 = interest_payment_date_list[6]
+        if len(interest_payment_date_list) > 7:
+            token_obj.interest_payment_date8 = interest_payment_date_list[7]
+        if len(interest_payment_date_list) > 8:
+            token_obj.interest_payment_date9 = interest_payment_date_list[8]
+        if len(interest_payment_date_list) > 9:
+            token_obj.interest_payment_date10 = interest_payment_date_list[9]
+        if len(interest_payment_date_list) > 10:
+            token_obj.interest_payment_date11 = interest_payment_date_list[10]
+        if len(interest_payment_date_list) > 11:
+            token_obj.interest_payment_date12 = interest_payment_date_list[11]
 
         return token_obj
 
@@ -693,8 +761,41 @@ class ShareToken(TokenBase):
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, ShareTokenModel)
         token_obj = cls()
-        for key, value in token_model.json().items():
-            setattr(token_obj, key, value)
+        token_obj.token_address = token_model.token_address
+        # TODO: Remove these casts after fixing app/model/db/idx_token.py types to align with schema.
+        token_obj.token_template = cast(str, token_model.token_template)
+        token_obj.owner_address = cast(str, token_model.owner_address)
+        token_obj.company_name = cast(str, token_model.company_name)
+        token_obj.rsa_publickey = cast(str, token_model.rsa_publickey)
+        token_obj.name = cast(str, token_model.name)
+        token_obj.symbol = cast(str, token_model.symbol)
+        token_obj.total_supply = cast(int, token_model.total_supply)
+        token_obj.tradable_exchange = cast(str, token_model.tradable_exchange)
+        token_obj.contact_information = cast(str, token_model.contact_information)
+        token_obj.privacy_policy = cast(str, token_model.privacy_policy)
+        token_obj.status = cast(bool, token_model.status)
+        token_obj.max_holding_quantity = token_model.max_holding_quantity
+        token_obj.max_sell_amount = token_model.max_sell_amount
+        token_obj.personal_info_address = cast(str, token_model.personal_info_address)
+        token_obj.require_personal_info_registered = cast(
+            bool,
+            token_model.require_personal_info_registered,
+        )
+        token_obj.transferable = cast(bool, token_model.transferable)
+        token_obj.is_offering = cast(bool, token_model.is_offering)
+        token_obj.transfer_approval_required = cast(
+            bool,
+            token_model.transfer_approval_required,
+        )
+        token_obj.issue_price = cast(int, token_model.issue_price)
+        token_obj.cancellation_date = cast(str, token_model.cancellation_date)
+        token_obj.memo = cast(str, token_model.memo)
+        token_obj.principal_value = cast(int, token_model.principal_value)
+        token_obj.is_canceled = cast(bool, token_model.is_canceled)
+        token_obj.dividend_information = cast(
+            ShareDividendInformationDict,
+            token_model.dividend_information,
+        )
         return token_obj
 
     def to_model(self) -> "ShareTokenModel":
@@ -1016,8 +1117,31 @@ class MembershipToken(TokenBase):
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, MembershipTokenModel)
         token_obj = cls()
-        for key, value in token_model.json().items():
-            setattr(token_obj, key, value)
+        token_obj.token_address = token_model.token_address
+        # TODO: Remove these casts after fixing app/model/db/idx_token.py types to align with schema.
+        token_obj.token_template = cast(str, token_model.token_template)
+        token_obj.owner_address = cast(str, token_model.owner_address)
+        token_obj.company_name = cast(str, token_model.company_name)
+        token_obj.rsa_publickey = cast(str, token_model.rsa_publickey)
+        token_obj.name = cast(str, token_model.name)
+        token_obj.symbol = cast(str, token_model.symbol)
+        token_obj.total_supply = cast(int, token_model.total_supply)
+        token_obj.tradable_exchange = cast(str, token_model.tradable_exchange)
+        token_obj.contact_information = cast(str, token_model.contact_information)
+        token_obj.privacy_policy = cast(str, token_model.privacy_policy)
+        token_obj.status = cast(bool, token_model.status)
+        token_obj.max_holding_quantity = token_model.max_holding_quantity
+        token_obj.max_sell_amount = token_model.max_sell_amount
+        token_obj.details = cast(str, token_model.details)
+        token_obj.return_details = cast(str, token_model.return_details)
+        token_obj.expiration_date = cast(str, token_model.expiration_date)
+        token_obj.memo = cast(str, token_model.memo)
+        token_obj.transferable = cast(bool, token_model.transferable)
+        token_obj.initial_offering_status = cast(
+            bool,
+            token_model.initial_offering_status,
+        )
+        token_obj.image_url = cast(list[TokenImageDict], token_model.image_url)
         return token_obj
 
     def to_model(self) -> "MembershipTokenModel":
@@ -1280,8 +1404,31 @@ class CouponToken(TokenBase):
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, CouponTokenModel)
         token_obj = cls()
-        for key, value in token_model.json().items():
-            setattr(token_obj, key, value)
+        token_obj.token_address = token_model.token_address
+        # TODO: Remove these casts after fixing app/model/db/idx_token.py types to align with schema.
+        token_obj.token_template = cast(str, token_model.token_template)
+        token_obj.owner_address = cast(str, token_model.owner_address)
+        token_obj.company_name = cast(str, token_model.company_name)
+        token_obj.rsa_publickey = cast(str, token_model.rsa_publickey)
+        token_obj.name = cast(str, token_model.name)
+        token_obj.symbol = cast(str, token_model.symbol)
+        token_obj.total_supply = cast(int, token_model.total_supply)
+        token_obj.tradable_exchange = cast(str, token_model.tradable_exchange)
+        token_obj.contact_information = cast(str, token_model.contact_information)
+        token_obj.privacy_policy = cast(str, token_model.privacy_policy)
+        token_obj.status = cast(bool, token_model.status)
+        token_obj.max_holding_quantity = token_model.max_holding_quantity
+        token_obj.max_sell_amount = token_model.max_sell_amount
+        token_obj.details = cast(str, token_model.details)
+        token_obj.return_details = cast(str, token_model.return_details)
+        token_obj.expiration_date = cast(str, token_model.expiration_date)
+        token_obj.memo = cast(str, token_model.memo)
+        token_obj.transferable = cast(bool, token_model.transferable)
+        token_obj.initial_offering_status = cast(
+            bool,
+            token_model.initial_offering_status,
+        )
+        token_obj.image_url = cast(list[TokenImageDict], token_model.image_url)
         return token_obj
 
     def to_model(self) -> "CouponTokenModel":
