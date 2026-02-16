@@ -29,7 +29,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.model.db import Company
-from batch.indexer_Company_List import LOG, Processor
+from batch.sub_indexers.indexer_Company_List import LOG, Processor
 
 
 @pytest.fixture(scope="function")
@@ -57,7 +57,9 @@ class MockResponse:
         return self.data
 
 
-@mock.patch("batch.indexer_Company_List.COMPANY_LIST_URL", "https://localhost")
+@mock.patch(
+    "batch.sub_indexers.indexer_Company_List.COMPANY_LIST_URL", "https://localhost"
+)
 @pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################

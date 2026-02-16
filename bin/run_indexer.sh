@@ -36,7 +36,6 @@ if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
     echo -n "[WARNING] Could not access to COMPANY_LIST_URL, " >&2
     echo "please confirm COMPANY_LIST_URL, which response code is ${resp}" >&2
   fi
-  python batch/indexer_Company_List.py &
 else
   # check company_list.json is default one
   content_length="$(wc -c data/company_list.json | awk '{print $1}')"
@@ -44,7 +43,6 @@ else
     echo '[WARNING] company_list.json is empty. Please mount company_list.json if you use company list local mode.' >&2
   fi
 fi
-
 
 # check TOKEN_LIST_URL
 if [ -z "${TOKEN_LIST_URL:-}" ]; then
@@ -57,8 +55,6 @@ if [ "${resp}" -ne 200 ]; then
   echo -n "[WARNING] Could not access to TOKEN_LIST_URL, " >&2
   echo "please confirm TOKEN_LIST_URL, which response code is ${resp}" >&2
 fi
-python batch/indexer_PublicInfo_TokenList.py &
-
 
 # check PUBLIC_ACCOUNT_LIST_URL
 if [ -z "${PUBLIC_ACCOUNT_LIST_URL:-}" ]; then
@@ -71,8 +67,8 @@ if [ "${resp}" -ne 200 ]; then
   echo -n "[WARNING] Could not access to PUBLIC_ACCOUNT_LIST_URL, " >&2
   echo "please confirm PUBLIC_ACCOUNT_LIST_URL, which response code is ${resp}" >&2
 fi
-python batch/indexer_PublicInfo_PublicAccountList.py &
 
+python batch/indexer_PublicInfo_Combined.py &
 
 python batch/indexer_Transfer_Combined.py &
 python batch/indexer_Token_Holders.py &

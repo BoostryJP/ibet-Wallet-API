@@ -19,8 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import hashlib
 import json
-import sys
-import time
 from typing import Literal
 
 import requests
@@ -28,22 +26,16 @@ from eth_utils.address import to_checksum_address
 from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.session import Session
 from urllib3 import Retry
 
-from app.config import (
-    DATABASE_URL,
-    PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL,
-    PUBLIC_ACCOUNT_LIST_URL,
-    REQUEST_TIMEOUT,
-)
-from app.errors import ServiceUnavailable
+from app.config import DATABASE_URL, PUBLIC_ACCOUNT_LIST_URL, REQUEST_TIMEOUT
 from app.model.db import PublicAccountList
-from batch import free_malloc, log
+from batch import log
+from batch.log import BatchLoggerAdapter
 
-process_name = "INDEXER-PUBLIC-INFO-PUBLIC-ACCOUNT"
-LOG = log.get_logger(process_name=process_name)
+process_name = "SUB:PUBLIC-ACCOUNT-LIST"
+LOG: BatchLoggerAdapter = log.get_logger(process_name=process_name)
 
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
@@ -54,10 +46,12 @@ class Processor:
     def __init__(self):
         self.account_list_digest = None
 
+    async def sync_new_logs(self) -> None:
+        self.process()
+
     def process(self):
         LOG.info("Syncing public account list")
 
-        # Get data from PUBLIC_ACCOUNT_LIST_URL
         if PUBLIC_ACCOUNT_LIST_URL is None:
             LOG.warning("PUBLIC_ACCOUNT_LIST_URL is not set")
             return
@@ -77,7 +71,6 @@ class Processor:
             LOG.exception("Failed to get public account list")
             return
 
-        # Check the difference from the previous cycle
         _resp_digest = hashlib.sha256(
             json.dumps(account_list_json).encode()
         ).hexdigest()
@@ -87,13 +80,10 @@ class Processor:
         else:
             self.account_list_digest = _resp_digest
 
-        # Update DB data
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            # Delete all account list from DB
             db_session.execute(delete(PublicAccountList))
 
-            # Insert account list
             for i, _account in enumerate(account_list_json):
                 key_manager = _account.get("key_manager", None)
                 key_manager_name = _account.get("key_manager_name", None)
@@ -153,30 +143,3 @@ class Processor:
         _account_list.account_type = account_type
         _account_list.account_address = account_address
         db_session.merge(_account_list)
-
-
-def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-    while True:
-        start_time = time.time()
-
-        try:
-            processor.process()
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during processing")
-
-        elapsed_time = time.time() - start_time
-        time.sleep(max(PUBLIC_ACCOUNT_LIST_SLEEP_INTERVAL - elapsed_time, 0))
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit(1)

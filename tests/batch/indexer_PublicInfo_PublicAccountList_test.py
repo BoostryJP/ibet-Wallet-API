@@ -29,7 +29,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.model.db import PublicAccountList
-from batch.indexer_PublicInfo_PublicAccountList import LOG, Processor
+from batch.sub_indexers.indexer_PublicInfo_PublicAccountList import LOG, Processor
 
 
 @pytest.fixture(scope="function")
@@ -58,7 +58,7 @@ class MockResponse:
 
 
 @mock.patch(
-    "batch.indexer_PublicInfo_PublicAccountList.PUBLIC_ACCOUNT_LIST_URL",
+    "batch.sub_indexers.indexer_PublicInfo_PublicAccountList.PUBLIC_ACCOUNT_LIST_URL",
     "http://test/public_account_list.json",
 )
 @pytest.mark.asyncio

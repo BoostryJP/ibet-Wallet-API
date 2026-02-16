@@ -19,31 +19,23 @@ SPDX-License-Identifier: Apache-2.0
 
 import hashlib
 import json
-import sys
-import time
 
 import requests
 from pydantic import ValidationError
 from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.session import Session
 from urllib3 import Retry
 
-from app.config import (
-    COMPANY_LIST_SLEEP_INTERVAL,
-    COMPANY_LIST_URL,
-    DATABASE_URL,
-    REQUEST_TIMEOUT,
-)
-from app.errors import ServiceUnavailable
+from app.config import COMPANY_LIST_URL, DATABASE_URL, REQUEST_TIMEOUT
 from app.model.db import Company
 from app.model.type import CompanyListItem
-from batch import free_malloc, log
+from batch import log
+from batch.log import BatchLoggerAdapter
 
-process_name = "INDEXER-COMPANY-LIST"
-LOG = log.get_logger(process_name=process_name)
+process_name = "SUB:COMPANY-LIST"
+LOG: BatchLoggerAdapter = log.get_logger(process_name=process_name)
 
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
@@ -54,10 +46,12 @@ class Processor:
     def __init__(self):
         self.company_list_digest = None
 
+    async def sync_new_logs(self) -> None:
+        self.process()
+
     def process(self):
         LOG.info("Syncing company list")
 
-        # Get from COMPANY_LIST_URL
         if COMPANY_LIST_URL is None:
             LOG.warning("COMPANY_LIST_URL is not set")
             return
@@ -77,7 +71,6 @@ class Processor:
             LOG.exception("Failed to get company list")
             return
 
-        # Check the difference from the previous cycle
         _resp_digest = hashlib.sha256(
             json.dumps(company_list_json).encode()
         ).hexdigest()
@@ -87,13 +80,10 @@ class Processor:
         else:
             self.company_list_digest = _resp_digest
 
-        # Update DB data
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            # Delete all company list from DB
             db_session.execute(delete(Company))
 
-            # Insert company list
             for i, company in enumerate(company_list_json):
                 try:
                     company_list_item = CompanyListItem.model_validate(company)  # type: ignore[arg-type]
@@ -141,30 +131,3 @@ class Processor:
                 company_list_item.trustee.corporate_address
             )
         db_session.merge(_company)
-
-
-def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-    while True:
-        start_time = time.time()
-
-        try:
-            processor.process()
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during processing")
-
-        elapsed_time = time.time() - start_time
-        time.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit(1)
