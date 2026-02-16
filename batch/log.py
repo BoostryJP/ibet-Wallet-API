@@ -21,10 +21,12 @@ import contextlib
 import contextvars
 import logging
 import sys
-from typing import Any, Mapping, cast
+from typing import Any, cast
 
 from app import config
 from logger import NOTICE, SystemLogger
+
+_BATCH_STREAM_HANDLER_NAME = "ibet_wallet_batch.stdout"
 
 _parent_process_name: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "batch_parent_process_name", default=None
@@ -58,22 +60,6 @@ class BatchLoggerAdapter(logging.LoggerAdapter[SystemLogger]):
     def __init__(self, logger: SystemLogger, process_name: str):
         super().__init__(logger, {"process_name": process_name})
 
-    def process(self, msg: Any, kwargs: Mapping[str, Any]):
-        kwargs = dict(kwargs)
-        extra = kwargs.get("extra")
-        empty_extra: dict[str, object] = {}
-        base_extra: Mapping[str, object] = (
-            self.extra if self.extra is not None else empty_extra
-        )
-        if extra is None:
-            kwargs["extra"] = dict(base_extra)
-        else:
-            merged = dict(base_extra)
-            if isinstance(extra, Mapping):
-                merged.update(cast(Mapping[str, object], extra))
-            kwargs["extra"] = merged
-        return msg, kwargs
-
     def notice(self, msg: str, *args: Any, **kwargs: Any):
         self.log(NOTICE, msg, *args, **kwargs)
 
@@ -88,8 +74,11 @@ def _configure_base_logger() -> SystemLogger:
     base_logger = cast(SystemLogger, logging.getLogger("ibet_wallet_batch"))
     base_logger.propagate = False
 
-    if not getattr(base_logger, "_ibet_wallet_batch_configured", False):
+    if not any(
+        handler.name == _BATCH_STREAM_HANDLER_NAME for handler in base_logger.handlers
+    ):
         stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.set_name(_BATCH_STREAM_HANDLER_NAME)
         stream_handler.addFilter(_BatchContextFilter())
         formatter = logging.Formatter(
             config.INFO_LOG_FORMAT.format("[%(process_path)s]"),
@@ -97,7 +86,6 @@ def _configure_base_logger() -> SystemLogger:
         )
         stream_handler.setFormatter(formatter)
         base_logger.addHandler(stream_handler)
-        setattr(base_logger, "_ibet_wallet_batch_configured", True)
 
     return base_logger
 
