@@ -22,13 +22,12 @@ if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
 fi
 PROC_LIST="${PROC_LIST} batch/indexer_PublicInfo_TokenList.py"
 PROC_LIST="${PROC_LIST} batch/indexer_PublicInfo_PublicAccountList.py"
-PROC_LIST="${PROC_LIST} batch/indexer_Transfer.py"
+PROC_LIST="${PROC_LIST} batch/indexer_Transfer_Combined.py"
 PROC_LIST="${PROC_LIST} batch/indexer_Token_Holders.py"
 PROC_LIST="${PROC_LIST} batch/indexer_Token_List_Event.py"
 
 if [ "${SHARE_TOKEN_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} batch/indexer_Position_Share.py"
-  PROC_LIST="${PROC_LIST} batch/indexer_TransferApproval.py"
 fi
 
 if [ "${BOND_TOKEN_ENABLED}" = 1 ]; then

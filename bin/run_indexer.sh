@@ -74,13 +74,12 @@ fi
 python batch/indexer_PublicInfo_PublicAccountList.py &
 
 
-python batch/indexer_Transfer.py &
+python batch/indexer_Transfer_Combined.py &
 python batch/indexer_Token_Holders.py &
 python batch/indexer_Token_List_Event.py &
 
 if [[ $SHARE_TOKEN_ENABLED = 1 ]]; then
   python batch/indexer_Position_Share.py &
-  python batch/indexer_TransferApproval.py &
 fi
 
 if [[ $BOND_TOKEN_ENABLED = 1 ]]; then

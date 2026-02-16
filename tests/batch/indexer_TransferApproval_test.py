@@ -17,12 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
-import logging
 from datetime import datetime
-from typing import Awaitable, Callable
 from unittest import mock
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
@@ -37,8 +34,8 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
-from batch import indexer_TransferApproval
-from batch.indexer_TransferApproval import LOG, Processor, main
+from batch.sub_indexers import indexer_TransferApproval
+from batch.sub_indexers.indexer_TransferApproval import Processor
 from tests.account_config import eth_account
 from tests.helpers import IbetShareTestHelper
 from tests.helpers.ibet_exchange_helpers import (
@@ -59,17 +56,6 @@ def test_module(shared_contract: SharedContract):
     indexer_TransferApproval.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
         "address"
     ]
-
-
-@pytest.fixture(scope="function")
-def main_func():
-    LOG = logging.getLogger("ibet_wallet_batch")
-    default_log_level = LOG.level
-    LOG.setLevel(logging.DEBUG)
-    LOG.propagate = True
-    yield main
-    LOG.propagate = False
-    LOG.setLevel(default_log_level)
 
 
 @pytest_asyncio.fixture(scope="function", loop_scope="session")
@@ -1011,7 +997,6 @@ class TestProcessor:
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
     # <Error_1_1>: ABIEventNotFound occurs in __sync_xx method.
     @mock.patch(
@@ -1432,36 +1417,3 @@ class TestProcessor:
             )
         ).first()
         assert idx_transfer_approval_block_number is None
-
-    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(
-        self,
-        main_func: Callable[[], Awaitable[None]],
-        shared_contract: SharedContract,
-        async_session: AsyncSession,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        # Mocking time.sleep to break mainloop
-        asyncio_mock = AsyncMock(wraps=asyncio)
-        asyncio_mock.sleep.side_effect = [True, TypeError()]
-
-        # Run mainloop once and fail with web3 utils error
-        with (
-            mock.patch("batch.indexer_TransferApproval.asyncio", asyncio_mock),
-            mock.patch(
-                "batch.indexer_TransferApproval.Processor.initial_sync",
-                return_value=True,
-            ),
-            mock.patch(
-                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-                MagicMock(side_effect=ServiceUnavailable()),
-            ),
-            pytest.raises(TypeError),
-        ):
-            # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            await main_func()
-
-        assert 1 == caplog.record_tuples.count(
-            (LOG.name, 25, "An external service was unavailable")
-        )
-        caplog.clear()
