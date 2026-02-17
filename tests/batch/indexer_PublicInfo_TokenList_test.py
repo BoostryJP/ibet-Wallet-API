@@ -30,7 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.model.db import TokenList
-from batch.indexer_PublicInfo_TokenList import LOG, Processor
+from batch.sub_indexers.indexer_PublicInfo_TokenList import LOG, Processor
 
 
 @pytest.fixture(scope="function")
@@ -58,7 +58,10 @@ class MockResponse:
         return self.data
 
 
-@mock.patch("batch.indexer_PublicInfo_TokenList.TOKEN_LIST_URL", "https://localhost")
+@mock.patch(
+    "batch.sub_indexers.indexer_PublicInfo_TokenList.TOKEN_LIST_URL",
+    "https://localhost",
+)
 @pytest.mark.asyncio
 class TestProcessor:
     ###########################################################################

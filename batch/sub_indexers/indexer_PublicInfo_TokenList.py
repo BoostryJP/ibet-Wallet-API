@@ -19,31 +19,23 @@ SPDX-License-Identifier: Apache-2.0
 
 import hashlib
 import json
-import sys
-import time
 
 import requests
 from pydantic import ValidationError
 from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.session import Session
 from urllib3 import Retry
 
-from app.config import (
-    DATABASE_URL,
-    REQUEST_TIMEOUT,
-    TOKEN_LIST_SLEEP_INTERVAL,
-    TOKEN_LIST_URL,
-)
-from app.errors import ServiceUnavailable
+from app.config import DATABASE_URL, REQUEST_TIMEOUT, TOKEN_LIST_URL
 from app.model.db import TokenList
 from app.model.type.token_list import TokenListItem
-from batch import free_malloc, log
+from batch import log
+from batch.log import BatchLoggerAdapter
 
-process_name = "INDEXER-PUBLIC-INFO-TOKEN-LIST"
-LOG = log.get_logger(process_name=process_name)
+process_name = "SUB:TOKEN-LIST"
+LOG: BatchLoggerAdapter = log.get_logger(process_name=process_name)
 
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
@@ -125,30 +117,3 @@ class Processor:
         _token_list.product_type = token_list_item.product_type
         _token_list.issuer_address = token_list_item.issuer_address
         db_session.merge(_token_list)
-
-
-def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-    while True:
-        start_time = time.time()
-
-        try:
-            processor.process()
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during processing")
-
-        elapsed_time = time.time() - start_time
-        time.sleep(max(TOKEN_LIST_SLEEP_INTERVAL - elapsed_time, 0))
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit(1)
