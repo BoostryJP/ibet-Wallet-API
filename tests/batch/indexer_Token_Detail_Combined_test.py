@@ -57,7 +57,14 @@ async def test_main_schedules_both_processors_independently(
     short_term_processor = MagicMock()
     short_term_processor.process = AsyncMock()
 
+    token_list_event_processor = MagicMock()
+    token_list_event_processor.process = AsyncMock()
+
     with (
+        mock.patch(
+            "batch.indexer_Token_Detail_Combined.TokenListEventProcessor",
+            return_value=token_list_event_processor,
+        ),
         mock.patch(
             "batch.indexer_Token_Detail_Combined.TokenDetailProcessor",
             return_value=token_detail_processor,
@@ -74,12 +81,50 @@ async def test_main_schedules_both_processors_independently(
             "batch.indexer_Token_Detail_Combined.config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL",
             9999,
         ),
+        mock.patch("batch.indexer_Token_Detail_Combined.config.TOKEN_CACHE", True),
         pytest.raises(asyncio.TimeoutError),
     ):
         await asyncio.wait_for(main_func(), timeout=0.05)
 
+    assert token_list_event_processor.process.await_count == 1
     assert token_detail_processor.process.await_count == 1
     assert short_term_processor.process.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_main_runs_only_token_list_event_when_token_cache_disabled(
+    main_func: Callable[[], Awaitable[None]],
+) -> None:
+    token_list_event_processor = MagicMock()
+    token_list_event_processor.process = AsyncMock()
+
+    token_detail_processor = MagicMock()
+    token_detail_processor.process = AsyncMock()
+
+    short_term_processor = MagicMock()
+    short_term_processor.process = AsyncMock()
+
+    with (
+        mock.patch(
+            "batch.indexer_Token_Detail_Combined.TokenListEventProcessor",
+            return_value=token_list_event_processor,
+        ),
+        mock.patch(
+            "batch.indexer_Token_Detail_Combined.TokenDetailProcessor",
+            return_value=token_detail_processor,
+        ),
+        mock.patch(
+            "batch.indexer_Token_Detail_Combined.TokenDetailShortTermProcessor",
+            return_value=short_term_processor,
+        ),
+        mock.patch("batch.indexer_Token_Detail_Combined.config.TOKEN_CACHE", False),
+        pytest.raises(asyncio.TimeoutError),
+    ):
+        await asyncio.wait_for(main_func(), timeout=0.05)
+
+    assert token_list_event_processor.process.await_count == 1
+    assert token_detail_processor.process.await_count == 0
+    assert short_term_processor.process.await_count == 0
 
 
 # Verify that run_processor handles unexpected exceptions

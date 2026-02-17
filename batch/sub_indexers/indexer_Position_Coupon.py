@@ -17,14 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
-import sys
 from itertools import groupby
 from typing import List, Mapping, Optional, Sequence
 
 from eth_utils.address import to_checksum_address
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
@@ -38,9 +35,9 @@ from app.model.db import IDXPosition, IDXPositionCouponBlockNumber, Listing
 from app.model.schema.base import TokenType
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import free_malloc, log
+from batch import log
 
-process_name = "INDEXER-POSITION-COUPON"
+process_name = "SUB:POSITION-COUPON"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
@@ -156,38 +153,6 @@ class Processor:
     @staticmethod
     def __get_db_session():
         return BatchAsyncSessionLocal()
-
-    async def initial_sync(self):
-        local_session = self.__get_db_session()
-        try:
-            await self.__get_contract_list(local_session)
-            # Synchronize 1,000,000 blocks each
-            # if some blocks have already synced, sync starting from next block
-            latest_block = int(await async_web3.eth.block_number)
-            _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
-            _to_block = 999999 + _from_block
-            if latest_block > _to_block:
-                while _to_block < latest_block:
-                    await self.__sync_all(
-                        db_session=local_session,
-                        block_to=_to_block,
-                    )
-                    _to_block += 1000000
-                await self.__sync_all(db_session=local_session, block_to=latest_block)
-            else:
-                await self.__sync_all(db_session=local_session, block_to=latest_block)
-            await self.__set_idx_position_block_number(
-                local_session, self.token_list, latest_block
-            )
-            await local_session.commit()
-        except Exception as e:
-            await local_session.rollback()
-            raise e
-        finally:
-            await local_session.close()
-            self.token_list = self.TargetTokenList()
-            self.exchange_list = self.TargetExchangeList()
-        LOG.info("Initial sync has been completed")
 
     async def sync_new_logs(self):
         local_session = self.__get_db_session()
@@ -836,38 +801,3 @@ class Processor:
             return [task.result() for task in tasks]
         except ExceptionGroup:
             raise ServiceUnavailable
-
-
-async def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-
-    initial_synced_completed = False
-    while not initial_synced_completed:
-        try:
-            await processor.initial_sync()
-            initial_synced_completed = True
-        except Exception:
-            LOG.exception("Initial sync failed")
-
-        await asyncio.sleep(10)
-
-    while True:
-        try:
-            await processor.sync_new_logs()
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
-
-        await asyncio.sleep(10)
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        sys.exit(1)

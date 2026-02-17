@@ -18,30 +18,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 PROC_LIST="${PROC_LIST} batch/indexer_PublicInfo_Combined.py"
+PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_Combined.py"
 PROC_LIST="${PROC_LIST} batch/indexer_Transfer_Combined.py"
+PROC_LIST="${PROC_LIST} batch/indexer_Position_Combined.py"
 PROC_LIST="${PROC_LIST} batch/indexer_Token_Holders.py"
-PROC_LIST="${PROC_LIST} batch/indexer_Token_List_Event.py"
-
-if [ "${SHARE_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_Position_Share.py"
-fi
-
-if [ "${BOND_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_Position_Bond.py"
-fi
-
-if [ "${MEMBERSHIP_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_Position_Membership.py"
-fi
-
-if [ "${COUPON_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_Consume_Coupon.py"
-  PROC_LIST="${PROC_LIST} batch/indexer_Position_Coupon.py"
-fi
-
-if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_Combined.py"
-fi
 
 for i in ${PROC_LIST}; do
   # shellcheck disable=SC2009
