@@ -23,29 +23,29 @@ import time
 from dataclasses import dataclass
 from typing import Protocol
 
-from sqlalchemy.exc import SQLAlchemyError
-
-from app.config import SHARE_TOKEN_ENABLED
-from app.errors import ServiceUnavailable
+from app import config
 from batch import free_malloc, log
-from batch.log import BatchLoggerAdapter
-from batch.sub_indexers import (
-    indexer_Transfer,
-    indexer_TransferApproval,
+from batch.sub_indexers.indexer_Token_Detail import (
+    Processor as TokenDetailProcessor,
+    process_name as token_detail_process_name,
+)
+from batch.sub_indexers.indexer_Token_Detail_ShortTerm import (
+    Processor as TokenDetailShortTermProcessor,
+    process_name as token_detail_short_term_process_name,
 )
 
-process_name = "INDEXER-TRANSFER-COMBINED"
-LOG: BatchLoggerAdapter = log.get_logger(process_name=process_name)
+process_name = "INDEXER-TOKEN-DETAIL-COMBINED"
+LOG = log.get_logger(process_name=process_name)
 
 
 class IndexerProcessor(Protocol):
-    async def sync_new_logs(self) -> None: ...
+    async def process(self) -> None: ...
 
 
 @dataclass
 class ScheduledProcessor:
+    process_name: str
     processor: IndexerProcessor
-    child_logger: BatchLoggerAdapter
     interval_sec: int
     next_run_at: float = 0.0
     current_task: asyncio.Task[None] | None = None
@@ -55,52 +55,36 @@ class ScheduledProcessor:
 async def run_processor(scheduled: ScheduledProcessor):
     """Run the processor and handle exceptions"""
 
+    child_logger = log.get_logger(process_name=scheduled.process_name)
     try:
         with log.parent_process(process_name):
-            await scheduled.processor.sync_new_logs()
-            scheduled.child_logger.debug("Processed")
-    except ServiceUnavailable:
-        with log.parent_process(process_name):
-            scheduled.child_logger.notice("An external service was unavailable")
-    except SQLAlchemyError as sa_err:
-        with log.parent_process(process_name):
-            scheduled.child_logger.error(
-                f"A database error has occurred: code={sa_err.code}\n{sa_err}"
-            )
+            await scheduled.processor.process()
+            child_logger.debug("Processed")
     except Exception:
         with log.parent_process(process_name):
-            scheduled.child_logger.exception(
-                "An exception occurred during event synchronization"
-            )
+            child_logger.exception("An exception occurred during processing")
 
 
 async def main():
-    """Main function for the combined Transfer indexer."""
+    """Main function to run the combined token detail processors"""
 
     LOG.info("Service started successfully")
 
-    loop_interval_sec = 5
+    loop_interval_sec = 1
 
     # Initialize scheduled processors
     processors: list[ScheduledProcessor] = [
         ScheduledProcessor(
-            processor=indexer_Transfer.Processor(),
-            child_logger=indexer_Transfer.LOG,
-            interval_sec=loop_interval_sec,
+            process_name=token_detail_process_name,
+            processor=TokenDetailProcessor(),
+            interval_sec=config.TOKEN_CACHE_REFRESH_INTERVAL,
+        ),
+        ScheduledProcessor(
+            process_name=token_detail_short_term_process_name,
+            processor=TokenDetailShortTermProcessor(),
+            interval_sec=config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL,
         ),
     ]
-
-    if SHARE_TOKEN_ENABLED:
-        processors.append(
-            ScheduledProcessor(
-                processor=indexer_TransferApproval.Processor(),
-                child_logger=indexer_TransferApproval.LOG,
-                interval_sec=loop_interval_sec,
-            )
-        )
-        LOG.info("TransferApproval processor is enabled")
-    else:
-        LOG.info("TransferApproval processor is disabled")
 
     # Set initial next run time to now for all processors
     now = time.time()
@@ -127,7 +111,8 @@ async def main():
                 and not scheduled.delayed_logged
             ):
                 with log.parent_process(process_name):
-                    scheduled.child_logger.notice(
+                    child_logger = log.get_logger(process_name=scheduled.process_name)
+                    child_logger.notice(
                         "Processing is delayed: processing time exceeded the configured interval"
                     )
                     scheduled.delayed_logged = True
@@ -139,6 +124,7 @@ async def main():
 
         elapsed_time = time.time() - loop_start
         time_to_sleep = max(loop_interval_sec - elapsed_time, 0)
+
         await asyncio.sleep(time_to_sleep)
         free_malloc()
 
