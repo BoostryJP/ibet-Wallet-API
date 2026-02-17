@@ -80,7 +80,7 @@ async def main():
 
     LOG.info("Service started successfully")
 
-    loop_interval_sec = 5
+    loop_interval_sec = 10
 
     processors: list[ScheduledProcessor] = []
 
