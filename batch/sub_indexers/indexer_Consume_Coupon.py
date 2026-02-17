@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import sys
 from datetime import UTC, datetime
 from typing import Any, Sequence
@@ -25,7 +24,6 @@ from zoneinfo import ZoneInfo
 
 from eth_utils.address import to_checksum_address
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
@@ -33,15 +31,14 @@ from web3.exceptions import ABIEventNotFound
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, TZ, ZERO_ADDRESS
 from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
-from app.errors import ServiceUnavailable
 from app.model.db import IDXConsumeCoupon, Listing
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import free_malloc, log
+from batch import log
 
 local_tz = ZoneInfo(TZ)
 
-process_name = "INDEXER-CONSUME-COUPON"
+process_name = "SUB:CONSUME-COUPON"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
@@ -219,38 +216,3 @@ class Processor:
             consume_coupon.amount = amount
             consume_coupon.block_timestamp = block_timestamp
             await db_session.merge(consume_coupon)
-
-
-async def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-
-    initial_synced_completed = False
-    while not initial_synced_completed:
-        try:
-            await processor.initial_sync()
-            initial_synced_completed = True
-        except Exception:
-            LOG.exception("Initial sync failed")
-
-        await asyncio.sleep(10)
-
-    while True:
-        try:
-            await processor.sync_new_logs()
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
-
-        await asyncio.sleep(10)
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        sys.exit(1)

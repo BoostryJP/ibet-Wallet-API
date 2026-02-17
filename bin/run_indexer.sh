@@ -69,30 +69,10 @@ if [ "${resp}" -ne 200 ]; then
 fi
 
 python batch/indexer_PublicInfo_Combined.py &
-
+python batch/indexer_Token_Detail_Combined.py &
 python batch/indexer_Transfer_Combined.py &
+python batch/indexer_Position_Combined.py &
 python batch/indexer_Token_Holders.py &
-python batch/indexer_Token_List_Event.py &
 
-if [[ $SHARE_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Position_Share.py &
-fi
-
-if [[ $BOND_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Position_Bond.py &
-fi
-
-if [[ $MEMBERSHIP_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Position_Membership.py &
-fi
-
-if [[ $COUPON_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Consume_Coupon.py &
-  python batch/indexer_Position_Coupon.py &
-fi
-
-if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
-  python batch/indexer_Token_Detail_Combined.py &
-fi
 
 tail -f /dev/null

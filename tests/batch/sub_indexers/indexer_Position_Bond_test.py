@@ -17,9 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
 import logging
-from typing import Awaitable, Callable, Sequence
+from typing import Sequence
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
@@ -45,8 +44,8 @@ from app.model.db import (
     IDXUnlock,
     Listing,
 )
-from batch import indexer_Position_Bond
-from batch.indexer_Position_Bond import LOG, Processor, main
+from batch.sub_indexers import indexer_Position_Bond
+from batch.sub_indexers.indexer_Position_Bond import LOG, Processor
 from tests.account_config import eth_account
 from tests.helpers import IbetStraightBondTestHelper, PersonalInfoHelper
 from tests.helpers.ibet_exchange_helpers import (
@@ -72,21 +71,10 @@ def test_module(shared_contract: SharedContract):
     ]
 
 
-@pytest.fixture(scope="function")
-def main_func():
-    LOG = logging.getLogger("ibet_wallet_batch")
-    default_log_level = LOG.level
-    LOG.setLevel(logging.DEBUG)
-    LOG.propagate = True
-    yield main
-    LOG.propagate = False
-    LOG.setLevel(default_log_level)
-
-
 @pytest_asyncio.fixture(scope="function")
 async def processor() -> Processor:
     processor = Processor()
-    await processor.initial_sync()
+    await processor.sync_new_logs()
     return processor
 
 
@@ -2114,7 +2102,7 @@ class TestProcessor:
                 session.merge(idx_position_bond_block_number)
                 session.commit()
                 __sync_all_mock.return_value = None
-                await processor.initial_sync()
+                await processor.sync_new_logs()
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
@@ -2237,7 +2225,6 @@ class TestProcessor:
     # <Error_1>: ABIEventNotFound occurs in __sync_xx method.
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
     # <Error_1>: ABIEventNotFound occurs in __sync_xx method.
     @mock.patch(
@@ -2272,7 +2259,7 @@ class TestProcessor:
 
         block_number_current = web3.eth.block_number
         # Run initial sync
-        await processor.initial_sync()
+        await processor.sync_new_logs()
 
         # Assertion
         _position_list: Sequence[IDXPosition] = session.scalars(
@@ -2366,7 +2353,7 @@ class TestProcessor:
             ),
             pytest.raises(ServiceUnavailable),
         ):
-            await processor.initial_sync()
+            await processor.sync_new_logs()
 
         # Clear cache in DB session.
         session.rollback()
@@ -2465,7 +2452,7 @@ class TestProcessor:
             mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
             pytest.raises(SQLAlchemyError),
         ):
-            await processor.initial_sync()
+            await processor.sync_new_logs()
 
         # Clear cache in DB session.
         session.rollback()
@@ -2522,35 +2509,3 @@ class TestProcessor:
                 "An exception occurred during event synchronization",
             )
         )
-
-    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(
-        self,
-        main_func: Callable[[], Awaitable[None]],
-        shared_contract: SharedContract,
-        session: Session,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        # Mocking time.sleep to break mainloop
-        asyncio_mock = AsyncMock(wraps=asyncio)
-        asyncio_mock.sleep.side_effect = [True, TypeError()]
-
-        # Run mainloop once and fail with web3 utils error
-        with (
-            mock.patch("batch.indexer_Position_Bond.asyncio", asyncio_mock),
-            mock.patch(
-                "batch.indexer_Position_Bond.Processor.initial_sync", return_value=True
-            ),
-            mock.patch(
-                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-                MagicMock(side_effect=ServiceUnavailable()),
-            ),
-            pytest.raises(TypeError),
-        ):
-            # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            await main_func()
-
-        assert 1 == caplog.record_tuples.count(
-            (LOG.name, 25, "An external service was unavailable")
-        )
-        caplog.clear()

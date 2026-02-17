@@ -749,7 +749,6 @@ class TestProcessor:
     ###########################################################################
     # <Error_1_1>: ServiceUnavailable occurs in __sync_xx method.
     # <Error_1_2>: SQLAlchemyError occurs in "process"
-    # <Error_2>: ServiceUnavailable occurs and is handled in mainloop.
 
     # <Error_1_1>: ServiceUnavailable occurs in __sync_xx method.
     @pytest.mark.asyncio

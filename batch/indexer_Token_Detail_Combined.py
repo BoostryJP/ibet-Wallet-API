@@ -33,6 +33,10 @@ from batch.sub_indexers.indexer_Token_Detail_ShortTerm import (
     Processor as TokenDetailShortTermProcessor,
     process_name as token_detail_short_term_process_name,
 )
+from batch.sub_indexers.indexer_Token_List_Event import (
+    Processor as TokenListEventProcessor,
+    process_name as token_list_event_process_name,
+)
 
 process_name = "INDEXER-TOKEN-DETAIL-COMBINED"
 LOG = log.get_logger(process_name=process_name)
@@ -75,16 +79,26 @@ async def main():
     # Initialize scheduled processors
     processors: list[ScheduledProcessor] = [
         ScheduledProcessor(
-            process_name=token_detail_process_name,
-            processor=TokenDetailProcessor(),
-            interval_sec=config.TOKEN_CACHE_REFRESH_INTERVAL,
-        ),
-        ScheduledProcessor(
-            process_name=token_detail_short_term_process_name,
-            processor=TokenDetailShortTermProcessor(),
-            interval_sec=config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL,
+            process_name=token_list_event_process_name,
+            processor=TokenListEventProcessor(),
+            interval_sec=5,
         ),
     ]
+    if config.TOKEN_CACHE:
+        processors.extend(
+            [
+                ScheduledProcessor(
+                    process_name=token_detail_process_name,
+                    processor=TokenDetailProcessor(),
+                    interval_sec=config.TOKEN_CACHE_REFRESH_INTERVAL,
+                ),
+                ScheduledProcessor(
+                    process_name=token_detail_short_term_process_name,
+                    processor=TokenDetailShortTermProcessor(),
+                    interval_sec=config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL,
+                ),
+            ]
+        )
 
     # Set initial next run time to now for all processors
     now = time.time()

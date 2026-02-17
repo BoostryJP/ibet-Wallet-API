@@ -17,12 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
-import sys
 from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.contract import AsyncContract as Web3AsyncContract
 from web3.exceptions import ABIEventNotFound
@@ -31,13 +28,12 @@ from web3.types import EventData
 from app import config
 from app.contracts import AsyncContract
 from app.database import BatchAsyncSessionLocal
-from app.errors import ServiceUnavailable
 from app.model.db import IDXTokenListBlockNumber, IDXTokenListRegister
 from app.model.schema.base import TokenType
 from app.utils.web3_utils import AsyncWeb3Wrapper
-from batch import free_malloc, log
+from batch import log
 
-process_name = "INDEXER-TOKEN-LIST-EVENT"
+process_name = "SUB:TOKEN-LIST-EVENT"
 LOG = log.get_logger(process_name=process_name)
 
 async_web3 = AsyncWeb3Wrapper()
@@ -233,29 +229,3 @@ class Processor:
         _idx_token_list_block_number.latest_block_number = block_number
         _idx_token_list_block_number.contract_address = contract_address
         await db_session.merge(_idx_token_list_block_number)
-
-
-async def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-
-    while True:
-        try:
-            await processor.process()
-            LOG.debug("Processed")
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
-
-        await asyncio.sleep(5)
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        sys.exit(1)

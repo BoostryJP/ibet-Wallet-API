@@ -17,11 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import asyncio
-import logging
-from typing import Awaitable, Callable, Sequence
+from typing import Sequence
 from unittest import mock
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
@@ -38,8 +36,8 @@ from web3.types import BlockData
 from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXConsumeCoupon, Listing
-from batch import indexer_Consume_Coupon
-from batch.indexer_Consume_Coupon import LOG, Processor, main
+from batch.sub_indexers import indexer_Consume_Coupon
+from batch.sub_indexers.indexer_Consume_Coupon import Processor
 from tests.account_config import eth_account
 from tests.helpers import IbetCouponTestHelper
 from tests.types import DeployedContract, SharedContract, UnitTestAccount
@@ -62,17 +60,6 @@ async def test_module(shared_contract: SharedContract):
     indexer_Consume_Coupon.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
         "address"
     ]
-
-
-@pytest_asyncio.fixture(scope="function")
-async def main_func():
-    LOG = logging.getLogger("ibet_wallet_batch")
-    default_log_level = LOG.level
-    LOG.setLevel(logging.DEBUG)
-    LOG.propagate = True
-    yield main
-    LOG.propagate = False
-    LOG.setLevel(default_log_level)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -590,35 +577,3 @@ class TestProcessor:
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
         assert processor.latest_block == block_number_bf
-
-    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
-    async def test_error_3(
-        self,
-        main_func: Callable[[], Awaitable[None]],
-        shared_contract: SharedContract,
-        session: Session,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        # Mocking time.sleep to break mainloop
-        asyncio_mock = AsyncMock(wraps=asyncio)
-        asyncio_mock.sleep.side_effect = [True, TypeError()]
-
-        # Run mainloop once and fail with web3 utils error
-        with (
-            mock.patch("batch.indexer_Consume_Coupon.asyncio", asyncio_mock),
-            mock.patch(
-                "batch.indexer_Consume_Coupon.Processor.initial_sync", return_value=True
-            ),
-            mock.patch(
-                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-                MagicMock(side_effect=ServiceUnavailable()),
-            ),
-            pytest.raises(TypeError),
-        ):
-            # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
-            await main_func()
-
-        assert 1 == caplog.record_tuples.count(
-            (LOG.name, 25, "An external service was unavailable")
-        )
-        caplog.clear()
