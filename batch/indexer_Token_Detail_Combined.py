@@ -49,6 +49,7 @@ class ScheduledProcessor:
     interval_sec: int
     next_run_at: float = 0.0
     current_task: asyncio.Task[None] | None = None
+    delayed_logged: bool = False
 
 
 async def run_processor(scheduled: ScheduledProcessor):
@@ -100,6 +101,21 @@ async def main():
             if current_task is not None and current_task.done():
                 await current_task
                 scheduled.current_task = None
+                scheduled.delayed_logged = False
+
+            # Detect delay when the processor is still running beyond its next scheduled run time.
+            if (
+                current_task is not None
+                and not current_task.done()
+                and loop_start >= scheduled.next_run_at
+                and not scheduled.delayed_logged
+            ):
+                with log.parent_process(process_name):
+                    child_logger = log.get_logger(process_name=scheduled.process_name)
+                    child_logger.notice(
+                        "Processing is delayed: processing time exceeded the configured interval"
+                    )
+                    scheduled.delayed_logged = True
 
             # Schedule the next run if it's time and there's no current task running
             if loop_start >= scheduled.next_run_at and scheduled.current_task is None:
@@ -108,8 +124,6 @@ async def main():
 
         elapsed_time = time.time() - loop_start
         time_to_sleep = max(loop_interval_sec - elapsed_time, 0)
-        if time_to_sleep == 0:
-            LOG.notice("Processing is delayed")
 
         await asyncio.sleep(time_to_sleep)
         free_malloc()
