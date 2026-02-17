@@ -29,7 +29,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXTokenListRegister, Listing
-from batch.indexer_Token_Detail import Processor
+from batch.sub_indexers.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
 from tests.helpers import IbetStraightBondTestHelper
 from tests.types import SharedContract

@@ -18,10 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-import logging
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Awaitable, Callable, Mapping
+from typing import Mapping
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -44,7 +43,7 @@ from app.model.db import (
     IDXTokenListRegister,
     Listing,
 )
-from batch.indexer_Token_Detail_ShortTerm import LOG, Processor, main
+from batch.sub_indexers.indexer_Token_Detail_ShortTerm import Processor
 from tests.account_config import eth_account
 from tests.helpers import (
     IbetCouponTestHelper,
@@ -67,17 +66,6 @@ def processor() -> Processor:
     config.COUPON_TOKEN_ENABLED = True
     processor = Processor()
     return processor
-
-
-@pytest.fixture(scope="function")
-def main_func():
-    LOG = logging.getLogger("ibet_wallet_batch")
-    default_log_level = LOG.level
-    LOG.setLevel(logging.DEBUG)
-    LOG.propagate = True
-    yield main
-    LOG.propagate = False
-    LOG.setLevel(default_log_level)
 
 
 @mock.patch("app.config.BOND_TOKEN_ENABLED", True)
@@ -910,62 +898,3 @@ class TestProcessor:
         assert _coupon_token is not None
         assert _coupon_token.short_term_cache_created is not None
         assert _coupon_token.short_term_cache_created < current
-
-    # <Error_2>: ServiceUnavailable occurs and is handled in mainloop.
-    @pytest.mark.asyncio
-    async def test_error_2(
-        self,
-        main_func: Callable[[], Awaitable[None]],
-        shared_contract: SharedContract,
-        async_session: AsyncSession,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        # Issue Token
-        token_list_contract = shared_contract["TokenList"]
-        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
-        args = {
-            "name": "テストクーポン",
-            "symbol": "COUPON",
-            "totalSupply": 1000000,
-            "tradableExchange": exchange_contract["address"],
-            "details": "クーポン詳細",
-            "returnDetails": "リターン詳細",
-            "memo": "クーポンメモ欄",
-            "expirationDate": "20191231",
-            "transferable": True,
-            "contactInformation": "問い合わせ先",
-            "privacyPolicy": "プライバシーポリシー",
-        }
-        token = self.issue_token_coupon_with_args(
-            self.issuer, token_list_contract, args
-        )
-        await self.listing_token(token.address, "IbetCoupon", async_session)
-        coupon_data = await CouponToken.get(async_session, token.address)
-        assert coupon_data is not None
-        async_session.add(coupon_data.to_model())
-
-        await async_session.commit()
-
-        # Mocking asyncio.sleep to break mainloop
-        time_mock = MagicMock(wraps=asyncio)
-        time_mock.sleep.side_effect = [TypeError()]
-
-        # Run mainloop once and fail with web3 utils error
-        with (
-            mock.patch("batch.indexer_Token_Detail_ShortTerm.asyncio", time_mock),
-            mock.patch(
-                "web3.AsyncWeb3.AsyncHTTPProvider.make_request",
-                MagicMock(side_effect=ServiceUnavailable()),
-            ),
-            pytest.raises(TypeError),
-        ):
-            # Expect that process() raises ServiceUnavailable and handled in mainloop.
-            await main_func()
-
-        assert 1 == caplog.record_tuples.count(
-            (LOG.name, logging.INFO, "Service started successfully")
-        )
-        assert 1 == caplog.record_tuples.count(
-            (LOG.name, 25, "An external service was unavailable")
-        )
-        caplog.clear()

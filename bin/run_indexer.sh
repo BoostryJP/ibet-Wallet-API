@@ -92,8 +92,7 @@ if [[ $COUPON_TOKEN_ENABLED = 1 ]]; then
 fi
 
 if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
-  python batch/indexer_Token_Detail.py &
-  python batch/indexer_Token_Detail_ShortTerm.py &
+  python batch/indexer_Token_Detail_Combined.py &
 fi
 
 tail -f /dev/null

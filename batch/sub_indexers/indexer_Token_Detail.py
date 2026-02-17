@@ -18,85 +18,63 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-import sys
 import time
 from dataclasses import dataclass
-from typing import List
+from datetime import UTC, datetime
+from typing import List, Sequence
 
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import ObjectDeletedError, StaleDataError
 
 from app import config
 from app.database import BatchAsyncSessionLocal
-from app.errors import ServiceUnavailable
-from app.model.blockchain import (
-    BondToken,
-    CouponToken,
-    MembershipToken,
-    ShareToken,
-    TokenClassTypes,
-)
-from app.model.db import (
-    IDXBondToken as BondTokenModel,
-    IDXCouponToken as CouponTokenModel,
-    IDXMembershipToken as MembershipTokenModel,
-    IDXShareToken as ShareTokenModel,
-    IDXTokenInstance,
-    Listing,
-)
+from app.model.blockchain import BondToken, CouponToken, MembershipToken, ShareToken
+from app.model.blockchain.token import TokenClassTypes
+from app.model.db import IDXTokenListRegister, Listing
 from app.model.schema.base import TokenType
-from batch import free_malloc, log
+from batch import log
 
-process_name = "INDEXER-TOKEN-DETAIL-SHORT-TERM"
+process_name = "SUB:TOKEN-DETAIL"
 LOG = log.get_logger(process_name=process_name)
 
 
 class Processor:
-    """Processor for indexing token detail attributes for short term"""
+    """Processor for indexing token detail"""
 
     @dataclass
     class TargetTokenType:
         template: str
         token_class: TokenClassTypes
-        token_model: type[IDXTokenInstance]
 
     target_token_types: List[TargetTokenType]
-    SEC_PER_RECORD: float = config.TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC / 1000
+    SEC_PER_RECORD: int = config.TOKEN_FETCH_INTERVAL
 
     def __init__(self):
         self.target_token_types = []
         if config.BOND_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template=TokenType.IbetStraightBond,
-                    token_class=BondToken,
-                    token_model=BondTokenModel,
+                    template=TokenType.IbetStraightBond, token_class=BondToken
                 )
             )
         if config.SHARE_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template=TokenType.IbetShare,
-                    token_class=ShareToken,
-                    token_model=ShareTokenModel,
+                    template=TokenType.IbetShare, token_class=ShareToken
                 )
             )
         if config.MEMBERSHIP_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template=TokenType.IbetMembership,
-                    token_class=MembershipToken,
-                    token_model=MembershipTokenModel,
+                    template=TokenType.IbetMembership, token_class=MembershipToken
                 )
             )
         if config.COUPON_TOKEN_ENABLED:
             self.target_token_types.append(
                 self.TargetTokenType(
-                    template=TokenType.IbetCoupon,
-                    token_class=CouponToken,
-                    token_model=CouponTokenModel,
+                    template=TokenType.IbetCoupon, token_class=CouponToken
                 )
             )
 
@@ -121,23 +99,31 @@ class Processor:
 
     async def __sync(self, local_session: AsyncSession):
         for token_type in self.target_token_types:
-            available_tokens = (
+            available_tokens: Sequence[Listing] = (
                 await local_session.scalars(
-                    select(token_type.token_model).join(
-                        Listing,
-                        token_type.token_model.token_address == Listing.token_address,
+                    select(Listing)
+                    .join(
+                        IDXTokenListRegister,
+                        IDXTokenListRegister.token_address == Listing.token_address,
                     )
+                    .where(IDXTokenListRegister.token_template == token_type.template)
+                    .order_by(Listing.id)
                 )
             ).all()
 
             for available_token in available_tokens:
+                assert available_token.token_address is not None
                 try:
                     start_time = time.time()
-                    token = token_type.token_class.from_model(available_token)
-                    await token.fetch_expiry_short()
-                    token_model = token.to_model()
+                    assert available_token.token_address is not None
+                    token_address = to_checksum_address(available_token.token_address)
+                    token_detail_obj = await token_type.token_class.fetch(
+                        local_session, token_address
+                    )
+                    token_detail = token_detail_obj.to_model()
+                    token_detail.created = datetime.now(UTC).replace(tzinfo=None)
                     async with local_session.begin_nested():
-                        await local_session.merge(token_model)
+                        await local_session.merge(token_detail)
                         await local_session.commit()
 
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
@@ -147,35 +133,3 @@ class Processor:
                     LOG.notice(
                         "The record may have been deleted in a different session during the update"
                     )
-
-
-async def main():
-    LOG.info("Service started successfully")
-    processor = Processor()
-    while True:
-        start_time = time.time()
-
-        try:
-            await processor.process()
-        except ServiceUnavailable:
-            LOG.notice("An external service was unavailable")
-        except SQLAlchemyError as sa_err:
-            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
-        except Exception:  # Unexpected errors
-            LOG.exception("An exception occurred during event synchronization")
-
-        elapsed_time = time.time() - start_time
-        time_to_sleep = max(
-            config.TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL - elapsed_time, 0
-        )
-        if time_to_sleep == 0:
-            LOG.debug("Processing is delayed")
-        await asyncio.sleep(time_to_sleep)
-        free_malloc()
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        sys.exit(1)

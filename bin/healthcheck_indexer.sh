@@ -40,8 +40,7 @@ if [ "${COUPON_TOKEN_ENABLED}" = 1 ]; then
 fi
 
 if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
-  PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail.py"
-  PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_ShortTerm.py"
+  PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_Combined.py"
 fi
 
 for i in ${PROC_LIST}; do
