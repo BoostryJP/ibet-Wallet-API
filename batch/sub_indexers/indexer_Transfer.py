@@ -340,7 +340,7 @@ class Processor:
             [input_param["type"] for input_param in event_abi.get("inputs", [])]
         )
         signature = f"{event_name}({input_types})"
-        return Web3.keccak(text=signature).hex()
+        return Web3.keccak(text=signature).to_0x_hex()
 
     async def __get_logs_by_event(
         self, event_name: str, block_from: int, block_to: int
