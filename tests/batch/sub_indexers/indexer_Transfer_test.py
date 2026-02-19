@@ -1025,13 +1025,6 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: block_to <= skip_block",
-            )
-        )
         caplog.clear()
 
     # <Normal_4_2>
@@ -1130,13 +1123,6 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_2
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: block_from <= skip_block < block_to",
-            )
-        )
         caplog.clear()
 
     # <Normal_4_3>
@@ -1243,13 +1229,6 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_2
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: block_to <= skip_block",
-            )
-        )
         caplog.clear()
 
     # <Normal_4_4>
@@ -1374,14 +1353,69 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: skip_block < block_from < block_to",
-            )
-        )
         caplog.clear()
+
+    # <Normal_4_6>
+    # get_logs is called once per event type in a single sync run
+    async def test_normal_4_6(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract,
+        )
+        await self.listing_token(share_token.address, async_session)
+
+        # Execute batch processing with spying get_logs
+        with mock.patch.object(
+            indexer_Transfer.async_web3.eth,
+            "get_logs",
+            wraps=indexer_Transfer.async_web3.eth.get_logs,
+        ) as mock_get_logs:
+            await processor.sync_new_logs()
+
+        # Transfer / Unlock / ForceUnlock / ForceChangeLockedAccount
+        assert mock_get_logs.await_count == 4
+
+    # <Normal_4_7>
+    # get_logs is not called when token is already synchronized to latest block
+    async def test_normal_4_7(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+    ):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract,
+        )
+        await self.listing_token(share_token.address, async_session)
+
+        # 1st sync to initialize skip block
+        await processor.sync_new_logs()
+
+        # 2nd sync should skip all event queries
+        with mock.patch.object(
+            indexer_Transfer.async_web3.eth,
+            "get_logs",
+            wraps=indexer_Transfer.async_web3.eth.get_logs,
+        ) as mock_get_logs:
+            await processor.sync_new_logs()
+
+        assert mock_get_logs.await_count == 0
 
     # <Normal_5>
     # Not Listing Token

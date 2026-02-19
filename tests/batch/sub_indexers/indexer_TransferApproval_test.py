@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import logging
 from datetime import datetime
 from unittest import mock
 from unittest.mock import MagicMock
@@ -35,7 +36,7 @@ from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import IDXTransferApproval, IDXTransferApprovalBlockNumber, Listing
 from batch.sub_indexers import indexer_TransferApproval
-from batch.sub_indexers.indexer_TransferApproval import Processor
+from batch.sub_indexers.indexer_TransferApproval import LOG, Processor
 from tests.account_config import eth_account
 from tests.helpers import IbetShareTestHelper
 from tests.helpers.ibet_exchange_helpers import (
@@ -63,6 +64,17 @@ async def processor() -> Processor:
     processor = Processor()
     await processor.sync_new_logs()
     return processor
+
+
+@pytest.fixture(scope="function")
+def caplog(caplog: pytest.LogCaptureFixture):
+    batch_logger = logging.getLogger("ibet_wallet_batch")
+    default_log_level = batch_logger.level
+    batch_logger.setLevel(logging.DEBUG)
+    batch_logger.propagate = True
+    yield caplog
+    batch_logger.propagate = False
+    batch_logger.setLevel(default_log_level)
 
 
 @pytest.mark.asyncio
@@ -601,6 +613,59 @@ class TestProcessor:
         ).all()
         assert len(_transfer_approval_list) == 0
 
+    # <Normal_1_7>
+    # Skip processing with no new block (token events)
+    async def test_normal_1_7(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract,
+        )
+        await self.list_token(token_address=token.address, async_session=async_session)
+
+        # Run target process first time
+        await processor.sync_new_logs()
+
+        # Run target process second time without new block
+        caplog.clear()
+        await processor.sync_new_logs()
+
+        latest_block = web3.eth.block_number
+        next_block = latest_block + 1
+
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip ApplyForTransfer(token): {token.address} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip CancelTransfer(token): {token.address} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip ApproveTransfer(token): {token.address} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+
     # <Normal_2_1>
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
@@ -989,6 +1054,91 @@ class TestProcessor:
         assert _transfer_approval.cancelled is None
         assert _transfer_approval.escrow_finished is True
         assert _transfer_approval.transfer_approved is True
+
+    # <Normal_2_5>
+    # Skip processing with no new block (exchange events)
+    async def test_normal_2_5(
+        self,
+        processor: Processor,
+        shared_contract: SharedContract,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+
+        # Issue token with exchange
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=st_escrow_contract,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract,
+        )
+        await self.list_token(token_address=token.address, async_session=async_session)
+
+        # Run target process first time
+        await processor.sync_new_logs()
+
+        # Run target process second time without new block
+        caplog.clear()
+        await processor.sync_new_logs()
+
+        latest_block = web3.eth.block_number
+        next_block = latest_block + 1
+
+        # token-side skips
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip ApplyForTransfer(token): {token.address} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip CancelTransfer(token): {token.address} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip ApproveTransfer(token): {token.address} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+
+        # exchange-side skips
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip ApplyForTransfer(exchange): {st_escrow_contract['address']} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip CancelTransfer(exchange): {st_escrow_contract['address']} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip EscrowFinished(exchange): {st_escrow_contract['address']} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
+        assert 1 == caplog.record_tuples.count(
+            (
+                LOG.name,
+                logging.DEBUG,
+                f"Skip ApproveTransfer(exchange): {st_escrow_contract['address']} block_from({next_block}) > block_to({latest_block})",
+            )
+        )
 
     ###########################################################################
     # Error Case

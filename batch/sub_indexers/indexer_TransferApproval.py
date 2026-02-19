@@ -19,12 +19,15 @@ SPDX-License-Identifier: Apache-2.0
 
 import sys
 from datetime import datetime, timezone
-from typing import Any, List, Mapping, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence, cast
 
+from eth_utils.address import to_checksum_address
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3 import Web3
+from web3.contract.async_contract import AsyncContractEvent
 from web3.exceptions import ABIEventNotFound
-from web3.types import EventData
+from web3.types import EventData, FilterParams
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -60,6 +63,10 @@ ibetSecurityTokenEscrow
 
 class Processor:
     """Processor for indexing Token transfer approval events"""
+
+    # Maximum number of contract addresses in one eth_getLogs request.
+    # This is a trade-off between request count and payload size.
+    ADDRESS_CHUNK_SIZE = 200
 
     class TargetTokenList:
         class TargetToken:
@@ -295,10 +302,12 @@ class Processor:
         local_session = self.__get_db_session()
         try:
             await self.__get_contract_list(local_session)
+
             # Synchronize 1,000,000 blocks each
             latest_block = int(await async_web3.eth.block_number)
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
+
             if latest_block > _to_block:
                 while _to_block < latest_block:
                     await self.__sync_all(db_session=local_session, block_to=_to_block)
@@ -310,6 +319,7 @@ class Processor:
                 local_session, self.token_list, latest_block
             )
             await local_session.commit()
+
         except Exception as e:
             await local_session.rollback()
             raise e
@@ -331,6 +341,196 @@ class Processor:
 
         self.__update_cursor(block_to + 1)
 
+    @staticmethod
+    def __chunked(values: list[str], chunk_size: int) -> list[list[str]]:
+        """Split a list into fixed-size chunks."""
+        return [values[i : i + chunk_size] for i in range(0, len(values), chunk_size)]
+
+    @staticmethod
+    def __build_topic0(event_name: str, event_abi: Any) -> str:
+        """Build topic0 (= event signature hash) from event ABI."""
+        input_types = ",".join(
+            [input_param["type"] for input_param in event_abi.get("inputs", [])]
+        )
+        signature = f"{event_name}({input_types})"
+        return Web3.keccak(text=signature).to_0x_hex()
+
+    async def __get_logs_for_token_event(
+        self, event_name: str, block_to: int
+    ) -> list[tuple[TargetTokenList.TargetToken, EventData]]:
+        """Fetch logs once per event type, then decode and map to each target token.
+
+        Flow:
+        1) Build target token/decoder maps
+        2) Query logs in address chunks with shared topic0 filter
+        3) Filter out already synchronized logs by per-token cursor
+        4) Decode and return logs sorted by (blockNumber, logIndex)
+        """
+        target_by_address: dict[str, Processor.TargetTokenList.TargetToken] = {}
+        event_decoder_by_address: dict[str, AsyncContractEvent] = {}
+        topic0: str | None = None
+        oldest_block_from: int | None = None
+
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                # Already synchronized up to block_to. Skip RPC call and processing.
+                LOG.debug(
+                    f"Skip {event_name}(token): {token.address} block_from({block_from}) > block_to({block_to})"
+                )
+                continue
+
+            if oldest_block_from is None or block_from < oldest_block_from:
+                oldest_block_from = block_from
+
+            event_class: Any = getattr(token.events, event_name, None)
+            if event_class is None:
+                continue
+            event_decoder = event_class()
+            if not isinstance(event_decoder, AsyncContractEvent):
+                continue
+            token_address = to_checksum_address(token.address)
+            target_by_address[token_address] = target
+            event_decoder_by_address[token_address] = event_decoder
+            if topic0 is None:
+                topic0 = self.__build_topic0(event_name, event_decoder.abi)
+
+        if oldest_block_from is None or len(target_by_address) == 0 or topic0 is None:
+            return []
+
+        logs: list[tuple[Processor.TargetTokenList.TargetToken, EventData]] = []
+        target_addresses = list(target_by_address.keys())
+        topics = [[topic0]]
+
+        for address_chunk in self.__chunked(target_addresses, self.ADDRESS_CHUNK_SIZE):
+            # One eth_getLogs request per event type + address chunk.
+            filter_params = cast(
+                FilterParams,
+                {
+                    "fromBlock": oldest_block_from,
+                    "toBlock": block_to,
+                    "address": address_chunk,
+                    "topics": topics,
+                },
+            )
+            raw_logs = await async_web3.eth.get_logs(filter_params)
+            for raw_log in raw_logs:
+                # Map log to target token by address.
+                token_address = to_checksum_address(raw_log["address"])
+                target = target_by_address.get(token_address)
+                if target is None:
+                    continue
+
+                # Guard: skip logs that are already synchronized, based on per-token cursor.
+                if raw_log["blockNumber"] < target.cursor:
+                    continue
+
+                # Decode log with corresponding event decoder.
+                event_decoder = event_decoder_by_address.get(token_address)
+                if event_decoder is None:
+                    continue
+                try:
+                    event = event_decoder.process_log(raw_log)
+                    logs.append((target, event))
+                except Exception:
+                    # Keep indexing robust: skip logs that cannot be decoded.
+                    continue
+
+        # Sort logs by (blockNumber, logIndex) to ensure correct processing order.
+        logs.sort(
+            key=lambda log_data: (log_data[1]["blockNumber"], log_data[1]["logIndex"])
+        )
+        return logs
+
+    async def __get_logs_for_exchange_event(
+        self, event_name: str, block_to: int
+    ) -> list[tuple[TargetExchangeList.TargetExchange, EventData]]:
+        """Fetch logs once per event type, then decode and map to each exchange.
+
+        Flow:
+        1) Build target exchange/decoder maps
+        2) Query logs in address chunks with shared topic0 filter
+        3) Filter out already synchronized logs by per-exchange cursor
+        4) Decode and return logs sorted by (blockNumber, logIndex)
+        """
+        target_by_address: dict[str, Processor.TargetExchangeList.TargetExchange] = {}
+        event_decoder_by_address: dict[str, AsyncContractEvent] = {}
+        topic0: str | None = None
+        oldest_block_from: int | None = None
+
+        for target in self.exchange_list:
+            block_from = target.cursor
+            if block_from > block_to:
+                # Already synchronized up to block_to. Skip RPC call and processing.
+                LOG.debug(
+                    f"Skip {event_name}(exchange): {target.exchange_address} block_from({block_from}) > block_to({block_to})"
+                )
+                continue
+
+            if oldest_block_from is None or block_from < oldest_block_from:
+                oldest_block_from = block_from
+
+            event_class: Any = getattr(
+                target.exchange_contract.events, event_name, None
+            )
+            if event_class is None:
+                continue
+            event_decoder = event_class()
+            if not isinstance(event_decoder, AsyncContractEvent):
+                continue
+            exchange_address = to_checksum_address(target.exchange_address)
+            target_by_address[exchange_address] = target
+            event_decoder_by_address[exchange_address] = event_decoder
+            if topic0 is None:
+                topic0 = self.__build_topic0(event_name, event_decoder.abi)
+
+        if oldest_block_from is None or len(target_by_address) == 0 or topic0 is None:
+            return []
+
+        logs: list[tuple[Processor.TargetExchangeList.TargetExchange, EventData]] = []
+        target_addresses = list(target_by_address.keys())
+        topics = [[topic0]]
+
+        for address_chunk in self.__chunked(target_addresses, self.ADDRESS_CHUNK_SIZE):
+            # One eth_getLogs request per event type + address chunk.
+            filter_params = cast(
+                FilterParams,
+                {
+                    "fromBlock": oldest_block_from,
+                    "toBlock": block_to,
+                    "address": address_chunk,
+                    "topics": topics,
+                },
+            )
+            raw_logs = await async_web3.eth.get_logs(filter_params)
+            for raw_log in raw_logs:
+                # Map log to target exchange by address.
+                exchange_address = to_checksum_address(raw_log["address"])
+                target = target_by_address.get(exchange_address)
+                if target is None:
+                    continue
+
+                # Skip logs that are already synchronized, based on per-exchange cursor.
+                if raw_log["blockNumber"] < target.cursor:
+                    continue
+
+                # Decode log with corresponding event decoder.
+                event_decoder = event_decoder_by_address.get(exchange_address)
+                if event_decoder is None:
+                    continue
+                try:
+                    event = event_decoder.process_log(raw_log)
+                    logs.append((target, event))
+                except Exception:
+                    continue
+
+        # Sort logs by (blockNumber, logIndex) to ensure correct processing order.
+        logs.sort(
+            key=lambda log_data: (log_data[1]["blockNumber"], log_data[1]["logIndex"])
+        )
+        return logs
+
     def __update_cursor(self, block_number: int):
         """Memorize the block number where next processing should start from
         :param block_number: block number to be set
@@ -351,38 +551,33 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.token_list:
-            token = target.token_contract
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            try:
-                events: list[EventData] = await token.events.ApplyForTransfer.get_logs(
-                    from_block=block_from, to_block=block_to
+        # Fetch once by event type and process per-token with cursor guards.
+        try:
+            events = await self.__get_logs_for_token_event("ApplyForTransfer", block_to)
+        except ABIEventNotFound:
+            events = []
+        try:
+            for target, event in events:
+                token = target.token_contract
+                args = event["args"]
+                value = args.get("value", 0)
+                if value > sys.maxsize:
+                    continue
+                block_timestamp = await self.get_block_timestamp(event=event)
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="ApplyFor",
+                    token_address=token.address,
+                    exchange_address=None,
+                    application_id=args.get("index"),
+                    from_address=args.get("from", ZERO_ADDRESS),
+                    to_address=args.get("to", ZERO_ADDRESS),
+                    value=value,
+                    optional_data_applicant=args.get("data"),
+                    block_timestamp=block_timestamp,
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                for event in events:
-                    args = event["args"]
-                    value = args.get("value", 0)
-                    if value > sys.maxsize:
-                        continue
-                    block_timestamp = await self.get_block_timestamp(event=event)
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="ApplyFor",
-                        token_address=token.address,
-                        exchange_address=None,
-                        application_id=args.get("index"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                        value=value,
-                        optional_data_applicant=args.get("data"),
-                        block_timestamp=block_timestamp,
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     async def __sync_token_cancel_transfer(
         self, db_session: AsyncSession, block_to: int
@@ -392,31 +587,26 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.token_list:
-            token = target.token_contract
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            try:
-                events: list[EventData] = await token.events.CancelTransfer.get_logs(
-                    from_block=block_from, to_block=block_to
+        # Fetch once by event type and process per-token with cursor guards.
+        try:
+            events = await self.__get_logs_for_token_event("CancelTransfer", block_to)
+        except ABIEventNotFound:
+            events = []
+        try:
+            for target, event in events:
+                token = target.token_contract
+                args = event["args"]
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="Cancel",
+                    token_address=token.address,
+                    exchange_address=None,
+                    application_id=args.get("index"),
+                    from_address=args.get("from", ZERO_ADDRESS),
+                    to_address=args.get("to", ZERO_ADDRESS),
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                for event in events:
-                    args = event["args"]
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="Cancel",
-                        token_address=token.address,
-                        exchange_address=None,
-                        application_id=args.get("index"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     async def __sync_token_approve_transfer(
         self, db_session: AsyncSession, block_to: int
@@ -426,34 +616,29 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.token_list:
-            token = target.token_contract
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            try:
-                events: list[EventData] = await token.events.ApproveTransfer.get_logs(
-                    from_block=block_from, to_block=block_to
+        # Fetch once by event type and process per-token with cursor guards.
+        try:
+            events = await self.__get_logs_for_token_event("ApproveTransfer", block_to)
+        except ABIEventNotFound:
+            events = []
+        try:
+            for target, event in events:
+                token = target.token_contract
+                args = event["args"]
+                block_timestamp = await self.get_block_timestamp(event=event)
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="Approve",
+                    token_address=token.address,
+                    exchange_address=None,
+                    application_id=args.get("index"),
+                    from_address=args.get("from", ZERO_ADDRESS),
+                    to_address=args.get("to", ZERO_ADDRESS),
+                    optional_data_approver=args.get("data"),
+                    block_timestamp=block_timestamp,
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                for event in events:
-                    args = event["args"]
-                    block_timestamp = await self.get_block_timestamp(event=event)
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="Approve",
-                        token_address=token.address,
-                        exchange_address=None,
-                        application_id=args.get("index"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                        optional_data_approver=args.get("data"),
-                        block_timestamp=block_timestamp,
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     async def __sync_exchange_apply_for_transfer(
         self, db_session: AsyncSession, block_to: int
@@ -463,47 +648,38 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.exchange_list:
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            exchange = target.exchange_contract
-            try:
-                events: list[
-                    EventData
-                ] = await exchange.events.ApplyForTransfer.get_logs(
-                    from_block=block_from, to_block=block_to
+        # Fetch once by event type and process per-exchange with cursor guards.
+        try:
+            events = await self.__get_logs_for_exchange_event(
+                "ApplyForTransfer", block_to
+            )
+        except ABIEventNotFound:
+            events = []
+        try:
+            token_address_list = [t.token_contract.address for t in self.token_list]
+            for target, event in events:
+                exchange = target.exchange_contract
+                args = event["args"]
+                if args.get("token", ZERO_ADDRESS) not in token_address_list:
+                    continue
+                value = args.get("value", 0)
+                if value > sys.maxsize:
+                    continue
+                block_timestamp = await self.get_block_timestamp(event=event)
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="ApplyFor",
+                    token_address=args.get("token", ZERO_ADDRESS),
+                    exchange_address=exchange.address,
+                    application_id=args.get("escrowId"),
+                    from_address=args.get("from", ZERO_ADDRESS),
+                    to_address=args.get("to", ZERO_ADDRESS),
+                    value=args.get("value"),
+                    optional_data_applicant=args.get("data"),
+                    block_timestamp=block_timestamp,
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                # Filter events by listed token
-                events_filtered: list[EventData] = []
-                token_address_list = [t.token_contract.address for t in self.token_list]
-                for event in events:
-                    args = event["args"]
-                    if args.get("token", ZERO_ADDRESS) in token_address_list:
-                        events_filtered.append(event)
-                for event in events_filtered:
-                    args = event["args"]
-                    value = args.get("value", 0)
-                    if value > sys.maxsize:
-                        continue
-                    block_timestamp = await self.get_block_timestamp(event=event)
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="ApplyFor",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                        value=args.get("value"),
-                        optional_data_applicant=args.get("data"),
-                        block_timestamp=block_timestamp,
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     async def __sync_exchange_cancel_transfer(
         self, db_session: AsyncSession, block_to: int
@@ -513,38 +689,31 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.exchange_list:
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            exchange = target.exchange_contract
-            try:
-                events: list[EventData] = await exchange.events.CancelTransfer.get_logs(
-                    from_block=block_from, to_block=block_to
+        # Fetch once by event type and process per-exchange with cursor guards.
+        try:
+            events = await self.__get_logs_for_exchange_event(
+                "CancelTransfer", block_to
+            )
+        except ABIEventNotFound:
+            events = []
+        try:
+            token_address_list = [t.token_contract.address for t in self.token_list]
+            for target, event in events:
+                exchange = target.exchange_contract
+                args = event["args"]
+                if args.get("token", ZERO_ADDRESS) not in token_address_list:
+                    continue
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="Cancel",
+                    token_address=args.get("token", ZERO_ADDRESS),
+                    exchange_address=exchange.address,
+                    application_id=args.get("escrowId"),
+                    from_address=args.get("from", ZERO_ADDRESS),
+                    to_address=args.get("to", ZERO_ADDRESS),
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                # Filter events by listed token
-                events_filtered: list[EventData] = []
-                token_address_list = [t.token_contract.address for t in self.token_list]
-                for event in events:
-                    args = event["args"]
-                    if args.get("token", ZERO_ADDRESS) in token_address_list:
-                        events_filtered.append(event)
-                for event in events_filtered:
-                    args = event["args"]
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="Cancel",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     async def __sync_exchange_escrow_finished(
         self, db_session: AsyncSession, block_to: int
@@ -554,40 +723,33 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.exchange_list:
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            exchange = target.exchange_contract
-            try:
-                events: list[EventData] = await exchange.events.EscrowFinished.get_logs(
-                    from_block=block_from,
-                    to_block=block_to,
-                    argument_filters={"transferApprovalRequired": True},
+        # Fetch once by event type and process per-exchange with cursor guards.
+        try:
+            events = await self.__get_logs_for_exchange_event(
+                "EscrowFinished", block_to
+            )
+        except ABIEventNotFound:
+            events = []
+        try:
+            token_address_list = [t.token_contract.address for t in self.token_list]
+            for target, event in events:
+                exchange = target.exchange_contract
+                args = event["args"]
+                if args.get("transferApprovalRequired") is not True:
+                    continue
+                if args.get("token", ZERO_ADDRESS) not in token_address_list:
+                    continue
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="EscrowFinish",
+                    token_address=args.get("token", ZERO_ADDRESS),
+                    exchange_address=exchange.address,
+                    application_id=args.get("escrowId"),
+                    from_address=args.get("sender", ZERO_ADDRESS),
+                    to_address=args.get("recipient", ZERO_ADDRESS),
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                # Filter events by listed token
-                events_filtered: list[EventData] = []
-                token_address_list = [t.token_contract.address for t in self.token_list]
-                for event in events:
-                    args = event["args"]
-                    if args.get("token", ZERO_ADDRESS) in token_address_list:
-                        events_filtered.append(event)
-                for event in events_filtered:
-                    args = event["args"]
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="EscrowFinish",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId"),
-                        from_address=args.get("sender", ZERO_ADDRESS),
-                        to_address=args.get("recipient", ZERO_ADDRESS),
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     async def __sync_exchange_approve_transfer(
         self, db_session: AsyncSession, block_to: int
@@ -597,41 +759,32 @@ class Processor:
         :param block_to: To Block
         :return: None
         """
-        for target in self.exchange_list:
-            block_from = target.cursor
-            if block_from > block_to:
-                continue
-            exchange = target.exchange_contract
-            try:
-                events: list[
-                    EventData
-                ] = await exchange.events.ApproveTransfer.get_logs(
-                    from_block=block_from, to_block=block_to
+        # Fetch once by event type and process per-exchange with cursor guards.
+        try:
+            events = await self.__get_logs_for_exchange_event(
+                "ApproveTransfer", block_to
+            )
+        except ABIEventNotFound:
+            events = []
+        try:
+            token_address_list = [t.token_contract.address for t in self.token_list]
+            for target, event in events:
+                exchange = target.exchange_contract
+                args = event["args"]
+                if args.get("token", ZERO_ADDRESS) not in token_address_list:
+                    continue
+                block_timestamp = await self.get_block_timestamp(event=event)
+                await self.__sink_on_transfer_approval(
+                    db_session=db_session,
+                    event_type="Approve",
+                    token_address=args.get("token", ZERO_ADDRESS),
+                    exchange_address=exchange.address,
+                    application_id=args.get("escrowId"),
+                    optional_data_approver=args.get("data"),
+                    block_timestamp=block_timestamp,
                 )
-            except ABIEventNotFound:
-                events = []
-            try:
-                # Filter events by listed token
-                events_filtered: list[EventData] = []
-                token_address_list = [t.token_contract.address for t in self.token_list]
-                for event in events:
-                    args = event["args"]
-                    if args.get("token", ZERO_ADDRESS) in token_address_list:
-                        events_filtered.append(event)
-                for event in events_filtered:
-                    args = event["args"]
-                    block_timestamp = await self.get_block_timestamp(event=event)
-                    await self.__sink_on_transfer_approval(
-                        db_session=db_session,
-                        event_type="Approve",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId"),
-                        optional_data_approver=args.get("data"),
-                        block_timestamp=block_timestamp,
-                    )
-            except Exception as e:
-                raise e
+        except Exception as e:
+            raise e
 
     @staticmethod
     def __get_oldest_cursor(target_token_list: TargetTokenList, block_to: int) -> int:

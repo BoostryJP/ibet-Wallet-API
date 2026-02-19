@@ -20,15 +20,17 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence, cast
 
 from eth_utils.address import to_checksum_address
 from hexbytes import HexBytes
 from pydantic import ValidationError
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3 import Web3
+from web3.contract.async_contract import AsyncContractEvent
 from web3.exceptions import ABIEventNotFound
-from web3.types import EventData
+from web3.types import EventData, FilterParams
 
 from app.config import TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
 from app.contracts import AsyncContract
@@ -54,6 +56,10 @@ async_web3 = AsyncWeb3Wrapper()
 
 class Processor:
     """Processor for indexing Token transfer events"""
+
+    # Maximum number of contract addresses in one eth_getLogs request.
+    # This is a trade-off between request count and payload size.
+    ADDRESS_CHUNK_SIZE = 200
 
     class TargetTokenList:
         class TargetToken:
@@ -259,6 +265,7 @@ class Processor:
                 block_number=latest_block,
             )
             await local_session.commit()
+
         except Exception as e:
             await local_session.rollback()
             raise e
@@ -316,14 +323,135 @@ class Processor:
     async def __sync_all(
         self, db_session: AsyncSession, block_from: int, block_to: int
     ):
-        await self.__sync_transfer(db_session, block_from, block_to)
-        await self.__sync_unlock(db_session, block_from, block_to)
-        await self.__sync_force_unlock(db_session, block_from, block_to)
-        await self.__sync_force_change_locked_account(db_session, block_from, block_to)
+        # Filter active targets that may still have unsynchronized logs up to block_to.
+        active_targets = self.__filter_active_targets(block_to)
+        if len(active_targets) == 0:
+            return
+
+        # Sync each event type
+        await self.__sync_transfer(db_session, block_from, block_to, active_targets)
+        await self.__sync_unlock(db_session, block_from, block_to, active_targets)
+        await self.__sync_force_unlock(db_session, block_from, block_to, active_targets)
+        await self.__sync_force_change_locked_account(
+            db_session, block_from, block_to, active_targets
+        )
         await self.__update_skip_block(db_session)
 
+    def __filter_active_targets(
+        self, block_to: int
+    ) -> list[TargetTokenList.TargetToken]:
+        """Return tokens that may still have unsynchronized logs up to block_to."""
+        return [
+            target
+            for target in self.token_list
+            if target.skip_block is None or block_to > target.skip_block
+        ]
+
+    @staticmethod
+    def __chunked(values: list[str], chunk_size: int) -> list[list[str]]:
+        """Split a list into fixed-size chunks."""
+        return [values[i : i + chunk_size] for i in range(0, len(values), chunk_size)]
+
+    @staticmethod
+    def __build_topic0(event_name: str, event_abi: Any) -> str:
+        """Build topic0 (= event signature hash) from event ABI."""
+        input_types = ",".join(
+            [input_param["type"] for input_param in event_abi.get("inputs", [])]
+        )
+        signature = f"{event_name}({input_types})"
+        return Web3.keccak(text=signature).to_0x_hex()
+
+    async def __get_logs_by_event(
+        self,
+        event_name: str,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
+    ) -> list[tuple[TargetTokenList.TargetToken, EventData]]:
+        """Fetch logs once per event type, then decode and map to each target token.
+
+        Flow:
+        1) Build target token/decoder maps
+        2) Query logs in address chunks with shared topic0 filter
+        3) Filter out already synchronized logs by per-token skip_block
+        4) Decode and return logs sorted by (blockNumber, logIndex)
+        """
+        target_by_address: dict[str, Processor.TargetTokenList.TargetToken] = {}
+        event_decoder_by_address: dict[str, AsyncContractEvent] = {}
+        topic0: str | None = None
+
+        for target in targets:
+            token = target.token_contract
+
+            event_class: Any = getattr(token.events, event_name, None)
+            if event_class is None:
+                continue
+            event_decoder = event_class()
+            if not isinstance(event_decoder, AsyncContractEvent):
+                continue
+
+            token_address = to_checksum_address(token.address)
+            target_by_address[token_address] = target
+            event_decoder_by_address[token_address] = event_decoder
+            if topic0 is None:
+                topic0 = self.__build_topic0(event_name, event_decoder.abi)
+
+        if len(target_by_address) == 0 or topic0 is None:
+            return []
+
+        logs: list[tuple[Processor.TargetTokenList.TargetToken, EventData]] = []
+        target_addresses = list(target_by_address.keys())
+        topics = [[topic0]]
+
+        for address_chunk in self.__chunked(target_addresses, self.ADDRESS_CHUNK_SIZE):
+            # One eth_getLogs request per event type + address chunk.
+            filter_params = cast(
+                FilterParams,
+                {
+                    "fromBlock": block_from,
+                    "toBlock": block_to,
+                    "address": address_chunk,
+                    "topics": topics,
+                },
+            )
+            raw_logs = await async_web3.eth.get_logs(filter_params)
+            for raw_log in raw_logs:
+                # Map log to target token by address.
+                token_address = to_checksum_address(raw_log["address"])
+                target = target_by_address.get(token_address)
+                if target is None:
+                    continue
+
+                # Skip logs that are already synchronized based on per-token skip_block.
+                if (
+                    target.skip_block is not None
+                    and raw_log["blockNumber"] <= target.skip_block
+                ):
+                    continue
+
+                # Decode log with corresponding event decoder.
+                event_decoder = event_decoder_by_address.get(token_address)
+                if event_decoder is None:
+                    continue
+
+                try:
+                    event = event_decoder.process_log(raw_log)
+                    logs.append((target, event))
+                except Exception:
+                    continue
+
+        # Sort logs by (blockNumber, logIndex) to ensure correct processing order.
+        logs.sort(
+            key=lambda log_data: (log_data[1]["blockNumber"], log_data[1]["logIndex"])
+        )
+        return logs
+
     async def __sync_transfer(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Sync Transfer events
 
@@ -332,92 +460,73 @@ class Processor:
         :param block_to: To block
         :return:
         """
-        for target in self.token_list:
-            token = target.token_contract
-            skip_timestamp = target.skip_timestamp
-            skip_block = target.skip_block
-            events_view: Any = token.events
+        # Fetch once by event type and process per-token with skip guards.
+        try:
+            events = await self.__get_logs_by_event(
+                "Transfer", block_from, block_to, targets
+            )
+        except ABIEventNotFound:
+            events = []
 
-            # Get "Transfer" logs
-            try:
-                if skip_block is not None and block_to <= skip_block:
-                    # Skip if the token has already been synchronized to block_to.
-                    LOG.debug(f"{token.address}: block_to <= skip_block")
+        try:
+            for target, event in events:
+                token = target.token_contract
+                skip_timestamp = target.skip_timestamp
+                args = event["args"]
+                value = args.get("value", 0)
+                if value > sys.maxsize:
                     continue
-                elif skip_block is not None and block_from <= skip_block < block_to:
-                    # block_from <= skip_block < block_to
-                    LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events: list[EventData] = await events_view.Transfer.get_logs(
-                        from_block=skip_block + 1, to_block=block_to
-                    )
-                else:
-                    # No logs or
-                    # skip_block < block_from < block_to
-                    LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = await events_view.Transfer.get_logs(
-                        from_block=block_from, to_block=block_to
-                    )
-            except ABIEventNotFound:
-                events = []
 
-            # Index logs
-            try:
-                for event in events:
-                    args = event["args"]
-                    value = args.get("value", 0)
-                    if value > sys.maxsize:
-                        pass
-                    else:
-                        event_created = await self.__gen_block_timestamp(event=event)
-                        if event_created is None:
-                            continue
-                        if (
-                            skip_timestamp is not None
-                            and event_created <= skip_timestamp
-                        ):
-                            LOG.debug(
-                                f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}"
-                            )
-                            continue
+                event_created = await self.__gen_block_timestamp(event=event)
+                if event_created is None:
+                    continue
+                if skip_timestamp is not None and event_created <= skip_timestamp:
+                    LOG.debug(
+                        f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}"
+                    )
+                    continue
 
-                        # Judge whether the transfer is a reallocation
-                        transaction_hash = event["transactionHash"].to_0x_hex()
-                        is_reallocation = False
-                        tx = await AsyncContract.get_transaction(
-                            event["transactionHash"], event["blockNumber"]
-                        )
-                        if tx is not None:
-                            tx_data: HexBytes | None = tx.get("input")
-                            # Check if the transaction data contains the reallocation marker("c0ffee00")
-                            if tx_data is not None and "c0ffee00" in tx_data.hex():
-                                try:
-                                    raw_call_data = tx_data.hex().split("c0ffee00", 1)[
-                                        1
-                                    ]
-                                    call_data = json.loads(bytes.fromhex(raw_call_data))
-                                    if call_data.get("purpose") == "Reallocation":
-                                        is_reallocation = True
-                                except (ValueError, json.JSONDecodeError):
-                                    # If decoding fails, treat it as a normal transfer
-                                    pass
-                        self.__insert_idx(
-                            db_session=db_session,
-                            transaction_hash=transaction_hash,
-                            token_address=to_checksum_address(token.address),
-                            from_account_address=args.get("from", ZERO_ADDRESS),
-                            to_account_address=args.get("to", ZERO_ADDRESS),
-                            value=value,
-                            source_event=IDXTransferSourceEventType.REALLOCATION
-                            if is_reallocation is True
-                            else IDXTransferSourceEventType.TRANSFER,
-                            data_str=None,
-                            event_created=event_created,
-                        )
-            except Exception as e:
-                raise e
+                # Judge whether the transfer is a reallocation
+                transaction_hash = event["transactionHash"].to_0x_hex()
+                is_reallocation = False
+                tx = await AsyncContract.get_transaction(
+                    event["transactionHash"], event["blockNumber"]
+                )
+                if tx is not None:
+                    tx_data: HexBytes | None = tx.get("input")
+                    # Check if the transaction data contains the reallocation marker("c0ffee00")
+                    if tx_data is not None and "c0ffee00" in tx_data.hex():
+                        try:
+                            raw_call_data = tx_data.hex().split("c0ffee00", 1)[1]
+                            call_data = json.loads(bytes.fromhex(raw_call_data))
+                            if call_data.get("purpose") == "Reallocation":
+                                is_reallocation = True
+                        except (ValueError, json.JSONDecodeError):
+                            # If decoding fails, treat it as a normal transfer
+                            pass
+
+                self.__insert_idx(
+                    db_session=db_session,
+                    transaction_hash=transaction_hash,
+                    token_address=to_checksum_address(token.address),
+                    from_account_address=args.get("from", ZERO_ADDRESS),
+                    to_account_address=args.get("to", ZERO_ADDRESS),
+                    value=value,
+                    source_event=IDXTransferSourceEventType.REALLOCATION
+                    if is_reallocation is True
+                    else IDXTransferSourceEventType.TRANSFER,
+                    data_str=None,
+                    event_created=event_created,
+                )
+        except Exception as e:
+            raise e
 
     async def __sync_unlock(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Synchronize Unlock events
 
@@ -426,67 +535,52 @@ class Processor:
         :param block_to: to block number
         :return: None
         """
-        for target in self.token_list:
-            token = target.token_contract
-            skip_block = target.skip_block
-            events_view: Any = token.events
+        # Fetch once by event type and process per-token with skip guards.
+        try:
+            events = await self.__get_logs_by_event(
+                "Unlock", block_from, block_to, targets
+            )
+        except ABIEventNotFound:
+            events = []
 
-            # Get "Unlock" logs
-            try:
-                if skip_block is not None and block_to <= skip_block:
-                    # Skip if the token has already been synchronized to block_to.
-                    LOG.debug(f"{token.address}: block_to <= skip_block")
+        try:
+            for target, event in events:
+                token = target.token_contract
+                args = event["args"]
+                transaction_hash = event["transactionHash"].to_0x_hex()
+                block_data = await async_web3.eth.get_block(event["blockNumber"])
+                assert "timestamp" in block_data
+                block_timestamp = datetime.fromtimestamp(
+                    block_data["timestamp"],
+                    UTC,
+                ).replace(tzinfo=None)
+                if args.get("value", 0) > sys.maxsize:
                     continue
-                elif skip_block is not None and block_from <= skip_block < block_to:
-                    # block_from <= skip_block < block_to
-                    LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events: list[EventData] = await events_view.Unlock.get_logs(
-                        from_block=skip_block + 1, to_block=block_to
-                    )
-                else:
-                    # No logs or
-                    # skip_block < block_from < block_to
-                    LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = await events_view.Unlock.get_logs(
-                        from_block=block_from, to_block=block_to
-                    )
-            except ABIEventNotFound:
-                events = []
 
-            # Index logs
-            try:
-                for event in events:
-                    args = event["args"]
-                    transaction_hash = event["transactionHash"].to_0x_hex()
-                    block_data = await async_web3.eth.get_block(event["blockNumber"])
-                    assert "timestamp" in block_data
-                    block_timestamp = datetime.fromtimestamp(
-                        block_data["timestamp"],
-                        UTC,
-                    ).replace(tzinfo=None)
-                    if args.get("value", 0) > sys.maxsize:
-                        pass
-                    else:
-                        from_address = args.get("accountAddress", ZERO_ADDRESS)
-                        to_address = args.get("recipientAddress", ZERO_ADDRESS)
-                        data_str = args.get("data", "")
-                        if from_address != to_address:
-                            self.__insert_idx(
-                                db_session=db_session,
-                                transaction_hash=transaction_hash,
-                                token_address=to_checksum_address(token.address),
-                                from_account_address=from_address,
-                                to_account_address=to_address,
-                                value=args.get("value", 0),
-                                source_event=IDXTransferSourceEventType.UNLOCK,
-                                data_str=data_str,
-                                event_created=block_timestamp,
-                            )
-            except Exception:
-                raise
+                from_address = args.get("accountAddress", ZERO_ADDRESS)
+                to_address = args.get("recipientAddress", ZERO_ADDRESS)
+                data_str = args.get("data", "")
+                if from_address != to_address:
+                    self.__insert_idx(
+                        db_session=db_session,
+                        transaction_hash=transaction_hash,
+                        token_address=to_checksum_address(token.address),
+                        from_account_address=from_address,
+                        to_account_address=to_address,
+                        value=args.get("value", 0),
+                        source_event=IDXTransferSourceEventType.UNLOCK,
+                        data_str=data_str,
+                        event_created=block_timestamp,
+                    )
+        except Exception:
+            raise
 
     async def __sync_force_unlock(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Synchronize ForceUnlock events
 
@@ -495,67 +589,53 @@ class Processor:
         :param block_to: to block number
         :return: None
         """
-        for target in self.token_list:
-            token = target.token_contract
-            skip_block = target.skip_block
-            events_view: Any = token.events
+        # Fetch once by event type and process per-token with skip guards.
+        try:
+            events = await self.__get_logs_by_event(
+                "ForceUnlock", block_from, block_to, targets
+            )
+        except ABIEventNotFound:
+            events = []
 
-            # Get "ForceUnlock" logs
-            try:
-                if skip_block is not None and block_to <= skip_block:
-                    # Skip if the token has already been synchronized to block_to.
-                    LOG.debug(f"{token.address}: block_to <= skip_block")
+        try:
+            for target, event in events:
+                token = target.token_contract
+                args = event["args"]
+                transaction_hash = event["transactionHash"].to_0x_hex()
+                block_data = await async_web3.eth.get_block(event["blockNumber"])
+                assert "timestamp" in block_data
+                block_timestamp = datetime.fromtimestamp(
+                    block_data["timestamp"],
+                    UTC,
+                ).replace(tzinfo=None)
+                if args.get("value", 0) > sys.maxsize:
                     continue
-                elif skip_block is not None and block_from <= skip_block < block_to:
-                    # block_from <= skip_block < block_to
-                    LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events: list[EventData] = await events_view.ForceUnlock.get_logs(
-                        from_block=skip_block + 1, to_block=block_to
-                    )
-                else:
-                    # No logs or
-                    # skip_block < block_from < block_to
-                    LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = await events_view.ForceUnlock.get_logs(
-                        from_block=block_from, to_block=block_to
-                    )
-            except ABIEventNotFound:
-                events = []
 
-            # Index logs
-            try:
-                for event in events:
-                    args = event["args"]
-                    transaction_hash = event["transactionHash"].to_0x_hex()
-                    block_data = await async_web3.eth.get_block(event["blockNumber"])
-                    assert "timestamp" in block_data
-                    block_timestamp = datetime.fromtimestamp(
-                        block_data["timestamp"],
-                        UTC,
-                    ).replace(tzinfo=None)
-                    if args.get("value", 0) > sys.maxsize:
-                        pass
-                    else:
-                        from_address = args.get("accountAddress", ZERO_ADDRESS)
-                        to_address = args.get("recipientAddress", ZERO_ADDRESS)
-                        data_str = args.get("data", "")
-                        if from_address != to_address:
-                            self.__insert_idx(
-                                db_session=db_session,
-                                transaction_hash=transaction_hash,
-                                token_address=to_checksum_address(token.address),
-                                from_account_address=from_address,
-                                to_account_address=to_address,
-                                value=args.get("value", 0),
-                                source_event=IDXTransferSourceEventType.FORCE_UNLOCK,
-                                data_str=data_str,
-                                event_created=block_timestamp,
-                            )
-            except Exception:
-                raise
+                # Only insert if from and to addresses are different.
+                from_address = args.get("accountAddress", ZERO_ADDRESS)
+                to_address = args.get("recipientAddress", ZERO_ADDRESS)
+                data_str = args.get("data", "")
+                if from_address != to_address:
+                    self.__insert_idx(
+                        db_session=db_session,
+                        transaction_hash=transaction_hash,
+                        token_address=to_checksum_address(token.address),
+                        from_account_address=from_address,
+                        to_account_address=to_address,
+                        value=args.get("value", 0),
+                        source_event=IDXTransferSourceEventType.FORCE_UNLOCK,
+                        data_str=data_str,
+                        event_created=block_timestamp,
+                    )
+        except Exception:
+            raise
 
     async def __sync_force_change_locked_account(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Synchronize ForceChangeLockedAccount events
 
@@ -564,66 +644,46 @@ class Processor:
         :param block_to: to block number
         :return: None
         """
-        for target in self.token_list:
-            token = target.token_contract
-            skip_block = target.skip_block
-            events_view: Any = token.events
+        # Fetch once by event type and process per-token with skip guards.
+        try:
+            events = await self.__get_logs_by_event(
+                "ForceChangeLockedAccount", block_from, block_to, targets
+            )
+        except ABIEventNotFound:
+            events = []
 
-            # Get "ForceChangeLockedAccount" logs
-            try:
-                if skip_block is not None and block_to <= skip_block:
-                    # Skip if the token has already been synchronized to block_to.
-                    LOG.debug(f"{token.address}: block_to <= skip_block")
+        try:
+            for target, event in events:
+                token = target.token_contract
+                args = event["args"]
+                transaction_hash = event["transactionHash"].to_0x_hex()
+                block_data = await async_web3.eth.get_block(event["blockNumber"])
+                assert "timestamp" in block_data
+                block_timestamp = datetime.fromtimestamp(
+                    block_data["timestamp"],
+                    UTC,
+                ).replace(tzinfo=None)
+                if args.get("value", 0) > sys.maxsize:
                     continue
-                elif skip_block is not None and block_from <= skip_block < block_to:
-                    # block_from <= skip_block < block_to
-                    LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
-                    events: list[
-                        EventData
-                    ] = await events_view.ForceChangeLockedAccount.get_logs(
-                        from_block=skip_block + 1, to_block=block_to
-                    )
-                else:
-                    # No logs or
-                    # skip_block < block_from < block_to
-                    LOG.debug(f"{token.address}: skip_block < block_from < block_to")
-                    events = await events_view.ForceChangeLockedAccount.get_logs(
-                        from_block=block_from, to_block=block_to
-                    )
-            except ABIEventNotFound:
-                events = []
 
-            # Index logs
-            try:
-                for event in events:
-                    args = event["args"]
-                    transaction_hash = event["transactionHash"].to_0x_hex()
-                    block_data = await async_web3.eth.get_block(event["blockNumber"])
-                    assert "timestamp" in block_data
-                    block_timestamp = datetime.fromtimestamp(
-                        block_data["timestamp"],
-                        UTC,
-                    ).replace(tzinfo=None)
-                    if args.get("value", 0) > sys.maxsize:
-                        pass
-                    else:
-                        from_address = args.get("beforeAccountAddress", ZERO_ADDRESS)
-                        to_address = args.get("afterAccountAddress", ZERO_ADDRESS)
-                        data_str = args.get("data", "")
-                        if from_address != to_address:
-                            self.__insert_idx(
-                                db_session=db_session,
-                                transaction_hash=transaction_hash,
-                                token_address=to_checksum_address(token.address),
-                                from_account_address=from_address,
-                                to_account_address=to_address,
-                                value=args.get("value", 0),
-                                source_event=IDXTransferSourceEventType.FORCE_CHANGE_LOCKED_ACCOUNT,
-                                data_str=data_str,
-                                event_created=block_timestamp,
-                            )
-            except Exception:
-                raise
+                # Only insert if from and to addresses are different.
+                from_address = args.get("beforeAccountAddress", ZERO_ADDRESS)
+                to_address = args.get("afterAccountAddress", ZERO_ADDRESS)
+                data_str = args.get("data", "")
+                if from_address != to_address:
+                    self.__insert_idx(
+                        db_session=db_session,
+                        transaction_hash=transaction_hash,
+                        token_address=to_checksum_address(token.address),
+                        from_account_address=from_address,
+                        to_account_address=to_address,
+                        value=args.get("value", 0),
+                        source_event=IDXTransferSourceEventType.FORCE_CHANGE_LOCKED_ACCOUNT,
+                        data_str=data_str,
+                        event_created=block_timestamp,
+                    )
+        except Exception:
+            raise
 
     async def __update_skip_block(self, db_session: AsyncSession):
         """Memorize the block number where next processing should start from
