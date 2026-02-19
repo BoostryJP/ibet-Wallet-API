@@ -332,11 +332,27 @@ class Processor:
         self, db_session: AsyncSession, block_from: int, block_to: int
     ):
         LOG.info(f"STEP-2_{block_from}-{block_to}")
-        await self.__sync_transfer(db_session, block_from, block_to)
-        await self.__sync_unlock(db_session, block_from, block_to)
-        await self.__sync_force_unlock(db_session, block_from, block_to)
-        await self.__sync_force_change_locked_account(db_session, block_from, block_to)
+        active_targets = self.__filter_active_targets(block_to)
+        if len(active_targets) == 0:
+            return
+
+        await self.__sync_transfer(db_session, block_from, block_to, active_targets)
+        await self.__sync_unlock(db_session, block_from, block_to, active_targets)
+        await self.__sync_force_unlock(db_session, block_from, block_to, active_targets)
+        await self.__sync_force_change_locked_account(
+            db_session, block_from, block_to, active_targets
+        )
         await self.__update_skip_block(db_session)
+
+    def __filter_active_targets(
+        self, block_to: int
+    ) -> list[TargetTokenList.TargetToken]:
+        """Return tokens that may still have unsynchronized logs up to block_to."""
+        return [
+            target
+            for target in self.token_list
+            if target.skip_block is None or block_to > target.skip_block
+        ]
 
     @staticmethod
     def __chunked(values: list[str], chunk_size: int) -> list[list[str]]:
@@ -353,7 +369,11 @@ class Processor:
         return Web3.keccak(text=signature).to_0x_hex()
 
     async def __get_logs_by_event(
-        self, event_name: str, block_from: int, block_to: int
+        self,
+        event_name: str,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ) -> list[tuple[TargetTokenList.TargetToken, EventData]]:
         """Fetch logs once per event type, then decode and map to each target token.
 
@@ -365,46 +385,30 @@ class Processor:
         """
         target_by_address: dict[str, Processor.TargetTokenList.TargetToken] = {}
         event_decoder_by_address: dict[str, AsyncContractEvent] = {}
-        topic0_set: set[str] = set()
+        topic0: str | None = None
 
-        for target in self.token_list:
-            if target.skip_block is not None and block_to <= target.skip_block:
-                # Already synchronized up to block_to. Skip RPC call and processing.
-                LOG.debug(f"{target.token_contract.address}: block_to <= skip_block")
-                continue
-            elif (
-                target.skip_block is not None
-                and block_from <= target.skip_block < block_to
-            ):
-                # Request range partially overlaps with already synchronized range.
-                LOG.debug(
-                    f"{target.token_contract.address}: block_from <= skip_block < block_to"
-                )
-            else:
-                # Full request range is potentially unsynchronized for this token.
-                LOG.debug(
-                    f"{target.token_contract.address}: skip_block < block_from < block_to"
-                )
+        for target in targets:
+            token = target.token_contract
 
-            token_address = to_checksum_address(target.token_contract.address)
-            target_by_address[token_address] = target
-
-            event_class: Any = getattr(target.token_contract.events, event_name, None)
+            event_class: Any = getattr(token.events, event_name, None)
             if event_class is None:
                 continue
             event_decoder = event_class()
             if not isinstance(event_decoder, AsyncContractEvent):
                 continue
 
+            token_address = to_checksum_address(token.address)
+            target_by_address[token_address] = target
             event_decoder_by_address[token_address] = event_decoder
-            topic0_set.add(self.__build_topic0(event_name, event_decoder.abi))
+            if topic0 is None:
+                topic0 = self.__build_topic0(event_name, event_decoder.abi)
 
-        if len(target_by_address) == 0:
+        if len(target_by_address) == 0 or topic0 is None:
             return []
 
         logs: list[tuple[Processor.TargetTokenList.TargetToken, EventData]] = []
         target_addresses = list(target_by_address.keys())
-        topics = [list(topic0_set)]
+        topics = [[topic0]]
 
         for address_chunk in self.__chunked(target_addresses, self.ADDRESS_CHUNK_SIZE):
             # One eth_getLogs request per event type + address chunk.
@@ -450,7 +454,11 @@ class Processor:
         return logs
 
     async def __sync_transfer(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Sync Transfer events
 
@@ -461,7 +469,9 @@ class Processor:
         """
         # Fetch once by event type and process per-token with skip guards.
         try:
-            events = await self.__get_logs_by_event("Transfer", block_from, block_to)
+            events = await self.__get_logs_by_event(
+                "Transfer", block_from, block_to, targets
+            )
         except ABIEventNotFound:
             events = []
 
@@ -519,7 +529,11 @@ class Processor:
             raise e
 
     async def __sync_unlock(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Synchronize Unlock events
 
@@ -530,7 +544,9 @@ class Processor:
         """
         # Fetch once by event type and process per-token with skip guards.
         try:
-            events = await self.__get_logs_by_event("Unlock", block_from, block_to)
+            events = await self.__get_logs_by_event(
+                "Unlock", block_from, block_to, targets
+            )
         except ABIEventNotFound:
             events = []
 
@@ -567,7 +583,11 @@ class Processor:
             raise
 
     async def __sync_force_unlock(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Synchronize ForceUnlock events
 
@@ -578,7 +598,9 @@ class Processor:
         """
         # Fetch once by event type and process per-token with skip guards.
         try:
-            events = await self.__get_logs_by_event("ForceUnlock", block_from, block_to)
+            events = await self.__get_logs_by_event(
+                "ForceUnlock", block_from, block_to, targets
+            )
         except ABIEventNotFound:
             events = []
 
@@ -616,7 +638,11 @@ class Processor:
             raise
 
     async def __sync_force_change_locked_account(
-        self, db_session: AsyncSession, block_from: int, block_to: int
+        self,
+        db_session: AsyncSession,
+        block_from: int,
+        block_to: int,
+        targets: Sequence[TargetTokenList.TargetToken],
     ):
         """Synchronize ForceChangeLockedAccount events
 
@@ -628,7 +654,7 @@ class Processor:
         # Fetch once by event type and process per-token with skip guards.
         try:
             events = await self.__get_logs_by_event(
-                "ForceChangeLockedAccount", block_from, block_to
+                "ForceChangeLockedAccount", block_from, block_to, targets
             )
         except ABIEventNotFound:
             events = []

@@ -376,38 +376,40 @@ class Processor:
         """
         target_by_address: dict[str, Processor.TargetTokenList.TargetToken] = {}
         event_decoder_by_address: dict[str, AsyncContractEvent] = {}
-        topic0_set: set[str] = set()
+        topic0: str | None = None
         oldest_block_from: int | None = None
 
         for target in self.token_list:
-            if target.cursor > block_to:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
                 # Already synchronized up to block_to. Skip RPC call and processing.
                 LOG.debug(
-                    f"Skip {event_name}(token): {target.token_contract.address} block_from({target.cursor}) > block_to({block_to})"
+                    f"Skip {event_name}(token): {token.address} block_from({block_from}) > block_to({block_to})"
                 )
                 continue
 
-            if oldest_block_from is None or target.cursor < oldest_block_from:
-                oldest_block_from = target.cursor
+            if oldest_block_from is None or block_from < oldest_block_from:
+                oldest_block_from = block_from
 
-            token_address = to_checksum_address(target.token_contract.address)
-            target_by_address[token_address] = target
-
-            event_class: Any = getattr(target.token_contract.events, event_name, None)
+            event_class: Any = getattr(token.events, event_name, None)
             if event_class is None:
                 continue
             event_decoder = event_class()
             if not isinstance(event_decoder, AsyncContractEvent):
                 continue
+            token_address = to_checksum_address(token.address)
+            target_by_address[token_address] = target
             event_decoder_by_address[token_address] = event_decoder
-            topic0_set.add(self.__build_topic0(event_name, event_decoder.abi))
+            if topic0 is None:
+                topic0 = self.__build_topic0(event_name, event_decoder.abi)
 
-        if oldest_block_from is None or len(target_by_address) == 0:
+        if oldest_block_from is None or len(target_by_address) == 0 or topic0 is None:
             return []
 
         logs: list[tuple[Processor.TargetTokenList.TargetToken, EventData]] = []
         target_addresses = list(target_by_address.keys())
-        topics = [list(topic0_set)]
+        topics = [[topic0]]
 
         for address_chunk in self.__chunked(target_addresses, self.ADDRESS_CHUNK_SIZE):
             # One eth_getLogs request per event type + address chunk.
@@ -462,22 +464,20 @@ class Processor:
         """
         target_by_address: dict[str, Processor.TargetExchangeList.TargetExchange] = {}
         event_decoder_by_address: dict[str, AsyncContractEvent] = {}
-        topic0_set: set[str] = set()
+        topic0: str | None = None
         oldest_block_from: int | None = None
 
         for target in self.exchange_list:
-            if target.cursor > block_to:
+            block_from = target.cursor
+            if block_from > block_to:
                 # Already synchronized up to block_to. Skip RPC call and processing.
                 LOG.debug(
-                    f"Skip {event_name}(exchange): {target.exchange_address} block_from({target.cursor}) > block_to({block_to})"
+                    f"Skip {event_name}(exchange): {target.exchange_address} block_from({block_from}) > block_to({block_to})"
                 )
                 continue
 
-            if oldest_block_from is None or target.cursor < oldest_block_from:
-                oldest_block_from = target.cursor
-
-            exchange_address = to_checksum_address(target.exchange_address)
-            target_by_address[exchange_address] = target
+            if oldest_block_from is None or block_from < oldest_block_from:
+                oldest_block_from = block_from
 
             event_class: Any = getattr(
                 target.exchange_contract.events, event_name, None
@@ -487,15 +487,18 @@ class Processor:
             event_decoder = event_class()
             if not isinstance(event_decoder, AsyncContractEvent):
                 continue
+            exchange_address = to_checksum_address(target.exchange_address)
+            target_by_address[exchange_address] = target
             event_decoder_by_address[exchange_address] = event_decoder
-            topic0_set.add(self.__build_topic0(event_name, event_decoder.abi))
+            if topic0 is None:
+                topic0 = self.__build_topic0(event_name, event_decoder.abi)
 
-        if oldest_block_from is None or len(target_by_address) == 0:
+        if oldest_block_from is None or len(target_by_address) == 0 or topic0 is None:
             return []
 
         logs: list[tuple[Processor.TargetExchangeList.TargetExchange, EventData]] = []
         target_addresses = list(target_by_address.keys())
-        topics = [list(topic0_set)]
+        topics = [[topic0]]
 
         for address_chunk in self.__chunked(target_addresses, self.ADDRESS_CHUNK_SIZE):
             # One eth_getLogs request per event type + address chunk.

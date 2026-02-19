@@ -1025,13 +1025,6 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_1
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: block_to <= skip_block",
-            )
-        )
         caplog.clear()
 
     # <Normal_4_2>
@@ -1130,13 +1123,6 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_2
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: block_from <= skip_block < block_to",
-            )
-        )
         caplog.clear()
 
     # <Normal_4_3>
@@ -1243,13 +1229,6 @@ class TestProcessor:
         assert idx_block_number is not None
         assert idx_block_number.latest_block_number == block_number_2
 
-        assert 4 == caplog.record_tuples.count(
-            (
-                LOG.name,
-                logging.DEBUG,
-                f"{share_token.address}: block_to <= skip_block",
-            )
-        )
         caplog.clear()
 
     # <Normal_4_4>
