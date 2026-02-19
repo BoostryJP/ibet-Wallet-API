@@ -243,12 +243,8 @@ class Processor:
         try:
             LOG.info("Syncing to={}".format(latest_block))
 
-            LOG.info("STEP-1")
-
             # Refresh listed tokens
             await self.__get_token_list(local_session)
-
-            LOG.info("STEP-2")
 
             # Synchronize 1,000,000 blocks each
             _to_block = 999_999
@@ -262,8 +258,6 @@ class Processor:
             else:
                 await self.__sync_all(local_session, _from_block, latest_block)
 
-            LOG.info("STEP-3")
-
             # Update latest synchronized block numbers
             await self.__update_idx_latest_block(
                 db_session=local_session,
@@ -271,8 +265,6 @@ class Processor:
                 block_number=latest_block,
             )
             await local_session.commit()
-
-            LOG.info("STEP-4")
 
         except Exception as e:
             await local_session.rollback()
@@ -331,11 +323,12 @@ class Processor:
     async def __sync_all(
         self, db_session: AsyncSession, block_from: int, block_to: int
     ):
-        LOG.info(f"STEP-2_{block_from}-{block_to}")
+        # Filter active targets that may still have unsynchronized logs up to block_to.
         active_targets = self.__filter_active_targets(block_to)
         if len(active_targets) == 0:
             return
 
+        # Sync each event type
         await self.__sync_transfer(db_session, block_from, block_to, active_targets)
         await self.__sync_unlock(db_session, block_from, block_to, active_targets)
         await self.__sync_force_unlock(db_session, block_from, block_to, active_targets)
