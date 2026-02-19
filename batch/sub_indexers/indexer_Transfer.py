@@ -331,6 +331,7 @@ class Processor:
     async def __sync_all(
         self, db_session: AsyncSession, block_from: int, block_to: int
     ):
+        LOG.info(f"STEP-2_{block_from}-{block_to}")
         await self.__sync_transfer(db_session, block_from, block_to)
         await self.__sync_unlock(db_session, block_from, block_to)
         await self.__sync_force_unlock(db_session, block_from, block_to)
