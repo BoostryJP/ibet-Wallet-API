@@ -445,7 +445,11 @@ class Processor:
     ) -> list[tuple[TargetExchangeList.TargetExchange, EventData]]:
         """Fetch logs once per event type, then decode and map to each exchange.
 
-        Flow is the same as token-side batched fetch.
+        Flow:
+        1) Build target exchange/decoder maps
+        2) Query logs in address chunks with shared topic0 filter
+        3) Filter out already synchronized logs by per-exchange cursor
+        4) Decode and return logs sorted by (blockNumber, logIndex)
         """
         target_by_address: dict[str, Processor.TargetExchangeList.TargetExchange] = {}
         event_decoder_by_address: dict[str, AsyncContractEvent] = {}
