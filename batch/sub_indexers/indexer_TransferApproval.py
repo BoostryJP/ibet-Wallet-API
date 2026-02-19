@@ -301,11 +301,19 @@ class Processor:
     async def sync_new_logs(self):
         local_session = self.__get_db_session()
         try:
+            LOG.info("STEP-1")
+
             await self.__get_contract_list(local_session)
+
+            LOG.info("STEP-2")
+
             # Synchronize 1,000,000 blocks each
             latest_block = int(await async_web3.eth.block_number)
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
+
+            LOG.info("STEP-3")
+
             if latest_block > _to_block:
                 while _to_block < latest_block:
                     await self.__sync_all(db_session=local_session, block_to=_to_block)
@@ -317,6 +325,9 @@ class Processor:
                 local_session, self.token_list, latest_block
             )
             await local_session.commit()
+
+            LOG.info("STEP-4")
+
         except Exception as e:
             await local_session.rollback()
             raise e
