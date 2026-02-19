@@ -368,23 +368,28 @@ class Processor:
         topic0_set: set[str] = set()
 
         for target in self.token_list:
-            token = target.token_contract
-            skip_block = target.skip_block
-            if skip_block is not None and block_to <= skip_block:
+            if target.skip_block is not None and block_to <= target.skip_block:
                 # Already synchronized up to block_to. Skip RPC call and processing.
-                LOG.debug(f"{token.address}: block_to <= skip_block")
+                LOG.debug(f"{target.token_contract.address}: block_to <= skip_block")
                 continue
-            elif skip_block is not None and block_from <= skip_block < block_to:
+            elif (
+                target.skip_block is not None
+                and block_from <= target.skip_block < block_to
+            ):
                 # Request range partially overlaps with already synchronized range.
-                LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
+                LOG.debug(
+                    f"{target.token_contract.address}: block_from <= skip_block < block_to"
+                )
             else:
                 # Full request range is potentially unsynchronized for this token.
-                LOG.debug(f"{token.address}: skip_block < block_from < block_to")
+                LOG.debug(
+                    f"{target.token_contract.address}: skip_block < block_from < block_to"
+                )
 
-            token_address = to_checksum_address(token.address)
+            token_address = to_checksum_address(target.token_contract.address)
             target_by_address[token_address] = target
 
-            event_class: Any = getattr(token.events, event_name, None)
+            event_class: Any = getattr(target.token_contract.events, event_name, None)
             if event_class is None:
                 continue
             event_decoder = event_class()

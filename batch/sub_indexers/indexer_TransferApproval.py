@@ -380,22 +380,20 @@ class Processor:
         oldest_block_from: int | None = None
 
         for target in self.token_list:
-            token = target.token_contract
-            block_from = target.cursor
-            if block_from > block_to:
+            if target.cursor > block_to:
                 # Already synchronized up to block_to. Skip RPC call and processing.
                 LOG.debug(
-                    f"Skip {event_name}(token): {token.address} block_from({block_from}) > block_to({block_to})"
+                    f"Skip {event_name}(token): {target.token_contract.address} block_from({target.cursor}) > block_to({block_to})"
                 )
                 continue
 
-            if oldest_block_from is None or block_from < oldest_block_from:
-                oldest_block_from = block_from
+            if oldest_block_from is None or target.cursor < oldest_block_from:
+                oldest_block_from = target.cursor
 
-            token_address = to_checksum_address(token.address)
+            token_address = to_checksum_address(target.token_contract.address)
             target_by_address[token_address] = target
 
-            event_class: Any = getattr(token.events, event_name, None)
+            event_class: Any = getattr(target.token_contract.events, event_name, None)
             if event_class is None:
                 continue
             event_decoder = event_class()
@@ -468,16 +466,15 @@ class Processor:
         oldest_block_from: int | None = None
 
         for target in self.exchange_list:
-            block_from = target.cursor
-            if block_from > block_to:
+            if target.cursor > block_to:
                 # Already synchronized up to block_to. Skip RPC call and processing.
                 LOG.debug(
-                    f"Skip {event_name}(exchange): {target.exchange_address} block_from({block_from}) > block_to({block_to})"
+                    f"Skip {event_name}(exchange): {target.exchange_address} block_from({target.cursor}) > block_to({block_to})"
                 )
                 continue
 
-            if oldest_block_from is None or block_from < oldest_block_from:
-                oldest_block_from = block_from
+            if oldest_block_from is None or target.cursor < oldest_block_from:
+                oldest_block_from = target.cursor
 
             exchange_address = to_checksum_address(target.exchange_address)
             target_by_address[exchange_address] = target
