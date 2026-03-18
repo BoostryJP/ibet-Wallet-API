@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: astral-sh/ruff-action@v3
       - name: Install uv
-        uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -113,7 +113,7 @@ jobs:
         run: jrm cov/pytest.xml "cov/pytest-*.xml"
       - name: Pytest coverage comment
         id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@26f986d2599c288bb62f623d29c2da98609e9cd4 # v1.6.0
+        uses: MishaKav/pytest-coverage-comment@287292879eaaff04116f36d3eb1a670f6e5df1a4 # v1.7.1
         with:
           report-only-changed-files: true
           pytest-xml-coverage-path: cov/coverage.xml
