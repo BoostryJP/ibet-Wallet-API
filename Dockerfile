@@ -57,6 +57,11 @@ COPY --chown=apl:apl . /app/ibet-Wallet-API
 RUN cd /app/ibet-Wallet-API \
  && uv venv $UV_PROJECT_ENVIRONMENT \
  && uv sync --frozen --no-install-project --no-dev \
+ && PYTHON_BIN="$(uv python find $PYTHON_VERSION)" \
+ && PYTHON_ROOT="$(dirname "$(dirname "$PYTHON_BIN")")" \
+ && rm -f "$PYTHON_ROOT"/bin/pip "$PYTHON_ROOT"/bin/pip3 "$PYTHON_ROOT"/bin/pip3.* \
+ && rm -rf "$PYTHON_ROOT"/lib/python*/site-packages/pip "$PYTHON_ROOT"/lib/python*/site-packages/pip-*.dist-info \
+ && rm -rf /home/apl/.cache/uv \
  && rm -f /app/ibet-Wallet-API/pyproject.toml \
  && rm -f /app/ibet-Wallet-API/uv.lock \
  && rm -rf /app/ibet-Wallet-API/tests/
@@ -91,7 +96,10 @@ RUN apt-get update -q \
 
 # copy python, dependencies and uv from builder stage
 USER apl
-COPY --from=builder --chown=apl:apl /home/apl/ /home/apl/
+COPY --from=builder --chown=apl:apl /home/apl/.bash_profile /home/apl/.bash_profile
+COPY --from=builder --chown=apl:apl /home/apl/.bashrc /home/apl/.bashrc
+COPY --from=builder --chown=apl:apl /home/apl/.local/share/uv/python/ /home/apl/.local/share/uv/python/
+COPY --from=builder --chown=apl:apl /home/apl/.venv/ /home/apl/.venv/
 COPY --from=builder --chown=apl:apl /app/ibet-Wallet-API/ /app/ibet-Wallet-API/
 COPY --from=builder --chown=apl:apl /usr/local/bin/uv /usr/local/bin/uv
 COPY --from=builder --chown=apl:apl /usr/local/bin/uvx /usr/local/bin/uvx
