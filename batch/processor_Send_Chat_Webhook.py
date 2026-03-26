@@ -48,6 +48,7 @@ class Processor:
 
                 for hook in hook_list:
                     try:
+                        assert CHAT_WEBHOOK_URL is not None
                         requests.post(CHAT_WEBHOOK_URL, json=hook.message)
                     except Exception:
                         LOG.exception("Failed to send chat webhook")

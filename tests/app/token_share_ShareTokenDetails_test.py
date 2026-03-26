@@ -17,28 +17,17 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
-from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    invalidate_share_token,
-    issue_bond_token,
-    issue_share_token,
-    register_bond_list,
-    register_share_list,
-)
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+from tests.helpers import IbetShareTestHelper, IbetStraightBondTestHelper
+from tests.types import SharedContract
 
 
 class TestTokenShareTokenDetails:
@@ -50,7 +39,9 @@ class TestTokenShareTokenDetails:
     apiurl_base = "/Token/Share/"  # {contract_address}
 
     @staticmethod
-    def bond_token_attribute(exchange_address, personal_info_address):
+    def bond_token_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -88,7 +79,9 @@ class TestTokenShareTokenDetails:
         return attribute
 
     @staticmethod
-    def share_token_attribute(exchange_address, personal_info_address):
+    def share_token_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
@@ -110,19 +103,9 @@ class TestTokenShareTokenDetails:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session, token):
+    def list_token(session: Session, token_address: str) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -134,35 +117,37 @@ class TestTokenShareTokenDetails:
 
     # Normal_1
     @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], share_token.address, token_list["address"]
+        )
 
         # Register tokens on the list
-        self.list_token(session, share_token)
+        self.list_token(session, share_token.address)
 
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + share_token["address"]
+        apiurl = self.apiurl_base + share_token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
-            "token_address": share_token["address"],
+            "token_address": share_token.address,
             "token_template": "IbetShare",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -199,38 +184,42 @@ class TestTokenShareTokenDetails:
     # Normal_2
     # status = False
     @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
+        share_token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], share_token.address, token_list["address"]
+        )
 
         # Register tokens on the list
-        self.list_token(session, share_token)
+        self.list_token(session, share_token.address)
 
         # Invalidate token
-        invalidate_share_token(issuer, share_token)
+        IbetShareTestHelper.set_token_status(
+            issuer["account_address"], share_token.address, False
+        )
 
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + share_token["address"]
+        apiurl = self.apiurl_base + share_token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
-            "token_address": share_token["address"],
+            "token_address": share_token.address,
             "token_template": "IbetShare",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -298,26 +287,28 @@ class TestTokenShareTokenDetails:
     # Not registered on the list
     # -> 404
     @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
-    def test_error_2(self, client, shared_contract, session):
+    def test_error_2(
+        self, client: TestClient, shared_contract: SharedContract, session: Session
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Prepare data: issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetShareExchange"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
         attribute = self.share_token_attribute(exchange_address, personal_info)
-        token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, token, token_list)
+        token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
 
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + token["address"]
+        apiurl = self.apiurl_base + token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
@@ -326,7 +317,7 @@ class TestTokenShareTokenDetails:
         assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
-            "description": "token_address: " + token["address"],
+            "description": "token_address: " + token.address,
         }
 
     # Error_3
@@ -351,29 +342,33 @@ class TestTokenShareTokenDetails:
     # Retrieve the token address of other token type
     # -> 404
     @mock.patch("app.config.SHARE_TOKEN_ENABLED", True)
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # Set up TokenList contract
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # Issue token
-        exchange_address = to_checksum_address(
-            shared_contract["IbetStraightBondExchange"]["address"]
-        )
-        personal_info = to_checksum_address(shared_contract["PersonalInfo"]["address"])
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
+        personal_info = shared_contract["PersonalInfo"]["address"]
         attribute = self.bond_token_attribute(exchange_address, personal_info)
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
+        bond_token = IbetStraightBondTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], bond_token.address, token_list["address"]
+        )
 
         # Register tokens on the list
-        self.list_token(session, bond_token)
+        self.list_token(session, bond_token.address)
 
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + bond_token["address"]
+        apiurl = self.apiurl_base + bond_token.address
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
@@ -381,6 +376,6 @@ class TestTokenShareTokenDetails:
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 30,
-            "description": f"token_address: {bond_token['address']}",
+            "description": f"token_address: {bond_token.address}",
             "message": "Data Not Exists",
         }

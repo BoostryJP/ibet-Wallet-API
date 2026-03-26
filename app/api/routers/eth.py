@@ -18,17 +18,17 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import httpx
 from eth_account import Account
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Path, Query
 from hexbytes import HexBytes
 from rlp import decode
 from sqlalchemy import select
 from web3.exceptions import ContractLogicError, TimeExhausted, Web3RPCError
-from web3.types import BlockIdentifier, TxReceipt
+from web3.types import BlockIdentifier, TxParams, TxReceipt
 
 from app import config, log
 from app.contracts import AsyncContract
@@ -43,16 +43,28 @@ from app.model.db import ExecutableContract, Listing, Node
 from app.model.schema import (
     GetTransactionCountQuery,
     JsonRPCRequest,
+    SendRawTransactionNoWaitResultDict,
     SendRawTransactionRequest,
+    SendRawTransactionResultDict,
     SendRawTransactionsNoWaitResponse,
     SendRawTransactionsResponse,
     TransactionCountResponse,
     WaitForTransactionReceiptQuery,
     WaitForTransactionReceiptResponse,
+    WaitForTransactionReceiptResultDict,
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    Success200MetaModel,
     SuccessResponse,
+)
+from app.model.schema.eth import (
+    SendRawTransactionFailureResponse,
+    SendRawTransactionNoWaitFailureResponse,
+    SendRawTransactionNoWaitSuccessResponse,
+    SendRawTransactionSuccessResponse,
+    WaitForTransactionReceiptFailureResponse,
+    WaitForTransactionReceiptSuccessResponse,
 )
 from app.model.type import EthereumAddress
 from app.utils.contract_error_code import error_code_msg
@@ -88,6 +100,8 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
 
     if node is not None:
         try:
+            # TODO: Migrate node.endpoint_uri to NOT NULL and update ORM typing
+            assert node.endpoint_uri is not None
             async with httpx.AsyncClient() as client:
                 res_data = await client.post(
                     node.endpoint_uri,
@@ -103,6 +117,10 @@ async def ethereum_json_rpc(async_session: DBAsyncSession, data: JsonRPCRequest)
     else:
         raise ServiceUnavailable("No web3 providers available")
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[Any](
+            meta=Success200MetaModel(code=200, message="OK"), data=res_data.json()
+        )
     return json_response({**SuccessResponse.default(), "data": res_data.json()})
 
 
@@ -129,14 +147,26 @@ async def get_transaction_count(
     except ValueError:
         raise InvalidParameterError
 
+    block_identifier: BlockIdentifier | None = (
+        query.block_identifier.value if query.block_identifier is not None else None
+    )
     nonce = await async_web3.eth.get_transaction_count(
-        to_checksum_address(eth_address), block_identifier=query.block_identifier
+        to_checksum_address(eth_address), block_identifier=block_identifier
     )
     gasprice = await async_web3.eth.gas_price
     chainid = config.WEB3_CHAINID
 
     eth_info = {"nonce": nonce, "gasprice": gasprice, "chainid": chainid}
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[TransactionCountResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=TransactionCountResponse(
+                nonce=nonce,
+                gasprice=gasprice,
+                chainid=chainid,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": eth_info})
 
 
@@ -169,7 +199,7 @@ async def send_raw_transaction(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
+            to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
         except Exception as err:
             LOG.notice(f"RLP decoding failed: {err}")
             continue
@@ -218,12 +248,12 @@ async def send_raw_transaction(
                 continue
 
     # Send transaction
-    result: list[dict[str, Any]] = []
+    result: list[SendRawTransactionResultDict] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
+            to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0, "transaction_hash": None})
@@ -234,18 +264,14 @@ async def send_raw_transaction(
         executable_contract = (
             await async_session.scalars(
                 select(ExecutableContract)
-                .where(to_contract_address == ExecutableContract.contract_address)
+                .where(ExecutableContract.contract_address == to_contract_address)
                 .limit(1)
             )
         ).first()
         if executable_contract is None:
             # If it is not a default contract, return error status.
             if (
-                to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
-                and to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
-                and to_contract_address
-                != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-                and to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+                to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address
                 != config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS
@@ -259,7 +285,7 @@ async def send_raw_transaction(
 
         # Send raw transaction
         try:
-            tx_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
+            tx_hash = await async_web3.eth.send_raw_transaction(HexBytes(raw_tx_hex))
         except Web3RPCError as err:
             error_msg = err.message
             if "nonce too low" in error_msg:
@@ -286,8 +312,11 @@ async def send_raw_transaction(
             )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
-                err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
-                code, message = error_code_msg(err_msg)
+                try:
+                    err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
+                    code, message = error_code_msg(err_msg)
+                except DataNotExistsError:
+                    code, message = None, None
                 result.append(
                     {
                         "id": i + 1,
@@ -314,12 +343,12 @@ async def send_raw_transaction(
                 )
                 LOG.error(f"get sender address from signed transaction failed: {err}")
                 continue
-            nonce = int(
-                "0x0" if raw_tx[0].to_0x_hex() == "0x" else raw_tx[0].to_0x_hex(), 16
-            )
+            raw_tx_nonce = HexBytes(raw_tx[0]).to_0x_hex()
+            nonce = int("0x0" if raw_tx_nonce == "0x" else raw_tx_nonce, 16)
             txpool_inspect = await async_web3.geth.txpool.inspect()
-            if from_address in txpool_inspect["queued"]:
-                if str(nonce) in txpool_inspect["queued"][from_address]:
+            queued_pool = txpool_inspect.get("queued", {})
+            if from_address in queued_pool:
+                if str(nonce) in queued_pool[from_address]:
                     status = 0  # execution failure
 
             result.append(
@@ -337,11 +366,39 @@ async def send_raw_transaction(
         result.append(
             {
                 "id": i + 1,
-                "status": tx["status"],
+                "status": 1,
                 "transaction_hash": tx_hash.to_0x_hex(),
             }
         )
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[SendRawTransactionsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=SendRawTransactionsResponse(
+                root=[
+                    (
+                        SendRawTransactionFailureResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=entry["transaction_hash"],
+                            error_code=(
+                                entry["error_code"] if "error_code" in entry else None
+                            ),
+                            error_msg=(
+                                entry["error_msg"] if "error_msg" in entry else None
+                            ),
+                        )
+                        if entry["status"] == 0
+                        else SendRawTransactionSuccessResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=entry["transaction_hash"],
+                        )
+                    )
+                    for entry in result
+                ]
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": result})
 
 
@@ -374,7 +431,7 @@ async def send_raw_transaction_no_wait(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
+            to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
         except Exception as err:
             LOG.notice(f"RLP decoding failed: {err}")
             continue
@@ -424,12 +481,12 @@ async def send_raw_transaction_no_wait(
                 continue
 
     # Send transaction
-    result: list[dict[str, Any]] = []
+    result: list[SendRawTransactionNoWaitResultDict] = []
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address(raw_tx[3].to_0x_hex())
+            to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0})
@@ -440,18 +497,14 @@ async def send_raw_transaction_no_wait(
         executable_contract = (
             await async_session.scalars(
                 select(ExecutableContract)
-                .where(to_contract_address == ExecutableContract.contract_address)
+                .where(ExecutableContract.contract_address == to_contract_address)
                 .limit(1)
             )
         ).first()
         if executable_contract is None:
             # If it is not a default contract, return error status.
             if (
-                to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
-                and to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
-                and to_contract_address
-                != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-                and to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
+                to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS
                 and to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS
                 and to_contract_address
                 != config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS
@@ -465,7 +518,9 @@ async def send_raw_transaction_no_wait(
 
         # Send raw transaction
         try:
-            transaction_hash = await async_web3.eth.send_raw_transaction(raw_tx_hex)
+            transaction_hash = await async_web3.eth.send_raw_transaction(
+                HexBytes(raw_tx_hex)
+            )
         except Web3RPCError as err:
             error_msg = err.message
             if "nonce too low" in error_msg:
@@ -487,6 +542,32 @@ async def send_raw_transaction_no_wait(
             {"id": i + 1, "status": 1, "transaction_hash": transaction_hash.to_0x_hex()}
         )
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[SendRawTransactionsNoWaitResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=SendRawTransactionsNoWaitResponse(
+                root=[
+                    (
+                        SendRawTransactionNoWaitFailureResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=(
+                                entry["transaction_hash"]
+                                if "transaction_hash" in entry
+                                else None
+                            ),
+                        )
+                        if entry["status"] == 0
+                        else SendRawTransactionNoWaitSuccessResponse(
+                            id=entry["id"],
+                            status=entry["status"],
+                            transaction_hash=entry["transaction_hash"],
+                        )
+                    )
+                    for entry in result
+                ]
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": result})
 
 
@@ -510,41 +591,80 @@ async def wait_for_transaction_receipt(
     transaction_hash = query.transaction_hash
     timeout = query.timeout
 
-    result: dict[str, Any] = {}
+    result: WaitForTransactionReceiptResultDict = {"status": 1}
     # Watch transaction receipt for given timeout duration.
     try:
+        tx_hash = HexBytes(transaction_hash)
         tx: TxReceipt = await async_web3.eth.wait_for_transaction_receipt(
-            transaction_hash=transaction_hash, timeout=timeout
+            transaction_hash=tx_hash, timeout=timeout
         )
         if tx["status"] == 0:
             # Inspect reason of transaction fail.
-            err_msg = await inspect_tx_failure(transaction_hash, tx["blockNumber"])
-            code, message = error_code_msg(err_msg)
-            result["status"] = 0
-            result["error_code"] = code
-            result["error_msg"] = message
+            try:
+                err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
+                code, message = error_code_msg(err_msg)
+            except DataNotExistsError:
+                code, message = None, None
+            result = {"status": 0, "error_code": code, "error_msg": message}
         else:
-            result["status"] = 1
+            result = {"status": 1}
     except TimeExhausted:
         raise DataNotExistsError
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[WaitForTransactionReceiptResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=(
+                WaitForTransactionReceiptFailureResponse(
+                    status=result["status"],
+                    error_code=result["error_code"],
+                    error_msg=result["error_msg"],
+                )
+                if result["status"] == 0
+                else WaitForTransactionReceiptSuccessResponse(
+                    status=result["status"],
+                )
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": result})
 
 
 async def inspect_tx_failure(tx_hash: HexBytes, block_number: BlockIdentifier) -> str:
     tx = await AsyncContract.get_transaction(tx_hash, block_number)
+    if tx is None:
+        raise DataNotExistsError
 
-    # build a new transaction to replay:
-    replay_tx = {
-        "to": tx["to"],
-        "from": tx["from"],
-        "value": tx["value"],
-        "data": tx["input"],
+    tx_to = tx.get("to")
+    tx_from = tx.get("from")
+    tx_value = tx.get("value")
+    tx_input = tx.get("input")
+    tx_block_number = tx.get("blockNumber")
+    if not isinstance(tx_to, str):
+        raise DataNotExistsError
+    if not isinstance(tx_from, str):
+        raise DataNotExistsError
+    if not isinstance(tx_value, int):
+        raise DataNotExistsError
+    if not isinstance(tx_input, (str, bytes, bytearray, HexBytes)):
+        raise DataNotExistsError
+    if not isinstance(tx_block_number, int):
+        raise DataNotExistsError
+    tx_data: str | bytes
+    if isinstance(tx_input, str):
+        tx_data = tx_input
+    else:
+        tx_data = bytes(tx_input)
+
+    replay_tx: TxParams = {
+        "to": tx_to,
+        "from": tx_from,
+        "value": tx_value,
+        "data": tx_data,
     }
 
     # replay the transaction locally:
     try:
-        await async_web3.eth.call(replay_tx, tx["blockNumber"] - 1)
+        await async_web3.eth.call(replay_tx, tx_block_number - 1)
     except ContractLogicError as e:
         if len(e.args) == 0:
             raise e

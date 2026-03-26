@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -36,7 +38,7 @@ class TestAdminTokenDELETE:
     apiurl_base = "/Admin/Tokens/"
 
     @staticmethod
-    def insert_Listing(session: Session, token):
+    def insert_Listing(session: Session, token: dict[str, Any]):
         listing = Listing()
         listing.token_address = token["token_address"]
         listing.is_public = token["is_public"]
@@ -46,13 +48,13 @@ class TestAdminTokenDELETE:
         session.add(listing)
 
     @staticmethod
-    def insert_ExecutableContract(session: Session, token):
+    def insert_ExecutableContract(session: Session, token: dict[str, Any]):
         executable_contract = ExecutableContract()
         executable_contract.contract_address = token["token_address"]
         session.add(executable_contract)
 
     @staticmethod
-    def insert_IDXBondToken(session: Session, token):
+    def insert_IDXBondToken(session: Session, token: dict[str, Any]):
         idx_token = IDXBondToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetStraightBond"
@@ -63,21 +65,21 @@ class TestAdminTokenDELETE:
         session.add(idx_token)
 
     @staticmethod
-    def insert_IDXShareToken(session: Session, token):
+    def insert_IDXShareToken(session: Session, token: dict[str, Any]):
         idx_token = IDXShareToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetShare"
         session.add(idx_token)
 
     @staticmethod
-    def insert_IDXMembershipToken(session: Session, token):
+    def insert_IDXMembershipToken(session: Session, token: dict[str, Any]):
         idx_token = IDXMembershipToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetMembership"
         session.add(idx_token)
 
     @staticmethod
-    def insert_IDXCouponToken(session: Session, token):
+    def insert_IDXCouponToken(session: Session, token: dict[str, Any]):
         idx_token = IDXCouponToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetCoupon"

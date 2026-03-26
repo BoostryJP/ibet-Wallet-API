@@ -1,0 +1,10 @@
+{
+    "include": [
+        "app/",
+        "batch/",
+        "logger.py",
+        "tests/",
+    ],
+    "exclude": [],
+    "typeCheckingMode": "strict"
+}

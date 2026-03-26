@@ -21,6 +21,7 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from web3.contract import Contract as Web3Contract
 
 from app import config
 from app.model.db import (
@@ -31,8 +32,8 @@ from app.model.db import (
     Listing,
 )
 from tests.account_config import eth_account
-from tests.contract_modules import share_lock, transfer_share_token
-from tests.utils import IbetShareUtils, PersonalInfoUtils
+from tests.helpers import IbetShareTestHelper, PersonalInfoHelper
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 
 class TestPositionShare:
@@ -42,14 +43,17 @@ class TestPositionShare:
     issuer = eth_account["issuer"]
     account_1 = eth_account["deployer"]
     account_2 = eth_account["trader"]
-    zero_address = {"address": config.ZERO_ADDRESS}
+    zero_address: DeployedContract = {"address": config.ZERO_ADDRESS, "abi": {}}
 
     # Prepare balance data
     # balance = 1000000
     @staticmethod
     def create_balance_data(
-        account, exchange_contract, personal_info_contract, token_list_contract
-    ):
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> Web3Contract:
         issuer_address = TestPositionShare.issuer["account_address"]
 
         # Issue token
@@ -70,20 +74,20 @@ class TestPositionShare:
             "memo": "メモ",
             "transferable": True,
         }
-        token = IbetShareUtils.issue(tx_from=issuer_address, args=args)
-        IbetShareUtils.register_token_list(
+        token = IbetShareTestHelper.issue(tx_from=issuer_address, args=args)
+        IbetShareTestHelper.register_token_list(
             tx_from=issuer_address,
             token_address=token.address,
             token_list_contract_address=token_list_contract["address"],
         )
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             tx_from=account["account_address"],
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address,
         )
-        IbetShareUtils.transfer_to_exchange(
+        IbetShareTestHelper.transfer_token(
             tx_from=issuer_address,
-            exchange_address=account["account_address"],
+            to=account["account_address"],
             token_address=token.address,
             amount=1000000,
         )
@@ -94,13 +98,13 @@ class TestPositionShare:
     # balance = 1000000, pending_transfer = [args pending_transfer]
     @staticmethod
     def create_pending_transfer_data(
-        account,
-        to_account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-        pending_transfer,
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        pending_transfer: int,
+    ) -> Web3Contract:
         issuer_address = TestPositionShare.issuer["account_address"]
 
         # Issue token
@@ -109,15 +113,15 @@ class TestPositionShare:
         )
 
         # Apply for transfer
-        IbetShareUtils.set_transfer_approval_required(
+        IbetShareTestHelper.set_transfer_approval_required(
             tx_from=issuer_address, token_address=token.address, required=True
         )
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             tx_from=to_account["account_address"],
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address,
         )
-        IbetShareUtils.apply_for_transfer(
+        IbetShareTestHelper.apply_for_token_transfer(
             tx_from=account["account_address"],
             token_address=token.address,
             to=to_account["account_address"],
@@ -129,25 +133,26 @@ class TestPositionShare:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(
-        account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-        commitment,
-    ):
+    def create_exchange_commitment_data(
+        account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+        commitment: int,
+    ) -> Web3Contract:
         # Issue token
         token = TestPositionShare.create_balance_data(
             account, exchange_contract, personal_info_contract, token_list_contract
         )
 
-        # Sell order
-        IbetShareUtils.sell(
+        # Create escrow
+        IbetShareTestHelper.create_escrow(
+            escrow_address=exchange_contract["address"],
             tx_from=account["account_address"],
-            exchange_address=exchange_contract["address"],
             token_address=token.address,
+            recipient_address=account["account_address"],
             amount=commitment,
-            price=1000,
+            agent_address=account["account_address"],
         )
 
         return token
@@ -156,12 +161,12 @@ class TestPositionShare:
     # balance = 0
     @staticmethod
     def create_non_balance_data(
-        account,
-        to_account,
-        exchange_contract,
-        personal_info_contract,
-        token_list_contract,
-    ):
+        account: UnitTestAccount,
+        to_account: UnitTestAccount,
+        exchange_contract: DeployedContract,
+        personal_info_contract: DeployedContract,
+        token_list_contract: DeployedContract,
+    ) -> Web3Contract:
         issuer_address = TestPositionShare.issuer["account_address"]
 
         # Issue token
@@ -170,14 +175,14 @@ class TestPositionShare:
         )
 
         # Transfer all amount
-        PersonalInfoUtils.register(
+        PersonalInfoHelper.register(
             tx_from=to_account["account_address"],
             personal_info_address=personal_info_contract["address"],
             link_address=issuer_address,
         )
-        IbetShareUtils.transfer_to_exchange(
+        IbetShareTestHelper.transfer_token(
             tx_from=account["account_address"],
-            exchange_address=to_account["account_address"],
+            to=to_account["account_address"],
             token_address=token.address,
             amount=1000000,
         )
@@ -278,7 +283,7 @@ class TestPositionShare:
         session.commit()
 
     @staticmethod
-    def list_token(token_address, session):
+    def list_token(token_address: str, session: Session) -> None:
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
@@ -292,10 +297,12 @@ class TestPositionShare:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -372,7 +379,7 @@ class TestPositionShare:
         )
         self.list_token(token_4.address, session)
 
-        token_5 = self.create_commitment_data(
+        token_5 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -381,7 +388,7 @@ class TestPositionShare:
         )
         self.list_token(token_5.address, session)
 
-        token_6 = self.create_commitment_data(
+        token_6 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -480,10 +487,12 @@ class TestPositionShare:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -560,7 +569,7 @@ class TestPositionShare:
         )
         self.list_token(token_4.address, session)
 
-        token_5 = self.create_commitment_data(
+        token_5 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -569,7 +578,7 @@ class TestPositionShare:
         )
         self.list_token(token_5.address, session)
 
-        token_6 = self.create_commitment_data(
+        token_6 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -642,7 +651,9 @@ class TestPositionShare:
 
     # <Normal_3>
     # token details
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -723,10 +734,12 @@ class TestPositionShare:
     # <Normal_4>
     # List all positions
     # Indexed: <Normal_1>
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -894,7 +907,7 @@ class TestPositionShare:
             config.ZERO_ADDRESS,
         )
 
-        token_5 = self.create_commitment_data(
+        token_5 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -916,7 +929,7 @@ class TestPositionShare:
             config.ZERO_ADDRESS,
         )
 
-        token_6 = self.create_commitment_data(
+        token_6 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1051,10 +1064,12 @@ class TestPositionShare:
     # <Normal_5>
     # Pagination
     # Indexed: <Normal_2>
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1222,7 +1237,7 @@ class TestPositionShare:
             config.ZERO_ADDRESS,
         )
 
-        token_5 = self.create_commitment_data(
+        token_5 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1244,7 +1259,7 @@ class TestPositionShare:
             config.ZERO_ADDRESS,
         )
 
-        token_6 = self.create_commitment_data(
+        token_6 = self.create_exchange_commitment_data(
             self.account_1,
             exchange_contract,
             personal_info_contract,
@@ -1353,7 +1368,9 @@ class TestPositionShare:
     # <Normal_6>
     # token details
     # Indexed: <Normal_3>
-    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -1438,7 +1455,9 @@ class TestPositionShare:
 
     # <Normal_7>
     # locked amount
-    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         config.SHARE_TOKEN_ENABLED = True
 
         token_list_contract = shared_contract["TokenList"]
@@ -1452,29 +1471,32 @@ class TestPositionShare:
             token_list_contract,
         )
 
-        share_lock(
-            invoker=self.account_1,
-            token={"address": token_1.address},
-            lock_address=self.account_2["account_address"],
-            amount=1000,
+        IbetShareTestHelper.lock_token(
+            self.account_1["account_address"],
+            token_1.address,
+            self.account_2["account_address"],
+            1000,
+            "",
         )
-        share_lock(
-            invoker=self.account_1,
-            token={"address": token_1.address},
-            lock_address=self.issuer["account_address"],
-            amount=2000,
+        IbetShareTestHelper.lock_token(
+            self.account_1["account_address"],
+            token_1.address,
+            self.issuer["account_address"],
+            2000,
+            "",
         )
-        transfer_share_token(
-            invoker=self.account_1,
-            to=self.account_2,
-            token={"address": token_1.address},
-            amount=5000,
+        IbetShareTestHelper.transfer_token(
+            self.account_1["account_address"],
+            token_1.address,
+            self.account_2["account_address"],
+            5000,
         )
-        share_lock(
-            invoker=self.account_2,
-            token={"address": token_1.address},
-            lock_address=self.issuer["account_address"],
-            amount=5000,
+        IbetShareTestHelper.lock_token(
+            self.account_2["account_address"],
+            token_1.address,
+            self.issuer["account_address"],
+            5000,
+            "",
         )
 
         self.create_idx_position(

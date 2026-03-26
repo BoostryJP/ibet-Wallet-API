@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Sequence
+from typing import TYPE_CHECKING, Annotated, Sequence
 
 from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
@@ -31,7 +31,7 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import BondToken
+from app.model.blockchain import BondToken as BondTokenBlockchain
 from app.model.db import IDXBondToken, Listing
 from app.model.schema import (
     ListAllStraightBondTokenAddressesResponse,
@@ -39,9 +39,14 @@ from app.model.schema import (
     ListAllStraightBondTokensResponse,
     RetrieveStraightBondTokenResponse,
     StraightBondTokensQuery,
+    StraightBondTokensSortItem,
 )
 from app.model.schema.base import (
+    BondToken as BondTokenSchema,
     GenericSuccessResponse,
+    ResultSet,
+    SortOrder,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
@@ -131,16 +136,16 @@ async def list_all_straight_bond_tokens(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    if sort_item == "created":
-        sort_attr = getattr(Listing, sort_item, None)
+    if sort_item == StraightBondTokensSortItem.created:
+        sort_attr = getattr(Listing, sort_item.value)
     else:
-        sort_attr = getattr(IDXBondToken, sort_item, None)
+        sort_attr = getattr(IDXBondToken, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != StraightBondTokensSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Listing.created)
 
@@ -151,8 +156,8 @@ async def list_all_straight_bond_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXBondToken] = (await async_session.scalars(stmt)).all()
-
-    tokens = [BondToken.from_model(_token).__dict__ for _token in _token_list]
+    bond_tokens = [BondTokenBlockchain.from_model(_token) for _token in _token_list]
+    tokens = [token.__dict__ for token in bond_tokens]
     data = {
         "result_set": {
             "count": count,
@@ -163,6 +168,22 @@ async def list_all_straight_bond_tokens(
         "tokens": tokens,
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllStraightBondTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllStraightBondTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                tokens=[
+                    BondTokenSchema.from_blockchain_token(token)
+                    for token in bond_tokens
+                ],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -241,16 +262,16 @@ async def list_all_straight_bond_token_addresses(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    if sort_item == "created":
-        sort_attr = getattr(Listing, sort_item, None)
+    if sort_item == StraightBondTokensSortItem.created:
+        sort_attr = getattr(Listing, sort_item.value)
     else:
-        sort_attr = getattr(IDXBondToken, sort_item, None)
+        sort_attr = getattr(IDXBondToken, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != StraightBondTokensSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Listing.created)
 
@@ -272,6 +293,19 @@ async def list_all_straight_bond_token_addresses(
         "address_list": [_token.token_address for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllStraightBondTokenAddressesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllStraightBondTokenAddressesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                address_list=[token.token_address for token in _token_list],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -308,29 +342,33 @@ async def retrieve_straight_bond_token(
     list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
     )
-    token = await AsyncContract.call_function(
+    token: tuple[str, str, str] = await AsyncContract.call_function(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-    token_template = token[1]
+    token_template = str(token[1])
 
     if token_template != TokenType.IbetStraightBond:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail = await BondToken.get(
-            async_session=async_session, token_address=token_address
+        token_detail: BondTokenBlockchain = await BondTokenBlockchain.get(
+            async_session, token_address
         )
     except ServiceUnavailable as e:
-        LOG.notice(e)
+        LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
-    if token_detail is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
-
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[RetrieveStraightBondTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveStraightBondTokenResponse(
+                root=BondTokenSchema.from_blockchain_token(token_detail)
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

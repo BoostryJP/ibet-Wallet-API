@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Optional
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -36,12 +36,49 @@ from app.model.type import EthereumAddress
 
 
 ############################
+# DTO
+############################
+class ShareDividendInformationDict(TypedDict):
+    dividends: float
+    dividend_record_date: str
+    dividend_payment_date: str
+
+
+class ShareTokenDict(TypedDict):
+    token_address: EthereumAddress
+    token_template: str
+    owner_address: EthereumAddress
+    company_name: str
+    rsa_publickey: str
+    name: str
+    symbol: str
+    total_supply: int
+    tradable_exchange: EthereumAddress
+    contact_information: str
+    privacy_policy: str
+    status: bool
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
+    personal_info_address: str
+    require_personal_info_registered: bool
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
+    issue_price: int
+    cancellation_date: str
+    memo: str
+    principal_value: int
+    is_canceled: bool
+    dividend_information: ShareDividendInformationDict
+
+
+############################
 # REQUEST
 ############################
 class ShareTokensSortItem(StrEnum):
     token_address = "token_address"
     owner_address = "owner_address"
-    name = "name"
+    name_ = "name"
     symbol = "symbol"
     company_name = "company_name"
     tradable_exchange = "tradable_exchange"
@@ -77,12 +114,10 @@ class ShareTokensQuery(BasePaginationQuery):
     )
     is_canceled: Optional[bool] = Field(None, description="cancellation status")
 
-    sort_item: Optional[ShareTokensSortItem] = Field(
+    sort_item: ShareTokensSortItem = Field(
         ShareTokensSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class ListAllShareTokensQuery(ShareTokensQuery):

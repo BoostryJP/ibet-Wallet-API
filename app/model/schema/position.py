@@ -19,7 +19,16 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Generic, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Generic,
+    NotRequired,
+    Optional,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 from pydantic import BaseModel, Field, RootModel, StrictStr
 
@@ -29,8 +38,10 @@ from app.model.schema.base import (
     SortOrder,
     TokenType,
 )
+from app.model.schema.token import TokenDetailDict
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
+from app.model.schema.token_lock import Locked
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 from app.model.schema.token_share import RetrieveShareTokenResponse
 from app.model.type import EthereumAddress
@@ -140,13 +151,6 @@ class LockEventCategory(StrEnum):
     Unlock = "Unlock"
 
 
-class Locked(BaseModel):
-    token_address: EthereumAddress
-    lock_address: EthereumAddress
-    account_address: EthereumAddress
-    value: int
-
-
 class LockedWithTokenDetail(Locked, Generic[SecurityTokenResponseT]):
     token: SecurityTokenResponseT = Field(..., description="Token information")
 
@@ -163,7 +167,7 @@ class LockEvent(BaseModel):
         default=None, description="Recipient address"
     )
     value: int = Field(description="Transfer quantity")
-    data: dict = Field(description="Data")
+    data: dict[str, Any] = Field(description="Data")
     block_timestamp: datetime = Field(
         description="block_timestamp when Lock log was emitted (local_timezone)"
     )
@@ -177,6 +181,119 @@ class CouponConsumption(BaseModel):
     account_address: str = Field(description="account address")
     block_timestamp: str = Field(description="consumption datetime")
     value: int = Field(description="consumption quantity")
+
+
+############################
+# DTO
+############################
+class ResultSetDict(TypedDict):
+    count: int | None
+    offset: int | None
+    limit: int | None
+    total: int | None
+
+
+class SecurityTokenPositionDataDictBase(TypedDict):
+    balance: int
+    pending_transfer: int
+    exchange_balance: int
+    exchange_commitment: int
+    locked: int | None
+
+
+class SecurityTokenPositionDataWithAddressDict(SecurityTokenPositionDataDictBase):
+    token_address: EthereumAddress
+
+
+class SecurityTokenPositionDataWithTokenDict(SecurityTokenPositionDataDictBase):
+    token: TokenDetailDict
+
+
+SecurityTokenPositionDataDict: TypeAlias = (
+    SecurityTokenPositionDataWithAddressDict | SecurityTokenPositionDataWithTokenDict
+)
+
+
+class MembershipPositionDataDictBase(TypedDict):
+    balance: int
+    exchange_balance: int
+    exchange_commitment: int
+
+
+class MembershipPositionDataWithAddressDict(MembershipPositionDataDictBase):
+    token_address: EthereumAddress
+
+
+class MembershipPositionDataWithTokenDict(MembershipPositionDataDictBase):
+    token: TokenDetailDict
+
+
+MembershipPositionDataDict: TypeAlias = (
+    MembershipPositionDataWithAddressDict | MembershipPositionDataWithTokenDict
+)
+
+
+class CouponPositionDataDictBase(TypedDict):
+    balance: int
+    exchange_balance: int
+    exchange_commitment: int
+    used: int
+
+
+class CouponPositionDataWithAddressDict(CouponPositionDataDictBase):
+    token_address: EthereumAddress
+
+
+class CouponPositionDataWithTokenDict(CouponPositionDataDictBase):
+    token: TokenDetailDict
+
+
+CouponPositionDataDict: TypeAlias = (
+    CouponPositionDataWithAddressDict | CouponPositionDataWithTokenDict
+)
+
+
+PositionDataDict: TypeAlias = (
+    SecurityTokenPositionDataDict | MembershipPositionDataDict | CouponPositionDataDict
+)
+
+
+class PositionsResponseDict(TypedDict):
+    result_set: ResultSetDict
+    positions: list[PositionDataDict]
+
+
+class LockedPositionDataDict(TypedDict):
+    token_address: EthereumAddress
+    lock_address: EthereumAddress
+    account_address: EthereumAddress
+    value: int
+    token: NotRequired[TokenDetailDict]
+
+
+class LockEventDataDict(TypedDict):
+    category: str
+    is_forced: bool
+    transaction_hash: str
+    msg_sender: EthereumAddress | None
+    token_address: EthereumAddress
+    lock_address: EthereumAddress
+    account_address: EthereumAddress
+    recipient_address: str | None
+    value: int
+    data: dict[str, Any]
+    block_timestamp: datetime
+    token: NotRequired[TokenDetailDict]
+
+
+class LockPositionsResponseDict(TypedDict):
+    result_set: ResultSetDict
+    locked_positions: list[LockedPositionDataDict]
+
+
+class LockEventsResponseDict(TypedDict):
+    result_set: ResultSetDict
+    events: list[LockEventDataDict]
 
 
 ############################
@@ -207,7 +324,7 @@ class ListAllLockedSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     account_address = "account_address"
-    value = "value"
+    value_ = "value"
 
 
 class ListAllLockedPositionQuery(BasePaginationQuery):
@@ -230,7 +347,7 @@ class LockEventSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     recipient_address = "recipient_address"
-    value = "value"
+    value_ = "value"
     block_timestamp = "block_timestamp"
 
 
@@ -261,15 +378,11 @@ class ListAllLockEventQuery(BasePaginationQuery):
 ############################
 class TokenPositionsResponse(BaseModel):
     result_set: ResultSet
-    positions: Union[
-        list[
-            Union[
-                StraightBondPositionWithDetail,
-                SharePositionWithDetail,
-                CouponPositionWithDetail,
-                MembershipPositionWithDetail,
-            ]
-        ]
+    positions: list[
+        StraightBondPositionWithDetail
+        | SharePositionWithDetail
+        | CouponPositionWithDetail
+        | MembershipPositionWithDetail
     ]
 
 
@@ -295,9 +408,7 @@ class CouponPositionsResponse(BaseModel):
 
 class ListAllLockedPositionResponse(BaseModel, Generic[SecurityTokenResponseT]):
     result_set: ResultSet
-    locked_positions: Union[
-        list[LockedWithTokenDetail[SecurityTokenResponseT]] | list[Locked]
-    ]
+    locked_positions: list[LockedWithTokenDetail[SecurityTokenResponseT]] | list[Locked]
 
 
 class ListAllLockEventsResponse(BaseModel, Generic[SecurityTokenResponseT]):

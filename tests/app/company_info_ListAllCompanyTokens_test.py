@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -25,16 +27,13 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    coupon_register_list,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    membership_issue,
-    membership_register_list,
-    register_bond_list,
-    register_share_list,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -46,7 +45,9 @@ class TestListAllCompanyTokens:
     RSA_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtestPublicKeyExample\n-----END PUBLIC KEY-----"""
 
     @staticmethod
-    def _bond_attribute(exchange_address, personal_info_address):
+    def _bond_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -83,7 +84,9 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _share_attribute(exchange_address, personal_info_address):
+    def _share_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
@@ -104,7 +107,7 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _membership_attribute(exchange_address):
+    def _membership_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -121,7 +124,7 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _coupon_attribute(exchange_address):
+    def _coupon_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -138,7 +141,12 @@ class TestListAllCompanyTokens:
         return attribute
 
     @staticmethod
-    def _insert_listing(session, token_address, owner_address, is_public: bool = True):
+    def _insert_listing(
+        session: Session,
+        token_address: str,
+        owner_address: str,
+        is_public: bool = True,
+    ) -> None:
         listing = Listing()
         listing.token_address = token_address
         listing.is_public = is_public
@@ -146,13 +154,12 @@ class TestListAllCompanyTokens:
         session.add(listing)
 
     @staticmethod
-    def _set_env(shared_contract):
-        bond_exchange = shared_contract["IbetStraightBondExchange"]
-        membership_exchange = shared_contract["IbetMembershipExchange"]
-        coupon_exchange = shared_contract["IbetCouponExchange"]
-        share_exchange = shared_contract["IbetShareExchange"]
+    def _set_env(shared_contract: SharedContract):
+        bond_exchange = shared_contract["IbetSecurityTokenEscrow"]
+        share_exchange = shared_contract["IbetSecurityTokenEscrow"]
+        membership_exchange = shared_contract["IbetEscrow"]
+        coupon_exchange = shared_contract["IbetEscrow"]
         personal_info = shared_contract["PersonalInfo"]
-        payment_gateway = shared_contract["PaymentGateway"]
         token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
         return (
@@ -161,7 +168,6 @@ class TestListAllCompanyTokens:
             coupon_exchange,
             share_exchange,
             personal_info,
-            payment_gateway,
             token_list,
         )
 
@@ -171,10 +177,12 @@ class TestListAllCompanyTokens:
 
     # Normal_1
     # 債券トークン
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.BOND_TOKEN_ENABLED = True
-        bond_exchange, _, _, _, personal_info, _, token_list = self._set_env(
+        bond_exchange, _, _, _, personal_info, token_list = self._set_env(
             shared_contract
         )
 
@@ -183,9 +191,13 @@ class TestListAllCompanyTokens:
         attribute = self._bond_attribute(
             bond_exchange["address"], personal_info["address"]
         )
-        token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], attribute)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
+        self._insert_listing(session, token.address, issuer["account_address"])
 
         session.commit()
 
@@ -194,7 +206,7 @@ class TestListAllCompanyTokens:
 
         assumed_body = [
             {
-                "token_address": token["address"],
+                "token_address": token.address,
                 "token_template": "IbetStraightBond",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -247,10 +259,12 @@ class TestListAllCompanyTokens:
 
     # Normal_2
     # 株式トークン
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.SHARE_TOKEN_ENABLED = True
-        _, _, _, share_exchange, personal_info, _, token_list = self._set_env(
+        _, _, _, share_exchange, personal_info, token_list = self._set_env(
             shared_contract
         )
 
@@ -259,9 +273,13 @@ class TestListAllCompanyTokens:
         attribute = self._share_attribute(
             share_exchange["address"], personal_info["address"]
         )
-        token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        token = IbetShareTestHelper.issue(issuer["account_address"], attribute)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
+        self._insert_listing(session, token.address, issuer["account_address"])
 
         session.commit()
 
@@ -270,7 +288,7 @@ class TestListAllCompanyTokens:
 
         assumed_body = [
             {
-                "token_address": token["address"],
+                "token_address": token.address,
                 "token_template": "IbetShare",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -308,17 +326,23 @@ class TestListAllCompanyTokens:
 
     # Normal_3
     # 会員権トークン
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        _, membership_exchange, _, _, _, _, token_list = self._set_env(shared_contract)
+        _, membership_exchange, _, _, _, token_list = self._set_env(shared_contract)
 
         # 新規トークン発行
         issuer = eth_account["issuer"]
         attribute = self._membership_attribute(membership_exchange["address"])
-        token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        token = IbetMembershipTestHelper.issue(issuer["account_address"], attribute)
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
+        self._insert_listing(session, token.address, issuer["account_address"])
 
         session.commit()
 
@@ -327,7 +351,7 @@ class TestListAllCompanyTokens:
 
         assumed_body = [
             {
-                "token_address": token["address"],
+                "token_address": token.address,
                 "token_template": "IbetMembership",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -361,17 +385,21 @@ class TestListAllCompanyTokens:
 
     # Normal_4
     # クーポントークン
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # 環境変数設定変更
         config.COUPON_TOKEN_ENABLED = True
-        _, _, coupon_exchange, _, _, _, token_list = self._set_env(shared_contract)
+        _, _, coupon_exchange, _, _, token_list = self._set_env(shared_contract)
 
         # 新規トークン発行
         issuer = eth_account["issuer"]
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, token, token_list)
-        self._insert_listing(session, token["address"], issuer["account_address"])
+        token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
+        self._insert_listing(session, token.address, issuer["account_address"])
 
         session.commit()
 
@@ -380,7 +408,7 @@ class TestListAllCompanyTokens:
 
         assumed_body = [
             {
-                "token_address": token["address"],
+                "token_address": token.address,
                 "token_template": "IbetCoupon",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -414,31 +442,41 @@ class TestListAllCompanyTokens:
 
     # Normal_5
     # 複数種類のトークン
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
-        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(
+        _, membership_exchange, coupon_exchange, _, _, token_list = self._set_env(
             shared_contract
         )
 
         # 新規トークン発行（会員権）
         attribute = self._membership_attribute(membership_exchange["address"])
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"],
+            membership_token.address,
+            token_list["address"],
+        )
         self._insert_listing(
-            session, membership_token["address"], issuer["account_address"]
+            session, membership_token.address, issuer["account_address"]
         )
 
         # 新規トークン発行（クーポン）
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
-        self._insert_listing(
-            session, coupon_token["address"], issuer["account_address"]
+        coupon_token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon_token.address,
+            token_list["address"],
         )
+        self._insert_listing(session, coupon_token.address, issuer["account_address"])
 
         session.commit()
 
@@ -447,7 +485,7 @@ class TestListAllCompanyTokens:
 
         assumed_body = [
             {
-                "token_address": coupon_token["address"],
+                "token_address": coupon_token.address,
                 "token_template": "IbetCoupon",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -474,7 +512,7 @@ class TestListAllCompanyTokens:
                 "tradable_exchange": coupon_exchange["address"],
             },
             {
-                "token_address": membership_token["address"],
+                "token_address": membership_token.address,
                 "token_template": "IbetMembership",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -522,29 +560,37 @@ class TestListAllCompanyTokens:
 
     # Normal_7_1
     # include_private_listing=true
-    def test_normal_7_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
-        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(
+        _, membership_exchange, coupon_exchange, _, _, token_list = self._set_env(
             shared_contract
         )
 
         # データ準備
         attribute = self._membership_attribute(membership_exchange["address"])
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership_token.address, token_list["address"]
+        )
         self._insert_listing(
-            session, membership_token["address"], issuer["account_address"], True
+            session, membership_token.address, issuer["account_address"], True
         )
 
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupon_token.address, token_list["address"]
+        )
         self._insert_listing(
-            session, coupon_token["address"], issuer["account_address"], False
+            session, coupon_token.address, issuer["account_address"], False
         )
 
         session.commit()
@@ -557,7 +603,7 @@ class TestListAllCompanyTokens:
         # 検証
         assumed_body = [
             {
-                "token_address": coupon_token["address"],
+                "token_address": coupon_token.address,
                 "token_template": "IbetCoupon",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -584,7 +630,7 @@ class TestListAllCompanyTokens:
                 "tradable_exchange": coupon_exchange["address"],
             },
             {
-                "token_address": membership_token["address"],
+                "token_address": membership_token.address,
                 "token_template": "IbetMembership",
                 "owner_address": issuer["account_address"],
                 "company_name": "",
@@ -617,29 +663,37 @@ class TestListAllCompanyTokens:
 
     # Normal_7_2
     # include_private_listing=false
-    def test_normal_7_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_7_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         issuer = eth_account["issuer"]
 
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.COUPON_TOKEN_ENABLED = True
-        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(
+        _, membership_exchange, coupon_exchange, _, _, token_list = self._set_env(
             shared_contract
         )
 
         # データ準備
         attribute = self._membership_attribute(membership_exchange["address"])
-        membership_token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, membership_token, token_list)
+        membership_token = IbetMembershipTestHelper.issue(
+            issuer["account_address"], attribute
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer["account_address"], membership_token.address, token_list["address"]
+        )
         self._insert_listing(
-            session, membership_token["address"], issuer["account_address"], True
+            session, membership_token.address, issuer["account_address"], True
         )
 
         attribute = self._coupon_attribute(coupon_exchange["address"])
-        coupon_token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon_token, token_list)
+        coupon_token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupon_token.address, token_list["address"]
+        )
         self._insert_listing(
-            session, coupon_token["address"], issuer["account_address"], False
+            session, coupon_token.address, issuer["account_address"], False
         )
 
         session.commit()
@@ -652,7 +706,7 @@ class TestListAllCompanyTokens:
         # 検証
         assumed_body = [
             {
-                "token_address": membership_token["address"],
+                "token_address": membership_token.address,
                 "token_template": "IbetMembership",
                 "owner_address": issuer["account_address"],
                 "company_name": "",

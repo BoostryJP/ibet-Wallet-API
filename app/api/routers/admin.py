@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from fastapi import APIRouter, Path
 from sqlalchemy import delete, desc, select
@@ -50,7 +50,17 @@ from app.model.schema import (
     RetrieveAdminTokenResponse,
     UpdateAdminTokenRequest,
 )
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse, TokenType
+from app.model.schema.base import (
+    BondToken as BondTokenSchema,
+    CouponToken as CouponTokenSchema,
+    EmptyData,
+    GenericSuccessResponse,
+    MembershipToken as MembershipTokenSchema,
+    ShareToken as ShareTokenSchema,
+    Success200MetaModel,
+    SuccessResponse,
+    TokenType,
+)
 from app.utils.asyncio_utils import SemaphoreTaskGroup
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -77,9 +87,35 @@ async def list_all_admin_tokens(async_session: DBAsyncSession):
         await async_session.scalars(select(Listing).order_by(desc(Listing.id)))
     ).all()
 
-    res_body = [token.json() for token in listed_tokens]
+    listed_token_payload = [token.json() for token in listed_tokens]
 
-    return json_response({**SuccessResponse.default(), "data": res_body})
+    if TYPE_CHECKING:
+        admin_tokens_for_type_check: list[RetrieveAdminTokenResponse] = []
+        for token in listed_tokens:
+            # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
+            assert token.token_address is not None
+            # TODO: Migrate listing.is_public to NOT NULL and update ORM typing.
+            assert token.is_public is not None
+            # TODO: Migrate listing.owner_address to NOT NULL and update ORM typing.
+            assert token.owner_address is not None
+            # TODO: Migrate listing.created to NOT NULL and update ORM typing.
+            assert token.created is not None
+            admin_tokens_for_type_check.append(
+                RetrieveAdminTokenResponse(
+                    id=token.id,
+                    token_address=token.token_address,
+                    is_public=token.is_public,
+                    max_holding_quantity=token.max_holding_quantity,
+                    max_sell_amount=token.max_sell_amount,
+                    owner_address=token.owner_address,
+                    created=token.format_timestamp(token.created),
+                )
+            )
+        _ = GenericSuccessResponse[ListAllAdminTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllAdminTokensResponse(root=admin_tokens_for_type_check),
+        )
+    return json_response({**SuccessResponse.default(), "data": listed_token_payload})
 
 
 @router.post(
@@ -131,11 +167,18 @@ async def register_admin_token(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(contract_address,),
-        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
+        default_returns=(
+            config.ZERO_ADDRESS,
+            "",
+            config.ZERO_ADDRESS,
+        ),
     )
 
     # Check whether the token is valid.
-    token_type = token[1]
+    try:
+        token_type = TokenType(token[1])
+    except ValueError:
+        token_type = None
     if token_type is None or token_type not in available_token_template():
         raise InvalidParameterError(
             description="contract_address is invalid token address"
@@ -184,13 +227,32 @@ async def register_admin_token(
 
     await async_session.commit()
 
-    _data = {"token": token_obj.__dict__}
-    return json_response({**SuccessResponse.default(), "data": _data})
+    registered_token_payload = {"token": token_obj.__dict__}
+    if TYPE_CHECKING:
+        if token_type == TokenType.IbetShare:
+            assert isinstance(token_obj, ShareToken)
+            response_token = ShareTokenSchema.from_blockchain_token(token_obj)
+        elif token_type == TokenType.IbetStraightBond:
+            assert isinstance(token_obj, BondToken)
+            response_token = BondTokenSchema.from_blockchain_token(token_obj)
+        elif token_type == TokenType.IbetMembership:
+            assert isinstance(token_obj, MembershipToken)
+            response_token = MembershipTokenSchema.from_blockchain_token(token_obj)
+        else:
+            assert isinstance(token_obj, CouponToken)
+            response_token = CouponTokenSchema.from_blockchain_token(token_obj)
+        _ = GenericSuccessResponse[RegisterTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RegisterTokenResponse(token=response_token),
+        )
+    return json_response(
+        {**SuccessResponse.default(), "data": registered_token_payload}
+    )
 
 
 async def __fetch_token_details(
     async_session: DBAsyncSession, token_type: TokenType, contract_address: str
-):
+) -> BondToken | ShareToken | MembershipToken | CouponToken:
     """Fetch token details"""
     if token_type == TokenType.IbetShare:
         token_obj = await ShareToken.get(async_session, contract_address)
@@ -217,13 +279,23 @@ async def get_admin_token_type():
     """
     Returns available token type.
     """
-    res_body = {
+    token_type_availability = {
         "IbetStraightBond": config.BOND_TOKEN_ENABLED,
         "IbetShare": config.SHARE_TOKEN_ENABLED,
         "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,
         "IbetCoupon": config.COUPON_TOKEN_ENABLED,
     }
-    return json_response({**SuccessResponse.default(), "data": res_body})
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[GetAdminTokenTypeResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=GetAdminTokenTypeResponse(
+                IbetStraightBond=config.BOND_TOKEN_ENABLED,
+                IbetShare=config.SHARE_TOKEN_ENABLED,
+                IbetMembership=config.MEMBERSHIP_TOKEN_ENABLED,
+                IbetCoupon=config.COUPON_TOKEN_ENABLED,
+            ),
+        )
+    return json_response({**SuccessResponse.default(), "data": token_type_availability})
 
 
 # ------------------------------
@@ -251,7 +323,31 @@ async def retrieve_admin_token(
     ).first()
 
     if token is not None:
-        return json_response({**SuccessResponse.default(), "data": token.json()})
+        listed_token_payload = token.json()
+        if TYPE_CHECKING:
+            # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
+            assert token.token_address is not None
+            # TODO: Migrate listing.is_public to NOT NULL and update ORM typing.
+            assert token.is_public is not None
+            # TODO: Migrate listing.owner_address to NOT NULL and update ORM typing.
+            assert token.owner_address is not None
+            # TODO: Migrate listing.created to NOT NULL and update ORM typing.
+            assert token.created is not None
+            _ = GenericSuccessResponse[RetrieveAdminTokenResponse](
+                meta=Success200MetaModel(code=200, message="OK"),
+                data=RetrieveAdminTokenResponse(
+                    id=token.id,
+                    token_address=token.token_address,
+                    is_public=token.is_public,
+                    max_holding_quantity=token.max_holding_quantity,
+                    max_sell_amount=token.max_sell_amount,
+                    owner_address=token.owner_address,
+                    created=token.format_timestamp(token.created),
+                ),
+            )
+        return json_response(
+            {**SuccessResponse.default(), "data": listed_token_payload}
+        )
     else:
         raise DataNotExistsError()
 
@@ -305,6 +401,10 @@ async def update_token(
     token.owner_address = owner_address
     await async_session.merge(token)
     await async_session.commit()
+    if TYPE_CHECKING:
+        _ = SuccessResponse(
+            meta=Success200MetaModel(code=200, message="OK"), data=EmptyData()
+        )
     return json_response(SuccessResponse.default())
 
 
@@ -349,16 +449,20 @@ async def delete_token(
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()
     await async_session.commit()
+    if TYPE_CHECKING:
+        _ = SuccessResponse(
+            meta=Success200MetaModel(code=200, message="OK"), data=EmptyData()
+        )
     return json_response(SuccessResponse.default())
 
 
-def available_token_template():
+def available_token_template() -> list[TokenType]:
     """
     利用可能なtoken_templateをlistで返却
 
     :return: 利用可能なtoken_templateリスト
     """
-    available_token_template_list = []
+    available_token_template_list: list[TokenType] = []
     if config.BOND_TOKEN_ENABLED:
         available_token_template_list.append(TokenType.IbetStraightBond)
     if config.SHARE_TOKEN_ENABLED:
@@ -371,7 +475,7 @@ def available_token_template():
 
 
 async def get_account_balance_all(
-    token_template: str, token_address: str, account_address: str
+    token_template: TokenType, token_address: str, account_address: str
 ) -> tuple[int, int, int, int]:
     """Get balance"""
     token_contract = AsyncContract.get_contract(

@@ -34,7 +34,7 @@ class TestNotificationsIdDELETE:
 
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
-    def _insert_test_data(self, session):
+    def _insert_test_data(self, session: Session) -> None:
         n = Notification()
         n.notification_category = "event_log"
         n.notification_id = "0x00000021034300000000000000"
@@ -151,7 +151,7 @@ class TestNotificationsIdDELETE:
         _notification_list = session.scalars(select(Notification)).all()
         assert len(_notification_list) == 4
 
-        _notification: Notification = session.scalars(
+        _notification = session.scalars(
             select(Notification)
             .where(Notification.notification_id == notification_id)
             .limit(1)

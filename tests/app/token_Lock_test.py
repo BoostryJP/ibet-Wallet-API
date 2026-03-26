@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import itertools
 from datetime import datetime, timedelta
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -27,6 +28,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXLockedPosition
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -122,7 +124,7 @@ class TestTokenLock:
             params={},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 27, "offset": None, "limit": None, "total": 27},
             "locked_list": [
                 {
@@ -305,7 +307,7 @@ class TestTokenLock:
             params={"token_address_list": [self.token_1, self.token_2]},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 18, "offset": None, "limit": None, "total": 18},
             "locked_list": [
                 {
@@ -425,7 +427,9 @@ class TestTokenLock:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -438,7 +442,7 @@ class TestTokenLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": 1, "limit": 2, "total": 9},
             "locked_list": [
                 {
@@ -462,7 +466,9 @@ class TestTokenLock:
 
     # <Normal_3>
     # Pagination(over offset)
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -471,7 +477,7 @@ class TestTokenLock:
             params={"token_address_list": [self.token_1], "offset": 9},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": 9, "limit": None, "total": 9},
             "locked_list": [],
         }
@@ -482,7 +488,9 @@ class TestTokenLock:
 
     # <Normal_4>
     # Filter(lock_address)
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -491,7 +499,7 @@ class TestTokenLock:
             params={"lock_address": self.lock_1},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 27},
             "locked_list": [
                 {
@@ -557,7 +565,9 @@ class TestTokenLock:
 
     # <Normal_5>
     # Filter(account_address)
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -566,7 +576,7 @@ class TestTokenLock:
             params={"account_address": self.account_1},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 27},
             "locked_list": [
                 {
@@ -632,7 +642,9 @@ class TestTokenLock:
 
     # <Normal_6_1>
     # Sort(token_address)
-    def test_normal_6_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -641,7 +653,7 @@ class TestTokenLock:
             params={"sort_order": 1, "sort_item": "token_address"},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 27, "offset": None, "limit": None, "total": 27},
             "locked_list": [
                 {
@@ -815,7 +827,9 @@ class TestTokenLock:
 
     # <Normal_6_2>
     # Sort(lock_address)
-    def test_normal_6_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -828,7 +842,7 @@ class TestTokenLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_list": [
                 {
@@ -894,7 +908,9 @@ class TestTokenLock:
 
     # <Normal_6_3>
     # Sort(account_address)
-    def test_normal_6_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -907,7 +923,7 @@ class TestTokenLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 27},
             "locked_list": [
                 {
@@ -973,7 +989,9 @@ class TestTokenLock:
 
     # <Normal_6_4>
     # Sort(value)
-    def test_normal_6_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -986,7 +1004,7 @@ class TestTokenLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 27},
             "locked_list": [
                 {

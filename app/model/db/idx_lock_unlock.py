@@ -17,19 +17,14 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from enum import StrEnum
-from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 from sqlalchemy import JSON, BigInteger, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.config import TZ
 from app.model.db.base import Base
-
-UTC = timezone(timedelta(hours=0), "UTC")
-local_tz = ZoneInfo(TZ)
 
 
 class LockMessage(StrEnum):
@@ -78,39 +73,13 @@ class IDXLock(Base):
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     # Data(LockDataMessage)
-    data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    data: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     # Lock Datetime
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
     # Whether the lock is forced or not
     is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "msg_sender": str,
-        "block_number": int,
-        "token_address": str,
-        "lock_address": str,
-        "account_address": str,
-        "value": int,
-        "data": dict,
-        "block_timestamp": datetime,
-        "is_forced": bool,
-    }
-    FIELDS.update(Base.FIELDS)
-
-    @staticmethod
-    def replace_to_local_tz(_datetime: datetime) -> datetime | None:
-        """Convert timestamp from UTC to local timezone
-        :param _datetime:
-        :return: datetime | None
-        """
-        if _datetime is None:
-            return None
-        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return datetime_local
 
     def json(self):
         return {
@@ -158,40 +127,13 @@ class IDXUnlock(Base):
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     # Data(UnlockDataMessage)
-    data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    data: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     # Lock Datetime
     block_timestamp: Mapped[datetime] = mapped_column(
         DateTime, index=True, nullable=False
     )
     # Whether the unlock is forced or not
     is_forced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "msg_sender": str,
-        "block_number": int,
-        "token_address": str,
-        "lock_address": str,
-        "account_address": str,
-        "recipient_address": str,
-        "value": int,
-        "data": dict,
-        "block_timestamp": datetime,
-        "is_forced": bool,
-    }
-    FIELDS.update(Base.FIELDS)
-
-    @staticmethod
-    def replace_to_local_tz(_datetime: datetime) -> datetime | None:
-        """Convert timestamp from UTC to local timezone
-        :param _datetime:
-        :return: datetime | None
-        """
-        if _datetime is None:
-            return None
-        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return datetime_local
 
     def json(self):
         return {

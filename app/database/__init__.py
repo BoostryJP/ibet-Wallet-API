@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Literal
+from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import AsyncAdaptedQueuePool, NullPool, create_engine

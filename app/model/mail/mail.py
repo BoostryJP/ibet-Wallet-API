@@ -153,10 +153,10 @@ class Mail:
 
         elif SMTP_METHOD == 1:  # Amazon SES
             # Initialize a new smtp client
-            smtp_client = boto3.client("ses", region_name=self.aws_region_name)
+            ses_client = boto3.client("ses", region_name=self.aws_region_name)
 
             # Send mail
-            smtp_client.send_raw_email(
+            ses_client.send_raw_email(
                 Source=self.sender_email,
                 Destinations=[self.to_email],
                 RawMessage={

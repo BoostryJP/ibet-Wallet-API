@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -30,7 +31,7 @@ class TestAdminTokenGET:
     apiurl_base = "/Admin/Tokens/"
 
     @staticmethod
-    def insert_listing_data(session: Session, _token):
+    def insert_listing_data(session: Session, _token: dict[str, Any]):
         token = Listing()
         token.token_address = _token["token_address"]
         token.is_public = _token["is_public"]

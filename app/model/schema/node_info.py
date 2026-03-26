@@ -39,14 +39,8 @@ from app.model.type import EthereumAddress
 
 
 class GetNodeInfoResponse(BaseModel):
-    payment_gateway_address: Optional[EthereumAddress]
-    payment_gateway_abi: Optional[object]
     personal_info_address: Optional[EthereumAddress]
     personal_info_abi: Optional[object]
-    ibet_membership_exchange_address: Optional[EthereumAddress]
-    ibet_membership_exchange_abi: Optional[object]
-    ibet_coupon_exchange_address: Optional[EthereumAddress]
-    ibet_coupon_exchange_abi: Optional[object]
     ibet_escrow_address: Optional[EthereumAddress]
     ibet_escrow_abi: Optional[object]
     ibet_security_token_escrow_address: Optional[EthereumAddress]

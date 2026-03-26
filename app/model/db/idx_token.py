@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import datetime
-from typing import Type, Union
+from typing import Any, Mapping, Type, Union
 
 from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -67,26 +67,7 @@ class TokenBase(Base):
     # Cached time of short-term cache
     short_term_cache_created: Mapped[datetime.datetime | None] = mapped_column(DateTime)
 
-    FIELDS = {
-        "token_address": str,
-        "token_template": str,
-        "owner_address": str,
-        "company_name": str,
-        "rsa_publickey": str,
-        "name": str,
-        "symbol": str,
-        "total_supply": int,
-        "tradable_exchange": str,
-        "contact_information": str,
-        "privacy_policy": str,
-        "status": bool,
-        "max_holding_quantity": int,
-        "max_sell_amount": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
-
-    def json(self):
+    def json(self) -> Mapping[str, Any]:
         return {
             "token_address": self.token_address,
             "token_template": self.token_template,
@@ -131,7 +112,7 @@ class IDXBondToken(TokenBase):
     # Interest Rate
     interest_rate: Mapped[float | None] = mapped_column(Float)
     # Interest Payment Date(JSON)
-    interest_payment_date: Mapped[dict | None] = mapped_column(JSON)
+    interest_payment_date: Mapped[list[str] | None] = mapped_column(JSON)
     # Interest Payment Currency
     interest_payment_currency: Mapped[str] = mapped_column(String(3), nullable=False)
     # Redemption Date
@@ -156,30 +137,6 @@ class IDXBondToken(TokenBase):
     # Is Redeemed
     # NOTE: Short-term cache required
     is_redeemed: Mapped[bool | None] = mapped_column(Boolean)
-
-    FIELDS = {
-        "personal_info_address": str,
-        "require_personal_info_registered": bool,
-        "transferable": bool,
-        "is_offering": bool,
-        "transfer_approval_required": bool,
-        "face_value": int,
-        "face_value_currency": str,
-        "interest_rate": float,
-        "interest_payment_date": list,
-        "interest_payment_currency": str,
-        "redemption_date": str,
-        "redemption_value": int,
-        "redemption_value_currency": str,
-        "base_fx_rate": float,
-        "return_date": str,
-        "return_amount": str,
-        "purpose": str,
-        "memo": str,
-        "is_redeemed": bool,
-    }
-
-    FIELDS.update(TokenBase.FIELDS)
 
     def json(self):
         return {
@@ -239,26 +196,10 @@ class IDXShareToken(TokenBase):
     principal_value: Mapped[int | None] = mapped_column(BigInteger)
     # Is Canceled
     # NOTE: Short-term cache required
-    is_canceled: Mapped[int | None] = mapped_column(Boolean)
+    is_canceled: Mapped[bool | None] = mapped_column(Boolean)
     # Dividend Information(JSON)
     # NOTE: Short-term cache required
-    dividend_information: Mapped[dict | None] = mapped_column(JSON)
-
-    FIELDS = {
-        "personal_info_address": str,
-        "require_personal_info_registered": bool,
-        "transferable": bool,
-        "is_offering": bool,
-        "transfer_approval_required": bool,
-        "issue_price": int,
-        "cancellation_date": str,
-        "memo": str,
-        "principal_value": int,
-        "is_canceled": bool,
-        "dividend_information": slice,
-    }
-
-    FIELDS.update(TokenBase.FIELDS)
+    dividend_information: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     def json(self):
         return {
@@ -297,19 +238,7 @@ class IDXMembershipToken(TokenBase):
     # NOTE: Short-term cache required
     initial_offering_status: Mapped[bool | None] = mapped_column(Boolean)
     # Image URL(JSON)
-    image_url: Mapped[dict | None] = mapped_column(JSON)
-
-    FIELDS = {
-        "details": str,
-        "return_details": str,
-        "expiration_date": str,
-        "memo": str,
-        "transferable": bool,
-        "initial_offering_status": bool,
-        "image_url": list,
-    }
-
-    FIELDS.update(TokenBase.FIELDS)
+    image_url: Mapped[list[dict[str, int | str]] | None] = mapped_column(JSON)
 
     def json(self):
         return {
@@ -344,19 +273,7 @@ class IDXCouponToken(TokenBase):
     # NOTE: Short-term cache required
     initial_offering_status: Mapped[bool | None] = mapped_column(Boolean)
     # Image URL(JSON)
-    image_url: Mapped[dict | None] = mapped_column(JSON)
-
-    FIELDS = {
-        "details": str,
-        "return_details": str,
-        "expiration_date": str,
-        "memo": str,
-        "transferable": bool,
-        "initial_offering_status": bool,
-        "image_url": list,
-    }
-
-    FIELDS.update(TokenBase.FIELDS)
+    image_url: Mapped[list[dict[str, int | str]] | None] = mapped_column(JSON)
 
     def json(self):
         return {

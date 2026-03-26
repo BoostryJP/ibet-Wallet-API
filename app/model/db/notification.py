@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import sys
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from sqlalchemy import (
     JSON,
@@ -37,6 +37,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import engine
 from app.model.db.base import Base, naive_utcnow
+
+if TYPE_CHECKING:
+    from app.model.schema.notification import NotificationJSONDict
 
 
 # 通知データをキャッシュするためのテーブル
@@ -118,9 +121,9 @@ class Notification(Base):
     block_timestamp: Mapped[datetime | None] = mapped_column(DateTime)
 
     # 通知イベントの内容
-    args: Mapped[dict | None] = mapped_column(JSON)
+    args: Mapped[dict[str, object] | None] = mapped_column(JSON)
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
-    metainfo: Mapped[dict | None] = mapped_column(JSON)
+    metainfo: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
@@ -137,7 +140,7 @@ class Notification(Base):
             self.notification_id, self.notification_type
         )
 
-    def json(self):
+    def json(self) -> "NotificationJSONDict":
         return {
             "notification_category": self.notification_category,
             "notification_type": self.notification_type,
@@ -175,21 +178,6 @@ class Notification(Base):
             "account_address": self.address,
         }
 
-    FIELDS = {
-        "notification_id": int,
-        "notification_type": str,
-        "priority": int,
-        "address": str,
-        "is_read": bool,
-        "is_flagged": bool,
-        "is_deleted": bool,
-        "deleted_at": datetime,
-        "args": dict,
-        "metainfo": dict,
-    }
-
-    FIELDS.update(Base.FIELDS)
-
 
 # 通知を新着順でソート時に使用
 Index("notification_index_1", Notification.address, Notification.notification_id)
@@ -204,17 +192,17 @@ Index(
 
 class NotificationType(StrEnum):
     # Event Log Notification
-    NEW_ORDER = "NewOrder"
-    NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
-    CANCEL_ORDER = "CancelOrder"
-    CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"
-    FORCE_CANCEL_ORDER = "ForceCancelOrder"
-    BUY_AGREEMENT = "BuyAgreement"
-    BUY_SETTLEMENT_OK = "BuySettlementOK"
-    BUY_SETTLEMENT_NG = "BuySettlementNG"
-    SELL_AGREEMENT = "SellAgreement"
-    SELL_SETTLEMENT_OK = "SellSettlementOK"
-    SELL_SETTLEMENT_NG = "SellSettlementNG"
+    NEW_ORDER = "NewOrder"  # Deprecated
+    NEW_ORDER_COUNTERPART = "NewOrderCounterpart"  # Deprecated
+    CANCEL_ORDER = "CancelOrder"  # Deprecated
+    CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"  # Deprecated
+    FORCE_CANCEL_ORDER = "ForceCancelOrder"  # Deprecated
+    BUY_AGREEMENT = "BuyAgreement"  # Deprecated
+    BUY_SETTLEMENT_OK = "BuySettlementOK"  # Deprecated
+    BUY_SETTLEMENT_NG = "BuySettlementNG"  # Deprecated
+    SELL_AGREEMENT = "SellAgreement"  # Deprecated
+    SELL_SETTLEMENT_OK = "SellSettlementOK"  # Deprecated
+    SELL_SETTLEMENT_NG = "SellSettlementNG"  # Deprecated
 
     TRANSFER = "Transfer"
     APPLY_FOR_TRANSFER = "ApplyForTransfer"
@@ -240,14 +228,6 @@ class NotificationBlockNumber(Base):
     contract_address = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = mapped_column(BigInteger)
-
-    FIELDS = {
-        "notification_type": str,
-        "contract_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
 
 
 class NotificationAttributeValue(Base):

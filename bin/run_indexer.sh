@@ -36,7 +36,6 @@ if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
     echo -n "[WARNING] Could not access to COMPANY_LIST_URL, " >&2
     echo "please confirm COMPANY_LIST_URL, which response code is ${resp}" >&2
   fi
-  python batch/indexer_Company_List.py &
 else
   # check company_list.json is default one
   content_length="$(wc -c data/company_list.json | awk '{print $1}')"
@@ -44,7 +43,6 @@ else
     echo '[WARNING] company_list.json is empty. Please mount company_list.json if you use company list local mode.' >&2
   fi
 fi
-
 
 # check TOKEN_LIST_URL
 if [ -z "${TOKEN_LIST_URL:-}" ]; then
@@ -57,8 +55,6 @@ if [ "${resp}" -ne 200 ]; then
   echo -n "[WARNING] Could not access to TOKEN_LIST_URL, " >&2
   echo "please confirm TOKEN_LIST_URL, which response code is ${resp}" >&2
 fi
-python batch/indexer_PublicInfo_TokenList.py &
-
 
 # check PUBLIC_ACCOUNT_LIST_URL
 if [ -z "${PUBLIC_ACCOUNT_LIST_URL:-}" ]; then
@@ -71,42 +67,12 @@ if [ "${resp}" -ne 200 ]; then
   echo -n "[WARNING] Could not access to PUBLIC_ACCOUNT_LIST_URL, " >&2
   echo "please confirm PUBLIC_ACCOUNT_LIST_URL, which response code is ${resp}" >&2
 fi
-python batch/indexer_PublicInfo_PublicAccountList.py &
 
-
-python batch/indexer_Transfer.py &
+python batch/indexer_PublicInfo_Combined.py &
+python batch/indexer_Token_Detail_Combined.py &
+python batch/indexer_Transfer_Combined.py &
+python batch/indexer_Position_Combined.py &
 python batch/indexer_Token_Holders.py &
-python batch/indexer_Token_List_Event.py &
 
-if [[ $SHARE_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Position_Share.py &
-  python batch/indexer_TransferApproval.py &
-fi
-
-if [[ $BOND_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Position_Bond.py &
-fi
-
-if [[ $MEMBERSHIP_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Position_Membership.py &
-fi
-
-if [[ $COUPON_TOKEN_ENABLED = 1 ]]; then
-  python batch/indexer_Consume_Coupon.py &
-  python batch/indexer_Position_Coupon.py &
-fi
-
-if [ -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" ] || [ -n "$IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS" ]; then
-  python batch/indexer_DEX.py &
-fi
-
-if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
-  python batch/indexer_Token_Detail.py &
-  python batch/indexer_Token_Detail_ShortTerm.py &
-fi
-
-if [[ $BC_EXPLORER_ENABLED = 1 ]]; then
-  python batch/indexer_Block_Tx_Data.py &
-fi
 
 tail -f /dev/null

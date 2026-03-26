@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Optional, Sequence
+from typing import TYPE_CHECKING, Annotated, Optional, Sequence
 
 from fastapi import APIRouter, Path, Query, Request
 from sqlalchemy import desc, func, select
@@ -31,17 +31,22 @@ from app.errors import (
     NotSupportedError,
     ServiceUnavailable,
 )
-from app.model.blockchain import CouponToken
+from app.model.blockchain import CouponToken as CouponTokenBlockchain
 from app.model.db import IDXCouponToken, Listing
 from app.model.schema import (
     CouponTokensQuery,
+    CouponTokensSortItem,
     ListAllCouponTokenAddressesResponse,
     ListAllCouponTokensQuery,
     ListAllCouponTokensResponse,
     RetrieveCouponTokenResponse,
 )
 from app.model.schema.base import (
+    CouponToken as CouponTokenSchema,
     GenericSuccessResponse,
+    ResultSet,
+    SortOrder,
+    Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
@@ -122,16 +127,16 @@ async def list_all_coupon_tokens(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    if sort_item == "created":
-        sort_attr = getattr(Listing, sort_item, None)
+    if sort_item == CouponTokensSortItem.created:
+        sort_attr = getattr(Listing, sort_item.value)
     else:
-        sort_attr = getattr(IDXCouponToken, sort_item, None)
+        sort_attr = getattr(IDXCouponToken, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != CouponTokensSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Listing.created)
 
@@ -142,8 +147,8 @@ async def list_all_coupon_tokens(
         stmt = stmt.offset(offset)
 
     _token_list: Sequence[IDXCouponToken] = (await async_session.scalars(stmt)).all()
-
-    tokens = [CouponToken.from_model(_token).__dict__ for _token in _token_list]
+    coupon_tokens = [CouponTokenBlockchain.from_model(_token) for _token in _token_list]
+    tokens = [token.__dict__ for token in coupon_tokens]
     data = {
         "result_set": {
             "count": count,
@@ -154,6 +159,22 @@ async def list_all_coupon_tokens(
         "tokens": tokens,
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllCouponTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCouponTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                tokens=[
+                    CouponTokenSchema.from_blockchain_token(token)
+                    for token in coupon_tokens
+                ],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -223,16 +244,16 @@ async def list_all_coupon_token_addresses(
         stmt.with_only_columns(func.count()).order_by(None)
     )
 
-    if sort_item == "created":
-        sort_attr = getattr(Listing, sort_item, None)
+    if sort_item == CouponTokensSortItem.created:
+        sort_attr = getattr(Listing, sort_item.value)
     else:
-        sort_attr = getattr(IDXCouponToken, sort_item, None)
+        sort_attr = getattr(IDXCouponToken, sort_item.value)
 
-    if sort_order == 0:  # ASC
+    if sort_order == SortOrder.ASC:
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
         stmt = stmt.order_by(desc(sort_attr))
-    if sort_item != "created":
+    if sort_item != CouponTokensSortItem.created:
         # NOTE: Set secondary sort for consistent results
         stmt = stmt.order_by(Listing.created)
 
@@ -254,6 +275,19 @@ async def list_all_coupon_token_addresses(
         "address_list": [_token.token_address for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[ListAllCouponTokenAddressesResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllCouponTokenAddressesResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=offset,
+                    limit=limit,
+                    total=total,
+                ),
+                address_list=[token.token_address for token in _token_list],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -290,29 +324,33 @@ async def retrieve_coupon_token(
     list_contract = AsyncContract.get_contract(
         contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
     )
-    token = await AsyncContract.call_function(
+    token: tuple[str, str, str] = await AsyncContract.call_function(
         contract=list_contract,
         function_name="getTokenByAddress",
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-    token_template = token[1]
+    token_template = str(token[1])
 
     if token_template != TokenType.IbetCoupon:
         raise DataNotExistsError("token_address: %s" % token_address)
 
     try:
-        token_detail = await CouponToken.get(
-            async_session=async_session, token_address=token_address
+        token_detail: CouponTokenBlockchain = await CouponTokenBlockchain.get(
+            async_session, token_address
         )
     except ServiceUnavailable as e:
-        LOG.notice(e)
+        LOG.notice(str(e))
         raise DataNotExistsError("token_address: %s" % token_address) from None
     except Exception as e:
         LOG.error(e)
         raise DataNotExistsError("token_address: %s" % token_address) from None
 
-    if token_detail is None:
-        raise DataNotExistsError("token_address: %s" % token_address)
-
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[RetrieveCouponTokenResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=RetrieveCouponTokenResponse(
+                root=CouponTokenSchema.from_blockchain_token(token_detail)
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": token_detail.__dict__})

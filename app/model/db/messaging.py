@@ -48,17 +48,6 @@ class Mail(Base):
         LargeBinary().with_variant(LONGBLOB, "mysql"), nullable=True
     )
 
-    FIELDS = {
-        "id": int,
-        "to_email": str,
-        "subject": str,
-        "text_content": str,
-        "html_content": str,
-        "file_name": str,
-        "file_content": bytes,
-    }
-    FIELDS.update(Base.FIELDS)
-
 
 class ChatWebhook(Base):
     """
@@ -71,9 +60,3 @@ class ChatWebhook(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     # html mail content
     message: Mapped[str] = mapped_column(Text, nullable=False)
-
-    FIELDS = {
-        "id": int,
-        "message": str,
-    }
-    FIELDS.update(Base.FIELDS)

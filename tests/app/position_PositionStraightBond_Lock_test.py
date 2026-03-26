@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import itertools
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -27,6 +28,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXBondToken, IDXLockedPosition
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -224,7 +226,9 @@ class TestPositionStraightBondLock:
             {},
         ],
     )
-    def test_normal_1_1(self, get_params, client: TestClient, session: Session):
+    def test_normal_1_1(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -235,7 +239,7 @@ class TestPositionStraightBondLock:
             params={**get_params},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
                 {
@@ -314,7 +318,9 @@ class TestPositionStraightBondLock:
             {},
         ],
     )
-    def test_normal_1_2(self, get_params, client: TestClient, session: Session):
+    def test_normal_1_2(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -325,7 +331,7 @@ class TestPositionStraightBondLock:
             params={**get_params, "token_address_list": [self.token_1, self.token_2]},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 6, "offset": None, "limit": None, "total": 6},
             "locked_positions": [
                 {
@@ -387,7 +393,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_2(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -404,7 +414,7 @@ class TestPositionStraightBondLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 3, "offset": 1, "limit": 2, "total": 3},
             "locked_positions": [
                 {
@@ -442,7 +452,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_3(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -454,7 +468,7 @@ class TestPositionStraightBondLock:
             params={**get_params, "token_address_list": [self.token_1], "offset": 9},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 3, "offset": 9, "limit": None, "total": 3},
             "locked_positions": [],
         }
@@ -479,7 +493,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_4(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -491,7 +509,7 @@ class TestPositionStraightBondLock:
             params={**get_params, "lock_address": self.lock_1},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 3, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
                 {
@@ -535,7 +553,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_5_1(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -547,7 +569,7 @@ class TestPositionStraightBondLock:
             params={**get_params, "sort_order": 1, "sort_item": "token_address"},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
                 {
@@ -627,7 +649,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_5_2(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -639,7 +665,7 @@ class TestPositionStraightBondLock:
             params={**get_params, "sort_order": 0, "sort_item": "lock_address"},
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 9, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
                 {
@@ -719,7 +745,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_5_3(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -736,7 +766,7 @@ class TestPositionStraightBondLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 3, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
                 {
@@ -780,7 +810,11 @@ class TestPositionStraightBondLock:
         ],
     )
     def test_normal_5_4(
-        self, get_params, client: TestClient, session: Session, shared_contract
+        self,
+        get_params: dict[str, Any],
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
     ):
         config.BOND_TOKEN_ENABLED = True
 
@@ -797,7 +831,7 @@ class TestPositionStraightBondLock:
             },
         )
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 3, "offset": None, "limit": None, "total": 9},
             "locked_positions": [
                 {

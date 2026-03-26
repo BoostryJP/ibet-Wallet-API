@@ -75,15 +75,13 @@ class ListAllPublicListedTokensSortItem(StrEnum):
 
 
 class ListAllPublicListedTokensQuery(BasePaginationQuery):
-    token_template: Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"] = (
-        Field(None, description="Token template")
-    )
+    token_template: (
+        Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"] | None
+    ) = Field(None, description="Token template")
     sort_item: ListAllPublicListedTokensSortItem = Field(
         default=ListAllPublicListedTokensSortItem.token_address, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 class ListAllPublicAccountsSortItem(StrEnum):
@@ -98,9 +96,7 @@ class ListAllPublicAccountsQuery(BasePaginationQuery):
     sort_item: ListAllPublicAccountsSortItem = Field(
         default=ListAllPublicAccountsSortItem.key_manager, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 ############################

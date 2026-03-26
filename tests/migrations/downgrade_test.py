@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import importlib
 import logging
 from datetime import datetime
+from types import ModuleType
 from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
@@ -120,10 +121,12 @@ def alembic_config():
 @mark.alembic
 class TestMigrationsDowngrade:
     @staticmethod
-    def sqlalchemy_migrate_definition(scripts: list) -> MetaData:
+    def sqlalchemy_migrate_definition(scripts: list[ModuleType]) -> MetaData:
         for migrate_script in scripts:
             importlib.reload(migrate_script)
-            migrate_script.downgrade(engine)
+            downgrade = getattr(migrate_script, "downgrade")
+            assert callable(downgrade)
+            downgrade(engine)
         m = MetaData()
         m.reflect(engine)
         return m
@@ -143,13 +146,13 @@ class TestMigrationsDowngrade:
         sorted_columns = sorted(original_table.columns, key=lambda c: c.name)
         sorted_table = Table(original_table.name, MetaData())
         for column in sorted_columns:
-            column_copy = column._copy()
+            column_copy = column.copy()
             sorted_table.append_column(column_copy)
         return sorted_table
 
     @classmethod
     def create_migrate_version(cls, db_engine: Engine, version: int):
-        metadata = MetaData(bind=db_engine)
+        metadata = MetaData()
         migrate_version = Table(
             "migrate_version",
             metadata,
@@ -157,7 +160,7 @@ class TestMigrationsDowngrade:
             Column("repository_path", Text),
             Column("version", Integer),
         )
-        metadata.create_all()
+        metadata.create_all(bind=db_engine)
 
         with db_engine.connect() as connection:
             stmt = insert(migrate_version).values(
@@ -190,6 +193,7 @@ class TestMigrationsDowngrade:
         # 2. Insert test record
         # NOTE: node data
         node = meta.tables.get("node")
+        assert node is not None
         stmt1 = insert(node).values(id=2, is_synced=True)
         with engine.connect() as conn:
             conn.execute(stmt1)
@@ -197,6 +201,7 @@ class TestMigrationsDowngrade:
 
         # NOTE: position data
         position = meta.tables.get("position")
+        assert position is not None
         stmt1 = insert(position).values(
             token_address="token_address1",
             account_address="account_address1",
@@ -220,6 +225,7 @@ class TestMigrationsDowngrade:
 
         # NOTE: executable_contract data
         executable_contract = meta.tables.get("executable_contract")
+        assert executable_contract is not None
         stmt1 = insert(executable_contract).values(
             contract_address="token_address1",
             modified=datetime(2023, 4, 4, 0, 0, 0),
@@ -238,6 +244,7 @@ class TestMigrationsDowngrade:
         idx_position_bond_block_number = meta.tables.get(
             "idx_position_bond_block_number"
         )
+        assert idx_position_bond_block_number is not None
         stmt1 = insert(idx_position_bond_block_number).values(
             token_address="token_address1",
             exchange_address="exchange_address1",
@@ -264,6 +271,7 @@ class TestMigrationsDowngrade:
         idx_position_share_block_number = meta.tables.get(
             "idx_position_share_block_number"
         )
+        assert idx_position_share_block_number is not None
         stmt1 = insert(idx_position_share_block_number).values(
             token_address="token_address1",
             exchange_address="exchange_address1",
@@ -290,6 +298,7 @@ class TestMigrationsDowngrade:
         idx_position_coupon_block_number = meta.tables.get(
             "idx_position_coupon_block_number"
         )
+        assert idx_position_coupon_block_number is not None
         stmt1 = insert(idx_position_coupon_block_number).values(
             token_address="token_address1",
             exchange_address="exchange_address1",
@@ -316,6 +325,7 @@ class TestMigrationsDowngrade:
         idx_position_membership_block_number = meta.tables.get(
             "idx_position_membership_block_number"
         )
+        assert idx_position_membership_block_number is not None
         stmt1 = insert(idx_position_membership_block_number).values(
             token_address="token_address1",
             exchange_address="exchange_address1",
@@ -340,6 +350,8 @@ class TestMigrationsDowngrade:
 
         idx_lock = meta.tables.get("lock")
         idx_unlock = meta.tables.get("unlock")
+        assert idx_lock is not None
+        assert idx_unlock is not None
         stmt1 = insert(idx_lock).values(
             transaction_hash="." * 66,
             msg_sender=ZERO_ADDRESS,

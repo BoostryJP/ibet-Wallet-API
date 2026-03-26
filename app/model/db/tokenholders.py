@@ -67,12 +67,3 @@ class TokenHolder(Base):
             "hold_balance": self.hold_balance,
             "locked_balance": self.locked_balance,
         }
-
-    FIELDS = {
-        "holder_list_id": int,
-        "account_address": str,
-        "hold_balance": int,
-        "locked_balance": int,
-    }
-
-    FIELDS.update(Base.FIELDS)

@@ -68,14 +68,14 @@ class SendMailRequest(BaseModel):
 
     @field_validator("to_emails")
     @classmethod
-    def is_valid_to_emails(cls, v):
+    def is_valid_to_emails(cls, v: list[EmailStr]) -> list[EmailStr]:
         if len(v) != len(set(v)):
             raise ValueError("Each to_emails should be unique value")
         return v
 
     @field_validator("file_name")
     @classmethod
-    def is_valid_file_name(cls, v):
+    def is_valid_file_name(cls, v: str | None) -> str | None:
         if v:
             match = RE_INVALID_WIN_FILENAME.search(v)
             if match:
@@ -83,14 +83,13 @@ class SendMailRequest(BaseModel):
         return v
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_file(cls, values: Self):
-        if (values.file_content and not values.file_name) or (
-            not values.file_content and values.file_name
+    def validate_file(self) -> Self:
+        if (self.file_content and not self.file_name) or (
+            not self.file_content and self.file_name
         ):
             raise ValueError("File content should be posted with name.")
-        return values
+        return self
 
 
 class SendChatWebhookRequest(BaseModel):
-    message: Json = Field(..., description="Message body")
+    message: Json[object] = Field(..., description="Message body")

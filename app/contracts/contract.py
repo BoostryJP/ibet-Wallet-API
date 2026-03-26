@@ -18,13 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from typing import Any, Never, Type, TypeVar
+from typing import Any, Type, TypeVar, overload
 
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from hexbytes import HexBytes
-from web3 import contract
+from web3.contract import AsyncContract as Web3AsyncContract
 from web3.contract.async_contract import AsyncContractEvents
-from web3.eth.async_eth import AsyncContract as Web3AsyncContract
 from web3.exceptions import (
     BadFunctionCallOutput,
     ContractLogicError,
@@ -52,8 +51,9 @@ class AsyncContractEventsView:
 
 
 class AsyncContract:
-    cache = {}  # コントラクト情報のキャッシュ
+    cache: dict[str, dict[str, Any]] = {}  # コントラクト情報のキャッシュ
     factory_map: dict[str, Type[Web3AsyncContract]] = {}
+    _MISSING = object()
 
     @classmethod
     def get_contract(cls, contract_name: str, address: str) -> Web3AsyncContract:
@@ -65,7 +65,7 @@ class AsyncContract:
         :return: コントラクト
         """
         if contract_name in AsyncContract.cache:
-            contract_json = AsyncContract.cache[contract_name]
+            contract_json: dict[str, Any] = AsyncContract.cache[contract_name]
         else:
             contract_file = f"app/contracts/json/{contract_name}.json"
             contract_json = json.load(open(contract_file, "r"))
@@ -80,7 +80,9 @@ class AsyncContract:
         return contract_factory(address=to_checksum_address(address))
 
     @staticmethod
-    async def deploy_contract(contract_name: str, args: list, deployer: str):
+    async def deploy_contract(
+        contract_name: str, args: list[Any], deployer: str
+    ) -> tuple[str | None, Any]:
         """
         コントラクトデプロイ
 
@@ -90,13 +92,13 @@ class AsyncContract:
         :return: コントラクト情報
         """
         if contract_name in AsyncContract.cache:
-            contract_json = AsyncContract.cache[contract_name]
+            contract_json: dict[str, Any] = AsyncContract.cache[contract_name]
         else:
             contract_file = f"app/contracts/json/{contract_name}.json"
             contract_json = json.load(open(contract_file, "r"))
             AsyncContract.cache[contract_name] = contract_json
 
-        async_contract = async_web3.eth.contract(
+        async_contract: type[Web3AsyncContract] = async_web3.eth.contract(
             abi=contract_json["abi"],
             bytecode=contract_json["bytecode"],
             bytecode_runtime=contract_json["deployedBytecode"],
@@ -107,26 +109,70 @@ class AsyncContract:
         )
         tx = await async_web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        contract_address = ""
-        if tx is not None:
-            # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-            if "contractAddress" in tx.keys():
-                contract_address = tx["contractAddress"]
+        contract_address: str | None = ""
+        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
+        if "contractAddress" in tx.keys():
+            contract_address = tx["contractAddress"]
 
         return contract_address, contract_json["abi"]
 
     T = TypeVar("T")
+    R = TypeVar("R")
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+    ) -> Any: ...
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        default_returns: T,
+    ) -> T: ...
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        *,
+        expected_type: type[R],
+    ) -> R: ...
+
+    @staticmethod
+    @overload
+    async def call_function(
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        default_returns: object,
+        *,
+        expected_type: type[R],
+    ) -> R: ...
 
     @staticmethod
     async def call_function(
-        contract: contract, function_name: str, args: tuple, default_returns: T = None
-    ) -> T:
+        contract: Web3AsyncContract,
+        function_name: str,
+        args: tuple[Any, ...],
+        default_returns: object = _MISSING,
+        *,
+        expected_type: type[Any] | None = None,
+    ) -> Any:
         """Call contract function
 
         :param contract: Contract
         :param function_name: Function name
         :param args: Function args
         :param default_returns: Default return when exception is raised
+        :param expected_type: Expected type of return value
         :return: Return from function or default return
         """
         _function = getattr(contract.functions, function_name)
@@ -134,29 +180,36 @@ class AsyncContract:
         try:
             result = await _function(*args).call()
         except (BadFunctionCallOutput, ContractLogicError) as exc:
-            if default_returns is not None:
-                return default_returns
-            else:
+            if default_returns is AsyncContract._MISSING:
                 raise exc
+            result = default_returns
+
+        if expected_type is not None and not isinstance(result, expected_type):
+            raise TypeError(
+                f"{function_name} returned unexpected type: "
+                f"expected={expected_type.__name__}, got={type(result).__name__}"
+            )
 
         return result
 
     @staticmethod
     async def get_transaction(
         transaction_hash: HexBytes, block_number: BlockIdentifier
-    ) -> TxData | dict[Any, Never]:
+    ) -> TxData | None:
         """Get transaction
 
         :param transaction_hash: Transaction hash
         :param block_number: Block number
         :return: Return the transaction data or empty dict
         """
-        tx = {}
+        tx: TxData | None = None
         try:
             tx = await async_web3.eth.get_transaction(transaction_hash)
         except TransactionNotFound:
             # Retrieve transaction from block data when node has pruned old transaction
-            block = await async_web3.eth.get_block(block_number, full_transactions=True)
+            block: Any = await async_web3.eth.get_block(
+                block_number, full_transactions=True
+            )
             for transaction in block.get("transactions", []):
                 if transaction.get("hash") == transaction_hash:
                     tx = transaction

@@ -35,14 +35,6 @@ class IDXTokenListRegister(Base):
     # Owner Address
     owner_address: Mapped[str | None] = mapped_column(String(42), index=True)
 
-    FIELDS = {
-        "token_address": str,
-        "token_template": str,
-        "owner_address": str,
-    }
-
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXTokenListBlockNumber(Base):
     """Synchronized blockNumber of IDXTokenList"""
@@ -53,10 +45,3 @@ class IDXTokenListBlockNumber(Base):
     contract_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "contract_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)

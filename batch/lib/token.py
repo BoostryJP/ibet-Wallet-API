@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from web3.contract import AsyncContract as Web3AsyncContract
+
 from app.contracts import AsyncContract
 from app.model.schema.base import TokenType
 
@@ -25,25 +27,25 @@ class TokenFactory:
     def __init__(self):
         pass
 
-    def get_straight_bond(self, address):
+    def get_straight_bond(self, address: str):
         contract = AsyncContract.get_contract(TokenType.IbetStraightBond, address)
         return Token(contract)
 
-    def get_share(self, address):
+    def get_share(self, address: str):
         contract = AsyncContract.get_contract(TokenType.IbetShare, address)
         return Token(contract)
 
-    def get_membership(self, address):
+    def get_membership(self, address: str):
         contract = AsyncContract.get_contract(TokenType.IbetMembership, address)
         return Token(contract)
 
-    def get_coupon(self, address):
+    def get_coupon(self, address: str):
         contract = AsyncContract.get_contract(TokenType.IbetCoupon, address)
         return Token(contract)
 
 
 class Token:
-    def __init__(self, contract):
+    def __init__(self, contract: Web3AsyncContract):
         self.contract = contract
 
     @property

@@ -35,7 +35,7 @@ class ABIInputType(StrEnum):
     string = "string"
     bool = "bool"
 
-    def to_python_type(self) -> Type:
+    def to_python_type(self) -> Type[Any]:
         match self:
             case ABIInputType.address | ABIInputType.string:
                 return str
@@ -119,7 +119,7 @@ class ABI(RootModel[List[ABIDescription]]):
 
 
 @lru_cache(None)
-def create_abi_event_argument_models(contract_name: str) -> tuple[Type[BaseModel]]:
+def create_abi_event_argument_models(contract_name: str) -> Any:
     contract_file = (
         f"{os.path.dirname(os.path.abspath(__file__))}/json/{contract_name}.json"
     )
@@ -128,20 +128,20 @@ def create_abi_event_argument_models(contract_name: str) -> tuple[Type[BaseModel
         contract_json = json.load(file)
         abi_list = ABI.model_validate(contract_json.get("abi"))
 
-        models = []
+        models: list[Type[BaseModel]] = []
         for abi in abi_list.root:
             if abi.type != ABIDescriptionType.event:
                 continue
 
-            fields = {}
+            fields: dict[str, Any] = {}
             for i in abi.inputs:
                 if i.indexed is True:
                     fields[i.name] = (Optional[i.type.to_python_type()], None)
 
-            if len(fields.values()) == 0:
+            if not fields:
                 continue
 
-            model = create_model(
+            model: Type[BaseModel] = create_model(
                 f"{abi.name.capitalize()}{abi.type.capitalize()}Argument",
                 **fields,
                 __config__=ConfigDict(extra="forbid"),

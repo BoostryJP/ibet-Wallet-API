@@ -17,9 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
-from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
@@ -35,17 +35,13 @@ from app.model.db import (
     Listing,
 )
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    coupon_register_list,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    membership_issue,
-    membership_register_list,
-    register_bond_list,
-    register_share_list,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetMembershipTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
-from tests.utils.contract import Contract
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -94,7 +90,7 @@ class TestListAllCompanies:
         address: str,
         homepage: str = "https://www.aaaa.com/jp/",
         trustee: dict[str, str] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         return {
             "address": address,
             "corporate_name": "株式会社DEMO",
@@ -104,7 +100,9 @@ class TestListAllCompanies:
         }
 
     @staticmethod
-    def _bond_attribute(exchange_address, personal_info_address):
+    def _bond_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト債券",
             "symbol": "BOND",
@@ -141,7 +139,9 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def _share_attribute(exchange_address, personal_info_address):
+    def _share_attribute(
+        exchange_address: str, personal_info_address: str
+    ) -> dict[str, Any]:
         attribute = {
             "name": "テスト株式",
             "symbol": "SHARE",
@@ -162,7 +162,7 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def _membership_attribute(exchange_address):
+    def _membership_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テスト会員権",
             "symbol": "MEMBERSHIP",
@@ -179,7 +179,7 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def _coupon_attribute(exchange_address):
+    def _coupon_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -196,25 +196,18 @@ class TestListAllCompanies:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session, token, is_public: bool = True):
+    def list_token(
+        session: Session, token_address: str, is_public: bool = True
+    ) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = is_public
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
     @staticmethod
-    def store_bond_index_data(session, token_address: str, owner_address: str):
+    def store_bond_index_data(session: Session, token_address: str, owner_address: str):
         idx = IDXBondToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
@@ -225,21 +218,27 @@ class TestListAllCompanies:
         session.add(idx)
 
     @staticmethod
-    def store_share_index_data(session, token_address: str, owner_address: str):
+    def store_share_index_data(
+        session: Session, token_address: str, owner_address: str
+    ):
         idx = IDXShareToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
         session.add(idx)
 
     @staticmethod
-    def store_coupon_index_data(session, token_address: str, owner_address: str):
+    def store_coupon_index_data(
+        session: Session, token_address: str, owner_address: str
+    ):
         idx = IDXCouponToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
         session.add(idx)
 
     @staticmethod
-    def store_membership_index_data(session, token_address: str, owner_address: str):
+    def store_membership_index_data(
+        session: Session, token_address: str, owner_address: str
+    ):
         idx = IDXMembershipToken()
         idx.owner_address = owner_address
         idx.token_address = token_address
@@ -253,29 +252,35 @@ class TestListAllCompanies:
     # 登録済みのトークンアドレスに紐づく会社情報が返却される(ローカルJSON)
     # indexerバッチデータ利用無し
     def test_normal_1_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント
-        issuerList = [
+        issuer_list = [
             eth_account["issuer"],
             eth_account["deployer"],
             eth_account["agent"],
         ]
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備：新規発行（クーポン）
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         for i in range(0, 3):
             attribute = self._coupon_attribute(exchange_address)
-            token = issue_coupon_token(issuerList[i], attribute)
-            coupon_register_list(issuerList[i], token, token_list)
+            token = IbetCouponTestHelper.issue(
+                issuer_list[i]["account_address"], attribute
+            )
+            IbetCouponTestHelper.register_token_list(
+                issuer_list[i]["account_address"], token.address, token_list["address"]
+            )
             # 取扱トークンデータ挿入
-            self.list_token(session, token)
+            self.list_token(session, token.address)
         session.commit()
 
         # テスト対象API呼び出し
@@ -296,9 +301,11 @@ class TestListAllCompanies:
     # indexerバッチデータ利用無し
     @mock.patch("app.config.APP_ENV", "dev")
     @mock.patch("app.config.COMPANY_LIST_LOCAL_MODE", False)
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # テスト用アカウント
-        issuerList = [eth_account["issuer"], eth_account["deployer"]]
+        issuer_list = [eth_account["issuer"], eth_account["deployer"]]
 
         # データ準備
         _company = Company()
@@ -321,18 +328,20 @@ class TestListAllCompanies:
         session.add(_company)
         session.commit()
 
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         for i in range(0, 2):
             attribute = self._coupon_attribute(exchange_address)
-            token = issue_coupon_token(issuerList[i], attribute)
-            coupon_register_list(issuerList[i], token, token_list)
+            token = IbetCouponTestHelper.issue(
+                issuer_list[i]["account_address"], attribute
+            )
+            IbetCouponTestHelper.register_token_list(
+                issuer_list[i]["account_address"], token.address, token_list["address"]
+            )
             # 取扱トークンデータ挿入
-            self.list_token(session, token)
+            self.list_token(session, token.address)
 
         session.commit()
 
@@ -354,7 +363,7 @@ class TestListAllCompanies:
     @mock.patch("app.config.APP_ENV", "dev")
     @mock.patch("app.config.COMPANY_LIST_LOCAL_MODE", False)
     def test_normal_1_3_company_with_trustee(
-        self, client: TestClient, session: Session, shared_contract
+        self, client: TestClient, session: Session, shared_contract: SharedContract
     ):
         issuer = eth_account["issuer"]
 
@@ -375,16 +384,16 @@ class TestListAllCompanies:
         session.add(company)
         session.commit()
 
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self._coupon_attribute(exchange_address)
-        token = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, token, token_list)
-        self.list_token(session, token)
+        token = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
+        self.list_token(session, token.address)
         session.commit()
 
         resp = client.get(self.apiurl)
@@ -399,22 +408,28 @@ class TestListAllCompanies:
     # <Normal_2>
     # listing対象とcompanylistが突合されず0件リターン
     def test_normal_2(
-        self, client: TestClient, shared_contract, mocked_company_list, session: Session
+        self,
+        client: TestClient,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
+        session: Session,
     ):
         # テスト用アカウント
-        issuerList = [eth_account["issuer"], eth_account["deployer"]]
+        issuer_list = [eth_account["issuer"], eth_account["deployer"]]
 
         # データ準備
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         for i in range(0, 2):
             attribute = self._coupon_attribute(exchange_address)
-            token = issue_coupon_token(issuerList[i], attribute)
-            coupon_register_list(issuerList[i], token, token_list)
+            token = IbetCouponTestHelper.issue(
+                issuer_list[i]["account_address"], attribute
+            )
+            IbetCouponTestHelper.register_token_list(
+                issuer_list[i]["account_address"], token.address, token_list["address"]
+            )
 
         # テスト対象API呼び出し
         resp = client.get(self.apiurl)
@@ -429,12 +444,16 @@ class TestListAllCompanies:
     # include_private_listing=true
     # indexerバッチデータ利用無し
     def test_normal_3_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
-        issuerList = [issuer_1, issuer_2]
+        issuer_list = [issuer_1, issuer_2]
 
         _company_1 = Company()
         _company_1.address = issuer_1["account_address"]
@@ -453,21 +472,29 @@ class TestListAllCompanies:
         session.commit()
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetCouponExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._coupon_attribute(exchange_address)
-        token_1 = issue_coupon_token(issuerList[0], attribute_1)
-        coupon_register_list(issuerList[0], token_1, token_list)
-        self.list_token(session, token_1, True)
+        token_1 = IbetCouponTestHelper.issue(
+            issuer_list[0]["account_address"], attribute_1
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer_list[0]["account_address"], token_1.address, token_list["address"]
+        )
+        self.list_token(session, token_1.address, True)
 
         attribute_2 = self._coupon_attribute(exchange_address)
-        token_2 = issue_coupon_token(issuerList[1], attribute_2)
-        coupon_register_list(issuerList[1], token_2, token_list)
-        self.list_token(session, token_2, False)
+        token_2 = IbetCouponTestHelper.issue(
+            issuer_list[1]["account_address"], attribute_2
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer_list[1]["account_address"], token_2.address, token_list["address"]
+        )
+        self.list_token(session, token_2.address, False)
 
         session.commit()
 
@@ -488,12 +515,16 @@ class TestListAllCompanies:
     # include_private_listing=false
     # indexerバッチデータ利用無し
     def test_normal_3_2(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
-        issuerList = [issuer_1, issuer_2]
+        issuer_list = [issuer_1, issuer_2]
 
         _company_1 = Company()
         _company_1.address = issuer_1["account_address"]
@@ -512,21 +543,29 @@ class TestListAllCompanies:
         session.commit()
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetCouponExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._coupon_attribute(exchange_address)
-        token_1 = issue_coupon_token(issuerList[0], attribute_1)
-        coupon_register_list(issuerList[0], token_1, token_list)
-        self.list_token(session, token_1, True)
+        token_1 = IbetCouponTestHelper.issue(
+            issuer_list[0]["account_address"], attribute_1
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer_list[0]["account_address"], token_1.address, token_list["address"]
+        )
+        self.list_token(session, token_1.address, True)
 
         attribute_2 = self._coupon_attribute(exchange_address)
-        token_2 = issue_coupon_token(issuerList[1], attribute_2)
-        coupon_register_list(issuerList[1], token_2, token_list)
-        self.list_token(session, token_2, False)
+        token_2 = IbetCouponTestHelper.issue(
+            issuer_list[1]["account_address"], attribute_2
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer_list[1]["account_address"], token_2.address, token_list["address"]
+        )
+        self.list_token(session, token_2.address, False)
 
         session.commit()
 
@@ -544,12 +583,16 @@ class TestListAllCompanies:
     # 債権トークン
     # indexerバッチデータ利用有り
     def test_normal_4_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
-        issuerList = [issuer_1, issuer_2]
+        issuer_list = [issuer_1, issuer_2]
 
         _company_1 = Company()
         _company_1.address = issuer_1["account_address"]
@@ -568,30 +611,38 @@ class TestListAllCompanies:
         session.commit()
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetStraightBondExchange"]["address"]
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
 
         attribute_1 = self._bond_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_1 = issue_bond_token(issuerList[0], attribute_1)
-        register_bond_list(issuerList[0], token_1, token_list)
-        self.list_token(session, token_1, True)
+        token_1 = IbetStraightBondTestHelper.issue(
+            issuer_list[0]["account_address"], attribute_1
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer_list[0]["account_address"], token_1.address, token_list["address"]
+        )
+        self.list_token(session, token_1.address, True)
         self.store_bond_index_data(
-            session, token_1["address"], issuerList[0]["account_address"]
+            session, token_1.address, issuer_list[0]["account_address"]
         )
 
         attribute_2 = self._share_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_2 = issue_share_token(issuerList[1], attribute_2)
-        register_share_list(issuerList[1], token_2, token_list)
-        self.list_token(session, token_2, False)
+        token_2 = IbetShareTestHelper.issue(
+            issuer_list[1]["account_address"], attribute_2
+        )
+        IbetStraightBondTestHelper.register_token_list(
+            issuer_list[1]["account_address"], token_2.address, token_list["address"]
+        )
+        self.list_token(session, token_2.address, False)
         self.store_bond_index_data(
-            session, token_2["address"], issuerList[1]["account_address"]
+            session, token_2.address, issuer_list[1]["account_address"]
         )
 
         session.commit()
@@ -614,12 +665,16 @@ class TestListAllCompanies:
     # 株式トークン
     # indexerバッチデータ利用有り
     def test_normal_4_2(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
-        issuerList = [issuer_1, issuer_2]
+        issuer_list = [issuer_1, issuer_2]
 
         _company_1 = Company()
         _company_1.address = issuer_1["account_address"]
@@ -638,30 +693,38 @@ class TestListAllCompanies:
         session.commit()
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetShareExchange"]["address"]
+        exchange_address = shared_contract["IbetSecurityTokenEscrow"]["address"]
 
         attribute_1 = self._share_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_1 = issue_share_token(issuerList[0], attribute_1)
-        register_share_list(issuerList[0], token_1, token_list)
-        self.list_token(session, token_1, True)
+        token_1 = IbetShareTestHelper.issue(
+            issuer_list[0]["account_address"], attribute_1
+        )
+        IbetShareTestHelper.register_token_list(
+            issuer_list[0]["account_address"], token_1.address, token_list["address"]
+        )
+        self.list_token(session, token_1.address, True)
         self.store_share_index_data(
-            session, token_1["address"], issuerList[0]["account_address"]
+            session, token_1.address, issuer_list[0]["account_address"]
         )
 
         attribute_2 = self._share_attribute(
             exchange_address, "0x0000000000000000000000000000000000000000"
         )
-        token_2 = issue_share_token(issuerList[1], attribute_2)
-        register_share_list(issuerList[1], token_2, token_list)
-        self.list_token(session, token_2, False)
+        token_2 = IbetShareTestHelper.issue(
+            issuer_list[1]["account_address"], attribute_2
+        )
+        IbetShareTestHelper.register_token_list(
+            issuer_list[1]["account_address"], token_2.address, token_list["address"]
+        )
+        self.list_token(session, token_2.address, False)
         self.store_share_index_data(
-            session, token_2["address"], issuerList[1]["account_address"]
+            session, token_2.address, issuer_list[1]["account_address"]
         )
 
         session.commit()
@@ -684,12 +747,16 @@ class TestListAllCompanies:
     # 会員権トークン
     # indexerバッチデータ利用有り
     def test_normal_4_3(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
-        issuerList = [issuer_1, issuer_2]
+        issuer_list = [issuer_1, issuer_2]
 
         _company_1 = Company()
         _company_1.address = issuer_1["account_address"]
@@ -708,26 +775,34 @@ class TestListAllCompanies:
         session.commit()
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetMembershipExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._membership_attribute(exchange_address)
-        token_1 = membership_issue(issuerList[0], attribute_1)
-        membership_register_list(issuerList[0], token_1, token_list)
-        self.list_token(session, token_1, True)
+        token_1 = IbetMembershipTestHelper.issue(
+            issuer_list[0]["account_address"], attribute_1
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer_list[0]["account_address"], token_1.address, token_list["address"]
+        )
+        self.list_token(session, token_1.address, True)
         self.store_membership_index_data(
-            session, token_1["address"], issuerList[0]["account_address"]
+            session, token_1.address, issuer_list[0]["account_address"]
         )
 
         attribute_2 = self._membership_attribute(exchange_address)
-        token_2 = membership_issue(issuerList[1], attribute_2)
-        membership_register_list(issuerList[1], token_2, token_list)
-        self.list_token(session, token_2, False)
+        token_2 = IbetMembershipTestHelper.issue(
+            issuer_list[1]["account_address"], attribute_2
+        )
+        IbetMembershipTestHelper.register_token_list(
+            issuer_list[1]["account_address"], token_2.address, token_list["address"]
+        )
+        self.list_token(session, token_2.address, False)
         self.store_membership_index_data(
-            session, token_2["address"], issuerList[1]["account_address"]
+            session, token_2.address, issuer_list[1]["account_address"]
         )
 
         session.commit()
@@ -750,12 +825,16 @@ class TestListAllCompanies:
     # クーポントークン
     # indexerバッチデータ利用有り
     def test_normal_4_4(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト用アカウント設定
         issuer_1 = eth_account["issuer"]
         issuer_2 = eth_account["deployer"]
-        issuerList = [issuer_1, issuer_2]
+        issuer_list = [issuer_1, issuer_2]
 
         _company_1 = Company()
         _company_1.address = issuer_1["account_address"]
@@ -774,26 +853,34 @@ class TestListAllCompanies:
         session.commit()
 
         # TokenListコントラクトアドレスの設定
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetCouponExchange"]["address"]
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
         attribute_1 = self._coupon_attribute(exchange_address)
-        token_1 = issue_coupon_token(issuerList[0], attribute_1)
-        coupon_register_list(issuerList[0], token_1, token_list)
-        self.list_token(session, token_1, True)
+        token_1 = IbetCouponTestHelper.issue(
+            issuer_list[0]["account_address"], attribute_1
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer_list[0]["account_address"], token_1.address, token_list["address"]
+        )
+        self.list_token(session, token_1.address, True)
         self.store_coupon_index_data(
-            session, token_1["address"], issuerList[0]["account_address"]
+            session, token_1.address, issuer_list[0]["account_address"]
         )
 
         attribute_2 = self._coupon_attribute(exchange_address)
-        token_2 = issue_coupon_token(issuerList[1], attribute_2)
-        coupon_register_list(issuerList[1], token_2, token_list)
-        self.list_token(session, token_2, False)
+        token_2 = IbetCouponTestHelper.issue(
+            issuer_list[1]["account_address"], attribute_2
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer_list[1]["account_address"], token_2.address, token_list["address"]
+        )
+        self.list_token(session, token_2.address, False)
         self.store_coupon_index_data(
-            session, token_2["address"], issuerList[1]["account_address"]
+            session, token_2.address, issuer_list[1]["account_address"]
         )
 
         session.commit()
@@ -820,7 +907,11 @@ class TestListAllCompanies:
     # Invalid Parameter
     # include_private_listing: unallowed value
     def test_error_1(
-        self, client: TestClient, session: Session, shared_contract, mocked_company_list
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         # テスト対象API呼び出し
         query_string = "include_private_listing=test"

@@ -25,6 +25,7 @@ from unittest.mock import MagicMock
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.model.db import ChatWebhook
@@ -51,7 +52,12 @@ def caplog(caplog: pytest.LogCaptureFixture):
 class TestProcessorSendChatWebhook:
     # Normal_1
     # No unsent hook exists
-    async def test_normal_1(self, processor, async_session, caplog):
+    async def test_normal_1(
+        self,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Run processor
         with mock.patch("requests.post", MagicMock(side_effect=None)):
             processor.process()
@@ -62,7 +68,12 @@ class TestProcessorSendChatWebhook:
 
     # Normal_2
     # Unsent hook exists
-    async def test_normal_2(self, processor, async_session, caplog):
+    async def test_normal_2(
+        self,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Prepare data
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title1", "text": "test_text"})
@@ -84,7 +95,12 @@ class TestProcessorSendChatWebhook:
 
     # Normal_3
     # Fail to send message -> Skip
-    async def test_normal_3(self, processor, async_session, caplog):
+    async def test_normal_3(
+        self,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Prepare data
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title", "text": "test_text"})
@@ -111,7 +127,12 @@ class TestProcessorSendChatWebhook:
 
     # Error_1
     # SQLAlchemyError
-    async def test_error_1(self, processor, async_session, caplog):
+    async def test_error_1(
+        self,
+        processor: Processor,
+        async_session: AsyncSession,
+        caplog: pytest.LogCaptureFixture,
+    ):
         # Prepare data
         hook = ChatWebhook()
         hook.message = json.dumps({"title": "test_title", "text": "test_text"})

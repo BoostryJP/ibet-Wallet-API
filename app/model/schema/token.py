@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Literal, Optional, TypeAlias, TypedDict
 
 from pydantic import UUID4, BaseModel, Field, StrictStr
 
@@ -31,6 +31,10 @@ from app.model.schema.base import (
     ValidatedNaiveUTCDatetime,
     ValueOperator,
 )
+from app.model.schema.token_bond import BondTokenDict
+from app.model.schema.token_coupon import CouponTokenDict
+from app.model.schema.token_membership import MembershipTokenDict
+from app.model.schema.token_share import ShareTokenDict
 from app.model.type import EthereumAddress
 
 
@@ -43,6 +47,19 @@ class TransferSourceEvent(StrEnum):
     ForceUnlock = "ForceUnlock"
     ForceChangeLockedAccount = "ForceChangeLockedAccount"
     Reallocation = "Reallocation"
+
+
+############################
+# DTO
+############################
+class TokenImageDict(TypedDict):
+    id: int
+    url: str
+
+
+TokenDetailDict: TypeAlias = (
+    BondTokenDict | ShareTokenDict | MembershipTokenDict | CouponTokenDict
+)
 
 
 ############################
@@ -139,12 +156,10 @@ class SearchTokenHoldersRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTokenHoldersSortItem] = Field(
+    sort_item: SearchTokenHoldersSortItem = Field(
         default=SearchTokenHoldersSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.DESC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.DESC, description="sort order")
 
 
 class RetrieveTokenHoldersCountQuery(BaseModel):
@@ -211,7 +226,7 @@ class SearchTransferHistorySortItem(StrEnum):
     transaction_hash = "transaction_hash"
     from_address = "from_address"
     to_address = "to_address"
-    value = "value"
+    value_ = "value"
 
 
 class SearchTransferHistoryRequest(BaseModel):
@@ -241,12 +256,10 @@ class SearchTransferHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTransferHistorySortItem] = Field(
+    sort_item: SearchTransferHistorySortItem = Field(
         default=SearchTransferHistorySortItem.id, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 class ListAllTransferApprovalHistoryQuery(BasePaginationQuery):
@@ -269,7 +282,7 @@ class SearchTransferApprovalHistorySortItem(StrEnum):
     created = "created"
     from_address = "from_address"
     to_address = "to_address"
-    value = "value"
+    value_ = "value"
     application_datetime = "application_datetime"
     application_blocktimestamp = "application_blocktimestamp"
     approval_datetime = "approval_datetime"
@@ -315,13 +328,11 @@ class SearchTransferApprovalHistoryRequest(BaseModel):
         default=ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    sort_item: Optional[SearchTransferApprovalHistorySortItem] = Field(
+    sort_item: SearchTransferApprovalHistorySortItem = Field(
         default=SearchTransferApprovalHistorySortItem.application_id,
         description="sort item",
     )
-    sort_order: Optional[SortOrder] = Field(
-        default=SortOrder.ASC, description="sort order"
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="sort order")
 
 
 ############################
@@ -393,6 +404,15 @@ class TokenHoldersCollectionResponse(BaseModel):
     )
 
 
+class TransferDataMessage(BaseModel):
+    message: Literal[
+        "garnishment",
+        "inheritance",
+        "force_unlock",
+        "ibet_wst_bridge",
+    ]
+
+
 class TransferHistoryBase(BaseModel):
     transaction_hash: str = Field(description="Transaction hash")
     token_address: EthereumAddress = Field(description="Token address")
@@ -403,7 +423,6 @@ class TransferHistoryBase(BaseModel):
         description="Account address of transfer destination"
     )
     value: int = Field(description="Transfer quantity")
-    data: dict | None = Field(description="Event data")
     message: (
         Literal[
             "garnishment",
@@ -420,18 +439,10 @@ class TransferHistoryBase(BaseModel):
 
 class TransferHistory(TransferHistoryBase):
     source_event: Literal[
-        TransferSourceEvent.Transfer, TransferSourceEvent.Reallocation
+        TransferSourceEvent.Transfer,
+        TransferSourceEvent.Reallocation,
     ] = Field(description="Source Event")
     data: None = Field(description="Event data")
-
-
-class TransferDataMessage(BaseModel):
-    message: Literal[
-        "garnishment",
-        "inheritance",
-        "force_unlock",
-        "ibet_wst_bridge",
-    ]
 
 
 class TransferWithMessage(TransferHistoryBase):
@@ -440,7 +451,7 @@ class TransferWithMessage(TransferHistoryBase):
         TransferSourceEvent.ForceUnlock,
         TransferSourceEvent.ForceChangeLockedAccount,
     ] = Field(description="Source Event")
-    data: TransferDataMessage | dict = Field(description="Event data")
+    data: TransferDataMessage | dict[str, str] = Field(description="Event data")
 
 
 class TransferHistoriesResponse(BaseModel):

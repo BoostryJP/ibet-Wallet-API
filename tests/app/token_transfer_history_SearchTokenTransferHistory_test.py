@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC, datetime, timedelta, timezone
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -42,7 +43,7 @@ class TestSearchTokenTransferHistory:
     to_address = "0x6431d02363FC69fFD9F69CAa4E05E96d4e79f3da"
 
     @staticmethod
-    def insert_listing(session: Session, listing: dict):
+    def insert_listing(session: Session, listing: dict[str, Any]):
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
@@ -51,9 +52,9 @@ class TestSearchTokenTransferHistory:
     @staticmethod
     def insert_transfer_event(
         session: Session,
-        transfer_event: dict,
+        transfer_event: dict[str, Any],
         transfer_source_event: IDXTransferSourceEventType = IDXTransferSourceEventType.TRANSFER,
-        transfer_event_data: dict | None = None,
+        transfer_event_data: dict[str, Any] | None = None,
         created: datetime | None = None,
     ):
         _transfer = IDXTransfer()
@@ -62,7 +63,7 @@ class TestSearchTokenTransferHistory:
         _transfer.from_address = transfer_event["from_address"]
         _transfer.to_address = transfer_event["to_address"]
         _transfer.value = transfer_event["value"]
-        _transfer.source_event = transfer_source_event.value
+        _transfer.source_event = transfer_source_event
         _transfer.data = transfer_event_data
         _transfer.message = (
             transfer_event_data.get("message")

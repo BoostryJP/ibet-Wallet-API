@@ -55,7 +55,7 @@ class StripTrailingSlashMiddleware:
 
             # Update url in scope
             if "url" in scope:
-                url_parts = list(urlparse(scope["url"]))
+                url_parts = list(urlparse(str(scope["url"])))
                 url_parts[2] = new_path  # Update path
                 scope["url"] = urlunparse(url_parts)
 

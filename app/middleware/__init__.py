@@ -1,3 +1,4 @@
+# pyright: reportUnusedImport=false
 """
 Copyright BOOSTRY Co., Ltd.
 
@@ -17,5 +18,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from .cache_control import CacheControlMiddleware
 from .response_logger import ResponseLoggerMiddleware
 from .strip_trailing_slash import StripTrailingSlashMiddleware

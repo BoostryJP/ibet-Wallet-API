@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
+from typing import TYPE_CHECKING
 
 import requests
 from fastapi import APIRouter
@@ -28,7 +29,11 @@ from app.database import DBAsyncSession
 from app.errors import ServiceUnavailable
 from app.model.db import Node
 from app.model.schema import GetBlockSyncStatusResponse, GetNodeInfoResponse
-from app.model.schema.base import GenericSuccessResponse, SuccessResponse
+from app.model.schema.base import (
+    GenericSuccessResponse,
+    Success200MetaModel,
+    SuccessResponse,
+)
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 from app.utils.web3_utils import AsyncWeb3Wrapper
@@ -52,11 +57,7 @@ async def get_node_info():
     """
     Returns node information.
     """
-    payment_gateway_json = json.load(
-        open("app/contracts/json/PaymentGateway.json", "r")
-    )
     personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
-    ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
     ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
     ibet_security_token_escrow_json = json.load(
         open("app/contracts/json/IbetSecurityTokenEscrow.json", "r")
@@ -67,14 +68,8 @@ async def get_node_info():
     e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
     nodeInfo = {
-        "payment_gateway_address": config.PAYMENT_GATEWAY_CONTRACT_ADDRESS,
-        "payment_gateway_abi": payment_gateway_json["abi"],
         "personal_info_address": config.PERSONAL_INFO_CONTRACT_ADDRESS,
         "personal_info_abi": personal_info_json["abi"],
-        "ibet_membership_exchange_address": config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-        "ibet_membership_exchange_abi": ibet_exchange_json["abi"],
-        "ibet_coupon_exchange_address": config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
-        "ibet_coupon_exchange_abi": ibet_exchange_json["abi"],
         "ibet_escrow_address": config.IBET_ESCROW_CONTRACT_ADDRESS,
         "ibet_escrow_abi": ibet_escrow_json["abi"],
         "ibet_security_token_escrow_address": config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
@@ -84,6 +79,22 @@ async def get_node_info():
         "e2e_messaging_address": config.E2E_MESSAGING_CONTRACT_ADDRESS,
         "e2e_messaging_abi": e2e_messaging_json["abi"],
     }
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[GetNodeInfoResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=GetNodeInfoResponse(
+                personal_info_address=config.PERSONAL_INFO_CONTRACT_ADDRESS,
+                personal_info_abi=personal_info_json["abi"],
+                ibet_escrow_address=config.IBET_ESCROW_CONTRACT_ADDRESS,
+                ibet_escrow_abi=ibet_escrow_json["abi"],
+                ibet_security_token_escrow_address=config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
+                ibet_security_token_escrow_abi=ibet_security_token_escrow_json["abi"],
+                ibet_security_token_dvp_address=config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS,
+                ibet_security_token_dvp_abi=ibet_security_token_dvp_json["abi"],
+                e2e_messaging_address=config.E2E_MESSAGING_CONTRACT_ADDRESS,
+                e2e_messaging_abi=e2e_messaging_json["abi"],
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": nodeInfo})
 
 
@@ -102,7 +113,7 @@ async def get_block_sync_status(async_session: DBAsyncSession):
     Returns block sync status of node.
     """
     # Get block sync status
-    node: Node = (
+    node: Node | None = (
         await async_session.scalars(
             select(Node).where(Node.is_synced == True).order_by(Node.priority).limit(1)
         )
@@ -119,6 +130,14 @@ async def get_block_sync_status(async_session: DBAsyncSession):
         except requests.exceptions.ReadTimeout:
             raise ServiceUnavailable("Temporarily unable to connect to web3 provider")
 
+    if TYPE_CHECKING:
+        _ = GenericSuccessResponse[GetBlockSyncStatusResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=GetBlockSyncStatusResponse(
+                is_synced=is_synced,
+                latest_block_number=latest_block_number,
+            ),
+        )
     return json_response(
         {
             **SuccessResponse.default(),

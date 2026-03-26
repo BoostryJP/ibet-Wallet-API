@@ -47,7 +47,7 @@ class ListAllLockSortItem(StrEnum):
     token_address = "token_address"
     lock_address = "lock_address"
     account_address = "account_address"
-    value = "value"
+    value_ = "value"
 
 
 class ListAllTokenLockQuery(BasePaginationQuery):

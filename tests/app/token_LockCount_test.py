@@ -27,6 +27,7 @@ from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXLockedPosition
+from tests.types import SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -147,7 +148,9 @@ class TestTokenLockCount:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -168,7 +171,9 @@ class TestTokenLockCount:
 
     # <Normal_3>
     # Pagination(over offset)
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -185,7 +190,9 @@ class TestTokenLockCount:
 
     # <Normal_4>
     # Filter(lock_address)
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 
@@ -202,7 +209,9 @@ class TestTokenLockCount:
 
     # <Normal_5>
     # Filter(account_address)
-    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare Data
         self.setup_data(session)
 

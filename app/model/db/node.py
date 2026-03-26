@@ -40,12 +40,3 @@ class Node(Base):
 
     def __repr__(self):
         return "<Node id='%d' is_synced='%s'>" % (self.id, self.is_synced)
-
-    FIELDS = {
-        "id": int,
-        "endpoint_uri": str,
-        "priority": int,
-        "is_synced": bool,
-    }
-
-    FIELDS.update(Base.FIELDS)

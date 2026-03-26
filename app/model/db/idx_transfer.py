@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from enum import StrEnum
 from typing import Literal
 from zoneinfo import ZoneInfo
@@ -77,7 +77,8 @@ class IDXTransfer(Base):
     #     => None
     #   source_event = "Unlock", "ForceUnlock", "ForceChangeLockedAccount"
     #     =>  DataMessage
-    data: Mapped[dict | None] = mapped_column(JSON)
+    # TODO: Enforce a valid JSON schema for transfer.data at the DB layer and reflect the same constraint in ORM typing.
+    data: Mapped[dict[str, object] | None] = mapped_column(JSON)
     # Message
     #   source_event = "Transfer", "Reallocation"
     #     => None
@@ -85,27 +86,11 @@ class IDXTransfer(Base):
     #     => "force_unlock", "garnishment" or "inheritance"
     #   source_event = "ForceChangeLockedAccount"
     #     => "ibet_wst_bridge"
+    # TODO: Enforce valid (source_event, message) combinations at the DB layer and reflect the same constraint in ORM typing.
     message: Mapped[str | None] = mapped_column(String(50), index=True)
 
-    @staticmethod
-    def format_timestamp(_datetime: datetime) -> str:
-        """Convert timestamp from UTC to local timezone str
-        :param _datetime:
-        :return: str
-        """
-        if _datetime is None:
-            return ""
-        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
-        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-            datetime_local.year,
-            datetime_local.month,
-            datetime_local.day,
-            datetime_local.hour,
-            datetime_local.minute,
-            datetime_local.second,
-        )
-
     def json(self):
+        assert self.created is not None
         return {
             "transaction_hash": self.transaction_hash,
             "token_address": self.token_address,
@@ -118,19 +103,6 @@ class IDXTransfer(Base):
             "created": self.format_timestamp(self.created),
         }
 
-    FIELDS = {
-        "id": int,
-        "transaction_hash": str,
-        "token_address": str,
-        "from_address": str,
-        "to_address": str,
-        "value": int,
-        "source_event": str,
-        "data": dict,
-        "message": str,
-    }
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXTransferBlockNumber(Base):
     """Synchronized blockNumber of IDXTransfer"""
@@ -141,10 +113,3 @@ class IDXTransferBlockNumber(Base):
     contract_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "contract_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)

@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from app.model.db import AccountTag
 from tests.account_config import eth_account
+from tests.types import SharedContract
 
 
 class TestTaggingAccountAddress:
@@ -38,7 +39,9 @@ class TestTaggingAccountAddress:
 
     # <Normal_1>
     # 新規データ登録
-    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Call API
         request_params = {
             "account_address": self.test_account["account_address"],
@@ -51,12 +54,15 @@ class TestTaggingAccountAddress:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
         account_tag_af = session.scalars(select(AccountTag).limit(1)).first()
+        assert account_tag_af is not None
         assert account_tag_af.account_address == self.test_account["account_address"]
         assert account_tag_af.account_tag == "test_tag"
 
     # <Normal_2_1>
     # 更新登録
-    def test_normal_2_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare data
         account_tag = AccountTag()
         account_tag.account_address = self.test_account["account_address"]
@@ -76,12 +82,15 @@ class TestTaggingAccountAddress:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
         account_tag_af = session.scalars(select(AccountTag).limit(1)).first()
+        assert account_tag_af is not None
         assert account_tag_af.account_address == self.test_account["account_address"]
         assert account_tag_af.account_tag == "test_tag_af"
 
     # <Normal_2_2>
     # 更新登録（Noneに更新）
-    def test_normal_2_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Prepare data
         account_tag = AccountTag()
         account_tag.account_address = self.test_account["account_address"]
@@ -101,6 +110,7 @@ class TestTaggingAccountAddress:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
         account_tag_af = session.scalars(select(AccountTag).limit(1)).first()
+        assert account_tag_af is not None
         assert account_tag_af.account_address == self.test_account["account_address"]
         assert account_tag_af.account_tag is None
 
@@ -110,7 +120,9 @@ class TestTaggingAccountAddress:
 
     # <Error_1>
     # Invalid Parameter
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         # Call API
         request_params = {
             "account_address": "invalid_account_address",

@@ -18,18 +18,20 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
-from typing import TypedDict
+from collections.abc import AsyncGenerator, Generator
+from typing import Any
 
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from pytest_asyncio import is_async_test
 from sqlalchemy import text
+from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import Session
 from web3 import Web3
-from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
-from web3.types import ChecksumAddress, RPCEndpoint
+from web3.types import RPCEndpoint, RPCResponse
 
 from app import config
 from app.database import (
@@ -45,60 +47,19 @@ from app.model.db import Notification
 from app.model.db.base import Base
 from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
-from tests.utils.contract import Contract
+from tests.helpers.contract import Contract
+from tests.types import DeployedContract, SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
-class DeployedContract(TypedDict):
-    address: str
-    abi: dict
-
-
-class SharedContract(TypedDict):
-    PaymentGateway: DeployedContract
-    PersonalInfo: DeployedContract
-    IbetShareExchange: DeployedContract
-    IbetStraightBondExchange: DeployedContract
-    IbetMembershipExchange: DeployedContract
-    IbetCouponExchange: DeployedContract
-    TokenList: DeployedContract
-    E2EMessaging: Web3Contract
-    IbetEscrow: Web3Contract
-    IbetSecurityTokenEscrow: Web3Contract
-    IbetSecurityTokenDVP: Web3Contract
-
-
-class UnitTestAccount(TypedDict):
-    account_address: ChecksumAddress
-    password: str
-
-
 @pytest.fixture(scope="session")
 def client() -> TestClient:
-    AsyncFailOverHTTPProvider.is_default = None
+    setattr(AsyncFailOverHTTPProvider, "is_default", None)
 
     client = TestClient(app)
     return client
-
-
-@pytest.fixture(scope="session")
-def payment_gateway_contract() -> DeployedContract:
-    deployer = eth_account["deployer"]
-    agent = eth_account["agent"]
-
-    web3.eth.default_account = deployer["account_address"]
-
-    contract_address, abi = Contract.deploy_contract(
-        "PaymentGateway", [], deployer["account_address"]
-    )
-    contract = Contract.get_contract("PaymentGateway", contract_address)
-    contract.functions.addAgent(agent["account_address"]).transact(
-        {"from": deployer["account_address"]}
-    )
-
-    return {"address": contract_address, "abi": abi}
 
 
 @pytest.fixture(scope="session")
@@ -127,20 +88,17 @@ def tokenlist_contract() -> DeployedContract:
 
 
 @pytest.fixture(scope="session")
-def e2e_messaging_contract() -> Web3Contract:
+def e2e_messaging_contract() -> DeployedContract:
     deployer = eth_account["deployer"]
     web3.eth.default_account = deployer["account_address"]
-    contract_address, _ = Contract.deploy_contract(
+    contract_address, abi = Contract.deploy_contract(
         contract_name="E2EMessaging", args=[], deployer=deployer["account_address"]
     )
-    _e2e_messaging_contract: Web3Contract = Contract.get_contract(
-        contract_name="E2EMessaging", address=contract_address
-    )
-    return _e2e_messaging_contract
+    return {"address": contract_address, "abi": abi}
 
 
 @pytest.fixture(scope="session")
-def ibet_escrow_contract() -> Web3Contract:
+def ibet_escrow_contract() -> DeployedContract:
     deployer = eth_account["deployer"]["account_address"]
 
     web3.eth.default_account = deployer
@@ -149,7 +107,7 @@ def ibet_escrow_contract() -> Web3Contract:
         contract_name="EscrowStorage", args=[], deployer=deployer
     )
 
-    contract_address, _ = Contract.deploy_contract(
+    contract_address, abi = Contract.deploy_contract(
         contract_name="IbetEscrow", args=[storage_address], deployer=deployer
     )
 
@@ -158,20 +116,17 @@ def ibet_escrow_contract() -> Web3Contract:
     )
     storage.functions.upgradeVersion(contract_address).transact({"from": deployer})
 
-    _ibet_escrow_contract: Web3Contract = Contract.get_contract(
-        contract_name="IbetEscrow", address=contract_address
-    )
-    return _ibet_escrow_contract
+    return {"address": contract_address, "abi": abi}
 
 
 @pytest.fixture(scope="session")
-def ibet_st_escrow_contract() -> Web3Contract:
+def ibet_st_escrow_contract() -> DeployedContract:
     deployer = eth_account["deployer"]["account_address"]
 
     storage_address, _ = Contract.deploy_contract(
         contract_name="EscrowStorage", args=[], deployer=deployer
     )
-    contract_address, _ = Contract.deploy_contract(
+    contract_address, abi = Contract.deploy_contract(
         contract_name="IbetSecurityTokenEscrow",
         args=[storage_address],
         deployer=deployer,
@@ -182,20 +137,17 @@ def ibet_st_escrow_contract() -> Web3Contract:
     )
     storage.functions.upgradeVersion(contract_address).transact({"from": deployer})
 
-    _ibet_st_escrow_contract: Web3Contract = Contract.get_contract(
-        contract_name="IbetSecurityTokenEscrow", address=contract_address
-    )
-    return _ibet_st_escrow_contract
+    return {"address": contract_address, "abi": abi}
 
 
 @pytest.fixture(scope="session")
-def ibet_st_dvp_contract() -> Web3Contract:
+def ibet_st_dvp_contract() -> DeployedContract:
     deployer = eth_account["deployer"]["account_address"]
 
     storage_address, _ = Contract.deploy_contract(
         contract_name="DVPStorage", args=[], deployer=deployer
     )
-    contract_address, _ = Contract.deploy_contract(
+    contract_address, abi = Contract.deploy_contract(
         contract_name="IbetSecurityTokenDVP",
         args=[storage_address],
         deployer=deployer,
@@ -204,37 +156,20 @@ def ibet_st_dvp_contract() -> Web3Contract:
     storage = Contract.get_contract(contract_name="DVPStorage", address=storage_address)
     storage.functions.upgradeVersion(contract_address).transact({"from": deployer})
 
-    _ibet_st_dvp_contract: Web3Contract = Contract.get_contract(
-        contract_name="IbetSecurityTokenDVP", address=contract_address
-    )
-    return _ibet_st_dvp_contract
+    return {"address": contract_address, "abi": abi}
 
 
 @pytest.fixture(scope="session")
 def shared_contract(
-    payment_gateway_contract,
-    personalinfo_contract,
-    tokenlist_contract,
-    e2e_messaging_contract,
-    ibet_escrow_contract,
-    ibet_st_escrow_contract,
-    ibet_st_dvp_contract,
+    personalinfo_contract: DeployedContract,
+    tokenlist_contract: DeployedContract,
+    e2e_messaging_contract: DeployedContract,
+    ibet_escrow_contract: DeployedContract,
+    ibet_st_escrow_contract: DeployedContract,
+    ibet_st_dvp_contract: DeployedContract,
 ) -> SharedContract:
     return {
-        "PaymentGateway": payment_gateway_contract,
         "PersonalInfo": personalinfo_contract,
-        "IbetShareExchange": ibet_exchange_contract(
-            payment_gateway_contract["address"]
-        ),
-        "IbetStraightBondExchange": ibet_exchange_contract(
-            payment_gateway_contract["address"]
-        ),
-        "IbetMembershipExchange": ibet_exchange_contract(
-            payment_gateway_contract["address"]
-        ),
-        "IbetCouponExchange": ibet_exchange_contract(
-            payment_gateway_contract["address"]
-        ),
         "TokenList": tokenlist_contract,
         "E2EMessaging": e2e_messaging_contract,
         "IbetEscrow": ibet_escrow_contract,
@@ -244,7 +179,7 @@ def shared_contract(
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
-async def async_db_engine():
+async def async_db_engine() -> AsyncGenerator[AsyncEngine, None]:
     if async_engine.name != "mysql":
         async with async_engine.begin() as conn:
             # NOTE:MySQLの場合はSEQ機能が利用できない
@@ -261,7 +196,7 @@ async def async_db_engine():
 
 # テーブルの自動作成・自動削除
 @pytest.fixture(scope="session")
-def db_engine():
+def db_engine() -> Generator[Engine, None, None]:
     from app.model.db.base import Base
 
     if engine.name != "mysql":
@@ -277,7 +212,7 @@ def db_engine():
 
 # テーブル上のレコード削除
 @pytest_asyncio.fixture(scope="function", loop_scope="session")
-async def async_db(async_db_engine):
+async def async_db(async_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     # Create DB session
     db = AsyncSessionLocal()
 
@@ -328,7 +263,7 @@ async def async_db(async_db_engine):
 
 # テーブルの自動作成・自動削除
 @pytest.fixture(scope="function")
-def db(db_engine):
+def db(db_engine: Engine) -> Generator[Session, None, None]:
     # Create DB session
     db = SessionLocal()
 
@@ -369,14 +304,18 @@ def db(db_engine):
 
 # ブロックナンバーの保存・復元
 @pytest.fixture(scope="function")
-def block_number(request):
-    evm_snapshot = web3.provider.make_request(RPCEndpoint("evm_snapshot"), [])
+def block_number(request: pytest.FixtureRequest) -> None:
+    evm_snapshot: RPCResponse = web3.provider.make_request(
+        RPCEndpoint("evm_snapshot"), []
+    )
 
     def teardown():
+        result = evm_snapshot.get("result")
+        assert isinstance(result, str)
         web3.provider.make_request(
             RPCEndpoint("evm_revert"),
             [
-                int(evm_snapshot["result"], 16),
+                int(result, 16),
             ],
         )
 
@@ -385,19 +324,19 @@ def block_number(request):
 
 # セッションの作成・自動ロールバック
 @pytest.fixture(scope="function")
-def session(db: Session):
+def session(db: Session) -> Generator[Session, None, None]:
     yield db
 
 
 @pytest_asyncio.fixture(scope="function", loop_scope="session")
-async def async_session(async_db):
+async def async_session(async_db: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
     yield async_db
 
 
 # 発行企業リストのモック
 @pytest.fixture(scope="function")
-def mocked_company_list(request):
-    company_list = json.load(open("data/company_list.json", "r"))
+def mocked_company_list(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
+    company_list: list[dict[str, Any]] = json.load(open("data/company_list.json", "r"))
 
     mocked_company_list = [
         {
@@ -430,34 +369,8 @@ def mocked_company_list(request):
     return mocked_company_list
 
 
-def ibet_exchange_contract(payment_gateway_address) -> DeployedContract:
-    deployer = eth_account["deployer"]
-
-    web3.eth.default_account = deployer["account_address"]
-
-    storage_address, _ = Contract.deploy_contract(
-        "ExchangeStorage", [], deployer["account_address"]
-    )
-
-    args = [
-        payment_gateway_address,
-        storage_address,
-    ]
-
-    contract_address, abi = Contract.deploy_contract(
-        "IbetExchange", args, deployer["account_address"]
-    )
-
-    storage = Contract.get_contract("ExchangeStorage", storage_address)
-    storage.functions.upgradeVersion(contract_address).transact(
-        {"from": deployer["account_address"]}
-    )
-
-    return {"address": contract_address, "abi": abi}
-
-
 # async test で使用するイベントループの固定化
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:

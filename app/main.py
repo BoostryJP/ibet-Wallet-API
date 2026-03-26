@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import ctypes
 from contextlib import asynccontextmanager
 from ctypes.util import find_library
+from typing import AsyncIterator
 
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -34,11 +35,8 @@ from starlette.middleware.cors import CORSMiddleware
 from app import log
 from app.api.routers import (
     admin as routers_admin,
-    bc_explorer as routers_bc_explorer,
     company_info as routers_company_info,
     contract_abi as routers_contract_abi,
-    dex_market as routers_dex_market,
-    dex_order_list as routers_dex_order_list,
     e2e_message as routers_e2e_message,
     eth as routers_eth,
     events as routers_events,
@@ -66,13 +64,17 @@ from app.errors import (
     ServiceUnavailable,
     SuspendedTokenError,
 )
-from app.middleware import ResponseLoggerMiddleware, StripTrailingSlashMiddleware
+from app.middleware import (
+    CacheControlMiddleware,
+    ResponseLoggerMiddleware,
+    StripTrailingSlashMiddleware,
+)
 from app.utils import o11y
 from app.utils.docs_utils import custom_openapi
 
 LOG = log.get_logger()
 
-tags_metadata = [
+tags_metadata: list[dict[str, str]] = [
     {"name": "root", "description": ""},
     {
         "name": "public_info",
@@ -91,25 +93,21 @@ tags_metadata = [
     {"name": "user_position", "description": "User's token balance"},
     {"name": "user_notification", "description": "Notifications for users"},
     {"name": "contract_log", "description": "Contract event logs"},
-    {
-        "name": "dex",
-        "description": "Trade related functions on IbetExchange (Only for utility tokens)",
-    },
     {"name": "messaging", "description": "Messaging functions with external systems"},
 ]
 
 
-def on_startup():
+def on_startup() -> None:
     if PROFILING_MODE is True:
         o11y.setup_pyroscope()
 
 
-async def on_shutdown():
+async def on_shutdown() -> None:
     pass
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     on_startup()
     yield
     await on_shutdown()
@@ -119,7 +117,7 @@ app = FastAPI(
     title="ibet Wallet API",
     description="RPC services that provides utility tools for building a wallet system on ibet network",
     terms_of_service="",
-    version="25.12.0",
+    version="26.3.0",
     contact={"email": "dev@boostry.co.jp"},
     license_info={
         "name": "Apache 2.0",
@@ -140,7 +138,7 @@ libc = ctypes.CDLL(find_library("c"))
 
 
 @app.get("/", tags=["root"])
-def root():
+def root() -> dict[str, str]:
     libc.malloc_trim(0)
     return {"server": BRAND_NAME}
 
@@ -149,7 +147,6 @@ app.include_router(routers_public_info.router)
 app.include_router(routers_company_info.router)
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
-app.include_router(routers_bc_explorer.router)
 app.include_router(routers_contract_abi.router)
 app.include_router(routers_user_info.router)
 app.include_router(routers_eth.router)
@@ -165,8 +162,6 @@ app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)
 app.include_router(routers_mail.router)
 app.include_router(routers_events.router)
-app.include_router(routers_dex_market.router)
-app.include_router(routers_dex_order_list.router)
 
 
 ###############################################################
@@ -180,6 +175,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(CacheControlMiddleware)
 app.add_middleware(ResponseLoggerMiddleware)
 app.add_middleware(StripTrailingSlashMiddleware)
 
@@ -193,7 +189,9 @@ if PROFILING_MODE is True:
 
 # 500:InternalServerError
 @app.exception_handler(Exception)
-async def internal_server_error_handler(request: Request, exc: Exception):
+async def internal_server_error_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
     meta = {"code": 1, "title": "InternalServerError"}
     LOG.error(exc)
     return JSONResponse(
@@ -204,16 +202,19 @@ async def internal_server_error_handler(request: Request, exc: Exception):
 
 # 429:TooManyRequests
 @app.exception_handler(OperationalError)
-async def too_many_request_error_handler(request: Request, exc: OperationalError):
+async def too_many_request_error_handler(
+    request: Request, exc: OperationalError
+) -> JSONResponse:
     meta = {"code": 1, "title": "TooManyRequestsError"}
-    if exc.orig.args == ("FATAL:  sorry, too many clients already\n",):
+    orig = exc.orig
+    if orig is not None and orig.args == ("FATAL:  sorry, too many clients already\n",):
         # NOTE: If postgres is used and has run out of connections, exception above would be thrown.
 
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content=jsonable_encoder({"meta": meta}),
         )
-    elif exc.orig.args[0] == 1040:
+    elif orig is not None and orig.args and orig.args[0] == 1040:
         # NOTE: If MySQL is used and has run out of connections, exception below would be thrown.
         #       sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1040, 'Too many connections')
         #       sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1040, 'ny connections')
@@ -227,10 +228,14 @@ async def too_many_request_error_handler(request: Request, exc: OperationalError
 
 # 400:InvalidParameterError
 @app.exception_handler(InvalidParameterError)
-async def invalid_parameter_error_handler(request: Request, exc: InvalidParameterError):
-    meta = {"code": exc.error_code, "message": exc.message}
-    if getattr(exc, "description"):
-        meta["description"] = exc.description
+async def invalid_parameter_error_handler(
+    request: Request, exc: InvalidParameterError
+) -> JSONResponse:
+    meta = (
+        {"code": exc.error_code, "message": exc.message, "description": exc.description}
+        if exc.description
+        else {"code": exc.error_code, "message": exc.message}
+    )
 
     return JSONResponse(
         status_code=exc.status_code,
@@ -240,7 +245,9 @@ async def invalid_parameter_error_handler(request: Request, exc: InvalidParamete
 
 # 400:SuspendedTokenError
 @app.exception_handler(SuspendedTokenError)
-async def send_transaction_error_handler(request: Request, exc: SuspendedTokenError):
+async def send_transaction_error_handler(
+    request: Request, exc: SuspendedTokenError
+) -> JSONResponse:
     meta = {
         "code": exc.error_code,
         "message": exc.message,
@@ -254,7 +261,9 @@ async def send_transaction_error_handler(request: Request, exc: SuspendedTokenEr
 
 # 404:NotSupported
 @app.exception_handler(NotSupportedError)
-async def not_supported_error_handler(request: Request, exc: NotSupportedError):
+async def not_supported_error_handler(
+    request: Request, exc: NotSupportedError
+) -> JSONResponse:
     meta = {
         "code": exc.error_code,
         "message": exc.message,
@@ -268,10 +277,12 @@ async def not_supported_error_handler(request: Request, exc: NotSupportedError):
 
 # 400-503: AppError
 @app.exception_handler(AppError)
-async def app_error_handler(request: Request, exc: AppError):
-    meta = {"code": exc.error_code, "message": exc.message}
-    if getattr(exc, "description"):
-        meta["description"] = exc.description
+async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+    meta = (
+        {"code": exc.error_code, "message": exc.message, "description": exc.description}
+        if exc.description
+        else {"code": exc.error_code, "message": exc.message}
+    )
 
     return JSONResponse(
         status_code=exc.status_code,
@@ -281,7 +292,9 @@ async def app_error_handler(request: Request, exc: AppError):
 
 # 404:NotFound
 @app.exception_handler(404)
-async def not_found_error_handler(request: Request, exc: StarletteHTTPException):
+async def not_found_error_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
     meta = {"code": 1, "message": "NotFound"}
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -293,7 +306,7 @@ async def not_found_error_handler(request: Request, exc: StarletteHTTPException)
 @app.exception_handler(405)
 async def method_not_allowed_error_handler(
     request: Request, exc: StarletteHTTPException
-):
+) -> JSONResponse:
     meta = {
         "code": 1,
         "message": "Method Not Allowed",
@@ -307,10 +320,14 @@ async def method_not_allowed_error_handler(
 
 # 409:DataConflict
 @app.exception_handler(DataConflictError)
-async def data_conflict_error_handler(request: Request, exc: DataConflictError):
-    meta = {"code": exc.error_code, "message": exc.message}
-    if getattr(exc, "description"):
-        meta["description"] = exc.description
+async def data_conflict_error_handler(
+    request: Request, exc: DataConflictError
+) -> JSONResponse:
+    meta = (
+        {"code": exc.error_code, "message": exc.message, "description": exc.description}
+        if exc.description
+        else {"code": exc.error_code, "message": exc.message}
+    )
 
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
@@ -320,10 +337,14 @@ async def data_conflict_error_handler(request: Request, exc: DataConflictError):
 
 # 404:DataNotExistsError
 @app.exception_handler(DataNotExistsError)
-async def data_not_exists_error_handler(request: Request, exc: DataNotExistsError):
-    meta = {"code": exc.error_code, "message": exc.message}
-    if getattr(exc, "description"):
-        meta["description"] = exc.description
+async def data_not_exists_error_handler(
+    request: Request, exc: DataNotExistsError
+) -> JSONResponse:
+    meta = (
+        {"code": exc.error_code, "message": exc.message, "description": exc.description}
+        if exc.description
+        else {"code": exc.error_code, "message": exc.message}
+    )
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content=jsonable_encoder({"meta": meta}),
@@ -351,7 +372,9 @@ def convert_errors(
 
 # 400:RequestValidationError
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     meta = {
         "code": 88,
         "message": "Invalid Parameter",
@@ -366,7 +389,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # 400:ValidationError
 # NOTE: for exceptions raised directly from Pydantic validation
 @app.exception_handler(ValidationError)
-async def query_validation_exception_handler(request: Request, exc: ValidationError):
+async def query_validation_exception_handler(
+    request: Request, exc: ValidationError
+) -> JSONResponse:
     meta = {
         "code": 88,
         "message": "Invalid Parameter",
@@ -380,7 +405,9 @@ async def query_validation_exception_handler(request: Request, exc: ValidationEr
 
 # 503:ServiceUnavailable
 @app.exception_handler(ServiceUnavailable)
-async def service_unavailable_error_handler(request: Request, exc: ServiceUnavailable):
+async def service_unavailable_error_handler(
+    request: Request, exc: ServiceUnavailable
+) -> JSONResponse:
     meta = {
         "code": 503,
         "message": "Service Unavailable",

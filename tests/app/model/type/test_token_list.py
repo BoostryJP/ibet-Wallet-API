@@ -36,7 +36,9 @@ def test_token_list_item_addresses_are_converted_to_checksum():
         "0x456",  # too short
     ],
 )
-def test_token_list_item_rejects_invalid_addresses(token_address, issuer_address):
+def test_token_list_item_rejects_invalid_addresses(
+    token_address: str, issuer_address: str
+):
     with pytest.raises(ValidationError):
         TokenListItem(
             token_template="ibetBond",

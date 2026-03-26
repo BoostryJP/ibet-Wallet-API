@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import itertools
 from datetime import datetime, timedelta
+from typing import Any
 from unittest.mock import ANY
 
 import pytest
@@ -286,7 +287,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_1(self, get_params, client: TestClient, session: Session):
+    def test_normal_1(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -302,7 +305,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_2,
@@ -357,7 +360,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -382,7 +385,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_2(self, get_params, client: TestClient, session: Session):
+    def test_normal_2(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -398,7 +403,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "offset": 3, "limit": 1},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -414,7 +419,7 @@ class TestPositionStraightBondLockEvent:
             }
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -439,7 +444,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_3(self, get_params, client: TestClient, session: Session):
+    def test_normal_3(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -455,9 +462,9 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "offset": 4},
         )
 
-        assumed_body = []
+        assumed_body: list[dict[str, Any]] = []
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -482,7 +489,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_1_1(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_1_1(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -502,7 +511,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "token_address_list": []},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_2,
                 "lock_address": self.lock_2,
@@ -609,7 +618,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -634,7 +643,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_1_2(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_1_2(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -652,7 +663,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "token_address_list": [self.token_1]},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_2,
@@ -707,7 +718,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -732,7 +743,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_1_3(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_1_3(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -759,7 +772,7 @@ class TestPositionStraightBondLockEvent:
             },
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_2,
                 "lock_address": self.lock_2,
@@ -866,7 +879,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -891,7 +904,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_2(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_2(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -907,7 +922,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "msg_sender": self.lock_1},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -923,7 +938,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -948,7 +963,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_3(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_3(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -964,7 +981,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "lock_address": self.lock_1},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -993,7 +1010,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1018,7 +1035,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_4(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_4(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1034,7 +1053,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "recipient_address": self.recipient_1},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1050,7 +1069,7 @@ class TestPositionStraightBondLockEvent:
             }
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1075,7 +1094,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_5(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_5(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1095,7 +1116,7 @@ class TestPositionStraightBondLockEvent:
             },
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1111,7 +1132,7 @@ class TestPositionStraightBondLockEvent:
             }
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1136,7 +1157,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_6(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_6(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1156,7 +1179,7 @@ class TestPositionStraightBondLockEvent:
             },
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1172,7 +1195,7 @@ class TestPositionStraightBondLockEvent:
             }
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1197,7 +1220,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_4_7(self, get_params, client: TestClient, session: Session):
+    def test_normal_4_7(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1213,7 +1238,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "data": "1"},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1242,7 +1267,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1267,7 +1292,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_5_1(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_1(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1287,7 +1314,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "sort_item": "token_address", "sort_order": 0},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_2,
@@ -1394,7 +1421,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1419,7 +1446,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_5_2(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_2(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1435,7 +1464,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "sort_item": "lock_address", "sort_order": 0},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1490,7 +1519,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1515,7 +1544,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_5_3(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_3(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1531,7 +1562,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "sort_item": "recipient_address", "sort_order": 0},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1586,7 +1617,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1611,7 +1642,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_5_5(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_5(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1627,7 +1660,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "sort_item": "value", "sort_order": 0},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1682,7 +1715,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]
@@ -1707,7 +1740,9 @@ class TestPositionStraightBondLockEvent:
             {},
         ],
     )
-    def test_normal_5_6(self, get_params, client: TestClient, session: Session):
+    def test_normal_5_6(
+        self, get_params: dict[str, Any], client: TestClient, session: Session
+    ):
         config.BOND_TOKEN_ENABLED = True
 
         # Prepare Data
@@ -1723,7 +1758,7 @@ class TestPositionStraightBondLockEvent:
             params={**get_params, "sort_item": "block_timestamp", "sort_order": 0},
         )
 
-        assumed_body = [
+        assumed_body: list[dict[str, Any]] = [
             {
                 "token_address": self.token_1,
                 "lock_address": self.lock_1,
@@ -1778,7 +1813,7 @@ class TestPositionStraightBondLockEvent:
             },
         ]
         if get_params.get("include_token_details") is True:
-            assumed_body = [
+            assumed_body: list[dict[str, Any]] = [
                 {**b, "token": self.expected_token(b["token_address"])}
                 for b in assumed_body
             ]

@@ -18,13 +18,15 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import DateTime, create_engine
 from sqlalchemy.dialects.mysql import DATETIME as MySQLDATETIME
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app import config, log
-from app.utils import alchemy
+
+local_tz = ZoneInfo(config.TZ)
 
 LOG = log.get_logger()
 
@@ -55,21 +57,27 @@ class Base(DeclarativeBase):
             DateTime, default=naive_utcnow, onupdate=naive_utcnow
         )
 
-    def to_dict(self):
-        intersection = set(self.__table__.columns.keys()) & set(self.FIELDS)
-        return dict(
-            map(
-                lambda key: (
-                    key,
-                    (lambda value: self.FIELDS[key](value) if value else None)(
-                        getattr(self, key)
-                    ),
-                ),
-                intersection,
-            )
-        )
+    @staticmethod
+    def replace_to_local_tz(_datetime: datetime) -> datetime:
+        """Convert timestamp from UTC to local timezone
+        :param _datetime:
+        :return: datetime
+        """
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return datetime_local
 
-    FIELDS = {
-        "created": alchemy.datetime_to_timestamp,
-        "modified": alchemy.datetime_to_timestamp,
-    }
+    @staticmethod
+    def format_timestamp(_datetime: datetime) -> str:
+        """Convert timestamp from UTC to local timezone str
+        :param _datetime:
+        :return: str
+        """
+        datetime_local = _datetime.replace(tzinfo=UTC).astimezone(local_tz)
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            datetime_local.year,
+            datetime_local.month,
+            datetime_local.day,
+            datetime_local.hour,
+            datetime_local.minute,
+            datetime_local.second,
+        )

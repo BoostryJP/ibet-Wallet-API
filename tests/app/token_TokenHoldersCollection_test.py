@@ -24,36 +24,25 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import Listing, TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
-from tests.utils.contract import Contract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 from sqlalchemy.orm import Session
 
 from tests.account_config import eth_account
-from tests.contract_modules import (
-    bond_transfer_to_exchange,
-    issue_bond_token,
-    register_bond_list,
-    register_personalinfo,
-    transfer_token,
-)
-
-
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    return Processor
+from tests.helpers import IbetStraightBondTestHelper, PersonalInfoHelper
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
-    processor = test_module()
-    return processor
+def processor() -> Processor:
+    return Processor()
 
 
 class TestTokenTokenHoldersCollection:
@@ -75,8 +64,11 @@ class TestTokenTokenHoldersCollection:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> Web3Contract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -113,13 +105,16 @@ class TestTokenTokenHoldersCollection:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(issuer, args)
-        register_bond_list(issuer, token, token_list)
-
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], args)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"],
+            token.address,
+            token_list["address"],
+        )
         return token
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session) -> None:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -141,7 +136,7 @@ class TestTokenTokenHoldersCollection:
     def test_normal_1(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -152,34 +147,41 @@ class TestTokenTokenHoldersCollection:
         personal_info_contract = shared_contract["PersonalInfo"]
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
 
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
 
-        register_personalinfo(self.trader, personal_info_contract)
+        PersonalInfoHelper.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
 
         # Transfer
-        bond_transfer_to_exchange(
-            self.issuer, {"address": escrow_contract.address}, token, 10000
-        )
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
+        )
+        IbetStraightBondTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
             self.trader["account_address"],
             30000,
         )
-        block_number = web3.eth.block_number
+
+        current_block_number = web3.eth.block_number
         list_id = str(uuid.uuid4())
 
         # Request target API
-        apiurl = self.apiurl_base.format(contract_address=token["address"])
+        apiurl = self.apiurl_base.format(contract_address=token.address)
 
-        request_params = {"block_number": block_number, "list_id": list_id}
+        request_params = {"block_number": current_block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
         resp = client.post(apiurl, headers=headers, json=request_params)
 
@@ -198,7 +200,7 @@ class TestTokenTokenHoldersCollection:
             asyncio.run(processor.collect())
 
         apiurl = self.apiurl_after_post.format(
-            contract_address=token["address"], list_id=list_id
+            contract_address=token.address, list_id=list_id
         )
         resp = client.get(apiurl)
         holders = [
@@ -220,7 +222,7 @@ class TestTokenTokenHoldersCollection:
     def test_normal_2(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -232,29 +234,32 @@ class TestTokenTokenHoldersCollection:
 
         token1 = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token1["address"], session)
+        self.listing_token(token1.address, session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         token2 = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token2["address"], session)
+        self.listing_token(token2.address, session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        for i, address in enumerate([token1["address"], token2["address"]]):
-            block_number = web3.eth.block_number
+        for i, address in enumerate([token1.address, token2.address]):
+            current_block_number = web3.eth.block_number
             list_id = str(uuid.uuid4())
             # Request target API
             apiurl = self.apiurl_base.format(contract_address=address)
 
-            request_params = {"block_number": block_number - i, "list_id": list_id}
+            request_params = {
+                "block_number": current_block_number - i,
+                "list_id": list_id,
+            }
             headers = {"Content-Type": "application/json"}
             resp = client.post(apiurl, headers=headers, json=request_params)
 
@@ -270,7 +275,7 @@ class TestTokenTokenHoldersCollection:
     def test_normal_3(
         self,
         client: TestClient,
-        shared_contract,
+        shared_contract: SharedContract,
         session: Session,
         processor: Processor,
         block_number: None,
@@ -282,22 +287,22 @@ class TestTokenTokenHoldersCollection:
 
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
+        self.listing_token(token.address, session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        block_number = web3.eth.block_number
+        current_block_number = web3.eth.block_number
         list_id1 = str(uuid.uuid4())
         list_id2 = str(uuid.uuid4())
 
         for list_id in [list_id1, list_id2]:
             # Request target API
-            apiurl = self.apiurl_base.format(contract_address=token["address"])
+            apiurl = self.apiurl_base.format(contract_address=token.address)
 
-            request_params = {"block_number": block_number, "list_id": list_id}
+            request_params = {"block_number": current_block_number, "list_id": list_id}
             headers = {"Content-Type": "application/json"}
             resp = client.post(apiurl, headers=headers, json=request_params)
 

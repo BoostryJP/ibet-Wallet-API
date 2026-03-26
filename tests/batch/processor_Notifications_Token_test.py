@@ -17,11 +17,9 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from importlib import reload
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -43,32 +41,20 @@ from app.model.db import (
     NotificationType,
 )
 from tests.account_config import eth_account
-from tests.conftest import DeployedContract, SharedContract, UnitTestAccount
-from tests.contract_modules import (
-    bond_change_to_redeemed,
-    coupon_register_list,
-    coupon_transfer_to_exchange,
-    coupon_withdraw_from_exchange,
-    issue_bond_token,
-    issue_coupon_token,
-    issue_share_token,
-    register_bond_list,
-    register_personalinfo,
-    register_share_list,
-    share_apply_for_transfer,
-    share_approve_transfer,
-    share_cancel_transfer,
-    share_change_to_canceled,
-    share_force_lock,
-    share_force_unlock,
-    share_set_transfer_approval_required,
-    transfer_coupon_token,
-    transfer_share_token,
-    untransferable_share_token,
+from tests.helpers import (
+    IbetCouponTestHelper,
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
 )
+from tests.helpers.ibet_exchange_helpers import withdraw_from_exchange
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 if TYPE_CHECKING:
-    from batch.processor_Notifications_Token import EventWatcher
+    from batch.processor_Notifications_Token import AttributeWatcher, EventWatcher
+
+    WatcherFactory = Callable[[str], EventWatcher | AttributeWatcher]
+else:
+    WatcherFactory = Callable[[str], object]
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -77,18 +63,17 @@ web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 @pytest.fixture(scope="function")
 def watcher_factory(
     async_session: AsyncSession, shared_contract: SharedContract
-) -> Callable[[str], EventWatcher]:
-    def _watcher(cls_name):
+) -> WatcherFactory:
+    def _watcher(cls_name: str):
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
 
         from batch import processor_Notifications_Token
 
         test_module = reload(processor_Notifications_Token)
-        test_module.db_session = async_session
+        setattr(test_module, "db_session", async_session)
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
-        watcher.from_block = web3.eth.block_number
         return watcher
 
     return _watcher
@@ -114,11 +99,15 @@ async def prepare_coupon_token(
         "contactInformation": "問い合わせ先",
         "privacyPolicy": "プライバシーポリシー",
     }
-    token = issue_coupon_token(issuer, args)
-    coupon_register_list(issuer, token, token_list)
+    token = IbetCouponTestHelper.issue(issuer["account_address"], args)
+    IbetCouponTestHelper.register_token_list(
+        issuer["account_address"],
+        token.address,
+        token_list["address"],
+    )
 
     _listing = Listing()
-    _listing.token_address = token["address"]
+    _listing.token_address = token.address
     _listing.is_public = True
     _listing.max_holding_quantity = 1000000
     _listing.max_sell_amount = 1000000
@@ -171,12 +160,17 @@ async def prepare_bond_token(
         "interestPaymentCurrency": "JPY",
         "redemptionValueCurrency": "JPY",
         "baseFxRate": "",
+        "requirePersonalInfoRegistered": False,
     }
-    token = issue_bond_token(issuer, args)
-    register_bond_list(issuer, token, token_list)
+    token = IbetStraightBondTestHelper.issue(issuer["account_address"], args)
+    IbetStraightBondTestHelper.register_token_list(
+        issuer["account_address"],
+        token.address,
+        token_list["address"],
+    )
 
     _listing = Listing()
-    _listing.token_address = token["address"]
+    _listing.token_address = token.address
     _listing.is_public = True
     _listing.max_holding_quantity = 1000000
     _listing.max_sell_amount = 1000000
@@ -211,12 +205,17 @@ async def prepare_share_token(
         "privacyPolicy": "プライバシーポリシー",
         "memo": "メモ",
         "transferable": True,
+        "requirePersonalInfoRegistered": False,
     }
-    token = issue_share_token(issuer, args)
-    register_share_list(issuer, token, token_list)
+    token = IbetShareTestHelper.issue(issuer["account_address"], args)
+    IbetShareTestHelper.register_token_list(
+        issuer["account_address"],
+        token.address,
+        token_list["address"],
+    )
 
     _listing = Listing()
-    _listing.token_address = token["address"]
+    _listing.token_address = token.address
     _listing.is_public = True
     _listing.max_holding_quantity = 1000000
     _listing.max_sell_amount = 1000000
@@ -240,11 +239,15 @@ class TestWatchTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -253,14 +256,19 @@ class TestWatchTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit Transfer event
-        transfer_coupon_token(self.issuer, token, self.trader, 100)
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
 
         # Run target process
         await watcher.loop()
@@ -278,6 +286,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -290,35 +299,40 @@ class TestWatchTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テストクーポン",
             "exchange_address": "",
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -327,15 +341,25 @@ class TestWatchTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit Transfer event
-        transfer_coupon_token(self.issuer, token, self.trader, 100)
-        transfer_coupon_token(self.issuer, token, self.trader2, 200)
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            200,
+        )
 
         # Run target process
         await watcher.loop()
@@ -360,6 +384,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -372,7 +397,7 @@ class TestWatchTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テストクーポン",
             "exchange_address": "",
             "token_type": "IbetCoupon",
@@ -388,6 +413,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -400,35 +426,40 @@ class TestWatchTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テストクーポン",
             "exchange_address": "",
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -437,7 +468,7 @@ class TestWatchTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
         async_session.add(idx_token_list_item)
@@ -463,16 +494,21 @@ class TestWatchTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # Transfer from DEX
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
 
         # Issue token
@@ -481,20 +517,25 @@ class TestWatchTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Transfer to DEX
-        coupon_transfer_to_exchange(
-            invoker=self.issuer, exchange=exchange_contract, token=token, amount=100
+        IbetCouponTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            exchange_contract["address"],
+            100,
         )
 
         # Emit Transfer event: Withdraw from DEX
-        coupon_withdraw_from_exchange(
-            invoker=self.issuer, exchange=exchange_contract, token=token, amount=100
+        withdraw_from_exchange(
+            self.issuer,
+            {"address": exchange_contract["address"]},
+            {"address": token.address},
         )
 
         # Run target process
@@ -523,6 +564,7 @@ class TestWatchTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.TRANSFER
         assert _notification.priority == 0
@@ -535,25 +577,26 @@ class TestWatchTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テストクーポン",
             "exchange_address": "",
             "token_type": "IbetCoupon",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -567,18 +610,22 @@ class TestWatchTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = shared_contract["IbetCouponExchange"]
+        exchange_contract = shared_contract["IbetEscrow"]
         token_list_contract = shared_contract["TokenList"]
         token = await prepare_coupon_token(
             self.issuer, exchange_contract, token_list_contract, async_session
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetCoupon"
         async_session.add(idx_token_list_item)
@@ -614,11 +661,15 @@ class TestWatchApplyForTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -632,18 +683,29 @@ class TestWatchApplyForTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ApplyForTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
-        share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            100,
+            "TEST_DATA",
+        )
 
         # Run target process
         await watcher.loop()
@@ -661,6 +723,7 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
         assert _notification.block_timestamp is not None
@@ -673,35 +736,40 @@ class TestWatchApplyForTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.APPLY_FOR_TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -715,19 +783,36 @@ class TestWatchApplyForTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emmit ApplyForTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
-        share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
-        share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            20,
+            "TEST_DATA2",
+        )
 
         # Run target process
         await watcher.loop()
@@ -752,6 +837,7 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER
         assert _notification.priority == 0
@@ -766,7 +852,7 @@ class TestWatchApplyForTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
@@ -782,6 +868,7 @@ class TestWatchApplyForTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER
         assert _notification.priority == 0
@@ -796,35 +883,40 @@ class TestWatchApplyForTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.APPLY_FOR_TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -838,17 +930,22 @@ class TestWatchApplyForTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Not emit ApplyForTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
 
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
@@ -867,6 +964,7 @@ class TestWatchApplyForTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -880,11 +978,15 @@ class TestWatchApplyForTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -896,17 +998,27 @@ class TestWatchApplyForTransfer:
             async_session,
         )
 
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
 
         # Transfer
-        share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -942,11 +1054,15 @@ class TestWatchApproveTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApproveTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -960,19 +1076,32 @@ class TestWatchApproveTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ApproveTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
-        share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
-        share_approve_transfer(self.issuer, token, 0, "TEST_DATA")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            100,
+            "TEST_DATA",
+        )
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 0, "TEST_DATA"
+        )
 
         # Run target process
         await watcher.loop()
@@ -990,6 +1119,7 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER
         assert _notification.priority == 0
@@ -1003,35 +1133,40 @@ class TestWatchApproveTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.APPROVE_TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApproveTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1045,21 +1180,42 @@ class TestWatchApproveTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ApproveTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
-        share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
-        share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
-        share_approve_transfer(self.issuer, token, 0, "TEST_DATA1")
-        share_approve_transfer(self.issuer, token, 1, "TEST_DATA2")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            20,
+            "TEST_DATA2",
+        )
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 0, "TEST_DATA1"
+        )
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 1, "TEST_DATA2"
+        )
 
         # Run target process
         await watcher.loop()
@@ -1084,6 +1240,7 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER
         assert _notification.priority == 0
@@ -1097,7 +1254,7 @@ class TestWatchApproveTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
@@ -1113,6 +1270,7 @@ class TestWatchApproveTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER
         assert _notification.priority == 0
@@ -1126,35 +1284,40 @@ class TestWatchApproveTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.APPROVE_TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1168,17 +1331,22 @@ class TestWatchApproveTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # No emit ApproveTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
 
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
@@ -1197,6 +1365,7 @@ class TestWatchApproveTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1210,11 +1379,15 @@ class TestWatchApproveTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1226,18 +1399,30 @@ class TestWatchApproveTransfer:
             async_session,
         )
 
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
 
         # Transfer
-        share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
-        share_approve_transfer(self.issuer, token, 0, "TEST_DATA1")
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 0, "TEST_DATA1"
+        )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -1273,11 +1458,15 @@ class TestWatchCancelTransfer:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1291,19 +1480,32 @@ class TestWatchCancelTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit CancelTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
-        share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
-        share_cancel_transfer(self.issuer, token, 0, "TEST_DATA")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            100,
+            "TEST_DATA",
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token.address, 0, "TEST_DATA"
+        )
 
         # Run target process
         await watcher.loop()
@@ -1321,6 +1523,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1334,35 +1537,40 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CANCEL_TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single Token / Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1376,21 +1584,42 @@ class TestWatchCancelTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit CancelTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
-        share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
-        share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
-        share_cancel_transfer(self.issuer, token, 0, "TEST_DATA1")
-        share_cancel_transfer(self.issuer, token, 1, "TEST_DATA2")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            20,
+            "TEST_DATA2",
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token.address, 0, "TEST_DATA1"
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token.address, 1, "TEST_DATA2"
+        )
 
         # Run target process
         await watcher.loop()
@@ -1415,6 +1644,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1428,7 +1658,7 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
@@ -1444,6 +1674,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1457,35 +1688,40 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CANCEL_TRANSFER,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi token / Multi event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1499,18 +1735,35 @@ class TestWatchCancelTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token_1["address"]
+        idx_token_list_item.token_address = token_1.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token_1, 100)
-        share_set_transfer_approval_required(self.issuer, token_1, True)
-        share_apply_for_transfer(self.trader, token_1, self.trader2, 10, "TEST_DATA1")
-        share_apply_for_transfer(self.trader, token_1, self.trader2, 20, "TEST_DATA2")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token_1.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token_1.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token_1.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token_1.address,
+            self.trader2["account_address"],
+            20,
+            "TEST_DATA2",
+        )
 
         # Issue token (2)
         token_2 = await prepare_share_token(
@@ -1522,22 +1775,49 @@ class TestWatchCancelTransfer:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token_2["address"]
+        idx_token_list_item.token_address = token_2.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
-        transfer_share_token(self.issuer, self.trader, token_2, 100)
-        share_set_transfer_approval_required(self.issuer, token_2, True)
-        share_apply_for_transfer(self.trader, token_2, self.trader2, 10, "TEST_DATA1")
-        share_apply_for_transfer(self.trader, token_2, self.trader2, 20, "TEST_DATA2")
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token_2.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token_2.address, True
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token_2.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token_2.address,
+            self.trader2["account_address"],
+            20,
+            "TEST_DATA2",
+        )
 
         # Emit CancelTransfer event
-        share_cancel_transfer(self.issuer, token_1, 0, "TEST_DATA1")
-        share_cancel_transfer(self.issuer, token_1, 1, "TEST_DATA2")
-        share_cancel_transfer(self.issuer, token_2, 0, "TEST_DATA1")
-        share_cancel_transfer(self.issuer, token_2, 1, "TEST_DATA2")
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token_1.address, 0, "TEST_DATA1"
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token_1.address, 1, "TEST_DATA2"
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token_2.address, 0, "TEST_DATA1"
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token_2.address, 1, "TEST_DATA2"
+        )
 
         # Run target process
         await watcher.loop()
@@ -1562,6 +1842,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1575,7 +1856,7 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token_1["address"],
+            "token_address": token_1.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
@@ -1591,6 +1872,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1604,7 +1886,7 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token_1["address"],
+            "token_address": token_1.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
@@ -1620,6 +1902,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1633,7 +1916,7 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token_2["address"],
+            "token_address": token_2.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
@@ -1649,6 +1932,7 @@ class TestWatchCancelTransfer:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER
         assert _notification.priority == 0
@@ -1662,35 +1946,40 @@ class TestWatchCancelTransfer:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token_2["address"],
+            "token_address": token_2.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CANCEL_TRANSFER,
-                        NotificationBlockNumber.contract_address == token_1["address"],
+                        NotificationBlockNumber.contract_address == token_1.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # No event logs
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchCancelTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1703,17 +1992,22 @@ class TestWatchCancelTransfer:
             async_session,
         )
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Not emit CancelTransfer event
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
 
         # Run target process
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
@@ -1732,6 +2026,7 @@ class TestWatchCancelTransfer:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -1745,11 +2040,15 @@ class TestWatchCancelTransfer:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchApplyForTransfer")
 
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1761,18 +2060,30 @@ class TestWatchCancelTransfer:
             async_session,
         )
 
-        register_personalinfo(self.trader, personal_info_contract)
-        register_personalinfo(self.trader2, personal_info_contract)
-
-        transfer_share_token(self.issuer, self.trader, token, 100)
-        share_set_transfer_approval_required(self.issuer, token, True)
+        IbetShareTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            100,
+        )
+        IbetShareTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
 
         # Transfer
-        share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
-        share_cancel_transfer(self.issuer, token, 0, "TEST_DATA1")
+        IbetShareTestHelper.apply_for_token_transfer(
+            self.trader["account_address"],
+            token.address,
+            self.trader2["account_address"],
+            10,
+            "TEST_DATA1",
+        )
+        IbetShareTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token.address, 0, "TEST_DATA1"
+        )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -1807,10 +2118,14 @@ class TestWatchForceLock:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1824,20 +2139,20 @@ class TestWatchForceLock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ForceLock event
-        share_force_lock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            account_address=self.issuer["account_address"],
-            amount=10,
-            data_str="test_data",
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
 
         # Run target process
@@ -1856,6 +2171,7 @@ class TestWatchForceLock:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.FORCE_LOCK
         assert _notification.priority == 0
@@ -1869,34 +2185,39 @@ class TestWatchForceLock:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.FORCE_LOCK,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1910,28 +2231,28 @@ class TestWatchForceLock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ForceLock event
-        share_force_lock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            account_address=self.issuer["account_address"],
-            amount=10,
-            data_str="test_data",
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
-        share_force_lock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            account_address=self.issuer["account_address"],
-            amount=10,
-            data_str="test_data",
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
 
         # Run target process
@@ -1943,28 +2264,33 @@ class TestWatchForceLock:
         _notification_list = (await async_session.scalars(select(Notification))).all()
         assert len(_notification_list) == 2
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.FORCE_LOCK,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1978,7 +2304,7 @@ class TestWatchForceLock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -1999,6 +2325,7 @@ class TestWatchForceLock:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
@@ -2012,10 +2339,14 @@ class TestWatchForceLock:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceLock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2029,7 +2360,7 @@ class TestWatchForceLock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -2064,10 +2395,14 @@ class TestWatchForceUnlock:
     # <Normal_1>
     # Single event logs
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2081,28 +2416,29 @@ class TestWatchForceUnlock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ForceUnlock event
-        share_force_lock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            account_address=self.issuer["account_address"],
-            amount=10,
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
-        share_force_unlock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            target=self.issuer["account_address"],
-            recipient=self.issuer["account_address"],
-            amount=10,
-            data_str="test_data",
+        IbetShareTestHelper.force_unlock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
 
         # Run target process
@@ -2121,6 +2457,7 @@ class TestWatchForceUnlock:
                 .limit(1)
             )
         ).first()
+        assert _notification is not None
         assert _notification.notification_category == "event_log"
         assert _notification.notification_type == NotificationType.FORCE_UNLOCK
         assert _notification.priority == 0
@@ -2135,34 +2472,39 @@ class TestWatchForceUnlock:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.FORCE_UNLOCK,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2176,37 +2518,38 @@ class TestWatchForceUnlock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ForceUnlock event
-        share_force_lock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            account_address=self.issuer["account_address"],
-            amount=20,
+        IbetShareTestHelper.force_lock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            20,
+            "test_data",
         )
-        share_force_unlock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            target=self.issuer["account_address"],
-            recipient=self.issuer["account_address"],
-            amount=10,
-            data_str="test_data",
+        IbetShareTestHelper.force_unlock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
-        share_force_unlock(
-            invoker=self.issuer,
-            token=token,
-            lock_address=self.lock_account["account_address"],
-            target=self.issuer["account_address"],
-            recipient=self.issuer["account_address"],
-            amount=10,
-            data_str="test_data",
+        IbetShareTestHelper.force_unlock_token(
+            self.issuer["account_address"],
+            token.address,
+            self.lock_account["account_address"],
+            self.issuer["account_address"],
+            self.issuer["account_address"],
+            10,
+            "test_data",
         )
 
         # Run target process
@@ -2218,28 +2561,33 @@ class TestWatchForceUnlock:
         _notification_list = (await async_session.scalars(select(Notification))).all()
         assert len(_notification_list) == 2
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.FORCE_UNLOCK,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2253,7 +2601,7 @@ class TestWatchForceUnlock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -2274,6 +2622,7 @@ class TestWatchForceUnlock:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # ###########################################################################
@@ -2287,10 +2636,14 @@ class TestWatchForceUnlock:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchForceUnlock")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2304,7 +2657,7 @@ class TestWatchForceUnlock:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -2338,10 +2691,14 @@ class TestWatchChangeToRedeemed:
     # <Normal_1>
     # Initial Sync
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2355,7 +2712,7 @@ class TestWatchChangeToRedeemed:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetStraightBond"
         async_session.add(idx_token_list_item)
@@ -2379,28 +2736,33 @@ class TestWatchChangeToRedeemed:
         ).first()
         assert _notification is None
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CHANGE_TO_REDEEMED,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2414,7 +2776,7 @@ class TestWatchChangeToRedeemed:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetStraightBond"
         async_session.add(idx_token_list_item)
@@ -2423,15 +2785,14 @@ class TestWatchChangeToRedeemed:
         notification_block_number.notification_type = (
             NotificationType.CHANGE_TO_REDEEMED
         )
-        notification_block_number.contract_address = token["address"]
+        notification_block_number.contract_address = token.address
         notification_block_number.latest_block_number = web3.eth.block_number
         async_session.add(notification_block_number)
         await async_session.commit()
 
         # Emit ChangeToRedeemed event
-        bond_change_to_redeemed(
-            invoker=self.issuer,
-            token=token,
+        IbetStraightBondTestHelper.change_to_redeemed(
+            self.issuer["account_address"], token.address
         )
 
         # Run target process
@@ -2455,33 +2816,38 @@ class TestWatchChangeToRedeemed:
         assert _notification_list[0].metainfo == {
             "company_name": "株式会社DEMO",
             "exchange_address": "",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト債券",
             "token_type": "IbetStraightBond",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CHANGE_TO_REDEEMED,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2495,7 +2861,7 @@ class TestWatchChangeToRedeemed:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetStraightBond"
         async_session.add(idx_token_list_item)
@@ -2504,19 +2870,17 @@ class TestWatchChangeToRedeemed:
         notification_block_number.notification_type = (
             NotificationType.CHANGE_TO_REDEEMED
         )
-        notification_block_number.contract_address = token["address"]
+        notification_block_number.contract_address = token.address
         notification_block_number.latest_block_number = web3.eth.block_number
         async_session.add(notification_block_number)
         await async_session.commit()
 
         # Emit ChangeToRedeemed event
-        bond_change_to_redeemed(
-            invoker=self.issuer,
-            token=token,
+        IbetStraightBondTestHelper.change_to_redeemed(
+            self.issuer["account_address"], token.address
         )
-        bond_change_to_redeemed(
-            invoker=self.issuer,
-            token=token,
+        IbetStraightBondTestHelper.change_to_redeemed(
+            self.issuer["account_address"], token.address
         )
 
         # Run target process
@@ -2540,7 +2904,7 @@ class TestWatchChangeToRedeemed:
         assert _notification_list[0].metainfo == {
             "company_name": "株式会社DEMO",
             "exchange_address": "",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト債券",
             "token_type": "IbetStraightBond",
         }
@@ -2555,33 +2919,38 @@ class TestWatchChangeToRedeemed:
         assert _notification_list[1].metainfo == {
             "company_name": "株式会社DEMO",
             "exchange_address": "",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト債券",
             "token_type": "IbetStraightBond",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CHANGE_TO_REDEEMED,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # No event logs
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2595,7 +2964,7 @@ class TestWatchChangeToRedeemed:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetStraightBond"
         async_session.add(idx_token_list_item)
@@ -2604,7 +2973,7 @@ class TestWatchChangeToRedeemed:
         notification_block_number.notification_type = (
             NotificationType.CHANGE_TO_REDEEMED
         )
-        notification_block_number.contract_address = token["address"]
+        notification_block_number.contract_address = token.address
         notification_block_number.latest_block_number = web3.eth.block_number
         async_session.add(notification_block_number)
         await async_session.commit()
@@ -2624,15 +2993,20 @@ class TestWatchChangeToRedeemed:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Skip past data on initial sync
     async def test_normal_5(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2646,16 +3020,16 @@ class TestWatchChangeToRedeemed:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetStraightBond"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ChangeToRedeemed event
-        bond_change_to_redeemed(
-            invoker=self.issuer,
-            token=token,
+        IbetStraightBondTestHelper.change_to_redeemed(
+            self.issuer["account_address"],
+            token.address,
         )
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
 
@@ -2671,6 +3045,7 @@ class TestWatchChangeToRedeemed:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # ###########################################################################
@@ -2684,10 +3059,14 @@ class TestWatchChangeToRedeemed:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToRedeemed")
-        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2701,7 +3080,7 @@ class TestWatchChangeToRedeemed:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetStraightBond"
         async_session.add(idx_token_list_item)
@@ -2735,10 +3114,14 @@ class TestWatchChangeToCanceled:
     # <Normal_1>
     # Initial Sync
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2752,7 +3135,7 @@ class TestWatchChangeToCanceled:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -2776,28 +3159,33 @@ class TestWatchChangeToCanceled:
         ).first()
         assert _notification is None
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CHANGE_TO_CANCELED,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single event logs
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2811,7 +3199,7 @@ class TestWatchChangeToCanceled:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -2820,15 +3208,15 @@ class TestWatchChangeToCanceled:
         notification_block_number.notification_type = (
             NotificationType.CHANGE_TO_CANCELED
         )
-        notification_block_number.contract_address = token["address"]
+        notification_block_number.contract_address = token.address
         notification_block_number.latest_block_number = web3.eth.block_number
         async_session.add(notification_block_number)
         await async_session.commit()
 
         # Emit ChangeToCanceled event
-        share_change_to_canceled(
-            invoker=self.issuer,
-            token=token,
+        IbetShareTestHelper.change_to_canceled(
+            self.issuer["account_address"],
+            token.address,
         )
 
         # Run target process
@@ -2852,33 +3240,38 @@ class TestWatchChangeToCanceled:
         assert _notification_list[0].metainfo == {
             "company_name": "株式会社DEMO",
             "exchange_address": "",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CHANGE_TO_CANCELED,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi event logs
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2892,7 +3285,7 @@ class TestWatchChangeToCanceled:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -2901,19 +3294,19 @@ class TestWatchChangeToCanceled:
         notification_block_number.notification_type = (
             NotificationType.CHANGE_TO_CANCELED
         )
-        notification_block_number.contract_address = token["address"]
+        notification_block_number.contract_address = token.address
         notification_block_number.latest_block_number = web3.eth.block_number
         async_session.add(notification_block_number)
         await async_session.commit()
 
         # Emit ChangeToCanceled event
-        share_change_to_canceled(
-            invoker=self.issuer,
-            token=token,
+        IbetShareTestHelper.change_to_canceled(
+            self.issuer["account_address"],
+            token.address,
         )
-        share_change_to_canceled(
-            invoker=self.issuer,
-            token=token,
+        IbetShareTestHelper.change_to_canceled(
+            self.issuer["account_address"],
+            token.address,
         )
 
         # Run target process
@@ -2937,7 +3330,7 @@ class TestWatchChangeToCanceled:
         assert _notification_list[0].metainfo == {
             "company_name": "株式会社DEMO",
             "exchange_address": "",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "token_type": "IbetShare",
         }
@@ -2952,33 +3345,38 @@ class TestWatchChangeToCanceled:
         assert _notification_list[1].metainfo == {
             "company_name": "株式会社DEMO",
             "exchange_address": "",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "テスト株式",
             "token_type": "IbetShare",
         }
 
-        _notification_block_number: NotificationBlockNumber = (
+        _notification_block_number = (
             await async_session.scalars(
                 select(NotificationBlockNumber)
                 .where(
                     and_(
                         NotificationBlockNumber.notification_type
                         == NotificationType.CHANGE_TO_CANCELED,
-                        NotificationBlockNumber.contract_address == token["address"],
+                        NotificationBlockNumber.contract_address == token.address,
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # No event logs
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -2992,7 +3390,7 @@ class TestWatchChangeToCanceled:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -3001,7 +3399,7 @@ class TestWatchChangeToCanceled:
         notification_block_number.notification_type = (
             NotificationType.CHANGE_TO_CANCELED
         )
-        notification_block_number.contract_address = token["address"]
+        notification_block_number.contract_address = token.address
         notification_block_number.latest_block_number = web3.eth.block_number
         async_session.add(notification_block_number)
         await async_session.commit()
@@ -3021,15 +3419,20 @@ class TestWatchChangeToCanceled:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Skip past data on initial sync
     async def test_normal_5(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3043,16 +3446,16 @@ class TestWatchChangeToCanceled:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
         await async_session.commit()
 
         # Emit ChangeToCanceled event
-        share_change_to_canceled(
-            invoker=self.issuer,
-            token=token,
+        IbetShareTestHelper.change_to_canceled(
+            self.issuer["account_address"],
+            token.address,
         )
         web3.provider.make_request(RPCEndpoint("evm_mine"), [])
 
@@ -3068,6 +3471,7 @@ class TestWatchChangeToCanceled:
         _notification_block_number = (
             await async_session.scalars(select(NotificationBlockNumber).limit(1))
         ).first()
+        assert _notification_block_number is not None
         assert _notification_block_number.latest_block_number == block_number
 
     # ###########################################################################
@@ -3081,10 +3485,14 @@ class TestWatchChangeToCanceled:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchChangeToCanceled")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3098,7 +3506,7 @@ class TestWatchChangeToCanceled:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -3132,10 +3540,14 @@ class TestWatchWatchTransferableAttribute:
     # <Normal_1>
     # Initial Sync
     async def test_normal_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3149,7 +3561,7 @@ class TestWatchWatchTransferableAttribute:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -3164,28 +3576,33 @@ class TestWatchWatchTransferableAttribute:
         ).first()
         assert _notification is None
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
                     and_(
-                        NotificationAttributeValue.contract_address == token["address"],
+                        NotificationAttributeValue.contract_address == token.address,
                         NotificationAttributeValue.attribute_key == "transferable",
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": True}
 
     # <Normal_2>
     # Attribute not changed
     @pytest.mark.freeze_time(datetime(2025, 7, 31, 1, 35, 0, tzinfo=timezone.utc))
     async def test_normal_2(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3199,7 +3616,7 @@ class TestWatchWatchTransferableAttribute:
         )
 
         idx_token = IDXShareToken()
-        idx_token.token_address = token["address"]
+        idx_token.token_address = token.address
         idx_token.token_template = "IbetShare"
         idx_token.name = "test_token"
         idx_token.transferable = True
@@ -3209,13 +3626,13 @@ class TestWatchWatchTransferableAttribute:
         async_session.add(idx_token)
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
 
         notification_attribute_value = NotificationAttributeValue()
-        notification_attribute_value.contract_address = token["address"]
+        notification_attribute_value.contract_address = token.address
         notification_attribute_value.attribute_key = "transferable"
         notification_attribute_value.attribute = {"transferable": True}
         async_session.add(notification_attribute_value)
@@ -3231,28 +3648,33 @@ class TestWatchWatchTransferableAttribute:
         ).first()
         assert _notification is None
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
                     and_(
-                        NotificationAttributeValue.contract_address == token["address"],
+                        NotificationAttributeValue.contract_address == token.address,
                         NotificationAttributeValue.attribute_key == "transferable",
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": True}
 
     # <Normal_3>
     # Attribute changed
     @pytest.mark.freeze_time(datetime(2025, 7, 31, 1, 35, 0, tzinfo=timezone.utc))
     async def test_normal_3(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3266,7 +3688,7 @@ class TestWatchWatchTransferableAttribute:
         )
 
         idx_token = IDXShareToken()
-        idx_token.token_address = token["address"]
+        idx_token.token_address = token.address
         idx_token.token_template = "IbetShare"
         idx_token.name = "test_token"
         idx_token.transferable = False
@@ -3276,13 +3698,13 @@ class TestWatchWatchTransferableAttribute:
         async_session.add(idx_token)
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
 
         notification_attribute_value = NotificationAttributeValue()
-        notification_attribute_value.contract_address = token["address"]
+        notification_attribute_value.contract_address = token.address
         notification_attribute_value.attribute_key = "transferable"
         notification_attribute_value.attribute = {"transferable": True}
         async_session.add(notification_attribute_value)
@@ -3296,11 +3718,12 @@ class TestWatchWatchTransferableAttribute:
         _notification = (
             await async_session.scalars(select(Notification).limit(1))
         ).first()
+        assert _notification is not None
         attribute_key_hash = Web3.keccak(text="transferable").hex()[0:8]
         assert _notification.notification_category == "attribute_change"
         assert (
             _notification.notification_id[14:]
-            == f"{token['address'].replace('0x', '').lower()}{attribute_key_hash}00"
+            == f"{token.address.replace('0x', '').lower()}{attribute_key_hash}00"
         )
         assert _notification.notification_type == NotificationType.TRANSFERABLE_CHANGED
         assert _notification.priority == 0
@@ -3312,34 +3735,39 @@ class TestWatchWatchTransferableAttribute:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "test_token",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
                     and_(
-                        NotificationAttributeValue.contract_address == token["address"],
+                        NotificationAttributeValue.contract_address == token.address,
                         NotificationAttributeValue.attribute_key == "transferable",
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": False}
 
     # <Normal_4>
     # Attribute changed (On chain access)
     @pytest.mark.freeze_time(datetime(2025, 7, 31, 1, 35, 0, tzinfo=timezone.utc))
     async def test_normal_4(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3352,10 +3780,14 @@ class TestWatchWatchTransferableAttribute:
             async_session,
         )
 
-        untransferable_share_token(self.issuer, token)
+        IbetShareTestHelper.set_transferable(
+            self.issuer["account_address"],
+            token.address,
+            False,
+        )
 
         idx_token = IDXShareToken()
-        idx_token.token_address = token["address"]
+        idx_token.token_address = token.address
         idx_token.token_template = "IbetShare"
         idx_token.name = "test_token"
         idx_token.transferable = True  # Cache expired
@@ -3365,13 +3797,13 @@ class TestWatchWatchTransferableAttribute:
         async_session.add(idx_token)
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
 
         notification_attribute_value = NotificationAttributeValue()
-        notification_attribute_value.contract_address = token["address"]
+        notification_attribute_value.contract_address = token.address
         notification_attribute_value.attribute_key = "transferable"
         notification_attribute_value.attribute = {"transferable": True}
         async_session.add(notification_attribute_value)
@@ -3385,11 +3817,12 @@ class TestWatchWatchTransferableAttribute:
         _notification = (
             await async_session.scalars(select(Notification).limit(1))
         ).first()
+        assert _notification is not None
         attribute_key_hash = Web3.keccak(text="transferable").hex()[0:8]
         assert _notification.notification_category == "attribute_change"
         assert (
             _notification.notification_id[14:]
-            == f"{token['address'].replace('0x', '').lower()}{attribute_key_hash}00"
+            == f"{token.address.replace('0x', '').lower()}{attribute_key_hash}00"
         )
         assert _notification.notification_type == NotificationType.TRANSFERABLE_CHANGED
         assert _notification.priority == 0
@@ -3401,24 +3834,25 @@ class TestWatchWatchTransferableAttribute:
         }
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
-            "token_address": token["address"],
+            "token_address": token.address,
             "token_name": "test_token",
             "exchange_address": "",
             "token_type": "IbetShare",
         }
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
                     and_(
-                        NotificationAttributeValue.contract_address == token["address"],
+                        NotificationAttributeValue.contract_address == token.address,
                         NotificationAttributeValue.attribute_key == "transferable",
                     )
                 )
                 .limit(1)
             )
         ).first()
+        assert _notification_attribute_value is not None
         assert _notification_attribute_value.attribute == {"transferable": False}
 
     # ###########################################################################
@@ -3432,10 +3866,14 @@ class TestWatchWatchTransferableAttribute:
         MagicMock(side_effect=Exception()),
     )
     async def test_error_1(
-        self, watcher_factory, async_session, shared_contract, mocked_company_list
+        self,
+        watcher_factory: WatcherFactory,
+        async_session: AsyncSession,
+        shared_contract: SharedContract,
+        mocked_company_list: list[dict[str, Any]],
     ):
         watcher = watcher_factory("WatchTransferableAttribute")
-        exchange_contract = shared_contract["IbetShareExchange"]
+        exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -3449,7 +3887,7 @@ class TestWatchWatchTransferableAttribute:
         )
 
         idx_token_list_item = IDXTokenListRegister()
-        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.token_address = token.address
         idx_token_list_item.owner_address = self.issuer["account_address"]
         idx_token_list_item.token_template = "IbetShare"
         async_session.add(idx_token_list_item)
@@ -3465,12 +3903,12 @@ class TestWatchWatchTransferableAttribute:
         ).first()
         assert _notification is None
 
-        _notification_attribute_value: NotificationAttributeValue = (
+        _notification_attribute_value = (
             await async_session.scalars(
                 select(NotificationAttributeValue)
                 .where(
                     and_(
-                        NotificationAttributeValue.contract_address == token["address"],
+                        NotificationAttributeValue.contract_address == token.address,
                         NotificationAttributeValue.attribute_key == "transferable",
                     )
                 )

@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-25.12-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-26.3-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -43,8 +43,6 @@ English | <a href='./README_JA.md'>日本語</a>
     - DB for test use: ethcache_test
 - Need to deploy the following contract beforehand.
   - TokenList
-  - PaymentGateway (optional)
-  - IbetExchange (optional)
   - IbetEscrow (optional)
   - IbetSecurityTokenEscrow (optional)
   - E2EMessaging (optional)
@@ -58,7 +56,7 @@ $ uv venv
 
 Install python packages with:
 ```bash
-$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
+$ uv sync --frozen --no-install-project --no-dev
 ```
 
 ### Setting environment variables

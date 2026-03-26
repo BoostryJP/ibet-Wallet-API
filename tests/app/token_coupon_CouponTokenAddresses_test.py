@@ -18,38 +18,24 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
+from typing import Any
 
 import pytest
-from eth_utils import to_checksum_address
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import IDXTokenListRegister, Listing
-from batch import indexer_Token_Detail
-from batch.indexer_Token_Detail import Processor
+from batch.sub_indexers.indexer_Token_Detail import Processor
 from tests.account_config import eth_account
-from tests.contract_modules import coupon_register_list, issue_coupon_token
-from tests.utils.contract import Contract
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-
-
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    indexer_Token_Detail.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"][
-        "address"
-    ]
-    return indexer_Token_Detail
+from tests.helpers import IbetCouponTestHelper
+from tests.types import SharedContract
 
 
 @pytest.fixture(scope="function")
-def processor(test_module, session):
+def processor(session: Session) -> Processor:
     config.COUPON_TOKEN_ENABLED = True
-    processor = test_module.Processor()
+    processor = Processor()
     return processor
 
 
@@ -62,7 +48,7 @@ class TestTokenCouponTokenAddresses:
     apiurl = "/Token/Coupon/Addresses"
 
     @staticmethod
-    def token_attribute(exchange_address):
+    def token_attribute(exchange_address: str) -> dict[str, Any]:
         attribute = {
             "name": "テストクーポン",
             "symbol": "COUPON",
@@ -79,24 +65,15 @@ class TestTokenCouponTokenAddresses:
         return attribute
 
     @staticmethod
-    def tokenlist_contract():
-        deployer = eth_account["deployer"]
-        web3.eth.default_account = deployer["account_address"]
-        contract_address, abi = Contract.deploy_contract(
-            "TokenList", [], deployer["account_address"]
-        )
-        return {"address": contract_address, "abi": abi}
-
-    @staticmethod
-    def list_token(session, token):
+    def list_token(session: Session, token_address: str) -> None:
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
         token_list_item = IDXTokenListRegister()
-        token_list_item.token_address = token["address"]
+        token_list_item.token_address = token_address
         token_list_item.token_template = "IbetCoupon"
         token_list_item.owner_address = ""
         session.add(token_list_item)
@@ -111,7 +88,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -120,19 +97,21 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.token_attribute(exchange_address)
-        coupon = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon, token_list)
+        coupon = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon)
+        self.list_token(session, coupon.address)
         session.commit()
 
         # 事前準備
@@ -141,9 +120,9 @@ class TestTokenCouponTokenAddresses:
 
         query_string = ""
         resp = client.get(self.apiurl, params=query_string)
-        tokens = [coupon["address"]]
+        tokens = [coupon.address]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 1, "offset": None, "limit": None, "total": 1},
             "address_list": tokens,
         }
@@ -158,7 +137,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -167,52 +146,80 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
         attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
-        coupon1 = issue_coupon_token(issuer, attribute_token1)
-        token_address_list.append(coupon1["address"])
-        coupon_register_list(issuer, coupon1, token_list)
+        coupon1 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(coupon1.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テストクーポン2"
-        coupon2 = issue_coupon_token(issuer, attribute_token2)
-        token_address_list.append(coupon2["address"])
-        coupon_register_list(issuer, coupon2, token_list)
+        coupon2 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(coupon2.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テストクーポン3"
-        coupon3 = issue_coupon_token(issuer, attribute_token3)
-        token_address_list.append(coupon3["address"])
-        coupon_register_list(issuer, coupon3, token_list)
+        coupon3 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(coupon3.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テストクーポン4"
-        coupon4 = issue_coupon_token(issuer, attribute_token4)
-        token_address_list.append(coupon4["address"])
-        coupon_register_list(issuer, coupon4, token_list)
+        coupon4 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(coupon4.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テストクーポン5"
-        coupon5 = issue_coupon_token(issuer, attribute_token5)
-        token_address_list.append(coupon5["address"])
-        coupon_register_list(issuer, coupon5, token_list)
+        coupon5 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(coupon5.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon1)
-        self.list_token(session, coupon2)
-        self.list_token(session, coupon3)
-        self.list_token(session, coupon4)
-        self.list_token(session, coupon5)
+        self.list_token(session, coupon1.address)
+        self.list_token(session, coupon2.address)
+        self.list_token(session, coupon3.address)
+        self.list_token(session, coupon4.address)
+        self.list_token(session, coupon5.address)
         session.commit()
 
         # 事前準備
@@ -228,7 +235,7 @@ class TestTokenCouponTokenAddresses:
         )
         tokens = [token_address_list[i] for i in range(1, 3)]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": 1, "limit": 2, "total": 5},
             "address_list": tokens,
         }
@@ -243,7 +250,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -252,54 +259,80 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
-        attribute_token1 = self.token_attribute(
-            exchange_address,
-        )
+        attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
-        coupon1 = issue_coupon_token(issuer, attribute_token1)
-        token_address_list.append(coupon1["address"])
-        coupon_register_list(issuer, coupon1, token_list)
+        coupon1 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(coupon1.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テストクーポン2"
-        coupon2 = issue_coupon_token(issuer, attribute_token2)
-        token_address_list.append(coupon2["address"])
-        coupon_register_list(issuer, coupon2, token_list)
+        coupon2 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(coupon2.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テストクーポン3"
-        coupon3 = issue_coupon_token(issuer, attribute_token3)
-        token_address_list.append(coupon3["address"])
-        coupon_register_list(issuer, coupon3, token_list)
+        coupon3 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(coupon3.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テストクーポン4"
-        coupon4 = issue_coupon_token(issuer, attribute_token4)
-        token_address_list.append(coupon4["address"])
-        coupon_register_list(issuer, coupon4, token_list)
+        coupon4 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(coupon4.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テストクーポン5"
-        coupon5 = issue_coupon_token(issuer, attribute_token5)
-        token_address_list.append(coupon5["address"])
-        coupon_register_list(issuer, coupon5, token_list)
+        coupon5 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(coupon5.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon1)
-        self.list_token(session, coupon2)
-        self.list_token(session, coupon3)
-        self.list_token(session, coupon4)
-        self.list_token(session, coupon5)
+        self.list_token(session, coupon1.address)
+        self.list_token(session, coupon2.address)
+        self.list_token(session, coupon3.address)
+        self.list_token(session, coupon4.address)
+        self.list_token(session, coupon5.address)
         session.commit()
 
         # 事前準備
@@ -309,7 +342,7 @@ class TestTokenCouponTokenAddresses:
         resp = client.get(self.apiurl, params={"offset": 7})
         tokens = []
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": 7, "limit": None, "total": 5},
             "address_list": tokens,
         }
@@ -324,7 +357,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -333,54 +366,80 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
-        attribute_token1 = self.token_attribute(
-            exchange_address,
-        )
+        attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
-        coupon1 = issue_coupon_token(issuer, attribute_token1)
-        token_address_list.append(coupon1["address"])
-        coupon_register_list(issuer, coupon1, token_list)
+        coupon1 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(coupon1.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テストクーポン2"
-        coupon2 = issue_coupon_token(issuer, attribute_token2)
-        token_address_list.append(coupon2["address"])
-        coupon_register_list(issuer, coupon2, token_list)
+        coupon2 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(coupon2.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テストクーポン3"
-        coupon3 = issue_coupon_token(issuer, attribute_token3)
-        token_address_list.append(coupon3["address"])
-        coupon_register_list(issuer, coupon3, token_list)
+        coupon3 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(coupon3.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テストクーポン4"
-        coupon4 = issue_coupon_token(issuer, attribute_token4)
-        token_address_list.append(coupon4["address"])
-        coupon_register_list(issuer, coupon4, token_list)
+        coupon4 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(coupon4.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テストクーポン5"
-        coupon5 = issue_coupon_token(issuer, attribute_token5)
-        token_address_list.append(coupon5["address"])
-        coupon_register_list(issuer, coupon5, token_list)
+        coupon5 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(coupon5.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon1)
-        self.list_token(session, coupon2)
-        self.list_token(session, coupon3)
-        self.list_token(session, coupon4)
-        self.list_token(session, coupon5)
+        self.list_token(session, coupon1.address)
+        self.list_token(session, coupon2.address)
+        self.list_token(session, coupon3.address)
+        self.list_token(session, coupon4.address)
+        self.list_token(session, coupon5.address)
         session.commit()
 
         # 事前準備
@@ -402,7 +461,7 @@ class TestTokenCouponTokenAddresses:
         )
         tokens = [token_address_list[i] for i in range(0, 5)]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "address_list": tokens,
         }
@@ -417,7 +476,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -426,54 +485,80 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
-        attribute_token1 = self.token_attribute(
-            exchange_address,
-        )
+        attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
-        coupon1 = issue_coupon_token(issuer, attribute_token1)
-        token_address_list.append(coupon1["address"])
-        coupon_register_list(issuer, coupon1, token_list)
+        coupon1 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(coupon1.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テストクーポン2"
-        coupon2 = issue_coupon_token(issuer, attribute_token2)
-        token_address_list.append(coupon2["address"])
-        coupon_register_list(issuer, coupon2, token_list)
+        coupon2 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(coupon2.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テストクーポン3"
-        coupon3 = issue_coupon_token(issuer, attribute_token3)
-        token_address_list.append(coupon3["address"])
-        coupon_register_list(issuer, coupon3, token_list)
+        coupon3 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(coupon3.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テストクーポン4"
-        coupon4 = issue_coupon_token(issuer, attribute_token4)
-        token_address_list.append(coupon4["address"])
-        coupon_register_list(issuer, coupon4, token_list)
+        coupon4 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(coupon4.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テストクーポン5"
-        coupon5 = issue_coupon_token(issuer, attribute_token5)
-        token_address_list.append(coupon5["address"])
-        coupon_register_list(issuer, coupon5, token_list)
+        coupon5 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(coupon5.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon1)
-        self.list_token(session, coupon2)
-        self.list_token(session, coupon3)
-        self.list_token(session, coupon4)
-        self.list_token(session, coupon5)
+        self.list_token(session, coupon1.address)
+        self.list_token(session, coupon2.address)
+        self.list_token(session, coupon3.address)
+        self.list_token(session, coupon4.address)
+        self.list_token(session, coupon5.address)
         session.commit()
 
         # 事前準備
@@ -494,7 +579,7 @@ class TestTokenCouponTokenAddresses:
         for key, value in not_matched_key_value.items():
             resp = client.get(self.apiurl, params={key: value})
 
-            assumed_body = {
+            assumed_body: dict[str, Any] = {
                 "result_set": {"count": 0, "offset": None, "limit": None, "total": 5},
                 "address_list": [],
             }
@@ -509,7 +594,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -518,54 +603,80 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
 
-        token_address_list = []
+        token_address_list: list[str] = []
 
-        attribute_token1 = self.token_attribute(
-            exchange_address,
-        )
+        attribute_token1 = self.token_attribute(exchange_address)
         attribute_token1["name"] = "テストクーポン1"
-        coupon1 = issue_coupon_token(issuer, attribute_token1)
-        token_address_list.append(coupon1["address"])
-        coupon_register_list(issuer, coupon1, token_list)
+        coupon1 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token1
+        )
+        token_address_list.append(coupon1.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon1.address,
+            token_list["address"],
+        )
 
         attribute_token2 = self.token_attribute(exchange_address)
         attribute_token2["name"] = "テストクーポン2"
-        coupon2 = issue_coupon_token(issuer, attribute_token2)
-        token_address_list.append(coupon2["address"])
-        coupon_register_list(issuer, coupon2, token_list)
+        coupon2 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token2
+        )
+        token_address_list.append(coupon2.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon2.address,
+            token_list["address"],
+        )
 
         attribute_token3 = self.token_attribute(exchange_address)
         attribute_token3["name"] = "テストクーポン3"
-        coupon3 = issue_coupon_token(issuer, attribute_token3)
-        token_address_list.append(coupon3["address"])
-        coupon_register_list(issuer, coupon3, token_list)
+        coupon3 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token3
+        )
+        token_address_list.append(coupon3.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon3.address,
+            token_list["address"],
+        )
 
         attribute_token4 = self.token_attribute(exchange_address)
         attribute_token4["name"] = "テストクーポン4"
-        coupon4 = issue_coupon_token(issuer, attribute_token4)
-        token_address_list.append(coupon4["address"])
-        coupon_register_list(issuer, coupon4, token_list)
+        coupon4 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token4
+        )
+        token_address_list.append(coupon4.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon4.address,
+            token_list["address"],
+        )
 
         attribute_token5 = self.token_attribute(exchange_address)
         attribute_token5["name"] = "テストクーポン5"
-        coupon5 = issue_coupon_token(issuer, attribute_token5)
-        token_address_list.append(coupon5["address"])
-        coupon_register_list(issuer, coupon5, token_list)
+        coupon5 = IbetCouponTestHelper.issue(
+            issuer["account_address"], attribute_token5
+        )
+        token_address_list.append(coupon5.address)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon5.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon1)
-        self.list_token(session, coupon2)
-        self.list_token(session, coupon3)
-        self.list_token(session, coupon4)
-        self.list_token(session, coupon5)
+        self.list_token(session, coupon1.address)
+        self.list_token(session, coupon2.address)
+        self.list_token(session, coupon3.address)
+        self.list_token(session, coupon4.address)
+        self.list_token(session, coupon5.address)
         session.commit()
 
         # 事前準備
@@ -583,7 +694,7 @@ class TestTokenCouponTokenAddresses:
         )
         tokens = [token_address_list[i] for i in range(0, 5)]
 
-        assumed_body = {
+        assumed_body: dict[str, Any] = {
             "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
             "address_list": list(reversed(tokens)),
         }
@@ -598,7 +709,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = False
@@ -606,19 +717,21 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.token_attribute(exchange_address)
-        coupon = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon, token_list)
+        coupon = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon)
+        self.list_token(session, coupon.address)
         session.commit()
 
         # 事前準備
@@ -641,7 +754,7 @@ class TestTokenCouponTokenAddresses:
         self,
         client: TestClient,
         session: Session,
-        shared_contract,
+        shared_contract: SharedContract,
         processor: Processor,
     ):
         config.COUPON_TOKEN_ENABLED = True
@@ -650,19 +763,21 @@ class TestTokenCouponTokenAddresses:
         issuer = eth_account["issuer"]
 
         # TokenListコントラクト
-        token_list = self.tokenlist_contract()
+        token_list = shared_contract["TokenList"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
-        # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(
-            shared_contract["IbetCouponExchange"]["address"]
-        )
+        # トークン発行
+        exchange_address = shared_contract["IbetEscrow"]["address"]
         attribute = self.token_attribute(exchange_address)
-        coupon = issue_coupon_token(issuer, attribute)
-        coupon_register_list(issuer, coupon, token_list)
+        coupon = IbetCouponTestHelper.issue(issuer["account_address"], attribute)
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"],
+            coupon.address,
+            token_list["address"],
+        )
 
         # 取扱トークンデータ挿入
-        self.list_token(session, coupon)
+        self.list_token(session, coupon.address)
         session.commit()
 
         # 事前準備

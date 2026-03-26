@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Any, Literal, Optional, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -34,6 +34,24 @@ from app.model.type import EthereumAddress
 ############################
 # COMMON
 ############################
+
+
+############################
+# DTO
+############################
+class NotificationJSONDict(TypedDict):
+    notification_category: Literal["event_log", "attribute_change"]
+    notification_type: str | None
+    id: str
+    priority: int | None
+    block_timestamp: str | None
+    is_read: bool | None
+    is_flagged: bool | None
+    is_deleted: bool | None
+    deleted_at: str | None
+    args: object
+    metainfo: dict[str, Any] | None
+    account_address: EthereumAddress | None
 
 
 ############################
@@ -53,12 +71,10 @@ class NotificationsQuery(BasePaginationQuery):
     address: Optional[EthereumAddress] = Field(None, description="account address")
     notification_type: Optional[NotificationType] = Field(None)
     priority: Optional[int] = Field(None, ge=0, le=2)
-    sort_item: Optional[NotificationsSortItem] = Field(
-        NotificationsSortItem.created, description="sort item"
+    sort_item: NotificationsSortItem = Field(
+        default=NotificationsSortItem.created, description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(
-        SortOrder.ASC, description=SortOrder.__doc__
-    )
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description=SortOrder.__doc__)
 
 
 class NotificationReadRequest(BaseModel):
@@ -98,7 +114,7 @@ class Notification(BaseModel):
     is_deleted: bool
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
-    metainfo: NotificationMetainfo | dict
+    metainfo: NotificationMetainfo | dict[str, Any]
     account_address: EthereumAddress
     sort_id: int
     created: str = Field(description="datetime of create")
@@ -123,5 +139,5 @@ class NotificationUpdateResponse(BaseModel):
     is_deleted: bool
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
-    metainfo: NotificationMetainfo | dict
+    metainfo: NotificationMetainfo | dict[str, Any]
     account_address: EthereumAddress

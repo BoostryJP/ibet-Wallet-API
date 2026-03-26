@@ -21,6 +21,7 @@ import importlib
 import json
 import logging
 from datetime import datetime
+from types import ModuleType
 from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
@@ -127,11 +128,13 @@ def alembic_config():
 @mark.alembic
 class TestMigrationsUpgrade:
     @staticmethod
-    def sqlalchemy_migrate_definition(scripts: list) -> MetaData:
+    def sqlalchemy_migrate_definition(scripts: list[ModuleType]) -> MetaData:
         for migrate_script in scripts:
             importlib.reload(migrate_script)
-            migrate_script.upgrade(engine)
-        m = MetaData(bind=engine)
+            upgrade = getattr(migrate_script, "upgrade")
+            assert callable(upgrade)
+            upgrade(engine)
+        m = MetaData()
         m.reflect(engine)
         return m
 
@@ -150,7 +153,7 @@ class TestMigrationsUpgrade:
         sorted_columns = sorted(original_table.columns, key=lambda c: c.name)
         sorted_table = Table(original_table.name, MetaData())
         for column in sorted_columns:
-            column_copy = column._copy()
+            column_copy = column.copy()
             sorted_table.append_column(column_copy)
         return sorted_table
 
@@ -205,6 +208,7 @@ class TestMigrationsUpgrade:
         # 2. Insert null contained data
         #   027_alter_transfer_approval.py
         transfer_approval = meta.tables.get("transfer_approval")
+        assert transfer_approval is not None
         stmt1 = insert(transfer_approval).values(id=1)
         with engine.connect() as conn:
             conn.execute(stmt1)
@@ -260,9 +264,11 @@ class TestMigrationsUpgrade:
         # 2. Insert null contained data
         #   046_alter_bond_token.py
         bond_token = meta.tables.get("bond_token")
+        assert bond_token is not None
         stmt1 = insert(bond_token).values(token_address="." * 42, memo="." * 2000)
         #   047_alter_share_token.py
         share_token = meta.tables.get("share_token")
+        assert share_token is not None
         stmt2 = insert(share_token).values(token_address="." * 42, memo="." * 2000)
         with engine.connect() as conn:
             conn.execute(stmt1)
@@ -294,9 +300,11 @@ class TestMigrationsUpgrade:
         # 2. Insert null contained data
         #   052_alter_transfer.py
         transfer = meta.tables.get("transfer")
+        assert transfer is not None
         stmt1 = insert(transfer).values(id=1)
         #   053_alter_token_holder.py
         token_holder = meta.tables.get("token_holder")
+        assert token_holder is not None
         stmt2 = insert(token_holder).values(holder_list=1, account_address="." * 42)
 
         with engine.connect() as conn:
@@ -344,6 +352,7 @@ class TestMigrationsUpgrade:
         # 2. Insert test record
         # NOTE: node data
         node = meta.tables.get("node")
+        assert node is not None
         stmt1 = insert(node).values(id=1, is_synced=None)
         stmt2 = insert(node).values(id=2, is_synced=True)
 
@@ -354,6 +363,7 @@ class TestMigrationsUpgrade:
 
         # NOTE: position data
         position = meta.tables.get("position")
+        assert position is not None
         stmt1 = insert(position).values(
             id=1,
             token_address=None,
@@ -423,6 +433,7 @@ class TestMigrationsUpgrade:
 
         # NOTE: executable_contract data
         executable_contract = meta.tables.get("executable_contract")
+        assert executable_contract is not None
         stmt1 = insert(executable_contract).values(
             id=1,
             contract_address=None,
@@ -467,6 +478,7 @@ class TestMigrationsUpgrade:
         idx_position_bond_block_number = meta.tables.get(
             "idx_position_bond_block_number"
         )
+        assert idx_position_bond_block_number is not None
         stmt1 = insert(idx_position_bond_block_number).values(
             id=1,
             token_address="token_address1",
@@ -510,6 +522,7 @@ class TestMigrationsUpgrade:
         idx_position_share_block_number = meta.tables.get(
             "idx_position_share_block_number"
         )
+        assert idx_position_share_block_number is not None
         stmt1 = insert(idx_position_share_block_number).values(
             id=1,
             token_address="token_address1",
@@ -553,6 +566,7 @@ class TestMigrationsUpgrade:
         idx_position_coupon_block_number = meta.tables.get(
             "idx_position_coupon_block_number"
         )
+        assert idx_position_coupon_block_number is not None
         stmt1 = insert(idx_position_coupon_block_number).values(
             id=1,
             token_address="token_address1",
@@ -596,6 +610,7 @@ class TestMigrationsUpgrade:
         idx_position_membership_block_number = meta.tables.get(
             "idx_position_membership_block_number"
         )
+        assert idx_position_membership_block_number is not None
         stmt1 = insert(idx_position_membership_block_number).values(
             id=1,
             token_address="token_address1",
@@ -637,7 +652,9 @@ class TestMigrationsUpgrade:
 
         # NOTE: idx_lock/idx_unlock data
         idx_lock = meta.tables.get("lock")
+        assert idx_lock is not None
         idx_unlock = meta.tables.get("unlock")
+        assert idx_unlock is not None
         stmt1 = insert(idx_lock).values(
             id=1,
             transaction_hash="." * 66,
@@ -827,6 +844,7 @@ class TestMigrationsUpgrade:
         # 2. Insert test record
         # NOTE: idx bond token data
         bond_token = meta.tables.get("bond_token")
+        assert bond_token is not None
         stmt1 = insert(bond_token).values(token_address="test1")
         stmt2 = insert(bond_token).values(token_address="test2")
 
@@ -876,6 +894,7 @@ class TestMigrationsUpgrade:
 
         # 2. Insert test record
         bond_token = meta.tables.get("bond_token")
+        assert bond_token is not None
         stmt1 = insert(bond_token).values(
             token_address="test1",
             face_value_currency="JPY",
@@ -892,6 +911,7 @@ class TestMigrationsUpgrade:
         )
 
         share_token = meta.tables.get("share_token")
+        assert share_token is not None
         stmt3 = insert(share_token).values(token_address="test3")
         stmt4 = insert(share_token).values(token_address="test4")
 
@@ -938,6 +958,7 @@ class TestMigrationsUpgrade:
 
         # 2. Insert test record
         idx_transfer = meta.tables.get("transfer")
+        assert idx_transfer is not None
         stmt1 = insert(idx_transfer).values(
             id=1,
             transaction_hash="test1",
@@ -951,6 +972,7 @@ class TestMigrationsUpgrade:
         )
 
         idx_lock = meta.tables.get("lock")
+        assert idx_lock is not None
         stmt2 = insert(idx_lock).values(
             id=1,
             transaction_hash="test1",
@@ -966,6 +988,7 @@ class TestMigrationsUpgrade:
         )
 
         idx_unlock = meta.tables.get("unlock")
+        assert idx_unlock is not None
         stmt3 = insert(idx_unlock).values(
             id=1,
             transaction_hash="test1",

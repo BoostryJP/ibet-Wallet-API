@@ -23,33 +23,24 @@ from unittest.mock import ANY
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from app import config
 from app.model.db import Listing
 from tests.account_config import eth_account
-from tests.contract_modules import (
+from tests.helpers import (
+    IbetShareTestHelper,
+    IbetStraightBondTestHelper,
+    PersonalInfoHelper,
+)
+from tests.helpers.ibet_exchange_helpers import (
     approve_transfer_security_token_escrow,
-    bond_apply_for_transfer,
-    bond_approve_transfer,
-    bond_cancel_transfer,
-    bond_issue_from,
-    bond_lock,
-    bond_redeem_from,
-    bond_set_transfer_approval_required,
-    bond_transfer_to_exchange,
-    bond_unlock,
     create_security_token_escrow,
     finish_security_token_escrow,
     get_latest_security_escrow_id,
-    issue_bond_token,
-    issue_share_token,
-    register_bond_list,
-    register_personalinfo,
-    register_share_list,
-    transfer_token,
 )
-from tests.utils.contract import Contract
+from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
@@ -66,7 +57,7 @@ class TestEventsIbetSecurityTokenInterface:
     apiurl = "/Events/IbetSecurityTokenInterface/{token_address}"
 
     @staticmethod
-    def listing_token(token_address, session):
+    def listing_token(token_address: str, session: Session) -> None:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
@@ -80,8 +71,11 @@ class TestEventsIbetSecurityTokenInterface:
 
     @staticmethod
     def issue_token_bond(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> Web3Contract:
         # Issue token
         args = {
             "name": "テスト債券",
@@ -118,15 +112,20 @@ class TestEventsIbetSecurityTokenInterface:
             "redemptionValueCurrency": "JPY",
             "baseFxRate": "",
         }
-        token = issue_bond_token(issuer, args)
-        register_bond_list(issuer, token, token_list)
+        token = IbetStraightBondTestHelper.issue(issuer["account_address"], args)
+        IbetStraightBondTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
 
         return token
 
     @staticmethod
     def issue_token_share(
-        issuer, exchange_contract_address, personal_info_contract_address, token_list
-    ):
+        issuer: UnitTestAccount,
+        exchange_contract_address: str,
+        personal_info_contract_address: str,
+        token_list: DeployedContract,
+    ) -> Web3Contract:
         # Issue token
         args = {
             "name": "テスト株式",
@@ -145,8 +144,10 @@ class TestEventsIbetSecurityTokenInterface:
             "memo": "メモ",
             "transferable": True,
         }
-        token = issue_share_token(issuer, args)
-        register_share_list(issuer, token, token_list)
+        token = IbetShareTestHelper.issue(issuer["account_address"], args)
+        IbetShareTestHelper.register_token_list(
+            issuer["account_address"], token.address, token_list["address"]
+        )
 
         return token
 
@@ -161,7 +162,7 @@ class TestEventsIbetSecurityTokenInterface:
     #   - ApproveTransfer
     # - Lock
     # - Unlock
-    def setup_data(self, session: Session, shared_contract):
+    def setup_data(self, session: Session, shared_contract: SharedContract):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -169,54 +170,81 @@ class TestEventsIbetSecurityTokenInterface:
         # Issuer issues bond token.
         token = self.issue_token_bond(
             self.issuer,
-            escrow_contract.address,
+            escrow_contract["address"],
             personal_info_contract["address"],
             token_list_contract,
         )
-        self.listing_token(token["address"], session)
-        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+        self.listing_token(token.address, session)
 
         # User1 and trader must register personal information before they receive token.
-        register_personalinfo(self.user1, personal_info_contract)
-        register_personalinfo(self.trader, personal_info_contract)
-
-        transfer_token(
-            token_contract,
-            self.issuer["account_address"],
+        PersonalInfoHelper.register(
             self.user1["account_address"],
-            20000,
+            personal_info_contract["address"],
+            self.issuer["account_address"],
         )
-        bond_transfer_to_exchange(
-            self.user1, {"address": escrow_contract.address}, token, 10000
+        PersonalInfoHelper.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"],
+        )
+
+        IbetStraightBondTestHelper.transfer_token(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            200000,
+        )
+        IbetStraightBondTestHelper.transfer_token(
+            self.user1["account_address"],
+            token.address,
+            escrow_contract["address"],
+            10000,
         )
         # user1: 20000 trader: 0
 
         # Issuer transfers issued token to user1 and trader.
-        bond_set_transfer_approval_required(self.issuer, token, True)
-        bond_apply_for_transfer(self.issuer, token, self.user1, 10000, "to user1#1")
-        bond_apply_for_transfer(self.issuer, token, self.trader, 10000, "to trader#1")
-
-        bond_cancel_transfer(self.issuer, token, 0, "to user1#1")
-        bond_approve_transfer(self.issuer, token, 1, "to trader#1")
+        IbetStraightBondTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, True
+        )
+        IbetStraightBondTestHelper.apply_for_token_transfer(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            10000,
+        )
+        IbetStraightBondTestHelper.apply_for_token_transfer(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            10000,
+        )
+        IbetStraightBondTestHelper.cancel_token_transfer_application(
+            self.issuer["account_address"], token.address, 0, "to user1#1"
+        )
+        IbetStraightBondTestHelper.approve_token_transfer(
+            self.issuer["account_address"], token.address, 1, "to trader#1"
+        )
         # user1: 20000 trader: 10000
 
         create_security_token_escrow(
             self.user1,
-            {"address": escrow_contract.address},
-            token,
+            {"address": escrow_contract["address"]},
+            {"address": token.address},
             self.trader["account_address"],
             self.agent["account_address"],
             7000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id(
-            {"address": escrow_contract.address}
+            {"address": escrow_contract["address"]}
         )
         finish_security_token_escrow(
-            self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id
+            self.agent,
+            {"address": escrow_contract["address"]},
+            _latest_security_escrow_id,
         )
         approve_transfer_security_token_escrow(
             self.issuer,
-            {"address": escrow_contract.address},
+            {"address": escrow_contract["address"]},
             _latest_security_escrow_id,
             "",
         )
@@ -224,50 +252,81 @@ class TestEventsIbetSecurityTokenInterface:
 
         create_security_token_escrow(
             self.user1,
-            {"address": escrow_contract.address},
-            token,
+            {"address": escrow_contract["address"]},
+            {"address": token.address},
             self.trader["account_address"],
             self.agent["account_address"],
             2000,
         )
         _latest_security_escrow_id = get_latest_security_escrow_id(
-            {"address": escrow_contract.address}
+            {"address": escrow_contract["address"]}
         )
         finish_security_token_escrow(
-            self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id
+            self.agent,
+            {"address": escrow_contract["address"]},
+            _latest_security_escrow_id,
         )
         # user1: 13000 trader: 17000
 
-        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        IbetStraightBondTestHelper.lock_token(
+            self.trader["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            3000,
+            "",
+        )
         # user1: 13000 trader: 17000
 
-        bond_unlock(
-            self.issuer,
-            token,
+        IbetStraightBondTestHelper.unlock_token(
+            self.issuer["account_address"],
+            token.address,
             self.trader["account_address"],
             self.user1["account_address"],
             2000,
+            "",
         )
         # user1: 15000 trader: 15000
 
-        bond_set_transfer_approval_required(self.issuer, token, False)
-        transfer_token(
-            token_contract,
+        IbetStraightBondTestHelper.set_transfer_approval_required(
+            self.issuer["account_address"], token.address, False
+        )
+        IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
+            token.address,
             self.user1["account_address"],
             100000,
         )
         # user1: 115000 trader: 15000
 
-        bond_issue_from(self.issuer, token, self.issuer["account_address"], 40000)
-        bond_redeem_from(self.issuer, token, self.user1["account_address"], 10000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            40000,
+        )
+        IbetStraightBondTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.user1["account_address"],
+            10000,
+        )
         # user1: 105000 trader: 15000
 
-        bond_issue_from(self.issuer, token, self.trader["account_address"], 30000)
-        bond_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
+        IbetStraightBondTestHelper.mint(
+            self.issuer["account_address"],
+            token.address,
+            self.trader["account_address"],
+            30000,
+        )
+        IbetStraightBondTestHelper.burn(
+            self.issuer["account_address"],
+            token.address,
+            self.issuer["account_address"],
+            10000,
+        )
         # user1: 115000 trader: 45000
 
-        self.token_address = token["address"]
+        self.token_address = token.address
         self.latest_block_number = web3.eth.block_number
 
     ###########################################################################
@@ -276,7 +335,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_1_1
     # No event
-    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -295,7 +356,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_1_2
     # event = All
-    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -445,7 +508,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Normal_1_3
     # event = All(argument_filter: lockAddress)
     # - Events that do not have lockAddress in the event argument will not be returned.
-    def test_normal_1_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_1_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -496,7 +561,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_2_1
     # event = Transfer
-    def test_normal_2_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -550,7 +617,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_2_2
     # event = Transfer(argument_filter: from)
-    def test_normal_2_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -585,7 +654,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_2_3
     # event = Transfer(argument_filter: from)
-    def test_normal_2_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -632,7 +703,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_1
     # event = Issue
-    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -680,7 +753,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_2
     # event = Issue(argument_filter: from)
-    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -731,7 +806,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_3
     # event = Issue(argument_filter: targetAddress)
-    def test_normal_3_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -769,7 +846,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_3_4
     # event = Issue(argument_filter: lockAddress)
-    def test_normal_3_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_3_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -818,7 +897,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_1
     # event = Redeem
-    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -866,7 +947,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_2
     # event = Redeem(argument_filter: from)
-    def test_normal_4_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -917,7 +1000,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_3
     # event = Redeem(argument_filter: targetAddress)
-    def test_normal_4_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -955,7 +1040,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_4_4
     # event = Redeem(argument_filter: lockAddress)
-    def test_normal_4_4(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_4_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1004,7 +1091,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_5_1
     # event = Lock
-    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1039,7 +1128,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_5_2
     # event = Lock(argument_filter: accountAddress)
-    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1063,7 +1154,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_5_3
     # event = Lock(argument_filter: lockAddress)
-    def test_normal_5_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_5_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1101,7 +1194,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_6_1
     # event = Unlock
-    def test_normal_6_1(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1137,7 +1232,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_6_2
     # event = Unlock(argument_filter: accountAddress)
-    def test_normal_6_2(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1161,7 +1258,9 @@ class TestEventsIbetSecurityTokenInterface:
 
     # Normal_6_3
     # event = Unlock(argument_filter: lockAddress)
-    def test_normal_6_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_6_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1205,7 +1304,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_1
     # InvalidParameterError
     # - null value not allowed
-    def test_error_1(self, client: TestClient, session: Session, shared_contract):
+    def test_error_1(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1237,7 +1338,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_2
     # InvalidParameterError
     # - from_block, to_block: min value
-    def test_error_2(self, client: TestClient, session: Session, shared_contract):
+    def test_error_2(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1272,7 +1375,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_3
     # InvalidParameterError
     # - Invalid event
-    def test_error_3(self, client: TestClient, session: Session, shared_contract):
+    def test_error_3(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 
@@ -1307,7 +1412,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_4
     # InvalidParameterError
     # - to_block must be greater than or equal to the from_block
-    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+    def test_error_4(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         self.setup_data(session, shared_contract)
 
         # request target API
@@ -1342,7 +1449,9 @@ class TestEventsIbetSecurityTokenInterface:
     # Error_5
     # RequestBlockRangeLimitExceededError
     # - block range must be less than or equal to 10000
-    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+    def test_error_5(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
         current_block_number = web3.eth.block_number
         self.setup_data(session, shared_contract)
 

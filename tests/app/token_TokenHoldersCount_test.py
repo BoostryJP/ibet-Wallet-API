@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -42,7 +44,7 @@ class TestTokenTokenHoldersCount:
     lock_address_1 = eth_account["user1"]["account_address"]
 
     @staticmethod
-    def insert_listing(session, listing: dict):
+    def insert_listing(session: Session, listing: dict[str, Any]):
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
@@ -51,7 +53,7 @@ class TestTokenTokenHoldersCount:
         session.add(_listing)
 
     @staticmethod
-    def insert_position(session, position: dict):
+    def insert_position(session: Session, position: dict[str, Any]):
         _position = IDXPosition()
         _position.token_address = position["token_address"]
         _position.account_address = position["account_address"]
@@ -62,7 +64,7 @@ class TestTokenTokenHoldersCount:
         session.add(_position)
 
     @staticmethod
-    def insert_locked_position(session: Session, locked_position: dict):
+    def insert_locked_position(session: Session, locked_position: dict[str, Any]):
         idx_locked = IDXLockedPosition()
         idx_locked.token_address = locked_position["token_address"]
         idx_locked.lock_address = locked_position["lock_address"]

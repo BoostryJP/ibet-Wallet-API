@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from typing import Any
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -70,7 +71,7 @@ SDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr
         homepage: str = "https://www.aaaa.com/jp/",
         trustee: dict[str, str] | None = None,
         personal_info_addresses: list[str] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         return {
             "address": address,
             "corporate_name": "株式会社DEMO",
@@ -88,7 +89,10 @@ SDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr
     # Information for the specified address exists in the issuer list (local JSON).
     # local JSON
     def test_normal_1_1(
-        self, client: TestClient, mocked_company_list, session: Session
+        self,
+        client: TestClient,
+        mocked_company_list: list[dict[str, Any]],
+        session: Session,
     ):
         eth_address = eth_account["issuer"]["account_address"]
         apiurl = self.apiurl_base + eth_address
@@ -104,7 +108,10 @@ SDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr
     # Information for the specified address exists in the issuer list (local JSON) &
     # has null attributes.
     def test_normal_1_2(
-        self, client: TestClient, mocked_company_list, session: Session
+        self,
+        client: TestClient,
+        mocked_company_list: list[dict[str, Any]],
+        session: Session,
     ):
         eth_address = eth_account["agent"]["account_address"]
         apiurl = self.apiurl_base + eth_address
@@ -272,7 +279,12 @@ SDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr
     # Error_1
     # The information for the specified address does not exist in the issuer list.
     # -> 404: Data not exists
-    def test_error_1(self, client: TestClient, mocked_company_list, session: Session):
+    def test_error_1(
+        self,
+        client: TestClient,
+        mocked_company_list: list[dict[str, Any]],
+        session: Session,
+    ):
         eth_address = "0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf1"
         apiurl = self.apiurl_base + eth_address
 
@@ -287,7 +299,12 @@ SDuvqVApY7yNCEue5X0pLRAd+287VBVVvsOsZVOSj02w4PGIlsg2Y33BbcpwESzr
 
     # Error_2
     # Invalid ethereum address
-    def test_error_2(self, client: TestClient, mocked_company_list, session: Session):
+    def test_error_2(
+        self,
+        client: TestClient,
+        mocked_company_list: list[dict[str, Any]],
+        session: Session,
+    ):
         eth_address = "0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf"  # アドレスが短い
         apiurl = self.apiurl_base + eth_address
 

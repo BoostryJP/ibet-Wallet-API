@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-25.12-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-26.3-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -44,8 +44,6 @@
     - テスト用 DB: ethcache_test
 - 以下のコントラクトを事前にデプロイする必要があります。
   - TokenList
-  - PaymentGateway （任意）
-  - IbetExchange （任意）
   - IbetEscrow （任意）
   - IbetSecurityTokenEscrow （任意）
   - E2EMessaging （任意）
@@ -59,7 +57,7 @@ $ uv venv
 
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ uv sync --frozen --no-install-project --no-dev --extra ibet-explorer
+$ uv sync --frozen --no-install-project --no-dev
 ```
 
 ### 環境変数の設定

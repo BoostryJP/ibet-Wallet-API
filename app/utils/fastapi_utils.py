@@ -26,7 +26,7 @@ from fastapi.responses import ORJSONResponse
 from app.config import RESPONSE_VALIDATION_MODE
 
 
-def decimal_default(obj):
+def decimal_default(obj: Any):
     if isinstance(obj, decimal.Decimal):
         return float(obj)
     raise TypeError
@@ -43,7 +43,7 @@ class CustomORJSONResponse(ORJSONResponse):
         )
 
 
-def json_response(content: dict):
+def json_response(content: dict[str, Any]):
     if RESPONSE_VALIDATION_MODE:
         return content
     else:

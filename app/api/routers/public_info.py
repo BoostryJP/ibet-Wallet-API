@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Annotated, Sequence
+from typing import TYPE_CHECKING, Annotated, Sequence
 
 from fastapi import APIRouter, Query
 from sqlalchemy import desc, func, select
@@ -32,10 +32,20 @@ from app.model.schema import (
     ListAllPublicAccountsSortItem,
     ListAllPublicListedTokensQuery,
     ListAllPublicListedTokensResponse,
+    ListAllPublicListedTokensSortItem,
 )
 from app.model.schema.base import (
     GenericSuccessResponse,
+    ResultSet,
+    Success200MetaModel,
     SuccessResponse,
+)
+from app.model.schema.public_info import (
+    IbetBondToken,
+    IbetCouponToken,
+    IbetMembershipToken,
+    IbetShareToken,
+    PublicAccount,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
@@ -76,7 +86,10 @@ async def list_all_public_tokens(
     )
 
     # Sort
-    sort_attr = getattr(TokenList, request_query.sort_item, None)
+    if request_query.sort_item == ListAllPublicListedTokensSortItem.token_address:
+        sort_attr = TokenList.token_address
+    else:
+        sort_attr = TokenList.token_address
     if request_query.sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
@@ -100,6 +113,69 @@ async def list_all_public_tokens(
         "tokens": [_token.json() for _token in _token_list],
     }
 
+    if TYPE_CHECKING:
+        type_checked_tokens: list[
+            IbetBondToken | IbetShareToken | IbetMembershipToken | IbetCouponToken
+        ] = []
+        for token in _token_list:
+            if token.token_template == "ibetBond":
+                type_checked_tokens.append(
+                    IbetBondToken(
+                        token_address=token.token_address,
+                        token_template="ibetBond",
+                        key_manager=token.key_manager,
+                        product_type=1,
+                        issuer_address=token.issuer_address,
+                    )
+                )
+            elif token.token_template == "ibetShare":
+                # TODO: Once (token_template, product_type) constraints are enforced in DB schema and ORM typing, remove this runtime guard.
+                match token.product_type:
+                    case 1 | 2 | 3 | 4 | 5 as share_product_type:
+                        pass
+                    case _:
+                        continue
+                type_checked_tokens.append(
+                    IbetShareToken(
+                        token_address=token.token_address,
+                        token_template="ibetShare",
+                        key_manager=token.key_manager,
+                        product_type=share_product_type,
+                        issuer_address=token.issuer_address,
+                    )
+                )
+            elif token.token_template == "ibetMembership":
+                type_checked_tokens.append(
+                    IbetMembershipToken(
+                        token_address=token.token_address,
+                        token_template="ibetMembership",
+                        key_manager=token.key_manager,
+                        product_type=1,
+                        issuer_address=token.issuer_address,
+                    )
+                )
+            else:
+                type_checked_tokens.append(
+                    IbetCouponToken(
+                        token_address=token.token_address,
+                        token_template="ibetCoupon",
+                        key_manager=token.key_manager,
+                        product_type=1,
+                        issuer_address=token.issuer_address,
+                    )
+                )
+        _ = GenericSuccessResponse[ListAllPublicListedTokensResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllPublicListedTokensResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=request_query.offset,
+                    limit=request_query.limit,
+                    total=total,
+                ),
+                tokens=type_checked_tokens,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})
 
 
@@ -144,7 +220,12 @@ async def list_all_public_accounts(
     )
 
     # Sort
-    sort_attr = getattr(PublicAccountList, request_query.sort_item, None)
+    if request_query.sort_item == ListAllPublicAccountsSortItem.key_manager:
+        sort_attr = PublicAccountList.key_manager
+    elif request_query.sort_item == ListAllPublicAccountsSortItem.key_manager_name:
+        sort_attr = PublicAccountList.key_manager_name
+    else:
+        sort_attr = PublicAccountList.account_address
     if request_query.sort_order == 0:  # ASC
         stmt = stmt.order_by(sort_attr)
     else:  # DESC
@@ -176,4 +257,30 @@ async def list_all_public_accounts(
         },
         "accounts": [_account.json() for _account in _account_list],
     }
+    if TYPE_CHECKING:
+        type_checked_accounts: list[PublicAccount] = []
+        for account in _account_list:
+            # TODO: Migrate account.modified to NOT NULL and update ORM typing.
+            assert account.modified is not None
+            type_checked_accounts.append(
+                PublicAccount(
+                    key_manager=account.key_manager,
+                    key_manager_name=account.key_manager_name,
+                    account_type=account.account_type,
+                    account_address=account.account_address,
+                    modified=account.format_timestamp(account.modified),
+                )
+            )
+        _ = GenericSuccessResponse[ListAllPublicAccountsResponse](
+            meta=Success200MetaModel(code=200, message="OK"),
+            data=ListAllPublicAccountsResponse(
+                result_set=ResultSet(
+                    count=count,
+                    offset=request_query.offset,
+                    limit=request_query.limit,
+                    total=total,
+                ),
+                accounts=type_checked_accounts,
+            ),
+        )
     return json_response({**SuccessResponse.default(), "data": data})

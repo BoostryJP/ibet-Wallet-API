@@ -43,16 +43,6 @@ class IDXPosition(Base):
     # Pending Transfer
     pending_transfer: Mapped[int | None] = mapped_column(BigInteger)
 
-    FIELDS = {
-        "token_address": str,
-        "account_address": str,
-        "balance": int,
-        "exchange_balance": int,
-        "exchange_commitment": int,
-        "pending_transfer": int,
-    }
-    FIELDS.update(Base.FIELDS)
-
     @staticmethod
     def bond(position: Optional["IDXPosition"]):
         return {
@@ -132,14 +122,6 @@ class IDXPositionBondBlockNumber(Base):
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
-    FIELDS = {
-        "token_address": str,
-        "exchange_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXPositionShareBlockNumber(Base):
     """Synchronized blockNumber of IDXPosition(Share token)"""
@@ -152,14 +134,6 @@ class IDXPositionShareBlockNumber(Base):
     exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "token_address": str,
-        "exchange_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
 
 
 class IDXPositionCouponBlockNumber(Base):
@@ -174,14 +148,6 @@ class IDXPositionCouponBlockNumber(Base):
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
 
-    FIELDS = {
-        "token_address": str,
-        "exchange_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
-
 
 class IDXPositionMembershipBlockNumber(Base):
     """Synchronized blockNumber of IDXPosition(Membership token)"""
@@ -194,14 +160,6 @@ class IDXPositionMembershipBlockNumber(Base):
     exchange_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number: Mapped[int | None] = mapped_column(BigInteger)
-
-    FIELDS = {
-        "token_address": str,
-        "exchange_address": str,
-        "latest_block_number": int,
-    }
-
-    FIELDS.update(Base.FIELDS)
 
 
 class IDXLockedPosition(Base):
@@ -217,14 +175,6 @@ class IDXLockedPosition(Base):
     account_address: Mapped[str] = mapped_column(String(42), primary_key=True)
     # Locked Amount
     value: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
-
-    FIELDS = {
-        "token_address": str,
-        "lock_address": str,
-        "account_address": str,
-        "value": int,
-    }
-    FIELDS.update(Base.FIELDS)
 
     def json(self):
         return {

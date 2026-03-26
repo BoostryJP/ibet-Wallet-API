@@ -37,8 +37,11 @@ class TestNodeInfoBlockSyncStatus:
 
     @staticmethod
     def insert_node_data(
-        session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0
-    ):
+        session: Session,
+        is_synced: bool,
+        endpoint_uri: str = config.WEB3_HTTP_PROVIDER,
+        priority: int = 0,
+    ) -> None:
         node = Node()
         node.is_synced = is_synced
         node.endpoint_uri = endpoint_uri
