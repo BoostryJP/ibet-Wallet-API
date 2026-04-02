@@ -92,14 +92,6 @@ async def list_all_admin_tokens(async_session: DBAsyncSession):
     if TYPE_CHECKING:
         admin_tokens_for_type_check: list[RetrieveAdminTokenResponse] = []
         for token in listed_tokens:
-            # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-            assert token.token_address is not None
-            # TODO: Migrate listing.is_public to NOT NULL and update ORM typing.
-            assert token.is_public is not None
-            # TODO: Migrate listing.owner_address to NOT NULL and update ORM typing.
-            assert token.owner_address is not None
-            # TODO: Migrate listing.created to NOT NULL and update ORM typing.
-            assert token.created is not None
             admin_tokens_for_type_check.append(
                 RetrieveAdminTokenResponse(
                     id=token.id,
@@ -325,14 +317,6 @@ async def retrieve_admin_token(
     if token is not None:
         listed_token_payload = token.json()
         if TYPE_CHECKING:
-            # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-            assert token.token_address is not None
-            # TODO: Migrate listing.is_public to NOT NULL and update ORM typing.
-            assert token.is_public is not None
-            # TODO: Migrate listing.owner_address to NOT NULL and update ORM typing.
-            assert token.owner_address is not None
-            # TODO: Migrate listing.created to NOT NULL and update ORM typing.
-            assert token.created is not None
             _ = GenericSuccessResponse[RetrieveAdminTokenResponse](
                 meta=Success200MetaModel(code=200, message="OK"),
                 data=RetrieveAdminTokenResponse(

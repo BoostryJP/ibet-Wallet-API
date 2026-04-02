@@ -26,10 +26,21 @@ from typing import Final
 
 from pytest import LogCaptureFixture, fixture, mark
 from pytest_alembic import MigrationContext
-from sqlalchemy import Column, Integer, MetaData, String, Table, Text, insert, text
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    Text,
+    insert,
+    inspect,
+    select,
+    text,
+)
 from sqlalchemy.engine import Engine
 
-from app.database import engine
+from app.database import engine, get_db_schema
 
 REVISION_22_3: Final = "a80595c53d52"
 REVISION_22_6: Final = "e8d970fdd886"
@@ -42,6 +53,7 @@ REVISION_23_12: Final = "f6f13d28bb48"
 REVISION_24_3: Final = "3d3b90fda898"
 REVISION_24_6: Final = "418af51b07b5"
 REVISION_25_6: Final = "9a28ed8d4afd"
+REVISION_26_3: Final = "d7de2d20be69"
 
 REVISION_UP_TO_1_8 = [REVISION_22_3]
 REVISION_UP_TO_22_6 = REVISION_UP_TO_1_8 + [REVISION_22_6]
@@ -1045,3 +1057,134 @@ class TestMigrationsUpgrade:
                 )
                 unlocks = list(unlocks)
                 assert unlocks[0].data == {}
+
+    def test_upgrade_v26_3_feature_1792(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        # 1. Migrate to v26.3 initial
+        alembic_runner.migrate_up_to(REVISION_26_3)
+        schema = get_db_schema()
+        listing_table_key = f"{schema}.listing" if schema else "listing"
+        executable_contract_table_key = (
+            f"{schema}.executable_contract" if schema else "executable_contract"
+        )
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # 2. Insert test record
+        listing = meta.tables.get(listing_table_key)
+        assert listing is not None
+        stmt1 = insert(listing).values(
+            token_address="0x0000000000000000000000000000000000000011",
+            is_public=None,
+            max_holding_quantity=1,
+            max_sell_amount=1,
+            owner_address="0x0000000000000000000000000000000000000012",
+            created=None,
+            modified=None,
+        )
+        stmt2 = insert(listing).values(
+            token_address=None,
+            is_public=True,
+            max_holding_quantity=1,
+            max_sell_amount=1,
+            owner_address="0x0000000000000000000000000000000000000013",
+            created=None,
+            modified=None,
+        )
+        stmt3 = insert(listing).values(
+            token_address="0x0000000000000000000000000000000000000014",
+            is_public=False,
+            max_holding_quantity=1,
+            max_sell_amount=1,
+            owner_address=None,
+            created=None,
+            modified=None,
+        )
+
+        executable_contract = meta.tables.get(executable_contract_table_key)
+        assert executable_contract is not None
+        stmt4 = insert(executable_contract).values(
+            contract_address="0x0000000000000000000000000000000000000011",
+            created=None,
+            modified=None,
+        )
+        stmt5 = insert(executable_contract).values(
+            contract_address="0x0000000000000000000000000000000000000014",
+            created=None,
+            modified=None,
+        )
+        stmt6 = insert(executable_contract).values(
+            contract_address="0x0000000000000000000000000000000000000015",
+            created=None,
+            modified=None,
+        )
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.execute(stmt4)
+            conn.execute(stmt5)
+            conn.execute(stmt6)
+            conn.commit()
+
+        # 3. Run to head
+        alembic_runner.migrate_up_to("head")
+
+        inspector = inspect(engine)
+        listing_columns = {
+            column["name"]: column
+            for column in inspector.get_columns("listing", schema=schema)
+        }
+        assert listing_columns["token_address"]["nullable"] is False
+        assert listing_columns["is_public"]["nullable"] is False
+        assert listing_columns["owner_address"]["nullable"] is False
+        assert listing_columns["created"]["nullable"] is False
+        assert listing_columns["modified"]["nullable"] is False
+
+        executable_contract_columns = {
+            column["name"]: column
+            for column in inspector.get_columns("executable_contract", schema=schema)
+        }
+        assert executable_contract_columns["created"]["nullable"] is False
+        assert executable_contract_columns["modified"]["nullable"] is False
+
+        post_meta = MetaData()
+        post_meta.reflect(bind=engine)
+        listing = post_meta.tables.get(listing_table_key)
+        executable_contract = post_meta.tables.get(executable_contract_table_key)
+        assert listing is not None
+        assert executable_contract is not None
+
+        with engine.connect() as conn:
+            listing_rows = conn.execute(
+                select(listing).order_by(listing.c.id)
+            ).mappings()
+            listing_rows = list(listing_rows)
+            assert len(listing_rows) == 1
+            assert (
+                listing_rows[0]["token_address"]
+                == "0x0000000000000000000000000000000000000011"
+            )
+            assert bool(listing_rows[0]["is_public"]) is True
+            assert (
+                listing_rows[0]["owner_address"]
+                == "0x0000000000000000000000000000000000000012"
+            )
+            assert listing_rows[0]["created"] is not None
+            assert listing_rows[0]["modified"] is not None
+
+            executable_contract_rows = conn.execute(
+                select(executable_contract).order_by(
+                    executable_contract.c.contract_address
+                )
+            ).mappings()
+            executable_contract_rows = list(executable_contract_rows)
+            assert len(executable_contract_rows) == 1
+            assert (
+                executable_contract_rows[0]["contract_address"]
+                == "0x0000000000000000000000000000000000000011"
+            )
+            assert executable_contract_rows[0]["created"] is not None
+            assert executable_contract_rows[0]["modified"] is not None
