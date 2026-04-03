@@ -267,9 +267,9 @@ class TestMigrationsUpgrade:
         meta = self.alembic_definition(REVISION_UP_TO_22_9, alembic_runner)
         if from_legacy_migration:
             self.reset_alembic_revision(engine)
-            self.create_migrate_version(engine, 47)
+            self.create_migrate_version(engine, 41)
             alembic_runner.config.alembic_config.set_main_option(
-                "sqlalchemy_migrate_version", str("47")
+                "sqlalchemy_migrate_version", str("41")
             )
         assert "WARNING" not in caplog.text
 
@@ -441,6 +441,25 @@ class TestMigrationsUpgrade:
             conn.execute(stmt7)
             conn.execute(stmt8)
             conn.execute(stmt9)
+            conn.commit()
+
+        # NOTE: listing data
+        listing = meta.tables.get("listing")
+        assert listing is not None
+        stmt1 = insert(listing).values(
+            token_address="token_address1",
+            is_public=True,
+            owner_address="owner_address1",
+        )
+        stmt2 = insert(listing).values(
+            token_address="token_address2",
+            is_public=True,
+            owner_address="owner_address2",
+        )
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
             conn.commit()
 
         # NOTE: executable_contract data
