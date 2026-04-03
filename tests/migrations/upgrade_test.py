@@ -54,6 +54,7 @@ REVISION_24_3: Final = "3d3b90fda898"
 REVISION_24_6: Final = "418af51b07b5"
 REVISION_25_6: Final = "9a28ed8d4afd"
 REVISION_26_3: Final = "d7de2d20be69"
+REVISION_26_6: Final = "4df7e2c1b8a3"
 
 REVISION_UP_TO_1_8 = [REVISION_22_3]
 REVISION_UP_TO_22_6 = REVISION_UP_TO_1_8 + [REVISION_22_6]
@@ -1207,3 +1208,77 @@ class TestMigrationsUpgrade:
             )
             assert executable_contract_rows[0]["created"] is not None
             assert executable_contract_rows[0]["modified"] is not None
+
+    def test_upgrade_v26_6_feature_1793(
+        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
+    ):
+        alembic_runner.migrate_up_to(REVISION_26_6)
+        schema = get_db_schema()
+        consume_coupon_table_key = (
+            f"{schema}.consume_coupon" if schema else "consume_coupon"
+        )
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        consume_coupon = meta.tables.get(consume_coupon_table_key)
+        assert consume_coupon is not None
+
+        current_dt = datetime(2026, 4, 3, 0, 0, 0)
+        valid_block_timestamp = datetime(2026, 4, 3, 12, 0, 0)
+        stmt1 = insert(consume_coupon).values(
+            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000011",
+            token_address="0x0000000000000000000000000000000000000011",
+            account_address="0x0000000000000000000000000000000000000012",
+            amount=100,
+            block_timestamp=valid_block_timestamp,
+            created=current_dt,
+            modified=current_dt,
+        )
+        stmt2 = insert(consume_coupon).values(
+            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000022",
+            token_address="0x0000000000000000000000000000000000000021",
+            account_address="0x0000000000000000000000000000000000000022",
+            amount=None,
+            block_timestamp=valid_block_timestamp,
+            created=current_dt,
+            modified=current_dt,
+        )
+        stmt3 = insert(consume_coupon).values(
+            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000033",
+            token_address="0x0000000000000000000000000000000000000031",
+            account_address="0x0000000000000000000000000000000000000032",
+            amount=300,
+            block_timestamp=None,
+            created=current_dt,
+            modified=current_dt,
+        )
+
+        with engine.connect() as conn:
+            conn.execute(stmt1)
+            conn.execute(stmt2)
+            conn.execute(stmt3)
+            conn.commit()
+
+        alembic_runner.migrate_up_to("head")
+
+        inspector = inspect(engine)
+        consume_coupon_columns = {
+            column["name"]: column
+            for column in inspector.get_columns("consume_coupon", schema=schema)
+        }
+        assert consume_coupon_columns["amount"]["nullable"] is False
+        assert consume_coupon_columns["block_timestamp"]["nullable"] is False
+
+        post_meta = MetaData()
+        post_meta.reflect(bind=engine)
+        consume_coupon = post_meta.tables.get(consume_coupon_table_key)
+        assert consume_coupon is not None
+
+        with engine.connect() as conn:
+            consume_coupon_rows = conn.execute(
+                select(consume_coupon).order_by(consume_coupon.c.id)
+            ).mappings()
+            consume_coupon_rows = list(consume_coupon_rows)
+            assert len(consume_coupon_rows) == 1
+            assert consume_coupon_rows[0]["amount"] == 100
+            assert consume_coupon_rows[0]["block_timestamp"] == valid_block_timestamp
