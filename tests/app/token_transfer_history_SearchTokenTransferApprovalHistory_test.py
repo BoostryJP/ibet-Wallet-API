@@ -52,6 +52,7 @@ class TestSearchTokenTransferApprovalHistory:
         _listing = Listing()
         _listing.token_address = listing["token_address"]
         _listing.is_public = listing["is_public"]
+        _listing.owner_address = "0x0000000000000000000000000000000000000000"
         session.add(_listing)
 
     @staticmethod

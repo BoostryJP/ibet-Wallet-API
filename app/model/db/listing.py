@@ -39,21 +39,21 @@ class Listing(Base):
 
     __tablename__ = "listing"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    token_address: Mapped[str | None] = mapped_column(
+    token_address: Mapped[str] = mapped_column(
         String(256), index=True
     )  # トークンアドレス
-    is_public: Mapped[bool | None] = mapped_column(Boolean)
+    is_public: Mapped[bool] = mapped_column(Boolean)
     max_holding_quantity: Mapped[int | None] = mapped_column(BigInteger)  # 最大保有数量
     max_sell_amount: Mapped[int | None] = mapped_column(BigInteger)  # 売却価格上限
-    owner_address: Mapped[str | None] = mapped_column(String(256))  # 発行体アドレス
+    owner_address: Mapped[str] = mapped_column(String(256))  # 発行体アドレス
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             MySQLDATETIME(fsp=6), default=naive_utcnow, index=True
         )
     else:
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             DateTime, default=naive_utcnow, index=True
         )
 
@@ -61,7 +61,6 @@ class Listing(Base):
         return "<Listing id='%d'>" % self.id
 
     def json(self):
-        assert self.created is not None
         return {
             "id": self.id,
             "token_address": self.token_address,

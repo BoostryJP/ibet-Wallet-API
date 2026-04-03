@@ -850,10 +850,8 @@ class BasePositionMembership(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-        _token_position_list = cast(
-            Sequence[tuple[str, IDXPosition, IDXTokenInstance]],
-            (await async_session.execute(stmt)).tuples().all(),
+        _token_position_list: Sequence[tuple[str, IDXPosition, IDXTokenInstance]] = (
+            (await async_session.execute(stmt)).tuples().all()
         )
 
         position_list: list[PositionDataDict] = []

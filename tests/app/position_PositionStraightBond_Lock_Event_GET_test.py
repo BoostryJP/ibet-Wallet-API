@@ -113,6 +113,7 @@ class TestPositionStraightBondLockEvent:
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
+        _listing.owner_address = "0x0000000000000000000000000000000000000000"
         session.add(_listing)
 
     @staticmethod

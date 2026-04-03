@@ -204,6 +204,7 @@ class TestListAllCompanies:
         listed_token.is_public = is_public
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
+        listed_token.owner_address = "0x0000000000000000000000000000000000000000"
         session.add(listed_token)
 
     @staticmethod
