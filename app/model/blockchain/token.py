@@ -109,7 +109,6 @@ def token_db_cache(TargetModel: IDXTokenModel):
             now = datetime.now(UTC).replace(tzinfo=None)
             if (
                 cached_token
-                and cached_token.created is not None
                 and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL) >= now
             ):
                 # If cached data exists and doesn't expire, use cached data
