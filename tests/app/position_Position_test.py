@@ -29,6 +29,7 @@ from app import config
 from app.model.db import (
     IDXLockedPosition,
     IDXPosition,
+    IDXTokenListRegister,
     IDXTransfer,
     IDXTransferSourceEventType,
     Listing,
@@ -111,6 +112,17 @@ class TestPosition:
         listed_token.max_sell_amount = 1000
         listed_token.owner_address = "0x0000000000000000000000000000000000000000"
         session.add(listed_token)
+
+    @staticmethod
+    def create_idx_token_list_register(
+        session: Session, token_address: str, token_template: str
+    ) -> None:
+        idx_token_list_item = IDXTokenListRegister()
+        idx_token_list_item.token_address = token_address
+        idx_token_list_item.token_template = token_template
+        idx_token_list_item.owner_address = TestPosition.issuer["account_address"]
+        session.add(idx_token_list_item)
+        session.commit()
 
     @staticmethod
     def expected_bond_token():
@@ -2124,6 +2136,56 @@ class TestPosition:
             },
             "positions": [],
         }
+
+    # <Normal_9>
+    # Missing token cache rows are ignored
+    def test_normal_9(
+        self, client: TestClient, session: Session, shared_contract: SharedContract
+    ):
+        token_list_contract = shared_contract["TokenList"]
+        self.setup_data(session=session, shared_contract=shared_contract, index=0)
+
+        config.BOND_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
+        missing_token_rows = [
+            ("0x9000000000000000000000000000000000000001", "IbetStraightBond"),
+            ("0x9000000000000000000000000000000000000002", "IbetShare"),
+            ("0x9000000000000000000000000000000000000003", "IbetCoupon"),
+            ("0x9000000000000000000000000000000000000004", "IbetMembership"),
+        ]
+        for token_address, token_template in missing_token_rows:
+            self.create_idx_position(
+                session,
+                token_address,
+                self.account_1["account_address"],
+                balance=1,
+            )
+            self.list_token(token_address, session)
+            self.create_idx_token_list_register(session, token_address, token_template)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract):
+            resp = client.get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={},
+            )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["result_set"] == {
+            "count": 22,
+            "offset": None,
+            "limit": None,
+            "total": 22,
+        }
+        returned_token_addresses = [
+            position["token"]["token_address"]
+            for position in resp.json()["data"]["positions"]
+        ]
+        assert len(returned_token_addresses) == 22
+        for token_address, _ in missing_token_rows:
+            assert token_address not in returned_token_addresses
 
     ###########################################################################
     # Error
