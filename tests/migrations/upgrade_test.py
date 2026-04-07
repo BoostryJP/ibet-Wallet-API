@@ -1407,8 +1407,9 @@ class TestMigrationsUpgrade:
             ]
             metainfo_1 = notification_rows[0]["metainfo"]
             metainfo_2 = notification_rows[1]["metainfo"]
-            if engine.name == "mysql":
+            if isinstance(metainfo_1, str):
                 metainfo_1 = json.loads(metainfo_1)
+            if isinstance(metainfo_2, str):
                 metainfo_2 = json.loads(metainfo_2)
 
             assert (

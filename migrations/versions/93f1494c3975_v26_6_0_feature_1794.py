@@ -32,17 +32,33 @@ def _get_notification_table() -> sa.Table:
     )
 
 
+def _get_metainfo_null_condition(
+    dialect_name: str, notification: sa.Table
+) -> sa.ColumnElement[bool]:
+    if dialect_name == "mysql":
+        return sa.or_(
+            notification.c.metainfo.is_(None),
+            sa.func.json_type(notification.c.metainfo) == "NULL",
+        )
+    return sa.or_(
+        notification.c.metainfo.is_(None),
+        sa.func.json_typeof(notification.c.metainfo) == "null",
+    )
+
+
 def upgrade():
     ############################
     # Migration for notification not null columns
     ############################
     notification = _get_notification_table()
     connection = op.get_bind()
+    metainfo_null_condition = _get_metainfo_null_condition(
+        connection.dialect.name, notification
+    )
     notification_invalid_condition = sa.or_(
         notification.c.notification_type.is_(None),
         notification.c.block_timestamp.is_(None),
-        notification.c.metainfo.is_(None),
-        notification.c.metainfo == sa.JSON.NULL,
+        metainfo_null_condition,
     )
 
     connection.execute(
