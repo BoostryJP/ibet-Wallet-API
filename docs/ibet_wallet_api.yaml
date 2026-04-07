@@ -8071,7 +8071,9 @@ components:
             - type: object
           title: Metainfo
         account_address:
-          type: string
+          anyOf:
+            - type: string
+            - type: 'null'
           title: Account Address
         sort_id:
           type: integer
@@ -8199,7 +8201,9 @@ components:
             - type: object
           title: Metainfo
         account_address:
-          type: string
+          anyOf:
+            - type: string
+            - type: 'null'
           title: Account Address
       type: object
       required:

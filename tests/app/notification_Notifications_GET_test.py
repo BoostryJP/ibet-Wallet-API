@@ -137,13 +137,32 @@ class TestNotificationsGet:
         # Prepare data
         self._insert_test_data(session)
 
+        n = Notification()
+        n.notification_category = "attribute_change"
+        n.notification_id = "0x00000100000000000000000000"
+        n.notification_type = "TransferableChanged"
+        n.priority = 0
+        n.address = None
+        n.is_read = False
+        n.is_flagged = False
+        n.is_deleted = False
+        n.deleted_at = None
+        n.block_timestamp = datetime(2017, 1, 10, 10, 0, 0)
+        n.args = {
+            "previous": True,
+            "current": False,
+        }
+        n.metainfo = {}
+        n.created = datetime.strptime("2022/01/01 20:20:30", "%Y/%m/%d %H:%M:%S")
+        session.add(n)
+
         session.commit()
 
         # Request target API
         resp = client.get(self.apiurl)
 
         assumed_body: dict[str, Any] = {
-            "result_set": {"count": 5, "offset": None, "limit": None, "total": 5},
+            "result_set": {"count": 6, "offset": None, "limit": None, "total": 6},
             "notifications": [
                 {
                     "notification_category": "event_log",
@@ -234,6 +253,25 @@ class TestNotificationsGet:
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
                     "created": "2022/01/01 19:20:30",
+                },
+                {
+                    "notification_category": "attribute_change",
+                    "notification_type": "TransferableChanged",
+                    "id": "0x00000100000000000000000000",
+                    "sort_id": 6,
+                    "priority": 0,
+                    "block_timestamp": "2017/01/10 10:00:00",
+                    "is_read": False,
+                    "is_flagged": False,
+                    "is_deleted": False,
+                    "deleted_at": None,
+                    "args": {
+                        "previous": True,
+                        "current": False,
+                    },
+                    "metainfo": {},
+                    "account_address": None,
+                    "created": "2022/01/01 20:20:30",
                 },
             ],
         }

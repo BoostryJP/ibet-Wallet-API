@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Annotated, Any, Optional, Sequence
+from typing import TYPE_CHECKING, Annotated, Optional, Sequence
 
 from eth_utils.address import to_checksum_address
 from fastapi import APIRouter, Path, Query
@@ -125,23 +125,14 @@ async def list_all_notifications(
         await async_session.scalars(stmt)
     ).all()
 
-    notifications: list[dict[str, Any]] = []
-    for i, _notification in enumerate(_notification_list):
-        # TODO: Migrate notification.created to NOT NULL and update ORM typing
-        assert _notification.created is not None
-        notification_data = {
+    notifications = [
+        {
             **_notification.json(),
             "sort_id": sort_id + i + 1,
-            "created": "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                _notification.created.year,
-                _notification.created.month,
-                _notification.created.day,
-                _notification.created.hour,
-                _notification.created.minute,
-                _notification.created.second,
-            ),
+            "created": Notification.format_datetime(_notification.created),
         }
-        notifications.append(notification_data)
+        for i, _notification in enumerate(_notification_list)
+    ]
     data: dict[str, object] = {
         "result_set": {
             "count": count,
@@ -153,55 +144,31 @@ async def list_all_notifications(
     }
 
     if TYPE_CHECKING:
-        type_checked_notifications: list[NotificationSchema] = []
-        for i, _notification in enumerate(_notification_list):
-            assert _notification.created is not None
-            notification_data = _notification.json()
-            notification_type_value = notification_data["notification_type"]
-            priority_value = notification_data["priority"]
-            block_timestamp_value = notification_data["block_timestamp"]
-            is_read_value = notification_data["is_read"]
-            is_flagged_value = notification_data["is_flagged"]
-            is_deleted_value = notification_data["is_deleted"]
-            metainfo_value = notification_data["metainfo"]
-            account_address_value = notification_data["account_address"]
-            created_value = "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                _notification.created.year,
-                _notification.created.month,
-                _notification.created.day,
-                _notification.created.hour,
-                _notification.created.minute,
-                _notification.created.second,
+        type_checked_notifications = [
+            NotificationSchema(
+                notification_category=_notification.notification_category,
+                id=_notification.notification_id,
+                notification_type=NotificationType(_notification.notification_type),
+                priority=_notification.priority,
+                block_timestamp=Notification.format_datetime(
+                    _notification.block_timestamp
+                ),
+                is_read=_notification.is_read,
+                is_flagged=_notification.is_flagged,
+                is_deleted=_notification.is_deleted,
+                deleted_at=(
+                    Notification.format_datetime(_notification.deleted_at)
+                    if _notification.deleted_at is not None
+                    else None
+                ),
+                args=_notification.args,
+                metainfo=_notification.metainfo,
+                account_address=_notification.address,
+                sort_id=sort_id + i + 1,
+                created=Notification.format_datetime(_notification.created),
             )
-            # TODO: Migrate notification.notification_type, priority, block_timestamp,
-            # is_read, is_flagged, is_deleted, metainfo, and address to NOT NULL and
-            # update ORM typing.
-            assert notification_type_value is not None
-            assert priority_value is not None
-            assert block_timestamp_value is not None
-            assert is_read_value is not None
-            assert is_flagged_value is not None
-            assert is_deleted_value is not None
-            assert metainfo_value is not None
-            assert account_address_value is not None
-            type_checked_notifications.append(
-                NotificationSchema(
-                    notification_category=notification_data["notification_category"],
-                    id=notification_data["id"],
-                    notification_type=NotificationType(notification_type_value),
-                    priority=priority_value,
-                    block_timestamp=block_timestamp_value,
-                    is_read=is_read_value,
-                    is_flagged=is_flagged_value,
-                    is_deleted=is_deleted_value,
-                    deleted_at=notification_data["deleted_at"],
-                    args=notification_data["args"],
-                    metainfo=metainfo_value,
-                    account_address=account_address_value,
-                    sort_id=sort_id + i + 1,
-                    created=created_value,
-                )
-            )
+            for i, _notification in enumerate(_notification_list)
+        ]
         _ = GenericSuccessResponse[NotificationsResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=NotificationsResponse(
@@ -331,38 +298,26 @@ async def update_notification(
     await async_session.commit()
 
     if TYPE_CHECKING:
-        # TODO: Migrate notification.notification_type to NOT NULL and update ORM typing.
-        assert notification.notification_type is not None
-        # TODO: Migrate notification.priority to NOT NULL and update ORM typing.
-        assert notification.priority is not None
-        # TODO: Migrate notification.is_read to NOT NULL and update ORM typing.
-        assert notification.is_read is not None
-        # TODO: Migrate notification.is_flagged to NOT NULL and update ORM typing.
-        assert notification.is_flagged is not None
-        # TODO: Migrate notification.is_deleted to NOT NULL and update ORM typing.
-        assert notification.is_deleted is not None
-        # TODO: Migrate notification.address to NOT NULL and update ORM typing.
-        assert notification.address is not None
-        update_response_payload = notification.json()
-        block_timestamp_value = update_response_payload["block_timestamp"]
-        deleted_at_value = update_response_payload["deleted_at"]
-        metainfo_value = update_response_payload["metainfo"]
-        assert isinstance(block_timestamp_value, str)
-        assert deleted_at_value is None or isinstance(deleted_at_value, str)
-        assert isinstance(metainfo_value, dict)
+        deleted_at = (
+            Notification.format_datetime(notification.deleted_at)
+            if notification.deleted_at is not None
+            else None
+        )
         _ = GenericSuccessResponse[NotificationUpdateResponse](
             meta=Success200MetaModel(code=200, message="OK"),
             data=NotificationUpdateResponse(
                 notification_type=NotificationType(notification.notification_type),
                 id=notification.notification_id,
                 priority=notification.priority,
-                block_timestamp=block_timestamp_value,
+                block_timestamp=Notification.format_datetime(
+                    notification.block_timestamp
+                ),
                 is_read=notification.is_read,
                 is_flagged=notification.is_flagged,
                 is_deleted=notification.is_deleted,
-                deleted_at=deleted_at_value,
-                args=update_response_payload["args"],
-                metainfo=metainfo_value,
+                deleted_at=deleted_at,
+                args=notification.args,
+                metainfo=notification.metainfo,
                 account_address=notification.address,
             ),
         )
