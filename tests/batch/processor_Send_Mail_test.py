@@ -204,7 +204,7 @@ class TestProcessorSendMail:
         with (
             mock.patch(
                 "app.model.mail.mail.Mail.send_mail",
-                MagicMock(side_effect=SMTPException()),
+                MagicMock(side_effect=SMTPException("smtp auth failed")),
             ),
             mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
         ):
@@ -214,9 +214,16 @@ class TestProcessorSendMail:
         # Assertion
         assert len(session.scalars(select(Mail)).all()) == 0
 
-        assert 1 == caplog.record_tuples.count(
-            (LOG.name, logging.WARNING, "Could not send email: id=1")
-        )
+        error_logs = [
+            record
+            for record in caplog.records
+            if record.name == LOG.name
+            and record.levelno == logging.ERROR
+            and record.message == "Could not send email: id=1"
+        ]
+        assert 1 == len(error_logs)
+        assert error_logs[0].exc_info is not None
+        assert SMTPException is error_logs[0].exc_info[0]
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
