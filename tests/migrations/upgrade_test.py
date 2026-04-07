@@ -35,6 +35,7 @@ from sqlalchemy import (
     Text,
     insert,
     inspect,
+    null,
     select,
     text,
 )
@@ -1261,6 +1262,22 @@ class TestMigrationsUpgrade:
             created=current_dt,
             modified=current_dt,
         )
+        notification_stmt6 = insert(notification).values(
+            notification_category="event_log",
+            notification_id="0x00000000000000000000000066",
+            notification_type="Lock",
+            priority=0,
+            address="0x0000000000000000000000000000000000000066",
+            is_read=False,
+            is_flagged=False,
+            is_deleted=False,
+            deleted_at=None,
+            block_timestamp=notification_valid_block_timestamp,
+            args={},
+            metainfo=null(),
+            created=current_dt,
+            modified=current_dt,
+        )
 
         with engine.connect() as conn:
             conn.execute(listing_stmt1)
@@ -1277,6 +1294,7 @@ class TestMigrationsUpgrade:
             conn.execute(notification_stmt3)
             conn.execute(notification_stmt4)
             conn.execute(notification_stmt5)
+            conn.execute(notification_stmt6)
             conn.commit()
 
         # 3. Run to v26.6
@@ -1380,6 +1398,13 @@ class TestMigrationsUpgrade:
             ).mappings()
             notification_rows = list(notification_rows)
             assert len(notification_rows) == 2
+            assert [
+                notification_row["notification_id"]
+                for notification_row in notification_rows
+            ] == [
+                "0x00000000000000000000000011",
+                "0x00000000000000000000000022",
+            ]
             metainfo_1 = notification_rows[0]["metainfo"]
             metainfo_2 = notification_rows[1]["metainfo"]
             if engine.name == "mysql":

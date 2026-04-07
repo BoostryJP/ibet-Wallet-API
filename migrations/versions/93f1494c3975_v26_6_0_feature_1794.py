@@ -42,6 +42,7 @@ def upgrade():
         notification.c.notification_type.is_(None),
         notification.c.block_timestamp.is_(None),
         notification.c.metainfo.is_(None),
+        notification.c.metainfo == sa.JSON.NULL,
     )
 
     connection.execute(
