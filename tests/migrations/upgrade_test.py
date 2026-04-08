@@ -35,6 +35,7 @@ from sqlalchemy import (
     Text,
     insert,
     inspect,
+    null,
     select,
     text,
 )
@@ -54,7 +55,7 @@ REVISION_24_3: Final = "3d3b90fda898"
 REVISION_24_6: Final = "418af51b07b5"
 REVISION_25_6: Final = "9a28ed8d4afd"
 REVISION_26_3: Final = "d7de2d20be69"
-REVISION_26_6: Final = "4df7e2c1b8a3"
+REVISION_26_6: Final = "93f1494c3975"
 
 REVISION_UP_TO_1_8 = [REVISION_22_3]
 REVISION_UP_TO_22_6 = REVISION_UP_TO_1_8 + [REVISION_22_6]
@@ -1078,23 +1079,27 @@ class TestMigrationsUpgrade:
                 unlocks = list(unlocks)
                 assert unlocks[0].data == {}
 
-    def test_upgrade_v26_3_feature_1792(
+    def test_upgrade_v26_6(
         self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
     ):
-        # 1. Migrate to v26.3 initial
+        # 1. Migrate to v26.3
         alembic_runner.migrate_up_to(REVISION_26_3)
         schema = get_db_schema()
         listing_table_key = f"{schema}.listing" if schema else "listing"
         executable_contract_table_key = (
             f"{schema}.executable_contract" if schema else "executable_contract"
         )
+        consume_coupon_table_key = (
+            f"{schema}.consume_coupon" if schema else "consume_coupon"
+        )
+        notification_table_key = f"{schema}.notification" if schema else "notification"
         meta = MetaData()
         meta.reflect(bind=engine)
 
         # 2. Insert test record
         listing = meta.tables.get(listing_table_key)
         assert listing is not None
-        stmt1 = insert(listing).values(
+        listing_stmt1 = insert(listing).values(
             token_address="0x0000000000000000000000000000000000000011",
             is_public=None,
             max_holding_quantity=1,
@@ -1103,7 +1108,7 @@ class TestMigrationsUpgrade:
             created=None,
             modified=None,
         )
-        stmt2 = insert(listing).values(
+        listing_stmt2 = insert(listing).values(
             token_address=None,
             is_public=True,
             max_holding_quantity=1,
@@ -1112,7 +1117,7 @@ class TestMigrationsUpgrade:
             created=None,
             modified=None,
         )
-        stmt3 = insert(listing).values(
+        listing_stmt3 = insert(listing).values(
             token_address="0x0000000000000000000000000000000000000014",
             is_public=False,
             max_holding_quantity=1,
@@ -1124,33 +1129,176 @@ class TestMigrationsUpgrade:
 
         executable_contract = meta.tables.get(executable_contract_table_key)
         assert executable_contract is not None
-        stmt4 = insert(executable_contract).values(
+        executable_contract_stmt1 = insert(executable_contract).values(
             contract_address="0x0000000000000000000000000000000000000011",
             created=None,
             modified=None,
         )
-        stmt5 = insert(executable_contract).values(
+        executable_contract_stmt2 = insert(executable_contract).values(
             contract_address="0x0000000000000000000000000000000000000014",
             created=None,
             modified=None,
         )
-        stmt6 = insert(executable_contract).values(
+        executable_contract_stmt3 = insert(executable_contract).values(
             contract_address="0x0000000000000000000000000000000000000015",
             created=None,
             modified=None,
         )
+        consume_coupon = meta.tables.get(consume_coupon_table_key)
+        assert consume_coupon is not None
+
+        current_dt = datetime(2026, 4, 3, 0, 0, 0)
+        consume_coupon_valid_block_timestamp = datetime(2026, 4, 3, 12, 0, 0)
+        consume_coupon_stmt1 = insert(consume_coupon).values(
+            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000011",
+            token_address="0x0000000000000000000000000000000000000011",
+            account_address="0x0000000000000000000000000000000000000012",
+            amount=100,
+            block_timestamp=consume_coupon_valid_block_timestamp,
+            created=current_dt,
+            modified=current_dt,
+        )
+        consume_coupon_stmt2 = insert(consume_coupon).values(
+            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000022",
+            token_address="0x0000000000000000000000000000000000000021",
+            account_address="0x0000000000000000000000000000000000000022",
+            amount=None,
+            block_timestamp=consume_coupon_valid_block_timestamp,
+            created=current_dt,
+            modified=current_dt,
+        )
+        consume_coupon_stmt3 = insert(consume_coupon).values(
+            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000033",
+            token_address="0x0000000000000000000000000000000000000031",
+            account_address="0x0000000000000000000000000000000000000032",
+            amount=300,
+            block_timestamp=None,
+            created=current_dt,
+            modified=current_dt,
+        )
+        notification = meta.tables.get(notification_table_key)
+        assert notification is not None
+
+        current_dt = datetime(2026, 4, 7, 0, 0, 0)
+        notification_valid_block_timestamp = datetime(2026, 4, 7, 12, 0, 0)
+
+        notification_stmt1 = insert(notification).values(
+            notification_category="event_log",
+            notification_id="0x00000000000000000000000011",
+            notification_type="Transfer",
+            priority=1,
+            address="0x0000000000000000000000000000000000000011",
+            is_read=True,
+            is_flagged=False,
+            is_deleted=False,
+            deleted_at=None,
+            block_timestamp=notification_valid_block_timestamp,
+            args={"amount": 100},
+            metainfo={"token_name": "test"},
+            created=current_dt,
+            modified=current_dt,
+        )
+        notification_stmt2 = insert(notification).values(
+            notification_category="attribute_change",
+            notification_id="0x00000000000000000000000022",
+            notification_type="TransferableChanged",
+            priority=None,
+            address=None,
+            is_read=None,
+            is_flagged=None,
+            is_deleted=None,
+            deleted_at=None,
+            block_timestamp=notification_valid_block_timestamp,
+            args={"previous": True, "current": False},
+            metainfo={"attribute": "transferable"},
+            created=current_dt,
+            modified=current_dt,
+        )
+        notification_stmt3 = insert(notification).values(
+            notification_category="event_log",
+            notification_id="0x00000000000000000000000033",
+            notification_type=None,
+            priority=0,
+            address="0x0000000000000000000000000000000000000033",
+            is_read=False,
+            is_flagged=False,
+            is_deleted=False,
+            deleted_at=None,
+            block_timestamp=notification_valid_block_timestamp,
+            args={},
+            metainfo={},
+            created=current_dt,
+            modified=current_dt,
+        )
+        notification_stmt4 = insert(notification).values(
+            notification_category="event_log",
+            notification_id="0x00000000000000000000000044",
+            notification_type="ForceLock",
+            priority=0,
+            address="0x0000000000000000000000000000000000000044",
+            is_read=False,
+            is_flagged=False,
+            is_deleted=False,
+            deleted_at=None,
+            block_timestamp=None,
+            args={},
+            metainfo={},
+            created=current_dt,
+            modified=current_dt,
+        )
+        notification_stmt5 = insert(notification).values(
+            notification_category="event_log",
+            notification_id="0x00000000000000000000000055",
+            notification_type="ForceUnlock",
+            priority=0,
+            address="0x0000000000000000000000000000000000000055",
+            is_read=False,
+            is_flagged=False,
+            is_deleted=False,
+            deleted_at=None,
+            block_timestamp=notification_valid_block_timestamp,
+            args={},
+            metainfo=None,
+            created=current_dt,
+            modified=current_dt,
+        )
+        notification_stmt6 = insert(notification).values(
+            notification_category="event_log",
+            notification_id="0x00000000000000000000000066",
+            notification_type="Lock",
+            priority=0,
+            address="0x0000000000000000000000000000000000000066",
+            is_read=False,
+            is_flagged=False,
+            is_deleted=False,
+            deleted_at=None,
+            block_timestamp=notification_valid_block_timestamp,
+            args={},
+            metainfo=null(),
+            created=current_dt,
+            modified=current_dt,
+        )
 
         with engine.connect() as conn:
-            conn.execute(stmt1)
-            conn.execute(stmt2)
-            conn.execute(stmt3)
-            conn.execute(stmt4)
-            conn.execute(stmt5)
-            conn.execute(stmt6)
+            conn.execute(listing_stmt1)
+            conn.execute(listing_stmt2)
+            conn.execute(listing_stmt3)
+            conn.execute(executable_contract_stmt1)
+            conn.execute(executable_contract_stmt2)
+            conn.execute(executable_contract_stmt3)
+            conn.execute(consume_coupon_stmt1)
+            conn.execute(consume_coupon_stmt2)
+            conn.execute(consume_coupon_stmt3)
+            conn.execute(notification_stmt1)
+            conn.execute(notification_stmt2)
+            conn.execute(notification_stmt3)
+            conn.execute(notification_stmt4)
+            conn.execute(notification_stmt5)
+            conn.execute(notification_stmt6)
             conn.commit()
 
-        # 3. Run to head
-        alembic_runner.migrate_up_to("head")
+        # 3. Run to v26.6
+        alembic_runner.migrate_up_to(REVISION_26_6)
 
         inspector = inspect(engine)
         listing_columns = {
@@ -1170,12 +1318,37 @@ class TestMigrationsUpgrade:
         assert executable_contract_columns["created"]["nullable"] is False
         assert executable_contract_columns["modified"]["nullable"] is False
 
+        consume_coupon_columns = {
+            column["name"]: column
+            for column in inspector.get_columns("consume_coupon", schema=schema)
+        }
+        assert consume_coupon_columns["amount"]["nullable"] is False
+        assert consume_coupon_columns["block_timestamp"]["nullable"] is False
+
+        notification_columns = {
+            column["name"]: column
+            for column in inspector.get_columns("notification", schema=schema)
+        }
+        assert notification_columns["notification_type"]["nullable"] is False
+        assert notification_columns["priority"]["nullable"] is False
+        assert notification_columns["is_read"]["nullable"] is False
+        assert notification_columns["is_flagged"]["nullable"] is False
+        assert notification_columns["is_deleted"]["nullable"] is False
+        assert notification_columns["block_timestamp"]["nullable"] is False
+        assert notification_columns["metainfo"]["nullable"] is False
+        assert notification_columns["address"]["nullable"] is True
+        assert notification_columns["deleted_at"]["nullable"] is True
+
         post_meta = MetaData()
         post_meta.reflect(bind=engine)
         listing = post_meta.tables.get(listing_table_key)
         executable_contract = post_meta.tables.get(executable_contract_table_key)
+        consume_coupon = post_meta.tables.get(consume_coupon_table_key)
+        notification = post_meta.tables.get(notification_table_key)
         assert listing is not None
         assert executable_contract is not None
+        assert consume_coupon is not None
+        assert notification is not None
 
         with engine.connect() as conn:
             listing_rows = conn.execute(
@@ -1209,76 +1382,61 @@ class TestMigrationsUpgrade:
             assert executable_contract_rows[0]["created"] is not None
             assert executable_contract_rows[0]["modified"] is not None
 
-    def test_upgrade_v26_6_feature_1793(
-        self, alembic_runner: MigrationContext, caplog: LogCaptureFixture
-    ):
-        alembic_runner.migrate_up_to(REVISION_26_6)
-        schema = get_db_schema()
-        consume_coupon_table_key = (
-            f"{schema}.consume_coupon" if schema else "consume_coupon"
-        )
-        meta = MetaData()
-        meta.reflect(bind=engine)
-
-        consume_coupon = meta.tables.get(consume_coupon_table_key)
-        assert consume_coupon is not None
-
-        current_dt = datetime(2026, 4, 3, 0, 0, 0)
-        valid_block_timestamp = datetime(2026, 4, 3, 12, 0, 0)
-        stmt1 = insert(consume_coupon).values(
-            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000011",
-            token_address="0x0000000000000000000000000000000000000011",
-            account_address="0x0000000000000000000000000000000000000012",
-            amount=100,
-            block_timestamp=valid_block_timestamp,
-            created=current_dt,
-            modified=current_dt,
-        )
-        stmt2 = insert(consume_coupon).values(
-            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000022",
-            token_address="0x0000000000000000000000000000000000000021",
-            account_address="0x0000000000000000000000000000000000000022",
-            amount=None,
-            block_timestamp=valid_block_timestamp,
-            created=current_dt,
-            modified=current_dt,
-        )
-        stmt3 = insert(consume_coupon).values(
-            transaction_hash="0x0000000000000000000000000000000000000000000000000000000000000033",
-            token_address="0x0000000000000000000000000000000000000031",
-            account_address="0x0000000000000000000000000000000000000032",
-            amount=300,
-            block_timestamp=None,
-            created=current_dt,
-            modified=current_dt,
-        )
-
-        with engine.connect() as conn:
-            conn.execute(stmt1)
-            conn.execute(stmt2)
-            conn.execute(stmt3)
-            conn.commit()
-
-        alembic_runner.migrate_up_to("head")
-
-        inspector = inspect(engine)
-        consume_coupon_columns = {
-            column["name"]: column
-            for column in inspector.get_columns("consume_coupon", schema=schema)
-        }
-        assert consume_coupon_columns["amount"]["nullable"] is False
-        assert consume_coupon_columns["block_timestamp"]["nullable"] is False
-
-        post_meta = MetaData()
-        post_meta.reflect(bind=engine)
-        consume_coupon = post_meta.tables.get(consume_coupon_table_key)
-        assert consume_coupon is not None
-
-        with engine.connect() as conn:
             consume_coupon_rows = conn.execute(
                 select(consume_coupon).order_by(consume_coupon.c.id)
             ).mappings()
             consume_coupon_rows = list(consume_coupon_rows)
             assert len(consume_coupon_rows) == 1
             assert consume_coupon_rows[0]["amount"] == 100
-            assert consume_coupon_rows[0]["block_timestamp"] == valid_block_timestamp
+            assert (
+                consume_coupon_rows[0]["block_timestamp"]
+                == consume_coupon_valid_block_timestamp
+            )
+
+            notification_rows = conn.execute(
+                select(notification).order_by(notification.c.notification_id)
+            ).mappings()
+            notification_rows = list(notification_rows)
+            assert len(notification_rows) == 2
+            assert [
+                notification_row["notification_id"]
+                for notification_row in notification_rows
+            ] == [
+                "0x00000000000000000000000011",
+                "0x00000000000000000000000022",
+            ]
+            metainfo_1 = notification_rows[0]["metainfo"]
+            metainfo_2 = notification_rows[1]["metainfo"]
+            if isinstance(metainfo_1, str):
+                metainfo_1 = json.loads(metainfo_1)
+            if isinstance(metainfo_2, str):
+                metainfo_2 = json.loads(metainfo_2)
+
+            assert (
+                notification_rows[0]["notification_id"]
+                == "0x00000000000000000000000011"
+            )
+            assert notification_rows[0]["priority"] == 1
+            assert bool(notification_rows[0]["is_read"]) is True
+            assert bool(notification_rows[0]["is_flagged"]) is False
+            assert bool(notification_rows[0]["is_deleted"]) is False
+            assert (
+                notification_rows[0]["block_timestamp"]
+                == notification_valid_block_timestamp
+            )
+            assert metainfo_1 == {"token_name": "test"}
+
+            assert (
+                notification_rows[1]["notification_id"]
+                == "0x00000000000000000000000022"
+            )
+            assert notification_rows[1]["priority"] == 0
+            assert bool(notification_rows[1]["is_read"]) is False
+            assert bool(notification_rows[1]["is_flagged"]) is False
+            assert bool(notification_rows[1]["is_deleted"]) is False
+            assert notification_rows[1]["address"] is None
+            assert (
+                notification_rows[1]["block_timestamp"]
+                == notification_valid_block_timestamp
+            )
+            assert metainfo_2 == {"attribute": "transferable"}
