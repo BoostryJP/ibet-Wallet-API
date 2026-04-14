@@ -16,70 +16,110 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from __future__ import annotations
-
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any, cast
 from unittest import mock
 
 from hexbytes import HexBytes
+from web3.eth.async_eth import AsyncEth
+from web3.eth.eth import Eth
 from web3.types import RPCEndpoint
-
-from tests.helpers import contract as contract_helper
 
 
 @contextmanager
-def install_anvil_transaction_sync_patch() -> Iterator[None]:
-    """Route transaction sending through Anvil's sync RPC in tests.
-
-    The patch preserves the normal web3.py API shape while avoiding repeated
-    receipt polling in test code that already expects mined transactions.
-    """
+def install_anvil_transaction_sync_patch(_: Any = None) -> Iterator[None]:
+    """Route transaction sending through Anvil's synchronous RPC during tests."""
 
     transaction_receipt_cache: dict[HexBytes, Any] = {}
-    original_contract_get_transaction_receipt = (
-        contract_helper.web3.eth.get_transaction_receipt
-    )
+    original_sync_get_transaction_receipt = Eth.get_transaction_receipt
+    original_async_get_transaction_receipt = AsyncEth.get_transaction_receipt
 
     def _cache_receipt(receipt: Any) -> HexBytes:
         transaction_hash = HexBytes(receipt["transactionHash"])
         transaction_receipt_cache[transaction_hash] = receipt
         return transaction_hash
 
-    def _make_send_transaction_patch(web3_instance: Any):
-        def _send_transaction_via_sync_api(transaction: Any) -> HexBytes:
-            transaction_params = web3_instance.eth.send_transaction_munger(transaction)[
-                0
-            ]
-            receipt = web3_instance.manager.request_blocking(
-                cast(RPCEndpoint, "eth_sendTransactionSync"), [transaction_params]
-            )
-            return _cache_receipt(receipt)
+    def _get_cached_receipt(transaction_hash: Any) -> Any:
+        cached_receipt = transaction_receipt_cache.get(HexBytes(transaction_hash))
+        if cached_receipt is not None:
+            return cached_receipt
+        return None
 
-        return _send_transaction_via_sync_api
+    def _send_transaction_via_sync_api(self: Eth, transaction: Any) -> HexBytes:
+        transaction_params = self.send_transaction_munger(transaction)[0]
+        receipt = self.w3.manager.request_blocking(
+            cast(RPCEndpoint, "eth_sendTransactionSync"), [transaction_params]
+        )
+        return _cache_receipt(receipt)
 
-    def _make_get_transaction_receipt_patch(original_getter: Any):
-        def _get_transaction_receipt_with_cache(transaction_hash: HexBytes) -> Any:
-            cached_receipt = transaction_receipt_cache.get(HexBytes(transaction_hash))
-            if cached_receipt is not None:
-                return cached_receipt
-            return original_getter(transaction_hash)
+    def _send_raw_transaction_via_sync_api(self: Eth, transaction: Any) -> HexBytes:
+        receipt = self.w3.manager.request_blocking(
+            cast(RPCEndpoint, "eth_sendRawTransactionSync"), [transaction]
+        )
+        return _cache_receipt(receipt)
 
-        return _get_transaction_receipt_with_cache
+    async def _async_send_transaction_via_sync_api(
+        self: AsyncEth, transaction: Any
+    ) -> HexBytes:
+        transaction_params = self.send_transaction_munger(transaction)[0]
+        receipt = await self.w3.manager.coro_request(
+            cast(RPCEndpoint, "eth_sendTransactionSync"), [transaction_params]
+        )
+        return _cache_receipt(receipt)
+
+    async def _async_send_raw_transaction_via_sync_api(
+        self: AsyncEth, transaction: Any
+    ) -> HexBytes:
+        receipt = await self.w3.manager.coro_request(
+            cast(RPCEndpoint, "eth_sendRawTransactionSync"), [transaction]
+        )
+        return _cache_receipt(receipt)
+
+    def _get_transaction_receipt_with_cache(self: Eth, transaction_hash: Any) -> Any:
+        cached_receipt = _get_cached_receipt(transaction_hash)
+        if cached_receipt is not None:
+            return cached_receipt
+        return original_sync_get_transaction_receipt(self, transaction_hash)
+
+    async def _async_get_transaction_receipt_with_cache(
+        self: AsyncEth, transaction_hash: Any
+    ) -> Any:
+        cached_receipt = _get_cached_receipt(transaction_hash)
+        if cached_receipt is not None:
+            return cached_receipt
+        return await original_async_get_transaction_receipt(self, transaction_hash)
 
     with (
         mock.patch.object(
-            contract_helper.web3.eth,
+            Eth,
             "send_transaction",
-            _make_send_transaction_patch(contract_helper.web3),
+            _send_transaction_via_sync_api,
         ),
         mock.patch.object(
-            contract_helper.web3.eth,
+            Eth,
+            "send_raw_transaction",
+            _send_raw_transaction_via_sync_api,
+        ),
+        mock.patch.object(
+            Eth,
             "get_transaction_receipt",
-            _make_get_transaction_receipt_patch(
-                original_contract_get_transaction_receipt
-            ),
+            _get_transaction_receipt_with_cache,
+        ),
+        mock.patch.object(
+            AsyncEth,
+            "send_transaction",
+            _async_send_transaction_via_sync_api,
+        ),
+        mock.patch.object(
+            AsyncEth,
+            "send_raw_transaction",
+            _async_send_raw_transaction_via_sync_api,
+        ),
+        mock.patch.object(
+            AsyncEth,
+            "get_transaction_receipt",
+            _async_get_transaction_receipt_with_cache,
         ),
     ):
         yield
