@@ -209,7 +209,11 @@ class TestAdminTokensPOST:
         assert executable_contract is not None
         assert executable_contract.contract_address == req_params["contract_address"]
 
-        bond = session.scalars(select(IDXBondToken).limit(1)).first()
+        bond = session.scalars(
+            select(IDXBondToken)
+            .where(IDXBondToken.token_address == bond_token.address)
+            .limit(1)
+        ).first()
         assert bond is not None
         assert bond.token_address == req_params["contract_address"]
         assert bond.owner_address == issuer["account_address"]
@@ -316,7 +320,11 @@ class TestAdminTokensPOST:
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond = session.scalars(select(IDXBondToken).limit(1)).first()
+        bond = session.scalars(
+            select(IDXBondToken)
+            .where(IDXBondToken.token_address == bond_token.address)
+            .limit(1)
+        ).first()
         assert bond is not None
         assert bond.token_address == bond_token.address
         assert bond.owner_address == issuer["account_address"]
@@ -430,7 +438,11 @@ class TestAdminTokensPOST:
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
-        bond = session.scalars(select(IDXBondToken).limit(1)).first()
+        bond = session.scalars(
+            select(IDXBondToken)
+            .where(IDXBondToken.token_address == bond_token.address)
+            .limit(1)
+        ).first()
         assert bond is not None
         assert bond.token_address == bond_token.address
         assert bond.owner_address == issuer["account_address"]

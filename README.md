@@ -23,7 +23,7 @@ English | <a href='./README_JA.md'>日本語</a>
   - [MySQL](https://www.mysql.com/) - Version 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
-  - We use [hardhat network](https://hardhat.org/hardhat-network/) for local development and unit testing, and we use the latest version.
+  - We use [Anvil](https://www.getfoundry.sh/anvil/) for local development and unit testing.
 
 ## Supported contract version
 

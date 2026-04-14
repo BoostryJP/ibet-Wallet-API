@@ -21,6 +21,7 @@ import json
 from unittest.mock import ANY
 
 from fastapi.testclient import TestClient
+from hexbytes import HexBytes
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.contract import Contract as Web3Contract
@@ -44,6 +45,10 @@ from tests.types import DeployedContract, SharedContract, UnitTestAccount
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+
+
+def _wait_for_tx(tx_hash: HexBytes) -> None:
+    web3.eth.wait_for_transaction_receipt(tx_hash)
 
 
 class TestEventsIbetSecurityTokenInterface:
@@ -113,9 +118,10 @@ class TestEventsIbetSecurityTokenInterface:
             "baseFxRate": "",
         }
         token = IbetStraightBondTestHelper.issue(issuer["account_address"], args)
-        IbetStraightBondTestHelper.register_token_list(
+        tx_hash = IbetStraightBondTestHelper.register_token_list(
             issuer["account_address"], token.address, token_list["address"]
         )
+        _wait_for_tx(tx_hash)
 
         return token
 
@@ -145,9 +151,10 @@ class TestEventsIbetSecurityTokenInterface:
             "transferable": True,
         }
         token = IbetShareTestHelper.issue(issuer["account_address"], args)
-        IbetShareTestHelper.register_token_list(
+        tx_hash = IbetShareTestHelper.register_token_list(
             issuer["account_address"], token.address, token_list["address"]
         )
+        _wait_for_tx(tx_hash)
 
         return token
 
@@ -177,56 +184,65 @@ class TestEventsIbetSecurityTokenInterface:
         self.listing_token(token.address, session)
 
         # User1 and trader must register personal information before they receive token.
-        PersonalInfoHelper.register(
+        tx_hash = PersonalInfoHelper.register(
             self.user1["account_address"],
             personal_info_contract["address"],
             self.issuer["account_address"],
         )
-        PersonalInfoHelper.register(
+        _wait_for_tx(tx_hash)
+        tx_hash = PersonalInfoHelper.register(
             self.trader["account_address"],
             personal_info_contract["address"],
             self.issuer["account_address"],
         )
+        _wait_for_tx(tx_hash)
 
-        IbetStraightBondTestHelper.transfer_token(
+        tx_hash = IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
             token.address,
             self.user1["account_address"],
             200000,
         )
-        IbetStraightBondTestHelper.transfer_token(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.transfer_token(
             self.user1["account_address"],
             token.address,
             escrow_contract["address"],
             10000,
         )
+        _wait_for_tx(tx_hash)
         # user1: 20000 trader: 0
 
         # Issuer transfers issued token to user1 and trader.
-        IbetStraightBondTestHelper.set_transfer_approval_required(
+        tx_hash = IbetStraightBondTestHelper.set_transfer_approval_required(
             self.issuer["account_address"], token.address, True
         )
-        IbetStraightBondTestHelper.apply_for_token_transfer(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.apply_for_token_transfer(
             self.issuer["account_address"],
             token.address,
             self.user1["account_address"],
             10000,
         )
-        IbetStraightBondTestHelper.apply_for_token_transfer(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.apply_for_token_transfer(
             self.issuer["account_address"],
             token.address,
             self.trader["account_address"],
             10000,
         )
-        IbetStraightBondTestHelper.cancel_token_transfer_application(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.cancel_token_transfer_application(
             self.issuer["account_address"], token.address, 0, "to user1#1"
         )
-        IbetStraightBondTestHelper.approve_token_transfer(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.approve_token_transfer(
             self.issuer["account_address"], token.address, 1, "to trader#1"
         )
+        _wait_for_tx(tx_hash)
         # user1: 20000 trader: 10000
 
-        create_security_token_escrow(
+        tx_hash = create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
             {"address": token.address},
@@ -234,23 +250,26 @@ class TestEventsIbetSecurityTokenInterface:
             self.agent["account_address"],
             7000,
         )
+        _wait_for_tx(tx_hash)
         _latest_security_escrow_id = get_latest_security_escrow_id(
             {"address": escrow_contract["address"]}
         )
-        finish_security_token_escrow(
+        tx_hash = finish_security_token_escrow(
             self.agent,
             {"address": escrow_contract["address"]},
             _latest_security_escrow_id,
         )
-        approve_transfer_security_token_escrow(
+        _wait_for_tx(tx_hash)
+        tx_hash = approve_transfer_security_token_escrow(
             self.issuer,
             {"address": escrow_contract["address"]},
             _latest_security_escrow_id,
             "",
         )
+        _wait_for_tx(tx_hash)
         # user1: 13000 trader: 17000
 
-        create_security_token_escrow(
+        tx_hash = create_security_token_escrow(
             self.user1,
             {"address": escrow_contract["address"]},
             {"address": token.address},
@@ -258,26 +277,29 @@ class TestEventsIbetSecurityTokenInterface:
             self.agent["account_address"],
             2000,
         )
+        _wait_for_tx(tx_hash)
         _latest_security_escrow_id = get_latest_security_escrow_id(
             {"address": escrow_contract["address"]}
         )
-        finish_security_token_escrow(
+        tx_hash = finish_security_token_escrow(
             self.agent,
             {"address": escrow_contract["address"]},
             _latest_security_escrow_id,
         )
+        _wait_for_tx(tx_hash)
         # user1: 13000 trader: 17000
 
-        IbetStraightBondTestHelper.lock_token(
+        tx_hash = IbetStraightBondTestHelper.lock_token(
             self.trader["account_address"],
             token.address,
             self.issuer["account_address"],
             3000,
             "",
         )
+        _wait_for_tx(tx_hash)
         # user1: 13000 trader: 17000
 
-        IbetStraightBondTestHelper.unlock_token(
+        tx_hash = IbetStraightBondTestHelper.unlock_token(
             self.issuer["account_address"],
             token.address,
             self.trader["account_address"],
@@ -285,45 +307,52 @@ class TestEventsIbetSecurityTokenInterface:
             2000,
             "",
         )
+        _wait_for_tx(tx_hash)
         # user1: 15000 trader: 15000
 
-        IbetStraightBondTestHelper.set_transfer_approval_required(
+        tx_hash = IbetStraightBondTestHelper.set_transfer_approval_required(
             self.issuer["account_address"], token.address, False
         )
-        IbetStraightBondTestHelper.transfer_token(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.transfer_token(
             self.issuer["account_address"],
             token.address,
             self.user1["account_address"],
             100000,
         )
+        _wait_for_tx(tx_hash)
         # user1: 115000 trader: 15000
 
-        IbetStraightBondTestHelper.mint(
+        tx_hash = IbetStraightBondTestHelper.mint(
             self.issuer["account_address"],
             token.address,
             self.issuer["account_address"],
             40000,
         )
-        IbetStraightBondTestHelper.burn(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.burn(
             self.issuer["account_address"],
             token.address,
             self.user1["account_address"],
             10000,
         )
+        _wait_for_tx(tx_hash)
         # user1: 105000 trader: 15000
 
-        IbetStraightBondTestHelper.mint(
+        tx_hash = IbetStraightBondTestHelper.mint(
             self.issuer["account_address"],
             token.address,
             self.trader["account_address"],
             30000,
         )
-        IbetStraightBondTestHelper.burn(
+        _wait_for_tx(tx_hash)
+        tx_hash = IbetStraightBondTestHelper.burn(
             self.issuer["account_address"],
             token.address,
             self.issuer["account_address"],
             10000,
         )
+        _wait_for_tx(tx_hash)
         # user1: 115000 trader: 45000
 
         self.token_address = token.address

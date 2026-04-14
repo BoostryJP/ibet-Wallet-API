@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from hexbytes import HexBytes
 
-from tests.helpers.contract import Contract
+from tests.helpers.contract import Contract, web3
 
 
 class PersonalInfoHelper:
@@ -45,4 +45,5 @@ class PersonalInfoHelper:
         tx = personal_info_contract.functions.register(
             link_address, encrypted_info
         ).transact({"from": tx_from})  # type: ignore
+        web3.eth.wait_for_transaction_receipt(tx)
         return tx

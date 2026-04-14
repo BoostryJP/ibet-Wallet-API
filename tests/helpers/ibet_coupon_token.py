@@ -22,7 +22,7 @@ from typing import Any
 from hexbytes import HexBytes
 from web3.contract import Contract as Web3Contract
 
-from tests.helpers.contract import Contract
+from tests.helpers.contract import Contract, web3
 
 
 class IbetCouponTestHelper:
@@ -80,6 +80,7 @@ class IbetCouponTestHelper:
         tx = token_list_contract.functions.register(
             token_address, token_template_name
         ).transact({"from": tx_from})  # type: ignore
+        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -99,6 +100,7 @@ class IbetCouponTestHelper:
             contract_name="IbetCoupon", address=token_address
         )
         tx = token_contract.functions.transfer(to, amount).transact({"from": tx_from})  # type: ignore
+        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -117,6 +119,7 @@ class IbetCouponTestHelper:
         tx = token_contract.functions.consume(amount).transact(
             {"from": tx_from}  # type: ignore
         )
+        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -133,4 +136,5 @@ class IbetCouponTestHelper:
             contract_name="IbetCoupon", address=token_address
         )
         tx = token_contract.functions.setStatus(status).transact({"from": tx_from})  # type: ignore
+        web3.eth.wait_for_transaction_receipt(tx)
         return tx

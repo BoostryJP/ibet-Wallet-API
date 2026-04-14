@@ -32,12 +32,22 @@ class TestTransactionWaitPollLatency:
 
     # ＜正常系1＞: デフォルト値
     def test_normal_1(self):
-        from app import config
+        with mock.patch.dict(os.environ, {"UNIT_TEST_MODE": "0"}, clear=False):
+            from app import config
 
-        # Reload imported module to initialize with mocked env value
-        reload(config)
+            # Reload imported module to initialize with mocked env value
+            reload(config)
 
-        assert config.TRANSACTION_WAIT_POLL_LATENCY == 0.5
+            assert config.TRANSACTION_WAIT_POLL_LATENCY == 0.5
+
+    # ＜正常系1-2＞: Unit test mode のデフォルト値
+    def test_normal_1_2(self):
+        with mock.patch.dict(os.environ, {"UNIT_TEST_MODE": "1"}, clear=False):
+            from app import config
+
+            reload(config)
+
+            assert config.TRANSACTION_WAIT_POLL_LATENCY == 0.02
 
     # ＜正常系2＞: 小数値
     def test_normal_2(self):

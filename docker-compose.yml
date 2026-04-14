@@ -23,10 +23,10 @@ services:
       mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     tmpfs:
       - /var/lib/mysql
-  hardhat-network:
+  anvil-network:
     build:
       context: .
-      dockerfile: tests/Dockerfile_hardhat
+      dockerfile: tests/Dockerfile_anvil
     ports:
       - "8545:8545"
   ibet-wallet-api-postgres:
@@ -46,10 +46,10 @@ services:
       - SHARE_TOKEN_ENABLED=1
     links:
       - postgres:postgres
-      - hardhat-network:quorum
+      - anvil-network:quorum
     depends_on:
       - postgres
-      - hardhat-network
+      - anvil-network
     volumes:
       - ./cov:/app/ibet-Wallet-API/cov
   ibet-wallet-api-mysql:
@@ -69,9 +69,9 @@ services:
       - SHARE_TOKEN_ENABLED=1
     links:
       - mysql:mysql
-      - hardhat-network:quorum
+      - anvil-network:quorum
     depends_on:
       - mysql
-      - hardhat-network
+      - anvil-network
     volumes:
       - ./cov:/app/ibet-Wallet-API/cov

@@ -896,7 +896,8 @@ class TestEthSendRawTransaction:
         pre_tx = coupontoken_1.functions.setStatus(False).build_transaction(
             _tx_params(to_checksum_address(issuer["account_address"]))
         )
-        web3.eth.send_transaction(pre_tx)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         local_account_1 = web3.eth.account.create()
 
@@ -1286,7 +1287,13 @@ class TestEthSendRawTransaction:
             assert resp.status_code == 200
             assert resp.json()["meta"] == {"code": 200, "message": "OK"}
             assert resp.json()["data"] == [
-                {"id": 1, "status": 0, "transaction_hash": ANY}
+                {
+                    "id": 1,
+                    "status": 0,
+                    "transaction_hash": ANY,
+                    "error_code": 130401,
+                    "error_msg": "Message sender balance is insufficient.",
+                }
             ]
 
     # <Error_11>

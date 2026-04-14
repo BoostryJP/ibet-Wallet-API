@@ -22,7 +22,7 @@ from typing import Any
 from hexbytes import HexBytes
 from web3.contract import Contract as Web3Contract
 
-from tests.helpers.contract import Contract
+from tests.helpers.contract import Contract, web3
 
 
 class IbetStandardTokenHelper:
@@ -67,4 +67,5 @@ class IbetStandardTokenHelper:
             contract_name="IbetStandardToken", address=token_address
         )
         tx = token_contract.functions.transfer(to, amount).transact({"from": tx_from})  # type: ignore
+        web3.eth.wait_for_transaction_receipt(tx)
         return tx
