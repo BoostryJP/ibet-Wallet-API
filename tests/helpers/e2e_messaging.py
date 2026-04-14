@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from hexbytes import HexBytes
 
-from tests.helpers.contract import Contract, web3
+from tests.helpers.contract import Contract
 
 
 class E2EMessagingHelper:
@@ -42,7 +42,6 @@ class E2EMessagingHelper:
         tx = e2e_messaging_contract.functions.setPublicKey(
             public_key, public_key_type
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -64,5 +63,4 @@ class E2EMessagingHelper:
         tx = e2e_messaging_contract.functions.sendMessage(
             recipient_address, message
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx

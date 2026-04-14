@@ -47,11 +47,22 @@ from app.model.db import Notification
 from app.model.db.base import Base
 from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
+from tests.helpers.anvil_transaction_sync import install_anvil_transaction_sync_patch
 from tests.helpers.contract import Contract
 from tests.types import DeployedContract, SharedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def sync_send_transaction_via_anvil_patch():
+    if not config.UNIT_TEST_MODE:
+        yield
+        return
+
+    with install_anvil_transaction_sync_patch():
+        yield
 
 
 @pytest.fixture(scope="session")

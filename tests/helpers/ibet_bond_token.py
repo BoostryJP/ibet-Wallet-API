@@ -24,7 +24,7 @@ from hexbytes import HexBytes
 from web3.contract import Contract as Web3Contract
 
 from app import config
-from tests.helpers.contract import Contract, web3
+from tests.helpers.contract import Contract
 
 
 class IbetStraightBondTestHelper:
@@ -74,64 +74,45 @@ class IbetStraightBondTestHelper:
         # update
         bond_contract = Contract.get_contract("IbetStraightBond", contract_address)
         if "tradableExchange" in args:
-            tx = bond_contract.functions.setTradableExchange(
+            bond_contract.functions.setTradableExchange(
                 args["tradableExchange"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "interestRate" in args:
-            tx = bond_contract.functions.setInterestRate(args["interestRate"]).transact(
+            bond_contract.functions.setInterestRate(args["interestRate"]).transact(
                 {"from": tx_from}  # type: ignore
             )
-            web3.eth.wait_for_transaction_receipt(tx)
-        tx = bond_contract.functions.setInterestPaymentDate(
-            interest_payment_date
-        ).transact(
+        bond_contract.functions.setInterestPaymentDate(interest_payment_date).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         if "memo" in args:
-            tx = bond_contract.functions.setMemo(args["memo"]).transact(
-                {"from": tx_from}
-            )  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
+            bond_contract.functions.setMemo(args["memo"]).transact({"from": tx_from})  # type: ignore
         if "contactInformation" in args:
-            tx = bond_contract.functions.setContactInformation(
+            bond_contract.functions.setContactInformation(
                 args["contactInformation"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "privacyPolicy" in args:
-            tx = bond_contract.functions.setPrivacyPolicy(
-                args["privacyPolicy"]
-            ).transact(
+            bond_contract.functions.setPrivacyPolicy(args["privacyPolicy"]).transact(
                 {"from": tx_from}  # type: ignore
             )
-            web3.eth.wait_for_transaction_receipt(tx)
         if "personalInfoAddress" in args:
-            tx = bond_contract.functions.setPersonalInfoAddress(
+            bond_contract.functions.setPersonalInfoAddress(
                 args["personalInfoAddress"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "requirePersonalInfoRegistered" in args:
-            tx = bond_contract.functions.setRequirePersonalInfoRegistered(
+            bond_contract.functions.setRequirePersonalInfoRegistered(
                 args["requirePersonalInfoRegistered"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
-        tx = bond_contract.functions.setTransferable(True).transact(
+        bond_contract.functions.setTransferable(True).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         if "interestPaymentCurrency" in args:
-            tx = bond_contract.functions.setInterestPaymentCurrency(
+            bond_contract.functions.setInterestPaymentCurrency(
                 args["interestPaymentCurrency"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "baseFxRate" in args:
-            tx = bond_contract.functions.setBaseFXRate(
-                str(args["baseFxRate"])
-            ).transact(
+            bond_contract.functions.setBaseFXRate(str(args["baseFxRate"])).transact(
                 {"from": tx_from}  # type: ignore
             )
-            web3.eth.wait_for_transaction_receipt(tx)
 
         return bond_contract
 
@@ -159,7 +140,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.issueFrom(
             target_address, lock_address, amount
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -186,7 +166,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.redeemFrom(
             target_address, lock_address, amount
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -211,7 +190,6 @@ class IbetStraightBondTestHelper:
         tx = token_list_contract.functions.register(
             token_address, token_template_name
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -231,7 +209,6 @@ class IbetStraightBondTestHelper:
             contract_name="IbetStraightBond", address=token_address
         )
         tx = token_contract.functions.transfer(to, amount).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -254,7 +231,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.transferFrom(_from, _to, amount).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -276,7 +252,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.applyForTransfer(to, value, "").transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -298,7 +273,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.cancelTransfer(
             application_id, application_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -320,7 +294,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.approveTransfer(
             application_id, application_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -343,7 +316,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.lock(lock_address, amount, lock_data).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -372,7 +344,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.forceLock(
             lock_address, account_address, amount, lock_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -407,7 +378,6 @@ class IbetStraightBondTestHelper:
             amount,
             change_data,
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -436,7 +406,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.unlock(
             account_address, recipient_address, amount, unlock_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -467,7 +436,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.forceUnlock(
             lock_address, account_address, recipient_address, amount, unlock_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -507,7 +475,6 @@ class IbetStraightBondTestHelper:
             "test_data",
             "test_data",
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -528,7 +495,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.setTransferable(transferable).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -549,7 +515,6 @@ class IbetStraightBondTestHelper:
         tx = token_contract.functions.setTransferApprovalRequired(required).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -566,7 +531,6 @@ class IbetStraightBondTestHelper:
             contract_name="IbetStraightBond", address=token_address
         )
         tx = token_contract.functions.setStatus(status).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -582,5 +546,4 @@ class IbetStraightBondTestHelper:
             contract_name="IbetStraightBond", address=token_address
         )
         tx = token_contract.functions.changeToRedeemed().transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx

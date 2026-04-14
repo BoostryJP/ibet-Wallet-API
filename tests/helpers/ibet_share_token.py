@@ -65,49 +65,37 @@ class IbetShareTestHelper:
             contract_name="IbetShare", address=contract_address
         )
         if "tradableExchange" in args:
-            tx = share_contract.functions.setTradableExchange(
+            share_contract.functions.setTradableExchange(
                 args["tradableExchange"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "personalInfoAddress" in args:
-            tx = share_contract.functions.setPersonalInfoAddress(
+            share_contract.functions.setPersonalInfoAddress(
                 args["personalInfoAddress"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "requirePersonalInfoRegistered" in args:
-            tx = share_contract.functions.setRequirePersonalInfoRegistered(
+            share_contract.functions.setRequirePersonalInfoRegistered(
                 args["requirePersonalInfoRegistered"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "contactInformation" in args:
-            tx = share_contract.functions.setContactInformation(
+            share_contract.functions.setContactInformation(
                 args["contactInformation"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
         if "privacyPolicy" in args:
-            tx = share_contract.functions.setPrivacyPolicy(
-                args["privacyPolicy"]
-            ).transact(
+            share_contract.functions.setPrivacyPolicy(args["privacyPolicy"]).transact(
                 {"from": tx_from}  # type: ignore
             )
-            web3.eth.wait_for_transaction_receipt(tx)
         if "memo" in args:
-            tx = share_contract.functions.setMemo(args["memo"]).transact(
+            share_contract.functions.setMemo(args["memo"]).transact(
                 {"from": tx_from}  # type: ignore
             )
-            web3.eth.wait_for_transaction_receipt(tx)
         if "transferable" in args:
-            tx = share_contract.functions.setTransferable(
-                args["transferable"]
-            ).transact(
+            share_contract.functions.setTransferable(args["transferable"]).transact(
                 {"from": tx_from}  # type: ignore
             )
-            web3.eth.wait_for_transaction_receipt(tx)
         if "transferApprovalRequired" in args:
-            tx = share_contract.functions.setTransferApprovalRequired(
+            share_contract.functions.setTransferApprovalRequired(
                 args["transferApprovalRequired"]
             ).transact({"from": tx_from})  # type: ignore
-            web3.eth.wait_for_transaction_receipt(tx)
 
         return share_contract
 
@@ -135,7 +123,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.issueFrom(
             target_address, lock_address, amount
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -162,7 +149,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.redeemFrom(
             target_address, lock_address, amount
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -186,7 +172,6 @@ class IbetShareTestHelper:
         tx = token_list_contract.functions.register(
             token_address, token_template_name
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -206,7 +191,6 @@ class IbetShareTestHelper:
             contract_name="IbetShare", address=token_address
         )
         tx = token_contract.functions.transfer(to, amount).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -242,7 +226,6 @@ class IbetShareTestHelper:
             tx_data = str(tx_data)
         tx["data"] = HexStr(tx_data + marker.hex() + annotation_data.hex())
         tx_hash = web3.eth.send_transaction(tx)
-        web3.eth.wait_for_transaction_receipt(tx_hash)
         return tx_hash
 
     @staticmethod
@@ -265,7 +248,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.transferFrom(_from, _to, amount).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -292,7 +274,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.applyForTransfer(
             to, value, application_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -314,7 +295,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.cancelTransfer(
             application_id, application_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -336,7 +316,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.approveTransfer(
             application_id, application_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -359,7 +338,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.lock(lock_address, amount, lock_data).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -388,7 +366,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.forceLock(
             lock_address, account_address, amount, lock_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -417,7 +394,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.unlock(
             account_address, recipient_address, amount, unlock_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -448,7 +424,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.forceUnlock(
             lock_address, account_address, recipient_address, amount, unlock_data
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -483,7 +458,6 @@ class IbetShareTestHelper:
             amount,
             change_data,
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -523,7 +497,6 @@ class IbetShareTestHelper:
             "test_data",
             "test_data",
         ).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -544,7 +517,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.setTransferable(transferable).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -565,7 +537,6 @@ class IbetShareTestHelper:
         tx = token_contract.functions.setTransferApprovalRequired(required).transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -582,7 +553,6 @@ class IbetShareTestHelper:
             contract_name="IbetShare", address=token_address
         )
         tx = token_contract.functions.setStatus(status).transact({"from": tx_from})  # type: ignore
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx
 
     @staticmethod
@@ -600,5 +570,4 @@ class IbetShareTestHelper:
         tx = token_contract.functions.changeToCanceled().transact(
             {"from": tx_from}  # type: ignore
         )
-        web3.eth.wait_for_transaction_receipt(tx)
         return tx

@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from hexbytes import HexBytes
 
-from tests.helpers.contract import Contract, web3
+from tests.helpers.contract import Contract
 from tests.types import DeployedContract, UnitTestAccount
 
 
@@ -34,7 +34,6 @@ def withdraw_from_exchange(
     tx = exchange_contract.functions.withdraw(token["address"]).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -63,7 +62,6 @@ def create_security_token_escrow(
         transfer_application_data,
         data,
     ).transact({"from": invoker["account_address"]})  # type: ignore
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -85,7 +83,6 @@ def cancel_security_token_escrow(
     tx = security_token_escrow_contract.functions.cancelEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -99,7 +96,6 @@ def finish_security_token_escrow(
     tx = security_token_escrow_contract.functions.finishEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -116,7 +112,6 @@ def approve_transfer_security_token_escrow(
     tx = security_token_escrow_contract.functions.approveTransfer(
         escrow_id, transfer_approval_data
     ).transact({"from": invoker["account_address"]})  # type: ignore
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -136,7 +131,6 @@ def create_token_escrow(
     tx = ibet_escrow.functions.createEscrow(
         token["address"], recipient_address, amount, agent_address, "{}"
     ).transact({"from": invoker["account_address"]})  # type: ignore
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -155,7 +149,6 @@ def cancel_token_escrow(
     tx = ibet_escrow.functions.cancelEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -167,7 +160,6 @@ def finish_token_escrow(
     tx = ibet_escrow.functions.finishEscrow(escrow_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -193,7 +185,6 @@ def create_security_token_delivery(
         agent_address,
         "{}",
     ).transact({"from": invoker["account_address"]})  # type: ignore
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -215,7 +206,6 @@ def cancel_security_token_delivery(
     tx = security_token_dvp_contract.functions.cancelDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -229,7 +219,6 @@ def confirm_security_token_delivery(
     tx = security_token_dvp_contract.functions.confirmDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -243,7 +232,6 @@ def finish_security_token_delivery(
     tx = security_token_dvp_contract.functions.finishDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
 
 
@@ -257,5 +245,4 @@ def abort_security_token_delivery(
     tx = security_token_dvp_contract.functions.abortDelivery(delivery_id).transact(
         {"from": invoker["account_address"]}  # type: ignore
     )
-    web3.eth.wait_for_transaction_receipt(tx)
     return tx
