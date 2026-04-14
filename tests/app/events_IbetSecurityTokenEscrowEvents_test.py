@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from fastapi.testclient import TestClient
+from hexbytes import HexBytes
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
@@ -46,6 +47,10 @@ def _get_block_timestamp(block_number: int) -> int:
     timestamp = block.get("timestamp")
     assert timestamp is not None
     return timestamp
+
+
+def _wait_for_tx(tx_hash: HexBytes) -> None:
+    web3.eth.wait_for_transaction_receipt(tx_hash)
 
 
 class TestEventsIbetSecurityTokenEscrow:
@@ -116,6 +121,7 @@ class TestEventsIbetSecurityTokenEscrow:
             escrow_contract["address"],
             1000,
         )
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -171,12 +177,13 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Withdraw token from escrow contract
         tx_hash = withdraw_from_exchange(
@@ -184,6 +191,7 @@ class TestEventsIbetSecurityTokenEscrow:
             escrow_contract,
             {"address": token_contract.address},
         )  # Withdrawn
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -243,12 +251,13 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
         tx_hash = create_security_token_escrow(
@@ -261,6 +270,7 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -341,12 +351,13 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
         tx_hash = create_security_token_escrow(
@@ -359,6 +370,7 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -428,12 +440,13 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
         tx_hash = create_security_token_escrow(
@@ -446,6 +459,7 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -514,15 +528,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -532,12 +547,14 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
 
         # Cancel escrow
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
         tx_hash = cancel_security_token_escrow(
             issuer, escrow_contract, latest_escrow_id
         )  # EscrowCanceled
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -614,15 +631,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -632,12 +650,14 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
 
         # Cancel escrow
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
         tx_hash = cancel_security_token_escrow(
             issuer, escrow_contract, latest_escrow_id
         )  # EscrowCanceled
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -705,15 +725,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -723,12 +744,14 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
 
         # Cancel escrow
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
         tx_hash = cancel_security_token_escrow(
             issuer, escrow_contract, latest_escrow_id
         )  # EscrowCanceled
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -794,15 +817,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -812,12 +836,14 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
 
         # Finish escrow
         tx_hash = finish_security_token_escrow(
             agent, escrow_contract, latest_escrow_id
         )  # EscrowFinished
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -882,15 +908,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -900,12 +927,14 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
 
         # Finish escrow
         tx_hash = finish_security_token_escrow(
             agent, escrow_contract, latest_escrow_id
         )  # EscrowFinished
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -974,15 +1003,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -992,17 +1022,20 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
 
         # Finish escrow
-        finish_security_token_escrow(
+        finish_tx_hash = finish_security_token_escrow(
             agent, escrow_contract, latest_escrow_id
         )  # EscrowFinished
+        _wait_for_tx(finish_tx_hash)
 
         # Approve transfer
         tx_hash = approve_transfer_security_token_escrow(
             issuer, escrow_contract, latest_escrow_id, "test_approval_data"
         )
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -1062,15 +1095,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -1080,17 +1114,20 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
         latest_escrow_id = get_latest_security_escrow_id(escrow_contract)
 
         # Finish escrow
-        finish_security_token_escrow(
+        finish_tx_hash = finish_security_token_escrow(
             agent, escrow_contract, latest_escrow_id
         )  # EscrowFinished
+        _wait_for_tx(finish_tx_hash)
 
         # Approve transfer
         tx_hash = approve_transfer_security_token_escrow(
             issuer, escrow_contract, latest_escrow_id, "test_approval_data"
         )
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -1159,6 +1196,7 @@ class TestEventsIbetSecurityTokenEscrow:
             escrow_contract["address"],
             1000,
         )
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -1231,6 +1269,7 @@ class TestEventsIbetSecurityTokenEscrow:
             escrow_contract["address"],
             1000,
         )
+        _wait_for_tx(_tx_hash)
         latest_block_number = web3.eth.block_number
         _latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -1293,6 +1332,7 @@ class TestEventsIbetSecurityTokenEscrow:
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(tx_hash_1)
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
@@ -1307,6 +1347,7 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(tx_hash_2)
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = _get_block_timestamp(block_number_2)
 
@@ -1406,11 +1447,12 @@ class TestEventsIbetSecurityTokenEscrow:
             escrow_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(tx_hash_1)
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create escrow
-        create_security_token_escrow(
+        create_tx_hash = create_security_token_escrow(
             issuer,
             escrow_contract,
             {"address": token_contract.address},
@@ -1420,6 +1462,7 @@ class TestEventsIbetSecurityTokenEscrow:
             "test_application_data",
             "test_data",
         )  # EscrowCreated
+        _wait_for_tx(create_tx_hash)
         block_number_2 = web3.eth.block_number
 
         # Request target API

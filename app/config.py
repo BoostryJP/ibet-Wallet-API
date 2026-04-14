@@ -182,8 +182,10 @@ WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG["web3"]["chainid"]
 
 # Transaction reception wait
 TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT") or 5)
+_default_transaction_wait_poll_latency = 0.02 if UNIT_TEST_MODE else 0.5
 TRANSACTION_WAIT_POLL_LATENCY = float(
-    os.environ.get("TRANSACTION_WAIT_POLL_LATENCY") or 0.5
+    os.environ.get("TRANSACTION_WAIT_POLL_LATENCY")
+    or _default_transaction_wait_poll_latency
 )
 
 # Txpool length at which tx sending begins to pause

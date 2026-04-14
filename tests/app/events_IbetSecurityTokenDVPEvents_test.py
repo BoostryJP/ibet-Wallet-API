@@ -22,6 +22,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from hexbytes import HexBytes
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
@@ -49,6 +50,10 @@ def _get_block_timestamp(block_number: int) -> int:
     timestamp = block.get("timestamp")
     assert timestamp is not None
     return timestamp
+
+
+def _wait_for_tx(tx_hash: HexBytes) -> None:
+    web3.eth.wait_for_transaction_receipt(tx_hash)
 
 
 class TestEventsIbetSecurityTokenDVP:
@@ -116,6 +121,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract["address"],
             1000,
         )
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -182,17 +188,19 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Withdraw token from DVP contract
         tx_hash = withdraw_from_exchange(
             issuer, dvp_contract, {"address": token_contract.address}
         )  # Withdrawn
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -268,12 +276,13 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create delivery
         tx_hash = create_security_token_delivery(
@@ -284,6 +293,7 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -367,15 +377,16 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create delivery
-        create_security_token_delivery(
+        create_tx_hash = create_security_token_delivery(
             issuer,
             dvp_contract,
             {"address": token_contract.address},
@@ -383,12 +394,14 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(create_tx_hash)
 
         # Cancel delivery
         latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
         tx_hash = cancel_security_token_delivery(
             issuer, dvp_contract, latest_delivery_id
         )  # DeliveryCreated
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -469,15 +482,16 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create delivery
-        create_security_token_delivery(
+        create_tx_hash = create_security_token_delivery(
             issuer,
             dvp_contract,
             {"address": token_contract.address},
@@ -485,12 +499,14 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(create_tx_hash)
 
         # Confirm delivery
         latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
         tx_hash = confirm_security_token_delivery(
             user1, dvp_contract, latest_delivery_id
         )  # DeliveryConfirmed
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -571,15 +587,16 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create delivery
-        create_security_token_delivery(
+        create_tx_hash = create_security_token_delivery(
             issuer,
             dvp_contract,
             {"address": token_contract.address},
@@ -587,17 +604,20 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(create_tx_hash)
 
         # Confirm delivery
         latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
-        confirm_security_token_delivery(
+        confirm_tx_hash = confirm_security_token_delivery(
             user1, dvp_contract, latest_delivery_id
         )  # DeliveryConfirmed
+        _wait_for_tx(confirm_tx_hash)
 
         # Finish delivery
         tx_hash = finish_security_token_delivery(
             agent, dvp_contract, latest_delivery_id
         )  # DeliveryFinished
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -678,15 +698,16 @@ class TestEventsIbetSecurityTokenDVP:
         )
 
         # Deposit token to DVP contract
-        IbetShareTestHelper.transfer_token(
+        deposit_tx_hash = IbetShareTestHelper.transfer_token(
             issuer["account_address"],
             token_contract.address,
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(deposit_tx_hash)
 
         # Create delivery
-        create_security_token_delivery(
+        create_tx_hash = create_security_token_delivery(
             issuer,
             dvp_contract,
             {"address": token_contract.address},
@@ -694,17 +715,20 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(create_tx_hash)
 
         # Confirm delivery
         latest_delivery_id = get_latest_security_delivery_id(dvp_contract)
-        confirm_security_token_delivery(
+        confirm_tx_hash = confirm_security_token_delivery(
             user1, dvp_contract, latest_delivery_id
         )  # DeliveryConfirmed
+        _wait_for_tx(confirm_tx_hash)
 
         # Abort delivery
         tx_hash = abort_security_token_delivery(
             agent, dvp_contract, latest_delivery_id
         )  # DeliveryAborted
+        _wait_for_tx(tx_hash)
 
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
@@ -779,6 +803,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract["address"],
             1000,
         )
+        _wait_for_tx(tx_hash)
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -851,6 +876,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract["address"],
             1000,
         )
+        _wait_for_tx(_tx_hash)
         latest_block_number = web3.eth.block_number
         _latest_block_timestamp = _get_block_timestamp(latest_block_number)
 
@@ -913,6 +939,7 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(tx_hash_1)
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
@@ -925,6 +952,7 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(tx_hash_2)
         block_number_2 = web3.eth.block_number
         block_timestamp_2 = _get_block_timestamp(block_number_2)
 
@@ -1009,11 +1037,12 @@ class TestEventsIbetSecurityTokenDVP:
             dvp_contract["address"],
             1000,
         )  # Deposited
+        _wait_for_tx(tx_hash_1)
         block_number_1 = web3.eth.block_number
         block_timestamp_1 = _get_block_timestamp(block_number_1)
 
         # Create delivery
-        create_security_token_delivery(
+        create_tx_hash = create_security_token_delivery(
             issuer,
             dvp_contract,
             {"address": token_contract.address},
@@ -1021,6 +1050,7 @@ class TestEventsIbetSecurityTokenDVP:
             agent["account_address"],
             1000,
         )  # DeliveryCreated
+        _wait_for_tx(create_tx_hash)
         block_number_2 = web3.eth.block_number
 
         # Request target API
