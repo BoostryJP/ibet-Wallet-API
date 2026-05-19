@@ -36,6 +36,7 @@ from app.model.type import EthereumAddress
 class TokenBase(BaseModel):
     token_address: EthereumAddress
     key_manager: list[str]
+    contract_version: str
     issuer_address: EthereumAddress | None
 
 

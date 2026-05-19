@@ -113,6 +113,7 @@ class Processor:
         _token_list = TokenList()
         _token_list.token_address = token_list_item.token_address
         _token_list.token_template = token_list_item.token_template
+        _token_list.contract_version = token_list_item.contract_version
         _token_list.key_manager = token_list_item.key_manager
         _token_list.product_type = token_list_item.product_type
         _token_list.issuer_address = token_list_item.issuer_address

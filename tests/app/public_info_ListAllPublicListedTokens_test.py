@@ -104,6 +104,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": ["0000000000000"],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",
@@ -111,6 +112,7 @@ class TestListAllPublicListedTokens:
                 },
                 {
                     "key_manager": ["0000000000000"],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_2,
                     "token_template": "ibetBond",
@@ -118,6 +120,7 @@ class TestListAllPublicListedTokens:
                 },
                 {
                     "key_manager": ["1111111111111"],
+                    "contract_version": "25_09",
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
@@ -125,6 +128,7 @@ class TestListAllPublicListedTokens:
                 },
                 {
                     "key_manager": [],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_4,
                     "token_template": "ibetMembership",
@@ -132,6 +136,7 @@ class TestListAllPublicListedTokens:
                 },
                 {
                     "key_manager": [],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_5,
                     "token_template": "ibetCoupon",
@@ -194,6 +199,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": ["0000000000000"],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",
@@ -201,6 +207,7 @@ class TestListAllPublicListedTokens:
                 },
                 {
                     "key_manager": ["0000000000000"],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_2,
                     "token_template": "ibetBond",
@@ -263,6 +270,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": ["1111111111111"],
+                    "contract_version": "25_09",
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
@@ -325,6 +333,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": [],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_4,
                     "token_template": "ibetMembership",
@@ -387,6 +396,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": [],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_5,
                     "token_template": "ibetCoupon",
@@ -432,6 +442,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": ["1111111111111"],
+                    "contract_version": "25_09",
                     "product_type": 5,
                     "token_address": self.token_address_3,
                     "token_template": "ibetShare",
@@ -477,6 +488,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": ["0000000000000"],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",
@@ -511,6 +523,7 @@ class TestListAllPublicListedTokens:
             "tokens": [
                 {
                     "key_manager": ["0000000000000"],
+                    "contract_version": "25_09",
                     "product_type": 1,
                     "token_address": self.token_address_1,
                     "token_template": "ibetBond",

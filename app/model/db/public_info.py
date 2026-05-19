@@ -46,6 +46,10 @@ class TokenList(Base):
     token_template: Mapped[
         Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"]
     ] = mapped_column(String(50), nullable=False)
+    # Contract Version
+    contract_version: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="25_09"
+    )
     # Key Manager
     key_manager: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     # Product Type
@@ -58,6 +62,7 @@ class TokenList(Base):
         return {
             "token_address": self.token_address,
             "token_template": self.token_template,
+            "contract_version": self.contract_version,
             "key_manager": self.key_manager,
             "product_type": self.product_type,
             "issuer_address": self.issuer_address,
