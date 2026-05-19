@@ -7007,6 +7007,9 @@ components:
             type: string
           type: array
           title: Key Manager
+        contract_version:
+          type: string
+          title: Contract Version
         issuer_address:
           anyOf:
             - type: string
@@ -7024,6 +7027,7 @@ components:
       required:
         - token_address
         - key_manager
+        - contract_version
         - issuer_address
         - token_template
         - product_type
@@ -7038,6 +7042,9 @@ components:
             type: string
           type: array
           title: Key Manager
+        contract_version:
+          type: string
+          title: Contract Version
         issuer_address:
           anyOf:
             - type: string
@@ -7055,6 +7062,7 @@ components:
       required:
         - token_address
         - key_manager
+        - contract_version
         - issuer_address
         - token_template
         - product_type
@@ -7078,6 +7086,9 @@ components:
             type: string
           type: array
           title: Key Manager
+        contract_version:
+          type: string
+          title: Contract Version
         issuer_address:
           anyOf:
             - type: string
@@ -7095,6 +7106,7 @@ components:
       required:
         - token_address
         - key_manager
+        - contract_version
         - issuer_address
         - token_template
         - product_type
@@ -7152,6 +7164,9 @@ components:
             type: string
           type: array
           title: Key Manager
+        contract_version:
+          type: string
+          title: Contract Version
         issuer_address:
           anyOf:
             - type: string
@@ -7174,6 +7189,7 @@ components:
       required:
         - token_address
         - key_manager
+        - contract_version
         - issuer_address
         - token_template
         - product_type

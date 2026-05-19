@@ -20,6 +20,19 @@ def test_token_list_item_addresses_are_converted_to_checksum():
 
     assert item.token_address == to_checksum_address(raw_token_address)
     assert item.issuer_address == to_checksum_address(raw_issuer_address)
+    assert item.contract_version == "25_09"
+
+
+def test_token_list_item_accepts_explicit_contract_version():
+    item = TokenListItem(
+        token_template="ibetBond",
+        contract_version="25_10",
+        product_type=0,
+        token_address="0x000000000000000000000000000000000000dead",
+        key_manager=[],
+    )
+
+    assert item.contract_version == "25_10"
 
 
 @pytest.mark.parametrize(

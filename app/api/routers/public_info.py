@@ -123,6 +123,7 @@ async def list_all_public_tokens(
                     IbetBondToken(
                         token_address=token.token_address,
                         token_template="ibetBond",
+                        contract_version=token.contract_version,
                         key_manager=token.key_manager,
                         product_type=1,
                         issuer_address=token.issuer_address,
@@ -139,6 +140,7 @@ async def list_all_public_tokens(
                     IbetShareToken(
                         token_address=token.token_address,
                         token_template="ibetShare",
+                        contract_version=token.contract_version,
                         key_manager=token.key_manager,
                         product_type=share_product_type,
                         issuer_address=token.issuer_address,
@@ -149,6 +151,7 @@ async def list_all_public_tokens(
                     IbetMembershipToken(
                         token_address=token.token_address,
                         token_template="ibetMembership",
+                        contract_version=token.contract_version,
                         key_manager=token.key_manager,
                         product_type=1,
                         issuer_address=token.issuer_address,
@@ -159,6 +162,7 @@ async def list_all_public_tokens(
                     IbetCouponToken(
                         token_address=token.token_address,
                         token_template="ibetCoupon",
+                        contract_version=token.contract_version,
                         key_manager=token.key_manager,
                         product_type=1,
                         issuer_address=token.issuer_address,
