@@ -1,3 +1,22 @@
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 import asyncio
 from typing import Any, cast
 
@@ -7,6 +26,10 @@ from web3 import AsyncHTTPProvider, AsyncWeb3
 
 from app.contracts import contract as contract_module
 from app.utils.web3_utils import AsyncWeb3Wrapper
+
+
+async def _get_web3(wrapper: AsyncWeb3Wrapper) -> AsyncWeb3[AsyncHTTPProvider]:
+    return wrapper.get_web3()
 
 
 def test_async_web3_wrapper_normalizes_timeout_to_client_timeout():
@@ -83,7 +106,3 @@ def test_async_contract_factory_cache_is_scoped_by_async_web3(
     finally:
         contract_module.AsyncContract.cache.clear()
         contract_module.AsyncContract.factory_map.clear()
-
-
-async def _get_web3(wrapper: AsyncWeb3Wrapper) -> AsyncWeb3[AsyncHTTPProvider]:
-    return wrapper.get_web3()
