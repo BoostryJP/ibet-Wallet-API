@@ -22,8 +22,9 @@ import threading
 import time
 from json.decoder import JSONDecodeError
 from typing import Any, cast
+from weakref import WeakKeyDictionary
 
-from aiohttp import ClientError
+from aiohttp import ClientError, ClientTimeout
 from eth_typing import URI
 from requests.exceptions import ConnectionError, HTTPError
 from sqlalchemy import select
@@ -44,6 +45,8 @@ from app.model.db import Node
 LOG = log.get_logger()
 
 thread_local = threading.local()
+AsyncWeb3TimeoutKey = tuple[Any, Any, Any, Any]
+AsyncWeb3CacheMap = dict[AsyncWeb3TimeoutKey, AsyncWeb3[Any]]
 
 
 class Web3Wrapper:
@@ -87,38 +90,95 @@ class Web3Wrapper:
 class AsyncWeb3Wrapper:
     DEFAULT_TIMEOUT = 5
 
-    def __init__(self, request_timeout: int = DEFAULT_TIMEOUT):
+    def __init__(self, request_timeout: int | ClientTimeout = DEFAULT_TIMEOUT):
         if not config.UNIT_TEST_MODE:
             AsyncFailOverHTTPProvider.set_fail_over_mode(True)
         self.request_timeout = request_timeout
 
     @property
     def eth(self) -> AsyncEth:
-        web3 = self._get_web3(self.request_timeout)
+        web3 = self.get_web3()
         return web3.eth
 
     @property
     def geth(self) -> AsyncGeth:
-        web3 = self._get_web3(self.request_timeout)
+        web3 = self.get_web3()
         return web3.geth
 
     @property
     def net(self) -> AsyncNet:
-        web3 = self._get_web3(self.request_timeout)
+        web3 = self.get_web3()
         return web3.net
 
-    @staticmethod
-    def _get_web3(request_timeout: int) -> AsyncWeb3[Any]:
-        # Get web3 for each thread because make to FailOverHTTPProvider thread-safe
-        try:
-            async_web3 = cast(AsyncWeb3[Any], thread_local.async_web3)
-        except AttributeError:
-            async_web3 = AsyncWeb3(
-                AsyncFailOverHTTPProvider(request_kwargs={"timeout": request_timeout})
-            )
-            async_web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
-            thread_local.async_web3 = async_web3
+    def get_web3(self) -> AsyncWeb3[Any]:
+        return self._get_web3(self.request_timeout)
 
+    @staticmethod
+    def _normalize_async_timeout(
+        request_timeout: int | ClientTimeout,
+    ) -> ClientTimeout:
+        """Normalize timeout to ClientTimeout."""
+        if isinstance(request_timeout, ClientTimeout):
+            return request_timeout
+        return ClientTimeout(total=request_timeout)
+
+    @classmethod
+    def _get_web3(cls, request_timeout: int | ClientTimeout) -> AsyncWeb3[Any]:
+        """Get AsyncWeb3 instance with fail-over support and timeout handling."""
+        timeout = cls._normalize_async_timeout(request_timeout)
+        timeout_key: AsyncWeb3TimeoutKey = (
+            timeout.total,
+            timeout.connect,
+            timeout.sock_connect,
+            timeout.sock_read,
+        )
+
+        # Get web3 for each thread and event loop to avoid reusing
+        # aiohttp sessions across loops.
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is None:
+            try:
+                async_web3_map = cast(
+                    AsyncWeb3CacheMap,
+                    thread_local.async_web3_without_loop,
+                )
+            except AttributeError:
+                async_web3_map: AsyncWeb3CacheMap = {}
+                thread_local.async_web3_without_loop = async_web3_map
+            async_web3 = async_web3_map.get(timeout_key)
+            if async_web3 is None:
+                async_web3 = cls._create_web3(timeout)
+                async_web3_map[timeout_key] = async_web3
+            return async_web3
+
+        try:
+            async_web3_by_loop = cast(
+                WeakKeyDictionary[asyncio.AbstractEventLoop, AsyncWeb3CacheMap],
+                thread_local.async_web3_by_loop,
+            )
+        except AttributeError:
+            async_web3_by_loop: WeakKeyDictionary[
+                asyncio.AbstractEventLoop, AsyncWeb3CacheMap
+            ] = WeakKeyDictionary()
+            thread_local.async_web3_by_loop = async_web3_by_loop
+
+        loop_web3_map = async_web3_by_loop.setdefault(loop, cast(AsyncWeb3CacheMap, {}))
+        async_web3 = loop_web3_map.get(timeout_key)
+        if async_web3 is None:
+            async_web3 = cls._create_web3(timeout)
+            loop_web3_map[timeout_key] = async_web3
+        return async_web3
+
+    @staticmethod
+    def _create_web3(timeout: ClientTimeout) -> AsyncWeb3[Any]:
+        async_web3 = AsyncWeb3(
+            AsyncFailOverHTTPProvider(request_kwargs={"timeout": timeout})
+        )
+        async_web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
         return async_web3
 
 

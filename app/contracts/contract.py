@@ -19,9 +19,11 @@ SPDX-License-Identifier: Apache-2.0
 
 import json
 from typing import Any, Type, TypeVar, overload
+from weakref import WeakKeyDictionary
 
 from eth_utils.address import to_checksum_address
 from hexbytes import HexBytes
+from web3 import AsyncWeb3
 from web3.contract import AsyncContract as Web3AsyncContract
 from web3.contract.async_contract import AsyncContractEvents
 from web3.exceptions import (
@@ -52,7 +54,9 @@ class AsyncContractEventsView:
 
 class AsyncContract:
     cache: dict[str, dict[str, Any]] = {}  # コントラクト情報のキャッシュ
-    factory_map: dict[str, Type[Web3AsyncContract]] = {}
+    factory_map: WeakKeyDictionary[
+        AsyncWeb3[Any], dict[str, Type[Web3AsyncContract]]
+    ] = WeakKeyDictionary()
     _MISSING = object()
 
     @classmethod
@@ -71,12 +75,18 @@ class AsyncContract:
             contract_json = json.load(open(contract_file, "r"))
             AsyncContract.cache[contract_name] = contract_json
 
-        contract_factory = cls.factory_map.get(contract_name)
+        current_async_web3 = async_web3.get_web3()
+        contract_factory_map = cls.factory_map.get(current_async_web3)
+        if contract_factory_map is None:
+            contract_factory_map = {}
+            cls.factory_map[current_async_web3] = contract_factory_map
+
+        contract_factory = contract_factory_map.get(contract_name)
         if contract_factory is not None:
             return contract_factory(address=to_checksum_address(address))
 
-        contract_factory = async_web3.eth.contract(abi=contract_json["abi"])
-        cls.factory_map[contract_name] = contract_factory
+        contract_factory = current_async_web3.eth.contract(abi=contract_json["abi"])
+        contract_factory_map[contract_name] = contract_factory
         return contract_factory(address=to_checksum_address(address))
 
     @staticmethod

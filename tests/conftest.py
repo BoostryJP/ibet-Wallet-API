@@ -34,7 +34,6 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import RPCEndpoint, RPCResponse
 
 from app import config
-from app.contracts import AsyncContract
 from app.database import (
     AsyncSessionLocal,
     SessionLocal,
@@ -99,17 +98,6 @@ def block_number(request: pytest.FixtureRequest) -> None:
         )
 
     request.addfinalizer(teardown)
-
-
-@pytest.fixture(autouse=True)
-def reset_contract_cache() -> Generator[None, None, None]:
-    """Reset contract cache before each test."""
-    yield
-
-    Contract.cache.clear()
-    Contract.factory_map.clear()
-    AsyncContract.cache.clear()
-    AsyncContract.factory_map.clear()
 
 
 @pytest.fixture(scope="session")
