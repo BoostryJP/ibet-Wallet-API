@@ -100,7 +100,7 @@ async def _collect_event_logs(
                     argument_filters=argument_filters,
                 )
             )
-        except (Web3ValidationError, Web3RPCError):
+        except Web3ValidationError, Web3RPCError:
             events = []
         for event in events:
             block_number = int(event["blockNumber"])

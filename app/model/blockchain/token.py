@@ -17,8 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from __future__ import annotations
-
 import functools
 import json
 from datetime import UTC, datetime, timedelta

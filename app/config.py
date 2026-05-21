@@ -53,20 +53,13 @@ RESPONSE_VALIDATION_MODE = (
 NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
 
 # Environment-specific settings
-APP_ENV = os.environ.get("APP_ENV") or "local"
-if APP_ENV != "live":
-    INI_FILE = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), f"../conf/{APP_ENV}.ini"
-    )
-else:
-    if NETWORK == "IBET":  # ibet
-        INI_FILE = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "../conf/live.ini"
-        )
-    else:  # ibet for Fin
-        INI_FILE = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "../conf/live_fin.ini"
-        )
+_app_env = os.environ.get("APP_ENV") or "local"
+if _app_env not in ("local", "dev", "live"):
+    raise ValueError(f"Invalid APP_ENV: {_app_env}")
+APP_ENV: Literal["local", "dev", "live"] = _app_env
+INI_FILE = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), f"../conf/{APP_ENV}.ini"
+)
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
 

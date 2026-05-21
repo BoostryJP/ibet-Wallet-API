@@ -87,7 +87,7 @@ class Processor:
             for i, token in enumerate(token_list_json):
                 try:
                     token_list_item = TokenListItem.model_validate(token)
-                except (ValidationError, ValueError):
+                except ValidationError, ValueError:
                     LOG.notice(f"Invalid token data: index={i} token={token}")
                     continue
 

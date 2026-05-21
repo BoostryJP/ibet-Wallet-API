@@ -17,34 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import decimal
 from typing import Any
 
-import orjson
-from fastapi.responses import ORJSONResponse
 
-from app.config import RESPONSE_VALIDATION_MODE
-
-
-def decimal_default(obj: Any):
-    if isinstance(obj, decimal.Decimal):
-        return float(obj)
-    raise TypeError
-
-
-class CustomORJSONResponse(ORJSONResponse):
-    media_type = "application/json"
-
-    def render(self, content: Any) -> bytes:
-        return orjson.dumps(
-            content,
-            option=orjson.OPT_NON_STR_KEYS | orjson.OPT_SERIALIZE_NUMPY,
-            default=decimal_default,
-        )
-
-
-def json_response(content: dict[str, Any]):
-    if RESPONSE_VALIDATION_MODE:
-        return content
-    else:
-        return CustomORJSONResponse(content=content)
+def json_response(content: dict[str, Any] | list[Any]):
+    return content

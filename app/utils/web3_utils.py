@@ -21,7 +21,7 @@ import asyncio
 import threading
 import time
 from json.decoder import JSONDecodeError
-from typing import Any
+from typing import Any, cast
 
 from aiohttp import ClientError
 from eth_typing import URI
@@ -108,10 +108,10 @@ class AsyncWeb3Wrapper:
         return web3.net
 
     @staticmethod
-    def _get_web3(request_timeout: int) -> AsyncWeb3:
+    def _get_web3(request_timeout: int) -> AsyncWeb3[Any]:
         # Get web3 for each thread because make to FailOverHTTPProvider thread-safe
         try:
-            async_web3 = thread_local.async_web3
+            async_web3 = cast(AsyncWeb3[Any], thread_local.async_web3)
         except AttributeError:
             async_web3 = AsyncWeb3(
                 AsyncFailOverHTTPProvider(request_kwargs={"timeout": request_timeout})
@@ -159,7 +159,7 @@ class FailOverHTTPProvider(HTTPProvider):
                         self.endpoint_uri = URI(_node.endpoint_uri)
                         try:
                             return super().make_request(method, params)
-                        except (ConnectionError, JSONDecodeError, HTTPError):
+                        except ConnectionError, JSONDecodeError, HTTPError:
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.
@@ -221,7 +221,7 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
                         self.endpoint_uri = URI(_node.endpoint_uri)
                         try:
                             return await super().make_request(method, params)
-                        except (ClientError, JSONDecodeError):
+                        except ClientError, JSONDecodeError:
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.

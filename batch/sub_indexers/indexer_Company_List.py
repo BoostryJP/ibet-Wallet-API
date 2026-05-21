@@ -89,7 +89,7 @@ class Processor:
             for i, company in enumerate(company_list_json):
                 try:
                     company_list_item = CompanyListItem.model_validate(company)  # type: ignore[arg-type]
-                except (ValidationError, ValueError):
+                except ValidationError, ValueError:
                     LOG.notice(f"Invalid company data: index={i} company={company}")
                     continue
 

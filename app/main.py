@@ -20,11 +20,11 @@ SPDX-License-Identifier: Apache-2.0
 import ctypes
 from contextlib import asynccontextmanager
 from ctypes.util import find_library
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from pydantic_core import ArgsKwargs, ErrorDetails
@@ -54,7 +54,7 @@ from app.api.routers import (
     token_share as routers_token_share,
     user_info as routers_user_info,
 )
-from app.config import BRAND_NAME, PROFILING_MODE
+from app.config import APP_ENV, BRAND_NAME, PROFILING_MODE, RESPONSE_VALIDATION_MODE
 from app.errors import (
     AppError,
     DataConflictError,
@@ -107,7 +107,7 @@ async def on_shutdown() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     on_startup()
     yield
     await on_shutdown()
@@ -117,7 +117,7 @@ app = FastAPI(
     title="ibet Wallet API",
     description="RPC services that provides utility tools for building a wallet system on ibet network",
     terms_of_service="",
-    version="26.3.0",
+    version="26.6.0",
     contact={"email": "dev@boostry.co.jp"},
     license_info={
         "name": "Apache 2.0",
@@ -197,6 +197,31 @@ async def internal_server_error_handler(
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=jsonable_encoder({"meta": meta}),
+    )
+
+
+# ResponseValidationError
+@app.exception_handler(ResponseValidationError)
+async def response_validation_exception_handler(
+    request: Request, exc: ResponseValidationError
+) -> JSONResponse:
+    if RESPONSE_VALIDATION_MODE:
+        return await internal_server_error_handler(request, exc)
+
+    if APP_ENV == "live":
+        LOG.info(
+            f"Invalid response: path={request.url.path}, method={request.method}, detail={exc.errors()}"
+        )
+    else:
+        LOG.warning(
+            f"Invalid response: path={request.url.path}, method={request.method}, detail={exc.errors()}"
+        )
+
+    route = request.scope.get("route")
+    status_code = getattr(route, "status_code", None) or status.HTTP_200_OK
+    return JSONResponse(
+        status_code=status_code,
+        content=jsonable_encoder(exc.body),
     )
 
 
