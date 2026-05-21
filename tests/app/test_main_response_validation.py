@@ -67,7 +67,7 @@ class TestResponseValidationExceptionHandler:
         try:
             with (
                 mock.patch("app.main.RESPONSE_VALIDATION_MODE", False),
-                mock.patch("app.main.LOG.warning") as warning_mock,
+                mock.patch("app.main.LOG.notice") as warning_mock,
             ):
                 response = client.get(path)
         finally:

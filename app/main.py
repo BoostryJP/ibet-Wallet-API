@@ -54,7 +54,7 @@ from app.api.routers import (
     token_share as routers_token_share,
     user_info as routers_user_info,
 )
-from app.config import APP_ENV, BRAND_NAME, PROFILING_MODE, RESPONSE_VALIDATION_MODE
+from app.config import BRAND_NAME, PROFILING_MODE, RESPONSE_VALIDATION_MODE
 from app.errors import (
     AppError,
     DataConflictError,
@@ -208,14 +208,9 @@ async def response_validation_exception_handler(
     if RESPONSE_VALIDATION_MODE:
         return await internal_server_error_handler(request, exc)
 
-    if APP_ENV == "live":
-        LOG.info(
-            f"Invalid response: path={request.url.path}, method={request.method}, detail={exc.errors()}"
-        )
-    else:
-        LOG.warning(
-            f"Invalid response: path={request.url.path}, method={request.method}, detail={exc.errors()}"
-        )
+    LOG.notice(
+        f"Invalid response: path={request.url.path}, method={request.method}, detail={exc.errors()}"
+    )
 
     route = request.scope.get("route")
     status_code = getattr(route, "status_code", None) or status.HTTP_200_OK
