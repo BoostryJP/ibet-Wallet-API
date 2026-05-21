@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-26.3-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-26.6-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -17,7 +17,7 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ## Dependencies
 - [python3](https://www.python.org/)
-  - Version 3.13
+  - Version 3.14
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 16
   - [MySQL](https://www.mysql.com/) - Version 8.0

@@ -30,7 +30,6 @@ def setup_pyroscope():
             application_name=BRAND_NAME,
             server_address=PYROSCOPE_SERVER_URL,
             sample_rate=100,  # default is 100
-            detect_subprocesses=True,  # detect subprocesses started by the main process; default is False
             oncpu=False,  # report cpu time only; default is True
             gil_only=False,  # only include traces for threads that are holding on to the Global Interpreter Lock; default is True
             enable_logging=False,  # does enable logging facility; default is False

@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet 
     system on ibet network
-  version: 26.3.0
+  version: 26.6.0
 paths:
   /:
     get:
@@ -5365,7 +5365,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -5379,7 +5380,8 @@ components:
           $ref: '#/components/schemas/AppErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -5891,7 +5893,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -5905,7 +5908,8 @@ components:
           $ref: '#/components/schemas/DataConflictErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -5931,7 +5935,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -5945,7 +5950,8 @@ components:
           $ref: '#/components/schemas/DataNotExistsErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -7211,7 +7217,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -7225,7 +7232,8 @@ components:
           $ref: '#/components/schemas/InvalidParameterErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -7581,6 +7589,7 @@ components:
           title: Value
           description: Transfer quantity
         data:
+          additionalProperties: true
           type: object
           title: Data
           description: Data
@@ -7660,6 +7669,7 @@ components:
           title: Value
           description: Transfer quantity
         data:
+          additionalProperties: true
           type: object
           title: Data
           description: Data
@@ -7728,6 +7738,7 @@ components:
           title: Value
           description: Transfer quantity
         data:
+          additionalProperties: true
           type: object
           title: Data
           description: Data
@@ -8017,7 +8028,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -8031,7 +8043,8 @@ components:
           $ref: '#/components/schemas/NotSupportedErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -8084,7 +8097,8 @@ components:
         metainfo:
           anyOf:
             - $ref: '#/components/schemas/NotificationMetainfo'
-            - type: object
+            - additionalProperties: true
+              type: object
           title: Metainfo
         account_address:
           anyOf:
@@ -8214,7 +8228,8 @@ components:
         metainfo:
           anyOf:
             - $ref: '#/components/schemas/NotificationMetainfo'
-            - type: object
+            - additionalProperties: true
+              type: object
           title: Metainfo
         account_address:
           anyOf:
@@ -8364,7 +8379,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -8378,7 +8394,8 @@ components:
           $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -8435,7 +8452,8 @@ components:
           $ref: '#/components/schemas/RequestValidationErrorInfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
       type: object
@@ -9086,7 +9104,7 @@ components:
           anyOf:
             - type: string
               minLength: 1
-              format: binary
+              contentMediaType: application/octet-stream
             - type: 'null'
           title: File Content
           description: File content(Base64 encoded)
@@ -9284,7 +9302,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -9298,7 +9317,8 @@ components:
           $ref: '#/components/schemas/ServiceUnavailableMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -9595,7 +9615,8 @@ components:
         description:
           anyOf:
             - type: string
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Description
       type: object
@@ -9609,7 +9630,8 @@ components:
           $ref: '#/components/schemas/SuspendedTokenErrorMetainfo'
         details:
           anyOf:
-            - type: object
+            - additionalProperties: true
+              type: object
             - type: 'null'
           title: Details
           examples:
@@ -10172,6 +10194,11 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
         - loc

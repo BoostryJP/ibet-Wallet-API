@@ -1281,7 +1281,7 @@ class TestEthSendRawTransaction:
         }
         headers = {"Content-Type": "application/json"}
 
-        with mock.patch.object(eth.async_web3.eth, "get_transaction", ConnectionError):
+        with mock.patch.object(eth.async_web3.eth, "call", side_effect=ConnectionError):
             resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
@@ -1291,8 +1291,6 @@ class TestEthSendRawTransaction:
                     "id": 1,
                     "status": 0,
                     "transaction_hash": ANY,
-                    "error_code": 130401,
-                    "error_msg": "Message sender balance is insufficient.",
                 }
             ]
 

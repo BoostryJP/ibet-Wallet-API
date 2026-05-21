@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-26.3-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-26.6-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -18,7 +18,7 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.13
+  - バージョン 3.14
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 16
   - [MySQL](https://www.mysql.com/) - バージョン 8.0

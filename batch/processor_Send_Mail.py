@@ -84,7 +84,7 @@ class Processor:
                             file=file,
                         )
                         smtp_mail.send_mail()
-                    except (SMTPException, SESException, IndexError):
+                    except SMTPException, SESException, IndexError:
                         LOG.exception(f"Could not send email: id={mail.id}")
                         continue
                     finally:

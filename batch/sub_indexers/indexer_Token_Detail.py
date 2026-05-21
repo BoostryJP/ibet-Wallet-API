@@ -129,7 +129,7 @@ class Processor:
                     # Keep request interval constant to avoid throwing many request to JSON-RPC
                     elapsed_time = time.time() - start_time
                     await asyncio.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
-                except (ObjectDeletedError, StaleDataError):
+                except ObjectDeletedError, StaleDataError:
                     LOG.notice(
                         "The record may have been deleted in a different session during the update"
                     )
