@@ -53,20 +53,25 @@ class AsyncContractEventsView:
 
 
 class AsyncContract:
-    cache: dict[str, dict[str, Any]] = {}  # コントラクト情報のキャッシュ
+    cache: dict[str, dict[str, Any]] = {}  # Cache for contract metadata.
+
+    # ContractFactory is tied to the AsyncWeb3 that created it, so factories
+    # are cached per AsyncWeb3. WeakKeyDictionary lets old entries disappear
+    # when the AsyncWeb3 instance is no longer referenced.
     factory_map: WeakKeyDictionary[
         AsyncWeb3[Any], dict[str, Type[Web3AsyncContract]]
     ] = WeakKeyDictionary()
+
     _MISSING = object()
 
     @classmethod
     def get_contract(cls, contract_name: str, address: str) -> Web3AsyncContract:
         """
-        コントラクト取得
+        Get a contract instance.
 
-        :param contract_name: コントラクト名
-        :param address: コントラクトアドレス
-        :return: コントラクト
+        :param contract_name: Contract name
+        :param address: Contract address
+        :return: Contract instance
         """
         if contract_name in AsyncContract.cache:
             contract_json: dict[str, Any] = AsyncContract.cache[contract_name]
@@ -75,16 +80,21 @@ class AsyncContract:
             contract_json = json.load(open(contract_file, "r"))
             AsyncContract.cache[contract_name] = contract_json
 
+        # Resolve the AsyncWeb3 for the current execution context.
         current_async_web3 = async_web3.get_web3()
+
+        # Get or initialize the contract-name cache for this AsyncWeb3.
         contract_factory_map = cls.factory_map.get(current_async_web3)
         if contract_factory_map is None:
             contract_factory_map = {}
             cls.factory_map[current_async_web3] = contract_factory_map
 
+        # Reuse the cached factory and bind only the requested address.
         contract_factory = contract_factory_map.get(contract_name)
         if contract_factory is not None:
             return contract_factory(address=to_checksum_address(address))
 
+        # Otherwise build and cache the factory, then return the bound contract.
         contract_factory = current_async_web3.eth.contract(abi=contract_json["abi"])
         contract_factory_map[contract_name] = contract_factory
         return contract_factory(address=to_checksum_address(address))
@@ -94,12 +104,12 @@ class AsyncContract:
         contract_name: str, args: list[Any], deployer: str
     ) -> tuple[str | None, Any]:
         """
-        コントラクトデプロイ
+        Deploy a contract.
 
-        :param contract_name: コントラクト名
-        :param args: デプロイ時の引数
-        :param deployer: デプロイ実行者のアドレス
-        :return: コントラクト情報
+        :param contract_name: Contract name
+        :param args: Constructor arguments
+        :param deployer: Deployer address
+        :return: Contract information
         """
         if contract_name in AsyncContract.cache:
             contract_json: dict[str, Any] = AsyncContract.cache[contract_name]
@@ -120,7 +130,7 @@ class AsyncContract:
         tx = await async_web3.eth.wait_for_transaction_receipt(tx_hash)
 
         contract_address: str | None = ""
-        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
+        # Check the receipt and confirm that the contract address was recorded.
         if "contractAddress" in tx.keys():
             contract_address = tx["contractAddress"]
 

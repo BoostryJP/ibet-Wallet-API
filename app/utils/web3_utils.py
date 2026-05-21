@@ -45,7 +45,11 @@ from app.model.db import Node
 LOG = log.get_logger()
 
 thread_local = threading.local()
+
+# Hashable timeout key for AsyncWeb3/provider caches.
 AsyncWeb3TimeoutKey = tuple[Any, Any, Any, Any]
+
+# Cache bucket for one scope, keyed by timeout.
 AsyncWeb3CacheMap = dict[AsyncWeb3TimeoutKey, AsyncWeb3[Any]]
 
 
@@ -125,7 +129,10 @@ class AsyncWeb3Wrapper:
     @classmethod
     def _get_web3(cls, request_timeout: int | ClientTimeout) -> AsyncWeb3[Any]:
         """Get AsyncWeb3 instance with fail-over support and timeout handling."""
+        # Normalize plain integers before constructing the provider.
         timeout = cls._normalize_async_timeout(request_timeout)
+
+        # Cache entries are separated by effective timeout settings.
         timeout_key: AsyncWeb3TimeoutKey = (
             timeout.total,
             timeout.connect,
@@ -133,42 +140,50 @@ class AsyncWeb3Wrapper:
             timeout.sock_read,
         )
 
-        # Get web3 for each thread and event loop to avoid reusing
-        # aiohttp sessions across loops.
+        # Running loop for the current thread, if any.
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = None
 
+        # Without a running loop, fall back to a thread-local cache.
         if loop is None:
             try:
+                # Reuse an AsyncWeb3 created earlier on this thread.
                 async_web3_map = cast(
                     AsyncWeb3CacheMap,
                     thread_local.async_web3_without_loop,
                 )
             except AttributeError:
+                # Lazily initialize the fallback cache.
                 async_web3_map: AsyncWeb3CacheMap = {}
                 thread_local.async_web3_without_loop = async_web3_map
+
             async_web3 = async_web3_map.get(timeout_key)
             if async_web3 is None:
+                # Create one provider per thread/timeout pair.
                 async_web3 = cls._create_web3(timeout)
                 async_web3_map[timeout_key] = async_web3
             return async_web3
 
+        # With a running loop, scope AsyncWeb3 instances to that loop.
         try:
             async_web3_by_loop = cast(
                 WeakKeyDictionary[asyncio.AbstractEventLoop, AsyncWeb3CacheMap],
                 thread_local.async_web3_by_loop,
             )
         except AttributeError:
+            # Weak keys let loop entries vanish when the loop is gone.
             async_web3_by_loop: WeakKeyDictionary[
                 asyncio.AbstractEventLoop, AsyncWeb3CacheMap
             ] = WeakKeyDictionary()
             thread_local.async_web3_by_loop = async_web3_by_loop
 
+        # Each loop keeps its own timeout-keyed sub-cache.
         loop_web3_map = async_web3_by_loop.setdefault(loop, cast(AsyncWeb3CacheMap, {}))
         async_web3 = loop_web3_map.get(timeout_key)
         if async_web3 is None:
+            # Build and remember an AsyncWeb3 for this loop/timeout pair.
             async_web3 = cls._create_web3(timeout)
             loop_web3_map[timeout_key] = async_web3
         return async_web3
