@@ -59,6 +59,12 @@ Install python packages with:
 $ uv sync --frozen --no-install-project --no-dev
 ```
 
+### Dependency update policy
+
+- Dependabot manages `uv`, GitHub Actions, Dockerfile, and Docker Compose updates in this repository.
+- Regular version updates are delayed by a 14-day cooldown to reduce supply-chain risk. Security updates are still handled without that delay.
+- Docker base images and external Compose images are pinned by digest, and Dockerfiles must not rely on remote `ADD` or pipe-to-shell installers.
+
 ### Setting environment variables
 
 See the following documentation for environment variables that can be set in this system.

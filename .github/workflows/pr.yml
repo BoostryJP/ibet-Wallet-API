@@ -38,6 +38,34 @@ jobs:
       - name: Run typecheck
         run: |
           make typecheck
+  guardrail-check:
+    name: "Guardrail checks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+      - name: Restore cache
+        id: cache-venv
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-
+      - name: Install dependencies
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          uv sync --frozen --no-install-project
+      - name: Run guardrail checks
+        run: |
+          make test_guardrail_check
   unit-test:
     name: "Unit tests"
     runs-on: ubuntu-latest
@@ -45,8 +73,15 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        db: [postgres, mysql]
-        test_target: ["tests/app/", "tests/batch/"]
+        include:
+          - db: postgres
+            test_target: "tests/app/"
+          - db: mysql
+            test_target: "tests/app/"
+          - db: postgres
+            test_target: "tests/batch/"
+          - db: mysql
+            test_target: "tests/batch/"
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
