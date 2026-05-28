@@ -45,8 +45,17 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        db: [postgres, mysql]
-        test_target: ["tests/app/", "tests/batch/"]
+        include:
+          - db: postgres
+            test_target: "tests/app/"
+          - db: mysql
+            test_target: "tests/app/"
+          - db: postgres
+            test_target: "tests/batch/"
+          - db: mysql
+            test_target: "tests/batch/"
+          - db: postgres
+            test_target: "tests/test_guardrail_check.py"
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

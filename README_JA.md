@@ -60,6 +60,12 @@ $ uv venv
 $ uv sync --frozen --no-install-project --no-dev
 ```
 
+### 依存関係の更新ポリシー
+
+- このリポジトリでは `uv`、GitHub Actions、Dockerfile、Docker Compose の更新を Dependabot で管理します。
+- 通常のバージョン更新には 14 日の cooldown を設定し、サプライチェーンリスクを下げます。セキュリティ更新はこの遅延の対象外です。
+- Docker の base image と Compose で参照する外部 image は digest で固定し、Dockerfile ではリモート `ADD` や pipe-to-shell installer を使いません。
+
 ### 環境変数の設定
 
 設定可能な環境変数については以下のドキュメントを確認してください。
