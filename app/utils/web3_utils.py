@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import threading
 import time
+from dataclasses import dataclass
 from json.decoder import JSONDecodeError
 from typing import Any, cast
 from weakref import WeakKeyDictionary
@@ -51,6 +52,12 @@ AsyncWeb3TimeoutKey = tuple[Any, Any, Any, Any]
 
 # Cache bucket for one scope, keyed by timeout.
 AsyncWeb3CacheMap = dict[AsyncWeb3TimeoutKey, AsyncWeb3[Any]]
+
+
+@dataclass
+class ResolvedEndpointCache:
+    endpoint_uri: URI
+    expires_at: float
 
 
 class Web3Wrapper:
@@ -203,54 +210,100 @@ class FailOverHTTPProvider(HTTPProvider):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.endpoint_uri: URI | None = None
+        self._resolved_endpoint_cache: ResolvedEndpointCache | None = None
+        self._resolved_endpoint_lock = threading.Lock()
 
-    def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+    @staticmethod
+    def _get_cache_ttl() -> float:
+        return max(float(config.WEB3_REQUEST_WAIT_TIME), 1.0)
+
+    def _get_cached_endpoint_uri(self) -> URI | None:
+        with self._resolved_endpoint_lock:
+            cache = self._resolved_endpoint_cache
+            if cache is None:
+                return None
+            if cache.expires_at <= time.monotonic():
+                self._resolved_endpoint_cache = None
+                return None
+            return cache.endpoint_uri
+
+    def _set_cached_endpoint_uri(self, endpoint_uri: URI) -> None:
+        with self._resolved_endpoint_lock:
+            self._resolved_endpoint_cache = ResolvedEndpointCache(
+                endpoint_uri=endpoint_uri,
+                expires_at=time.monotonic() + self._get_cache_ttl(),
+            )
+
+    def _clear_cached_endpoint_uri(self) -> None:
+        with self._resolved_endpoint_lock:
+            self._resolved_endpoint_cache = None
+
+    def _resolve_endpoint_uri(self) -> URI | None:
         db_session = Session(autocommit=False, autoflush=True, bind=engine)
         try:
-            if FailOverHTTPProvider.fail_over_mode is True:
-                # If never running the block monitoring processor,
-                # use default(primary) node.
-                if db_session.scalars(select(Node).limit(1)).first() is None:
-                    self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
-                    return super().make_request(method, params)
-                else:
-                    counter = 0
-                    while counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                        # Switch alive node
-                        _node = db_session.scalars(
-                            select(Node)
-                            .where(Node.is_synced == True)
-                            .order_by(Node.priority)
-                            .order_by(Node.id)
-                            .limit(1)
-                        ).first()
-                        if _node is None:
-                            counter += 1
-                            if counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                                time.sleep(config.WEB3_REQUEST_WAIT_TIME)
-                                continue
-                            raise ServiceUnavailable("Block synchronization is down")
-                        assert _node.endpoint_uri is not None
-                        self.endpoint_uri = URI(_node.endpoint_uri)
-                        try:
-                            return super().make_request(method, params)
-                        except ConnectionError, JSONDecodeError, HTTPError:
-                            # NOTE:
-                            #  JSONDecodeError will be raised if a request is sent
-                            #  while Quorum is terminating.
-                            LOG.notice(
-                                f"Retry web3 request due to connection fail: method={method}, params={params}"
-                            )
-                            counter += 1
-                            if counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                                time.sleep(config.WEB3_REQUEST_WAIT_TIME)
-                                continue
-                    raise ServiceUnavailable("Block synchronization is down")
-            else:  # Use default provider
-                self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
-                return super().make_request(method, params)
+            if db_session.scalars(select(Node).limit(1)).first() is None:
+                endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
+                self._set_cached_endpoint_uri(endpoint_uri)
+                return endpoint_uri
+
+            _node = db_session.scalars(
+                select(Node)
+                .where(Node.is_synced == True)
+                .order_by(Node.priority)
+                .order_by(Node.id)
+                .limit(1)
+            ).first()
+            if _node is None:
+                return None
+            assert _node.endpoint_uri is not None
+            endpoint_uri = URI(_node.endpoint_uri)
+            self._set_cached_endpoint_uri(endpoint_uri)
+            return endpoint_uri
         finally:
             db_session.close()
+
+    def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+        if FailOverHTTPProvider.fail_over_mode is True:
+            cached_endpoint_uri = self._get_cached_endpoint_uri()
+            if cached_endpoint_uri is not None:
+                self.endpoint_uri = cached_endpoint_uri
+                try:
+                    return super().make_request(method, params)
+                except ConnectionError, JSONDecodeError, HTTPError:
+                    self._clear_cached_endpoint_uri()
+                    LOG.notice(
+                        f"Retry web3 request due to connection fail: method={method}, params={params}"
+                    )
+
+            counter = 0
+            while counter <= config.WEB3_REQUEST_RETRY_COUNT:
+                endpoint_uri = self._resolve_endpoint_uri()
+                if endpoint_uri is None:
+                    counter += 1
+                    if counter <= config.WEB3_REQUEST_RETRY_COUNT:
+                        time.sleep(config.WEB3_REQUEST_WAIT_TIME)
+                        continue
+                    raise ServiceUnavailable("Block synchronization is down")
+
+                self.endpoint_uri = endpoint_uri
+                try:
+                    return super().make_request(method, params)
+                except ConnectionError, JSONDecodeError, HTTPError:
+                    # NOTE:
+                    #  JSONDecodeError will be raised if a request is sent
+                    #  while Quorum is terminating.
+                    self._clear_cached_endpoint_uri()
+                    LOG.notice(
+                        f"Retry web3 request due to connection fail: method={method}, params={params}"
+                    )
+                    counter += 1
+                    if counter <= config.WEB3_REQUEST_RETRY_COUNT:
+                        time.sleep(config.WEB3_REQUEST_WAIT_TIME)
+                        continue
+            raise ServiceUnavailable("Block synchronization is down")
+
+        self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
+        return super().make_request(method, params)
 
     @staticmethod
     def set_fail_over_mode(use_fail_over: bool):
@@ -263,56 +316,102 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.endpoint_uri: URI | None = None
+        self._resolved_endpoint_cache: ResolvedEndpointCache | None = None
+        self._resolved_endpoint_lock = asyncio.Lock()
 
-    async def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+    @staticmethod
+    def _get_cache_ttl() -> float:
+        return max(float(config.WEB3_REQUEST_WAIT_TIME), 1.0)
+
+    async def _get_cached_endpoint_uri(self) -> URI | None:
+        async with self._resolved_endpoint_lock:
+            cache = self._resolved_endpoint_cache
+            if cache is None:
+                return None
+            if cache.expires_at <= time.monotonic():
+                self._resolved_endpoint_cache = None
+                return None
+            return cache.endpoint_uri
+
+    async def _set_cached_endpoint_uri(self, endpoint_uri: URI) -> None:
+        async with self._resolved_endpoint_lock:
+            self._resolved_endpoint_cache = ResolvedEndpointCache(
+                endpoint_uri=endpoint_uri,
+                expires_at=time.monotonic() + self._get_cache_ttl(),
+            )
+
+    async def _clear_cached_endpoint_uri(self) -> None:
+        async with self._resolved_endpoint_lock:
+            self._resolved_endpoint_cache = None
+
+    async def _resolve_endpoint_uri(self) -> URI | None:
         db_session = AsyncSession(autocommit=False, autoflush=True, bind=async_engine)
         try:
-            if AsyncFailOverHTTPProvider.fail_over_mode is True:
-                # If never running the block monitoring processor,
-                # use default(primary) node.
-                if (await db_session.scalars(select(Node).limit(1))).first() is None:
-                    self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
-                    return await super().make_request(method, params)
-                else:
-                    counter = 0
-                    while counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                        # Switch alive node
-                        _node = (
-                            await db_session.scalars(
-                                select(Node)
-                                .where(Node.is_synced == True)
-                                .order_by(Node.priority)
-                                .order_by(Node.id)
-                                .limit(1)
-                            )
-                        ).first()
-                        if _node is None:
-                            counter += 1
-                            if counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                                await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
-                                continue
-                            raise ServiceUnavailable("Block synchronization is down")
-                        assert _node.endpoint_uri is not None
-                        self.endpoint_uri = URI(_node.endpoint_uri)
-                        try:
-                            return await super().make_request(method, params)
-                        except ClientError, JSONDecodeError:
-                            # NOTE:
-                            #  JSONDecodeError will be raised if a request is sent
-                            #  while Quorum is terminating.
-                            LOG.notice(
-                                f"Retry web3 request due to connection fail: method={method}, params={params}"
-                            )
-                            counter += 1
-                            if counter <= config.WEB3_REQUEST_RETRY_COUNT:
-                                await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
-                                continue
-                    raise ServiceUnavailable("Block synchronization is down")
-            else:  # Use default provider
-                self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
-                return await super().make_request(method, params)
+            if (await db_session.scalars(select(Node).limit(1))).first() is None:
+                endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
+                await self._set_cached_endpoint_uri(endpoint_uri)
+                return endpoint_uri
+
+            _node = (
+                await db_session.scalars(
+                    select(Node)
+                    .where(Node.is_synced == True)
+                    .order_by(Node.priority)
+                    .order_by(Node.id)
+                    .limit(1)
+                )
+            ).first()
+            if _node is None:
+                return None
+            assert _node.endpoint_uri is not None
+            endpoint_uri = URI(_node.endpoint_uri)
+            await self._set_cached_endpoint_uri(endpoint_uri)
+            return endpoint_uri
         finally:
             await db_session.close()
+
+    async def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+        if AsyncFailOverHTTPProvider.fail_over_mode is True:
+            cached_endpoint_uri = await self._get_cached_endpoint_uri()
+            if cached_endpoint_uri is not None:
+                self.endpoint_uri = cached_endpoint_uri
+                try:
+                    return await super().make_request(method, params)
+                except ClientError, JSONDecodeError:
+                    await self._clear_cached_endpoint_uri()
+                    LOG.notice(
+                        f"Retry web3 request due to connection fail: method={method}, params={params}"
+                    )
+
+            counter = 0
+            while counter <= config.WEB3_REQUEST_RETRY_COUNT:
+                endpoint_uri = await self._resolve_endpoint_uri()
+                if endpoint_uri is None:
+                    counter += 1
+                    if counter <= config.WEB3_REQUEST_RETRY_COUNT:
+                        await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
+                        continue
+                    raise ServiceUnavailable("Block synchronization is down")
+
+                self.endpoint_uri = endpoint_uri
+                try:
+                    return await super().make_request(method, params)
+                except ClientError, JSONDecodeError:
+                    # NOTE:
+                    #  JSONDecodeError will be raised if a request is sent
+                    #  while Quorum is terminating.
+                    await self._clear_cached_endpoint_uri()
+                    LOG.notice(
+                        f"Retry web3 request due to connection fail: method={method}, params={params}"
+                    )
+                    counter += 1
+                    if counter <= config.WEB3_REQUEST_RETRY_COUNT:
+                        await asyncio.sleep(config.WEB3_REQUEST_WAIT_TIME)
+                        continue
+            raise ServiceUnavailable("Block synchronization is down")
+
+        self.endpoint_uri = URI(config.WEB3_HTTP_PROVIDER)
+        return await super().make_request(method, params)
 
     @staticmethod
     def set_fail_over_mode(use_fail_over: bool):
