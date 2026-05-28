@@ -101,7 +101,7 @@ exclude = ["migrations/*", ".venv/*", "cov/*"]
 combine-as-imports = true
 
 [tool.pytest.ini_options]
-addopts = "-m 'not alembic'"
+addopts = "-m 'not alembic and not guardrail_check'"
 markers = [
     "alembic: tests for alembic",
     "guardrail_check: tests for repository guardrails",

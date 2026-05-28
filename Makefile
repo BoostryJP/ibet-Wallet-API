@@ -1,4 +1,4 @@
-.PHONY: format lint typecheck doc test test_guardrail test_migrations run
+.PHONY: format lint typecheck doc test test_guardrail_check test_guardrail test_migrations run
 
 install:
 	uv sync --frozen --no-install-project --all-extras
@@ -22,8 +22,10 @@ doc:
 test:
 	uv run pytest tests/ ${ARG}
 
-test_guardrail:
-	uv run pytest --noconftest tests/test_guardrail_check.py
+test_guardrail_check:
+	uv run pytest --override-ini addopts='' --noconftest -v -m "guardrail_check" tests/test_guardrail_check.py
+
+test_guardrail: test_guardrail_check
 
 test_migrations:
 	uv run pytest -vv --test-alembic -m "alembic"
