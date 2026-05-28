@@ -53,10 +53,13 @@ _PIPE_TO_SHELL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# These tests scan repository files, so keep them out of the normal test run.
 pytestmark = pytest.mark.guardrail_check
 
 
+# Walk repository files that the guardrail checks should inspect.
 def _walk_repo_files(repo_root: Path):
+    # Only source-controlled inputs should affect these repository guardrails.
     for current_root, dirnames, filenames in os.walk(repo_root):
         dirnames[:] = [
             dirname for dirname in dirnames if dirname not in IGNORED_DIRECTORY_NAMES
@@ -66,6 +69,7 @@ def _walk_repo_files(repo_root: Path):
             yield current_path / filename
 
 
+# Find Dockerfiles that may pull base images or remote installers.
 def _collect_dockerfiles(repo_root: Path) -> list[Path]:
     return sorted(
         (
@@ -77,6 +81,7 @@ def _collect_dockerfiles(repo_root: Path) -> list[Path]:
     )
 
 
+# Find Compose files whose external service images must be pinned.
 def _collect_compose_files(repo_root: Path) -> list[Path]:
     return sorted(
         (
@@ -88,6 +93,7 @@ def _collect_compose_files(repo_root: Path) -> list[Path]:
     )
 
 
+# Check Docker FROM images and ignore local build-stage references.
 def _collect_docker_base_image_violations(file_path: Path) -> list[str]:
     stage_names: set[str] = set()
     violations: list[str] = []
@@ -101,10 +107,12 @@ def _collect_docker_base_image_violations(file_path: Path) -> list[str]:
         if not stripped or not stripped.upper().startswith("FROM "):
             continue
 
+        # Parse FROM like Docker does so flags and quoted values do not hide the image.
         tokens = shlex.split(stripped, comments=False, posix=True)
         if not tokens or tokens[0].upper() != "FROM":
             continue
 
+        # Skip FROM options such as --platform; the next token is the base image.
         token_index = 1
         while token_index < len(tokens) and tokens[token_index].startswith("--"):
             token_index += 1
@@ -114,9 +122,11 @@ def _collect_docker_base_image_violations(file_path: Path) -> list[str]:
         base_image = tokens[token_index]
         known_stage_names = set(stage_names)
 
+        # Named stages are local build outputs, not images pulled from a registry.
         if token_index + 2 < len(tokens) and tokens[token_index + 1].upper() == "AS":
             stage_names.add(tokens[token_index + 2])
 
+        # scratch is also local and has no digest to pin.
         if base_image == "scratch" or base_image in known_stage_names:
             continue
         if "@sha256:" not in base_image:
@@ -127,6 +137,7 @@ def _collect_docker_base_image_violations(file_path: Path) -> list[str]:
     return violations
 
 
+# Check Dockerfile lines that fetch and run remote content directly.
 def _collect_docker_remote_installer_violations(file_path: Path) -> list[str]:
     violations: list[str] = []
     relative_path = file_path.relative_to(REPO_ROOT)
@@ -135,16 +146,18 @@ def _collect_docker_remote_installer_violations(file_path: Path) -> list[str]:
         file_path.read_text(encoding="utf-8").splitlines(),
         1,
     ):
+        # Remote content must not bypass repository review.
         if _REMOTE_ADD_PATTERN.search(line):
             violations.append(f"{relative_path}:{lineno} Remote URL ADD is not allowed")
         if _PIPE_TO_SHELL_PATTERN.search(line):
             violations.append(
-                f"{relative_path}:{lineno} Pipe-to-shell installers must be hash verified"
+                f"{relative_path}:{lineno} Pipe-to-shell installers are not allowed"
             )
 
     return violations
 
 
+# Check Compose services that pull external images without digest pins.
 def _collect_compose_image_digest_violations(file_path: Path) -> list[str]:
     relative_path = file_path.relative_to(REPO_ROOT)
     yaml = cast(Any, YAML(typ="safe"))
@@ -163,6 +176,7 @@ def _collect_compose_image_digest_violations(file_path: Path) -> list[str]:
         ):
             continue
         service_obj = cast(dict[str, Any], service_obj_obj)
+        # build means the image comes from a local Dockerfile checked above.
         if "build" in service_obj:
             continue
         image = service_obj.get("image")
@@ -176,6 +190,7 @@ def _collect_compose_image_digest_violations(file_path: Path) -> list[str]:
     return violations
 
 
+# Check that Dependabot keeps the required update policy in place.
 def _collect_dependabot_policy_violations(config_path: Path) -> list[str]:
     relative_path = config_path.relative_to(REPO_ROOT)
     yaml = cast(Any, YAML(typ="safe"))
@@ -208,6 +223,7 @@ def _collect_dependabot_policy_violations(config_path: Path) -> list[str]:
             )
             continue
 
+        # Use the same cooldown everywhere so dependency updates arrive predictably.
         cooldown_obj = update.get("cooldown")
         if not isinstance(cooldown_obj, dict):
             violations.append(f"{relative_path} must define cooldown for {ecosystem!r}")
@@ -218,6 +234,7 @@ def _collect_dependabot_policy_violations(config_path: Path) -> list[str]:
                 f"{relative_path} cooldown.default-days for {ecosystem!r} must be {REQUIRED_COOLDOWN_DAYS}"
             )
 
+        # A limit of 0 disables version updates and can hide stale dependencies.
         if update.get("open-pull-requests-limit") == 0:
             violations.append(
                 f"{relative_path} must not disable version updates for {ecosystem!r}"
@@ -226,8 +243,10 @@ def _collect_dependabot_policy_violations(config_path: Path) -> list[str]:
     return violations
 
 
+# This checks that Dockerfiles use fixed base images and avoid remote installers.
 def test_dockerfiles_pin_base_images_and_avoid_remote_installers():
     violations: list[str] = []
+    # Report all Dockerfile issues together so one run gives a full fix list.
     for file_path in _collect_dockerfiles(REPO_ROOT):
         violations.extend(_collect_docker_base_image_violations(file_path))
         violations.extend(_collect_docker_remote_installer_violations(file_path))
@@ -237,8 +256,10 @@ def test_dockerfiles_pin_base_images_and_avoid_remote_installers():
     )
 
 
+# This checks that Compose services do not use floating external image tags.
 def test_compose_files_pin_images_by_digest():
     violations: list[str] = []
+    # Report all Compose issues together so one run gives a full fix list.
     for file_path in _collect_compose_files(REPO_ROOT):
         violations.extend(_collect_compose_image_digest_violations(file_path))
 
@@ -247,6 +268,7 @@ def test_compose_files_pin_images_by_digest():
     )
 
 
+# This checks that Dependabot keeps required updates enabled with a fixed cooldown.
 def test_dependabot_config_enforces_cooldown_policy():
     assert DEPENDABOT_CONFIG_PATH.exists(), (
         f"Dependabot configuration is missing: {DEPENDABOT_CONFIG_PATH.relative_to(REPO_ROOT)}"
