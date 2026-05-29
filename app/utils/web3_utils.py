@@ -25,13 +25,17 @@ from json.decoder import JSONDecodeError
 from typing import Any, cast
 from weakref import WeakKeyDictionary
 
-from aiohttp import ClientError, ClientTimeout
+from aiohttp import ClientError, ClientSession, ClientTimeout, TCPConnector
 from eth_typing import URI
 from requests.exceptions import ConnectionError, HTTPError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from web3 import AsyncHTTPProvider, AsyncWeb3, HTTPProvider, Web3
+from web3._utils.async_caching import async_lock
+from web3._utils.caching.caching_utils import generate_cache_key
+from web3._utils.http import DEFAULT_HTTP_TIMEOUT
+from web3._utils.http_session_manager import HTTPSessionManager
 from web3.eth import AsyncEth
 from web3.geth import AsyncGeth
 from web3.middleware import ExtraDataToPOAMiddleware
@@ -58,6 +62,106 @@ AsyncWeb3CacheMap = dict[AsyncWeb3TimeoutKey, AsyncWeb3[Any]]
 class ResolvedEndpointCache:
     endpoint_uri: URI
     expires_at: float
+
+
+class KeepAliveHTTPSessionManager(HTTPSessionManager):
+    @staticmethod
+    def _create_async_session() -> ClientSession:
+        return ClientSession(
+            raise_for_status=True,
+            connector=TCPConnector(),
+        )
+
+    async def async_cache_and_return_session(
+        self,
+        endpoint_uri: URI,
+        session: ClientSession | None = None,
+        request_timeout: ClientTimeout | None = None,
+    ) -> ClientSession:
+        # Preserve async HTTP keep-alive for RPC-heavy workloads.
+        cache_key = self._async_session_cache_key(endpoint_uri)
+
+        evicted_items = None
+        cached_session: ClientSession | None = None
+        async with async_lock(self.session_pool, self._lock):
+            if cache_key not in self.session_cache:
+                if session is None:
+                    session = self._create_async_session()
+
+                cached_session, evicted_items = self.session_cache.cache(
+                    cache_key, session
+                )
+                self.logger.debug(
+                    "Async session cached: %s, %s", endpoint_uri, cached_session
+                )
+
+            else:
+                cached_session = cast(
+                    ClientSession,
+                    self.session_cache.get_cache_entry(cache_key),
+                )
+                session_is_closed = cached_session.closed
+                session_loop = getattr(cached_session, "_loop", None)
+                session_loop_is_closed = bool(
+                    session_loop is not None and session_loop.is_closed()
+                )
+
+                warning = (
+                    "Async session was closed"
+                    if session_is_closed
+                    else (
+                        "Loop was closed for async session"
+                        if session_loop_is_closed
+                        else None
+                    )
+                )
+                if warning:
+                    self.logger.debug(
+                        "%s: %s, %s. Creating and caching a new async session for uri.",
+                        warning,
+                        endpoint_uri,
+                        cached_session,
+                    )
+
+                    self.session_cache.pop(cache_key)
+                    if not session_is_closed:
+                        await cached_session.close()
+                    self.logger.debug(
+                        "Async session closed and evicted from cache: %s",
+                        cached_session,
+                    )
+
+                    replacement_session = self._create_async_session()
+                    cached_session, evicted_items = self.session_cache.cache(
+                        cache_key, replacement_session
+                    )
+                    self.logger.debug(
+                        "Async session cached: %s, %s", endpoint_uri, cached_session
+                    )
+
+        if evicted_items is not None:
+            evicted_sessions = list(evicted_items.values())
+            for evicted_session in evicted_sessions:
+                self.logger.debug(
+                    "Async session cache full. Session evicted from cache: %s",
+                    evicted_session,
+                )
+            timeout_total = DEFAULT_HTTP_TIMEOUT
+            if request_timeout is not None and request_timeout.total is not None:
+                timeout_total = request_timeout.total
+            asyncio.create_task(
+                self._async_close_evicted_sessions(
+                    timeout_total + 0.1,
+                    evicted_sessions,
+                )
+            )
+
+        assert cached_session is not None
+        return cached_session
+
+    @staticmethod
+    def _async_session_cache_key(endpoint_uri: URI) -> str:
+        return generate_cache_key(f"{id(asyncio.get_event_loop())}:{endpoint_uri}")
 
 
 class Web3Wrapper:
@@ -315,6 +419,7 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
+        self._request_session_manager = KeepAliveHTTPSessionManager()
         self.endpoint_uri: URI | None = None
         self._resolved_endpoint_cache: ResolvedEndpointCache | None = None
         self._resolved_endpoint_lock = asyncio.Lock()

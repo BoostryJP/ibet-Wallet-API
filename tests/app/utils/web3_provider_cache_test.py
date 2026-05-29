@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 from typing import cast
 
 import pytest
-from aiohttp import ClientError
+from aiohttp import ClientError, ClientTimeout
 from eth_typing import URI
 from requests.exceptions import ConnectionError
 from web3 import AsyncHTTPProvider, HTTPProvider
@@ -167,3 +167,19 @@ async def test_async_failover_http_provider_invalidates_cache_on_request_error(
 
     assert result == {"result": "http://fresh-node"}
     assert len(resolve_calls) == 1
+
+
+# Verify that the AsyncFailOverHTTPProvider keeps HTTP connections alive when using the cached endpoint.
+@pytest.mark.asyncio
+async def test_async_failover_http_provider_keeps_http_connections_alive():
+    provider = web3_utils.AsyncFailOverHTTPProvider("http://127.0.0.1:8545")
+
+    session = await provider._request_session_manager.async_cache_and_return_session(  # type: ignore[attr-defined]
+        cast(URI, provider.endpoint_uri),
+        request_timeout=ClientTimeout(total=5),
+    )
+    try:
+        assert session.connector is not None
+        assert session.connector.force_close is False
+    finally:
+        await session.close()
