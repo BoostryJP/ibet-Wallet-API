@@ -1,6 +1,6 @@
 FROM ghcr.io/astral-sh/uv:0.11.18@sha256:78bc42400d77b0678ba95765305c826652ed5431f399257271dda681d0318f03 AS uv
 
-FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b AS builder
+FROM ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS builder
 
 ENV PYTHON_VERSION=3.14.2
 ENV UV_COMPILE_BYTECODE=1
@@ -65,7 +65,7 @@ RUN cd /app/ibet-Wallet-API \
  && rm -f /app/ibet-Wallet-API/uv.lock \
  && rm -rf /app/ibet-Wallet-API/tests/
 
-FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b AS runner
+FROM ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS runner
 
 # make application directory
 RUN mkdir -p /app
