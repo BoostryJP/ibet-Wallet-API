@@ -57,7 +57,7 @@ $ uv venv
 
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ uv sync --frozen --no-install-project --no-dev
+$ make install
 ```
 
 ### 依存関係の更新ポリシー
@@ -84,7 +84,7 @@ API サーバーの起動（停止）
 $ ./bin/run_server.sh start(stop)
 ```
 
-ブラウザで、[http://0.0.0.0:5000](http://0.0.0.0:5000) を開くと、以下のJSONのレスポンスを確認できるはずです。
+ブラウザで、[http://127.0.0.1:8000](http://127.0.0.1:8000) を開くと、以下のJSONのレスポンスを確認できるはずです。
 ```json
 {"server":"ibet-Wallet-API"}
 ```
@@ -99,7 +99,7 @@ $ ./bin/run_processor.sh
 
 #### Swagger UI
 
-サーバーを起動した状態で、[http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs) を開いてください。
+サーバーを起動した状態で、[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) を開いてください。
 
 Swagger UI 形式のドキュメントを参照することができるはずです。
 
@@ -108,7 +108,7 @@ Swagger UI 形式のドキュメントを参照することができるはずで
 
 #### ReDoc
 
-同様に、[http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc) を開いてください。
+同様に、[http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc) を開いてください。
 
 ReDoc 形式のドキュメントを参照することができるはずです。
 
@@ -124,7 +124,7 @@ $ uv venv
 
 テストで利用するパッケージをインストールします。
 ```bash
-$ uv sync --frozen --no-install-project
+$ make install
 ```
 
 以下のようにテストを実行します。
