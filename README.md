@@ -56,7 +56,7 @@ $ uv venv
 
 Install python packages with:
 ```bash
-$ uv sync --frozen --no-install-project --no-dev
+$ make install
 ```
 
 ### Dependency update policy
@@ -78,12 +78,12 @@ See [DB Migration Guide](migrations/README.md).
 
 ## Starting and Stopping the Server
 
-You can start (or stop) the API server with:
+You can start the API server with:
 ```bash
-$ ./bin/run_server.sh start(stop)
+$ make run
 ```
 
-Open your browser at [http://0.0.0.0:5000](http://0.0.0.0:5000).
+Open your browser at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 You will see the JSON response as:
 ```json
@@ -101,7 +101,7 @@ $ ./bin/run_processor.sh
 
 #### Swagger UI
 
-Now go to [http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs).
+Now go to [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
 You will see the automatic interactive API documentation provided by Swagger UI:
 
@@ -109,7 +109,7 @@ You will see the automatic interactive API documentation provided by Swagger UI:
 
 #### ReDoc
 
-And now, go to [http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc).
+And now, go to [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc).
 
 You will see the alternative automatic documentation provided by ReDoc:
 
@@ -125,7 +125,7 @@ $ uv venv
 
 Install packages with:
 ```bash
-$ uv sync --frozen --no-install-project
+$ make install
 ```
 
 You can run the tests with:
