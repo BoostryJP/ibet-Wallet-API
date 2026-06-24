@@ -91,7 +91,7 @@ class BlockHistory(TypedDict):
 
 class NodeInfo(TypedDict):
     priority: int
-    web3: AsyncWeb3
+    web3: AsyncWeb3[AsyncHTTPProvider]
     history: RingBuffer[BlockHistory]
 
 

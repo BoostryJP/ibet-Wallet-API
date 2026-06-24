@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-26.3-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-26.6-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -17,13 +17,13 @@ English | <a href='./README_JA.md'>日本語</a>
 
 ## Dependencies
 - [python3](https://www.python.org/)
-  - Version 3.13
+  - Version 3.14
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 16
   - [MySQL](https://www.mysql.com/) - Version 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
-  - We use [hardhat network](https://hardhat.org/hardhat-network/) for local development and unit testing, and we use the latest version.
+  - We use [Anvil](https://www.getfoundry.sh/anvil/) for local development and unit testing.
 
 ## Supported contract version
 
@@ -56,8 +56,14 @@ $ uv venv
 
 Install python packages with:
 ```bash
-$ uv sync --frozen --no-install-project --no-dev
+$ make install
 ```
+
+### Dependency update policy
+
+- Dependabot manages `uv`, GitHub Actions, Dockerfile, and Docker Compose updates in this repository.
+- Regular version updates are delayed by a 14-day cooldown to reduce supply-chain risk. Security updates are still handled without that delay.
+- Docker base images and external Compose images are pinned by digest, and Dockerfiles must not rely on remote `ADD` or pipe-to-shell installers.
 
 ### Setting environment variables
 
@@ -72,12 +78,12 @@ See [DB Migration Guide](migrations/README.md).
 
 ## Starting and Stopping the Server
 
-You can start (or stop) the API server with:
+You can start the API server with:
 ```bash
-$ ./bin/run_server.sh start(stop)
+$ make run
 ```
 
-Open your browser at [http://0.0.0.0:5000](http://0.0.0.0:5000).
+Open your browser at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 You will see the JSON response as:
 ```json
@@ -95,7 +101,7 @@ $ ./bin/run_processor.sh
 
 #### Swagger UI
 
-Now go to [http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs).
+Now go to [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
 You will see the automatic interactive API documentation provided by Swagger UI:
 
@@ -103,7 +109,7 @@ You will see the automatic interactive API documentation provided by Swagger UI:
 
 #### ReDoc
 
-And now, go to [http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc).
+And now, go to [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc).
 
 You will see the alternative automatic documentation provided by ReDoc:
 
@@ -119,7 +125,7 @@ $ uv venv
 
 Install packages with:
 ```bash
-$ uv sync --frozen --no-install-project
+$ make install
 ```
 
 You can run the tests with:

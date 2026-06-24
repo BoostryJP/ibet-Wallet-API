@@ -64,8 +64,9 @@ class TestTokenTokenHoldersSearch:
         _position.pending_transfer = position.get("pending_transfer")  # nullable
         _position.exchange_balance = position.get("exchange_balance")  # nullable
         _position.exchange_commitment = position.get("exchange_commitment")  # nullable
-        if "created" in position:
-            _position.created = position.get("created")
+        created = position.get("created")
+        if created is not None:
+            _position.created = created
         session.add(_position)
         session.commit()
 

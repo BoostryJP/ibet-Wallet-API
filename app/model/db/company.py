@@ -49,11 +49,11 @@ class Company(Base):
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             MySQLDATETIME(fsp=6), default=naive_utcnow, index=True
         )
     else:
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             DateTime, default=naive_utcnow, index=True
         )
     __table_args__ = (

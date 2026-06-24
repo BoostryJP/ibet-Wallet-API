@@ -27,6 +27,7 @@ from app.model.type.base import EthereumAddress
 
 class TokenListItem(BaseModel):
     token_template: Literal["ibetBond", "ibetShare", "ibetMembership", "ibetCoupon"]
+    contract_version: str = "25_09"
     product_type: int
     token_address: EthereumAddress
     key_manager: list[str]

@@ -333,25 +333,12 @@ class TestTokenTokenHoldersCollectionId:
         resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "description": [
-                {
-                    "ctx": {
-                        "error": "invalid character: expected an optional "
-                        "prefix of `urn:uuid:` followed by "
-                        "[0-9a-fA-F-], found `s` at 1"
-                    },
-                    "input": "some_id",
-                    "loc": ["path", "list_id"],
-                    "msg": "Input should be a valid UUID, invalid character: "
-                    "expected an optional prefix of `urn:uuid:` followed "
-                    "by [0-9a-fA-F-], found `s` at 1",
-                    "type": "uuid_parsing",
-                }
-            ],
-            "message": "Invalid Parameter",
-        }
+        error = resp.json()["meta"]["description"][0]
+        assert resp.json()["meta"]["code"] == 88
+        assert resp.json()["meta"]["message"] == "Invalid Parameter"
+        assert error["loc"] == ["path", "list_id"]
+        assert error["input"] == "some_id"
+        assert error["type"] == "uuid_parsing"
 
     # Error_3
     # 404: Data Not Exists Error

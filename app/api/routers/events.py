@@ -22,7 +22,7 @@ from typing import Annotated, Any, TypeAlias, TypedDict, cast
 from eth_typing import HexStr
 from fastapi import APIRouter, Depends, Path, Query
 from web3.contract.async_contract import AsyncContractEvent
-from web3.exceptions import Web3ValidationError
+from web3.exceptions import Web3RPCError, Web3ValidationError
 from web3.types import EventData
 
 from app import config, log
@@ -100,7 +100,7 @@ async def _collect_event_logs(
                     argument_filters=argument_filters,
                 )
             )
-        except Web3ValidationError:
+        except Web3ValidationError, Web3RPCError:
             events = []
         for event in events:
             block_number = int(event["blockNumber"])

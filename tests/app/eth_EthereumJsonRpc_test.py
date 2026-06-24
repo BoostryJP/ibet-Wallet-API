@@ -82,17 +82,12 @@ class TestEthereumJsonRpc:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "error": {
-                "code": -32004,
-                "message": "Method eth_sync is not supported",
-                "data": {
-                    "message": "Method eth_sync is not supported",
-                    "data": {"method": "eth_sync", "params": []},
-                },
+        assert resp.json() == {
+            "meta": {"code": 200, "message": "OK"},
+            "data": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "error": {"code": -32601, "message": "Method not found"},
             },
         }
 

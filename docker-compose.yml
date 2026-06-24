@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:17.10@sha256:0027bef26712baaee437a4ea48fdf3d2d2e2bc5f0d81615374408ca320f3c7e3
     ports:
       - "5432:5432"
     environment:
@@ -10,7 +10,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
   mysql:
-    image: mysql:8.4
+    image: mysql:8.4.9@sha256:c36050afdca850f23cef85703f84c7531a5ae155a11b5ee1c60acb09937c4084
     environment:
       - MYSQL_USER=apluser
       - MYSQL_PASSWORD=apluserpass
@@ -23,10 +23,10 @@ services:
       mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     tmpfs:
       - /var/lib/mysql
-  hardhat-network:
+  anvil-network:
     build:
       context: .
-      dockerfile: tests/Dockerfile_hardhat
+      dockerfile: tests/Dockerfile_anvil
     ports:
       - "8545:8545"
   ibet-wallet-api-postgres:
@@ -46,10 +46,10 @@ services:
       - SHARE_TOKEN_ENABLED=1
     links:
       - postgres:postgres
-      - hardhat-network:quorum
+      - anvil-network:quorum
     depends_on:
       - postgres
-      - hardhat-network
+      - anvil-network
     volumes:
       - ./cov:/app/ibet-Wallet-API/cov
   ibet-wallet-api-mysql:
@@ -69,9 +69,9 @@ services:
       - SHARE_TOKEN_ENABLED=1
     links:
       - mysql:mysql
-      - hardhat-network:quorum
+      - anvil-network:quorum
     depends_on:
       - mysql
-      - hardhat-network
+      - anvil-network
     volumes:
       - ./cov:/app/ibet-Wallet-API/cov

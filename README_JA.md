@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-26.3-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-26.6-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -18,13 +18,13 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.13
+  - バージョン 3.14
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 16
   - [MySQL](https://www.mysql.com/) - バージョン 8.0
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - [ibet-Network](https://github.com/BoostryJP/ibet-Network) の公式の GoQuorum をサポートしています。
-  - 最新の [hardhat network](https://hardhat.org/hardhat-network/) をローカル開発およびユニットテストで利用しています。
+  - [Anvil](https://www.getfoundry.sh/anvil/) をローカル開発およびユニットテストで利用しています。
 
 ## コントラクトのバージョン
 
@@ -57,8 +57,14 @@ $ uv venv
 
 以下のコマンドで Python パッケージをインストールします。
 ```bash
-$ uv sync --frozen --no-install-project --no-dev
+$ make install
 ```
+
+### 依存関係の更新ポリシー
+
+- このリポジトリでは `uv`、GitHub Actions、Dockerfile、Docker Compose の更新を Dependabot で管理します。
+- 通常のバージョン更新には 14 日の cooldown を設定し、サプライチェーンリスクを下げます。セキュリティ更新はこの遅延の対象外です。
+- Docker の base image と Compose で参照する外部 image は digest で固定し、Dockerfile ではリモート `ADD` や pipe-to-shell installer を使いません。
 
 ### 環境変数の設定
 
@@ -78,7 +84,7 @@ API サーバーの起動（停止）
 $ ./bin/run_server.sh start(stop)
 ```
 
-ブラウザで、[http://0.0.0.0:5000](http://0.0.0.0:5000) を開くと、以下のJSONのレスポンスを確認できるはずです。
+ブラウザで、[http://127.0.0.1:8000](http://127.0.0.1:8000) を開くと、以下のJSONのレスポンスを確認できるはずです。
 ```json
 {"server":"ibet-Wallet-API"}
 ```
@@ -93,7 +99,7 @@ $ ./bin/run_processor.sh
 
 #### Swagger UI
 
-サーバーを起動した状態で、[http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs) を開いてください。
+サーバーを起動した状態で、[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) を開いてください。
 
 Swagger UI 形式のドキュメントを参照することができるはずです。
 
@@ -102,7 +108,7 @@ Swagger UI 形式のドキュメントを参照することができるはずで
 
 #### ReDoc
 
-同様に、[http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc) を開いてください。
+同様に、[http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc) を開いてください。
 
 ReDoc 形式のドキュメントを参照することができるはずです。
 
@@ -118,7 +124,7 @@ $ uv venv
 
 テストで利用するパッケージをインストールします。
 ```bash
-$ uv sync --frozen --no-install-project
+$ make install
 ```
 
 以下のようにテストを実行します。

@@ -179,8 +179,6 @@ async def list_all_companies(
                 listing_owner_set.add(owner_address_is_cached[0])
                 continue
 
-            # TODO: Migrate listing.token_address to NOT NULL and update ORM typing
-            assert token[0].token_address is not None
             token_address = to_checksum_address(token[0].token_address)
             token_contract = AsyncContract.get_contract(
                 contract_name="Ownable", address=token_address
@@ -353,8 +351,6 @@ async def list_all_company_tokens(
     token_list: list[TokenDetailDict] = []
     token_instance_list: list[TokenInstanceTypes] = []
     for available_token in available_list:
-        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing
-        assert available_token.token_address is not None
         token_address = to_checksum_address(available_token.token_address)
         token_info = await AsyncContract.call_function(
             contract=list_contract,

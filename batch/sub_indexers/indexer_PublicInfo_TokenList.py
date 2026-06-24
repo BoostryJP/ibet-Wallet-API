@@ -87,7 +87,7 @@ class Processor:
             for i, token in enumerate(token_list_json):
                 try:
                     token_list_item = TokenListItem.model_validate(token)
-                except (ValidationError, ValueError):
+                except ValidationError, ValueError:
                     LOG.notice(f"Invalid token data: index={i} token={token}")
                     continue
 
@@ -113,6 +113,7 @@ class Processor:
         _token_list = TokenList()
         _token_list.token_address = token_list_item.token_address
         _token_list.token_template = token_list_item.token_template
+        _token_list.contract_version = token_list_item.contract_version
         _token_list.key_manager = token_list_item.key_manager
         _token_list.product_type = token_list_item.product_type
         _token_list.issuer_address = token_list_item.issuer_address

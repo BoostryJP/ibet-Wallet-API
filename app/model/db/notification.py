@@ -93,23 +93,25 @@ class Notification(Base):
     notification_id: Mapped[str] = mapped_column(String(256), primary_key=True)
 
     # 通知タイプ(例：BuySettlementOK, BuyAgreementなど)
-    notification_type: Mapped[str | None] = mapped_column(String(256), index=True)
+    notification_type: Mapped[str] = mapped_column(
+        String(256), index=True, nullable=False
+    )
 
     # 通知の重要度
     #   0: Low
     #   1: Medium
     #   2: High
-    priority: Mapped[int | None] = mapped_column(Integer, index=True)
+    priority: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
 
     # 通知対象のユーザーのアドレス
     address: Mapped[str | None] = mapped_column(String(256), index=True)
 
     # 既読フラグ
-    is_read: Mapped[bool | None] = mapped_column(Boolean, default=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # 重要フラグ
-    is_flagged: Mapped[bool | None] = mapped_column(Boolean, default=False)
+    is_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # 削除フラグ
-    is_deleted: Mapped[bool | None] = mapped_column(Boolean, default=False)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # 削除日付
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
@@ -118,20 +120,20 @@ class Notification(Base):
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    block_timestamp: Mapped[datetime | None] = mapped_column(DateTime)
+    block_timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     # 通知イベントの内容
     args: Mapped[dict[str, object] | None] = mapped_column(JSON)
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
-    metainfo: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    metainfo: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             MySQLDATETIME(fsp=6), default=naive_utcnow, index=True
         )
     else:
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             DateTime, default=naive_utcnow, index=True
         )
 
@@ -140,36 +142,29 @@ class Notification(Base):
             self.notification_id, self.notification_type
         )
 
+    @staticmethod
+    def format_datetime(_datetime: datetime) -> str:
+        return "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
+            _datetime.year,
+            _datetime.month,
+            _datetime.day,
+            _datetime.hour,
+            _datetime.minute,
+            _datetime.second,
+        )
+
     def json(self) -> "NotificationJSONDict":
         return {
             "notification_category": self.notification_category,
             "notification_type": self.notification_type,
             "id": self.notification_id,
             "priority": self.priority,
-            "block_timestamp": (
-                "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                    self.block_timestamp.year,
-                    self.block_timestamp.month,
-                    self.block_timestamp.day,
-                    self.block_timestamp.hour,
-                    self.block_timestamp.minute,
-                    self.block_timestamp.second,
-                )
-                if self.block_timestamp is not None
-                else None
-            ),
+            "block_timestamp": self.format_datetime(self.block_timestamp),
             "is_read": self.is_read,
             "is_flagged": self.is_flagged,
             "is_deleted": self.is_deleted,
             "deleted_at": (
-                "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
-                    self.deleted_at.year,
-                    self.deleted_at.month,
-                    self.deleted_at.day,
-                    self.deleted_at.hour,
-                    self.deleted_at.minute,
-                    self.deleted_at.second,
-                )
+                self.format_datetime(self.deleted_at)
                 if self.deleted_at is not None
                 else None
             ),

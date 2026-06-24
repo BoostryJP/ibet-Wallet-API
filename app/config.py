@@ -53,20 +53,13 @@ RESPONSE_VALIDATION_MODE = (
 NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
 
 # Environment-specific settings
-APP_ENV = os.environ.get("APP_ENV") or "local"
-if APP_ENV != "live":
-    INI_FILE = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), f"../conf/{APP_ENV}.ini"
-    )
-else:
-    if NETWORK == "IBET":  # ibet
-        INI_FILE = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "../conf/live.ini"
-        )
-    else:  # ibet for Fin
-        INI_FILE = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "../conf/live_fin.ini"
-        )
+_app_env = os.environ.get("APP_ENV") or "local"
+if _app_env not in ("local", "dev", "live"):
+    raise ValueError(f"Invalid APP_ENV: {_app_env}")
+APP_ENV: Literal["local", "dev", "live"] = _app_env
+INI_FILE = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), f"../conf/{APP_ENV}.ini"
+)
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
 
@@ -182,8 +175,10 @@ WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG["web3"]["chainid"]
 
 # Transaction reception wait
 TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT") or 5)
+_default_transaction_wait_poll_latency = 0.02 if UNIT_TEST_MODE else 0.5
 TRANSACTION_WAIT_POLL_LATENCY = float(
-    os.environ.get("TRANSACTION_WAIT_POLL_LATENCY") or 0.5
+    os.environ.get("TRANSACTION_WAIT_POLL_LATENCY")
+    or _default_transaction_wait_poll_latency
 )
 
 # Txpool length at which tx sending begins to pause

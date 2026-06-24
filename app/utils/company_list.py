@@ -89,7 +89,9 @@ class CompanyList:
                     company_list: list[Company] = []
                     company_models = (
                         await db_session.scalars(
-                            select(CompanyModel).order_by(CompanyModel.created)
+                            select(CompanyModel).order_by(
+                                CompanyModel.created, CompanyModel.address
+                            )
                         )
                     ).all()
                     for _company in company_models:

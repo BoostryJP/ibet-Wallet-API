@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import datetime
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -172,6 +173,7 @@ class TestPositionCoupon:
         consume.account_address = account_address
         consume.token_address = token_address
         consume.amount = amount
+        consume.block_timestamp = datetime(2020, 1, 1, 0, 0, 0)
         session.add(consume)
         session.commit()
 
@@ -245,6 +247,7 @@ class TestPositionCoupon:
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
+        listed_token.owner_address = "0x0000000000000000000000000000000000000000"
         session.add(listed_token)
 
     ###########################################################################

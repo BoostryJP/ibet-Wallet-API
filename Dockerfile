@@ -1,10 +1,10 @@
-FROM ubuntu:24.04 AS builder
+FROM ghcr.io/astral-sh/uv:0.11.19@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 AS uv
 
-ENV PYTHON_VERSION=3.13.11
-ENV UV_VERSION=0.9.16
+FROM ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS builder
+
+ENV PYTHON_VERSION=3.14.2
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
-ENV UV_INSTALL_DIR="/usr/local/bin"
 ENV UV_PROJECT_ENVIRONMENT="/home/apl/.venv"
 
 # make application directory
@@ -34,8 +34,7 @@ RUN apt-get update -q \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # install uv
-ADD https://astral.sh/uv/$UV_VERSION/install.sh /uv-installer.sh
-RUN INSTALLER_NO_MODIFY_PATH=1 sh /uv-installer.sh && rm /uv-installer.sh
+COPY --from=uv /uv /uvx /usr/local/bin/
 
 # install Python
 RUN uv python install $PYTHON_VERSION
@@ -56,7 +55,7 @@ RUN echo '. $HOME/.venv/bin/activate' >> ~apl/.bashrc
 COPY --chown=apl:apl . /app/ibet-Wallet-API
 RUN cd /app/ibet-Wallet-API \
  && uv venv $UV_PROJECT_ENVIRONMENT \
- && uv sync --frozen --no-install-project --no-dev \
+ && UV_MALWARE_CHECK=1 uv sync --frozen --no-install-project --no-dev \
  && PYTHON_BIN="$(uv python find $PYTHON_VERSION)" \
  && PYTHON_ROOT="$(dirname "$(dirname "$PYTHON_BIN")")" \
  && rm -f "$PYTHON_ROOT"/bin/pip "$PYTHON_ROOT"/bin/pip3 "$PYTHON_ROOT"/bin/pip3.* \
@@ -66,7 +65,7 @@ RUN cd /app/ibet-Wallet-API \
  && rm -f /app/ibet-Wallet-API/uv.lock \
  && rm -rf /app/ibet-Wallet-API/tests/
 
-FROM ubuntu:24.04 AS runner
+FROM ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS runner
 
 # make application directory
 RUN mkdir -p /app

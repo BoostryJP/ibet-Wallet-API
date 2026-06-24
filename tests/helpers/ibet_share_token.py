@@ -226,6 +226,9 @@ class IbetShareTestHelper:
             tx_data = str(tx_data)
         tx["data"] = HexStr(tx_data + marker.hex() + annotation_data.hex())
         tx_hash = web3.eth.send_transaction(tx)
+        # reallocate_token only needs a mined receipt because the batch indexer
+        # reads the transaction input to classify the transfer as a reallocation.
+        web3.eth.wait_for_transaction_receipt(tx_hash)
         return tx_hash
 
     @staticmethod

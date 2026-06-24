@@ -91,12 +91,12 @@ class Contract:
         tx_hash = HexBytes(
             contract.constructor(*args).transact({"from": deployer, "gas": 6000000})
         )
-        tx = web3.eth.wait_for_transaction_receipt(tx_hash)
+        tx = web3.eth.get_transaction_receipt(tx_hash)
 
         contract_address = ""
         # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
         if "contractAddress" in tx and tx["contractAddress"] is not None:
-            contract_address = tx["contractAddress"]
+            contract_address = to_checksum_address(tx["contractAddress"])
 
         return contract_address, contract_json["abi"]
 

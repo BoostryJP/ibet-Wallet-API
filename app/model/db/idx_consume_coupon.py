@@ -39,10 +39,10 @@ class IDXConsumeCoupon(Base):
     # Account Address
     account_address: Mapped[str | None] = mapped_column(String(42), index=True)
     # Consume Amount
-    amount: Mapped[int | None] = mapped_column(BigInteger)
+    amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
     # Block Timestamp (datetime)
     # NOTE:
     #  Postgres: Stored as UTC datetime.
     #  MySQL: Before 23.3, stored as JST datetime.
     #         From 23.3, stored as UTC datetime.
-    block_timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    block_timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)

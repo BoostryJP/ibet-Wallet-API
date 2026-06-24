@@ -47,6 +47,7 @@ from app.model.db import Notification
 from app.model.db.base import Base
 from app.utils.web3_utils import AsyncFailOverHTTPProvider
 from tests.account_config import eth_account
+from tests.helpers.anvil_transaction_sync import install_anvil_transaction_sync_patch
 from tests.helpers.contract import Contract
 from tests.types import DeployedContract, SharedContract
 
@@ -54,12 +55,49 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
+#####################################################################
+# Client Fixture
+#####################################################################
 @pytest.fixture(scope="session")
 def client() -> TestClient:
     setattr(AsyncFailOverHTTPProvider, "is_default", None)
 
     client = TestClient(app)
     return client
+
+
+#######################################################################
+# Blockchain Fixture
+#######################################################################
+@pytest.fixture(scope="session", autouse=True)
+def sync_send_transaction_via_anvil_patch():
+    """Patch to sync send transaction via Anvil."""
+    if not config.UNIT_TEST_MODE:
+        yield
+        return
+
+    with install_anvil_transaction_sync_patch():
+        yield
+
+
+@pytest.fixture(scope="function")
+def block_number(request: pytest.FixtureRequest) -> None:
+    """Save block number before tests and restore it after tests."""
+    evm_snapshot: RPCResponse = web3.provider.make_request(
+        RPCEndpoint("evm_snapshot"), []
+    )
+
+    def teardown():
+        result = evm_snapshot.get("result")
+        assert isinstance(result, str)
+        web3.provider.make_request(
+            RPCEndpoint("evm_revert"),
+            [
+                int(result, 16),
+            ],
+        )
+
+    request.addfinalizer(teardown)
 
 
 @pytest.fixture(scope="session")
@@ -178,11 +216,15 @@ def shared_contract(
     }
 
 
+######################################################################
+# Database Fixture
+######################################################################
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def async_db_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """Create DB tables before tests and drop them after tests."""
     if async_engine.name != "mysql":
+        # NOTE: MySQL not support SEQ, so skip creating it
         async with async_engine.begin() as conn:
-            # NOTE:MySQLの場合はSEQ機能が利用できない
             await conn.run_sync(Notification.notification_id_seq.create)
 
     async with async_engine.begin() as conn:
@@ -194,25 +236,9 @@ async def async_db_engine() -> AsyncGenerator[AsyncEngine, None]:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-# テーブルの自動作成・自動削除
-@pytest.fixture(scope="session")
-def db_engine() -> Generator[Engine, None, None]:
-    from app.model.db.base import Base
-
-    if engine.name != "mysql":
-        # NOTE:MySQLの場合はSEQ機能が利用できない
-        Notification.notification_id_seq.create(bind=engine)
-
-    Base.metadata.create_all(engine)
-
-    yield engine
-
-    Base.metadata.drop_all(engine)
-
-
-# テーブル上のレコード削除
 @pytest_asyncio.fixture(scope="function", loop_scope="session")
 async def async_db(async_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    """Create DB session and remove records in tables after tests."""
     # Create DB session
     db = AsyncSessionLocal()
 
@@ -261,9 +287,31 @@ async def async_db(async_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession,
     app.dependency_overrides[db_async_session] = db_async_session
 
 
-# テーブルの自動作成・自動削除
+@pytest_asyncio.fixture(scope="function", loop_scope="session")
+async def async_session(async_db: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
+    """Create DB session and rollback after tests."""
+    yield async_db
+
+
+@pytest.fixture(scope="session")
+def db_engine() -> Generator[Engine, None, None]:
+    """Create DB tables before tests and drop them after tests."""
+    from app.model.db.base import Base
+
+    if engine.name != "mysql":
+        # NOTE:MySQLの場合はSEQ機能が利用できない
+        Notification.notification_id_seq.create(bind=engine)
+
+    Base.metadata.create_all(engine)
+
+    yield engine
+
+    Base.metadata.drop_all(engine)
+
+
 @pytest.fixture(scope="function")
 def db(db_engine: Engine) -> Generator[Session, None, None]:
+    """Create DB session and remove records in tables after tests."""
     # Create DB session
     db = SessionLocal()
 
@@ -302,40 +350,18 @@ def db(db_engine: Engine) -> Generator[Session, None, None]:
     app.dependency_overrides[db_session] = db_session
 
 
-# ブロックナンバーの保存・復元
-@pytest.fixture(scope="function")
-def block_number(request: pytest.FixtureRequest) -> None:
-    evm_snapshot: RPCResponse = web3.provider.make_request(
-        RPCEndpoint("evm_snapshot"), []
-    )
-
-    def teardown():
-        result = evm_snapshot.get("result")
-        assert isinstance(result, str)
-        web3.provider.make_request(
-            RPCEndpoint("evm_revert"),
-            [
-                int(result, 16),
-            ],
-        )
-
-    request.addfinalizer(teardown)
-
-
-# セッションの作成・自動ロールバック
 @pytest.fixture(scope="function")
 def session(db: Session) -> Generator[Session, None, None]:
+    """Create DB session and rollback after tests."""
     yield db
 
 
-@pytest_asyncio.fixture(scope="function", loop_scope="session")
-async def async_session(async_db: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
-    yield async_db
-
-
-# 発行企業リストのモック
+######################################################################
+# Mock Fixture
+######################################################################
 @pytest.fixture(scope="function")
 def mocked_company_list(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
+    """Mock company list for tests."""
     company_list: list[dict[str, Any]] = json.load(open("data/company_list.json", "r"))
 
     mocked_company_list = [
@@ -369,8 +395,11 @@ def mocked_company_list(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
     return mocked_company_list
 
 
-# async test で使用するイベントループの固定化
+######################################################################
+# Pytest Hooks
+######################################################################
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Add session scope marker to async tests."""
     pytest_asyncio_tests = (item for item in items if is_async_test(item))
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
     for async_test in pytest_asyncio_tests:

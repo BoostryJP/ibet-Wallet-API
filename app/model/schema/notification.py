@@ -41,16 +41,16 @@ from app.model.type import EthereumAddress
 ############################
 class NotificationJSONDict(TypedDict):
     notification_category: Literal["event_log", "attribute_change"]
-    notification_type: str | None
+    notification_type: str
     id: str
-    priority: int | None
-    block_timestamp: str | None
-    is_read: bool | None
-    is_flagged: bool | None
-    is_deleted: bool | None
+    priority: int
+    block_timestamp: str
+    is_read: bool
+    is_flagged: bool
+    is_deleted: bool
     deleted_at: str | None
     args: object
-    metainfo: dict[str, Any] | None
+    metainfo: dict[str, Any]
     account_address: EthereumAddress | None
 
 
@@ -115,7 +115,7 @@ class Notification(BaseModel):
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
     metainfo: NotificationMetainfo | dict[str, Any]
-    account_address: EthereumAddress
+    account_address: EthereumAddress | None
     sort_id: int
     created: str = Field(description="datetime of create")
 
@@ -140,4 +140,4 @@ class NotificationUpdateResponse(BaseModel):
     deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
     metainfo: NotificationMetainfo | dict[str, Any]
-    account_address: EthereumAddress
+    account_address: EthereumAddress | None

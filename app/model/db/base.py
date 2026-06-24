@@ -45,15 +45,15 @@ def naive_utcnow():
 class Base(DeclarativeBase):
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
-        created: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(
             MySQLDATETIME(fsp=6), default=naive_utcnow
         )
-        modified: Mapped[datetime | None] = mapped_column(
+        modified: Mapped[datetime] = mapped_column(
             MySQLDATETIME(fsp=6), default=naive_utcnow, onupdate=naive_utcnow
         )
     else:
-        created: Mapped[datetime | None] = mapped_column(DateTime, default=naive_utcnow)
-        modified: Mapped[datetime | None] = mapped_column(
+        created: Mapped[datetime] = mapped_column(DateTime, default=naive_utcnow)
+        modified: Mapped[datetime] = mapped_column(
             DateTime, default=naive_utcnow, onupdate=naive_utcnow
         )
 

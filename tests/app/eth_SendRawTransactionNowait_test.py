@@ -70,6 +70,7 @@ def listing_token(session: Session, token_address: str) -> None:
     listing.is_public = True
     listing.max_holding_quantity = 1
     listing.max_sell_amount = 1000
+    listing.owner_address = "0x0000000000000000000000000000000000000000"
     session.add(listing)
 
 
@@ -712,7 +713,8 @@ class TestEthSendRawTransactionNoWait:
         pre_tx = coupontoken_1.functions.setStatus(False).build_transaction(
             _tx_params(to_checksum_address(issuer["account_address"]))
         )
-        web3.eth.send_transaction(pre_tx)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         local_account_1 = web3.eth.account.create()
 

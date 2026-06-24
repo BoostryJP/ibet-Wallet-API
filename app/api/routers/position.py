@@ -17,13 +17,23 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from decimal import Decimal
-from typing import TYPE_CHECKING, Annotated, Sequence, Type, Union, cast
+from typing import TYPE_CHECKING, Annotated, Any, Sequence, Type, Union
 
 from fastapi import APIRouter, Depends, Path, Query, Request
-from sqlalchemy import and_, func, literal, or_, select
+from sqlalchemy import (
+    BigInteger,
+    Integer,
+    Nullable,
+    String,
+    and_,
+    func,
+    literal,
+    or_,
+    select,
+    type_coerce,
+    union_all,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import ColumnElement
 from sqlalchemy.sql.functions import sum as sum_
 
 from app import config, log
@@ -70,8 +80,6 @@ from app.model.schema import (
     MembershipPositionWithDetail,
     PositionDataDict,
     PositionsResponseDict,
-    RetrieveCouponTokenResponse,
-    RetrieveMembershipTokenResponse,
     RetrieveShareTokenResponse,
     RetrieveStraightBondTokenResponse,
     SecurityTokenPositionWithAddress,
@@ -79,20 +87,14 @@ from app.model.schema import (
     TokenPositionsResponse,
 )
 from app.model.schema.base import (
-    BondToken as BondTokenSchema,
-    CouponToken as CouponTokenSchema,
     GenericSuccessResponse,
-    MembershipToken as MembershipTokenSchema,
     ResultSet,
-    ShareToken as ShareTokenSchema,
     Success200MetaModel,
     SuccessResponse,
     TokenType,
 )
 from app.model.schema.position import (
     CouponConsumption as CouponConsumptionSchema,
-    SharePositionWithDetail,
-    StraightBondPositionWithDetail,
 )
 from app.model.type import EthereumAddress
 from app.utils.asyncio_utils import SemaphoreTaskGroup
@@ -166,7 +168,7 @@ class BasePosition:
         stmt = (
             select(
                 Listing.token_address,
-                IDXPosition,
+                Nullable(IDXPosition),
                 func.sum(IDXLockedPosition.value),
                 self.idx_token_model,
             )
@@ -217,62 +219,58 @@ class BasePosition:
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-        _token_position_list = cast(
-            Sequence[tuple[str, IDXPosition | None, int | None, IDXTokenInstance]],
-            (await async_session.execute(stmt)).tuples().all(),
-        )
+        token_position_list = (await async_session.execute(stmt)).tuples().all()
 
         position_list: list[PositionDataDict] = []
-        for item in _token_position_list:
+        for _, position, locked, token in token_position_list:
             if include_token_details:
                 position_list.append(
                     {
-                        "balance": item[1].balance
-                        if item[1] and item[1].balance
+                        "balance": position.balance
+                        if position and position.balance
                         else 0,
                         "pending_transfer": (
-                            item[1].pending_transfer
-                            if item[1] and item[1].pending_transfer
+                            position.pending_transfer
+                            if position and position.pending_transfer
                             else 0
                         ),
                         "exchange_balance": (
-                            item[1].exchange_balance
-                            if item[1] and item[1].exchange_balance
+                            position.exchange_balance
+                            if position and position.exchange_balance
                             else 0
                         ),
                         "exchange_commitment": (
-                            item[1].exchange_commitment
-                            if item[1] and item[1].exchange_commitment
+                            position.exchange_commitment
+                            if position and position.exchange_commitment
                             else 0
                         ),
-                        "locked": item[2] if item[2] else 0,
-                        "token": self.token_model.from_model(item[3]).to_dict(),
+                        "locked": locked if locked else 0,
+                        "token": self.token_model.from_model(token).to_dict(),
                     }
                 )
             else:
                 position_list.append(
                     {
-                        "balance": item[1].balance
-                        if item[1] and item[1].balance
+                        "balance": position.balance
+                        if position and position.balance
                         else 0,
                         "pending_transfer": (
-                            item[1].pending_transfer
-                            if item[1] and item[1].pending_transfer
+                            position.pending_transfer
+                            if position and position.pending_transfer
                             else 0
                         ),
                         "exchange_balance": (
-                            item[1].exchange_balance
-                            if item[1] and item[1].exchange_balance
+                            position.exchange_balance
+                            if position and position.exchange_balance
                             else 0
                         ),
                         "exchange_commitment": (
-                            item[1].exchange_commitment
-                            if item[1] and item[1].exchange_commitment
+                            position.exchange_commitment
+                            if position and position.exchange_commitment
                             else 0
                         ),
-                        "locked": item[2] if item[2] else 0,
-                        "token_address": item[3].token_address,
+                        "locked": locked if locked else 0,
+                        "token_address": token.token_address,
                     }
                 )
         return {
@@ -387,7 +385,7 @@ class BasePosition:
         stmt = (
             select(
                 Listing.token_address,
-                IDXPosition,
+                Nullable(IDXPosition),
                 func.sum(IDXLockedPosition.value),
                 self.idx_token_model,
             )
@@ -428,15 +426,10 @@ class BasePosition:
             )
             .limit(1)
         )
-        result = cast(
-            tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None,
-            (await async_session.execute(stmt)).tuples().first(),
-        )
+        result = (await async_session.execute(stmt)).tuples().first()
         if result is None:
             raise DataNotExistsError(description="contract_address: %s" % token_address)
-        _position = result[1]
-        _locked = result[2]
-        token = result[3]
+        _, _position, _locked, token = result
 
         return {
             "balance": _position.balance if _position and _position.balance else 0,
@@ -850,10 +843,8 @@ class BasePositionMembership(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-        _token_position_list = cast(
-            Sequence[tuple[str, IDXPosition, IDXTokenInstance]],
-            (await async_session.execute(stmt)).tuples().all(),
+        _token_position_list: Sequence[tuple[str, IDXPosition, IDXTokenInstance]] = (
+            (await async_session.execute(stmt)).tuples().all()
         )
 
         position_list: list[PositionDataDict] = []
@@ -940,7 +931,7 @@ class BasePositionCoupon(BasePosition):
         stmt = (
             select(
                 Listing.token_address,
-                IDXPosition,
+                Nullable(IDXPosition),
                 self.idx_token_model,
                 sub_tx_used.c.used,
             )
@@ -993,52 +984,48 @@ class BasePositionCoupon(BasePosition):
         if offset is not None:
             stmt = stmt.offset(offset)
 
-        # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-        _token_position_list = cast(
-            Sequence[tuple[str, IDXPosition | None, IDXTokenInstance, Decimal | None]],
-            (await async_session.execute(stmt)).tuples().all(),
-        )
+        token_position_list = (await async_session.execute(stmt)).tuples().all()
 
         position_list: list[PositionDataDict] = []
-        for item in _token_position_list:
+        for _, position, token, used in token_position_list:
             if include_token_details:
                 position_list.append(
                     {
-                        "balance": item[1].balance
-                        if item[1] and item[1].balance
+                        "balance": position.balance
+                        if position and position.balance
                         else 0,
                         "exchange_balance": (
-                            item[1].exchange_balance
-                            if item[1] and item[1].exchange_balance
+                            position.exchange_balance
+                            if position and position.exchange_balance
                             else 0
                         ),
                         "exchange_commitment": (
-                            item[1].exchange_commitment
-                            if item[1] and item[1].exchange_commitment
+                            position.exchange_commitment
+                            if position and position.exchange_commitment
                             else 0
                         ),
-                        "used": int(item[3]) if item[3] else 0,
-                        "token": self.token_model.from_model(item[2]).to_dict(),
+                        "used": int(used) if used else 0,
+                        "token": self.token_model.from_model(token).to_dict(),
                     }
                 )
             else:
                 position_list.append(
                     {
-                        "balance": item[1].balance
-                        if item[1] and item[1].balance
+                        "balance": position.balance
+                        if position and position.balance
                         else 0,
                         "exchange_balance": (
-                            item[1].exchange_balance
-                            if item[1] and item[1].exchange_balance
+                            position.exchange_balance
+                            if position and position.exchange_balance
                             else 0
                         ),
                         "exchange_commitment": (
-                            item[1].exchange_commitment
-                            if item[1] and item[1].exchange_commitment
+                            position.exchange_commitment
+                            if position and position.exchange_commitment
                             else 0
                         ),
-                        "used": int(item[3]) if item[3] else 0,
-                        "token_address": item[2].token_address,
+                        "used": int(used) if used else 0,
+                        "token_address": token.token_address,
                     }
                 )
         return {
@@ -1600,8 +1587,6 @@ async def list_all_coupon_consumptions(
 
     res_data: list[dict[str, object]] = []
     for consumption in consumptions:
-        # TODO: Migrate consumption.block_timestamp to NOT NULL and update ORM typing.
-        assert consumption.block_timestamp is not None
         res_data.append(
             {
                 "account_address": account_address,
@@ -1619,10 +1604,6 @@ async def list_all_coupon_consumptions(
     if TYPE_CHECKING:
         type_checked_consumptions: list[CouponConsumptionSchema] = []
         for consumption in consumptions:
-            # TODO: Migrate consumption.block_timestamp to NOT NULL and update ORM typing.
-            assert consumption.block_timestamp is not None
-            # TODO: Migrate consumption.amount to NOT NULL and update ORM typing.
-            assert consumption.amount is not None
             block_timestamp = "{}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(
                 consumption.block_timestamp.year,
                 consumption.block_timestamp.month,
@@ -1687,215 +1668,398 @@ async def list_all_token_position(
     ):
         include_membership_token = True
 
-    bond_token_column = (
-        IDXBondToken if include_bond_token else literal(None).label("bond_token")
+    locked_position_subquery = (
+        select(
+            IDXLockedPosition.token_address.label("token_address"),
+            func.sum(IDXLockedPosition.value).label("locked"),
+        )
+        .where(IDXLockedPosition.account_address == account_address)
+        .group_by(IDXLockedPosition.token_address)
+        .subquery("sub_locked_position")
     )
-    share_token_column = (
-        IDXShareToken if include_share_token else literal(None).label("share_token")
+    coupon_consumption_subquery = (
+        select(
+            IDXConsumeCoupon.token_address.label("token_address"),
+            sum_(IDXConsumeCoupon.amount).label("used"),
+        )
+        .where(IDXConsumeCoupon.account_address == account_address)
+        .group_by(IDXConsumeCoupon.token_address)
+        .subquery("sub_coupon_consumption")
     )
-    coupon_token_column = (
-        IDXCouponToken if include_coupon_token else literal(None).label("coupon_token")
-    )
-    membership_token_column = (
-        IDXMembershipToken
-        if include_membership_token
-        else literal(None).label("membership_token")
-    )
-    query_target = (
-        Listing.token_address,
-        IDXTokenListRegister.token_template,
-        IDXPosition,
-        func.sum(IDXLockedPosition.value),
-        func.sum(IDXConsumeCoupon.amount),
-        bond_token_column,
-        share_token_column,
-        coupon_token_column,
-        membership_token_column,
-    )
-    group_by_columns = [
-        Listing.id,
-        IDXTokenListRegister.token_address,
-        IDXPosition.token_address,
-        IDXPosition.account_address,
-        IDXLockedPosition.token_address,
-        IDXConsumeCoupon.token_address,
-    ]
-    token_type_filter: list[ColumnElement[bool]] = []
+
+    position_selects: list[Any] = []
 
     if include_bond_token:
-        group_by_columns.append(IDXBondToken.token_address)
-        token_type_filter.append(
-            IDXTokenListRegister.token_template == TokenType.IbetStraightBond.value
-        )
-    if include_share_token:
-        group_by_columns.append(IDXShareToken.token_address)
-        token_type_filter.append(
-            IDXTokenListRegister.token_template == TokenType.IbetShare.value
-        )
-    if include_coupon_token:
-        group_by_columns.append(IDXCouponToken.token_address)
-        token_type_filter.append(
-            IDXTokenListRegister.token_template == TokenType.IbetCoupon.value
-        )
-    if include_membership_token:
-        group_by_columns.append(IDXMembershipToken.token_address)
-        token_type_filter.append(
-            IDXTokenListRegister.token_template == TokenType.IbetMembership.value
-        )
-
-    stmt = (
-        select(*query_target)
-        .join(
-            IDXTokenListRegister,
-            and_(
-                IDXTokenListRegister.token_address == Listing.token_address,
-                or_(*token_type_filter),
-            ),
-        )
-        .outerjoin(
-            IDXPosition,
-            and_(
-                IDXPosition.token_address == Listing.token_address,
-                IDXPosition.account_address == account_address,
-            ),
-        )
-        .outerjoin(
-            IDXLockedPosition,
-            and_(
-                Listing.token_address == IDXLockedPosition.token_address,
-                IDXLockedPosition.account_address == account_address,
-            ),
-        )
-        .outerjoin(
-            IDXConsumeCoupon,
-            and_(
-                Listing.token_address == IDXConsumeCoupon.token_address,
-                IDXConsumeCoupon.account_address == account_address,
-            ),
-        )
-    )
-
-    if include_bond_token:
-        stmt = stmt.outerjoin(
-            IDXBondToken,
-            Listing.token_address == IDXBondToken.token_address,
-        )
-
-    if include_share_token:
-        stmt = stmt.outerjoin(
-            IDXShareToken,
-            Listing.token_address == IDXShareToken.token_address,
-        )
-
-    if include_coupon_token:
-        stmt = stmt.outerjoin(
-            IDXCouponToken,
-            Listing.token_address == IDXCouponToken.token_address,
-        )
-
-    if include_membership_token:
-        stmt = stmt.outerjoin(
-            IDXMembershipToken,
-            Listing.token_address == IDXMembershipToken.token_address,
-        )
-
-    stmt = (
-        stmt.where(
-            or_(
-                IDXPosition.balance != 0,
-                IDXPosition.pending_transfer != 0,
-                IDXPosition.exchange_balance != 0,
-                IDXPosition.exchange_commitment != 0,
-                IDXLockedPosition.value != 0,
-                IDXConsumeCoupon.amount != 0,
+        position_selects.append(
+            select(
+                Listing.id.label("listing_id"),
+                Listing.token_address.label("token_address"),
+                literal(TokenType.IbetStraightBond.value).label("token_type"),
+                func.coalesce(IDXPosition.balance, 0).label("balance"),
+                func.coalesce(IDXPosition.pending_transfer, 0).label(
+                    "pending_transfer"
+                ),
+                func.coalesce(IDXPosition.exchange_balance, 0).label(
+                    "exchange_balance"
+                ),
+                func.coalesce(IDXPosition.exchange_commitment, 0).label(
+                    "exchange_commitment"
+                ),
+                func.coalesce(locked_position_subquery.c.locked, 0).label("locked"),
+                literal(0).label("used"),
+            )
+            .join(
+                IDXTokenListRegister,
+                and_(
+                    IDXTokenListRegister.token_address == Listing.token_address,
+                    IDXTokenListRegister.token_template
+                    == TokenType.IbetStraightBond.value,
+                ),
+            )
+            .join(
+                IDXBondToken,
+                Listing.token_address == IDXBondToken.token_address,
+            )
+            .outerjoin(
+                IDXPosition,
+                and_(
+                    IDXPosition.token_address == Listing.token_address,
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .outerjoin(
+                locked_position_subquery,
+                Listing.token_address == locked_position_subquery.c.token_address,
+            )
+            .where(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.pending_transfer != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                    locked_position_subquery.c.locked != 0,
+                )
             )
         )
-        .group_by(*group_by_columns)
-        .order_by(Listing.id)
-    )
-
-    total = await async_session.scalar(
-        select(func.count()).select_from(
-            stmt.with_only_columns(1).order_by(None).subquery()
+    if include_share_token:
+        position_selects.append(
+            select(
+                Listing.id.label("listing_id"),
+                Listing.token_address.label("token_address"),
+                literal(TokenType.IbetShare.value).label("token_type"),
+                func.coalesce(IDXPosition.balance, 0).label("balance"),
+                func.coalesce(IDXPosition.pending_transfer, 0).label(
+                    "pending_transfer"
+                ),
+                func.coalesce(IDXPosition.exchange_balance, 0).label(
+                    "exchange_balance"
+                ),
+                func.coalesce(IDXPosition.exchange_commitment, 0).label(
+                    "exchange_commitment"
+                ),
+                func.coalesce(locked_position_subquery.c.locked, 0).label("locked"),
+                literal(0).label("used"),
+            )
+            .join(
+                IDXTokenListRegister,
+                and_(
+                    IDXTokenListRegister.token_address == Listing.token_address,
+                    IDXTokenListRegister.token_template == TokenType.IbetShare.value,
+                ),
+            )
+            .join(
+                IDXShareToken,
+                Listing.token_address == IDXShareToken.token_address,
+            )
+            .outerjoin(
+                IDXPosition,
+                and_(
+                    IDXPosition.token_address == Listing.token_address,
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .outerjoin(
+                locked_position_subquery,
+                Listing.token_address == locked_position_subquery.c.token_address,
+            )
+            .where(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.pending_transfer != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                    locked_position_subquery.c.locked != 0,
+                )
+            )
         )
-    )
+    if include_coupon_token:
+        position_selects.append(
+            select(
+                Listing.id.label("listing_id"),
+                Listing.token_address.label("token_address"),
+                literal(TokenType.IbetCoupon.value).label("token_type"),
+                func.coalesce(IDXPosition.balance, 0).label("balance"),
+                func.coalesce(IDXPosition.pending_transfer, 0).label(
+                    "pending_transfer"
+                ),
+                func.coalesce(IDXPosition.exchange_balance, 0).label(
+                    "exchange_balance"
+                ),
+                func.coalesce(IDXPosition.exchange_commitment, 0).label(
+                    "exchange_commitment"
+                ),
+                literal(0).label("locked"),
+                func.coalesce(coupon_consumption_subquery.c.used, 0).label("used"),
+            )
+            .join(
+                IDXTokenListRegister,
+                and_(
+                    IDXTokenListRegister.token_address == Listing.token_address,
+                    IDXTokenListRegister.token_template == TokenType.IbetCoupon.value,
+                ),
+            )
+            .join(
+                IDXCouponToken,
+                Listing.token_address == IDXCouponToken.token_address,
+            )
+            .outerjoin(
+                IDXPosition,
+                and_(
+                    IDXPosition.token_address == Listing.token_address,
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .outerjoin(
+                coupon_consumption_subquery,
+                Listing.token_address == coupon_consumption_subquery.c.token_address,
+            )
+            .where(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.pending_transfer != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                    coupon_consumption_subquery.c.used != 0,
+                )
+            )
+        )
+    if include_membership_token:
+        position_selects.append(
+            select(
+                Listing.id.label("listing_id"),
+                Listing.token_address.label("token_address"),
+                literal(TokenType.IbetMembership.value).label("token_type"),
+                func.coalesce(IDXPosition.balance, 0).label("balance"),
+                func.coalesce(IDXPosition.pending_transfer, 0).label(
+                    "pending_transfer"
+                ),
+                func.coalesce(IDXPosition.exchange_balance, 0).label(
+                    "exchange_balance"
+                ),
+                func.coalesce(IDXPosition.exchange_commitment, 0).label(
+                    "exchange_commitment"
+                ),
+                literal(0).label("locked"),
+                literal(0).label("used"),
+            )
+            .join(
+                IDXTokenListRegister,
+                and_(
+                    IDXTokenListRegister.token_address == Listing.token_address,
+                    IDXTokenListRegister.token_template
+                    == TokenType.IbetMembership.value,
+                ),
+            )
+            .join(
+                IDXMembershipToken,
+                Listing.token_address == IDXMembershipToken.token_address,
+            )
+            .outerjoin(
+                IDXPosition,
+                and_(
+                    IDXPosition.token_address == Listing.token_address,
+                    IDXPosition.account_address == account_address,
+                ),
+            )
+            .where(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.pending_transfer != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                )
+            )
+        )
+    if len(position_selects) == 0:
+        data: PositionsResponseDict = {
+            "result_set": {
+                "count": 0,
+                "offset": offset,
+                "limit": limit,
+                "total": 0,
+            },
+            "positions": [],
+        }
+        return json_response({**SuccessResponse.default(), "data": data})
 
+    position_union = union_all(*position_selects).subquery("position_union")
+    total = await async_session.scalar(select(func.count()).select_from(position_union))
     count = total
 
+    listing_id_column = type_coerce(position_union.c.listing_id, Integer).label(
+        "listing_id"
+    )
+    stmt = select(
+        listing_id_column,
+        type_coerce(position_union.c.token_address, String).label("token_address"),
+        type_coerce(position_union.c.token_type, String).label("token_type"),
+        type_coerce(position_union.c.balance, BigInteger).label("balance"),
+        type_coerce(position_union.c.pending_transfer, BigInteger).label(
+            "pending_transfer"
+        ),
+        type_coerce(position_union.c.exchange_balance, BigInteger).label(
+            "exchange_balance"
+        ),
+        type_coerce(position_union.c.exchange_commitment, BigInteger).label(
+            "exchange_commitment"
+        ),
+        type_coerce(position_union.c.locked, BigInteger).label("locked"),
+        type_coerce(position_union.c.used, BigInteger).label("used"),
+    ).order_by(listing_id_column)
     if limit is not None:
         stmt = stmt.limit(limit)
     if offset is not None:
         stmt = stmt.offset(offset)
 
-    # TODO: Migrate listing.token_address to NOT NULL and update ORM typing.
-    _token_position_list = cast(
-        Sequence[
-            tuple[
-                str,
-                str | None,
-                IDXPosition | None,
-                int | None,
-                int | None,
-                IDXBondToken | None,
-                IDXShareToken | None,
-                IDXCouponToken | None,
-                IDXMembershipToken | None,
-            ]
-        ],
-        (await async_session.execute(stmt)).tuples().all(),
-    )
+    position_rows = (await async_session.execute(stmt)).tuples().all()
 
-    position_list: list[PositionDataDict] = []
-    for item in _token_position_list:
-        if item[1] == TokenType.IbetStraightBond.value:
-            # TODO: Add SQL-side guarantees to remove this assert.
-            assert item[5] is not None
-            bond_position = IDXPosition.bond(item[2])
-            position: PositionDataDict = {
-                "balance": bond_position["balance"],
-                "pending_transfer": bond_position["pending_transfer"],
-                "exchange_balance": bond_position["exchange_balance"],
-                "exchange_commitment": bond_position["exchange_commitment"],
-                "locked": item[3] if item[3] else 0,
-                "token": BondToken.from_model(item[5]).to_dict(),
-            }
-            position_list.append(position)
-        elif item[1] == TokenType.IbetShare.value:
-            # TODO: Add SQL-side guarantees to remove this assert.
-            assert item[6] is not None
-            share_position = IDXPosition.share(item[2])
-            position = {
-                "balance": share_position["balance"],
-                "pending_transfer": share_position["pending_transfer"],
-                "exchange_balance": share_position["exchange_balance"],
-                "exchange_commitment": share_position["exchange_commitment"],
-                "locked": item[3] if item[3] else 0,
-                "token": ShareToken.from_model(item[6]).to_dict(),
-            }
-            position_list.append(position)
-        elif item[1] == TokenType.IbetCoupon.value:
-            # TODO: Add SQL-side guarantees to remove this assert.
-            assert item[7] is not None
-            coupon_position = IDXPosition.coupon(item[2])
-            position = {
-                "balance": coupon_position["balance"],
-                "exchange_balance": coupon_position["exchange_balance"],
-                "exchange_commitment": coupon_position["exchange_commitment"],
-                "used": int(item[4]) if item[4] else 0,
-                "token": CouponToken.from_model(item[7]).to_dict(),
-            }
-            position_list.append(position)
-        elif item[1] == TokenType.IbetMembership.value:
-            # TODO: Add SQL-side guarantees to remove this assert.
-            assert item[8] is not None
-            membership_position = IDXPosition.membership(item[2])
-            position = {
-                "balance": membership_position["balance"],
-                "exchange_balance": membership_position["exchange_balance"],
-                "exchange_commitment": membership_position["exchange_commitment"],
-                "token": MembershipToken.from_model(item[8]).to_dict(),
-            }
-            position_list.append(position)
+    bond_addresses = [
+        token_address
+        for _, token_address, token_type, *_ in position_rows
+        if token_type == TokenType.IbetStraightBond.value
+    ]
+    share_addresses = [
+        token_address
+        for _, token_address, token_type, *_ in position_rows
+        if token_type == TokenType.IbetShare.value
+    ]
+    coupon_addresses = [
+        token_address
+        for _, token_address, token_type, *_ in position_rows
+        if token_type == TokenType.IbetCoupon.value
+    ]
+    membership_addresses = [
+        token_address
+        for _, token_address, token_type, *_ in position_rows
+        if token_type == TokenType.IbetMembership.value
+    ]
+
+    bond_token_map = {}
+    if len(bond_addresses) > 0:
+        bond_token_map = {
+            token.token_address: token
+            for token in (
+                await async_session.scalars(
+                    select(IDXBondToken).where(
+                        IDXBondToken.token_address.in_(bond_addresses)
+                    )
+                )
+            ).all()
+        }
+    share_token_map = {}
+    if len(share_addresses) > 0:
+        share_token_map = {
+            token.token_address: token
+            for token in (
+                await async_session.scalars(
+                    select(IDXShareToken).where(
+                        IDXShareToken.token_address.in_(share_addresses)
+                    )
+                )
+            ).all()
+        }
+    coupon_token_map = {}
+    if len(coupon_addresses) > 0:
+        coupon_token_map = {
+            token.token_address: token
+            for token in (
+                await async_session.scalars(
+                    select(IDXCouponToken).where(
+                        IDXCouponToken.token_address.in_(coupon_addresses)
+                    )
+                )
+            ).all()
+        }
+    membership_token_map = {}
+    if len(membership_addresses) > 0:
+        membership_token_map = {
+            token.token_address: token
+            for token in (
+                await async_session.scalars(
+                    select(IDXMembershipToken).where(
+                        IDXMembershipToken.token_address.in_(membership_addresses)
+                    )
+                )
+            ).all()
+        }
+
+    positions: list[PositionDataDict] = []
+    for (
+        _,
+        token_address,
+        token_type,
+        balance,
+        pending_transfer,
+        exchange_balance,
+        exchange_commitment,
+        locked,
+        used,
+    ) in position_rows:
+        if token_type == TokenType.IbetStraightBond.value:
+            token = bond_token_map[token_address]
+            positions.append(
+                {
+                    "balance": balance,
+                    "pending_transfer": pending_transfer,
+                    "exchange_balance": exchange_balance,
+                    "exchange_commitment": exchange_commitment,
+                    "locked": locked,
+                    "token": BondToken.from_model(token).to_dict(),
+                }
+            )
+        elif token_type == TokenType.IbetShare.value:
+            token = share_token_map[token_address]
+            positions.append(
+                {
+                    "balance": balance,
+                    "pending_transfer": pending_transfer,
+                    "exchange_balance": exchange_balance,
+                    "exchange_commitment": exchange_commitment,
+                    "locked": locked,
+                    "token": ShareToken.from_model(token).to_dict(),
+                }
+            )
+        elif token_type == TokenType.IbetCoupon.value:
+            token = coupon_token_map[token_address]
+            positions.append(
+                {
+                    "balance": balance,
+                    "exchange_balance": exchange_balance,
+                    "exchange_commitment": exchange_commitment,
+                    "used": int(used),
+                    "token": CouponToken.from_model(token).to_dict(),
+                }
+            )
+        else:
+            token = membership_token_map[token_address]
+            positions.append(
+                {
+                    "balance": balance,
+                    "exchange_balance": exchange_balance,
+                    "exchange_commitment": exchange_commitment,
+                    "token": MembershipToken.from_model(token).to_dict(),
+                }
+            )
 
     data: PositionsResponseDict = {
         "result_set": {
@@ -1904,90 +2068,6 @@ async def list_all_token_position(
             "limit": limit,
             "total": total,
         },
-        "positions": position_list,
+        "positions": positions,
     }
-    if TYPE_CHECKING:
-        type_checked_positions: list[
-            StraightBondPositionWithDetail
-            | SharePositionWithDetail
-            | CouponPositionWithDetail
-            | MembershipPositionWithDetail
-        ] = []
-        for item in _token_position_list:
-            if item[1] == TokenType.IbetStraightBond.value:
-                assert item[5] is not None
-                bond_position = IDXPosition.bond(item[2])
-                bond_token = BondToken.from_model(item[5])
-                type_checked_positions.append(
-                    StraightBondPositionWithDetail(
-                        balance=bond_position["balance"],
-                        pending_transfer=bond_position["pending_transfer"],
-                        exchange_balance=bond_position["exchange_balance"],
-                        exchange_commitment=bond_position["exchange_commitment"],
-                        locked=item[3] if item[3] else 0,
-                        token=RetrieveStraightBondTokenResponse(
-                            root=BondTokenSchema.from_blockchain_token(bond_token)
-                        ),
-                    )
-                )
-            elif item[1] == TokenType.IbetShare.value:
-                assert item[6] is not None
-                share_position = IDXPosition.share(item[2])
-                share_token = ShareToken.from_model(item[6])
-                type_checked_positions.append(
-                    SharePositionWithDetail(
-                        balance=share_position["balance"],
-                        pending_transfer=share_position["pending_transfer"],
-                        exchange_balance=share_position["exchange_balance"],
-                        exchange_commitment=share_position["exchange_commitment"],
-                        locked=item[3] if item[3] else 0,
-                        token=RetrieveShareTokenResponse(
-                            root=ShareTokenSchema.from_blockchain_token(share_token)
-                        ),
-                    )
-                )
-            elif item[1] == TokenType.IbetCoupon.value:
-                assert item[7] is not None
-                coupon_position = IDXPosition.coupon(item[2])
-                coupon_token = CouponToken.from_model(item[7])
-                type_checked_positions.append(
-                    CouponPositionWithDetail(
-                        balance=coupon_position["balance"],
-                        exchange_balance=coupon_position["exchange_balance"],
-                        exchange_commitment=coupon_position["exchange_commitment"],
-                        used=int(item[4]) if item[4] else 0,
-                        token=RetrieveCouponTokenResponse(
-                            root=CouponTokenSchema.from_blockchain_token(coupon_token)
-                        ),
-                    )
-                )
-            elif item[1] == TokenType.IbetMembership.value:
-                assert item[8] is not None
-                membership_position = IDXPosition.membership(item[2])
-                membership_token = MembershipToken.from_model(item[8])
-                type_checked_positions.append(
-                    MembershipPositionWithDetail(
-                        balance=membership_position["balance"],
-                        exchange_balance=membership_position["exchange_balance"],
-                        exchange_commitment=membership_position["exchange_commitment"],
-                        token=RetrieveMembershipTokenResponse(
-                            root=MembershipTokenSchema.from_blockchain_token(
-                                membership_token
-                            )
-                        ),
-                    )
-                )
-        result_set = data["result_set"]
-        _ = GenericSuccessResponse[TokenPositionsResponse](
-            meta=Success200MetaModel(code=200, message="OK"),
-            data=TokenPositionsResponse(
-                result_set=ResultSet(
-                    count=result_set["count"],
-                    offset=result_set["offset"],
-                    limit=result_set["limit"],
-                    total=result_set["total"],
-                ),
-                positions=type_checked_positions,
-            ),
-        )
     return json_response({**SuccessResponse.default(), "data": data})
