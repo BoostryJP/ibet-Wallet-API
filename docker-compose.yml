@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17.10@sha256:0027bef26712baaee437a4ea48fdf3d2d2e2bc5f0d81615374408ca320f3c7e3
+    image: postgres:17.10@sha256:5c855ad7b85e68e48a62f34662853f38b57c1c1d80f3a927ab58034fd6d31c5e
     ports:
       - "5432:5432"
     environment:
@@ -10,7 +10,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
   mysql:
-    image: mysql:8.4.9@sha256:c36050afdca850f23cef85703f84c7531a5ae155a11b5ee1c60acb09937c4084
+    image: mysql:8.4.10@sha256:d36d39a64cd12a5c1cc9e6aa2bfb5f8d4c81a2f6586e0a04a9ae13939db02209
     environment:
       - MYSQL_USER=apluser
       - MYSQL_PASSWORD=apluserpass
