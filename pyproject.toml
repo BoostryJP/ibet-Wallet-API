@@ -4,7 +4,7 @@ version = "26.6"
 description = "RPC services that provides utility functions for building a wallet system on ibet-Network."
 authors = [{ name = "BOOSTRY Co., Ltd.", email = "dev@boostry.co.jp" }]
 license = { text = "Apache License, Version 2.0" }
-requires-python = "==3.14.2"
+requires-python = "==3.14.6"
 dependencies = [
     "boto3~=1.42.18",
     "eth-keyfile==0.8.1",
