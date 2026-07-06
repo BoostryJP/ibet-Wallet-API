@@ -36,11 +36,14 @@ RUN apt-get update -q \
 # install uv
 COPY --from=uv /uv /uvx /usr/local/bin/
 
+# prepare Python install scope
+ENV UV_PYTHON_INSTALL_DIR="/home/apl/.local/share/uv/python"
+USER apl
+
 # install Python
 RUN uv python install $PYTHON_VERSION
 
 # prepare venv
-USER apl
 RUN mkdir /home/apl/.venv
 
 # setup shell setting
