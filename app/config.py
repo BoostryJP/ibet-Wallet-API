@@ -314,10 +314,3 @@ CHAT_WEBHOOK_URL = os.environ.get("CHAT_WEBHOOK_URL")
 # O11y Settings
 ######################################################
 PYROSCOPE_SERVER_URL = os.environ.get("PYROSCOPE_SERVER_URL")
-
-####################################################
-# Other settings
-####################################################
-# Load test
-BASIC_AUTH_USER = os.environ.get("BASIC_AUTH_USER")
-BASIC_AUTH_PASS = os.environ.get("BASIC_AUTH_PASS")
