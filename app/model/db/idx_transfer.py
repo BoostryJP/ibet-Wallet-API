@@ -23,7 +23,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
-from sqlalchemy import JSON, BigInteger, String
+from sqlalchemy import JSON, BigInteger, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config import TZ
@@ -55,6 +55,30 @@ class IDXTransfer(Base):
     """Token Transfer Events (INDEX)"""
 
     __tablename__ = "transfer"
+    __table_args__ = (
+        Index("ix_transfer_token_address_id", "token_address", "id"),
+        Index("ix_transfer_transaction_hash_id", "transaction_hash", "id"),
+        Index("ix_transfer_from_address_id", "from_address", "id"),
+        Index("ix_transfer_to_address_id", "to_address", "id"),
+        Index(
+            "ix_transfer_token_address_transaction_hash_id",
+            "token_address",
+            "transaction_hash",
+            "id",
+        ),
+        Index(
+            "ix_transfer_token_address_from_address_id",
+            "token_address",
+            "from_address",
+            "id",
+        ),
+        Index(
+            "ix_transfer_token_address_to_address_id",
+            "token_address",
+            "to_address",
+            "id",
+        ),
+    )
 
     # Sequence Id
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)

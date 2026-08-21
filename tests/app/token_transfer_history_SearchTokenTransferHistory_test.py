@@ -797,9 +797,7 @@ class TestSearchTokenTransferHistory:
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.post(
-            apiurl, json={"transaction_hash": self.transaction_hash[0:5]}
-        )
+        resp = client.post(apiurl, json={"transaction_hash": self.transaction_hash})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -864,7 +862,7 @@ class TestSearchTokenTransferHistory:
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.post(apiurl, json={"from_address": self.from_address[0:5]})
+        resp = client.post(apiurl, json={"from_address": self.from_address})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -929,7 +927,7 @@ class TestSearchTokenTransferHistory:
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.post(apiurl, json={"to_address": self.to_address[0:5]})
+        resp = client.post(apiurl, json={"to_address": self.to_address})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

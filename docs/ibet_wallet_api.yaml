@@ -2914,9 +2914,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: transaction hash
+            description: transaction hash (exact match)
             title: Transaction Hash
-          description: transaction hash
+          description: transaction hash (exact match)
         - name: from_address
           in: query
           required: false
@@ -2924,9 +2924,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: from address
+            description: from address (exact match)
             title: From Address
-          description: from address
+          description: from address (exact match)
         - name: to_address
           in: query
           required: false
@@ -2934,9 +2934,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: to address
+            description: to address (exact match)
             title: To Address
-          description: to address
+          description: to address (exact match)
         - name: value
           in: query
           required: false
@@ -3079,9 +3079,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: transaction hash
+            description: transaction hash (exact match)
             title: Transaction Hash
-          description: transaction hash
+          description: transaction hash (exact match)
         - name: from_address
           in: query
           required: false
@@ -3089,9 +3089,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: from address
+            description: from address (exact match)
             title: From Address
-          description: from address
+          description: from address (exact match)
         - name: to_address
           in: query
           required: false
@@ -3099,9 +3099,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: to address
+            description: to address (exact match)
             title: To Address
-          description: to address
+          description: to address (exact match)
         - name: value
           in: query
           required: false
@@ -8889,19 +8889,19 @@ components:
             - type: string
             - type: 'null'
           title: Transaction Hash
-          description: transaction hash
+          description: transaction hash (exact match)
         from_address:
           anyOf:
             - type: string
             - type: 'null'
           title: From Address
-          description: from address
+          description: from address (exact match)
         to_address:
           anyOf:
             - type: string
             - type: 'null'
           title: To Address
-          description: to address
+          description: to address (exact match)
         created_from:
           anyOf:
             - type: string
