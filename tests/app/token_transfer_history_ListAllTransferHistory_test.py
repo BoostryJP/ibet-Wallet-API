@@ -809,7 +809,7 @@ class TestAllTokenTransferHistory:
 
         # Call the target API
         resp = client.get(
-            self.apiurl, params={"transaction_hash": self.transaction_hash[0:5]}
+            self.apiurl, params={"transaction_hash": self.transaction_hash}
         )
 
         # Assertion
@@ -875,9 +875,7 @@ class TestAllTokenTransferHistory:
         session.commit()
 
         # Call the target API
-        resp = client.get(
-            self.apiurl, params={"from_address": self.account_address_1[0:5]}
-        )
+        resp = client.get(self.apiurl, params={"from_address": self.account_address_1})
 
         # Assertion
         assert resp.status_code == 200
@@ -942,9 +940,7 @@ class TestAllTokenTransferHistory:
         session.commit()
 
         # Call the target API
-        resp = client.get(
-            self.apiurl, params={"to_address": self.account_address_2[0:5]}
-        )
+        resp = client.get(self.apiurl, params={"to_address": self.account_address_2})
 
         # Assertion
         assert resp.status_code == 200
