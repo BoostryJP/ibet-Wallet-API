@@ -57,6 +57,7 @@ class IDXTransfer(Base):
     __tablename__ = "transfer"
     __table_args__ = (
         Index("ix_transfer_token_address_id", "token_address", "id"),
+        Index("ix_transfer_source_event_id", "source_event", "id"),
         Index("ix_transfer_transaction_hash_id", "transaction_hash", "id"),
         Index("ix_transfer_from_address_id", "from_address", "id"),
         Index("ix_transfer_to_address_id", "to_address", "id"),
@@ -64,6 +65,12 @@ class IDXTransfer(Base):
             "ix_transfer_token_address_transaction_hash_id",
             "token_address",
             "transaction_hash",
+            "id",
+        ),
+        Index(
+            "ix_transfer_token_address_source_event_id",
+            "token_address",
+            "source_event",
             "id",
         ),
         Index(
