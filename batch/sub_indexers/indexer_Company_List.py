@@ -22,16 +22,15 @@ import json
 
 import requests
 from pydantic import ValidationError
-from requests.adapters import HTTPAdapter
 from sqlalchemy import delete
 from sqlalchemy.engine.create import create_engine
 from sqlalchemy.orm.session import Session
-from urllib3 import Retry
 
 from app.config import COMPANY_LIST_URL, DATABASE_URL, REQUEST_TIMEOUT
 from app.model.db import Company
 from app.model.type import CompanyListItem
 from batch import log
+from batch.lib.http import get_retry_adapter
 from batch.log import BatchLoggerAdapter
 
 process_name = "SUB:COMPANY-LIST"
@@ -55,7 +54,7 @@ class Processor:
             return
         try:
             with requests.Session() as session:
-                adapter = HTTPAdapter(max_retries=Retry(3, allowed_methods=["GET"]))
+                adapter = get_retry_adapter()
                 session.mount("http://", adapter)
                 session.mount("https://", adapter)
                 _resp = session.get(
