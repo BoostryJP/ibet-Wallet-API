@@ -202,7 +202,7 @@ class TestSendEmail:
     # Normal_5
     # Resend selected failed emails
     def test_normal_5(self, client: TestClient, session: Session):
-        mail_list = []
+        mail_list: list[Mail] = []
         for i in range(2):
             mail = Mail()
             mail.to_email = f"failed{i}@example.com"
