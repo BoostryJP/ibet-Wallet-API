@@ -18,6 +18,7 @@ SPDX-License
 """
 
 import json
+from datetime import datetime
 from typing import TYPE_CHECKING, Annotated, Sequence
 
 from fastapi import APIRouter, Query
@@ -63,7 +64,11 @@ async def list_mails(
     """
     Returns email delivery metadata filtered by status.
     """
-    stmt = select(Mail).where(Mail.status == request_query.status).order_by(Mail.id)
+    stmt = (
+        select(Mail.id, Mail.status, Mail.created, Mail.modified)
+        .where(Mail.status == request_query.status)
+        .order_by(Mail.id)
+    )
     total = (
         await async_session.scalar(
             select(func.count())
@@ -78,15 +83,17 @@ async def list_mails(
     if request_query.limit is not None:
         stmt = stmt.limit(request_query.limit)
 
-    mail_list: Sequence[Mail] = (await async_session.scalars(stmt)).all()
+    mail_list: Sequence[tuple[int, MailStatus, datetime, datetime]] = (
+        (await async_session.execute(stmt)).tuples().all()
+    )
     mail_data = [
         MailData(
-            id=mail.id,
-            status=mail.status,
-            created=Mail.format_timestamp(mail.created),
-            modified=Mail.format_timestamp(mail.modified),
+            id=mail_id,
+            status=status,
+            created=Mail.format_timestamp(created),
+            modified=Mail.format_timestamp(modified),
         )
-        for mail in mail_list
+        for mail_id, status, created, modified in mail_list
     ]
     return GenericSuccessResponse[ListMailsResponse](
         meta=Success200MetaModel(code=200, message="OK"),
