@@ -223,6 +223,7 @@ class TestSendEmail:
         assert resp.status_code == 200
         assert resp.json() == {"meta": {"code": 200, "message": "OK"}, "data": {}}
 
+        session.expire_all()
         resent_mail_list = session.scalars(select(Mail).order_by(Mail.id)).all()
         assert [mail.status for mail in resent_mail_list] == [
             MailStatus.PENDING,
