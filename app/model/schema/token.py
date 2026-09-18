@@ -99,7 +99,9 @@ class ListAllTokenHoldersQuery(BasePaginationQuery):
         ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    locked: Optional[int] = Field(None, description="locked")
+    locked: Optional[int] = Field(
+        None, description="total locked amount for the account"
+    )
     locked_operator: Optional[ValueOperator] = Field(
         ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",

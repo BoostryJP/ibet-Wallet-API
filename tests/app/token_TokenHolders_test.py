@@ -658,7 +658,7 @@ class TestTokenTokenHolders:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # Normal_4_2
+    # Normal_4_2_1
     # Filter with equal filter
     @pytest.mark.parametrize(
         "query_filter",
@@ -670,7 +670,9 @@ class TestTokenTokenHolders:
             "locked",
         ],
     )
-    def test_normal_4_2(self, query_filter: str, client: TestClient, session: Session):
+    def test_normal_4_2_1(
+        self, query_filter: str, client: TestClient, session: Session
+    ):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -767,6 +769,64 @@ class TestTokenTokenHolders:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+    # Normal_4_2_2
+    # Test that the locked filter uses the account's total locked amount
+    def test_normal_4_2_2(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+        self.insert_position(
+            session,
+            {
+                "token_address": self.token_address,
+                "account_address": self.account_address_1,
+                "balance": 0,
+            },
+        )
+        self.insert_locked_position(
+            session,
+            {
+                "token_address": self.token_address,
+                "lock_address": self.lock_address_1,
+                "account_address": self.account_address_1,
+                "value": 10,
+            },
+        )
+        self.insert_locked_position(
+            session,
+            {
+                "token_address": self.token_address,
+                "lock_address": self.lock_address_2,
+                "account_address": self.account_address_1,
+                "value": 20,
+            },
+        )
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        partial_total_response = client.get(
+            apiurl, params={"locked": 20, "locked_operator": 0}
+        )
+        total_response = client.get(apiurl, params={"locked": 30, "locked_operator": 0})
+
+        assert partial_total_response.status_code == 200
+        assert partial_total_response.json()["data"]["result_set"] == {
+            "offset": None,
+            "limit": None,
+            "total": 1,
+            "count": 0,
+        }
+        assert partial_total_response.json()["data"]["token_holder_list"] == []
+        assert total_response.status_code == 200
+        assert total_response.json()["data"]["result_set"] == {
+            "offset": None,
+            "limit": None,
+            "total": 1,
+            "count": 1,
+        }
+        assert total_response.json()["data"]["token_holder_list"][0]["locked"] == 30
 
     # Normal_4_3
     # Filter with greater than equal filter
