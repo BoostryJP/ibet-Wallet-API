@@ -22,7 +22,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Annotated, Sequence
 
 from fastapi import APIRouter, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from app import log
 from app.database import DBAsyncSession
@@ -154,10 +154,16 @@ async def resend_mails(
     """
     Queues selected failed emails for delivery.
     """
-    mail_list: Sequence[Mail] = (
-        await async_session.scalars(select(Mail).where(Mail.id.in_(data.mail_ids)))
-    ).all()
-    mail_by_id = {mail.id: mail for mail in mail_list}
+    mail_list: Sequence[tuple[int, MailStatus]] = (
+        (
+            await async_session.execute(
+                select(Mail.id, Mail.status).where(Mail.id.in_(data.mail_ids))
+            )
+        )
+        .tuples()
+        .all()
+    )
+    mail_by_id = {mail_id: status for mail_id, status in mail_list}
     missing_mail_ids = [
         mail_id for mail_id in data.mail_ids if mail_id not in mail_by_id
     ]
@@ -165,13 +171,14 @@ async def resend_mails(
         raise DataNotExistsError(description=f"id: {missing_mail_ids[0]}")
 
     non_failed_mail_ids = [
-        mail.id for mail in mail_list if mail.status != MailStatus.FAILED
+        mail_id for mail_id, status in mail_list if status != MailStatus.FAILED
     ]
     if non_failed_mail_ids:
         raise InvalidParameterError(description="Only failed emails can be resent")
 
-    for mail in mail_list:
-        mail.status = MailStatus.PENDING
+    await async_session.execute(
+        update(Mail).where(Mail.id.in_(data.mail_ids)).values(status=MailStatus.PENDING)
+    )
     await async_session.commit()
 
     return SuccessResponse(
