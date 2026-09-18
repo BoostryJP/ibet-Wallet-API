@@ -27,7 +27,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.model.db import Mail
+from app.model.db import Mail, MailStatus
 from batch.processor_Send_Mail import LOG, Processor
 
 
@@ -187,7 +187,7 @@ class TestProcessorSendMail:
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, "Process end"))
 
     # Normal_5
-    # SMTPException -> skip
+    # SMTPException -> retain as failed
     def test_normal_5(
         self, processor: Processor, session: Session, caplog: pytest.LogCaptureFixture
     ):
@@ -212,7 +212,17 @@ class TestProcessorSendMail:
             session.commit()
 
         # Assertion
-        assert len(session.scalars(select(Mail)).all()) == 0
+        mail_list = session.scalars(select(Mail)).all()
+        assert len(mail_list) == 1
+        assert mail_list[0].status == MailStatus.FAILED
+
+        # Failed emails are not retried automatically.
+        with mock.patch(
+            "app.model.mail.mail.Mail.send_mail",
+            MagicMock(side_effect=None),
+        ) as send_mail_mock:
+            processor.process()
+        send_mail_mock.assert_not_called()
 
         error_logs = [
             record

@@ -22,13 +22,13 @@ import time
 from smtplib import SMTPException
 from typing import Sequence
 
-from botocore.exceptions import ClientError as SESException
+from botocore.exceptions import BotoCoreError
 from sqlalchemy import create_engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app import config
-from app.model.db import Mail
+from app.model.db import Mail, MailStatus
 from app.model.mail import File, Mail as SMTPMail
 from batch import free_malloc, log
 
@@ -41,7 +41,9 @@ class Processor:
     def process(self):
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
-            mail_list: Sequence[Mail] = db_session.scalars(select(Mail)).all()
+            mail_list: Sequence[Mail] = db_session.scalars(
+                select(Mail).where(Mail.status == MailStatus.PENDING)
+            ).all()
             if len(mail_list) > 0:
                 LOG.info("Process start")
                 for mail in mail_list:
@@ -55,6 +57,7 @@ class Processor:
                             LOG.notice(
                                 f"Destination address is not allowed to send: id={mail.id}"
                             )
+                            self._delete_mail(db_session, mail)
                             continue
 
                         # Not send emails if the destination address is not allowed
@@ -71,6 +74,7 @@ class Processor:
                             LOG.notice(
                                 f"Destination address is not allowed to send: id={mail.id}"
                             )
+                            self._delete_mail(db_session, mail)
                             continue
 
                         file = None
@@ -84,15 +88,31 @@ class Processor:
                             file=file,
                         )
                         smtp_mail.send_mail()
-                    except SMTPException, SESException, IndexError:
+                    except IndexError:
                         LOG.exception(f"Could not send email: id={mail.id}")
+                        self._delete_mail(db_session, mail)
                         continue
-                    finally:
-                        db_session.delete(mail)
+                    except (
+                        SMTPException,
+                        BotoCoreError,
+                        OSError,
+                        RuntimeError,
+                        ValueError,
+                    ):
+                        LOG.exception(f"Could not send email: id={mail.id}")
+                        mail.status = MailStatus.FAILED
                         db_session.commit()
+                        continue
+
+                    self._delete_mail(db_session, mail)
                 LOG.info("Process end")
         finally:
             db_session.close()
+
+    @staticmethod
+    def _delete_mail(db_session: Session, mail: Mail) -> None:
+        db_session.delete(mail)
+        db_session.commit()
 
 
 def main():

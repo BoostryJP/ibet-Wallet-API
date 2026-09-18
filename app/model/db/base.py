@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC, datetime
+from enum import StrEnum
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import DateTime, create_engine
@@ -40,6 +41,11 @@ def aware_utcnow():
 
 def naive_utcnow():
     return aware_utcnow().replace(tzinfo=None)
+
+
+def enum_values(enum_type: type[StrEnum]) -> list[str]:
+    """Return the string values used by a StrEnum."""
+    return [status.value for status in enum_type]
 
 
 class Base(DeclarativeBase):
