@@ -208,8 +208,6 @@ async def get_token_holders(
     offset = request_query.offset
 
     # Retrieve Token Holders List
-    position_account = aliased(AccountTag)
-    lock_position_account = aliased(AccountTag)
     stmt = (
         select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
         .outerjoin(
@@ -218,14 +216,6 @@ async def get_token_holders(
                 IDXLockedPosition.token_address == token_address,
                 IDXLockedPosition.account_address == IDXPosition.account_address,
             ),
-        )
-        .outerjoin(
-            position_account,
-            IDXPosition.account_address == position_account.account_address,
-        )
-        .outerjoin(
-            lock_position_account,
-            IDXLockedPosition.account_address == lock_position_account.account_address,
         )
         .where(IDXPosition.token_address == token_address)
         .where(
@@ -244,17 +234,47 @@ async def get_token_holders(
         )
     )
     if request_query.account_tag is not None:
+        position_account = aliased(AccountTag)
+        lock_position_account = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            position_account,
+            IDXPosition.account_address == position_account.account_address,
+        ).outerjoin(
+            lock_position_account,
+            IDXLockedPosition.account_address == lock_position_account.account_address,
+        )
         stmt = stmt.where(
             or_(
                 position_account.account_tag == request_query.account_tag,
                 lock_position_account.account_tag == request_query.account_tag,
             )
         )
-    total = await async_session.scalar(
-        select(func.count()).select_from(
-            stmt.with_only_columns(1).order_by(None).subquery()
+
+    has_filters = any(
+        (
+            request_query.account_tag is not None,
+            request_query.exclude_owner is True,
+            request_query.amount is not None
+            and request_query.amount_operator is not None,
+            request_query.pending_transfer is not None
+            and request_query.pending_transfer_operator is not None,
+            request_query.exchange_balance is not None
+            and request_query.exchange_balance_operator is not None,
+            request_query.exchange_commitment is not None
+            and request_query.exchange_commitment_operator is not None,
+            request_query.locked is not None
+            and request_query.locked_operator is not None,
         )
     )
+
+    if has_filters:
+        total = await async_session.scalar(
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
+        )
+    else:
+        total = None
 
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
@@ -331,6 +351,8 @@ async def get_token_holders(
             stmt.with_only_columns(1).order_by(None).subquery()
         )
     )
+    if total is None:
+        total = count
 
     # Pagination
     if limit is not None:
@@ -663,8 +685,6 @@ async def get_token_holders_count(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # Retrieve Token Holders
-    position_account = aliased(AccountTag)
-    lock_position_account = aliased(AccountTag)
     stmt = (
         select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
         .outerjoin(
@@ -673,14 +693,6 @@ async def get_token_holders_count(
                 IDXLockedPosition.token_address == token_address,
                 IDXLockedPosition.account_address == IDXPosition.account_address,
             ),
-        )
-        .outerjoin(
-            position_account,
-            IDXPosition.account_address == position_account.account_address,
-        )
-        .outerjoin(
-            lock_position_account,
-            IDXLockedPosition.account_address == lock_position_account.account_address,
         )
         .where(IDXPosition.token_address == token_address)
         .where(
@@ -699,6 +711,15 @@ async def get_token_holders_count(
         )
     )
     if request_query.account_tag is not None:
+        position_account = aliased(AccountTag)
+        lock_position_account = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            position_account,
+            IDXPosition.account_address == position_account.account_address,
+        ).outerjoin(
+            lock_position_account,
+            IDXLockedPosition.account_address == lock_position_account.account_address,
+        )
         stmt = stmt.where(
             or_(
                 position_account.account_tag == request_query.account_tag,
@@ -1576,24 +1597,23 @@ async def list_all_transfer_approval_histories(
         raise DataNotExistsError(f"token_address: {token_address}")
 
     # Retrieve Transfer Approval Histories
-    from_address_tag = aliased(AccountTag)
-    to_address_tag = aliased(AccountTag)
     stmt = (
         select(IDXTransferApproval)
         .where(IDXTransferApproval.token_address == token_address)
-        .outerjoin(
-            from_address_tag,
-            IDXTransferApproval.from_address == from_address_tag.account_address,
-        )
-        .outerjoin(
-            to_address_tag,
-            IDXTransferApproval.to_address == to_address_tag.account_address,
-        )
         .order_by(
             IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
         )
     )
     if request_query.account_tag is not None:
+        from_address_tag = aliased(AccountTag)
+        to_address_tag = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            from_address_tag,
+            IDXTransferApproval.from_address == from_address_tag.account_address,
+        ).outerjoin(
+            to_address_tag,
+            IDXTransferApproval.to_address == to_address_tag.account_address,
+        )
         stmt = stmt.where(
             or_(
                 from_address_tag.account_tag == request_query.account_tag,
