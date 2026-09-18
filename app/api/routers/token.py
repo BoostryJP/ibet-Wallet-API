@@ -208,13 +208,27 @@ async def get_token_holders(
     offset = request_query.offset
 
     # Retrieve Token Holders List
+    locked_position_summary = (
+        select(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+            func.sum(IDXLockedPosition.value).label("locked"),
+        )
+        .where(IDXLockedPosition.token_address == token_address)
+        .group_by(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+        )
+        .subquery()
+    )
     stmt = (
-        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
+        select(IDXPosition, func.coalesce(locked_position_summary.c.locked, 0))
         .outerjoin(
-            IDXLockedPosition,
+            locked_position_summary,
             and_(
-                IDXLockedPosition.token_address == token_address,
-                IDXLockedPosition.account_address == IDXPosition.account_address,
+                locked_position_summary.c.token_address == IDXPosition.token_address,
+                locked_position_summary.c.account_address
+                == IDXPosition.account_address,
             ),
         )
         .where(IDXPosition.token_address == token_address)
@@ -224,13 +238,8 @@ async def get_token_holders(
                 IDXPosition.pending_transfer > 0,
                 IDXPosition.exchange_balance > 0,
                 IDXPosition.exchange_commitment > 0,
-                IDXLockedPosition.value > 0,
+                locked_position_summary.c.locked > 0,
             )
-        )
-        .group_by(
-            IDXPosition.token_address,
-            IDXPosition.account_address,
-            IDXLockedPosition.account_address,
         )
     )
     if request_query.account_tag is not None:
@@ -241,7 +250,8 @@ async def get_token_holders(
             IDXPosition.account_address == position_account.account_address,
         ).outerjoin(
             lock_position_account,
-            IDXLockedPosition.account_address == lock_position_account.account_address,
+            locked_position_summary.c.account_address
+            == lock_position_account.account_address,
         )
         stmt = stmt.where(
             or_(
@@ -340,11 +350,17 @@ async def get_token_holders(
     if request_query.locked is not None and request_query.locked_operator is not None:
         match request_query.locked_operator:
             case ValueOperator.EQUAL:
-                stmt = stmt.where(IDXLockedPosition.value == request_query.locked)
+                stmt = stmt.where(
+                    locked_position_summary.c.locked == request_query.locked
+                )
             case ValueOperator.GTE:
-                stmt = stmt.where(IDXLockedPosition.value >= request_query.locked)
+                stmt = stmt.where(
+                    locked_position_summary.c.locked >= request_query.locked
+                )
             case ValueOperator.LTE:
-                stmt = stmt.where(IDXLockedPosition.value <= request_query.locked)
+                stmt = stmt.where(
+                    locked_position_summary.c.locked <= request_query.locked
+                )
 
     count = await async_session.scalar(
         select(func.count()).select_from(
@@ -685,13 +701,27 @@ async def get_token_holders_count(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # Retrieve Token Holders
+    locked_position_summary = (
+        select(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+            func.sum(IDXLockedPosition.value).label("locked"),
+        )
+        .where(IDXLockedPosition.token_address == token_address)
+        .group_by(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+        )
+        .subquery()
+    )
     stmt = (
-        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
+        select(IDXPosition, func.coalesce(locked_position_summary.c.locked, 0))
         .outerjoin(
-            IDXLockedPosition,
+            locked_position_summary,
             and_(
-                IDXLockedPosition.token_address == token_address,
-                IDXLockedPosition.account_address == IDXPosition.account_address,
+                locked_position_summary.c.token_address == IDXPosition.token_address,
+                locked_position_summary.c.account_address
+                == IDXPosition.account_address,
             ),
         )
         .where(IDXPosition.token_address == token_address)
@@ -701,13 +731,8 @@ async def get_token_holders_count(
                 IDXPosition.pending_transfer > 0,
                 IDXPosition.exchange_balance > 0,
                 IDXPosition.exchange_commitment > 0,
-                IDXLockedPosition.value > 0,
+                locked_position_summary.c.locked > 0,
             )
-        )
-        .group_by(
-            IDXPosition.token_address,
-            IDXPosition.account_address,
-            IDXLockedPosition.account_address,
         )
     )
     if request_query.account_tag is not None:
@@ -718,7 +743,8 @@ async def get_token_holders_count(
             IDXPosition.account_address == position_account.account_address,
         ).outerjoin(
             lock_position_account,
-            IDXLockedPosition.account_address == lock_position_account.account_address,
+            locked_position_summary.c.account_address
+            == lock_position_account.account_address,
         )
         stmt = stmt.where(
             or_(

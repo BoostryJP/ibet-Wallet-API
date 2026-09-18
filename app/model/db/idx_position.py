@@ -169,6 +169,14 @@ class IDXLockedPosition(Base):
     """Token Locked Amount (INDEX)"""
 
     __tablename__ = "locked_position"
+    __table_args__ = (
+        Index(
+            "ix_locked_position_token_address_account_address_value",
+            "token_address",
+            "account_address",
+            "value",
+        ),
+    )
 
     # Token Address
     token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
