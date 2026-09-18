@@ -2599,9 +2599,9 @@ paths:
             anyOf:
               - type: integer
               - type: 'null'
-            description: locked
+            description: total locked amount for the account
             title: Locked
-          description: locked
+          description: total locked amount for the account
         - name: locked_operator
           in: query
           required: false
