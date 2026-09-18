@@ -144,7 +144,7 @@ class TestSendEmail:
     # Normal_4
     # Filter and paginate emails
     def test_normal_4(self, client: TestClient, session: Session):
-        failed_mail_list = []
+        failed_mail_list: list[Mail] = []
         for i in range(3):
             mail = Mail()
             mail.to_email = f"failed{i}@example.com"
