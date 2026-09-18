@@ -135,11 +135,6 @@ class TestSendEmail:
         assert resp.json()["data"]["mails"] == [
             {
                 "id": failed_mail.id,
-                "to_email": "failed@example.com",
-                "subject": "Failed email",
-                "text_content": "text content",
-                "html_content": "<p>html content</p>",
-                "file_name": None,
                 "status": "failed",
                 "created": failed_mail.format_timestamp(failed_mail.created),
                 "modified": failed_mail.format_timestamp(failed_mail.modified),
@@ -147,8 +142,66 @@ class TestSendEmail:
         ]
 
     # Normal_4
-    # Resend selected failed emails
+    # Filter and paginate emails
     def test_normal_4(self, client: TestClient, session: Session):
+        failed_mail_list = []
+        for i in range(3):
+            mail = Mail()
+            mail.to_email = f"failed{i}@example.com"
+            mail.subject = "Failed email"
+            mail.text_content = "text content"
+            mail.html_content = "<p>html content</p>"
+            mail.status = MailStatus.FAILED
+            session.add(mail)
+            failed_mail_list.append(mail)
+
+        pending_mail = Mail()
+        pending_mail.to_email = "pending@example.com"
+        pending_mail.subject = "Pending email"
+        pending_mail.text_content = "text content"
+        pending_mail.html_content = "<p>html content</p>"
+        session.add(pending_mail)
+        session.commit()
+
+        resp = client.get(
+            self.api_url,
+            params={"status": "failed", "offset": 1, "limit": 1},
+        )
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json()["data"]["result_set"] == {
+            "count": 1,
+            "offset": 1,
+            "limit": 1,
+            "total": 3,
+        }
+        mail = failed_mail_list[1]
+        assert resp.json()["data"]["mails"] == [
+            {
+                "id": mail.id,
+                "status": "failed",
+                "created": mail.format_timestamp(mail.created),
+                "modified": mail.format_timestamp(mail.modified),
+            }
+        ]
+
+        resp = client.get(self.api_url, params={"status": "pending"})
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["result_set"]["total"] == 1
+        assert resp.json()["data"]["mails"] == [
+            {
+                "id": pending_mail.id,
+                "status": "pending",
+                "created": pending_mail.format_timestamp(pending_mail.created),
+                "modified": pending_mail.format_timestamp(pending_mail.modified),
+            }
+        ]
+
+    # Normal_5
+    # Resend selected failed emails
+    def test_normal_5(self, client: TestClient, session: Session):
         mail_list = []
         for i in range(2):
             mail = Mail()
@@ -176,9 +229,9 @@ class TestSendEmail:
             MailStatus.PENDING,
         ]
 
-    # Normal_5
+    # Normal_6
     # Multiple to_email
-    def test_normal_5(self, client: TestClient, session: Session):
+    def test_normal_6(self, client: TestClient, session: Session):
         params = {
             "to_emails": ["test1@example.com", "test2@example.com"],
             "subject": "Test email",

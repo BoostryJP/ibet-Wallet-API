@@ -4960,7 +4960,7 @@ paths:
       tags:
         - messaging
       summary: List Emails
-      description: Returns queued or failed emails filtered by status.
+      description: Returns email delivery metadata filtered by status.
       operationId: ListEmails
       parameters:
         - name: offset
@@ -7957,23 +7957,6 @@ components:
         id:
           type: integer
           title: Id
-        to_email:
-          type: string
-          title: To Email
-        subject:
-          type: string
-          title: Subject
-        text_content:
-          type: string
-          title: Text Content
-        html_content:
-          type: string
-          title: Html Content
-        file_name:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: File Name
         status:
           $ref: '#/components/schemas/MailStatus'
         created:
@@ -7985,11 +7968,6 @@ components:
       type: object
       required:
         - id
-        - to_email
-        - subject
-        - text_content
-        - html_content
-        - file_name
         - status
         - created
         - modified

@@ -61,7 +61,7 @@ async def list_mails(
     request_query: Annotated[ListMailsQuery, Query()],
 ) -> GenericSuccessResponse[ListMailsResponse]:
     """
-    Returns queued or failed emails filtered by status.
+    Returns email delivery metadata filtered by status.
     """
     stmt = select(Mail).where(Mail.status == request_query.status).order_by(Mail.id)
     total = (
@@ -82,11 +82,6 @@ async def list_mails(
     mail_data = [
         MailData(
             id=mail.id,
-            to_email=mail.to_email,
-            subject=mail.subject,
-            text_content=mail.text_content,
-            html_content=mail.html_content,
-            file_name=mail.file_name,
             status=mail.status,
             created=Mail.format_timestamp(mail.created),
             modified=Mail.format_timestamp(mail.modified),

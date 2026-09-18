@@ -108,11 +108,6 @@ class ResendMailsRequest(BaseModel):
 
 class MailData(BaseModel):
     id: int
-    to_email: str
-    subject: str
-    text_content: str
-    html_content: str
-    file_name: Optional[str]
     status: MailStatus
     created: str
     modified: str
