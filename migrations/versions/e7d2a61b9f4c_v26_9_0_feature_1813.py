@@ -1,7 +1,7 @@
 """v26_9_0_feature_1813
 
 Revision ID: e7d2a61b9f4c
-Revises: 0c1e4f2d9a7b
+Revises: b7e4c2d91f60
 Create Date: 2026-09-18 00:00:00.000000
 """
 
@@ -12,7 +12,7 @@ from app.database import get_db_schema
 
 # revision identifiers, used by Alembic.
 revision = "e7d2a61b9f4c"
-down_revision = "0c1e4f2d9a7b"
+down_revision = "b7e4c2d91f60"
 branch_labels = None
 depends_on = None
 
