@@ -47,7 +47,7 @@ from .idx_transfer import (
 )
 from .idx_transfer_approval import IDXTransferApproval, IDXTransferApprovalBlockNumber
 from .listing import Listing
-from .messaging import ChatWebhook, Mail
+from .messaging import ChatWebhook, Mail, MailStatus
 from .node import Node
 from .notification import (
     Notification,

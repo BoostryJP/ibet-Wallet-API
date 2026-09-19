@@ -23,7 +23,8 @@ from typing import Optional, Self
 
 from pydantic import BaseModel, Field, Json, field_validator, model_validator
 
-from app.model.schema.base import EmailStr
+from app.model.db import MailStatus
+from app.model.schema.base import BasePaginationQuery, EmailStr, ResultSet
 
 ############################
 # COMMON
@@ -93,3 +94,25 @@ class SendMailRequest(BaseModel):
 
 class SendChatWebhookRequest(BaseModel):
     message: Json[object] = Field(..., description="Message body")
+
+
+class ListMailsQuery(BasePaginationQuery):
+    status: MailStatus = Field(
+        default=MailStatus.FAILED, description="Mail delivery status"
+    )
+
+
+class ResendMailsRequest(BaseModel):
+    mail_ids: list[int] = Field(min_length=1, description="Mail IDs to resend")
+
+
+class MailData(BaseModel):
+    id: int
+    status: MailStatus
+    created: str
+    modified: str
+
+
+class ListMailsResponse(BaseModel):
+    result_set: ResultSet
+    mails: list[MailData]

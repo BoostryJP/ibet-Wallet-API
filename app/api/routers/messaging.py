@@ -18,22 +18,95 @@ SPDX-License
 """
 
 import json
-from typing import TYPE_CHECKING
+from datetime import datetime
+from typing import TYPE_CHECKING, Annotated, Sequence
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+from sqlalchemy import func, select, update
 
 from app import log
 from app.database import DBAsyncSession
-from app.errors import InvalidParameterError
-from app.model.db import ChatWebhook, Mail
-from app.model.schema import SendChatWebhookRequest, SendMailRequest
-from app.model.schema.base import EmptyData, Success200MetaModel, SuccessResponse
+from app.errors import DataNotExistsError, InvalidParameterError
+from app.model.db import ChatWebhook, Mail, MailStatus
+from app.model.schema import (
+    ListMailsQuery,
+    ListMailsResponse,
+    MailData,
+    ResendMailsRequest,
+    SendChatWebhookRequest,
+    SendMailRequest,
+)
+from app.model.schema.base import (
+    EmptyData,
+    GenericSuccessResponse,
+    ResultSet,
+    Success200MetaModel,
+    SuccessResponse,
+)
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi_utils import json_response
 
 LOG = log.get_logger()
 
 router = APIRouter(prefix="", tags=["messaging"])
+
+
+@router.get(
+    "/Mail",
+    summary="List Emails",
+    operation_id="ListEmails",
+    responses=get_routers_responses(InvalidParameterError),
+)
+async def list_mails(
+    async_session: DBAsyncSession,
+    request_query: Annotated[ListMailsQuery, Query()],
+) -> GenericSuccessResponse[ListMailsResponse]:
+    """
+    Returns email delivery metadata filtered by status.
+    """
+    stmt = (
+        select(Mail.id, Mail.status, Mail.created, Mail.modified)
+        .where(Mail.status == request_query.status)
+        .order_by(Mail.id)
+    )
+    total = (
+        await async_session.scalar(
+            select(func.count())
+            .select_from(Mail)
+            .where(Mail.status == request_query.status)
+        )
+        or 0
+    )
+
+    if request_query.offset is not None:
+        stmt = stmt.offset(request_query.offset)
+    if request_query.limit is not None:
+        stmt = stmt.limit(request_query.limit)
+
+    mail_list: Sequence[tuple[int, MailStatus, datetime, datetime]] = (
+        (await async_session.execute(stmt)).tuples().all()
+    )
+    mail_data = [
+        MailData(
+            id=mail_id,
+            status=status,
+            created=Mail.format_timestamp(created),
+            modified=Mail.format_timestamp(modified),
+        )
+        for mail_id, status, created, modified in mail_list
+    ]
+    return GenericSuccessResponse[ListMailsResponse](
+        meta=Success200MetaModel(code=200, message="OK"),
+        data=ListMailsResponse(
+            result_set=ResultSet(
+                count=len(mail_data),
+                offset=request_query.offset,
+                limit=request_query.limit,
+                total=total,
+            ),
+            mails=mail_data,
+        ),
+    )
 
 
 @router.post(
@@ -66,6 +139,52 @@ async def send_mail(async_session: DBAsyncSession, data: SendMailRequest):
             meta=Success200MetaModel(code=200, message="OK"), data=EmptyData()
         )
     return json_response(SuccessResponse.default())
+
+
+@router.post(
+    "/Mail/Resend",
+    summary="Resend failed Emails",
+    operation_id="ResendEmails",
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError),
+)
+async def resend_mails(
+    async_session: DBAsyncSession,
+    data: ResendMailsRequest,
+) -> SuccessResponse:
+    """
+    Queues selected failed emails for delivery.
+    """
+    mail_list: Sequence[tuple[int, MailStatus]] = (
+        (
+            await async_session.execute(
+                select(Mail.id, Mail.status).where(Mail.id.in_(data.mail_ids))
+            )
+        )
+        .tuples()
+        .all()
+    )
+    mail_by_id = {mail_id: status for mail_id, status in mail_list}
+    missing_mail_ids = [
+        mail_id for mail_id in data.mail_ids if mail_id not in mail_by_id
+    ]
+    if missing_mail_ids:
+        raise DataNotExistsError(description=f"id: {missing_mail_ids[0]}")
+
+    non_failed_mail_ids = [
+        mail_id for mail_id, status in mail_list if status != MailStatus.FAILED
+    ]
+    if non_failed_mail_ids:
+        raise InvalidParameterError(description="Only failed emails can be resent")
+
+    await async_session.execute(
+        update(Mail).where(Mail.id.in_(data.mail_ids)).values(status=MailStatus.PENDING)
+    )
+    await async_session.commit()
+
+    return SuccessResponse(
+        meta=Success200MetaModel(code=200, message="OK"),
+        data=EmptyData(),
+    )
 
 
 @router.post(
