@@ -99,7 +99,7 @@ async def list_mails(
         meta=Success200MetaModel(code=200, message="OK"),
         data=ListMailsResponse(
             result_set=ResultSet(
-                count=len(mail_data),
+                count=total,
                 offset=request_query.offset,
                 limit=request_query.limit,
                 total=total,

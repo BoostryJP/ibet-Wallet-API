@@ -106,6 +106,11 @@ class ResendMailsRequest(BaseModel):
     mail_ids: list[int] = Field(min_length=1, description="Mail IDs to resend")
 
 
+############################
+# RESPONSE
+############################
+
+
 class MailData(BaseModel):
     id: int
     status: MailStatus
