@@ -17,11 +17,18 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from sqlalchemy import BigInteger, LargeBinary, String, Text
+from enum import StrEnum
+
+from sqlalchemy import BigInteger, Enum, LargeBinary, String, Text
 from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.model.db.base import Base
+from app.model.db.base import Base, enum_values
+
+
+class MailStatus(StrEnum):
+    PENDING = "pending"
+    FAILED = "failed"
 
 
 class Mail(Base):
@@ -33,6 +40,19 @@ class Mail(Base):
 
     # unique id
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    # delivery status
+    status: Mapped[MailStatus] = mapped_column(
+        Enum(
+            MailStatus,
+            native_enum=False,
+            length=20,
+            values_callable=enum_values,
+        ),
+        default=MailStatus.PENDING,
+        server_default=MailStatus.PENDING.value,
+        index=True,
+        nullable=False,
+    )
     # to email address
     to_email: Mapped[str] = mapped_column(String(256), nullable=False)
     # subject
