@@ -208,24 +208,28 @@ async def get_token_holders(
     offset = request_query.offset
 
     # Retrieve Token Holders List
-    position_account = aliased(AccountTag)
-    lock_position_account = aliased(AccountTag)
+    locked_position_summary = (
+        select(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+            func.sum(IDXLockedPosition.value).label("locked"),
+        )
+        .where(IDXLockedPosition.token_address == token_address)
+        .group_by(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+        )
+        .subquery()
+    )
     stmt = (
-        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
+        select(IDXPosition, func.coalesce(locked_position_summary.c.locked, 0))
         .outerjoin(
-            IDXLockedPosition,
+            locked_position_summary,
             and_(
-                IDXLockedPosition.token_address == token_address,
-                IDXLockedPosition.account_address == IDXPosition.account_address,
+                locked_position_summary.c.token_address == IDXPosition.token_address,
+                locked_position_summary.c.account_address
+                == IDXPosition.account_address,
             ),
-        )
-        .outerjoin(
-            position_account,
-            IDXPosition.account_address == position_account.account_address,
-        )
-        .outerjoin(
-            lock_position_account,
-            IDXLockedPosition.account_address == lock_position_account.account_address,
         )
         .where(IDXPosition.token_address == token_address)
         .where(
@@ -234,27 +238,53 @@ async def get_token_holders(
                 IDXPosition.pending_transfer > 0,
                 IDXPosition.exchange_balance > 0,
                 IDXPosition.exchange_commitment > 0,
-                IDXLockedPosition.value > 0,
+                locked_position_summary.c.locked > 0,
             )
-        )
-        .group_by(
-            IDXPosition.token_address,
-            IDXPosition.account_address,
-            IDXLockedPosition.account_address,
         )
     )
     if request_query.account_tag is not None:
+        position_account = aliased(AccountTag)
+        lock_position_account = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            position_account,
+            IDXPosition.account_address == position_account.account_address,
+        ).outerjoin(
+            lock_position_account,
+            locked_position_summary.c.account_address
+            == lock_position_account.account_address,
+        )
         stmt = stmt.where(
             or_(
                 position_account.account_tag == request_query.account_tag,
                 lock_position_account.account_tag == request_query.account_tag,
             )
         )
-    total = await async_session.scalar(
-        select(func.count()).select_from(
-            stmt.with_only_columns(1).order_by(None).subquery()
+
+    has_filters = any(
+        (
+            request_query.account_tag is not None,
+            request_query.exclude_owner is True,
+            request_query.amount is not None
+            and request_query.amount_operator is not None,
+            request_query.pending_transfer is not None
+            and request_query.pending_transfer_operator is not None,
+            request_query.exchange_balance is not None
+            and request_query.exchange_balance_operator is not None,
+            request_query.exchange_commitment is not None
+            and request_query.exchange_commitment_operator is not None,
+            request_query.locked is not None
+            and request_query.locked_operator is not None,
         )
     )
+
+    if has_filters:
+        total = await async_session.scalar(
+            select(func.count()).select_from(
+                stmt.with_only_columns(1).order_by(None).subquery()
+            )
+        )
+    else:
+        total = None
 
     if request_query.exclude_owner is True:
         stmt = stmt.where(IDXPosition.account_address != listed_token.owner_address)
@@ -320,17 +350,25 @@ async def get_token_holders(
     if request_query.locked is not None and request_query.locked_operator is not None:
         match request_query.locked_operator:
             case ValueOperator.EQUAL:
-                stmt = stmt.where(IDXLockedPosition.value == request_query.locked)
+                stmt = stmt.where(
+                    locked_position_summary.c.locked == request_query.locked
+                )
             case ValueOperator.GTE:
-                stmt = stmt.where(IDXLockedPosition.value >= request_query.locked)
+                stmt = stmt.where(
+                    locked_position_summary.c.locked >= request_query.locked
+                )
             case ValueOperator.LTE:
-                stmt = stmt.where(IDXLockedPosition.value <= request_query.locked)
+                stmt = stmt.where(
+                    locked_position_summary.c.locked <= request_query.locked
+                )
 
     count = await async_session.scalar(
         select(func.count()).select_from(
             stmt.with_only_columns(1).order_by(None).subquery()
         )
     )
+    if total is None:
+        total = count
 
     # Pagination
     if limit is not None:
@@ -663,24 +701,28 @@ async def get_token_holders_count(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # Retrieve Token Holders
-    position_account = aliased(AccountTag)
-    lock_position_account = aliased(AccountTag)
+    locked_position_summary = (
+        select(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+            func.sum(IDXLockedPosition.value).label("locked"),
+        )
+        .where(IDXLockedPosition.token_address == token_address)
+        .group_by(
+            IDXLockedPosition.token_address,
+            IDXLockedPosition.account_address,
+        )
+        .subquery()
+    )
     stmt = (
-        select(IDXPosition, func.coalesce(func.sum(IDXLockedPosition.value), 0))
+        select(IDXPosition, func.coalesce(locked_position_summary.c.locked, 0))
         .outerjoin(
-            IDXLockedPosition,
+            locked_position_summary,
             and_(
-                IDXLockedPosition.token_address == token_address,
-                IDXLockedPosition.account_address == IDXPosition.account_address,
+                locked_position_summary.c.token_address == IDXPosition.token_address,
+                locked_position_summary.c.account_address
+                == IDXPosition.account_address,
             ),
-        )
-        .outerjoin(
-            position_account,
-            IDXPosition.account_address == position_account.account_address,
-        )
-        .outerjoin(
-            lock_position_account,
-            IDXLockedPosition.account_address == lock_position_account.account_address,
         )
         .where(IDXPosition.token_address == token_address)
         .where(
@@ -689,16 +731,21 @@ async def get_token_holders_count(
                 IDXPosition.pending_transfer > 0,
                 IDXPosition.exchange_balance > 0,
                 IDXPosition.exchange_commitment > 0,
-                IDXLockedPosition.value > 0,
+                locked_position_summary.c.locked > 0,
             )
-        )
-        .group_by(
-            IDXPosition.token_address,
-            IDXPosition.account_address,
-            IDXLockedPosition.account_address,
         )
     )
     if request_query.account_tag is not None:
+        position_account = aliased(AccountTag)
+        lock_position_account = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            position_account,
+            IDXPosition.account_address == position_account.account_address,
+        ).outerjoin(
+            lock_position_account,
+            locked_position_summary.c.account_address
+            == lock_position_account.account_address,
+        )
         stmt = stmt.where(
             or_(
                 position_account.account_tag == request_query.account_tag,
@@ -941,20 +988,16 @@ async def list_all_transfer_histories(
     """
 
     # Base query
-    from_address_tag = aliased(AccountTag)
-    to_address_tag = aliased(AccountTag)
-    stmt = (
-        select(IDXTransfer)
-        .outerjoin(
+    stmt = select(IDXTransfer)
+    if request_query.account_tag is not None:
+        from_address_tag = aliased(AccountTag)
+        to_address_tag = aliased(AccountTag)
+        stmt = stmt.outerjoin(
             from_address_tag,
             IDXTransfer.from_address == from_address_tag.account_address,
-        )
-        .outerjoin(
+        ).outerjoin(
             to_address_tag, IDXTransfer.to_address == to_address_tag.account_address
         )
-        .order_by(IDXTransfer.id)
-    )
-    if request_query.account_tag is not None:
         stmt = stmt.where(
             or_(
                 from_address_tag.account_tag == request_query.account_tag,
@@ -963,7 +1006,7 @@ async def list_all_transfer_histories(
         )
 
     total = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
     )
 
     # Filter
@@ -979,18 +1022,12 @@ async def list_all_transfer_histories(
         )
     if request_query.transaction_hash is not None:
         stmt = stmt.where(
-            IDXTransfer.transaction_hash.like(
-                "%" + request_query.transaction_hash + "%"
-            )
+            IDXTransfer.transaction_hash == request_query.transaction_hash
         )
     if request_query.from_address is not None:
-        stmt = stmt.where(
-            IDXTransfer.from_address.like("%" + request_query.from_address + "%")
-        )
+        stmt = stmt.where(IDXTransfer.from_address == request_query.from_address)
     if request_query.to_address is not None:
-        stmt = stmt.where(
-            IDXTransfer.to_address.like("%" + request_query.to_address + "%")
-        )
+        stmt = stmt.where(IDXTransfer.to_address == request_query.to_address)
     if request_query.created_from is not None:
         stmt = stmt.where(IDXTransfer.created >= request_query.created_from)
     if request_query.created_to is not None:
@@ -1005,7 +1042,7 @@ async def list_all_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= request_query.value)
 
     count = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
     )
 
     # Sort
@@ -1147,23 +1184,18 @@ async def list_token_transfer_histories(
         raise DataNotExistsError("token_address: %s" % token_address)
 
     # Base query
-    from_address_tag = aliased(AccountTag)
-    to_address_tag = aliased(AccountTag)
-    stmt = (
-        select(IDXTransfer)
-        .where(IDXTransfer.token_address == token_address)
-        .outerjoin(
-            from_address_tag,
-            IDXTransfer.from_address == from_address_tag.account_address,
-        )
-        .outerjoin(
-            to_address_tag, IDXTransfer.to_address == to_address_tag.account_address
-        )
-        .order_by(IDXTransfer.id)
-    )
+    stmt = select(IDXTransfer).where(IDXTransfer.token_address == token_address)
 
     # Filter
     if request_query.account_tag is not None:
+        from_address_tag = aliased(AccountTag)
+        to_address_tag = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            from_address_tag,
+            IDXTransfer.from_address == from_address_tag.account_address,
+        ).outerjoin(
+            to_address_tag, IDXTransfer.to_address == to_address_tag.account_address
+        )
         stmt = stmt.where(
             or_(
                 from_address_tag.account_tag == request_query.account_tag,
@@ -1172,7 +1204,7 @@ async def list_token_transfer_histories(
         )
 
     total = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
     )
 
     if request_query.source_event is not None:
@@ -1183,18 +1215,12 @@ async def list_token_transfer_histories(
         )
     if request_query.transaction_hash is not None:
         stmt = stmt.where(
-            IDXTransfer.transaction_hash.like(
-                "%" + request_query.transaction_hash + "%"
-            )
+            IDXTransfer.transaction_hash == request_query.transaction_hash
         )
     if request_query.from_address is not None:
-        stmt = stmt.where(
-            IDXTransfer.from_address.like("%" + request_query.from_address + "%")
-        )
+        stmt = stmt.where(IDXTransfer.from_address == request_query.from_address)
     if request_query.to_address is not None:
-        stmt = stmt.where(
-            IDXTransfer.to_address.like("%" + request_query.to_address + "%")
-        )
+        stmt = stmt.where(IDXTransfer.to_address == request_query.to_address)
     if request_query.created_from is not None:
         stmt = stmt.where(IDXTransfer.created >= request_query.created_from)
     if request_query.created_to is not None:
@@ -1209,7 +1235,7 @@ async def list_token_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= request_query.value)
 
     count = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
     )
 
     # Sort
@@ -1370,7 +1396,7 @@ async def search_transfer_histories(
             )
         )
     total = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
     )
 
     if data.source_event is not None:
@@ -1378,13 +1404,11 @@ async def search_transfer_histories(
     if data.data is not None:
         stmt = stmt.where(cast(IDXTransfer.data, String).like("%" + data.data + "%"))
     if data.transaction_hash is not None:
-        stmt = stmt.where(
-            IDXTransfer.transaction_hash.like("%" + data.transaction_hash + "%")
-        )
+        stmt = stmt.where(IDXTransfer.transaction_hash == data.transaction_hash)
     if data.from_address is not None:
-        stmt = stmt.where(IDXTransfer.from_address.like("%" + data.from_address + "%"))
+        stmt = stmt.where(IDXTransfer.from_address == data.from_address)
     if data.to_address is not None:
-        stmt = stmt.where(IDXTransfer.to_address.like("%" + data.to_address + "%"))
+        stmt = stmt.where(IDXTransfer.to_address == data.to_address)
     if data.created_from is not None:
         stmt = stmt.where(
             IDXTransfer.created >= data.created_from.astimezone(timezone.utc)
@@ -1403,7 +1427,7 @@ async def search_transfer_histories(
                 stmt = stmt.where(IDXTransfer.value <= data.value)
 
     count = await async_session.scalar(
-        stmt.with_only_columns(func.count()).order_by(None)
+        stmt.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
     )
 
     sort_item = data.sort_item
@@ -1599,24 +1623,23 @@ async def list_all_transfer_approval_histories(
         raise DataNotExistsError(f"token_address: {token_address}")
 
     # Retrieve Transfer Approval Histories
-    from_address_tag = aliased(AccountTag)
-    to_address_tag = aliased(AccountTag)
     stmt = (
         select(IDXTransferApproval)
         .where(IDXTransferApproval.token_address == token_address)
-        .outerjoin(
-            from_address_tag,
-            IDXTransferApproval.from_address == from_address_tag.account_address,
-        )
-        .outerjoin(
-            to_address_tag,
-            IDXTransferApproval.to_address == to_address_tag.account_address,
-        )
         .order_by(
             IDXTransferApproval.exchange_address, IDXTransferApproval.application_id
         )
     )
     if request_query.account_tag is not None:
+        from_address_tag = aliased(AccountTag)
+        to_address_tag = aliased(AccountTag)
+        stmt = stmt.outerjoin(
+            from_address_tag,
+            IDXTransferApproval.from_address == from_address_tag.account_address,
+        ).outerjoin(
+            to_address_tag,
+            IDXTransferApproval.to_address == to_address_tag.account_address,
+        )
         stmt = stmt.where(
             or_(
                 from_address_tag.account_tag == request_query.account_tag,

@@ -1,4 +1,4 @@
-FROM ghcr.io/foundry-rs/foundry:latest@sha256:8347b728d5d393dac1c018691b36f506d23b9dcd78341d40ea0fcb11c3a19cdd
+FROM ghcr.io/foundry-rs/foundry:latest@sha256:0c00cb0bda1ab1b91c9a6bf60f4c76c09c1a8870824b6d4718afbabacf6f9a17
 
 WORKDIR /app/ibet-Wallet-API
 

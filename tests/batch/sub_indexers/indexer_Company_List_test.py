@@ -1083,7 +1083,11 @@ class TestProcessor:
     # not succeed api
     @mock.patch("requests.Session.get")
     async def test_error_1_2(
-        self, mock_get: mock.MagicMock, processor: Processor, session: Session
+        self,
+        mock_get: mock.MagicMock,
+        processor: Processor,
+        session: Session,
+        caplog: pytest.LogCaptureFixture,
     ):
         # Prepare data
         _company = Company()
@@ -1117,6 +1121,9 @@ class TestProcessor:
             select(Company).order_by(Company.created)
         ).all()
         assert len(_company_list) == 3
+        assert 1 == caplog.record_tuples.count(
+            (LOG.name, logging.ERROR, "Failed to get company list")
+        )
 
     # <Error_2>
     # not decode response

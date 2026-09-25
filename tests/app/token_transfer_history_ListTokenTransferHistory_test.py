@@ -811,9 +811,7 @@ class TestListTokenTransferHistory:
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.get(
-            apiurl, params={"transaction_hash": self.transaction_hash[0:5]}
-        )
+        resp = client.get(apiurl, params={"transaction_hash": self.transaction_hash})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -878,7 +876,7 @@ class TestListTokenTransferHistory:
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.get(apiurl, params={"from_address": self.from_address[0:5]})
+        resp = client.get(apiurl, params={"from_address": self.from_address})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -943,7 +941,7 @@ class TestListTokenTransferHistory:
         session.commit()
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        resp = client.get(apiurl, params={"to_address": self.to_address[0:5]})
+        resp = client.get(apiurl, params={"to_address": self.to_address})
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

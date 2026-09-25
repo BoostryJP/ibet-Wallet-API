@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from typing import Optional
 
-from sqlalchemy import BigInteger, String
+from sqlalchemy import BigInteger, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.model.db.base import Base
@@ -29,6 +29,9 @@ class IDXPosition(Base):
     """Token Positions (INDEX)"""
 
     __tablename__ = "position"
+    __table_args__ = (
+        Index("ix_position_token_address_created", "token_address", "created"),
+    )
 
     # Token Address
     token_address: Mapped[str] = mapped_column(String(42), primary_key=True)
@@ -166,6 +169,14 @@ class IDXLockedPosition(Base):
     """Token Locked Amount (INDEX)"""
 
     __tablename__ = "locked_position"
+    __table_args__ = (
+        Index(
+            "ix_locked_position_token_address_account_address_value",
+            "token_address",
+            "account_address",
+            "value",
+        ),
+    )
 
     # Token Address
     token_address: Mapped[str] = mapped_column(String(42), primary_key=True)

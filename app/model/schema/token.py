@@ -99,7 +99,9 @@ class ListAllTokenHoldersQuery(BasePaginationQuery):
         ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
     )
-    locked: Optional[int] = Field(None, description="locked")
+    locked: Optional[int] = Field(
+        None, description="total locked amount for the account"
+    )
     locked_operator: Optional[ValueOperator] = Field(
         ValueOperator.EQUAL,
         description="value filter condition(0: equal, 1: greater than, 2: less than)",
@@ -178,9 +180,11 @@ class ListAllTransferHistoryQuery(BasePaginationQuery):
     )
     data: Optional[str] = Field(None, description="source event data")
     token_address: Optional[str] = Field(None, description="token address")
-    transaction_hash: Optional[str] = Field(None, description="transaction hash")
-    from_address: Optional[str] = Field(None, description="from address")
-    to_address: Optional[str] = Field(None, description="to address")
+    transaction_hash: Optional[str] = Field(
+        None, description="transaction hash (exact match)"
+    )
+    from_address: Optional[str] = Field(None, description="from address (exact match)")
+    to_address: Optional[str] = Field(None, description="to address (exact match)")
     value: Optional[int] = Field(None, description="value")
     value_operator: Optional[ValueOperator] = Field(
         ValueOperator.EQUAL,
@@ -202,9 +206,11 @@ class ListTokenTransferHistoryQuery(BasePaginationQuery):
         None, description="source event of transfer"
     )
     data: Optional[str] = Field(None, description="source event data")
-    transaction_hash: Optional[str] = Field(None, description="transaction hash")
-    from_address: Optional[str] = Field(None, description="from address")
-    to_address: Optional[str] = Field(None, description="to address")
+    transaction_hash: Optional[str] = Field(
+        None, description="transaction hash (exact match)"
+    )
+    from_address: Optional[str] = Field(None, description="from address (exact match)")
+    to_address: Optional[str] = Field(None, description="to address (exact match)")
     value: Optional[int] = Field(None, description="value")
     value_operator: Optional[ValueOperator] = Field(
         ValueOperator.EQUAL,
@@ -241,10 +247,14 @@ class SearchTransferHistoryRequest(BaseModel):
     )
     data: Optional[str] = Field(default=None, description="source event data")
     transaction_hash: Optional[str] = Field(
-        default=None, description="transaction hash"
+        default=None, description="transaction hash (exact match)"
     )
-    from_address: Optional[str] = Field(default=None, description="from address")
-    to_address: Optional[str] = Field(default=None, description="to address")
+    from_address: Optional[str] = Field(
+        default=None, description="from address (exact match)"
+    )
+    to_address: Optional[str] = Field(
+        default=None, description="to address (exact match)"
+    )
     created_from: Optional[datetime] = Field(
         default=None, description="created from datetime"
     )

@@ -3,7 +3,7 @@ info:
   title: ibet Wallet API
   description: RPC services that provides utility tools for building a wallet 
     system on ibet network
-  version: 26.6.0
+  version: 26.9.0
 paths:
   /:
     get:
@@ -2599,9 +2599,9 @@ paths:
             anyOf:
               - type: integer
               - type: 'null'
-            description: locked
+            description: total locked amount for the account
             title: Locked
-          description: locked
+          description: total locked amount for the account
         - name: locked_operator
           in: query
           required: false
@@ -2914,9 +2914,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: transaction hash
+            description: transaction hash (exact match)
             title: Transaction Hash
-          description: transaction hash
+          description: transaction hash (exact match)
         - name: from_address
           in: query
           required: false
@@ -2924,9 +2924,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: from address
+            description: from address (exact match)
             title: From Address
-          description: from address
+          description: from address (exact match)
         - name: to_address
           in: query
           required: false
@@ -2934,9 +2934,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: to address
+            description: to address (exact match)
             title: To Address
-          description: to address
+          description: to address (exact match)
         - name: value
           in: query
           required: false
@@ -3079,9 +3079,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: transaction hash
+            description: transaction hash (exact match)
             title: Transaction Hash
-          description: transaction hash
+          description: transaction hash (exact match)
         - name: from_address
           in: query
           required: false
@@ -3089,9 +3089,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: from address
+            description: from address (exact match)
             title: From Address
-          description: from address
+          description: from address (exact match)
         - name: to_address
           in: query
           required: false
@@ -3099,9 +3099,9 @@ paths:
             anyOf:
               - type: string
               - type: 'null'
-            description: to address
+            description: to address (exact match)
             title: To Address
-          description: to address
+          description: to address (exact match)
         - name: value
           in: query
           required: false
@@ -4956,6 +4956,59 @@ paths:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
           description: Not Found
   /Mail:
+    get:
+      tags:
+        - messaging
+      summary: List Emails
+      description: Returns email delivery metadata filtered by status.
+      operationId: ListEmails
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Offset for pagination
+            title: Offset
+          description: Offset for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+                minimum: 0
+              - type: 'null'
+            description: Limit for pagination
+            title: Limit
+          description: Limit for pagination
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/MailStatus'
+            description: Mail delivery status
+            default: failed
+          description: Mail delivery status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListMailsResponse_'
+        '400':
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Listemails
+          description: Bad Request
     post:
       tags:
         - messaging
@@ -4984,6 +5037,41 @@ paths:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
                 title: Response 400 Sendemail
+  /Mail/Resend:
+    post:
+      tags:
+        - messaging
+      summary: Resend failed Emails
+      description: Queues selected failed emails for delivery.
+      operationId: ResendEmails
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendMailsRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+                title: Response 400 Resendemails
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
   /Chat/Webhook:
     post:
       tags:
@@ -6524,6 +6612,20 @@ components:
         - meta
         - data
       title: GenericSuccessResponse[ListAllTokenLockResponse]
+    GenericSuccessResponse_ListMailsResponse_:
+      properties:
+        meta:
+          $ref: '#/components/schemas/Success200MetaModel'
+          examples:
+            - code: 200
+              message: OK
+        data:
+          $ref: '#/components/schemas/ListMailsResponse'
+      type: object
+      required:
+        - meta
+        - data
+      title: GenericSuccessResponse[ListMailsResponse]
     GenericSuccessResponse_MembershipPositionWithDetail_:
       properties:
         meta:
@@ -7547,6 +7649,20 @@ components:
         - result_set
         - locked_list
       title: ListAllTokenLockResponse
+    ListMailsResponse:
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        mails:
+          items:
+            $ref: '#/components/schemas/MailData'
+          type: array
+          title: Mails
+      type: object
+      required:
+        - result_set
+        - mails
+      title: ListMailsResponse
     LockEvent:
       properties:
         category:
@@ -7836,6 +7952,32 @@ components:
         - value
         - token
       title: LockedWithTokenDetail[RetrieveStraightBondTokenResponse]
+    MailData:
+      properties:
+        id:
+          type: integer
+          title: Id
+        status:
+          $ref: '#/components/schemas/MailStatus'
+        created:
+          type: string
+          title: Created
+        modified:
+          type: string
+          title: Modified
+      type: object
+      required:
+        - id
+        - status
+        - created
+        - modified
+      title: MailData
+    MailStatus:
+      type: string
+      enum:
+        - pending
+        - failed
+      title: MailStatus
     MembershipPositionWithAddress:
       properties:
         balance:
@@ -8460,6 +8602,19 @@ components:
       required:
         - meta
       title: RequestValidationErrorResponse
+    ResendMailsRequest:
+      properties:
+        mail_ids:
+          items:
+            type: integer
+          type: array
+          minItems: 1
+          title: Mail Ids
+          description: Mail IDs to resend
+      type: object
+      required:
+        - mail_ids
+      title: ResendMailsRequest
     ResultSet:
       properties:
         count:
@@ -8889,19 +9044,19 @@ components:
             - type: string
             - type: 'null'
           title: Transaction Hash
-          description: transaction hash
+          description: transaction hash (exact match)
         from_address:
           anyOf:
             - type: string
             - type: 'null'
           title: From Address
-          description: from address
+          description: from address (exact match)
         to_address:
           anyOf:
             - type: string
             - type: 'null'
           title: To Address
-          description: to address
+          description: to address (exact match)
         created_from:
           anyOf:
             - type: string

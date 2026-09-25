@@ -63,7 +63,14 @@ from .events import (
     ListAllEventsResponse,
     SecurityTokenEventArguments,
 )
-from .messaging import SendChatWebhookRequest, SendMailRequest
+from .messaging import (
+    ListMailsQuery,
+    ListMailsResponse,
+    MailData,
+    ResendMailsRequest,
+    SendChatWebhookRequest,
+    SendMailRequest,
+)
 from .node_info import GetBlockSyncStatusResponse, GetNodeInfoResponse
 from .notification import (
     NotificationJSONDict,
