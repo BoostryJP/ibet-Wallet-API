@@ -17,4 +17,4 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-__version__ = "26.9.0"
+__version__ = "26.12.0"
