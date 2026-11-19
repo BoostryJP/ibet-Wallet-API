@@ -181,9 +181,9 @@ class TestEthWaitForTransactionReceipt:
                 "error_msg": "Message sender balance is insufficient.",
             }
 
-    # <Normal_2_1>
-    # Wait receipt for reverted transaction when failure inspection is unavailable
-    def test_normal_2_1(
+    # <Normal_2_2>
+    # Reverted transaction: revert inspection is unavailable
+    def test_normal_2_2(
         self,
         client: TestClient,
         session: Session,
@@ -238,7 +238,9 @@ class TestEthWaitForTransactionReceipt:
             "error_msg": None,
         }
 
-    def test_inspect_tx_failure_returns_none_for_unavailable_state(self):
+    # <Normal_2_3>
+    # Revert inspection: transaction state is unavailable
+    def test_normal_2_3(self):
         tx_hash = HexBytes("0x" + "01" * 32)
 
         with mock.patch(
@@ -247,13 +249,20 @@ class TestEthWaitForTransactionReceipt:
         ):
             assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
 
+    # <Normal_2_4>
+    # Revert inspection: transaction lookup raises an RPC error
+    def test_normal_2_4(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+
         with mock.patch(
             "app.api.routers.eth.AsyncContract.get_transaction",
             mock.AsyncMock(side_effect=ConnectionError("missing trie node")),
         ):
             assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
 
-    def test_inspect_tx_failure_returns_none_for_replay_failure(self):
+    # <Normal_2_5>
+    # Revert inspection: replay raises an RPC error
+    def test_normal_2_5(self):
         tx_hash = HexBytes("0x" + "01" * 32)
         tx = {
             "to": "0x0000000000000000000000000000000000000001",
@@ -276,7 +285,9 @@ class TestEthWaitForTransactionReceipt:
         ):
             assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
 
-    def test_inspect_tx_failure_returns_none_when_replay_succeeds(self):
+    # <Normal_2_6>
+    # Revert inspection: replay unexpectedly succeeds
+    def test_normal_2_6(self):
         tx_hash = HexBytes("0x" + "01" * 32)
         tx = {
             "to": "0x0000000000000000000000000000000000000001",
