@@ -1291,6 +1291,8 @@ class TestEthSendRawTransaction:
                     "id": 1,
                     "status": 0,
                     "transaction_hash": ANY,
+                    "error_code": None,
+                    "error_msg": None,
                 }
             ]
 

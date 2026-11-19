@@ -17,16 +17,19 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import asyncio
 from unittest import mock
 
 from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
+from hexbytes import HexBytes
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import TxParams, Wei
 
 from app import config
+from app.api.routers import eth as eth_router
 from app.model.db import ExecutableContract, Listing
 from tests.account_config import eth_account
 from tests.helpers import IbetCouponTestHelper
@@ -177,6 +180,135 @@ class TestEthWaitForTransactionReceipt:
                 "error_code": 130401,
                 "error_msg": "Message sender balance is insufficient.",
             }
+
+    # <Normal_2_2>
+    # Reverted transaction: revert inspection is unavailable
+    def test_normal_2_2(
+        self,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+    ):
+        tokenlist = shared_contract["TokenList"]
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
+
+        issuer = eth_account["issuer"]
+        coupontoken_1 = IbetCouponTestHelper.issue(
+            issuer["account_address"],
+            {
+                "name": "name_test1",
+                "symbol": "symbol_test1",
+                "totalSupply": 1000000,
+                "tradableExchange": config.ZERO_ADDRESS,
+                "details": "details_test1",
+                "returnDetails": "returnDetails_test1",
+                "memo": "memo_test1",
+                "expirationDate": "20211201",
+                "transferable": True,
+                "contactInformation": "contactInformation_test1",
+                "privacyPolicy": "privacyPolicy_test1",
+            },
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupontoken_1.address, tokenlist["address"]
+        )
+
+        listing_token(session, coupontoken_1.address)
+        executable_contract_token(session, coupontoken_1.address)
+
+        user1 = eth_account["user1"]
+        tx = coupontoken_1.functions.consume(10000).build_transaction(
+            _tx_params(to_checksum_address(user1["account_address"]))
+        )
+        tx_hash = web3.eth.send_transaction(tx)
+
+        with mock.patch(
+            "app.api.routers.eth.AsyncContract.get_transaction",
+            mock.AsyncMock(return_value=None),
+        ):
+            resp = client.get(
+                self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()}
+            )
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "status": 0,
+            "error_code": None,
+            "error_msg": None,
+        }
+
+    # <Normal_2_3>
+    # Revert inspection: transaction state is unavailable
+    def test_normal_2_3(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+
+        with mock.patch(
+            "app.api.routers.eth.AsyncContract.get_transaction",
+            mock.AsyncMock(return_value=None),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
+
+    # <Normal_2_4>
+    # Revert inspection: transaction lookup raises an RPC error
+    def test_normal_2_4(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+
+        with mock.patch(
+            "app.api.routers.eth.AsyncContract.get_transaction",
+            mock.AsyncMock(side_effect=ConnectionError("missing trie node")),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
+
+    # <Normal_2_5>
+    # Revert inspection: replay raises an RPC error
+    def test_normal_2_5(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+        tx = {
+            "to": "0x0000000000000000000000000000000000000001",
+            "from": "0x0000000000000000000000000000000000000002",
+            "value": 0,
+            "input": HexBytes("0x"),
+            "blockNumber": 123,
+        }
+
+        with (
+            mock.patch(
+                "app.api.routers.eth.AsyncContract.get_transaction",
+                mock.AsyncMock(return_value=tx),
+            ),
+            mock.patch.object(
+                eth_router.async_web3.eth,
+                "call",
+                mock.AsyncMock(side_effect=ConnectionError("RPC unavailable")),
+            ),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
+
+    # <Normal_2_6>
+    # Revert inspection: replay unexpectedly succeeds
+    def test_normal_2_6(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+        tx = {
+            "to": "0x0000000000000000000000000000000000000001",
+            "from": "0x0000000000000000000000000000000000000002",
+            "value": 0,
+            "input": HexBytes("0x"),
+            "blockNumber": 123,
+        }
+
+        with (
+            mock.patch(
+                "app.api.routers.eth.AsyncContract.get_transaction",
+                mock.AsyncMock(return_value=tx),
+            ),
+            mock.patch.object(
+                eth_router.async_web3.eth,
+                "call",
+                mock.AsyncMock(return_value=b""),
+            ),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
 
     ###################################################################
     # Error

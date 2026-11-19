@@ -312,11 +312,11 @@ async def send_raw_transaction(
             )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
-                try:
-                    err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
-                    code, message = error_code_msg(err_msg)
-                except DataNotExistsError:
+                err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
+                if err_msg is None:
                     code, message = None, None
+                else:
+                    code, message = error_code_msg(err_msg)
                 result.append(
                     {
                         "id": i + 1,
@@ -600,11 +600,11 @@ async def wait_for_transaction_receipt(
         )
         if tx["status"] == 0:
             # Inspect reason of transaction fail.
-            try:
-                err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
-                code, message = error_code_msg(err_msg)
-            except DataNotExistsError:
+            err_msg = await inspect_tx_failure(tx_hash, tx["blockNumber"])
+            if err_msg is None:
                 code, message = None, None
+            else:
+                code, message = error_code_msg(err_msg)
             result = {"status": 0, "error_code": code, "error_msg": message}
         else:
             result = {"status": 1}
@@ -629,10 +629,20 @@ async def wait_for_transaction_receipt(
     return json_response({**SuccessResponse.default(), "data": result})
 
 
-async def inspect_tx_failure(tx_hash: HexBytes, block_number: BlockIdentifier) -> str:
-    tx = await AsyncContract.get_transaction(tx_hash, block_number)
+async def inspect_tx_failure(
+    tx_hash: HexBytes, block_number: BlockIdentifier
+) -> str | None:
+    try:
+        tx = await AsyncContract.get_transaction(tx_hash, block_number)
+    except Exception as exc:
+        LOG.warning(
+            "Failed to get transaction for revert inspection: "
+            f"transaction_hash={tx_hash.to_0x_hex()} "
+            f"block_number={block_number} error={exc}"
+        )
+        return None
     if tx is None:
-        raise DataNotExistsError
+        return None
 
     tx_to = tx.get("to")
     tx_from = tx.get("from")
@@ -640,15 +650,15 @@ async def inspect_tx_failure(tx_hash: HexBytes, block_number: BlockIdentifier) -
     tx_input = tx.get("input")
     tx_block_number = tx.get("blockNumber")
     if not isinstance(tx_to, str):
-        raise DataNotExistsError
+        return None
     if not isinstance(tx_from, str):
-        raise DataNotExistsError
+        return None
     if not isinstance(tx_value, int):
-        raise DataNotExistsError
+        return None
     if not isinstance(tx_input, (str, bytes, bytearray, HexBytes)):
-        raise DataNotExistsError
+        return None
     if not isinstance(tx_block_number, int):
-        raise DataNotExistsError
+        return None
     tx_data: str | bytes
     if isinstance(tx_input, str):
         tx_data = tx_input
@@ -665,17 +675,34 @@ async def inspect_tx_failure(tx_hash: HexBytes, block_number: BlockIdentifier) -
     # replay the transaction locally:
     try:
         await async_web3.eth.call(replay_tx, tx_block_number - 1)
-    except ContractLogicError as e:
-        if len(e.args) == 0:
-            raise e
-        if len(e.args[0].split("execution reverted: ")) == 2:
-            msg = e.args[0].split("execution reverted: ")[1]
+    except ContractLogicError as exc:
+        if len(exc.args) == 0:
+            LOG.warning(
+                "Failed to inspect transaction revert: "
+                f"transaction_hash={tx_hash.to_0x_hex()} "
+                f"block_number={block_number} error={exc}"
+            )
+            return None
+        error = exc.args[0]
+        if isinstance(error, str) and len(error.split("execution reverted: ")) == 2:
+            msg = error.split("execution reverted: ")[1]
         else:
-            msg = e.args[0]
+            msg = error
         return str(msg)
-    except Exception as e:
-        raise e
-    raise Exception("Inspecting transaction revert is failed.")
+    except Exception as exc:
+        LOG.warning(
+            "Failed to replay transaction revert: "
+            f"transaction_hash={tx_hash.to_0x_hex()} "
+            f"block_number={block_number} error={exc}"
+        )
+        return None
+
+    LOG.warning(
+        "Transaction replay unexpectedly succeeded: "
+        f"transaction_hash={tx_hash.to_0x_hex()} "
+        f"block_number={block_number}"
+    )
+    return None
 
 
 async def txpool_pending_count() -> int:
