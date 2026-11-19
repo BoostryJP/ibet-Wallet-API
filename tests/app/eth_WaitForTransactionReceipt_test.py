@@ -178,6 +178,63 @@ class TestEthWaitForTransactionReceipt:
                 "error_msg": "Message sender balance is insufficient.",
             }
 
+    # <Normal_2_1>
+    # Wait receipt for reverted transaction when failure inspection is unavailable
+    @mock.patch(
+        "app.api.routers.eth.inspect_tx_failure",
+        return_value=None,
+    )
+    def test_normal_2_1(
+        self,
+        mock_inspect: mock.MagicMock,
+        client: TestClient,
+        session: Session,
+        shared_contract: SharedContract,
+    ):
+        tokenlist = shared_contract["TokenList"]
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist["address"]
+
+        issuer = eth_account["issuer"]
+        coupontoken_1 = IbetCouponTestHelper.issue(
+            issuer["account_address"],
+            {
+                "name": "name_test1",
+                "symbol": "symbol_test1",
+                "totalSupply": 1000000,
+                "tradableExchange": config.ZERO_ADDRESS,
+                "details": "details_test1",
+                "returnDetails": "returnDetails_test1",
+                "memo": "memo_test1",
+                "expirationDate": "20211201",
+                "transferable": True,
+                "contactInformation": "contactInformation_test1",
+                "privacyPolicy": "privacyPolicy_test1",
+            },
+        )
+        IbetCouponTestHelper.register_token_list(
+            issuer["account_address"], coupontoken_1.address, tokenlist["address"]
+        )
+
+        listing_token(session, coupontoken_1.address)
+        executable_contract_token(session, coupontoken_1.address)
+
+        user1 = eth_account["user1"]
+        tx = coupontoken_1.functions.consume(10000).build_transaction(
+            _tx_params(to_checksum_address(user1["account_address"]))
+        )
+        tx_hash = web3.eth.send_transaction(tx)
+
+        resp = client.get(self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()})
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
+            "status": 0,
+            "error_code": None,
+            "error_msg": None,
+        }
+        mock_inspect.assert_called_once()
+
     ###################################################################
     # Error
     ###################################################################
