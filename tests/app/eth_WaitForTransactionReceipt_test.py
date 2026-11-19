@@ -17,16 +17,19 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
+import asyncio
 from unittest import mock
 
 from eth_utils.address import to_checksum_address
 from fastapi.testclient import TestClient
+from hexbytes import HexBytes
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 from web3.types import TxParams, Wei
 
 from app import config
+from app.api.routers import eth as eth_router
 from app.model.db import ExecutableContract, Listing
 from tests.account_config import eth_account
 from tests.helpers import IbetCouponTestHelper
@@ -180,13 +183,8 @@ class TestEthWaitForTransactionReceipt:
 
     # <Normal_2_1>
     # Wait receipt for reverted transaction when failure inspection is unavailable
-    @mock.patch(
-        "app.api.routers.eth.inspect_tx_failure",
-        return_value=None,
-    )
     def test_normal_2_1(
         self,
-        mock_inspect: mock.MagicMock,
         client: TestClient,
         session: Session,
         shared_contract: SharedContract,
@@ -224,7 +222,13 @@ class TestEthWaitForTransactionReceipt:
         )
         tx_hash = web3.eth.send_transaction(tx)
 
-        resp = client.get(self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()})
+        with mock.patch(
+            "app.api.routers.eth.AsyncContract.get_transaction",
+            mock.AsyncMock(return_value=None),
+        ):
+            resp = client.get(
+                self.apiurl, params={"transaction_hash": tx_hash.to_0x_hex()}
+            )
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -233,7 +237,67 @@ class TestEthWaitForTransactionReceipt:
             "error_code": None,
             "error_msg": None,
         }
-        mock_inspect.assert_called_once()
+
+    def test_inspect_tx_failure_returns_none_for_unavailable_state(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+
+        with mock.patch(
+            "app.api.routers.eth.AsyncContract.get_transaction",
+            mock.AsyncMock(return_value=None),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
+
+        with mock.patch(
+            "app.api.routers.eth.AsyncContract.get_transaction",
+            mock.AsyncMock(side_effect=ConnectionError("missing trie node")),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
+
+    def test_inspect_tx_failure_returns_none_for_replay_failure(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+        tx = {
+            "to": "0x0000000000000000000000000000000000000001",
+            "from": "0x0000000000000000000000000000000000000002",
+            "value": 0,
+            "input": HexBytes("0x"),
+            "blockNumber": 123,
+        }
+
+        with (
+            mock.patch(
+                "app.api.routers.eth.AsyncContract.get_transaction",
+                mock.AsyncMock(return_value=tx),
+            ),
+            mock.patch.object(
+                eth_router.async_web3.eth,
+                "call",
+                mock.AsyncMock(side_effect=ConnectionError("RPC unavailable")),
+            ),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
+
+    def test_inspect_tx_failure_returns_none_when_replay_succeeds(self):
+        tx_hash = HexBytes("0x" + "01" * 32)
+        tx = {
+            "to": "0x0000000000000000000000000000000000000001",
+            "from": "0x0000000000000000000000000000000000000002",
+            "value": 0,
+            "input": HexBytes("0x"),
+            "blockNumber": 123,
+        }
+
+        with (
+            mock.patch(
+                "app.api.routers.eth.AsyncContract.get_transaction",
+                mock.AsyncMock(return_value=tx),
+            ),
+            mock.patch.object(
+                eth_router.async_web3.eth,
+                "call",
+                mock.AsyncMock(return_value=b""),
+            ),
+        ):
+            assert asyncio.run(eth_router.inspect_tx_failure(tx_hash, 123)) is None
 
     ###################################################################
     # Error

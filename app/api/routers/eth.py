@@ -317,8 +317,6 @@ async def send_raw_transaction(
                     code, message = None, None
                 else:
                     code, message = error_code_msg(err_msg)
-                    if code == 0:
-                        code = None
                 result.append(
                     {
                         "id": i + 1,
@@ -607,8 +605,6 @@ async def wait_for_transaction_receipt(
                 code, message = None, None
             else:
                 code, message = error_code_msg(err_msg)
-                if code == 0:
-                    code = None
             result = {"status": 0, "error_code": code, "error_msg": message}
         else:
             result = {"status": 1}
