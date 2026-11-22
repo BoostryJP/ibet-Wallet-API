@@ -1,4 +1,3 @@
-# pyright: reportConstantRedefinition=false
 """
 Copyright BOOSTRY Co., Ltd.
 

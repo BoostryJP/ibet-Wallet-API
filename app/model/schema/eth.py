@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from enum import IntEnum, StrEnum
-from typing import Annotated, Literal, Optional, TypeAlias, TypedDict
+from typing import Annotated, Literal, NotRequired, Optional, TypeAlias, TypedDict
 
 from pydantic import BaseModel, Field, RootModel, StrictStr, field_validator
 
@@ -44,6 +44,9 @@ class SendRawTransactionResultBaseDict(TypedDict):
     id: int
     status: Literal[0, 1, 2, 3, 4]
     transaction_hash: str | None
+    # Failure details may be absent when execution fails before a contract revert.
+    error_code: NotRequired[int | None]
+    error_msg: NotRequired[str | None]
 
 
 class SendRawTransactionResultWithErrorDict(TypedDict):
@@ -62,6 +65,8 @@ SendRawTransactionResultDict: TypeAlias = (
 class SendRawTransactionNoWaitResultWithoutHashDict(TypedDict):
     id: int
     status: Literal[0]
+    # A failure before submission may not have a transaction hash.
+    transaction_hash: NotRequired[str | None]
 
 
 class SendRawTransactionNoWaitResultWithHashDict(TypedDict):

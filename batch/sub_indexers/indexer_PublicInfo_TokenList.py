@@ -43,7 +43,7 @@ class Processor:
     """Processor for indexing token list"""
 
     def __init__(self):
-        self.token_list_digest = None
+        self.token_list_digest: str | None = None
 
     def process(self):
         LOG.info("Syncing token list")

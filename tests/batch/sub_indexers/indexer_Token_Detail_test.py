@@ -164,6 +164,8 @@ class TestProcessor:
         exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+        # Expected payloads include nested dividend information as well as scalars.
+        args: dict[str, object]
         _bond_token_expected_list: list[dict[str, object]] = []
         # Issue bond token
         for i in range(10):

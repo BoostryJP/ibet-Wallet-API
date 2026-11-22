@@ -160,7 +160,7 @@ class Processor:
         self.node_info[endpoint_uri] = {
             "priority": priority,
             "web3": web3,
-            "history": RingBuffer(
+            "history": RingBuffer[BlockHistory](
                 config.BLOCK_SYNC_STATUS_CALC_PERIOD,
                 {"time": time.time(), "block_number": 0},
             ),

@@ -43,7 +43,7 @@ class Processor:
     """Processor for indexing company list"""
 
     def __init__(self):
-        self.company_list_digest = None
+        self.company_list_digest: str | None = None
 
     def process(self):
         LOG.info("Syncing company list")

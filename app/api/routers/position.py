@@ -107,6 +107,19 @@ LOG = log.get_logger()
 router = APIRouter(prefix="/Position", tags=["user_position"])
 
 
+if TYPE_CHECKING:
+
+    def _position_token_address(position: PositionDataDict) -> str:
+        # Open TypedDict variants may contain extra keys; check the value as well.
+        address = (
+            position["token_address"]
+            if "token_address" in position
+            else position["token"]["token_address"]
+        )
+        assert isinstance(address, str)
+        return address
+
+
 class BasePosition:
     # NOTE: Set Child class initializer.
     token_enabled: bool
@@ -1219,15 +1232,15 @@ async def list_all_share_positions(
         for position_data in positions["positions"]:
             assert "pending_transfer" in position_data
             assert "locked" in position_data
+            assert isinstance(position_data["pending_transfer"], int)
+            assert isinstance(position_data["locked"], int | None)
+
             balance = position_data["balance"]
             pending_transfer = position_data["pending_transfer"]
             exchange_balance = position_data["exchange_balance"]
             exchange_commitment = position_data["exchange_commitment"]
             locked = position_data["locked"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
+            token_address = _position_token_address(position_data)
             type_checked_positions.append(
                 SecurityTokenPositionWithAddress(
                     balance=balance,
@@ -1281,15 +1294,15 @@ async def list_all_straight_bond_positions(
         for position_data in positions["positions"]:
             assert "pending_transfer" in position_data
             assert "locked" in position_data
+            assert isinstance(position_data["pending_transfer"], int)
+            assert isinstance(position_data["locked"], int | None)
+
             balance = position_data["balance"]
             pending_transfer = position_data["pending_transfer"]
             exchange_balance = position_data["exchange_balance"]
             exchange_commitment = position_data["exchange_commitment"]
             locked = position_data["locked"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
+            token_address = _position_token_address(position_data)
             type_checked_positions.append(
                 SecurityTokenPositionWithAddress(
                     balance=balance,
@@ -1351,11 +1364,7 @@ async def list_all_membership_positions(
                         balance=position_data["balance"],
                         exchange_balance=position_data["exchange_balance"],
                         exchange_commitment=position_data["exchange_commitment"],
-                        token_address=(
-                            position_data["token_address"]
-                            if "token_address" in position_data
-                            else position_data["token"]["token_address"]
-                        ),
+                        token_address=_position_token_address(position_data),
                     )
                     for position_data in positions["positions"]
                 ],
@@ -1385,14 +1394,12 @@ async def list_all_coupon_positions(
         type_checked_positions: list[CouponPositionWithAddress] = []
         for position_data in positions["positions"]:
             assert "used" in position_data
+            assert isinstance(position_data["used"], int)
             balance = position_data["balance"]
             exchange_balance = position_data["exchange_balance"]
             exchange_commitment = position_data["exchange_commitment"]
             used = position_data["used"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
+            token_address = _position_token_address(position_data)
             type_checked_positions.append(
                 CouponPositionWithAddress(
                     balance=balance,

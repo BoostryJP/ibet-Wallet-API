@@ -737,7 +737,9 @@ class BondToken(TokenBase):
 
     @classmethod
     @token_db_cache(BondTokenModel)
-    async def get(cls, async_session: AsyncSession, token_address: str) -> BondToken:
+    async def get(
+        cls: type[BondToken], async_session: AsyncSession, token_address: str
+    ) -> BondToken:
         return await cls.fetch(async_session, token_address)
 
 
@@ -1097,7 +1099,9 @@ class ShareToken(TokenBase):
 
     @classmethod
     @token_db_cache(ShareTokenModel)
-    async def get(cls, async_session: AsyncSession, token_address: str) -> ShareToken:
+    async def get(
+        cls: type[ShareToken], async_session: AsyncSession, token_address: str
+    ) -> ShareToken:
         return await cls.fetch(async_session, token_address)
 
 
@@ -1383,7 +1387,7 @@ class MembershipToken(TokenBase):
     @classmethod
     @token_db_cache(MembershipTokenModel)
     async def get(
-        cls, async_session: AsyncSession, token_address: str
+        cls: type[MembershipToken], async_session: AsyncSession, token_address: str
     ) -> MembershipToken:
         return await cls.fetch(async_session, token_address)
 
@@ -1667,5 +1671,7 @@ class CouponToken(TokenBase):
 
     @classmethod
     @token_db_cache(CouponTokenModel)
-    async def get(cls, async_session: AsyncSession, token_address: str) -> CouponToken:
+    async def get(
+        cls: type[CouponToken], async_session: AsyncSession, token_address: str
+    ) -> CouponToken:
         return await cls.fetch(async_session, token_address)

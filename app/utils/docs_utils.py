@@ -81,9 +81,9 @@ def create_error_model(app_error: Type[AppError]) -> Type[ErrorResponse]:
         description = (dict[str, Any] | None, Field(default=None))
     metainfo_model = create_model(
         f"{base_name}Metainfo",
-        message=(Literal[app_error.message], Field(..., examples=[app_error.message])),
+        message=(Literal[app_error.message], Field(..., examples=[app_error.message])),  # pyrefly: ignore [invalid-literal]
         code=(
-            Literal[app_error.error_code],
+            Literal[app_error.error_code],  # pyrefly: ignore [invalid-literal]
             Field(..., examples=[app_error.error_code]),
         ),
         description=description,
@@ -132,11 +132,11 @@ def get_routers_responses(
             if status_code == 400:
                 ret[status_code] = {
                     "model": Union[
-                        tuple(error_models) + (RequestValidationErrorResponse,)
+                        tuple(error_models) + (RequestValidationErrorResponse,)  # pyrefly: ignore [not-a-type]
                     ]
                 }
             else:
-                ret[status_code] = {"model": Union[tuple(error_models)]}
+                ret[status_code] = {"model": Union[tuple(error_models)]}  # pyrefly: ignore [invalid-annotation]
     return ret
 
 
