@@ -117,9 +117,6 @@ ReDoc 形式のドキュメントを参照することができるはずです�
 
 ## テストの実行
 
-静的型検査は `make typecheck` で実行します。`pyproject.toml` の
-`[tool.pyrefly]` 設定を使用する pyrefly により、プルリクエストの CI でも実行されます。
-
 テストで利用する Python の仮想環境を作成します。
 ```bash
 $ uv venv

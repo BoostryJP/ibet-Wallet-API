@@ -118,9 +118,6 @@ You will see the alternative automatic documentation provided by ReDoc:
 
 ## Running the tests
 
-Run static type checks with `make typecheck`. This uses pyrefly with the
-`[tool.pyrefly]` configuration in `pyproject.toml` and also runs in pull request CI.
-
 Create virtual environment with:
 ```bash
 $ uv venv
