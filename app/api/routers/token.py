@@ -1330,8 +1330,7 @@ async def list_token_transfer_histories(
                             )
                         case _:
                             transfer_data = {
-                                str(key): str(value)
-                                for key, value in data_value.items()
+                                key: str(value) for key, value in data_value.items()
                             }
                 else:
                     transfer_data = {}
@@ -1567,8 +1566,7 @@ async def search_transfer_histories(
                             )
                         case _:
                             transfer_data = {
-                                str(key): str(value)
-                                for key, value in data_value.items()
+                                key: str(value) for key, value in data_value.items()
                             }
                 else:
                     transfer_data = {}

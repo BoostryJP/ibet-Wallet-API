@@ -105,7 +105,7 @@ class TestAdminTokenDELETE:
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.delete(apiurl)
 
         # Assertion
@@ -148,7 +148,7 @@ class TestAdminTokenDELETE:
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.delete(apiurl)
 
         # Assertion
@@ -191,7 +191,7 @@ class TestAdminTokenDELETE:
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.delete(apiurl)
 
         # Assertion
@@ -234,7 +234,7 @@ class TestAdminTokenDELETE:
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.delete(apiurl)
 
         # Assertion
@@ -278,7 +278,7 @@ class TestAdminTokenDELETE:
         session.commit()
 
         # Request target API
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.delete(apiurl)
 
         # Assertion

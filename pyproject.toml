@@ -65,6 +65,7 @@ dev = [
 project-includes = ["app/", "batch/", "logger.py", "tests/"]
 python-version = "3.14"
 preset = "strict"
+min-severity = "warn"
 
 [tool.ruff]
 line-length = 88

@@ -229,13 +229,11 @@ class Processor:
                         contract_name="IbetSecurityTokenInterface",
                         address=listed_token.token_address,
                     )
-                    tradable_exchange_address = str(
-                        await AsyncContract.call_function(
-                            contract=token_contract,
-                            function_name="tradableExchange",
-                            args=(),
-                            default_returns=ZERO_ADDRESS,
-                        )
+                    tradable_exchange_address = await AsyncContract.call_function(
+                        contract=token_contract,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS,
                     )
                     self.token_contract_cache[listed_token.token_address] = (
                         AsyncContractEventsView(

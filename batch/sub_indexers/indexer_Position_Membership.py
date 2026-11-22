@@ -209,7 +209,7 @@ class Processor:
                     args=(listed_token.token_address,),
                     default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
                 )
-                self.token_type_cache[listed_token.token_address] = str(token_info[1])
+                self.token_type_cache[listed_token.token_address] = token_info[1]
             token_type = self.token_type_cache[listed_token.token_address]
             if not token_type:
                 # Skip if token is not listed in the TokenList contract

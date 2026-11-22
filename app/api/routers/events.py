@@ -103,8 +103,8 @@ async def _collect_event_logs(
         except Web3ValidationError, Web3RPCError:
             events = []
         for event in events:
-            block_number = int(event["blockNumber"])
-            log_index = int(event["logIndex"])
+            block_number = event["blockNumber"]
+            log_index = event["logIndex"]
             block_data = await async_web3.eth.get_block(block_number)
             block_timestamp_raw = block_data.get("timestamp")
             if block_timestamp_raw is None:
@@ -156,7 +156,7 @@ async def list_all_e2e_messaging_event_logs(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
             argument_filters_dict = {
-                str(key): value for key, value in parsed_filters.items()
+                key: value for key, value in parsed_filters.items()
             }
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
@@ -209,7 +209,7 @@ async def list_all_ibet_escrow_event_logs(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
             argument_filters_dict = {
-                str(key): value for key, value in parsed_filters.items()
+                key: value for key, value in parsed_filters.items()
             }
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
@@ -273,7 +273,7 @@ async def list_all_ibet_security_token_escrow_event_logs(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
             argument_filters_dict = {
-                str(key): value for key, value in parsed_filters.items()
+                key: value for key, value in parsed_filters.items()
             }
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
@@ -346,7 +346,7 @@ async def list_all_ibet_security_token_dvp_event_logs(
                 request_query.argument_filters
             ).model_dump(exclude_none=True)
             argument_filters_dict = {
-                str(key): value for key, value in parsed_filters.items()
+                key: value for key, value in parsed_filters.items()
             }
         except Exception:
             raise InvalidParameterError("invalid argument_filters")
@@ -380,7 +380,7 @@ async def list_all_ibet_security_token_dvp_event_logs(
 
     resp_json = await _collect_event_logs(
         contract_name="IbetSecurityTokenDVP",
-        contract_address=str(config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS),
+        contract_address=config.IBET_SECURITY_TOKEN_DVP_CONTRACT_ADDRESS,
         attr_list=attr_list,
         from_block=request_query.from_block,
         to_block=request_query.to_block,
@@ -433,7 +433,7 @@ async def list_all_ibet_security_token_interface_event_logs(
 
     resp_json = await _collect_event_logs(
         contract_name="IbetSecurityTokenInterface",
-        contract_address=str(token_address),
+        contract_address=token_address,
         attr_list=attr_list,
         from_block=request_query.from_block,
         to_block=request_query.to_block,

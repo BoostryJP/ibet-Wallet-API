@@ -348,7 +348,7 @@ async def retrieve_straight_bond_token(
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-    token_template = str(token[1])
+    token_template = token[1]
 
     if token_template != TokenType.IbetStraightBond:
         raise DataNotExistsError("token_address: %s" % token_address)
