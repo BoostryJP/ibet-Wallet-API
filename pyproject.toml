@@ -65,7 +65,6 @@ dev = [
 project-includes = ["app/", "batch/", "logger.py", "tests/"]
 python-version = "3.14"
 preset = "strict"
-infer-with-first-use = false
 
 [tool.pyrefly.errors]
 implicit-any-empty-container = false
