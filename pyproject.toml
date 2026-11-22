@@ -66,10 +66,6 @@ project-includes = ["app/", "batch/", "logger.py", "tests/"]
 python-version = "3.14"
 preset = "strict"
 
-[tool.pyrefly.errors]
-implicit-any-empty-container = false
-missing-override-decorator = false
-
 [tool.ruff]
 line-length = 88
 indent-width = 4

@@ -49,7 +49,7 @@ class Company(Base):
 
     if engine.name == "mysql":
         # NOTE:MySQLではDatetime型で小数秒桁を指定しない場合、整数秒しか保存されない
-        created: Mapped[datetime] = mapped_column(
+        created: Mapped[datetime] = mapped_column(  # pyrefly: ignore [missing-override-decorator]
             MySQLDATETIME(fsp=6), default=naive_utcnow, index=True
         )
     else:

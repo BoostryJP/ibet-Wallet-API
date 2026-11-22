@@ -94,7 +94,7 @@ class TestListTokenTransferHistory:
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assumed_body = []
+        assumed_body: list[dict[str, object]] = []
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

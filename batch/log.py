@@ -21,7 +21,7 @@ import contextlib
 import contextvars
 import logging
 import sys
-from typing import Any, cast
+from typing import Any, cast, override
 
 from app import config
 from logger import NOTICE, SystemLogger
@@ -43,6 +43,7 @@ def parent_process(process_name: str | None):
 
 
 class _BatchContextFilter(logging.Filter):
+    @override
     def filter(self, record: logging.LogRecord) -> bool:
         process_name = getattr(record, "process_name", None) or record.name
         parent_name = _parent_process_name.get()

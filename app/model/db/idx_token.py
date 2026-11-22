@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import datetime
-from typing import Any, Mapping, Type, Union
+from typing import Any, Mapping, Type, Union, override
 
 from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -138,6 +138,7 @@ class IDXBondToken(TokenBase):
     # NOTE: Short-term cache required
     is_redeemed: Mapped[bool | None] = mapped_column(Boolean)
 
+    @override
     def json(self):
         return {
             **super().json(),
@@ -201,6 +202,7 @@ class IDXShareToken(TokenBase):
     # NOTE: Short-term cache required
     dividend_information: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
+    @override
     def json(self):
         return {
             **super().json(),
@@ -240,6 +242,7 @@ class IDXMembershipToken(TokenBase):
     # Image URL(JSON)
     image_url: Mapped[list[dict[str, int | str]] | None] = mapped_column(JSON)
 
+    @override
     def json(self):
         return {
             **super().json(),
@@ -275,6 +278,7 @@ class IDXCouponToken(TokenBase):
     # Image URL(JSON)
     image_url: Mapped[list[dict[str, int | str]] | None] = mapped_column(JSON)
 
+    @override
     def json(self):
         return {
             **super().json(),

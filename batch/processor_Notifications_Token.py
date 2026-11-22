@@ -21,7 +21,7 @@ import asyncio
 import sys
 import time
 from datetime import UTC, datetime
-from typing import Any, Sequence, TypedDict
+from typing import Any, Sequence, TypedDict, override
 
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -64,9 +64,6 @@ from batch import free_malloc, log
 from batch.lib.token_list import TokenList
 
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")
-
-WORKER_COUNT = int(WORKER_COUNT)
-NOTIFICATION_PROCESS_INTERVAL = int(NOTIFICATION_PROCESS_INTERVAL)
 
 async_web3 = AsyncWeb3Wrapper()
 
@@ -310,6 +307,7 @@ class WatchTransfer(EventWatcher):
     def __init__(self):
         super().__init__("Transfer", {}, NotificationType.TRANSFER)
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -359,6 +357,7 @@ class WatchApplyForTransfer(EventWatcher):
     def __init__(self):
         super().__init__("ApplyForTransfer", {}, NotificationType.APPLY_FOR_TRANSFER)
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -405,6 +404,7 @@ class WatchApproveTransfer(EventWatcher):
     def __init__(self):
         super().__init__("ApproveTransfer", {}, NotificationType.APPROVE_TRANSFER)
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -451,6 +451,7 @@ class WatchCancelTransfer(EventWatcher):
     def __init__(self):
         super().__init__("CancelTransfer", {}, NotificationType.CANCEL_TRANSFER)
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -496,6 +497,7 @@ class WatchForceLock(EventWatcher):
     def __init__(self):
         super().__init__("ForceLock", {}, NotificationType.FORCE_LOCK)
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -538,6 +540,7 @@ class WatchForceUnlock(EventWatcher):
     def __init__(self):
         super().__init__("ForceUnlock", {}, NotificationType.FORCE_UNLOCK)
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -586,6 +589,7 @@ class WatchChangeToRedeemed(EventWatcher):
             skip_past_data_on_initial_sync=True,
         )
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -634,6 +638,7 @@ class WatchChangeToCanceled(EventWatcher):
             skip_past_data_on_initial_sync=True,
         )
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,
@@ -886,6 +891,7 @@ class WatchTransferableAttribute(AttributeWatcher):
             token_type_list=[TokenType.IbetShare, TokenType.IbetStraightBond],
         )
 
+    @override
     async def db_merge(
         self,
         db_session: AsyncSession,

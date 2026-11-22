@@ -222,7 +222,7 @@ class Processor:
                     args=(listed_token.token_address,),
                     default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
                 )
-                self.token_type_cache[listed_token.token_address] = str(token_info[1])
+                self.token_type_cache[listed_token.token_address] = token_info[1]
             token_type = self.token_type_cache[listed_token.token_address]
             if not token_type:
                 # Skip if token is not listed in the TokenList contract
@@ -1542,7 +1542,7 @@ class Processor:
         :return: None
         """
         try:
-            data = json.loads(data_str)
+            data: dict[str, object] = json.loads(data_str)
             LockDataMessage.model_validate(data)
         except Exception:
             data = {}
@@ -1589,7 +1589,7 @@ class Processor:
         :return: None
         """
         try:
-            data = json.loads(data_str)
+            data: dict[str, object] = json.loads(data_str)
             UnlockDataMessage.model_validate(data)
         except:
             data = {}

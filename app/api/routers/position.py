@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import TYPE_CHECKING, Annotated, Any, Sequence, Type, Union
+from typing import TYPE_CHECKING, Annotated, Any, Sequence, Type, Union, override
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import (
@@ -603,6 +603,7 @@ class BasePositionShare(BasePosition):
             config.SHARE_TOKEN_ENABLED, TokenType.IbetShare, ShareToken, IDXShareToken
         )
 
+    @override
     async def _get_position(
         self,
         account_address: str,
@@ -711,6 +712,7 @@ class BasePositionStraightBond(BasePosition):
             IDXBondToken,
         )
 
+    @override
     async def _get_position(
         self,
         account_address: str,
@@ -819,6 +821,7 @@ class BasePositionMembership(BasePosition):
             IDXMembershipToken,
         )
 
+    @override
     async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
@@ -920,6 +923,7 @@ class BasePositionCoupon(BasePosition):
             IDXCouponToken,
         )
 
+    @override
     async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
@@ -1051,6 +1055,7 @@ class BasePositionCoupon(BasePosition):
             "positions": position_list,
         }
 
+    @override
     async def _get_position(
         self,
         account_address: str,
@@ -1961,7 +1966,7 @@ async def list_all_token_position(
         if token_type == TokenType.IbetMembership.value
     ]
 
-    bond_token_map = {}
+    bond_token_map: dict[str, IDXBondToken] = {}
     if len(bond_addresses) > 0:
         bond_token_map = {
             token.token_address: token
@@ -1973,7 +1978,7 @@ async def list_all_token_position(
                 )
             ).all()
         }
-    share_token_map = {}
+    share_token_map: dict[str, IDXShareToken] = {}
     if len(share_addresses) > 0:
         share_token_map = {
             token.token_address: token
@@ -1985,7 +1990,7 @@ async def list_all_token_position(
                 )
             ).all()
         }
-    coupon_token_map = {}
+    coupon_token_map: dict[str, IDXCouponToken] = {}
     if len(coupon_addresses) > 0:
         coupon_token_map = {
             token.token_address: token
@@ -1997,7 +2002,7 @@ async def list_all_token_position(
                 )
             ).all()
         }
-    membership_token_map = {}
+    membership_token_map: dict[str, IDXMembershipToken] = {}
     if len(membership_addresses) > 0:
         membership_token_map = {
             token.token_address: token
@@ -2053,7 +2058,7 @@ async def list_all_token_position(
                     "balance": balance,
                     "exchange_balance": exchange_balance,
                     "exchange_commitment": exchange_commitment,
-                    "used": int(used),
+                    "used": used,
                     "token": CouponToken.from_model(token).to_dict(),
                 }
             )

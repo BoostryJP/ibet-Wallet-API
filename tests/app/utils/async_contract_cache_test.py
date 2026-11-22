@@ -22,6 +22,7 @@ from typing import Any, cast
 
 import pytest
 from aiohttp import ClientTimeout
+from eth_typing import ABI
 from web3 import AsyncHTTPProvider, AsyncWeb3
 
 from app.contracts import contract as contract_module
@@ -85,7 +86,8 @@ def test_async_contract_factory_cache_is_scoped_by_async_web3(
 
     contract_module.AsyncContract.cache.clear()
     contract_module.AsyncContract.factory_map.clear()
-    contract_module.AsyncContract.cache["TestContract"] = {"abi": []}
+    abi: ABI = []
+    contract_module.AsyncContract.cache["TestContract"] = {"abi": abi}
 
     monkeypatch.setattr(contract_module.async_web3, "get_web3", lambda: web3_1)
     contract_1 = contract_module.AsyncContract.get_contract(

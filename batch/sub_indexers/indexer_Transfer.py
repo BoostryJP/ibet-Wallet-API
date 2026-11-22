@@ -181,13 +181,13 @@ class Processor:
                 validated_data = TransferDataMessage(**data)
                 message = validated_data.message
             except ValidationError:
-                data = {}
+                data = dict[str, object]()
                 message = None
             except json.JSONDecodeError:
-                data = {}
+                data = dict[str, object]()
                 message = None
             except:
-                data = {}
+                data = dict[str, object]()
                 message = None
         else:
             data = None
@@ -287,7 +287,7 @@ class Processor:
                     args=(listed_token.token_address,),
                     default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
                 )
-                self.token_type_cache[listed_token.token_address] = str(token_info[1])
+                self.token_type_cache[listed_token.token_address] = token_info[1]
             token_type = self.token_type_cache[listed_token.token_address]
             if not token_type:
                 # Skip if token is not listed in the TokenList contract
@@ -420,7 +420,7 @@ class Processor:
                                     call_data = json.loads(bytes.fromhex(raw_call_data))
                                     if call_data.get("purpose") == "Reallocation":
                                         is_reallocation = True
-                                except ValueError, json.JSONDecodeError:
+                                except ValueError:
                                     # If decoding fails, treat it as a normal transfer
                                     pass
                         self.__insert_idx(
