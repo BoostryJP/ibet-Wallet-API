@@ -120,7 +120,7 @@ class SearchTokenHoldersSortItem(StrEnum):
 
 class SearchTokenHoldersRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
-        [],
+        list[StrictStr](),
         description="list of token address (**this affects total number**)",
     )
     exclude_owner: Optional[bool] = Field(default=False, description="exclude owner")
@@ -237,7 +237,7 @@ class SearchTransferHistorySortItem(StrEnum):
 
 class SearchTransferHistoryRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
-        [],
+        list[StrictStr](),
         description="list of account address (**this affects total number**)",
     )
     offset: Optional[int] = Field(default=None, description="start position", ge=0)
@@ -302,7 +302,7 @@ class SearchTransferApprovalHistorySortItem(StrEnum):
 
 class SearchTransferApprovalHistoryRequest(BaseModel):
     account_address_list: list[StrictStr] = Field(
-        [],
+        list[StrictStr](),
         description="list of account address (**this affects total number**)",
     )
     offset: Optional[int] = Field(default=None, description="start position", ge=0)

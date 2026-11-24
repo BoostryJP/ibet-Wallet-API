@@ -1544,7 +1544,7 @@ class Processor:
         :return: None
         """
         try:
-            data = json.loads(data_str)
+            data: dict[str, object] = json.loads(data_str)
             LockDataMessage.model_validate(data)
         except Exception:
             data = {}
@@ -1591,7 +1591,7 @@ class Processor:
         :return: None
         """
         try:
-            data = json.loads(data_str)
+            data: dict[str, object] = json.loads(data_str)
             UnlockDataMessage.model_validate(data)
         except:
             data = {}

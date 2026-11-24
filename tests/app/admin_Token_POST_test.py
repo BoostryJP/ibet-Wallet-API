@@ -73,7 +73,7 @@ class TestAdminTokenPOST:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 200
@@ -107,7 +107,7 @@ class TestAdminTokenPOST:
         }
         headers = {"Content-Type": "invalid_type"}
         request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + str(self.default_token["token_address"])
+        apiurl = self.apiurl_base + self.default_token["token_address"]
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
         assert resp.status_code == 400
         assert resp.json() == {
@@ -138,7 +138,7 @@ class TestAdminTokenPOST:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + str(self.default_token["token_address"])
+        apiurl = self.apiurl_base + self.default_token["token_address"]
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 400
@@ -168,7 +168,7 @@ class TestAdminTokenPOST:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + str(self.default_token["token_address"])
+        apiurl = self.apiurl_base + self.default_token["token_address"]
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 400
@@ -209,7 +209,7 @@ class TestAdminTokenPOST:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + str(self.default_token["token_address"])
+        apiurl = self.apiurl_base + self.default_token["token_address"]
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 400
@@ -248,7 +248,7 @@ class TestAdminTokenPOST:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + str(self.default_token["token_address"])
+        apiurl = self.apiurl_base + self.default_token["token_address"]
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 404

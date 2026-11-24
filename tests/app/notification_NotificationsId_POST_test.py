@@ -186,7 +186,7 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        assumed_body = {
+        assumed_body: dict[str, object] = {
             "notification_type": NotificationType.APPLY_FOR_TRANSFER,
             "id": "0x00000011034000000000000000",
             "priority": 2,

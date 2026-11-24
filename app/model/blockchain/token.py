@@ -21,7 +21,7 @@ import functools
 import json
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Awaitable, Callable, Self, Type, TypeVar, Union, cast
+from typing import Awaitable, Callable, Self, Type, TypeVar, Union, cast, override
 
 from eth_utils.address import to_checksum_address
 from sqlalchemy import select
@@ -200,6 +200,7 @@ class BondToken(TokenBase):
     is_redeemed: bool
 
     @classmethod
+    @override
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, BondTokenModel)
         token_obj = cls()
@@ -286,6 +287,7 @@ class BondToken(TokenBase):
 
         return token_obj
 
+    @override
     def to_model(self) -> BondTokenModel:
         token_model = BondTokenModel()
         for key, value in self.__dict__.items():
@@ -302,6 +304,7 @@ class BondToken(TokenBase):
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
+    @override
     def to_dict(self) -> BondTokenDict:
         # TODO: Align with nullable BondTokenDict and emit null for unset
         # interest_payment_date1..12 values.
@@ -353,6 +356,7 @@ class BondToken(TokenBase):
         }
         return data
 
+    @override
     async def fetch_expiry_short(self) -> None:
         """
         債権トークン リアルタイム属性情報取得
@@ -604,14 +608,14 @@ class BondToken(TokenBase):
         interest_payment_date12 = ""
         try:
             if interest_payment_date_string != "":
-                interest_payment_date_raw = json.loads(
+                interest_payment_date_raw: dict[str, str] = json.loads(
                     interest_payment_date_string.replace("'", '"')
                     .replace("True", "true")
                     .replace("False", "false")
                 )
             else:
                 interest_payment_date_raw = {}
-            interest_payment_date = cast(dict[str, str], interest_payment_date_raw)
+            interest_payment_date = interest_payment_date_raw
             if "interestPaymentDate1" in interest_payment_date:
                 interest_payment_date1 = interest_payment_date.get(
                     "interestPaymentDate1", ""
@@ -736,8 +740,11 @@ class BondToken(TokenBase):
         return bondtoken
 
     @classmethod
+    @override
     @token_db_cache(BondTokenModel)
-    async def get(cls, async_session: AsyncSession, token_address: str) -> BondToken:
+    async def get(
+        cls: type[BondToken], async_session: AsyncSession, token_address: str
+    ) -> BondToken:
         return await cls.fetch(async_session, token_address)
 
 
@@ -755,6 +762,7 @@ class ShareToken(TokenBase):
     dividend_information: ShareDividendInformationDict
 
     @classmethod
+    @override
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, ShareTokenModel)
         token_obj = cls()
@@ -795,6 +803,7 @@ class ShareToken(TokenBase):
         )
         return token_obj
 
+    @override
     def to_model(self) -> "ShareTokenModel":
         token_model = ShareTokenModel()
         for key, value in self.__dict__.items():
@@ -803,6 +812,7 @@ class ShareToken(TokenBase):
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
+    @override
     def to_dict(self) -> ShareTokenDict:
         return {
             "token_address": self.token_address,
@@ -832,6 +842,7 @@ class ShareToken(TokenBase):
             "dividend_information": self.dividend_information,
         }
 
+    @override
     async def fetch_expiry_short(self) -> None:
         """
         株式トークン リアルタイム属性情報取得
@@ -1096,8 +1107,11 @@ class ShareToken(TokenBase):
         return sharetoken
 
     @classmethod
+    @override
     @token_db_cache(ShareTokenModel)
-    async def get(cls, async_session: AsyncSession, token_address: str) -> ShareToken:
+    async def get(
+        cls: type[ShareToken], async_session: AsyncSession, token_address: str
+    ) -> ShareToken:
         return await cls.fetch(async_session, token_address)
 
 
@@ -1111,6 +1125,7 @@ class MembershipToken(TokenBase):
     image_url: list[TokenImageDict]
 
     @classmethod
+    @override
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, MembershipTokenModel)
         token_obj = cls()
@@ -1141,6 +1156,7 @@ class MembershipToken(TokenBase):
         token_obj.image_url = cast(list[TokenImageDict], token_model.image_url)
         return token_obj
 
+    @override
     def to_model(self) -> "MembershipTokenModel":
         token_model = MembershipTokenModel()
         for key, value in self.__dict__.items():
@@ -1149,6 +1165,7 @@ class MembershipToken(TokenBase):
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
+    @override
     def to_dict(self) -> MembershipTokenDict:
         return {
             "token_address": self.token_address,
@@ -1174,6 +1191,7 @@ class MembershipToken(TokenBase):
             "image_url": self.image_url,
         }
 
+    @override
     async def fetch_expiry_short(self) -> None:
         """
         会員権トークン リアルタイム属性情報取得
@@ -1381,9 +1399,10 @@ class MembershipToken(TokenBase):
         return membershiptoken
 
     @classmethod
+    @override
     @token_db_cache(MembershipTokenModel)
     async def get(
-        cls, async_session: AsyncSession, token_address: str
+        cls: type[MembershipToken], async_session: AsyncSession, token_address: str
     ) -> MembershipToken:
         return await cls.fetch(async_session, token_address)
 
@@ -1398,6 +1417,7 @@ class CouponToken(TokenBase):
     image_url: list[TokenImageDict]
 
     @classmethod
+    @override
     def from_model(cls, token_model: IDXTokenInstance) -> Self:
         assert isinstance(token_model, CouponTokenModel)
         token_obj = cls()
@@ -1428,6 +1448,7 @@ class CouponToken(TokenBase):
         token_obj.image_url = cast(list[TokenImageDict], token_model.image_url)
         return token_obj
 
+    @override
     def to_model(self) -> "CouponTokenModel":
         token_model = CouponTokenModel()
         for key, value in self.__dict__.items():
@@ -1436,6 +1457,7 @@ class CouponToken(TokenBase):
         token_model.short_term_cache_created = datetime.now(UTC).replace(tzinfo=None)
         return token_model
 
+    @override
     def to_dict(self) -> CouponTokenDict:
         return {
             "token_address": self.token_address,
@@ -1461,6 +1483,7 @@ class CouponToken(TokenBase):
             "image_url": self.image_url,
         }
 
+    @override
     async def fetch_expiry_short(self) -> None:
         """
         クーポントークン リアルタイム属性情報取得
@@ -1666,6 +1689,9 @@ class CouponToken(TokenBase):
         return coupontoken
 
     @classmethod
+    @override
     @token_db_cache(CouponTokenModel)
-    async def get(cls, async_session: AsyncSession, token_address: str) -> CouponToken:
+    async def get(
+        cls: type[CouponToken], async_session: AsyncSession, token_address: str
+    ) -> CouponToken:
         return await cls.fetch(async_session, token_address)

@@ -136,7 +136,7 @@ def create_abi_event_argument_models(contract_name: str) -> Any:
             fields: dict[str, Any] = {}
             for i in abi.inputs:
                 if i.indexed is True:
-                    fields[i.name] = (Optional[i.type.to_python_type()], None)
+                    fields[i.name] = (Optional[i.type.to_python_type()], None)  # pyrefly: ignore [invalid-annotation]
 
             if not fields:
                 continue
@@ -149,5 +149,5 @@ def create_abi_event_argument_models(contract_name: str) -> Any:
 
             models.append(model)
 
-        parent_model = Union[tuple(models)]
+        parent_model = Union[tuple(models)]  # pyrefly: ignore [invalid-annotation]
     return parent_model

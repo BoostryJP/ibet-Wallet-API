@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import asyncio
 import sys
 import time
-from typing import Any, Generic, TypedDict, TypeVar
+from typing import Any, Generic, TypedDict, TypeVar, override
 
 from sqlalchemy import create_engine, delete, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -46,6 +46,7 @@ class Web3WrapperException(Exception):
 
 
 class CustomWeb3ExceptionMiddleware(Web3Middleware):
+    @override
     async def async_wrap_make_request(
         self, make_request: AsyncMakeRequestFn
     ) -> AsyncMakeRequestFn:
@@ -160,7 +161,7 @@ class Processor:
         self.node_info[endpoint_uri] = {
             "priority": priority,
             "web3": web3,
-            "history": RingBuffer(
+            "history": RingBuffer[BlockHistory](
                 config.BLOCK_SYNC_STATUS_CALC_PERIOD,
                 {"time": time.time(), "block_number": 0},
             ),
@@ -205,9 +206,7 @@ class Processor:
         # Check sync to other node
         syncing = await web3.eth.syncing
         if isinstance(syncing, dict):
-            remaining_blocks = int(syncing["highestBlock"]) - int(
-                syncing["currentBlock"]
-            )
+            remaining_blocks = syncing["highestBlock"] - syncing["currentBlock"]
             if remaining_blocks > config.BLOCK_SYNC_REMAINING_THRESHOLD:
                 is_synced = False
                 errors.append(

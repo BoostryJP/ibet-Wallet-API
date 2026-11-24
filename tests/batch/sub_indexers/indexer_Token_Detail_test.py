@@ -164,6 +164,8 @@ class TestProcessor:
         exchange_contract = shared_contract["IbetSecurityTokenEscrow"]
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+        # Expected payloads include nested dividend information as well as scalars.
+        args: dict[str, object]
         _bond_token_expected_list: list[dict[str, object]] = []
         # Issue bond token
         for i in range(10):
@@ -172,7 +174,7 @@ class TestProcessor:
                 "symbol": f"BOND{str(i + 1)}",
                 "totalSupply": 1000000 + 1,
                 "tradableExchange": exchange_contract["address"],
-                "faceValue": int((i + 1) * 10000),
+                "faceValue": (i + 1) * 10000,
                 "interestRate": 602 + 1,
                 "interestPaymentDate1": "0101",
                 "interestPaymentDate2": "0201",
@@ -223,7 +225,7 @@ class TestProcessor:
                 "symbol": f"SHARE{str(i + 1)}",
                 "tradableExchange": exchange_contract["address"],
                 "personalInfoAddress": personal_info_contract["address"],
-                "issuePrice": int((i + 1) * 1000),
+                "issuePrice": (i + 1) * 1000,
                 "principalValue": 1000 + i,
                 "totalSupply": 1000000 + i,
                 "dividends": 101 + i,
@@ -261,7 +263,7 @@ class TestProcessor:
             args = {
                 "name": f"テスト会員権{str(i + 1)}",
                 "symbol": f"MEMBERSHIP{str(i + 1)}",
-                "initialSupply": int((i + 1) * 1000000),
+                "initialSupply": (i + 1) * 1000000,
                 "tradableExchange": exchange_contract["address"],
                 "details": f"詳細{str(i + 1)}",
                 "returnDetails": f"リターン詳細{str(i + 1)}",
@@ -292,7 +294,7 @@ class TestProcessor:
             args = {
                 "name": f"テストクーポン{str(i + 1)}",
                 "symbol": f"COUPON{str(i + 1)}",
-                "totalSupply": int((i + 1) * 1000000),
+                "totalSupply": (i + 1) * 1000000,
                 "tradableExchange": exchange_contract["address"],
                 "details": f"クーポン詳細{str(i + 1)}",
                 "returnDetails": f"リターン詳細{str(i + 1)}",

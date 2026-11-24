@@ -381,7 +381,7 @@ class TestEthSendRawTransaction:
                             )
                         }
                     ),
-                    "queued": AttributeDict({}),
+                    "queued": AttributeDict[str, AttributeDict[str, str]]({}),
                 }
             )
 
@@ -1522,7 +1522,7 @@ class TestEthSendRawTransaction:
         async def mock_inspect():
             return AttributeDict(
                 {
-                    "pending": AttributeDict({}),
+                    "pending": AttributeDict[str, AttributeDict[str, str]]({}),
                     "queued": AttributeDict(
                         {
                             to_checksum_address(local_account_1.address): AttributeDict(

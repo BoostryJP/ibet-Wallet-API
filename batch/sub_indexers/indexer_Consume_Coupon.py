@@ -138,7 +138,7 @@ class Processor:
                 args=(listed_token.token_address,),
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS),
             )
-            if str(token_info[1]) == TokenType.IbetCoupon:
+            if token_info[1] == TokenType.IbetCoupon:
                 coupon_token_contract = AsyncContract.get_contract(
                     contract_name=TokenType.IbetCoupon,
                     address=listed_token.token_address,

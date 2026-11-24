@@ -93,7 +93,7 @@ class TestSearchTokenTransferHistory:
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         resp = client.post(apiurl, json={})
 
-        assumed_body = []
+        assumed_body: list[dict[str, object]] = []
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

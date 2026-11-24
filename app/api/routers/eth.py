@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 import httpx
 from eth_account import Account
@@ -198,7 +198,7 @@ async def send_raw_transaction(
     # NOTE: Check the token status before sending a transaction.
     for raw_tx_hex in raw_tx_hex_list:
         try:
-            raw_tx = decode(HexBytes(raw_tx_hex))
+            raw_tx = cast(list[bytes], decode(HexBytes(raw_tx_hex)))  # type: ignore[redundant-cast]
             to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
         except Exception as err:
             LOG.notice(f"RLP decoding failed: {err}")
@@ -252,7 +252,7 @@ async def send_raw_transaction(
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
-            raw_tx = decode(HexBytes(raw_tx_hex))
+            raw_tx = cast(list[bytes], decode(HexBytes(raw_tx_hex)))  # type: ignore[redundant-cast]
             to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
@@ -430,7 +430,7 @@ async def send_raw_transaction_no_wait(
     # NOTE: Check the token status before sending a transaction.
     for raw_tx_hex in raw_tx_hex_list:
         try:
-            raw_tx = decode(HexBytes(raw_tx_hex))
+            raw_tx = cast(list[bytes], decode(HexBytes(raw_tx_hex)))  # type: ignore[redundant-cast]
             to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
         except Exception as err:
             LOG.notice(f"RLP decoding failed: {err}")
@@ -485,7 +485,7 @@ async def send_raw_transaction_no_wait(
     for i, raw_tx_hex in enumerate(raw_tx_hex_list):
         # Get the contract address of the execution target.
         try:
-            raw_tx = decode(HexBytes(raw_tx_hex))
+            raw_tx = cast(list[bytes], decode(HexBytes(raw_tx_hex)))  # type: ignore[redundant-cast]
             to_contract_address = to_checksum_address(HexBytes(raw_tx[3]).to_0x_hex())
             LOG.debug(raw_tx)
         except Exception as err:
@@ -709,8 +709,6 @@ async def txpool_pending_count() -> int:
     txpool_status = await async_web3.geth.txpool.status()
     txpool_pending = txpool_status.get("pending", "0x0")
     pending_count = (
-        int(txpool_pending, 16)
-        if isinstance(txpool_pending, str)
-        else int(txpool_pending)
+        int(txpool_pending, 16) if isinstance(txpool_pending, str) else txpool_pending
     )
     return pending_count

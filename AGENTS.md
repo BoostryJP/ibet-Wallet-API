@@ -18,7 +18,7 @@ Run these from the repository root:
 | Install dependencies and hooks | `make install` |
 | Format Python and sort imports | `make format` |
 | Run Ruff checks | `make lint` |
-| Run strict Pyright checks | `make typecheck` |
+| Run strict pyrefly checks | `make typecheck` |
 | Run the default test suite | `UNIT_TEST_MODE=1 RESPONSE_VALIDATION_MODE=1 make test` |
 | Run a focused test selection | `make test ARG="-k test_name"` |
 | Run repository guardrails | `make test_guardrail_check` |

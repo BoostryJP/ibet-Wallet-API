@@ -14,7 +14,7 @@ lint:
 	uv run ruff check --fix
 
 typecheck:
-	uv run pyright --project pyrightconfig.json
+	uv run pyrefly check
 
 doc:
 	uv run python docs/generate_openapi_doc.py

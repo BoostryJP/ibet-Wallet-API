@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import TYPE_CHECKING, Annotated, Any, Sequence, Type, Union
+from typing import TYPE_CHECKING, Annotated, Any, Sequence, Type, Union, override
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy import (
@@ -105,6 +105,19 @@ LOG = log.get_logger()
 
 
 router = APIRouter(prefix="/Position", tags=["user_position"])
+
+
+if TYPE_CHECKING:
+
+    def _position_token_address(position: PositionDataDict) -> str:
+        # Open TypedDict variants may contain extra keys; check the value as well.
+        address = (
+            position["token_address"]
+            if "token_address" in position
+            else position["token"]["token_address"]
+        )
+        assert isinstance(address, str)
+        return address
 
 
 class BasePosition:
@@ -590,6 +603,7 @@ class BasePositionShare(BasePosition):
             config.SHARE_TOKEN_ENABLED, TokenType.IbetShare, ShareToken, IDXShareToken
         )
 
+    @override
     async def _get_position(
         self,
         account_address: str,
@@ -698,6 +712,7 @@ class BasePositionStraightBond(BasePosition):
             IDXBondToken,
         )
 
+    @override
     async def _get_position(
         self,
         account_address: str,
@@ -806,6 +821,7 @@ class BasePositionMembership(BasePosition):
             IDXMembershipToken,
         )
 
+    @override
     async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
@@ -907,6 +923,7 @@ class BasePositionCoupon(BasePosition):
             IDXCouponToken,
         )
 
+    @override
     async def get_list_from_index(
         self,
         request_query: ListAllPositionQuery,
@@ -1038,6 +1055,7 @@ class BasePositionCoupon(BasePosition):
             "positions": position_list,
         }
 
+    @override
     async def _get_position(
         self,
         account_address: str,
@@ -1219,15 +1237,15 @@ async def list_all_share_positions(
         for position_data in positions["positions"]:
             assert "pending_transfer" in position_data
             assert "locked" in position_data
+            assert isinstance(position_data["pending_transfer"], int)
+            assert isinstance(position_data["locked"], int | None)
+
             balance = position_data["balance"]
             pending_transfer = position_data["pending_transfer"]
             exchange_balance = position_data["exchange_balance"]
             exchange_commitment = position_data["exchange_commitment"]
             locked = position_data["locked"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
+            token_address = _position_token_address(position_data)
             type_checked_positions.append(
                 SecurityTokenPositionWithAddress(
                     balance=balance,
@@ -1281,15 +1299,15 @@ async def list_all_straight_bond_positions(
         for position_data in positions["positions"]:
             assert "pending_transfer" in position_data
             assert "locked" in position_data
+            assert isinstance(position_data["pending_transfer"], int)
+            assert isinstance(position_data["locked"], int | None)
+
             balance = position_data["balance"]
             pending_transfer = position_data["pending_transfer"]
             exchange_balance = position_data["exchange_balance"]
             exchange_commitment = position_data["exchange_commitment"]
             locked = position_data["locked"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
+            token_address = _position_token_address(position_data)
             type_checked_positions.append(
                 SecurityTokenPositionWithAddress(
                     balance=balance,
@@ -1351,11 +1369,7 @@ async def list_all_membership_positions(
                         balance=position_data["balance"],
                         exchange_balance=position_data["exchange_balance"],
                         exchange_commitment=position_data["exchange_commitment"],
-                        token_address=(
-                            position_data["token_address"]
-                            if "token_address" in position_data
-                            else position_data["token"]["token_address"]
-                        ),
+                        token_address=_position_token_address(position_data),
                     )
                     for position_data in positions["positions"]
                 ],
@@ -1385,14 +1399,12 @@ async def list_all_coupon_positions(
         type_checked_positions: list[CouponPositionWithAddress] = []
         for position_data in positions["positions"]:
             assert "used" in position_data
+            assert isinstance(position_data["used"], int)
             balance = position_data["balance"]
             exchange_balance = position_data["exchange_balance"]
             exchange_commitment = position_data["exchange_commitment"]
             used = position_data["used"]
-            if "token_address" in position_data:
-                token_address = position_data["token_address"]
-            else:
-                token_address = position_data["token"]["token_address"]
+            token_address = _position_token_address(position_data)
             type_checked_positions.append(
                 CouponPositionWithAddress(
                     balance=balance,
@@ -1954,7 +1966,7 @@ async def list_all_token_position(
         if token_type == TokenType.IbetMembership.value
     ]
 
-    bond_token_map = {}
+    bond_token_map: dict[str, IDXBondToken] = {}
     if len(bond_addresses) > 0:
         bond_token_map = {
             token.token_address: token
@@ -1966,7 +1978,7 @@ async def list_all_token_position(
                 )
             ).all()
         }
-    share_token_map = {}
+    share_token_map: dict[str, IDXShareToken] = {}
     if len(share_addresses) > 0:
         share_token_map = {
             token.token_address: token
@@ -1978,7 +1990,7 @@ async def list_all_token_position(
                 )
             ).all()
         }
-    coupon_token_map = {}
+    coupon_token_map: dict[str, IDXCouponToken] = {}
     if len(coupon_addresses) > 0:
         coupon_token_map = {
             token.token_address: token
@@ -1990,7 +2002,7 @@ async def list_all_token_position(
                 )
             ).all()
         }
-    membership_token_map = {}
+    membership_token_map: dict[str, IDXMembershipToken] = {}
     if len(membership_addresses) > 0:
         membership_token_map = {
             token.token_address: token
@@ -2046,7 +2058,7 @@ async def list_all_token_position(
                     "balance": balance,
                     "exchange_balance": exchange_balance,
                     "exchange_commitment": exchange_commitment,
-                    "used": int(used),
+                    "used": used,
                     "token": CouponToken.from_model(token).to_dict(),
                 }
             )

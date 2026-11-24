@@ -43,7 +43,7 @@ class Processor:
     """Processor for indexing public account list"""
 
     def __init__(self):
-        self.account_list_digest = None
+        self.account_list_digest: str | None = None
 
     def process(self):
         LOG.info("Syncing public account list")

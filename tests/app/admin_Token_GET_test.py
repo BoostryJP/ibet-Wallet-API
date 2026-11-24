@@ -56,7 +56,7 @@ class TestAdminTokenGET:
         self.insert_listing_data(session, token)
         session.commit()
 
-        apiurl = self.apiurl_base + str(token["token_address"])
+        apiurl = self.apiurl_base + token["token_address"]
         resp = client.get(apiurl)
 
         assert resp.status_code == 200

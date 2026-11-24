@@ -111,7 +111,7 @@ class Processor:
         token_info: tuple[str, str, str] = await TokenList(list_contract).get_token(
             self.target.token_address
         )
-        token_type = str(token_info[1])
+        token_type = token_info[1]
         self.token_owner_address = token_info[2]
         # Store token contract.
         if token_type == TokenType.IbetCoupon:

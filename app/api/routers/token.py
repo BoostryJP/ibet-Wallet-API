@@ -1088,9 +1088,9 @@ async def list_all_transfer_histories(
                     message = message_value
                 case _:
                     message = None
-            if source_event in (
-                TransferSourceEvent.Transfer,
-                TransferSourceEvent.Reallocation,
+            if (
+                source_event == TransferSourceEvent.Transfer
+                or source_event == TransferSourceEvent.Reallocation
             ):
                 type_checked_transfer_history.append(
                     TransferHistorySchema(
@@ -1288,9 +1288,10 @@ async def list_token_transfer_histories(
                     message = message_value
                 case _:
                     message = None
-            if source_event in (
-                TransferSourceEvent.Transfer,
-                TransferSourceEvent.Reallocation,
+            # Explicit comparisons narrow both enum members in the response union.
+            if (
+                source_event == TransferSourceEvent.Transfer
+                or source_event == TransferSourceEvent.Reallocation
             ):
                 type_checked_transfer_history.append(
                     TransferHistorySchema(
@@ -1329,8 +1330,7 @@ async def list_token_transfer_histories(
                             )
                         case _:
                             transfer_data = {
-                                str(key): str(value)
-                                for key, value in data_value.items()
+                                key: str(value) for key, value in data_value.items()
                             }
                 else:
                     transfer_data = {}
@@ -1524,9 +1524,10 @@ async def search_transfer_histories(
                     message = message_value
                 case _:
                     message = None
-            if source_event in (
-                TransferSourceEvent.Transfer,
-                TransferSourceEvent.Reallocation,
+            # Explicit comparisons narrow both enum members in the response union.
+            if (
+                source_event == TransferSourceEvent.Transfer
+                or source_event == TransferSourceEvent.Reallocation
             ):
                 type_checked_transfer_history.append(
                     TransferHistorySchema(
@@ -1565,8 +1566,7 @@ async def search_transfer_histories(
                             )
                         case _:
                             transfer_data = {
-                                str(key): str(value)
-                                for key, value in data_value.items()
+                                key: str(value) for key, value in data_value.items()
                             }
                 else:
                     transfer_data = {}

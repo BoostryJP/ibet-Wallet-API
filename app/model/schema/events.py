@@ -180,7 +180,8 @@ class IbetSecurityTokenDVPEventsQuery(BaseModel):
 
 
 class SecurityTokenEventArguments(
-    RootModel[create_abi_event_argument_models("IbetSecurityTokenInterface")]
+    # Pydantic accepts the event union generated from the ABI at runtime.
+    RootModel[create_abi_event_argument_models("IbetSecurityTokenInterface")]  # pyrefly: ignore [invalid-annotation]
 ):
     pass
 

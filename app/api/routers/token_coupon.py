@@ -330,7 +330,7 @@ async def retrieve_coupon_token(
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-    token_template = str(token[1])
+    token_template = token[1]
 
     if token_template != TokenType.IbetCoupon:
         raise DataNotExistsError("token_address: %s" % token_address)

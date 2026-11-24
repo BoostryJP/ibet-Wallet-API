@@ -270,7 +270,7 @@ class TestSendEmail:
     # Invalid Parameter
     # field required
     def test_error_1(self, client: TestClient, session: Session):
-        params = {}
+        params: dict[str, str] = {}
         resp = client.post(self.api_url, json=params)
 
         # Assertion

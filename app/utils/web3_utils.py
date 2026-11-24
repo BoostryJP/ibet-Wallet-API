@@ -22,7 +22,7 @@ import threading
 import time
 from dataclasses import dataclass
 from json.decoder import JSONDecodeError
-from typing import Any, cast
+from typing import Any, cast, override
 from weakref import WeakKeyDictionary
 
 from aiohttp import ClientError, ClientSession, ClientTimeout, TCPConnector
@@ -72,6 +72,7 @@ class KeepAliveHTTPSessionManager(HTTPSessionManager):
             connector=TCPConnector(),
         )
 
+    @override
     async def async_cache_and_return_session(
         self,
         endpoint_uri: URI,
@@ -366,6 +367,7 @@ class FailOverHTTPProvider(HTTPProvider):
         finally:
             db_session.close()
 
+    @override
     def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
         if FailOverHTTPProvider.fail_over_mode is True:
             cached_endpoint_uri = self._get_cached_endpoint_uri()
@@ -475,6 +477,7 @@ class AsyncFailOverHTTPProvider(AsyncHTTPProvider):
         finally:
             await db_session.close()
 
+    @override
     async def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
         if AsyncFailOverHTTPProvider.fail_over_mode is True:
             cached_endpoint_uri = await self._get_cached_endpoint_uri()

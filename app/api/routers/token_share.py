@@ -346,7 +346,7 @@ async def retrieve_share_token(
         args=(token_address,),
         default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS),
     )
-    token_template = str(token[1])
+    token_template = token[1]
 
     if token_template != TokenType.IbetShare:
         raise DataNotExistsError("token_address: %s" % token_address)
