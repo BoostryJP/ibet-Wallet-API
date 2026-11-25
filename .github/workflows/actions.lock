@@ -8,7 +8,7 @@ workflows:
     '.github/workflows/build.yml':
         - 'actions/checkout@v7.0.1'
         - 'docker/build-push-action@v7.4.0'
-        - 'docker/login-action@v4.7.0'
+        - 'docker/login-action@v4.8.0'
         - 'docker/setup-buildx-action@v4.4.1'
     '.github/workflows/codeql-analysis.yml':
         - 'actions/checkout@v7.0.1'
@@ -24,7 +24,7 @@ workflows:
         - 'docker/build-push-action@v6.19.2'
         - 'docker/metadata-action@v5.10.0'
         - 'docker/setup-buildx-action@v3.12.0'
-        - 'mishakav/pytest-coverage-comment@v1.13.0'
+        - 'mishakav/pytest-coverage-comment@v1.13.1'
 dependencies:
     'actions/cache@v6.1.0':
         ref: 'v6.1.0'
@@ -71,9 +71,9 @@ dependencies:
         commit: 'sha1-c3c9e263c25d99ce0380d002d59b67737d91b0dc'
         owner_id: 5429470
         repo_id: 241092383
-    'docker/login-action@v4.7.0':
-        ref: 'v4.7.0'
-        commit: 'sha1-81c6f93d4bc991e510b342a00b419b3bb4efc5c6'
+    'docker/login-action@v4.8.0':
+        ref: 'v4.8.0'
+        commit: 'sha1-8aa5831fb8d48d8f76594c7ddde61ae58019f550'
         owner_id: 5429470
         repo_id: 287743349
     'docker/metadata-action@v5.10.0':
@@ -101,8 +101,8 @@ dependencies:
         commit: 'sha1-0a2c53d3721e4c5cfcce6afd4014aecc337979f6'
         owner_id: 7448569
         repo_id: 212123834
-    'mishakav/pytest-coverage-comment@v1.13.0':
-        ref: 'v1.13.0'
-        commit: 'sha1-9516bf7f32a9229cf18d5e1717ae387c7154f279'
+    'mishakav/pytest-coverage-comment@v1.13.1':
+        ref: 'v1.13.1'
+        commit: 'sha1-4cfb48edc8f875ac019afdcfd97c48d78ad2b723'
         owner_id: 289035
         repo_id: 365032492
